@@ -34,8 +34,7 @@ class Dandelion():
         self.refresh = time() + REASSIGN_INTERVAL
         self.lock = RLock()
 
-    @staticmethod
-    def poissonTimeout(start=None, average=0):
+    def poissonTimeout(self, start=None, average=0):
         if start is None:
             start = time()
         if average == 0:
@@ -49,7 +48,7 @@ class Dandelion():
             self.hashMap[hashId] = Stem(
                     self.getNodeStem(source),
                     stream,
-                    Dandelion.poissonTimeout())
+                    self.poissonTimeout())
 
     def setHashStream(self, hashId, stream=1):
         with self.lock:
@@ -57,7 +56,7 @@ class Dandelion():
                 self.hashMap[hashId] = Stem(
                         self.hashMap[hashId].child,
                         stream,
-                        Dandelion.poissonTimeout())
+                        self.poissonTimeout())
 
     def removeHash(self, hashId, reason="no reason specified"):
         logging.debug("%s entering fluff mode due to %s.", ''.join('%02x'%ord(i) for i in hashId), reason)
@@ -81,7 +80,7 @@ class Dandelion():
                 for k in (k for k, v in self.nodeMap.iteritems() if v is None):
                     self.nodeMap[k] = connection
                 for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child is None}.iteritems():
-                    self.hashMap[k] = Stem(connection, v.stream, Dandelion.poissionTimeout())
+                    self.hashMap[k] = Stem(connection, v.stream, self.poissionTimeout())
                     invQueue.put((v.stream, k, v.child))
 
 
@@ -94,7 +93,7 @@ class Dandelion():
                 for k in (k for k, v in self.nodeMap.iteritems() if v == connection):
                     self.nodeMap[k] = None
                 for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child == connection}.iteritems():
-                    self.hashMap[k] = Stem(None, v.stream, Dandelion.poissonTimeout())
+                    self.hashMap[k] = Stem(None, v.stream, self.poissonTimeout())
 
     def pickStem(self, parent=None):
         try:
