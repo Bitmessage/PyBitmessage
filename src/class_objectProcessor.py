@@ -553,7 +553,9 @@ class objectProcessor(threading.Thread):
                 message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
                 )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
                 fromAddress = toAddress  # The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
-                # We don't actually need the ackdataForBroadcast for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
+                # We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
+                streamNumber = decodeAddress(fromAddress)[2]
+
                 ackdata = genAckPayload(streamNumber, 0)
                 toAddress = '[Broadcast subscribers]'
                 ripe = ''
@@ -568,7 +570,7 @@ class objectProcessor(threading.Thread):
                      fromAddress, 
                      subject, 
                      message, 
-                     ackdataForBroadcast, 
+                     ackdata, 
                      int(time.time()), # sentTime (this doesn't change)
                      int(time.time()), # lastActionTime
                      0, 
@@ -580,7 +582,7 @@ class objectProcessor(threading.Thread):
                 helper_sent.insert(t)
 
                 queues.UISignalQueue.put(('displayNewSentMessage', (
-                    toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdataForBroadcast)))
+                    toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdata)))
                 queues.workerQueue.put(('sendbroadcast', ''))
 
         # Don't send ACK if invalid, blacklisted senders, invisible messages, disabled or chan
