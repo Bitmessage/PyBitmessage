@@ -70,7 +70,7 @@ class MessageView(QtGui.QTextBrowser):
             return
         reply = QtGui.QMessageBox.warning(self,
             QtGui.QApplication.translate("MessageView", "Follow external link"),
-            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(str(link.toString())),
+            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(unicode(link.toString())),
             QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
