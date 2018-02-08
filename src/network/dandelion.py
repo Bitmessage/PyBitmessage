@@ -80,7 +80,7 @@ class Dandelion():
                 for k in (k for k, v in self.nodeMap.iteritems() if v is None):
                     self.nodeMap[k] = connection
                 for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child is None}.iteritems():
-                    self.hashMap[k] = Stem(connection, v.stream, self.poissionTimeout())
+                    self.hashMap[k] = Stem(connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
 
 
