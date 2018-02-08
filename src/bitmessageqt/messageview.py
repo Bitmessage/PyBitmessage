@@ -103,7 +103,7 @@ class MessageView(QtGui.QTextBrowser):
             if self.mode == MessageView.MODE_HTML:
                 pos = self.out.find(">", self.outpos)
                 if pos > self.outpos:
-                    self.outpos = pos
+                    self.outpos = pos + 1
             cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
             cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
         self.verticalScrollBar().setValue(position)
