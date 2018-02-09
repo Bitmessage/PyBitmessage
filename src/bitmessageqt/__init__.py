@@ -598,7 +598,7 @@ class MyForm(settingsmixin.SMainWindow):
         if 'win32' in sys.platform or 'win64' in sys.platform:
             # Auto-startup for Windows
             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-            self.settings = QSettings(RUN_PATH, QSettings.NativeFormat)
+            self.settings = QtCore.QSettings(RUN_PATH, QtCore.QSettings.NativeFormat)
             self.settings.remove(
                 "PyBitmessage")  # In case the user moves the program and the registry entry is no longer valid, this will delete the old registry entry.
             if BMConfigParser().getboolean('bitmessagesettings', 'startonlogon'):
@@ -2546,7 +2546,7 @@ class MyForm(settingsmixin.SMainWindow):
             if 'win32' in sys.platform or 'win64' in sys.platform:
             # Auto-startup for Windows
                 RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-                self.settings = QSettings(RUN_PATH, QSettings.NativeFormat)
+                self.settings = QtCore.QSettings(RUN_PATH, QtCore.QSettings.NativeFormat)
                 if BMConfigParser().getboolean('bitmessagesettings', 'startonlogon'):
                     self.settings.setValue("PyBitmessage", sys.argv[0])
                 else:
