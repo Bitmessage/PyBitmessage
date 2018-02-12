@@ -198,7 +198,7 @@ class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
                         None,
                         QtCore.QCoreApplication.CodecForTr,
                         count
-                    )
+                    ))
 
 
 class RegenerateAddressesDialog(QtGui.QDialog, RetranslateMixin):
