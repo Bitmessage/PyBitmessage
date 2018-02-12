@@ -3976,20 +3976,20 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
                 self.actionClipboardMessagelist = \
                     self.ui.inboxContextMenuToolbar.addAction(
-                        _translate(
-                            "MainWindow",
-                            "Copy subject to clipboard"
-                            if tableWidget.currentColumn() == 2
-                            else "Copy address to clipboard"),
+                        _translate("MainWindow", "Copy subject to clipboard")
+                        if tableWidget.currentColumn() == 2
+                        else _translate(
+                            "MainWindow", "Copy address to clipboard"),
                         self.on_action_ClipboardMessagelist
-                )
+                    )
                 self.popMenuInbox.addAction(self.actionClipboardMessagelist)
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionSaveMessageAs)
                 if currentFolder == "trash":
-                    self.popMenuInbox.addAction(self.actionUndeleteTrashedMessage)
+                    self.popMenuInbox.addAction(
+                        self.actionUndeleteTrashedMessage)
                 else:
                     self.popMenuInbox.addAction(self.actionTrashInboxMessage)
                 self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
