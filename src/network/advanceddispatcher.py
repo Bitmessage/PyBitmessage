@@ -61,7 +61,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
                     if not getattr(self, "state_" + str(self.state))():
                         break
             except AttributeError:
-                logger.error("Unknown state %s", self.state)
+                logger.error("Unknown state %s", self.state, exc_info=True)
                 raise
             except BusyError:
                 return False
