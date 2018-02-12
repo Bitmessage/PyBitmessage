@@ -194,8 +194,11 @@ class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
                 self.checkBoxDisplayMessagesAlreadyInInventory.setText(
                     _translate(
                         "MainWindow",
-                        "Display the %n recent broadcast(s) from this address."
-                    ).arg(count))
+                        "Display the %n recent broadcast(s) from this address.",
+                        None,
+                        QtCore.QCoreApplication.CodecForTr,
+                        count
+                    )
 
 
 class RegenerateAddressesDialog(QtGui.QDialog, RetranslateMixin):
