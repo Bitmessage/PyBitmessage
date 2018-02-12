@@ -1,12 +1,20 @@
 from PyQt4 import QtCore, QtGui
 from string import find, rfind, rstrip, lstrip
 
+from tr import _translate
 from bmconfigparser import BMConfigParser
 from helper_sql import *
 from utils import *
 from settingsmixin import SettingsMixin
 
-class AccountMixin (object):
+# for pylupdate
+_translate("MainWindow", "inbox")
+_translate("MainWindow", "new")
+_translate("MainWindow", "sent")
+_translate("MainWindow", "trash")
+
+
+class AccountMixin(object):
     ALL = 0
     NORMAL = 1
     CHAN = 2
@@ -97,7 +105,8 @@ class AccountMixin (object):
                     retval, = row
                     retval = unicode(retval, 'utf-8')
         elif self.address is None or self.type == AccountMixin.ALL:
-            return unicode(str(QtGui.QApplication.translate("MainWindow", "All accounts")), 'utf-8')
+            return unicode(
+                str(_translate("MainWindow", "All accounts")), 'utf-8')
         if retval is None:
             return unicode(self.address, 'utf-8')
         else:
@@ -115,17 +124,16 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
 
     def setFolderName(self, fname):
         self.folderName = str(fname)
-        
+
     def data(self, column, role):
         if column == 0:
             if role == QtCore.Qt.DisplayRole:
-                return QtGui.QApplication.translate("MainWindow", self.folderName) + (" (" + str(self.unreadCount) + ")" if self.unreadCount > 0 else "")
-            elif role == QtCore.Qt.EditRole:
-                return QtGui.QApplication.translate("MainWindow", self.folderName)
-            elif role == QtCore.Qt.ToolTipRole:    
-                return QtGui.QApplication.translate("MainWindow", self.folderName)
-            elif role == QtCore.Qt.DecorationRole:
-                pass
+                return _translate("MainWindow", self.folderName) + (
+                    " (" + str(self.unreadCount) + ")"
+                    if self.unreadCount > 0 else ""
+                )
+            elif role in (QtCore.Qt.EditRole, QtCore.Qt.ToolTipRole):
+                return _translate("MainWindow", self.folderName)
             elif role == QtCore.Qt.FontRole:
                 font = QtGui.QFont()
                 font.setBold(self.unreadCount > 0)
@@ -166,16 +174,19 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         self.setEnabled(enabled)
         self.setUnreadCount(unreadCount)
         self.setType()
-        
+
     def _getLabel(self):
         if self.address is None:
-            return unicode(QtGui.QApplication.translate("MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
+            return unicode(_translate(
+                "MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
         else:
             try:
-                return unicode(BMConfigParser().get(self.address, 'label'), 'utf-8', 'ignore')
+                return unicode(
+                    BMConfigParser().get(self.address, 'label'),
+                    'utf-8', 'ignore')
             except:
                 return unicode(self.address, 'utf-8')
-    
+
     def _getAddressBracket(self, unreadCount = False):
         ret = ""
         if unreadCount:
