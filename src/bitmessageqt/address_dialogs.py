@@ -194,7 +194,7 @@ class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
                 self.checkBoxDisplayMessagesAlreadyInInventory.setText(
                     _translate(
                         "MainWindow",
-                        "Display the %1 recent broadcast(s) from this address."
+                        "Display the %n recent broadcast(s) from this address."
                     ).arg(count))
 
 
