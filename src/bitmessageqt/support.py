@@ -21,7 +21,8 @@ import state
 from version import softwareVersion
 
 # this is BM support address going to Peter Surda
-SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
+OLD_SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
+SUPPORT_ADDRESS = 'BM-2cUdgkDDAahwPAU6oD2A7DnjqZz3hgY832'
 SUPPORT_LABEL = 'PyBitmessage support'
 SUPPORT_MY_LABEL = 'My new address'
 SUPPORT_SUBJECT = 'Support request'
@@ -53,6 +54,7 @@ Connected hosts: {}
 '''
 
 def checkAddressBook(myapp):
+    sqlExecute('''DELETE from addressbook WHERE address=?''', OLD_SUPPORT_ADDRESS)
     queryreturn = sqlQuery('''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
     if queryreturn == []:
         sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS)
