@@ -162,7 +162,11 @@ class namecoinConnection (object):
 
         except Exception:
             logger.info("Namecoin connection test failure")
-            return ('failed', "The connection to namecoin failed.")
+            return (
+                'failed',
+                tr._translate(
+                    "MainWindow", "The connection to namecoin failed.")
+            )
 
     # Helper routine that actually performs an JSON RPC call.
     def callRPC (self, method, params):
