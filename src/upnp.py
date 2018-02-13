@@ -187,7 +187,7 @@ class uPnPThread(threading.Thread, StoppableThread):
         self.localIP = self.getLocalIP()
         self.routers = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((self.localIP, 10000))
+        self.sock.bind((self.localIP, 0))
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
         self.sock.settimeout(5)
         self.sendSleep = 60
