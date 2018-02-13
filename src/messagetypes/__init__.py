@@ -11,6 +11,9 @@ class MsgBase(object):
 
 
 def constructObject(data):
+    whitelist = ["message"]
+    if data[""] not in whitelist:
+        return None
     try:
         m = import_module("messagetypes." + data[""])
         classBase = getattr(m, data[""].title())
