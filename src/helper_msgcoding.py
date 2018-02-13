@@ -21,7 +21,15 @@ BITMESSAGE_ENCODING_SIMPLE = 2
 BITMESSAGE_ENCODING_EXTENDED = 3
 
 
-class DecompressionSizeException(Exception):
+class MsgEncodeException(Exception):
+    pass
+
+
+class MsgDecodeException(Exception):
+    pass
+
+
+class DecompressionSizeException(MsgDecodeException):
     def __init__(self, size):
         self.size = size
 
@@ -38,7 +46,7 @@ class MsgEncode(object):
         elif self.encoding == BITMESSAGE_ENCODING_TRIVIAL:
             self.encodeTrivial(message)
         else:
-            raise ValueError("Unknown encoding %i" % (encoding))
+            raise MsgEncodeException("Unknown encoding %i" % (encoding))
 
     def encodeExtended(self, message):
         try:
@@ -46,10 +54,10 @@ class MsgEncode(object):
             self.data = zlib.compress(msgpack.dumps(msgObj.encode(message)), 9)
         except zlib.error:
             logger.error("Error compressing message")
-            raise
+            raise MsgEncodeException("Error compressing message")
         except msgpack.exceptions.PackException:
             logger.error("Error msgpacking message")
-            raise
+            raise MsgEncodeException("Error msgpacking message")
         self.length = len(self.data)
 
     def encodeSimple(self, message):
@@ -85,7 +93,7 @@ class MsgDecode(object):
                 data = dc.unconsumed_tail
             except zlib.error:
                 logger.error("Error decompressing message")
-                raise
+                raise MsgDecodeException("Error decompressing message")
         else:
             raise DecompressionSizeException(len(tmp))
 
@@ -94,21 +102,21 @@ class MsgDecode(object):
         except (msgpack.exceptions.UnpackException,
                 msgpack.exceptions.ExtraData):
             logger.error("Error msgunpacking message")
-            raise
+            raise MsgDecodeException("Error msgunpacking message")
 
         try:
             msgType = tmp[""]
         except KeyError:
             logger.error("Message type missing")
-            raise
+            raise MsgDecodeException("Message type missing")
 
         msgObj = messagetypes.constructObject(tmp)
         if msgObj is None:
-            raise ValueError("Malformed message")
+            raise MsgDecodeException("Malformed message")
         try:
             msgObj.process()
         except:
-            raise ValueError("Malformed message")
+            raise MsgDecodeException("Malformed message")
         if msgType == "message":
             self.subject = msgObj.subject
             self.body = msgObj.body
