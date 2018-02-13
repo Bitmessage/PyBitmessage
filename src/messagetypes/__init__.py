@@ -12,9 +12,10 @@ class MsgBase(object):
 
 def constructObject(data):
     try:
-        classBase = eval(data[""] + "." + data[""].title())
-    except NameError:
-        logger.error("Don't know how to handle message type: \"%s\"", data[""])
+        m = import_module("messagetypes." + data[""])
+        classBase = getattr(m, data[""].title())
+    except (NameError, ImportError):
+        logger.error("Don't know how to handle message type: \"%s\"", data[""], exc_info=True)
         return None
     try:
         returnObj = classBase()
