@@ -509,7 +509,10 @@ class objectProcessor(threading.Thread):
         if toLabel == '':
             toLabel = toAddress
 
-        decodedMessage = helper_msgcoding.MsgDecode(messageEncodingType, message)
+        try:
+            decodedMessage = helper_msgcoding.MsgDecode(messageEncodingType, message)
+        except helper_msgcoding.MsgDecodeException:
+            return
         subject = decodedMessage.subject
         body = decodedMessage.body
 
@@ -761,7 +764,10 @@ class objectProcessor(threading.Thread):
             sendersAddressVersion, sendersStream, calculatedRipe)
         logger.debug('fromAddress: ' + fromAddress)
 
-        decodedMessage = helper_msgcoding.MsgDecode(messageEncodingType, message)
+        try:
+            decodedMessage = helper_msgcoding.MsgDecode(messageEncodingType, message)
+        except helper_msgcoding.MsgDecodeException:
+            return
         subject = decodedMessage.subject
         body = decodedMessage.body
 
