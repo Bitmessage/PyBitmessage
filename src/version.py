@@ -1,2 +1,2 @@
 softwareName = 'PyBitmessage'
-softwareVersion = '0.6.2'
+softwareVersion = '0.6.3'
