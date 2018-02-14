@@ -755,7 +755,7 @@ class Ui_MainWindow(object):
         self.actionExit.setText(_translate("MainWindow", "Quit", None))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
         self.actionHelp.setText(_translate("MainWindow", "Help", None))
-        self.actionHelp.setShortcut(_translate("MainWindow", "F1", None))
+        self.actionHelp.setShortcut("F1")
         self.actionSupport.setText(_translate("MainWindow", "Contact support", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
         self.actionSettings.setText(_translate("MainWindow", "Settings", None))

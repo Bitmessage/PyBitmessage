@@ -1,8 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import time
 import shared
-
-from tr import _translate
+from tr import _translate, _codec
 from inventory import Inventory, PendingDownloadQueue, PendingUpload
 import knownnodes
 import l10n
@@ -27,9 +26,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
-        
+
         self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
@@ -54,33 +51,42 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.timer.stop()
 
     def formatBytes(self, num):
-        for x in [_translate("networkstatus", "byte(s)", None, QtCore.QCoreApplication.CodecForTr, num), "kB", "MB", "GB"]:
+        for x in [_translate("networkstatus", "byte(s)", None, _codec, num),
+                  _translate("networkstatus", "kB"),
+                  _translate("networkstatus", "MB"),
+                  _translate("networkstatus", "GB")]:
             if num < 1000.0:
                 return "%3.0f %s" % (num, x)
             num /= 1000.0
-        return "%3.0f %s" % (num, 'TB')
+        return "%3.0f %s" % (num, _translate("networkstatus", "TB"))
 
     def formatByteRate(self, num):
         num /= 1000
-        return "%4.0f kB" % num
-        
+        return "%4.0f" % num
+
     def updateNumberOfObjectsToBeSynced(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, network.stats.pendingDownload() + network.stats.pendingUpload()))
+        self.labelSyncStatus.setText(_translate(
+            "networkstatus", "Object(s) to be synced: %n", None, _codec,
+            network.stats.pendingDownload() + network.stats.pendingUpload()
+        ))
 
     def updateNumberOfMessagesProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelMessageCount.setText(_translate(
-            "networkstatus", "Processed %n person-to-person message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfMessagesProcessed))
+            "networkstatus", "Processed %n person-to-person message(s).",
+            None, _codec, shared.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelBroadcastCount.setText(_translate(
-            "networkstatus", "Processed %n broadcast message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfBroadcastsProcessed))
+            "networkstatus", "Processed %n broadcast message(s).",
+            None, _codec, shared.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelPubkeyCount.setText(_translate(
-            "networkstatus", "Processed %n public key(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfPubkeysProcessed))
+            "networkstatus", "Processed %n public key(s).",
+            None, _codec, shared.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):
         """
@@ -88,9 +94,15 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         sent and received by 2.
         """
         self.labelBytesRecvCount.setText(_translate(
-            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(network.stats.downloadSpeed()), self.formatBytes(network.stats.receivedBytes())))
+            "networkstatus", "Down: %1 kB/s  Total: %2").arg(
+                self.formatByteRate(network.stats.downloadSpeed()),
+                self.formatBytes(network.stats.receivedBytes()))
+        )
         self.labelBytesSentCount.setText(_translate(
-            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(network.stats.uploadSpeed()), self.formatBytes(network.stats.sentBytes())))
+            "networkstatus", "Up: %1 kB/s  Total: %2").arg(
+                self.formatByteRate(network.stats.uploadSpeed()),
+                self.formatBytes(network.stats.sentBytes()))
+        )
 
     def updateNetworkStatusTab(self, outbound, add, destination):
         if outbound:
@@ -151,8 +163,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.tableWidgetConnectionCount.setUpdatesEnabled(True)
         self.tableWidgetConnectionCount.setSortingEnabled(True)
         self.labelTotalConnections.setText(_translate(
-            "networkstatus", "Total Connections: %1").arg(str(self.tableWidgetConnectionCount.rowCount())))
-       # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
+            "networkstatus", "Total Connections: %1"
+        ).arg(str(self.tableWidgetConnectionCount.rowCount())))
+        # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
         if self.tableWidgetConnectionCount.rowCount() and shared.statusIconColor == 'red':
             self.window().setStatusIcon('yellow')
         elif self.tableWidgetConnectionCount.rowCount() == 0 and shared.statusIconColor != "red":
@@ -161,12 +174,14 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     # timer driven
     def runEveryTwoSeconds(self):
         self.labelLookupsPerSecond.setText(_translate(
-            "networkstatus", "Inventory lookups per second: %1").arg(str(Inventory().numberOfInventoryLookupsPerformed/2)))
+            "networkstatus", "Inventory lookups per second: %1"
+        ).arg(str(Inventory().numberOfInventoryLookupsPerformed/2)))
         Inventory().numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
 
     def retranslateUi(self):
         super(NetworkStatus, self).retranslateUi()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
+        self.labelStartupTime.setText(_translate(
+            "networkstatus", "Since startup on %1"
+        ).arg(l10n.formatTimestamp(self.startup)))

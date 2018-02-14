@@ -141,7 +141,7 @@
          </column>
          <column>
           <property name="text">
-           <string>TLS</string>
+           <string notr="true">TLS</string>
           </property>
           <property name="toolTip">
            <string>Connection encryption</string>
@@ -182,7 +182,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Since startup:</string>
+          <string notr="true">Since startup:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
