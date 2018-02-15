@@ -1,15 +1,35 @@
 
-from PyQt4.QtCore import QThread, SIGNAL
 import sys
 
+from PyQt5 import QtCore
+
 import queues
+from network.node import Peer
 
 
-class UISignaler(QThread):
+class UISignaler(QtCore.QThread):
     _instance = None
 
-    def __init__(self, parent=None):
-        QThread.__init__(self, parent)
+    writeNewAddressToTable = QtCore.Signal(str, str, str)
+    updateStatusBar = QtCore.Signal(object)
+    updateSentItemStatusByToAddress = QtCore.Signal(object, str)
+    updateSentItemStatusByAckdata = QtCore.Signal(object, str)
+    displayNewInboxMessage = QtCore.Signal(object, str, str, object, str)
+    displayNewSentMessage = QtCore.Signal(object, str, str, str, object, str)
+    updateNetworkStatusTab = QtCore.Signal(bool, bool, Peer)
+    updateNumberOfMessagesProcessed = QtCore.Signal()
+    updateNumberOfPubkeysProcessed = QtCore.Signal()
+    updateNumberOfBroadcastsProcessed = QtCore.Signal()
+    setStatusIcon = QtCore.Signal(str)
+    changedInboxUnread = QtCore.Signal(str)
+    rerenderMessagelistFromLabels = QtCore.Signal()
+    rerenderMessagelistToLabels = QtCore.Signal()
+    rerenderAddressBook = QtCore.Signal()
+    rerenderSubscriptions = QtCore.Signal()
+    rerenderBlackWhiteList = QtCore.Signal()
+    removeInboxRowByMsgid = QtCore.Signal(str)
+    newVersionAvailable = QtCore.Signal(str)
+    displayAlert = QtCore.Signal(str, str, bool)
 
     @classmethod
     def get(cls):
@@ -22,58 +42,58 @@ class UISignaler(QThread):
             command, data = queues.UISignalQueue.get()
             if command == 'writeNewAddressToTable':
                 label, address, streamNumber = data
-                self.emit(SIGNAL(
-                    "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
+                self.writeNewAddressToTable.emit(
+                    label, address, str(streamNumber))
             elif command == 'updateStatusBar':
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
+                self.updateStatusBar.emit(data)
             elif command == 'updateSentItemStatusByToAddress':
                 toAddress, message = data
-                self.emit(SIGNAL(
-                    "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), toAddress, message)
+                self.updateSentItemStatusByToAddress.emit(toAddress, message)
             elif command == 'updateSentItemStatusByAckdata':
                 ackData, message = data
-                self.emit(SIGNAL(
-                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
+                self.updateSentItemStatusByAckdata.emit(ackData, message)
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
-                self.emit(SIGNAL(
-                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                    inventoryHash, toAddress, fromAddress, subject, body)
+                self.displayNewInboxMessage.emit(
+                    inventoryHash, toAddress, fromAddress,
+                    unicode(subject, 'utf-8'), body)
             elif command == 'displayNewSentMessage':
                 toAddress, fromLabel, fromAddress, subject, message, ackdata = data
-                self.emit(SIGNAL(
-                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                    toAddress, fromLabel, fromAddress, subject, message, ackdata)
+                self.displayNewSentMessage.emit(
+                    toAddress, fromLabel, fromAddress,
+                    unicode(subject, 'utf-8'), message, ackdata)
             elif command == 'updateNetworkStatusTab':
                 outbound, add, destination = data
-                self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), outbound, add, destination)
+                self.updateNetworkStatusTab.emit(outbound, add, destination)
             elif command == 'updateNumberOfMessagesProcessed':
-                self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
+                self.updateNumberOfMessagesProcessed.emit()
             elif command == 'updateNumberOfPubkeysProcessed':
-                self.emit(SIGNAL("updateNumberOfPubkeysProcessed()"))
+                self.updateNumberOfPubkeysProcessed.emit()
             elif command == 'updateNumberOfBroadcastsProcessed':
-                self.emit(SIGNAL("updateNumberOfBroadcastsProcessed()"))
+                self.updateNumberOfBroadcastsProcessed.emit()
             elif command == 'setStatusIcon':
-                self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
+                self.setStatusIcon.emit(data)
             elif command == 'changedInboxUnread':
-                self.emit(SIGNAL("changedInboxUnread(PyQt_PyObject)"), data)
+                self.changedInboxUnread.emit(data)
             elif command == 'rerenderMessagelistFromLabels':
-                self.emit(SIGNAL("rerenderMessagelistFromLabels()"))
+                self.rerenderMessagelistFromLabels.emit()
             elif command == 'rerenderMessagelistToLabels':
-                self.emit(SIGNAL("rerenderMessagelistToLabels()"))
+                self.rerenderMessagelistToLabels.emit()
             elif command == 'rerenderAddressBook':
-                self.emit(SIGNAL("rerenderAddressBook()"))
+                self.rerenderAddressBook.emit()
             elif command == 'rerenderSubscriptions':
-                self.emit(SIGNAL("rerenderSubscriptions()"))
+                self.rerenderSubscriptions.emit()
             elif command == 'rerenderBlackWhiteList':
-                self.emit(SIGNAL("rerenderBlackWhiteList()"))
+                self.rerenderBlackWhiteList.emit()
             elif command == 'removeInboxRowByMsgid':
-                self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+                self.removeInboxRowByMsgid.emit(data)
             elif command == 'newVersionAvailable':
-                self.emit(SIGNAL("newVersionAvailable(PyQt_PyObject)"), data)
+                self.newVersionAvailable.emit(data)
             elif command == 'alert':
                 title, text, exitAfterUserClicksOk = data
-                self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
+                self.displayAlert.emit(title, text, exitAfterUserClicksOk)
             else:
                 sys.stderr.write(
-                    'Command sent to UISignaler not recognized: %s\n' % command)
+                    'Command sent to UISignaler not recognized: %s\n'
+                    % command
+                )

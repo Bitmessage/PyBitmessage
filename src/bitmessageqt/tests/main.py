@@ -4,7 +4,7 @@ import Queue
 import sys
 import unittest
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 import bitmessageqt
 import queues
@@ -16,7 +16,7 @@ class TestBase(unittest.TestCase):
 
     def setUp(self):
         self.app = (
-            QtGui.QApplication.instance()
+            QtWidgets.QApplication.instance()
             or bitmessageqt.BitmessageQtApplication(sys.argv))
         self.window = self.app.activeWindow()
         if not self.window:
@@ -41,7 +41,7 @@ class TestMain(unittest.TestCase):
         """Check the results of _translate() with various args"""
         self.assertIsInstance(
             _translate("MainWindow", "Test"),
-            QtCore.QString
+            unicode
         )
 
 

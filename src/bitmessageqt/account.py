@@ -1,46 +1,31 @@
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 """
-account.py
-==========
-
 Account related functions.
 
 """
-
-from __future__ import absolute_import
 
 import inspect
 import re
 import sys
 import time
 
-from PyQt4 import QtGui
-
 import queues
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute
-from .foldertree import AccountMixin
-from .utils import str_broadcast_subscribers
+from foldertree import AccountMixin
+from utils import str_broadcast_subscribers
+from tr import _translate
 
 
 def getSortedAccounts():
-    """Get a sorted list of configSections"""
-
+    """Get a sorted list of address config sections"""
     configSections = BMConfigParser().addresses()
     configSections.sort(
         cmp=lambda x, y: cmp(
-            unicode(
-                BMConfigParser().get(
-                    x,
-                    'label'),
-                'utf-8').lower(),
-            unicode(
-                BMConfigParser().get(
-                    y,
-                    'label'),
-                'utf-8').lower()))
+            unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(),
+            unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
+    )
     return configSections
 
 
@@ -94,7 +79,8 @@ def accountClass(address):
         return subscription
     try:
         gateway = BMConfigParser().get(address, "gateway")
-        for _, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+        for _, cls in inspect.getmembers(
+                sys.modules[__name__], inspect.isclass):
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
         # general gateway
@@ -105,7 +91,7 @@ def accountClass(address):
     return BMAccount(address)
 
 
-class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
+class AccountColor(AccountMixin):
     """Set the type of account"""
 
     def __init__(self, address, address_type=None):
@@ -127,12 +113,35 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
             self.type = address_type
 
 
-class BMAccount(object):
-    """Encapsulate a Bitmessage account"""
-
+class NoAccount(object):
+    """Minimal account like object (All accounts)"""
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
+        self.toAddress = self.fromAddress = ''
+        self.subject = self.message = ''
+        self.fromLabel = self.toLabel = ''
+
+    def getLabel(self, address=None):
+        """Get a label for this bitmessage account"""
+        return address or self.address
+
+    def parseMessage(self, toAddress, fromAddress, subject, message):
+        """Set metadata and address labels on self"""
+        self.toAddress = toAddress
+        self.fromAddress = fromAddress
+        self.subject = subject
+        self.message = message
+        self.fromLabel = self.getLabel(fromAddress)
+        self.toLabel = self.getLabel(toAddress)
+
+
+class BMAccount(NoAccount):
+    """Encapsulate a Bitmessage account"""
+
+    def __init__(self, address=None):
+        super(BMAccount, self).__init__(address)
         if BMConfigParser().has_section(address):
             if BMConfigParser().safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
@@ -148,8 +157,7 @@ class BMAccount(object):
 
     def getLabel(self, address=None):
         """Get a label for this bitmessage account"""
-        if address is None:
-            address = self.address
+        address = super(BMAccount, self).getLabel(address)
         label = BMConfigParser().safeGet(address, 'label', address)
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', address)
@@ -162,33 +170,7 @@ class BMAccount(object):
             if queryreturn != []:
                 for row in queryreturn:
                     label, = row
-        return label
-
-    def parseMessage(self, toAddress, fromAddress, subject, message):
-        """Set metadata and address labels on self"""
-
-        self.toAddress = toAddress
-        self.fromAddress = fromAddress
-        if isinstance(subject, unicode):
-            self.subject = str(subject)
-        else:
-            self.subject = subject
-        self.message = message
-        self.fromLabel = self.getLabel(fromAddress)
-        self.toLabel = self.getLabel(toAddress)
-
-
-class NoAccount(BMAccount):
-    """Override the __init__ method on a BMAccount"""
-
-    def __init__(self, address=None):  # pylint: disable=super-init-not-called
-        self.address = address
-        self.type = AccountMixin.NORMAL
-
-    def getLabel(self, address=None):
-        if address is None:
-            address = self.address
-        return address
+        return unicode(label, 'utf-8')
 
 
 class SubscriptionAccount(BMAccount):
@@ -208,15 +190,11 @@ class GatewayAccount(BMAccount):
     ALL_OK = 0
     REGISTRATION_DENIED = 1
 
-    def __init__(self, address):
-        super(GatewayAccount, self).__init__(address)
-
     def send(self):
-        """Override the send method for gateway accounts"""
-
-        # pylint: disable=unused-variable
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        """The send method for gateway accounts"""
+        streamNumber, ripe = decodeAddress(self.toAddress)[2:]
+        stealthLevel = BMConfigParser().safeGetInt(
+            'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -289,10 +267,9 @@ class MailchuckAccount(GatewayAccount):
 
     def settings(self):
         """settings specific to a MailchuckAccount"""
-
         self.toAddress = self.registrationAddress
         self.subject = "config"
-        self.message = QtGui.QApplication.translate(
+        self.message = _translate(
             "Mailchuck",
             """# You can use this to configure your email gateway account
 # Uncomment the setting you want to use
@@ -338,8 +315,9 @@ class MailchuckAccount(GatewayAccount):
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """parseMessage specific to a MailchuckAccount"""
-
-        super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(MailchuckAccount, self).parseMessage(
+            toAddress, fromAddress, subject, message
+        )
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
             if matches is not None:
@@ -360,6 +338,7 @@ class MailchuckAccount(GatewayAccount):
                     self.toLabel = matches.group(1)
                     self.toAddress = matches.group(1)
         self.feedback = self.ALL_OK
-        if fromAddress == self.registrationAddress and self.subject == "Registration Request Denied":
+        if fromAddress == self.registrationAddress \
+                and self.subject == "Registration Request Denied":
             self.feedback = self.REGISTRATION_DENIED
         return self.feedback

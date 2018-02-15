@@ -384,7 +384,7 @@ def check_pyqt():
     PyQt 4.8 or later.
     """
     QtCore = try_import(
-        'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
+        'qtpy.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
 
     if not QtCore:
         return False
