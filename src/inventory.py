@@ -18,10 +18,7 @@ class Inventory():
     def __init__(self):
         #super(self.__class__, self).__init__()
         self._moduleName = BMConfigParser().safeGet("inventory", "storage")
-        #import_module("." + self._moduleName, "storage")
-        #import_module("storage." + self._moduleName)
-        self._className = "storage." + self._moduleName + "." + self._moduleName.title() + "Inventory"
-        self._inventoryClass = eval(self._className)
+        self._inventoryClass = getattr(getattr(storage, self._moduleName), "{}Inventory".format(self._moduleName.title()))
         self._realInventory = self._inventoryClass()
         self.numberOfInventoryLookupsPerformed = 0
 
