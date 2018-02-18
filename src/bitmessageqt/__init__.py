@@ -1729,6 +1729,8 @@ class MyForm(settingsmixin.SMainWindow):
                         sent.item(i, 3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
+        if type(ackdata) is str:
+            ackdata = QtCore.QByteArray(ackdata)
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
@@ -2232,7 +2234,7 @@ class MyForm(settingsmixin.SMainWindow):
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
-            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) != fromAddress:
+            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) not in (fromAddress, None, False):
                 continue
             elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
                 continue
@@ -2240,7 +2242,7 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
-            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)', 'replace'))
+            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8', 'replace'))
             sent.setCurrentCell(0, 0)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
