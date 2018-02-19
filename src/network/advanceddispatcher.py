@@ -7,6 +7,12 @@ from debug import logger
 from helper_threading import BusyError, nonBlocking
 import state
 
+class ProcessingError(Exception):
+    pass
+
+class UnknownStateError(ProcessingError):
+    pass
+
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 131072 # 128kB
 
@@ -58,11 +64,13 @@ class AdvancedDispatcher(asyncore.dispatcher):
                         break
                     if len(self.read_buf) < self.expectBytes:
                         return False
-                    if not getattr(self, "state_" + str(self.state))():
+                    try:
+                        cmd = getattr(self, "state_" + str(self.state))
+                    except AttributeError:
+                        logger.error("Unknown state %s", self.state, exc_info=True)
+                        raise UnknownState(self.state)
+                    if not cmd():
                         break
-            except AttributeError:
-                logger.error("Unknown state %s", self.state, exc_info=True)
-                raise
             except BusyError:
                 return False
         return False
