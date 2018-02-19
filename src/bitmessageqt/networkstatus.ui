@@ -296,7 +296,7 @@
   <customwidget>
    <class>STableWidget</class>
    <extends>QTableWidget</extends>
-   <header>bitmessageqt/settingsmixin.h</header>
+   <header>bitmessageqt.settingsmixin</header>
   </customwidget>
  </customwidgets>
  <resources>

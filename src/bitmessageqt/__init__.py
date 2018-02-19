@@ -1781,11 +1781,9 @@ class MyForm(settingsmixin.SMainWindow):
                 fontMetrics = QtGui.QFontMetrics(font)
                 rect = fontMetrics.boundingRect(txt)
             # draw text
-            # painter = QtGui.QPainter(self)
             painter = QtGui.QPainter()
             painter.begin(pixmap)
-            painter.setPen(
-                QtGui.QPen(QtGui.QColor(255, 0, 0), QtCore.Qt.SolidPattern))
+            painter.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0)))
             painter.setFont(font)
             painter.drawText(24-rect.right()-marginX, -rect.top()+marginY, txt)
             painter.end()
