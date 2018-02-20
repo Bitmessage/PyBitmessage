@@ -3847,9 +3847,10 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
             self.popMenuYourIdentities.addAction(self.actionEmailGateway)
             self.popMenuYourIdentities.addSeparator()
-            # preloaded gui.menu plugins with prefix 'address'
-            for plugin in self.menu_plugins['address']:
-                self.popMenuYourIdentities.addAction(plugin)
+            if currentItem.type != AccountMixin.ALL:
+                # preloaded gui.menu plugins with prefix 'address'
+                for plugin in self.menu_plugins['address']:
+                    self.popMenuYourIdentities.addAction(plugin)
             self.popMenuYourIdentities.addSeparator()
         self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
 
