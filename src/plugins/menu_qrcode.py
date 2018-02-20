@@ -70,7 +70,7 @@ def connect_plugin(form):
             dialog = form.qrcode_dialog
         except AttributeError:
             form.qrcode_dialog = dialog = QRCodeDialog(form)
-        dialog.render(str(form.getCurrentAccount()))
+        dialog.render('bitmessage:' + str(form.getCurrentAccount()))
         dialog.exec_()
 
     return on_action_ShowQR, _translate("MainWindow", "Show QR-code")
