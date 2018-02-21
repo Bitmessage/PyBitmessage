@@ -1,12 +1,12 @@
 """Composing support request message functions."""
-# pylint: disable=no-member
 
 import ctypes
+import os
 import ssl
 import sys
 import time
 
-from PyQt4 import QtCore
+from qtpy import QtCore
 
 import account
 import defaults
@@ -22,8 +22,8 @@ from l10n import getTranslationLanguage
 from openclpow import openclEnabled
 from pyelliptic.openssl import OpenSSL
 from settings import getSOCKSProxyType
-from version import softwareVersion
 from tr import _translate
+from version import softwareVersion
 
 
 # this is BM support address going to Peter Surda
@@ -31,7 +31,7 @@ OLD_SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
 SUPPORT_ADDRESS = 'BM-2cUdgkDDAahwPAU6oD2A7DnjqZz3hgY832'
 SUPPORT_LABEL = _translate("Support", "PyBitmessage support")
 SUPPORT_MY_LABEL = _translate("Support", "My new address")
-SUPPORT_SUBJECT = 'Support request'
+SUPPORT_SUBJECT = _translate("Support", "Support request")
 SUPPORT_MESSAGE = _translate("Support", '''
 You can use this message to send a report to one of the PyBitmessage core \
 developers regarding PyBitmessage or the mailchuck.com email service. \
@@ -55,6 +55,7 @@ Operating system: {}
 Architecture: {}bit
 Python Version: {}
 OpenSSL Version: {}
+Qt API: {}
 Frozen: {}
 Portable mode: {}
 C PoW: {}
@@ -67,28 +68,35 @@ Connected hosts: {}
 
 
 def checkAddressBook(myapp):
+    """
+    Add "PyBitmessage support" address to address book, remove old one if found.
+    """
     sqlExecute('DELETE from addressbook WHERE address=?', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
+    queryreturn = sqlQuery(
+        'SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
     if queryreturn == []:
         sqlExecute(
             'INSERT INTO addressbook VALUES (?,?)',
-            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
+            SUPPORT_LABEL.encode('utf-8'), SUPPORT_ADDRESS)
         myapp.rerenderAddressBook()
 
 
 def checkHasNormalAddress():
+    """Returns first enabled normal address or False if not found."""
     for address in account.getSortedAccounts():
         acct = account.accountClass(address)
-        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
+        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(
+                address, 'enabled'):
             return address
     return False
 
 
 def createAddressIfNeeded(myapp):
+    """Checks if user has any anabled normal address, creates new one if no."""
     if not checkHasNormalAddress():
         queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, 1,
-            str(SUPPORT_MY_LABEL.toUtf8()),
+            SUPPORT_MY_LABEL.encode('utf-8'),
             1, "", False,
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes
@@ -100,6 +108,9 @@ def createAddressIfNeeded(myapp):
 
 
 def createSupportMessage(myapp):
+    """
+    Prepare the support request message and switch to tab "Send"
+    """
     checkAddressBook(myapp)
     address = createAddressIfNeeded(myapp)
     if state.shutdown:
@@ -119,15 +130,13 @@ def createSupportMessage(myapp):
     if commit:
         version += " GIT " + commit
 
-    os = sys.platform
-    if os == "win32":
-        windowsversion = sys.getwindowsversion()
-        os = "Windows " + str(windowsversion[0]) + "." + str(windowsversion[1])
+    if sys.platform.startswith("win"):
+        # pylint: disable=no-member
+        osname = "Windows %s.%s" % sys.getwindowsversion()[:2]
     else:
         try:
-            from os import uname
-            unixversion = uname()
-            os = unixversion[0] + " " + unixversion[2]
+            unixversion = os.uname()
+            osname = unixversion[0] + " " + unixversion[2]
         except:
             pass
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
@@ -136,22 +145,26 @@ def createSupportMessage(myapp):
     opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (
         ssl.OPENSSL_VERSION, OpenSSL._version)
 
+    qtapi = os.environ['QT_API']
+
     frozen = "N/A"
     if paths.frozen:
         frozen = paths.frozen
-    portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
+    portablemode = str(state.appdata == paths.lookupExeFolder())
     cpow = "True" if proofofwork.bmpow else "False"
     openclpow = str(
         BMConfigParser().safeGet('bitmessagesettings', 'opencl')
     ) if openclEnabled() else "None"
     locale = getTranslationLanguage()
-    socks = getSOCKSProxyType(BMConfigParser()) or "N/A"
-    upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', "N/A")
+    socks = getSOCKSProxyType(BMConfigParser()) or 'N/A'
+    upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', 'N/A')
     connectedhosts = len(network.stats.connectedHostsList())
 
-    myapp.ui.textEditMessage.setText(unicode(SUPPORT_MESSAGE, 'utf-8').format(
-        version, os, architecture, pythonversion, opensslversion, frozen,
-        portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
+    myapp.ui.textEditMessage.setText(SUPPORT_MESSAGE.format(
+        version, osname, architecture, pythonversion, opensslversion, qtapi,
+        frozen, portablemode, cpow, openclpow, locale, socks, upnp,
+        connectedhosts
+    ))
 
     # single msg tab
     myapp.ui.tabWidgetSend.setCurrentIndex(
