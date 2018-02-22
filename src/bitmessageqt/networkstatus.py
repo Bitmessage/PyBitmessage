@@ -24,10 +24,9 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         widgets.load('networkstatus.ui', self)
 
         header = self.tableWidgetConnectionCount.horizontalHeader()
-        # header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        for column in range(0, 4):
-            header.setSectionResizeMode(
-                column, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
 
         # Somehow this value was 5 when I tested
         if header.sortIndicatorSection() > 4:
