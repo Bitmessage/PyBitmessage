@@ -6,8 +6,6 @@ import ssl
 import sys
 import time
 
-from qtpy import QtCore
-
 import account
 import defaults
 import network.stats
@@ -117,9 +115,11 @@ def createSupportMessage(myapp):
         return
 
     myapp.ui.lineEditSubject.setText(SUPPORT_SUBJECT)
-    addrIndex = myapp.ui.comboBoxSendFrom.findData(
-        address, QtCore.Qt.UserRole,
-        QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
+    # addrIndex = myapp.ui.comboBoxSendFrom.findData(
+    #     address, QtCore.Qt.UserRole,
+    #     QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive
+    # )
+    addrIndex = myapp.ui.comboBoxSendFrom.findData(address)
     if addrIndex == -1:  # something is very wrong
         return
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
