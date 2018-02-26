@@ -14,8 +14,9 @@ class UISignaler(QtCore.QThread):
     updateStatusBar = QtCore.Signal(object)
     updateSentItemStatusByToAddress = QtCore.Signal(object, str)
     updateSentItemStatusByAckdata = QtCore.Signal(object, str)
-    displayNewInboxMessage = QtCore.Signal(object, str, str, object, str)
-    displayNewSentMessage = QtCore.Signal(object, str, str, str, object, str)
+    displayNewInboxMessage = QtCore.Signal(object, str, object, object, str)
+    displayNewSentMessage = QtCore.Signal(
+        object, str, str, object, object, str)
     updateNetworkStatusTab = QtCore.Signal(bool, bool, Peer)
     updateNumberOfMessagesProcessed = QtCore.Signal()
     updateNumberOfPubkeysProcessed = QtCore.Signal()
@@ -54,14 +55,15 @@ class UISignaler(QtCore.QThread):
                 self.updateSentItemStatusByAckdata.emit(ackData, message)
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
+
                 self.displayNewInboxMessage.emit(
                     inventoryHash, toAddress, fromAddress,
-                    unicode(subject, 'utf-8'), body)
+                    subject, body)
             elif command == 'displayNewSentMessage':
                 toAddress, fromLabel, fromAddress, subject, message, ackdata = data
                 self.displayNewSentMessage.emit(
                     toAddress, fromLabel, fromAddress,
-                    unicode(subject, 'utf-8'), message, ackdata)
+                    subject.decode('utf-8'), message, ackdata)
             elif command == 'updateNetworkStatusTab':
                 outbound, add, destination = data
                 self.updateNetworkStatusTab.emit(outbound, add, destination)
