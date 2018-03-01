@@ -56,7 +56,7 @@ class MessageView(QtWidgets.QTextBrowser):
         if (
             (QtWidgets.QApplication.queryKeyboardModifiers()
              & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
-            and event.orientation() == QtCore.Qt.Vertical
+            and event.angleDelta().y() != 0
         ):
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtWidgets.QApplication.activeWindow().statusbar.showMessage(

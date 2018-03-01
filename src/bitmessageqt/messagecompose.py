@@ -17,7 +17,7 @@ class MessageCompose(QtWidgets.QTextEdit):
         if (
             (QtWidgets.QApplication.queryKeyboardModifiers()
              & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
-            and event.orientation() == QtCore.Qt.Vertical
+            and event.angleDelta().y() != 0
         ):
             if event.delta() > 0:
                 self.zoomIn(1)
