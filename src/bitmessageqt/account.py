@@ -150,9 +150,7 @@ class BMAccount(object):
         """Get a label for this bitmessage account"""
         if address is None:
             address = self.address
-        label = address
-        if BMConfigParser().has_section(address):
-            label = BMConfigParser().get(address, 'label')
+        label = BMConfigParser().safeGet(address, 'label', address)
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', address)
         if queryreturn != []:
