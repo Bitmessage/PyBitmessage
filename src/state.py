@@ -19,6 +19,13 @@ shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof o
 
 curses = False
 
+# 0.6.3+ SPECIALOPMODES - mode selector flags, default to standalone GUI mode
+enableNetwork = True # enable network threads
+enableObjProc = True # enable object processing threads
+enableAPI = True # enable API (if configured)
+enableGUI = True # enable GUI (QT or ncurses)
+enableSTDIO = False # enable STDIO threads
+
 sqlReady = False # set to true by sqlTread when ready for processing
 
 maximumNumberOfHalfOpenConnections = 0

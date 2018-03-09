@@ -13,8 +13,8 @@ import shared
 import state
 
 def doCleanShutdown():
-    state.shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
-    objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
+    state.shutdown = 1 # Used to tell proof of work worker threads and the objectProcessorThread to exit.
+    objectProcessorQueue.put(('checkShutdownVariable', 'clean_shutdown'))
     for thread in threading.enumerate():
         if thread.isAlive() and isinstance(thread, StoppableThread):
             thread.stopThread()
@@ -59,7 +59,7 @@ def doCleanShutdown():
             except Queue.Empty:
                 break
 
-    if shared.thisapp.daemon:
+    if shared.thisapp.daemon or not state.enableGUI:
         logger.info('Clean shutdown complete.')
         shared.thisapp.cleanup()
         os._exit(0)

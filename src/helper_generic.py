@@ -9,6 +9,7 @@ import traceback
 import shared
 from debug import logger
 import queues
+import state
 import shutdown
 
 def powQueueSize():
@@ -54,7 +55,7 @@ def signal_handler(signal, frame):
     if current_thread().name not in ("PyBitmessage", "MainThread"):
         return
     logger.error("Got signal %i", signal)
-    if shared.thisapp.daemon:
+    if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
         allThreadTraceback(frame)
