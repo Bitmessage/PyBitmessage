@@ -35,22 +35,22 @@ class Cipher:
         else:
             raise Exception("RTFM ...")
 
-    @staticmethod
-    def get_all_cipher():
-        """
-        static method, returns all ciphers available
-        """
-        return OpenSSL.cipher_algo.keys()
+    # @staticmethod
+    # def get_all_cipher():
+    #     """
+    #     static method, returns all ciphers available
+    #     """
+    #     return OpenSSL.cipher_algo.keys()
 
     @staticmethod
     def get_blocksize(ciphername):
         cipher = OpenSSL.get_cipher(ciphername)
         return cipher.get_blocksize()
 
-    @staticmethod
-    def gen_IV(ciphername):
-        cipher = OpenSSL.get_cipher(ciphername)
-        return OpenSSL.rand(cipher.get_blocksize())
+    # @staticmethod
+    # def gen_IV(ciphername):
+    #     cipher = OpenSSL.get_cipher(ciphername)
+    #     return OpenSSL.rand(cipher.get_blocksize())
 
     def update(self, input):
         i = OpenSSL.c_int(0)

@@ -16,7 +16,7 @@ from debug import logger
 import defaults
 from helper_sql import *
 import helper_inbox
-from helper_generic import addDataPadding
+# from helper_generic import addDataPadding
 import helper_msgcoding
 from helper_threading import *
 from inventory import Inventory, PendingUpload
@@ -232,7 +232,7 @@ class singleWorker(threading.Thread, StoppableThread):
         
         TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
         embeddedTime = int(time.time() + TTL)
-        signedTimeForProtocolV2 = embeddedTime - TTL
+        # signedTimeForProtocolV2 = embeddedTime - TTL
         """
         According to the protocol specification, the expiresTime along with the pubkey information is
         signed. But to be backwards compatible during the upgrade period, we shall sign not the 
@@ -536,7 +536,7 @@ class singleWorker(threading.Thread, StoppableThread):
             toaddress, fromaddress, subject, message, ackdata, status, TTL, retryNumber, encoding = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(
                 toaddress)
-            fromStatus, fromAddressVersionNumber, fromStreamNumber, fromRipe = decodeAddress(
+            _, fromAddressVersionNumber, fromStreamNumber, _ = decodeAddress(
                 fromaddress)
             
             # We may or may not already have the pubkey for this toAddress. Let's check.

@@ -17,7 +17,7 @@ from bmconfigparser import BMConfigParser
 import defaults
 from namecoin import namecoinConnection
 from messageview import MessageView
-from migrationwizard import Ui_MigrationWizard
+# from migrationwizard import Ui_MigrationWizard
 from foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
@@ -280,10 +280,10 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Copy address to clipboard"),
             self.on_action_Clipboard)
-        self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Special address behavior..."),
-            self.on_action_SpecialAddressBehaviorDialog)
+        # self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(
+        #     _translate(
+        #         "MainWindow", "Special address behavior..."),
+        #     self.on_action_SpecialAddressBehaviorDialog)
 
         self.ui.treeWidgetChans.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
@@ -851,12 +851,12 @@ class MyForm(settingsmixin.SMainWindow):
         self.appIndicatorShowOrHideWindow()
 
     # unchecks the show item on the application indicator
-    def appIndicatorHide(self):
-        if self.actionShow is None:
-            return
-        if self.actionShow.isChecked():
-            self.actionShow.setChecked(False)
-            self.appIndicatorShowOrHideWindow()
+    # def appIndicatorHide(self):
+    #     if self.actionShow is None:
+    #         return
+    #     if self.actionShow.isChecked():
+    #         self.actionShow.setChecked(False)
+    #         self.appIndicatorShowOrHideWindow()
 
     def appIndicatorSwitchQuietMode(self):
         BMConfigParser().set(
@@ -1546,32 +1546,32 @@ class MyForm(settingsmixin.SMainWindow):
             elif dialog.radioButtonConfigureNetwork.isChecked():
                 self.click_actionSettings()
 
-    def showMigrationWizard(self, level):
-        self.migrationWizardInstance = Ui_MigrationWizard(["a"])
-        if self.migrationWizardInstance.exec_():
-            pass
-        else:
-            pass
+    # def showMigrationWizard(self, level):
+    #     self.migrationWizardInstance = Ui_MigrationWizard(["a"])
+    #     if self.migrationWizardInstance.exec_():
+    #         pass
+    #     else:
+    #         pass
 
-    def changeEvent(self, event):
-        if event.type() == QtCore.QEvent.LanguageChange:
-            self.ui.retranslateUi(self)
-            self.init_inbox_popup_menu(False)
-            self.init_identities_popup_menu(False)
-            self.init_chan_popup_menu(False)
-            self.init_addressbook_popup_menu(False)
-            self.init_subscriptions_popup_menu(False)
-            self.init_sent_popup_menu(False)
-            self.ui.blackwhitelist.init_blacklist_popup_menu(False)
-        if event.type() == QtCore.QEvent.WindowStateChange:
-            if self.windowState() & QtCore.Qt.WindowMinimized:
-                if BMConfigParser().getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
-                    QtCore.QTimer.singleShot(0, self.appIndicatorHide)
-            elif event.oldState() & QtCore.Qt.WindowMinimized:
-                # The window state has just been changed to
-                # Normal/Maximised/FullScreen
-                pass
-        # QtGui.QWidget.changeEvent(self, event)
+    # def changeEvent(self, event):
+    #     if event.type() == QtCore.QEvent.LanguageChange:
+    #         self.ui.retranslateUi(self)
+    #         self.init_inbox_popup_menu(False)
+    #         self.init_identities_popup_menu(False)
+    #         self.init_chan_popup_menu(False)
+    #         self.init_addressbook_popup_menu(False)
+    #         self.init_subscriptions_popup_menu(False)
+    #         self.init_sent_popup_menu(False)
+    #         self.ui.blackwhitelist.init_blacklist_popup_menu(False)
+    #     if event.type() == QtCore.QEvent.WindowStateChange:
+    #         if self.windowState() & QtCore.Qt.WindowMinimized:
+    #             if BMConfigParser().getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
+    #                 QtCore.QTimer.singleShot(0, self.appIndicatorHide)
+    #         elif event.oldState() & QtCore.Qt.WindowMinimized:
+    #             # The window state has just been changed to
+    #             # Normal/Maximised/FullScreen
+    #             pass
+    #     # QtGui.QWidget.changeEvent(self, event)
 
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
@@ -2135,17 +2135,17 @@ class MyForm(settingsmixin.SMainWindow):
                 self.updateStatusBar(_translate(
                     "MainWindow", "Broadcast queued."))
 
-    def click_pushButtonLoadFromAddressBook(self):
-        self.ui.tabWidget.setCurrentIndex(5)
-        for i in range(4):
-            time.sleep(0.1)
-            self.statusbar.clearMessage()
-            time.sleep(0.1)
-            self.updateStatusBar(_translate(
-                "MainWindow",
-                "Right click one or more entries in your address book and"
-                " select \'Send message to this address\'."
-            ))
+    # def click_pushButtonLoadFromAddressBook(self):
+    #     self.ui.tabWidget.setCurrentIndex(5)
+    #     for i in range(4):
+    #         time.sleep(0.1)
+    #         self.statusbar.clearMessage()
+    #         time.sleep(0.1)
+    #         self.updateStatusBar(_translate(
+    #             "MainWindow",
+    #             "Right click one or more entries in your address book and"
+    #             " select \'Send message to this address\'."
+    #         ))
 
     def click_pushButtonFetchNamecoinID(self):
         nc = namecoinConnection()
@@ -2846,25 +2846,25 @@ class MyForm(settingsmixin.SMainWindow):
         os._exit(0)
 
     # window close event
-    def closeEvent(self, event):
-        self.appIndicatorHide()
-        trayonclose = False
+    # def closeEvent(self, event):
+    #     self.appIndicatorHide()
+    #     trayonclose = False
 
-        try:
-            trayonclose = BMConfigParser().getboolean(
-                'bitmessagesettings', 'trayonclose')
-        except Exception:
-            pass
+    #     try:
+    #         trayonclose = BMConfigParser().getboolean(
+    #             'bitmessagesettings', 'trayonclose')
+    #     except Exception:
+    #         pass
 
-        # always ignore, it shuts down by itself
-        if self.quitAccepted:
-            event.accept()
-            return
+    #     # always ignore, it shuts down by itself
+    #     if self.quitAccepted:
+    #         event.accept()
+    #         return
 
-        event.ignore()
-        if not trayonclose:
-            # quit the application
-            self.quit()
+    #     event.ignore()
+    #     if not trayonclose:
+    #         # quit the application
+    #         self.quit()
 
     def on_action_InboxMessageForceHtml(self):
         msgid = self.getCurrentMessageId()
@@ -3092,24 +3092,24 @@ class MyForm(settingsmixin.SMainWindow):
                 "Error: You cannot add the same address to your blacklist"
                 " twice. Try renaming the existing one if you want."))
 
-    def deleteRowFromMessagelist(self, row = None, inventoryHash = None, ackData = None, messageLists = None):
-        if messageLists is None:
-            messageLists = (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions)
-        elif type(messageLists) not in (list, tuple):
-            messageLists = (messageLists)
-        for messageList in messageLists:
-            if row is not None:
-                inventoryHash = str(messageList.item(row, 3).data(
-                    QtCore.Qt.UserRole).toPyObject())
-                messageList.removeRow(row)
-            elif inventoryHash is not None:
-                for i in range(messageList.rowCount() - 1, -1, -1):
-                    if messageList.item(i, 3).data(QtCore.Qt.UserRole).toPyObject() == inventoryHash:
-                        messageList.removeRow(i)
-            elif ackData is not None:
-                for i in range(messageList.rowCount() - 1, -1, -1):
-                    if messageList.item(i, 3).data(QtCore.Qt.UserRole).toPyObject() == ackData:
-                        messageList.removeRow(i)
+    # def deleteRowFromMessagelist(self, row = None, inventoryHash = None, ackData = None, messageLists = None):
+    #     if messageLists is None:
+    #         messageLists = (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions)
+    #     elif type(messageLists) not in (list, tuple):
+    #         messageLists = (messageLists)
+    #     for messageList in messageLists:
+    #         if row is not None:
+    #             inventoryHash = str(messageList.item(row, 3).data(
+    #                 QtCore.Qt.UserRole).toPyObject())
+    #             messageList.removeRow(row)
+    #         elif inventoryHash is not None:
+    #             for i in range(messageList.rowCount() - 1, -1, -1):
+    #                 if messageList.item(i, 3).data(QtCore.Qt.UserRole).toPyObject() == inventoryHash:
+    #                     messageList.removeRow(i)
+    #         elif ackData is not None:
+    #             for i in range(messageList.rowCount() - 1, -1, -1):
+    #                 if messageList.item(i, 3).data(QtCore.Qt.UserRole).toPyObject() == ackData:
+    #                     messageList.removeRow(i)
 
     # Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
@@ -3457,16 +3457,16 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             return False
 
-    def getAccountTreeWidget(self, account):
-        try:
-            if account.type == AccountMixin.CHAN:
-                return self.ui.treeWidgetChans
-            elif account.type == AccountMixin.SUBSCRIPTION:
-                return self.ui.treeWidgetSubscriptions
-            else:
-                return self.ui.treeWidgetYourIdentities
-        except:
-            return self.ui.treeWidgetYourIdentities
+    # def getAccountTreeWidget(self, account):
+    #     try:
+    #         if account.type == AccountMixin.CHAN:
+    #             return self.ui.treeWidgetChans
+    #         elif account.type == AccountMixin.SUBSCRIPTION:
+    #             return self.ui.treeWidgetSubscriptions
+    #         else:
+    #             return self.ui.treeWidgetYourIdentities
+    #     except:
+    #         return self.ui.treeWidgetYourIdentities
 
     def getCurrentMessagelist(self):
         currentIndex = self.ui.tabWidget.currentIndex();

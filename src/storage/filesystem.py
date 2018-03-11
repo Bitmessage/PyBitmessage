@@ -114,8 +114,8 @@ class FilesystemInventory(InventoryStorage):
 #        for i, v in self._inventory.items():
 #            print "loaded stream: %s, %i items" % (i, len(v))
 
-    def stream_list(self):
-        return self._inventory.keys()
+    # def stream_list(self):
+    #     return self._inventory.keys()
 
     def object_list(self):
         return [unhexlify(x) for x in listdir(path.join(self.baseDir, FilesystemInventory.objectDir))]
@@ -130,7 +130,7 @@ class FilesystemInventory(InventoryStorage):
     def getMetadata(self, hashId):
         try:
             with open(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashId), FilesystemInventory.metadataFilename), 'r') as f:
-                objectType, streamNumber, expiresTime, tag, undef = string.split(f.read(), ",", 4)
+                objectType, streamNumber, expiresTime, tag, _ = string.split(f.read(), ",", 4)
                 return [int(objectType), int(streamNumber), int(expiresTime), unhexlify(tag)]
         except IOError:
             raise KeyError

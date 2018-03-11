@@ -418,12 +418,12 @@ All parameters are optional.
 
 
     #TODO: nice function but no one is using this 
-    def getApiAddress(self):
-        if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-            return None
-        address = BMConfigParser().get('bitmessagesettings', 'apiinterface')
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
-        return {'address':address,'port':port}
+    # def getApiAddress(self):
+    #     if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
+    #         return None
+    #     address = BMConfigParser().get('bitmessagesettings', 'apiinterface')
+    #     port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+    #     return {'address':address,'port':port}
 
 
 def main():

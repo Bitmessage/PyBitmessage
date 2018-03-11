@@ -187,8 +187,8 @@ class DuplicateKeyException(UnpackException):
 
 
 # Backwards compatibility
-KeyNotPrimitiveException = UnhashableKeyException
-KeyDuplicateException = DuplicateKeyException
+# KeyNotPrimitiveException = UnhashableKeyException
+# KeyDuplicateException = DuplicateKeyException
 
 #############################################################################
 # Exported Functions and Glob
@@ -196,9 +196,9 @@ KeyDuplicateException = DuplicateKeyException
 
 # Exported functions and variables, set up in __init()
 pack = None
-packb = None
+# packb = None
 unpack = None
-unpackb = None
+# unpackb = None
 dump = None
 dumps = None
 load = None
@@ -982,21 +982,21 @@ def __init():
     # Map packb and unpackb to the appropriate version
     if sys.version_info[0] == 3:
         pack = _pack3
-        packb = _packb3
+        # packb = _packb3
         dump = _pack3
         dumps = _packb3
         unpack = _unpack3
-        unpackb = _unpackb3
+        # unpackb = _unpackb3
         load = _unpack3
         loads = _unpackb3
         xrange = range
     else:
         pack = _pack2
-        packb = _packb2
+        # packb = _packb2
         dump = _pack2
         dumps = _packb2
         unpack = _unpack2
-        unpackb = _unpackb2
+        # unpackb = _unpackb2
         load = _unpack2
         loads = _unpackb2
 

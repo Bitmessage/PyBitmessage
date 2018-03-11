@@ -26,10 +26,10 @@ haveBloom = False
 
 class ObjectTracker(object):
     invCleanPeriod = 300
-    invInitialCapacity = 50000
-    invErrorRate = 0.03
+    # invInitialCapacity = 50000
+    # invErrorRate = 0.03
     trackingExpires = 3600
-    initialTimeOffset = 60
+    # initialTimeOffset = 60
 
     def __init__(self):
         self.objectsNewToMe = RandomTrackingDict()
@@ -39,17 +39,17 @@ class ObjectTracker(object):
         self.initAddrBloom()
         self.lastCleaned = time.time()
 
-    def initInvBloom(self):
-        if haveBloom:
+    # def initInvBloom(self):
+    #     if haveBloom:
             # lock?
-            self.invBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
-                                        error_rate=ObjectTracker.invErrorRate)
+            # self.invBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
+            #                             error_rate=ObjectTracker.invErrorRate)
 
-    def initAddrBloom(self):
-        if haveBloom:
+    # def initAddrBloom(self):
+    #     if haveBloom:
             # lock?
-            self.addrBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
-                                         error_rate=ObjectTracker.invErrorRate)
+            # self.addrBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
+            #                              error_rate=ObjectTracker.invErrorRate)
 
     def clean(self):
         if self.lastCleaned < time.time() - ObjectTracker.invCleanPeriod:
@@ -65,23 +65,23 @@ class ObjectTracker(object):
                     self.objectsNewToThem = {k: v for k, v in self.objectsNewToThem.iteritems() if v >= deadline}
             self.lastCleaned = time.time()
 
-    def hasObj(self, hashid):
-        if haveBloom:
-            return hashid in self.invBloom
-        else:
-            return hashid in self.objectsNewToMe
+    # def hasObj(self, hashid):
+    #     if haveBloom:
+    #         return hashid in self.invBloom
+    #     else:
+    #         return hashid in self.objectsNewToMe
 
-    def handleReceivedInventory(self, hashId):
-        if haveBloom:
-            self.invBloom.add(hashId)
-        try:
-            with self.objectsNewToThemLock:
-                del self.objectsNewToThem[hashId]
-        except KeyError:
-            pass
-        if hashId not in missingObjects:
-            missingObjects[hashId] = time.time()
-        self.objectsNewToMe[hashId] = True
+    # def handleReceivedInventory(self, hashId):
+    #     if haveBloom:
+    #         self.invBloom.add(hashId)
+    #     try:
+    #         with self.objectsNewToThemLock:
+    #             del self.objectsNewToThem[hashId]
+    #     except KeyError:
+    #         pass
+    #     if hashId not in missingObjects:
+    #         missingObjects[hashId] = time.time()
+    #     self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
         for i in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
@@ -106,13 +106,13 @@ class ObjectTracker(object):
                 except KeyError:
                     pass
 
-    def hasAddr(self, addr):
-        if haveBloom:
-            return addr in self.invBloom
+    # def hasAddr(self, addr):
+    #     if haveBloom:
+    #         return addr in self.invBloom
 
-    def addAddr(self, hashid):
-        if haveBloom:
-            self.addrBloom.add(hashid)
+    # def addAddr(self, hashid):
+    #     if haveBloom:
+    #         self.addrBloom.add(hashid)
 
 # addr sending -> per node upload queue, and flush every minute or so
 # inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue and flush every minute or so

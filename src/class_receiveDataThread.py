@@ -26,7 +26,7 @@ from binascii import hexlify
 from addresses import *
 from bmconfigparser import BMConfigParser
 from class_objectHashHolder import objectHashHolder
-from helper_generic import addDataPadding, isHostInPrivateIPRange
+from helper_generic import isHostInPrivateIPRange# , addDataPadding
 from helper_sql import sqlQuery
 import knownnodes
 from debug import logger
@@ -278,8 +278,8 @@ class receiveDataThread(threading.Thread):
                 context = ssl.SSLContext(protocol.sslProtocolVersion)
                 context.set_ciphers(protocol.sslProtocolCiphers)
                 context.set_ecdh_curve("secp256k1")
-                context.check_hostname = False
-                context.verify_mode = ssl.CERT_NONE
+                # context.check_hostname = False
+                # context.verify_mode = ssl.CERT_NONE
                 # also exclude TLSv1 and TLSv1.1 in the future
                 context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
                 self.sslSock = context.wrap_socket(self.sock, server_side = not self.initiatedConnection, do_handshake_on_connect=False)
@@ -791,7 +791,7 @@ class receiveDataThread(threading.Thread):
         timestamp, = unpack('>Q', data[12:20])
         self.timeOffset = timestamp - int(time.time())
 
-        self.myExternalIP = socket.inet_ntoa(data[40:44])
+        # self.myExternalIP = socket.inet_ntoa(data[40:44])
         # print 'myExternalIP', self.myExternalIP
         self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
         # print 'remoteNodeIncomingPort', self.remoteNodeIncomingPort

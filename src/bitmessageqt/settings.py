@@ -513,4 +513,4 @@ class Ui_settingsDialog(object):
         self.label_23.setText(_translate("settingsDialog", "months.", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabResendsExpire), _translate("settingsDialog", "Resends Expire", None))
 
-import bitmessage_icons_rc
+# import bitmessage_icons_rc

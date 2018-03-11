@@ -40,12 +40,10 @@ def read_callback():
 
     for i in ["networkConnections", "numberOfPubkeysProcessed", "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]:
         metric = collectd.Values()
-        metric.plugin = "pybitmessagestatus"
         if i[0:6] == "number":
             metric.type = 'counter'
         else:
             metric.type = 'gauge'
-        metric.type_instance = i.lower()
         try:
             metric.values = [clientStatus[i]]
         except:

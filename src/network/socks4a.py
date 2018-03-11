@@ -54,33 +54,33 @@ class Socks4aConnection(Socks4a):
     def __init__(self, address):
         Socks4a.__init__(self, address=address)
 
-    def state_auth_done(self):
-        # Now we can request the actual connection
-        rmtrslv = False
-        self.append_write_buf(struct.pack('>BBH', 0x04, 0x01, self.destination[1]))
-        # If the given destination address is an IP address, we'll
-        # use the IPv4 address request even if remote resolving was specified.
-        try:
-            self.ipaddr = socket.inet_aton(self.destination[0])
-            self.append_write_buf(self.ipaddr)
-        except socket.error:
-            # Well it's not an IP number,  so it's probably a DNS name.
-            if Proxy._remote_dns:
-                # Resolve remotely
-                rmtrslv = True
-                self.ipaddr = None
-                self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
-            else:
-                # Resolve locally
-                self.ipaddr = socket.inet_aton(socket.gethostbyname(self.destination[0]))
-                self.append_write_buf(self.ipaddr)
-        if self._auth:
-            self.append_write_buf(self._auth[0])
-        self.append_write_buf(chr(0x00).encode())
-        if rmtrslv:
-            self.append_write_buf(self.destination[0] + chr(0x00).encode())
-        self.set_state("pre_connect", length=0, expectBytes=8)
-        return True
+    # def state_auth_done(self):
+    #     # Now we can request the actual connection
+    #     rmtrslv = False
+    #     self.append_write_buf(struct.pack('>BBH', 0x04, 0x01, self.destination[1]))
+    #     # If the given destination address is an IP address, we'll
+    #     # use the IPv4 address request even if remote resolving was specified.
+    #     try:
+    #         self.ipaddr = socket.inet_aton(self.destination[0])
+    #         self.append_write_buf(self.ipaddr)
+    #     except socket.error:
+    #         # Well it's not an IP number,  so it's probably a DNS name.
+    #         if Proxy._remote_dns:
+    #             # Resolve remotely
+    #             rmtrslv = True
+    #             self.ipaddr = None
+    #             self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
+    #         else:
+    #             # Resolve locally
+    #             self.ipaddr = socket.inet_aton(socket.gethostbyname(self.destination[0]))
+    #             self.append_write_buf(self.ipaddr)
+    #     if self._auth:
+    #         self.append_write_buf(self._auth[0])
+    #     self.append_write_buf(chr(0x00).encode())
+    #     if rmtrslv:
+    #         self.append_write_buf(self.destination[0] + chr(0x00).encode())
+    #     self.set_state("pre_connect", length=0, expectBytes=8)
+    #     return True
 
     def state_pre_connect(self):
         try:
@@ -96,16 +96,16 @@ class Socks4aResolver(Socks4a):
         self.port = 8444
         Socks4a.__init__(self, address=(self.host, self.port))
 
-    def state_auth_done(self):
-        # Now we can request the actual connection
-        self.append_write_buf(struct.pack('>BBH', 0x04, 0xF0, self.destination[1]))
-        self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
-        if self._auth:
-            self.append_write_buf(self._auth[0])
-        self.append_write_buf(chr(0x00).encode())
-        self.append_write_buf(self.host + chr(0x00).encode())
-        self.set_state("pre_connect", length=0, expectBytes=8)
-        return True
+    # def state_auth_done(self):
+    #     # Now we can request the actual connection
+    #     self.append_write_buf(struct.pack('>BBH', 0x04, 0xF0, self.destination[1]))
+    #     self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
+    #     if self._auth:
+    #         self.append_write_buf(self._auth[0])
+    #     self.append_write_buf(chr(0x00).encode())
+    #     self.append_write_buf(self.host + chr(0x00).encode())
+    #     self.set_state("pre_connect", length=0, expectBytes=8)
+    #     return True
 
     def resolved(self):
         print "Resolved %s as %s" % (self.host, self.proxy_sock_name())

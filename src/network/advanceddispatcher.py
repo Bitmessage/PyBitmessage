@@ -119,8 +119,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def handle_connect(self):
         self.lastTx = time.time()
 
-    def state_close(self):
-        return False
+    # def state_close(self):
+    #     return False
 
     def handle_close(self):
         with self.readLock:

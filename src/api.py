@@ -56,7 +56,6 @@ class APIError(Exception):
 
 
 class StoppableXMLRPCServer(SimpleXMLRPCServer):
-    allow_reuse_address = True
 
     def serve_forever(self):
         while state.shutdown == 0:
@@ -68,79 +67,79 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
 # http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
 class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
-    def do_POST(self):
-        # Handles the HTTP POST request.
-        # Attempts to interpret all HTTP POST requests as XML-RPC calls,
-        # which are forwarded to the server's _dispatch method for handling.
+    # def do_POST(self):
+    #     # Handles the HTTP POST request.
+    #     # Attempts to interpret all HTTP POST requests as XML-RPC calls,
+    #     # which are forwarded to the server's _dispatch method for handling.
 
-        # Note: this method is the same as in SimpleXMLRPCRequestHandler,
-        # just hacked to handle cookies
+    #     # Note: this method is the same as in SimpleXMLRPCRequestHandler,
+    #     # just hacked to handle cookies
 
-        # Check that the path is legal
-        if not self.is_rpc_path_valid():
-            self.report_404()
-            return
+    #     # Check that the path is legal
+    #     if not self.is_rpc_path_valid():
+    #         self.report_404()
+    #         return
 
-        try:
-            # Get arguments by reading body of request.
-            # We read this in chunks to avoid straining
-            # socket.read(); around the 10 or 15Mb mark, some platforms
-            # begin to have problems (bug #792570).
-            max_chunk_size = 10 * 1024 * 1024
-            size_remaining = int(self.headers["content-length"])
-            L = []
-            while size_remaining:
-                chunk_size = min(size_remaining, max_chunk_size)
-                L.append(self.rfile.read(chunk_size))
-                size_remaining -= len(L[-1])
-            data = ''.join(L)
+    #     try:
+    #         # Get arguments by reading body of request.
+    #         # We read this in chunks to avoid straining
+    #         # socket.read(); around the 10 or 15Mb mark, some platforms
+    #         # begin to have problems (bug #792570).
+    #         max_chunk_size = 10 * 1024 * 1024
+    #         size_remaining = int(self.headers["content-length"])
+    #         L = []
+    #         while size_remaining:
+    #             chunk_size = min(size_remaining, max_chunk_size)
+    #             L.append(self.rfile.read(chunk_size))
+    #             size_remaining -= len(L[-1])
+    #         data = ''.join(L)
 
-            # In previous versions of SimpleXMLRPCServer, _dispatch
-            # could be overridden in this class, instead of in
-            # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
-            # check to see if a subclass implements _dispatch and dispatch
-            # using that method if present.
-            response = self.server._marshaled_dispatch(
-                data, getattr(self, '_dispatch', None)
-            )
-        except:  # This should only happen if the module is buggy
-            # internal error, report as HTTP server error
-            self.send_response(500)
-            self.end_headers()
-        else:
-            # got a valid XML RPC response
-            self.send_response(200)
-            self.send_header("Content-type", "text/xml")
-            self.send_header("Content-length", str(len(response)))
+    #         # In previous versions of SimpleXMLRPCServer, _dispatch
+    #         # could be overridden in this class, instead of in
+    #         # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
+    #         # check to see if a subclass implements _dispatch and dispatch
+    #         # using that method if present.
+    #         response = self.server._marshaled_dispatch(
+    #             data, getattr(self, '_dispatch', None)
+    #         )
+    #     except:  # This should only happen if the module is buggy
+    #         # internal error, report as HTTP server error
+    #         self.send_response(500)
+    #         self.end_headers()
+    #     else:
+    #         # got a valid XML RPC response
+    #         self.send_response(200)
+    #         self.send_header("Content-type", "text/xml")
+    #         self.send_header("Content-length", str(len(response)))
 
-            # HACK :start -> sends cookies here
-            if self.cookies:
-                for cookie in self.cookies:
-                    self.send_header('Set-Cookie', cookie.output(header=''))
-            # HACK :end
+    #         # HACK :start -> sends cookies here
+    #         if self.cookies:
+    #             for cookie in self.cookies:
+    #                 self.send_header('Set-Cookie', cookie.output(header=''))
+    #         # HACK :end
 
-            self.end_headers()
-            self.wfile.write(response)
+    #         self.end_headers()
+    #         self.wfile.write(response)
 
-            # shut down the connection
-            self.wfile.flush()
-            self.connection.shutdown(1)
+    #         # shut down the connection
+    #         self.wfile.flush()
+    #         self.connection.shutdown(1)
 
-    def APIAuthenticateClient(self):
-        if 'Authorization' in self.headers:
-            # handle Basic authentication
-            (enctype, encstr) = self.headers.get('Authorization').split()
-            (emailid, password) = encstr.decode('base64').split(':')
-            if emailid == BMConfigParser().get('bitmessagesettings', 'apiusername') and password == BMConfigParser().get('bitmessagesettings', 'apipassword'):
-                return True
-            else:
-                return False
-        else:
-            logger.warn('Authentication failed because header lacks Authentication field')
-            time.sleep(2)
-            return False
+    # def APIAuthenticateClient(self):
+    #     if 'Authorization' in self.headers:
+    #         # handle Basic authentication
+    #         (_, encstr) = self.headers.get('Authorization').split()
+    #         (emailid, password) = encstr.decode('base64').split(':')
+    #         if emailid == BMConfigParser().get('bitmessagesettings', 'apiusername') and password == BMConfigParser().get('bitmessagesettings', 'apipassword'):
+    #             return True
+    #         else:
+    #             return False
+    #     else:
+    #         logger.warn('Authentication failed because header lacks Authentication field')
+    #         time.sleep(2)
+    #         return False
 
-        return False
+    #     return False
 
     def _decode(self, text, decode_type):
         try:
@@ -445,7 +444,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if len(addressGeneratorReturnValue) == 0:
             raise APIError(24, 'Chan address is already present.')
         #TODO: this variable is not used to anything
-        createdAddress = addressGeneratorReturnValue[0] # in case we ever want it for anything.
+        #createdAddress = addressGeneratorReturnValue[0] # in case we ever want it for anything, uncomment
         return "success"
 
     def HandleLeaveChan(self, params):
@@ -1042,29 +1041,29 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
     handlers['shutdown'] = HandleShutdown
 
-    def _handle_request(self, method, params):
-        if (self.handlers.has_key(method)):
-            return self.handlers[method](self, params)
-        else:
-            raise APIError(20, 'Invalid method: %s' % method)
+    # def _handle_request(self, method, params):
+    #     if (self.handlers.has_key(method)):
+    #         return self.handlers[method](self, params)
+    #     else:
+    #         raise APIError(20, 'Invalid method: %s' % method)
 
-    def _dispatch(self, method, params):
-        self.cookies = []
+    # def _dispatch(self, method, params):
+    #     self.cookies = []
 
-        validuser = self.APIAuthenticateClient()
-        if not validuser:
-            time.sleep(2)
-            return "RPC Username or password incorrect or HTTP header lacks authentication at all."
+    #     validuser = self.APIAuthenticateClient()
+    #     if not validuser:
+    #         time.sleep(2)
+    #         return "RPC Username or password incorrect or HTTP header lacks authentication at all."
 
-        try:
-            return self._handle_request(method, params)
-        except APIError as e:
-            return str(e)
-        except varintDecodeError as e:
-            logger.error(e)
-            return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
-        except Exception as e:
-            logger.exception(e)
-            return "API Error 0021: Unexpected API Failure - %s" % str(e)
+    #     try:
+    #         return self._handle_request(method, params)
+    #     except APIError as e:
+    #         return str(e)
+    #     except varintDecodeError as e:
+    #         logger.error(e)
+    #         return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
+    #     except Exception as e:
+    #         logger.exception(e)
+    #         return "API Error 0021: Unexpected API Failure - %s" % str(e)
 
 

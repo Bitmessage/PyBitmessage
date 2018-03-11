@@ -6,7 +6,7 @@ from proxy import Proxy, ProxyError, GeneralProxyError
 from socks5 import Socks5Connection, Socks5Resolver, Socks5AuthError, Socks5Error
 from socks4a import Socks4aConnection, Socks4aResolver, Socks4aError
 
-class HttpError(ProxyError): pass
+# class HttpError(ProxyError): pass
 
 
 class HttpConnection(AdvancedDispatcher):
@@ -24,13 +24,13 @@ class HttpConnection(AdvancedDispatcher):
         self.set_state("http_request_sent", 0)
         return False
 
-    def state_http_request_sent(self):
-        if len(self.read_buf) > 0:
-            print "Received %ib" % (len(self.read_buf))
-            self.read_buf = b""
-        if not self.connected:
-            self.set_state("close", 0)
-        return False
+    # def state_http_request_sent(self):
+    #     if len(self.read_buf) > 0:
+    #         print "Received %ib" % (len(self.read_buf))
+    #         self.read_buf = b""
+    #     if not self.connected:
+    #         self.set_state("close", 0)
+    #     return False
 
 
 class Socks5HttpConnection(Socks5Connection, HttpConnection):
@@ -38,9 +38,9 @@ class Socks5HttpConnection(Socks5Connection, HttpConnection):
         self.path = path
         Socks5Connection.__init__(self, address=(host, 80))
 
-    def state_socks_handshake_done(self):
-        HttpConnection.state_init(self)
-        return False
+    # def state_socks_handshake_done(self):
+    #     HttpConnection.state_init(self)
+    #     return False
 
 
 class Socks4aHttpConnection(Socks4aConnection, HttpConnection):
@@ -48,9 +48,9 @@ class Socks4aHttpConnection(Socks4aConnection, HttpConnection):
         Socks4aConnection.__init__(self, address=(host, 80))
         self.path = path
 
-    def state_socks_handshake_done(self):
-        HttpConnection.state_init(self)
-        return False
+    # def state_socks_handshake_done(self):
+    #     HttpConnection.state_init(self)
+    #     return False
 
 
 if __name__ == "__main__":

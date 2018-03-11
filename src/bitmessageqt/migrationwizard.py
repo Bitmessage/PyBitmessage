@@ -14,8 +14,8 @@ class MigrationWizardIntroPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
         
-    def nextId(self):
-        return 1
+    # def nextId(self):
+    #     return 1
     
 
 class MigrationWizardAddressesPage(QtGui.QWizardPage):
@@ -30,8 +30,8 @@ class MigrationWizardAddressesPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
         
-    def nextId(self):
-        return 10
+    # def nextId(self):
+    #     return 10
     
 
 class MigrationWizardGPUPage(QtGui.QWizardPage):
@@ -46,8 +46,8 @@ class MigrationWizardGPUPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
         
-    def nextId(self):
-        return 10
+    # def nextId(self):
+    #     return 10
     
 
 class MigrationWizardConclusionPage(QtGui.QWizardPage):
@@ -67,7 +67,7 @@ class Ui_MigrationWizard(QtGui.QWizard):
     def __init__(self, addresses):
         super(QtGui.QWizard, self).__init__()
 
-        self.pages = {}
+        # self.pages = {}
         
         page = MigrationWizardIntroPage()
         self.setPage(0, page)

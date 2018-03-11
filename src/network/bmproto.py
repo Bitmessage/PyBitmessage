@@ -38,7 +38,7 @@ class BMProtoExcessiveDataError(BMProtoError):
 
 class BMProto(AdvancedDispatcher, ObjectTracker):
     # ~1.6 MB which is the maximum possible size of an inv message.
-    maxMessageSize = 1600100
+    # maxMessageSize = 1600100
     # 2**18 = 256kB is the maximum size of an object payload
     maxObjectPayloadSize = 2**18
     # protocol specification says max 1000 addresses in one addr command
@@ -46,7 +46,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     # protocol specification says max 50000 objects in one inv command
     maxObjectCount = 50000
     # address is online if online less than this many seconds ago
-    addressAlive = 10800
+    # addressAlive = 10800
     # maximum time offset
     maxTimeOffset = 3600
 
@@ -54,10 +54,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         AdvancedDispatcher.__init__(self, sock)
         self.isOutbound = False
         # packet/connection from a local IP
-        self.local = False
+        # self.local = False
 
     def bm_proto_reset(self):
-        self.magic = None
+        # self.magic = None
         self.command = None
         self.payloadLength = 0
         self.checksum = None
@@ -67,22 +67,22 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.expectBytes = protocol.Header.size
         self.object = None
 
-    def state_bm_header(self):
-        self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-        self.command = self.command.rstrip('\x00')
-        if self.magic != 0xE9BEB4D9:
-            # skip 1 byte in order to sync
-            self.set_state("bm_header", length=1)
-            self.bm_proto_reset()
-            logger.debug("Bad magic")
-            if self.socket.type == socket.SOCK_STREAM:
-                self.close_reason = "Bad magic"
-                self.set_state("close")
-            return False
-        if self.payloadLength > BMProto.maxMessageSize:
-            self.invalid = True
-        self.set_state("bm_command", length=protocol.Header.size, expectBytes=self.payloadLength)
-        return True
+    # def state_bm_header(self):
+    #     self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
+    #     self.command = self.command.rstrip('\x00')
+    #     if self.magic != 0xE9BEB4D9:
+    #         # skip 1 byte in order to sync
+    #         self.set_state("bm_header", length=1)
+    #         self.bm_proto_reset()
+    #         logger.debug("Bad magic")
+    #         if self.socket.type == socket.SOCK_STREAM:
+    #             self.close_reason = "Bad magic"
+    #             self.set_state("close")
+    #         return False
+    #     if self.payloadLength > BMProto.maxMessageSize:
+    #         self.invalid = True
+    #     self.set_state("bm_command", length=protocol.Header.size, expectBytes=self.payloadLength)
+    #     return True
         
     def state_bm_command(self):
         self.payload = self.read_buf[:self.payloadLength]
@@ -132,10 +132,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # else assume the command requires a different state to follow
         return True
 
-    def decode_payload_string(self, length):
-        value = self.payload[self.payloadOffset:self.payloadOffset+length]
-        self.payloadOffset += length
-        return value
+    # def decode_payload_string(self, length):
+    #     value = self.payload[self.payloadOffset:self.payloadOffset+length]
+    #     self.payloadOffset += length
+    #     return value
 
     def decode_payload_varint(self):
         value, offset = addresses.decodeVarint(self.payload[self.payloadOffset:])
@@ -272,60 +272,60 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         logger.error("%s:%i error: %i, %s", self.destination.host, self.destination.port, fatalStatus, errorText)
         return True
 
-    def bm_command_getdata(self):
-        items = self.decode_payload_content("l32s")
-        # skip?
-        if time.time() < self.skipUntil:
-            return True
-        #TODO make this more asynchronous
-        random.shuffle(items)
-        for i in map(str, items):
-            if Dandelion().hasHash(i) and \
-                    self != Dandelion().objectChildStem(i):
-                self.antiIntersectionDelay()
-                logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
-                break
-            else:
-                try:
-                    self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
-                except KeyError:
-                    self.antiIntersectionDelay()
-                    logger.info('%s asked for an object we don\'t have.', self.destination)
-                    break
-        # I think that aborting after the first missing/stem object is more secure
-        # when using random reordering, as the recipient won't know exactly which objects we refuse to deliver
-        return True
+    # def bm_command_getdata(self):
+    #     items = self.decode_payload_content("l32s")
+    #     # skip?
+    #     if time.time() < self.skipUntil:
+    #         return True
+    #     #TODO make this more asynchronous
+    #     random.shuffle(items)
+    #     for i in map(str, items):
+    #         if Dandelion().hasHash(i) and \
+    #                 self != Dandelion().objectChildStem(i):
+    #             self.antiIntersectionDelay()
+    #             logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
+    #             break
+    #         else:
+    #             try:
+    #                 self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
+    #             except KeyError:
+    #                 self.antiIntersectionDelay()
+    #                 logger.info('%s asked for an object we don\'t have.', self.destination)
+    #                 break
+    #     # I think that aborting after the first missing/stem object is more secure
+    #     # when using random reordering, as the recipient won't know exactly which objects we refuse to deliver
+    #     return True
 
-    def _command_inv(self, dandelion=False):
-        items = self.decode_payload_content("l32s")
+    # def _command_inv(self, dandelion=False):
+    #     items = self.decode_payload_content("l32s")
 
-        if len(items) >= BMProto.maxObjectCount:
-            logger.error("Too many items in %sinv message!", "d" if dandelion else "")
-            raise BMProtoExcessiveDataError()
-        else:
-            pass
+    #     if len(items) >= BMProto.maxObjectCount:
+    #         logger.error("Too many items in %sinv message!", "d" if dandelion else "")
+    #         raise BMProtoExcessiveDataError()
+    #     else:
+    #         pass
 
-        # ignore dinv if dandelion turned off
-        if dandelion and not state.dandelion:
-            return True
+    #     # ignore dinv if dandelion turned off
+    #     if dandelion and not state.dandelion:
+    #         return True
 
-        for i in map(str, items):
-            if i in Inventory() and not Dandelion().hasHash(i):
-                continue
-            if dandelion and not Dandelion().hasHash(i):
-                Dandelion().addHash(i, self)
-            self.handleReceivedInventory(i)
+    #     for i in map(str, items):
+    #         if i in Inventory() and not Dandelion().hasHash(i):
+    #             continue
+    #         if dandelion and not Dandelion().hasHash(i):
+    #             Dandelion().addHash(i, self)
+    #         self.handleReceivedInventory(i)
 
-        return True
+    #     return True
 
-    def bm_command_inv(self):
-        return self._command_inv(False)
+    # def bm_command_inv(self):
+    #     return self._command_inv(False)
 
-    def bm_command_dinv(self):
-        """
-        Dandelion stem announce
-        """
-        return self._command_inv(True)
+    # def bm_command_dinv(self):
+    #     """
+    #     Dandelion stem announce
+    #     """
+    #     return self._command_inv(True)
 
     def bm_command_object(self):
         objectOffset = self.payloadOffset
@@ -370,90 +370,90 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         invQueue.put((self.object.streamNumber, self.object.inventoryHash, self.destination))
         return True
 
-    def _decode_addr(self):
-        return self.decode_payload_content("LQIQ16sH")
+    # def _decode_addr(self):
+    #     return self.decode_payload_content("LQIQ16sH")
 
-    def bm_command_addr(self):
-        addresses = self._decode_addr()
-        for i in addresses:
-            seenTime, stream, services, ip, port = i
-            decodedIP = protocol.checkIPAddress(str(ip))
-            if stream not in state.streamsInWhichIAmParticipating:
-                continue
-            if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
-                peer = state.Peer(decodedIP, port)
-                try:
-                    if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
-                        continue
-                except KeyError:
-                    pass
-                if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
-                    with knownnodes.knownNodesLock:
-                        try:
-                            knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
-                        except (TypeError, KeyError):
-                            knownnodes.knownNodes[stream][peer] = {
-                                "lastseen": seenTime,
-                                "rating": 0,
-                                "self": False,
-                            }
-                addrQueue.put((stream, peer, self.destination))
-        return True
+    # def bm_command_addr(self):
+    #     addresses = self._decode_addr()
+    #     for i in addresses:
+    #         seenTime, stream, services, ip, port = i
+    #         decodedIP = protocol.checkIPAddress(str(ip))
+    #         if stream not in state.streamsInWhichIAmParticipating:
+    #             continue
+    #         if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
+    #             peer = state.Peer(decodedIP, port)
+    #             try:
+    #                 if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
+    #                     continue
+    #             except KeyError:
+    #                 pass
+    #             if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
+    #                 with knownnodes.knownNodesLock:
+    #                     try:
+    #                         knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
+    #                     except (TypeError, KeyError):
+    #                         knownnodes.knownNodes[stream][peer] = {
+    #                             "lastseen": seenTime,
+    #                             "rating": 0,
+    #                             "self": False,
+    #                         }
+    #             addrQueue.put((stream, peer, self.destination))
+    #     return True
 
-    def bm_command_portcheck(self):
-        portCheckerQueue.put(state.Peer(self.destination, self.peerNode.port))
-        return True
+    # def bm_command_portcheck(self):
+    #     portCheckerQueue.put(state.Peer(self.destination, self.peerNode.port))
+    #     return True
 
-    def bm_command_ping(self):
-        self.append_write_buf(protocol.CreatePacket('pong'))
-        return True
+    # def bm_command_ping(self):
+    #     self.append_write_buf(protocol.CreatePacket('pong'))
+    #     return True
 
-    def bm_command_pong(self):
-        # nothing really
-        return True
+    # def bm_command_pong(self):
+    #     # nothing really
+    #     return True
 
-    def bm_command_verack(self):
-        self.verackReceived = True
-        if self.verackSent:
-            if self.isSSL:
-                self.set_state("tls_init", length=self.payloadLength, expectBytes=0)
-                return False
-            self.set_state("connection_fully_established", length=self.payloadLength, expectBytes=0)
-            return False
-        return True
+    # def bm_command_verack(self):
+    #     self.verackReceived = True
+    #     if self.verackSent:
+    #         if self.isSSL:
+    #             self.set_state("tls_init", length=self.payloadLength, expectBytes=0)
+    #             return False
+    #         self.set_state("connection_fully_established", length=self.payloadLength, expectBytes=0)
+    #         return False
+    #     return True
 
-    def bm_command_version(self):
-        self.remoteProtocolVersion, self.services, self.timestamp, self.sockNode, self.peerNode, self.nonce, \
-            self.userAgent, self.streams = self.decode_payload_content("IQQiiQlsLv")
-        self.nonce = struct.pack('>Q', self.nonce)
-        self.timeOffset = self.timestamp - int(time.time())
-        logger.debug("remoteProtocolVersion: %i", self.remoteProtocolVersion)
-        logger.debug("services: 0x%08X", self.services)
-        logger.debug("time offset: %i", self.timestamp - int(time.time()))
-        logger.debug("my external IP: %s", self.sockNode.host)
-        logger.debug("remote node incoming address: %s:%i", self.destination.host, self.peerNode.port)
-        logger.debug("user agent: %s", self.userAgent)
-        logger.debug("streams: [%s]", ",".join(map(str,self.streams)))
-        if not self.peerValidityChecks():
-            # TODO ABORT
-            return True
-        #shared.connectedHostsList[self.destination] = self.streams[0]
-        self.append_write_buf(protocol.CreatePacket('verack'))
-        self.verackSent = True
-        if not self.isOutbound:
-            self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                    network.connectionpool.BMConnectionPool().streams, True, nodeid=self.nodeid))
-            #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
-        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-                protocol.haveSSL(not self.isOutbound)):
-            self.isSSL = True
-        if self.verackReceived:
-            if self.isSSL:
-                self.set_state("tls_init", length=self.payloadLength, expectBytes=0)
-                return False
-            self.set_state("connection_fully_established", length=self.payloadLength, expectBytes=0)
-            return False
-        return True
+    # def bm_command_version(self):
+    #     self.remoteProtocolVersion, self.services, self.timestamp, self.sockNode, self.peerNode, self.nonce, \
+    #         self.userAgent, self.streams = self.decode_payload_content("IQQiiQlsLv")
+    #     self.nonce = struct.pack('>Q', self.nonce)
+    #     self.timeOffset = self.timestamp - int(time.time())
+    #     logger.debug("remoteProtocolVersion: %i", self.remoteProtocolVersion)
+    #     logger.debug("services: 0x%08X", self.services)
+    #     logger.debug("time offset: %i", self.timestamp - int(time.time()))
+    #     logger.debug("my external IP: %s", self.sockNode.host)
+    #     logger.debug("remote node incoming address: %s:%i", self.destination.host, self.peerNode.port)
+    #     logger.debug("user agent: %s", self.userAgent)
+    #     logger.debug("streams: [%s]", ",".join(map(str,self.streams)))
+    #     if not self.peerValidityChecks():
+    #         # TODO ABORT
+    #         return True
+    #     #shared.connectedHostsList[self.destination] = self.streams[0]
+    #     self.append_write_buf(protocol.CreatePacket('verack'))
+    #     self.verackSent = True
+    #     if not self.isOutbound:
+    #         self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+    #                 network.connectionpool.BMConnectionPool().streams, True, nodeid=self.nodeid))
+    #         #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
+    #     if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
+    #             protocol.haveSSL(not self.isOutbound)):
+    #         self.isSSL = True
+    #     if self.verackReceived:
+    #         if self.isSSL:
+    #             self.set_state("tls_init", length=self.payloadLength, expectBytes=0)
+    #             return False
+    #         self.set_state("connection_fully_established", length=self.payloadLength, expectBytes=0)
+    #         return False
+    #     return True
 
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:

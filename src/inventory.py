@@ -10,8 +10,8 @@ from helper_sql import *
 from singleton import Singleton
 
 # TODO make this dynamic, and watch out for frozen, like with messagetypes
-import storage.sqlite
-import storage.filesystem
+# import storage.sqlite
+# import storage.filesystem
 
 @Singleton
 class Inventory():
@@ -103,7 +103,7 @@ class PendingUpload(object):
         self.deadline = 0
         self.maxLen = 0
         # during shutdown, wait up to 20 seconds to finish uploading
-        self.shutdownWait = 20
+        # self.shutdownWait = 20
         # forget tracking objects after 60 seconds
         self.objectWait = 60
         # wait 10 seconds between clears

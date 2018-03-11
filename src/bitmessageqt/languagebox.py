@@ -12,7 +12,7 @@ class LanguageBox(QtGui.QComboBox):
         self.populate()
 
     def populate(self):
-        self.languages = []
+        # self.languages = []
         self.clear()
         localesPath = os.path.join (paths.codePath(), 'translations')
         configuredLocale = "system"

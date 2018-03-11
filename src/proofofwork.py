@@ -126,30 +126,30 @@ def _doGPUPoW(target, initialHash):
     logger.debug("GPU PoW done")
     return [trialValue, nonce]
     
-def estimate(difficulty, format = False):
-    ret = difficulty / 10
-    if ret < 1:
-        ret = 1
-    if format:
-        out = str(int(ret)) + " seconds"
-        if ret > 60:
-            ret /= 60
-            out = str(int(ret)) + " minutes"
-        if ret > 60:
-            ret /= 60
-            out = str(int(ret)) + " hours"
-        if ret > 24:
-            ret /= 24
-            out = str(int(ret)) + " days"
-        if ret > 7:
-            out = str(int(ret)) + " weeks"
-        if ret > 31:
-            out = str(int(ret)) + " months"
-        if ret > 366:
-            ret /= 366
-            out = str(int(ret)) + " years"
-    else:
-        return ret
+# def estimate(difficulty, format = False):
+#     ret = difficulty / 10
+#     if ret < 1:
+#         ret = 1
+#     if format:
+#         out = str(int(ret)) + " seconds"
+#         if ret > 60:
+#             ret /= 60
+#             out = str(int(ret)) + " minutes"
+#         if ret > 60:
+#             ret /= 60
+#             out = str(int(ret)) + " hours"
+#         if ret > 24:
+#             ret /= 24
+#             out = str(int(ret)) + " days"
+#         if ret > 7:
+#             out = str(int(ret)) + " weeks"
+#         if ret > 31:
+#             out = str(int(ret)) + " months"
+#         if ret > 366:
+#             ret /= 366
+#             out = str(int(ret)) + " years"
+#     else:
+#         return ret
 
 def getPowType():
     if openclpow.openclEnabled():
@@ -252,7 +252,7 @@ def init():
             bso = ctypes.WinDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
             logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
             bmpow = bso.BitmessagePOW
-            bmpow.restype = ctypes.c_ulonglong
+            # bmpow.restype = ctypes.c_ulonglong
             _doCPoW(2**63, "")
             logger.info("Successfully tested C PoW DLL (stdcall) %s", bitmsglib)
         except:
@@ -262,7 +262,7 @@ def init():
                 bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
                 logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
                 bmpow = bso.BitmessagePOW
-                bmpow.restype = ctypes.c_ulonglong
+                # bmpow.restype = ctypes.c_ulonglong
                 _doCPoW(2**63, "")
                 logger.info("Successfully tested C PoW DLL (cdecl) %s", bitmsglib)
             except:
@@ -286,7 +286,7 @@ def init():
     if bso:
         try:
             bmpow = bso.BitmessagePOW
-            bmpow.restype = ctypes.c_ulonglong
+            # bmpow.restype = ctypes.c_ulonglong
         except:
             bmpow = None
     else:

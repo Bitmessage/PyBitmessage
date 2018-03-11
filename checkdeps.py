@@ -169,11 +169,9 @@ def testCompiler():
     )
 
     dist = Distribution()
-    dist.ext_modules = [bitmsghash]
     cmd = build_ext(dist)
     cmd.initialize_options()
     cmd.finalize_options()
-    cmd.force = True
     try:
         cmd.run()
     except CompileError:

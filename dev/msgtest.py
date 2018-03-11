@@ -1,4 +1,3 @@
-import importlib
 from os import listdir, path
 from pprint import pprint
 import sys

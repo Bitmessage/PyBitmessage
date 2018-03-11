@@ -29,17 +29,17 @@ NODE_DANDELION = 8
 BITFIELD_DOESACK = 1
 
 #Error types
-STATUS_WARNING = 0
-STATUS_ERROR = 1
-STATUS_FATAL = 2
+# STATUS_WARNING = 0
+# STATUS_ERROR = 1
+# STATUS_FATAL = 2
 
 #Object types
 OBJECT_GETPUBKEY = 0
 OBJECT_PUBKEY = 1
 OBJECT_MSG = 2
 OBJECT_BROADCAST = 3
-OBJECT_I2P = 0x493250
-OBJECT_ADDR = 0x61646472
+# OBJECT_I2P = 0x493250
+# OBJECT_ADDR = 0x61646472
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
@@ -48,7 +48,7 @@ eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
 
-VersionPacket = Struct('>LqQ20s4s36sH')
+# VersionPacket = Struct('>LqQ20s4s36sH')
 
 # Bitfield
 
@@ -306,17 +306,17 @@ def decryptAndCheckPubkeyPayload(data, address):
             return 'failed'
         
         readPosition = 0
-        bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
+        # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
         publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
-            decryptedData[readPosition:readPosition + 10])
+        # specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+        #     decryptedData[readPosition:readPosition + 10])
         readPosition += specifiedNonceTrialsPerByteLength
-        specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
-            decryptedData[readPosition:readPosition + 10])
+        # specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+        #     decryptedData[readPosition:readPosition + 10])
         readPosition += specifiedPayloadLengthExtraBytesLength
         storedData += decryptedData[:readPosition]
         signedData += decryptedData[:readPosition]
@@ -415,8 +415,8 @@ def checkAndShareObjectWithPeers(data):
 def _checkAndShareUndefinedObjectWithPeers(data):
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20 # bypass nonce, time, and object type
-    objectVersion, objectVersionLength = decodeVarint(
-        data[readPosition:readPosition + 9])
+    # objectVersion, objectVersionLength = decodeVarint(
+    #     data[readPosition:readPosition + 9])
     readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
@@ -438,8 +438,8 @@ def _checkAndShareUndefinedObjectWithPeers(data):
 def _checkAndShareMsgWithPeers(data):
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20 # bypass nonce, time, and object type
-    objectVersion, objectVersionLength = decodeVarint(
-        data[readPosition:readPosition + 9])
+    # objectVersion, objectVersionLength = decodeVarint(
+    #     data[readPosition:readPosition + 9])
     readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])

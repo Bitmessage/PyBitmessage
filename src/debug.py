@@ -28,8 +28,8 @@ helper_startup.loadConfig()
 # examples are here: https://bitmessage.org/forum/index.php/topic,4820.msg11163.html#msg11163
 log_level = 'WARNING'
 
-def log_uncaught_exceptions(ex_cls, ex, tb):
-    logging.critical('Unhandled exception', exc_info=(ex_cls, ex, tb))
+# def log_uncaught_exceptions(ex_cls, ex, tb):
+#     logging.critical('Unhandled exception', exc_info=(ex_cls, ex, tb))
 
 def configureLogging():
     have_logging = False
@@ -45,7 +45,7 @@ def configureLogging():
             # no need to confuse the user if the logger config is missing entirely
             print "Using default logger configuration"
     
-    sys.excepthook = log_uncaught_exceptions
+    # sys.excepthook = log_uncaught_exceptions
 
     if have_logging:
         return False

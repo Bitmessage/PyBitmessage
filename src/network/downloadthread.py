@@ -12,9 +12,9 @@ import protocol
 from state import missingObjects
 
 class DownloadThread(threading.Thread, StoppableThread):
-    minPending = 200
+    # minPending = 200
     maxRequestChunk = 1000
-    requestTimeout = 60
+    # requestTimeout = 60
     cleanInterval = 60
     requestExpires = 3600
 
