@@ -14,6 +14,7 @@ from binascii import hexlify
 from struct import Struct, pack, unpack
 
 import defaults
+import helper_db
 import highlevelcrypto
 import state
 from addresses import (
@@ -21,7 +22,6 @@ from addresses import (
 from bmconfigparser import BMConfigParser
 from debug import logger
 from fallback import RIPEMD160Hash
-from helper_sql import sqlExecute
 from version import softwareVersion
 
 # Service flags
@@ -503,8 +503,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             hexlify(publicSigningKey), hexlify(publicEncryptionKey)
         )
 
-        t = (address, addressVersion, storedData, int(time.time()), 'yes')
-        sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
+        helper_db.put_pubkey(address, addressVersion, storedData, True)
         return 'successful'
     except varintDecodeError:
         logger.info(

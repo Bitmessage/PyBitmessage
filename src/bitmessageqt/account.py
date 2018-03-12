@@ -4,43 +4,30 @@ account.py
 ==========
 
 Account related functions.
-
 """
-
-from __future__ import absolute_import
 
 import inspect
 import re
 import sys
-import time
 
-from PyQt4 import QtGui
-
+import helper_db
 import queues
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
-from helper_sql import sqlQuery, sqlExecute
-from .foldertree import AccountMixin
-from .utils import str_broadcast_subscribers
+from helper_sql import sqlQuery
+from foldertree import AccountMixin
+from utils import str_broadcast_subscribers
+from tr import _translate
 
 
 def getSortedAccounts():
     """Get a sorted list of configSections"""
-
     configSections = BMConfigParser().addresses()
     configSections.sort(
         cmp=lambda x, y: cmp(
-            unicode(
-                BMConfigParser().get(
-                    x,
-                    'label'),
-                'utf-8').lower(),
-            unicode(
-                BMConfigParser().get(
-                    y,
-                    'label'),
-                'utf-8').lower()))
+            unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(),
+            unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower()))
     return configSections
 
 
@@ -107,29 +94,27 @@ def accountClass(address):
 
 class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
     """Set the type of account"""
-
     def __init__(self, address, address_type=None):
         self.isEnabled = True
         self.address = address
-        if address_type is None:
-            if address is None:
-                self.type = AccountMixin.ALL
-            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
-                self.type = AccountMixin.MAILINGLIST
-            elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
-                self.type = AccountMixin.CHAN
-            elif sqlQuery(
-                    '''select label from subscriptions where address=?''', self.address):
-                self.type = AccountMixin.SUBSCRIPTION
-            else:
-                self.type = AccountMixin.NORMAL
-        else:
+        if address_type:
             self.type = address_type
+            return
+        # AccountMixin.setType()
+        if self.address is None:
+            self.type = self.ALL
+        elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
+            self.type = self.CHAN
+        elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+            self.type = self.MAILINGLIST
+        elif helper_db.get_label(self.address, "subscriptions"):
+            self.type = AccountMixin.SUBSCRIPTION
+        else:
+            self.type = self.NORMAL
 
 
 class BMAccount(object):
     """Encapsulate a Bitmessage account"""
-
     def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
@@ -140,29 +125,19 @@ class BMAccount(object):
                 self.type = AccountMixin.MAILINGLIST
         elif self.address == str_broadcast_subscribers:
             self.type = AccountMixin.BROADCAST
-        else:
-            queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
-            if queryreturn:
-                self.type = AccountMixin.SUBSCRIPTION
+        elif helper_db.get_label(self.address, "subscriptions"):
+            self.type = AccountMixin.SUBSCRIPTION
 
     def getLabel(self, address=None):
         """Get a label for this bitmessage account"""
         if address is None:
             address = self.address
-        label = BMConfigParser().safeGet(address, 'label', address)
-        queryreturn = sqlQuery(
-            '''select label from addressbook where address=?''', address)
-        if queryreturn != []:
-            for row in queryreturn:
-                label, = row
-        else:
-            queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', address)
-            if queryreturn != []:
-                for row in queryreturn:
-                    label, = row
-        return label
+        if BMConfigParser().has_section(address):
+            return BMConfigParser().get(address, 'label')
+        return (
+            helper_db.get_label(address) or
+            helper_db.get_label(address, "subscriptions") or address
+        )
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """Set metadata and address labels on self"""
@@ -186,9 +161,7 @@ class NoAccount(BMAccount):
         self.type = AccountMixin.NORMAL
 
     def getLabel(self, address=None):
-        if address is None:
-            address = self.address
-        return address
+        return address or self.address
 
 
 class SubscriptionAccount(BMAccount):
@@ -213,31 +186,17 @@ class GatewayAccount(BMAccount):
 
     def send(self):
         """Override the send method for gateway accounts"""
-
-        # pylint: disable=unused-variable
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        streamNumber, ripe = decodeAddress(self.toAddress)[2:]
+        stealthLevel = BMConfigParser().safeGetInt(
+            'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
-        sqlExecute(
-            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            '',
-            self.toAddress,
-            ripe,
-            self.fromAddress,
-            self.subject,
-            self.message,
-            ackdata,
-            int(time.time()),  # sentTime (this will never change)
-            int(time.time()),  # lastActionTime
-            0,  # sleepTill time. This will get set when the POW gets done.
-            'msgqueued',
-            0,  # retryNumber
-            'sent',  # folder
-            2,  # encodingtype
-            # not necessary to have a TTL higher than 2 days
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)
+        helper_db.put_sent(
+            self.toAddress, self.fromAddress, self.subject, self.message,
+            ackdata, 'msgqueued', 2, ripe,
+            min(
+                BMConfigParser().getint('bitmessagesettings', 'ttl'),
+                86400 * 2)  # not necessary to have a TTL higher than 2 days
         )
-
         queues.workerQueue.put(('sendmessage', self.toAddress))
 
 
@@ -292,9 +251,7 @@ class MailchuckAccount(GatewayAccount):
 
         self.toAddress = self.registrationAddress
         self.subject = "config"
-        self.message = QtGui.QApplication.translate(
-            "Mailchuck",
-            """# You can use this to configure your email gateway account
+        self.message = _translate("Mailchuck", """# You can use this to configure your email gateway account
 # Uncomment the setting you want to use
 # Here are the options:
 #
