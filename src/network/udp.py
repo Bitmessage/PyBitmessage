@@ -69,55 +69,55 @@ class UDPSocket(BMProto):
     def bm_command_error(self):
         return BMProto.bm_command_error(self)
 
-    def bm_command_getdata(self):
-        return True
+    # def bm_command_getdata(self):
+    #     return True
 #        return BMProto.bm_command_getdata(self)
 
-    def bm_command_inv(self):
-        return True
+    # def bm_command_inv(self):
+    #     return True
 #        return BMProto.bm_command_inv(self)
 
     def bm_command_object(self):
         return BMProto.bm_command_object(self)
 
-    def bm_command_addr(self):
+    # def bm_command_addr(self):
 #        BMProto.bm_command_object(self)
-        addresses = self._decode_addr()
+        # addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid attacks from random IPs on the internet
-        if not self.local:
-            return True
-        remoteport = False
-        for i in addresses:
-            seenTime, stream, services, ip, port = i
-            decodedIP = protocol.checkIPAddress(str(ip))
-            if stream not in state.streamsInWhichIAmParticipating:
-                continue
-            if seenTime < time.time() - BMProto.maxTimeOffset or seenTime > time.time() + BMProto.maxTimeOffset:
-                continue
-            if decodedIP is False:
-                # if the address isn't local, interpret it as the hosts' own announcement
-                remoteport = port
-        if remoteport is False:
-            return True
-        logger.debug("received peer discovery from %s:%i (port %i):", self.destination.host, self.destination.port, remoteport)
-        if self.local:
-            state.discoveredPeers[state.Peer(self.destination.host, remoteport)] = time.time()
-        return True
+        # if not self.local:
+        #     return True
+        # remoteport = False
+        # for i in addresses:
+        #     seenTime, stream, services, ip, port = i
+        #     decodedIP = protocol.checkIPAddress(str(ip))
+        #     if stream not in state.streamsInWhichIAmParticipating:
+        #         continue
+        #     if seenTime < time.time() - BMProto.maxTimeOffset or seenTime > time.time() + BMProto.maxTimeOffset:
+        #         continue
+        #     if decodedIP is False:
+        #         # if the address isn't local, interpret it as the hosts' own announcement
+        #         remoteport = port
+        # if remoteport is False:
+        #     return True
+        # logger.debug("received peer discovery from %s:%i (port %i):", self.destination.host, self.destination.port, remoteport)
+        # if self.local:
+        #     state.discoveredPeers[state.Peer(self.destination.host, remoteport)] = time.time()
+        # return True
 
-    def bm_command_portcheck(self):
-        return True
+    # def bm_command_portcheck(self):
+    #     return True
 
-    def bm_command_ping(self):
-        return True
+    # def bm_command_ping(self):
+    #     return True
 
-    def bm_command_pong(self):
-        return True
+    # def bm_command_pong(self):
+    #     return True
 
-    def bm_command_verack(self):
-        return True
+    # def bm_command_verack(self):
+    #     return True
 
-    def bm_command_version(self):
-        return True
+    # def bm_command_version(self):
+    #     return True
 
     def handle_connect(self):
         return
@@ -137,10 +137,10 @@ class UDPSocket(BMProto):
 
         self.destination = state.Peer(addr[0], addr[1])
         encodedAddr = protocol.encodeHost(addr[0])
-        if protocol.checkIPAddress(encodedAddr, True):
-            self.local = True
-        else:
-            self.local = False
+        # if protocol.checkIPAddress(encodedAddr, True):
+        #     self.local = True
+        # else:
+        #     self.local = False
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf[0:] = recdata
         self.bm_proto_reset()
@@ -165,12 +165,12 @@ if __name__ == "__main__":
             asyncore.loop(timeout=10, count=1)
         continue
 
-        proxy = Socks5BMConnection(host)
-        while len(asyncore.socket_map) > 0:
+        # proxy = Socks5BMConnection(host)
+        # while len(asyncore.socket_map) > 0:
 #            print "loop, state = %s" % (proxy.state)
-            asyncore.loop(timeout=10, count=1)
+        #     asyncore.loop(timeout=10, count=1)
 
-        proxy = Socks4aBMConnection(host)
-        while len(asyncore.socket_map) > 0:
+        # proxy = Socks4aBMConnection(host)
+        # while len(asyncore.socket_map) > 0:
 #            print "loop, state = %s" % (proxy.state)
-            asyncore.loop(timeout=10, count=1)
+            # asyncore.loop(timeout=10, count=1)

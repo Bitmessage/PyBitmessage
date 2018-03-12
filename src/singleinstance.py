@@ -2,7 +2,7 @@
 
 import atexit
 import errno
-from multiprocessing import Process
+# from multiprocessing import Process
 import os
 import sys
 import state
@@ -21,7 +21,7 @@ class singleinstance:
     """
     def __init__(self, flavor_id="", daemon=False):
         self.initialized = False
-        self.counter = 0
+        # self.counter = 0
         self.daemon = daemon
         self.lockPid = None
         self.lockfile = os.path.normpath(os.path.join(state.appdata, 'singleton%s.lock' % flavor_id))

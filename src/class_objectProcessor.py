@@ -15,7 +15,7 @@ import highlevelcrypto
 from addresses import *
 from bmconfigparser import BMConfigParser
 import helper_generic
-from helper_generic import addDataPadding
+# from helper_generic import addDataPadding
 import helper_bitcoin
 import helper_inbox
 import helper_msgcoding
@@ -209,7 +209,7 @@ class objectProcessor(threading.Thread):
             if len(data) < 146:  # sanity check. This is the minimum possible length.
                 logger.debug('(within processpubkey) payloadLength less than 146. Sanity check failed.')
                 return
-            bitfieldBehaviors = data[readPosition:readPosition + 4]
+            # bitfieldBehaviors = data[readPosition:readPosition + 4]
             readPosition += 4
             publicSigningKey = data[readPosition:readPosition + 64]
             # Is it possible for a public key to be invalid such that trying to
@@ -258,16 +258,16 @@ class objectProcessor(threading.Thread):
             if len(data) < 170:  # sanity check.
                 logger.warning('(within processpubkey) payloadLength less than 170. Sanity check failed.')
                 return
-            bitfieldBehaviors = data[readPosition:readPosition + 4]
+            # bitfieldBehaviors = data[readPosition:readPosition + 4]
             readPosition += 4
             publicSigningKey = '\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             publicEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+            _, specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])
             readPosition += specifiedNonceTrialsPerByteLength
-            specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+            _, specifiedPayloadLengthExtraBytesLength = decodeVarint(
                 data[readPosition:readPosition + 10])
             readPosition += specifiedPayloadLengthExtraBytesLength
             endOfSignedDataPosition = readPosition
@@ -874,18 +874,18 @@ class objectProcessor(threading.Thread):
         else:
             return '[' + mailingListName + '] ' + subject
 
-    def decodeType2Message(self, message):
-        bodyPositionIndex = string.find(message, '\nBody:')
-        if bodyPositionIndex > 1:
-            subject = message[8:bodyPositionIndex]
-            # Only save and show the first 500 characters of the subject.
-            # Any more is probably an attack.
-            subject = subject[:500]
-            body = message[bodyPositionIndex + 6:]
-        else:
-            subject = ''
-            body = message
-        # Throw away any extra lines (headers) after the subject.
-        if subject:
-            subject = subject.splitlines()[0]
-        return subject, body
+    # def decodeType2Message(self, message):
+    #     bodyPositionIndex = string.find(message, '\nBody:')
+    #     if bodyPositionIndex > 1:
+    #         subject = message[8:bodyPositionIndex]
+    #         # Only save and show the first 500 characters of the subject.
+    #         # Any more is probably an attack.
+    #         subject = subject[:500]
+    #         body = message[bodyPositionIndex + 6:]
+    #     else:
+    #         subject = ''
+    #         body = message
+    #     # Throw away any extra lines (headers) after the subject.
+    #     if subject:
+    #         subject = subject.splitlines()[0]
+    #     return subject, body

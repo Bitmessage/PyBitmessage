@@ -108,9 +108,9 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         # Popup menu for the Blacklist page
         self.blacklistContextMenuToolbar = QtGui.QToolBar()
         # Actions
-        self.actionBlacklistNew = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Add new entry"), self.on_action_BlacklistNew)
+        # self.actionBlacklistNew = self.blacklistContextMenuToolbar.addAction(
+        #     _translate(
+        #         "MainWindow", "Add new entry"), self.on_action_BlacklistNew)
         self.actionBlacklistDelete = self.blacklistContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Delete"), self.on_action_BlacklistDelete)
@@ -174,8 +174,8 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         self.tableWidgetBlacklist.setSortingEnabled(True)
 
     # Group of functions for the Blacklist dialog box
-    def on_action_BlacklistNew(self):
-        self.click_pushButtonAddBlacklist()
+    # def on_action_BlacklistNew(self):
+    #     self.click_pushButtonAddBlacklist()
 
     def on_action_BlacklistDelete(self):
         currentRow = self.tableWidgetBlacklist.currentRow()

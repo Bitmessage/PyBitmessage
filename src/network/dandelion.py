@@ -50,13 +50,13 @@ class Dandelion():
                     stream,
                     self.poissonTimeout())
 
-    def setHashStream(self, hashId, stream=1):
-        with self.lock:
-            if hashId in self.hashMap:
-                self.hashMap[hashId] = Stem(
-                        self.hashMap[hashId].child,
-                        stream,
-                        self.poissonTimeout())
+    # def setHashStream(self, hashId, stream=1):
+    #     with self.lock:
+    #         if hashId in self.hashMap:
+    #             self.hashMap[hashId] = Stem(
+    #                     self.hashMap[hashId].child,
+    #                     stream,
+    #                     self.poissonTimeout())
 
     def removeHash(self, hashId, reason="no reason specified"):
         logging.debug("%s entering fluff mode due to %s.", ''.join('%02x'%ord(i) for i in hashId), reason)
@@ -72,16 +72,16 @@ class Dandelion():
     def objectChildStem(self, hashId):
         return self.hashMap[hashId].child
 
-    def maybeAddStem(self, connection):
-        # fewer than MAX_STEMS outbound connections at last reshuffle?
-        with self.lock:
-            if len(self.stem) < MAX_STEMS:
-                self.stem.append(connection)
-                for k in (k for k, v in self.nodeMap.iteritems() if v is None):
-                    self.nodeMap[k] = connection
-                for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child is None}.iteritems():
-                    self.hashMap[k] = Stem(connection, v.stream, self.poissonTimeout())
-                    invQueue.put((v.stream, k, v.child))
+    # def maybeAddStem(self, connection):
+    #     # fewer than MAX_STEMS outbound connections at last reshuffle?
+    #     with self.lock:
+    #         if len(self.stem) < MAX_STEMS:
+    #             self.stem.append(connection)
+    #             for k in (k for k, v in self.nodeMap.iteritems() if v is None):
+    #                 self.nodeMap[k] = connection
+    #             for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child is None}.iteritems():
+    #                 self.hashMap[k] = Stem(connection, v.stream, self.poissonTimeout())
+    #                 invQueue.put((v.stream, k, v.child))
 
 
     def maybeRemoveStem(self, connection):

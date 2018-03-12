@@ -75,18 +75,18 @@ class ECC:
             self.pubkey_y = pubkey_y
             self.privkey = privkey
 
-    @staticmethod
-    def get_curves():
-        """
-        static method, returns the list of all the curves available
-        """
-        return OpenSSL.curves.keys()
+    # @staticmethod
+    # def get_curves():
+    #     """
+    #     static method, returns the list of all the curves available
+    #     """
+    #     return OpenSSL.curves.keys()
 
     def get_curve(self):
         return OpenSSL.get_curve_by_id(self.curve)
 
-    def get_curve_id(self):
-        return self.curve
+    # def get_curve_id(self):
+    #     return self.curve
 
     def get_pubkey(self):
         """
@@ -100,15 +100,15 @@ class ECC:
                          self.pubkey_y
                          ))
 
-    def get_privkey(self):
-        """
-        High level function which returns
-        curve(2) + len_of_privkey(2) + privkey
-        """
-        return b''.join((pack('!H', self.curve),
-                         pack('!H', len(self.privkey)),
-                         self.privkey
-                         ))
+    # def get_privkey(self):
+    #     """
+    #     High level function which returns
+    #     curve(2) + len_of_privkey(2) + privkey
+    #     """
+    #     return b''.join((pack('!H', self.curve),
+    #                      pack('!H', len(self.privkey)),
+    #                      self.privkey
+    #                      ))
 
     @staticmethod
     def _decode_pubkey(pubkey):
@@ -178,15 +178,15 @@ class ECC:
             OpenSSL.BN_free(pub_key_x)
             OpenSSL.BN_free(pub_key_y)
 
-    def get_ecdh_key(self, pubkey):
-        """
-        High level function. Compute public key with the local private key
-        and returns a 512bits shared key
-        """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
-        if curve != self.curve:
-            raise Exception("ECC keys must be from the same curve !")
-        return sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
+    # def get_ecdh_key(self, pubkey):
+    #     """
+    #     High level function. Compute public key with the local private key
+    #     and returns a 512bits shared key
+    #     """
+    #     curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+    #     if curve != self.curve:
+    #         raise Exception("ECC keys must be from the same curve !")
+    #     return sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
 
     def raw_get_ecdh_key(self, pubkey_x, pubkey_y):
         try:
@@ -243,20 +243,20 @@ class ECC:
             OpenSSL.EC_KEY_free(own_key)
             OpenSSL.BN_free(own_priv_key)
 
-    def check_key(self, privkey, pubkey):
-        """
-        Check the public key and the private key.
-        The private key is optional (replace by None)
-        """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
-        if privkey is None:
-            raw_privkey = None
-            curve2 = curve
-        else:
-            curve2, raw_privkey, i = ECC._decode_privkey(privkey)
-        if curve != curve2:
-            raise Exception("Bad public and private key")
-        return self.raw_check_key(raw_privkey, pubkey_x, pubkey_y, curve)
+    # def check_key(self, privkey, pubkey):
+    #     """
+    #     Check the public key and the private key.
+    #     The private key is optional (replace by None)
+    #     """
+    #     curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+    #     if privkey is None:
+    #         raw_privkey = None
+    #         curve2 = curve
+    #     else:
+    #         curve2, raw_privkey, i = ECC._decode_privkey(privkey)
+    #     if curve != curve2:
+    #         raise Exception("Bad public and private key")
+    #     return self.raw_check_key(raw_privkey, pubkey_x, pubkey_y, curve)
 
     def raw_check_key(self, privkey, pubkey_x, pubkey_y, curve=None):
         if curve is None:

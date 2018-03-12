@@ -45,8 +45,6 @@ def sslHandshake(sock, server=False):
         context = ssl.SSLContext(sslProtocolVersion())
         context.set_ciphers(sslProtocolCiphers())
         context.set_ecdh_curve("secp256k1")
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
         context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
         sslSock = context.wrap_socket(sock, server_side = server, do_handshake_on_connect=False)
     else:

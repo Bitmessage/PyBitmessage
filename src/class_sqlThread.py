@@ -28,7 +28,7 @@ class sqlThread(threading.Thread):
 
     def run(self):        
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
-        self.conn.text_factory = str
+        # self.conn.text_factory = str
         self.cur = self.conn.cursor()
         
         self.cur.execute('PRAGMA secure_delete = true')
@@ -525,7 +525,7 @@ class sqlThread(threading.Thread):
                 shutil.move(
                     paths.lookupAppdataFolder() + 'messages.dat', paths.lookupExeFolder() + 'messages.dat')
                 self.conn = sqlite3.connect(paths.lookupExeFolder() + 'messages.dat')
-                self.conn.text_factory = str
+                # self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'movemessagstoappdata':
                 logger.debug('the sqlThread is moving the messages.dat file to the Appdata folder.')
@@ -541,7 +541,7 @@ class sqlThread(threading.Thread):
                 shutil.move(
                     paths.lookupExeFolder() + 'messages.dat', paths.lookupAppdataFolder() + 'messages.dat')
                 self.conn = sqlite3.connect(paths.lookupAppdataFolder() + 'messages.dat')
-                self.conn.text_factory = str
+                # self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'deleteandvacuume':
                 self.cur.execute('''delete from inbox where folder='trash' ''')

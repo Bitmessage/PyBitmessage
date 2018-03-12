@@ -10,7 +10,7 @@ import socket
 from ssl import SSLError, SSL_ERROR_WANT_WRITE
 import sys
 
-from helper_generic import addDataPadding
+# from helper_generic import addDataPadding
 from class_objectHashHolder import *
 from addresses import *
 from debug import logger
@@ -71,7 +71,7 @@ class sendDataThread(threading.Thread):
             # if not 'Bad file descriptor' in err:
             logger.error('sock.sendall error: %s\n' % err)
             
-        self.versionSent = 1
+        # self.versionSent = 1
 
     def sendBytes(self, data = ""):
         self.buffer += data

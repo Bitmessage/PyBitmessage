@@ -1,6 +1,6 @@
 from PyQt4 import QtCore, QtGui
 
-import multiprocessing
+# import multiprocessing
 import Queue
 from urlparse import urlparse
 from safehtmlparser import *
@@ -75,9 +75,9 @@ class MessageView(QtGui.QTextBrowser):
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
-    def loadResource (self, restype, name):
-        if restype == QtGui.QTextDocument.ImageResource and name.scheme() == "bmmsg":
-            pass
+    # def loadResource (self, restype, name):
+    #     if restype == QtGui.QTextDocument.ImageResource and name.scheme() == "bmmsg":
+    #         pass
 #            QImage correctImage;
 #            lookup the correct QImage from a cache
 #            return QVariant::fromValue(correctImage);
@@ -85,8 +85,8 @@ class MessageView(QtGui.QTextBrowser):
 #        elif restype == QtGui.QTextDocument.ImageResource:
 #        elif restype == QtGui.QTextDocument.StyleSheetResource:
 #        elif restype == QtGui.QTextDocument.UserResource:
-        else:
-            pass
+        # else:
+        #     pass
 #            by default, this will interpret it as a local file
 #            QtGui.QTextBrowser.loadResource(restype, name)
 
@@ -132,7 +132,7 @@ class MessageView(QtGui.QTextBrowser):
         self.html = SafeHTMLParser()
         self.html.reset()
         self.html.reset_safe()
-        self.html.allow_picture = True
+        # self.html.allow_picture = True
         self.html.feed(data)
         self.html.close()
         self.showPlain()

@@ -1,5 +1,5 @@
 from math import ceil
-from os import stat, getenv, path
+from os import getenv, path
 from pybloom import BloomFilter as BloomFilter1
 from pybloomfilter import BloomFilter as BloomFilter2
 import sqlite3
@@ -9,7 +9,6 @@ from time import time
 
 conn = sqlite3.connect(path.join(getenv("HOME"), '.config/PyBitmessage/messages.dat'))
 
-conn.text_factory = str
 cur = conn.cursor()
 rawlen = 0
 itemcount = 0

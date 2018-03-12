@@ -763,7 +763,7 @@ class Ui_MainWindow(object):
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
-import bitmessage_icons_rc
+# import bitmessage_icons_rc
 
 if __name__ == "__main__":
     import sys

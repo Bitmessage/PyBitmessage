@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # sound type constants
-SOUND_NONE = 0
+# SOUND_NONE = 0
 SOUND_KNOWN = 1
 SOUND_UNKNOWN = 2
 SOUND_CONNECTED = 3

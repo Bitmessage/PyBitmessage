@@ -74,8 +74,8 @@ def hex_to_point(h): return (decode(h[2:66],16),decode(h[66:],16))
 
 def point_to_hex(p): return '04'+encode(p[0],16,64)+encode(p[1],16,64)
 
-def multiply(privkey,pubkey):
-  return point_to_hex(base10_multiply(hex_to_point(pubkey),decode(privkey,16)))
+# def multiply(privkey,pubkey):
+#   return point_to_hex(base10_multiply(hex_to_point(pubkey),decode(privkey,16)))
 
 def privtopub(privkey):
   return point_to_hex(base10_multiply(G,decode(privkey,16)))
@@ -86,21 +86,21 @@ def add(p1,p2):
   else:
     return point_to_hex(base10_add(hex_to_point(p1),hex_to_point(p2)))
 
-def hash_160(string):
-   intermed = hashlib.sha256(string).digest()
-   ripemd160 = hashlib.new('ripemd160')
-   ripemd160.update(intermed)
-   return ripemd160.digest()
+# def hash_160(string):
+#    intermed = hashlib.sha256(string).digest()
+#    ripemd160 = hashlib.new('ripemd160')
+#    ripemd160.update(intermed)
+#    return ripemd160.digest()
 
-def dbl_sha256(string):
-   return hashlib.sha256(hashlib.sha256(string).digest()).digest()
+# def dbl_sha256(string):
+#    return hashlib.sha256(hashlib.sha256(string).digest()).digest()
   
-def bin_to_b58check(inp):
-   inp_fmtd = '\x00' + inp
-   leadingzbytes = len(re.match('^\x00*',inp_fmtd).group(0))
-   checksum = dbl_sha256(inp_fmtd)[:4]
-   return '1' * leadingzbytes + changebase(inp_fmtd+checksum,256,58)
+# def bin_to_b58check(inp):
+#    inp_fmtd = '\x00' + inp
+#    leadingzbytes = len(re.match('^\x00*',inp_fmtd).group(0))
+#    checksum = dbl_sha256(inp_fmtd)[:4]
+#    return '1' * leadingzbytes + changebase(inp_fmtd+checksum,256,58)
 
 #Convert a public key (in hex) to a Bitcoin address
-def pubkey_to_address(pubkey):
-   return bin_to_b58check(hash_160(changebase(pubkey,16,256)))
+# def pubkey_to_address(pubkey):
+#    return bin_to_b58check(hash_160(changebase(pubkey,16,256)))

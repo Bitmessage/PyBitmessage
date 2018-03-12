@@ -66,10 +66,10 @@ class TCPConnection(BMProto, TLSDispatcher):
             self.connect(self.destination)
             logger.debug("Connecting to %s:%i", self.destination.host, self.destination.port)
         encodedAddr = protocol.encodeHost(self.destination.host)
-        if protocol.checkIPAddress(encodedAddr, True) and not protocol.checkSocksIP(self.destination.host):
-            self.local = True
-        else:
-            self.local = False
+        # if protocol.checkIPAddress(encodedAddr, True) and not protocol.checkSocksIP(self.destination.host):
+        #     self.local = True
+        # else:
+        #     self.local = False
         #shared.connectedHostsList[self.destination] = 0
         ObjectTracker.__init__(self)
         self.bm_proto_reset()
@@ -91,68 +91,68 @@ class TCPConnection(BMProto, TLSDispatcher):
                 logger.debug("Skipping processing getdata due to missing object for %.2fs", delay)
                 self.skipUntil = time.time() + delay
 
-    def state_connection_fully_established(self):
-        self.set_connection_fully_established()
-        self.set_state("bm_header")
-        self.bm_proto_reset()
-        return True
+    # def state_connection_fully_established(self):
+    #     self.set_connection_fully_established()
+    #     self.set_state("bm_header")
+    #     self.bm_proto_reset()
+    #     return True
 
-    def set_connection_fully_established(self):
-        if not self.isOutbound and not self.local:
-            shared.clientHasReceivedIncomingConnections = True
-            UISignalQueue.put(('setStatusIcon', 'green'))
-        UISignalQueue.put(('updateNetworkStatusTab', (self.isOutbound, True, self.destination)))
-        self.antiIntersectionDelay(True)
-        self.fullyEstablished = True
-        if self.isOutbound:
-            knownnodes.increaseRating(self.destination)
-        if self.isOutbound:
-            Dandelion().maybeAddStem(self)
-        self.sendAddr()
-        self.sendBigInv()
+    # def set_connection_fully_established(self):
+    #     if not self.isOutbound and not self.local:
+    #         shared.clientHasReceivedIncomingConnections = True
+    #         UISignalQueue.put(('setStatusIcon', 'green'))
+    #     UISignalQueue.put(('updateNetworkStatusTab', (self.isOutbound, True, self.destination)))
+    #     self.antiIntersectionDelay(True)
+    #     self.fullyEstablished = True
+    #     if self.isOutbound:
+    #         knownnodes.increaseRating(self.destination)
+    #     if self.isOutbound:
+    #         Dandelion().maybeAddStem(self)
+    #     self.sendAddr()
+    #     self.sendBigInv()
 
-    def sendAddr(self):
-        # We are going to share a maximum number of 1000 addrs (per overlapping
-        # stream) with our peer. 500 from overlapping streams, 250 from the
-        # left child stream, and 250 from the right child stream.
-        maxAddrCount = BMConfigParser().safeGetInt("bitmessagesettings", "maxaddrperstreamsend", 500)
+    # def sendAddr(self):
+    #     # We are going to share a maximum number of 1000 addrs (per overlapping
+    #     # stream) with our peer. 500 from overlapping streams, 250 from the
+    #     # left child stream, and 250 from the right child stream.
+    #     maxAddrCount = BMConfigParser().safeGetInt("bitmessagesettings", "maxaddrperstreamsend", 500)
 
-        # init
-        addressCount = 0
-        payload = b''
+    #     # init
+    #     # addressCount = 0
+    #     payload = b''
 
-        templist = []
-        addrs = {}
-        for stream in self.streams:
-            with knownnodes.knownNodesLock:
-                if len(knownnodes.knownNodes[stream]) > 0:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
-                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
-                    elemCount = len(filtered)
-                    if elemCount > maxAddrCount:
-                        elemCount = maxAddrCount
-                    # only if more recent than 3 hours
-                    addrs[stream] = random.sample(filtered.items(), elemCount)
-                # sent 250 only if the remote isn't interested in it
-                if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streams:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
-                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
-                    elemCount = len(filtered)
-                    if elemCount > maxAddrCount / 2:
-                        elemCount = int(maxAddrCount / 2)
-                    addrs[stream * 2] = random.sample(filtered.items(), elemCount)
-                if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streams:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
-                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
-                    elemCount = len(filtered)
-                    if elemCount > maxAddrCount / 2:
-                        elemCount = int(maxAddrCount / 2)
-                    addrs[stream * 2 + 1] = random.sample(filtered.items(), elemCount)
-        for substream in addrs.keys():
-            for peer, params in addrs[substream]:
-                templist.append((substream, peer, params["lastseen"]))
-        if len(templist) > 0:
-            self.append_write_buf(BMProto.assembleAddr(templist))
+    #     templist = []
+    #     addrs = {}
+    #     for stream in self.streams:
+    #         with knownnodes.knownNodesLock:
+    #             if len(knownnodes.knownNodes[stream]) > 0:
+    #                 filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
+    #                     if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+    #                 elemCount = len(filtered)
+    #                 if elemCount > maxAddrCount:
+    #                     elemCount = maxAddrCount
+    #                 # only if more recent than 3 hours
+    #                 addrs[stream] = random.sample(filtered.items(), elemCount)
+    #             # sent 250 only if the remote isn't interested in it
+    #             if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streams:
+    #                 filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
+    #                     if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+    #                 elemCount = len(filtered)
+    #                 if elemCount > maxAddrCount / 2:
+    #                     elemCount = int(maxAddrCount / 2)
+    #                 addrs[stream * 2] = random.sample(filtered.items(), elemCount)
+    #             if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streams:
+    #                 filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
+    #                     if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+    #                 elemCount = len(filtered)
+    #                 if elemCount > maxAddrCount / 2:
+    #                     elemCount = int(maxAddrCount / 2)
+    #                 addrs[stream * 2 + 1] = random.sample(filtered.items(), elemCount)
+    #     for substream in addrs.keys():
+    #         for peer, params in addrs[substream]:
+    #             templist.append((substream, peer, params["lastseen"]))
+    #     if len(templist) > 0:
+    #         self.append_write_buf(BMProto.assembleAddr(templist))
 
     def sendBigInv(self):
         def sendChunk():
@@ -275,14 +275,14 @@ class TCPServer(AdvancedDispatcher):
                     BMConfigParser().save()
                 break
         self.destination = state.Peer(host, port)
-        self.bound = True
+        # self.bound = True
         self.listen(5)
 
-    def is_bound(self):
-        try:
-            return self.bound
-        except AttributeError:
-            return False
+    # def is_bound(self):
+    #     try:
+    #         return self.bound
+    #     except AttributeError:
+    #         return False
 
     def handle_accept(self):
         pair = self.accept()
@@ -314,12 +314,12 @@ if __name__ == "__main__":
             asyncore.loop(timeout=10, count=1)
         continue
 
-        proxy = Socks5BMConnection(host)
-        while len(asyncore.socket_map) > 0:
+        # proxy = Socks5BMConnection(host)
+        # while len(asyncore.socket_map) > 0:
 #            print "loop, state = %s" % (proxy.state)
-            asyncore.loop(timeout=10, count=1)
+        #     asyncore.loop(timeout=10, count=1)
 
-        proxy = Socks4aBMConnection(host)
-        while len(asyncore.socket_map) > 0:
+        # proxy = Socks4aBMConnection(host)
+        # while len(asyncore.socket_map) > 0:
 #            print "loop, state = %s" % (proxy.state)
-            asyncore.loop(timeout=10, count=1)
+            # asyncore.loop(timeout=10, count=1)

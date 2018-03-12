@@ -119,11 +119,11 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         except AttributeError:
             return True
 
-    def validate_bitmessagesettings_maxoutboundconnections(self, value):
-        try:
-            value = int(value)
-        except ValueError:
-            return False
-        if value < 0 or value > 8:
-            return False
-        return True
+    # def validate_bitmessagesettings_maxoutboundconnections(self, value):
+    #     try:
+    #         value = int(value)
+    #     except ValueError:
+    #         return False
+    #     if value < 0 or value > 8:
+    #         return False
+    #     return True

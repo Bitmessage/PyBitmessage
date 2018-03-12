@@ -129,8 +129,8 @@ class AddressPassPhraseValidatorMixin():
         else:
             return (QtGui.QValidator.Intermediate, pos)
 
-    def checkData(self):
-        return self.validate("", 0)
+    # def checkData(self):
+    #     return self.validate("", 0)
 
 class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
     def __init__(self, parent=None, passPhraseObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):

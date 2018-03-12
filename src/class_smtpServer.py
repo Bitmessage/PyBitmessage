@@ -1,7 +1,7 @@
 import asyncore
 import base64
 import email
-from email.parser import Parser
+# from email.parser import Parser
 from email.header import decode_header
 import re
 import signal
@@ -24,30 +24,30 @@ SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
 
 class smtpServerChannel(smtpd.SMTPChannel):
-    def smtp_EHLO(self, arg):
-        if not arg:
-            self.push('501 Syntax: HELO hostname')
-            return
-        self.push('250-PyBitmessage %s' % softwareVersion)
-        self.push('250 AUTH PLAIN')
+    # def smtp_EHLO(self, arg):
+    #     if not arg:
+    #         self.push('501 Syntax: HELO hostname')
+    #         return
+    #     self.push('250-PyBitmessage %s' % softwareVersion)
+    #     self.push('250 AUTH PLAIN')
 
-    def smtp_AUTH(self, arg):
-        if not arg or arg[0:5] not in ["PLAIN"]:
-            self.push('501 Syntax: AUTH PLAIN')
-            return
-        authstring = arg[6:]
-        try:
-            decoded = base64.b64decode(authstring)
-            correctauth = "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdusername", "") + \
-                    "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
-            logger.debug("authstring: %s / %s", correctauth, decoded)
-            if correctauth == decoded:
-                self.auth = True
-                self.push('235 2.7.0 Authentication successful')
-            else:
-                raise Exception("Auth fail")
-        except:
-            self.push('501 Authentication fail')
+    # def smtp_AUTH(self, arg):
+    #     if not arg or arg[0:5] not in ["PLAIN"]:
+    #         self.push('501 Syntax: AUTH PLAIN')
+    #         return
+    #     authstring = arg[6:]
+    #     try:
+    #         decoded = base64.b64decode(authstring)
+    #         correctauth = "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdusername", "") + \
+    #                 "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
+    #         logger.debug("authstring: %s / %s", correctauth, decoded)
+    #         if correctauth == decoded:
+    #             self.auth = True
+    #             self.push('235 2.7.0 Authentication successful')
+    #         else:
+    #             raise Exception("Auth fail")
+    #     except:
+    #         self.push('501 Authentication fail')
 
     def smtp_DATA(self, arg):
         if not hasattr(self, "auth") or not self.auth:
@@ -62,7 +62,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         if pair is not None:
             conn, addr = pair
 #            print >> DEBUGSTREAM, 'Incoming connection from %s' % repr(addr)
-            self.channel = smtpServerChannel(self, conn, addr)
+            # self.channel = smtpServerChannel(self, conn, addr)
 
     def send(self, fromAddress, toAddress, subject, message):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
@@ -101,61 +101,61 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         return ret
 
 
-    def process_message(self, peer, mailfrom, rcpttos, data):
+    # def process_message(self, peer, mailfrom, rcpttos, data):
 #        print 'Receiving message from:', peer
-        p = re.compile(".*<([^>]+)>")
-        if not hasattr(self.channel, "auth") or not self.channel.auth:
-            logger.error("Missing or invalid auth")
-            return
-        try:
-            self.msg_headers = Parser().parsestr(data)
-        except:
-            logger.error("Invalid headers")
-            return
+        # p = re.compile(".*<([^>]+)>")
+        # if not hasattr(self.channel, "auth") or not self.channel.auth:
+        #     logger.error("Missing or invalid auth")
+        #     return
+        # try:
+        #     self.msg_headers = Parser().parsestr(data)
+        # except:
+        #     logger.error("Invalid headers")
+        #     return
 
-        try:
-            sender, domain = p.sub(r'\1', mailfrom).split("@")
-            if domain != SMTPDOMAIN:
-                raise Exception("Bad domain %s", domain)
-            if sender not in BMConfigParser().addresses():
-                raise Exception("Nonexisting user %s", sender)
-        except Exception as err:
-            logger.debug("Bad envelope from %s: %s", mailfrom, repr(err))
-            msg_from = self.decode_header("from")
-            try:
-                msg_from = p.sub(r'\1', self.decode_header("from")[0])
-                sender, domain = msg_from.split("@")
-                if domain != SMTPDOMAIN:
-                    raise Exception("Bad domain %s", domain)
-                if sender not in BMConfigParser().addresses():
-                    raise Exception("Nonexisting user %s", sender)
-            except Exception as err:
-                logger.error("Bad headers from %s: %s", msg_from, repr(err))
-                return
+        # try:
+        #     sender, domain = p.sub(r'\1', mailfrom).split("@")
+        #     if domain != SMTPDOMAIN:
+        #         raise Exception("Bad domain %s", domain)
+        #     if sender not in BMConfigParser().addresses():
+        #         raise Exception("Nonexisting user %s", sender)
+        # except Exception as err:
+        #     logger.debug("Bad envelope from %s: %s", mailfrom, repr(err))
+        #     msg_from = self.decode_header("from")
+        #     try:
+        #         msg_from = p.sub(r'\1', self.decode_header("from")[0])
+        #         sender, domain = msg_from.split("@")
+        #         if domain != SMTPDOMAIN:
+        #             raise Exception("Bad domain %s", domain)
+        #         if sender not in BMConfigParser().addresses():
+        #             raise Exception("Nonexisting user %s", sender)
+        #     except Exception as err:
+        #         logger.error("Bad headers from %s: %s", msg_from, repr(err))
+        #         return
 
-        try:
-            msg_subject = self.decode_header('subject')[0]
-        except:
-            msg_subject = "Subject missing..."
+        # try:
+        #     msg_subject = self.decode_header('subject')[0]
+        # except:
+        #     msg_subject = "Subject missing..."
 
-        msg_tmp = email.message_from_string(data)
-        body = u''
-        for part in msg_tmp.walk():
-            if part and part.get_content_type() == "text/plain":
-                body += part.get_payload(decode=1).decode(part.get_content_charset('utf-8'), errors='replace')
+        # msg_tmp = email.message_from_string(data)
+        # body = u''
+        # for part in msg_tmp.walk():
+        #     if part and part.get_content_type() == "text/plain":
+        #         body += part.get_payload(decode=1).decode(part.get_content_charset('utf-8'), errors='replace')
 
-        for to in rcpttos:
-            try:
-                rcpt, domain = p.sub(r'\1', to).split("@")
-                if domain != SMTPDOMAIN:
-                    raise Exception("Bad domain %s", domain)
-                logger.debug("Sending %s to %s about %s", sender, rcpt, msg_subject)
-                self.send(sender, rcpt, msg_subject, body)
-                logger.info("Relayed %s to %s", sender, rcpt) 
-            except Exception as err:
-                logger.error( "Bad to %s: %s", to, repr(err))
-                continue
-        return
+        # for to in rcpttos:
+        #     try:
+        #         rcpt, domain = p.sub(r'\1', to).split("@")
+        #         if domain != SMTPDOMAIN:
+        #             raise Exception("Bad domain %s", domain)
+        #         logger.debug("Sending %s to %s about %s", sender, rcpt, msg_subject)
+        #         self.send(sender, rcpt, msg_subject, body)
+        #         logger.info("Relayed %s to %s", sender, rcpt) 
+        #     except Exception as err:
+        #         logger.error( "Bad to %s: %s", to, repr(err))
+        #         continue
+        # return
 
 class smtpServer(threading.Thread, StoppableThread):
     def __init__(self, parent=None):
@@ -167,16 +167,16 @@ class smtpServer(threading.Thread, StoppableThread):
         super(smtpServer, self).stopThread()
         self.server.close()
         return
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #        for ip in ('127.0.0.1', BMConfigParser().get('bitmessagesettings', 'onionbindip')):
-        for ip in ('127.0.0.1'):
-            try:
-                s.connect((ip, LISTENPORT))
-                s.shutdown(socket.SHUT_RDWR)
-                s.close()
-                break
-            except:
-                pass
+        # for ip in ('127.0.0.1'):
+        #     try:
+        #         s.connect((ip, LISTENPORT))
+        #         s.shutdown(socket.SHUT_RDWR)
+        #         s.close()
+        #         break
+        #     except:
+        #         pass
 
     def run(self):
         asyncore.loop(1)

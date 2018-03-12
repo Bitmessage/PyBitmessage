@@ -21,17 +21,17 @@ def powQueueSize():
             pass
     return curWorkerQueue
 
-def convertIntToString(n):
-    a = __builtins__.hex(n)
-    if a[-1:] == 'L':
-        a = a[:-1]
-    if (len(a) % 2) == 0:
-        return unhexlify(a[2:])
-    else:
-        return unhexlify('0' + a[2:])
+# def convertIntToString(n):
+#     a = __builtins__.hex(n)
+#     if a[-1:] == 'L':
+#         a = a[:-1]
+#     if (len(a) % 2) == 0:
+#         return unhexlify(a[2:])
+#     else:
+#         return unhexlify('0' + a[2:])
 
-def convertStringToInt(s):
-    return int(hexlify(s), 16)
+# def convertStringToInt(s):
+#     return int(hexlify(s), 16)
 
 def allThreadTraceback(frame):
     id2name = dict([(th.ident, th.name) for th in enumerate()])
@@ -84,5 +84,5 @@ def isHostInPrivateIPRange(host):
             return True
     return False
 
-def addDataPadding(data, desiredMsgLength = 12, paddingChar = '\x00'):
-    return data + paddingChar * (desiredMsgLength - len(data))
+# def addDataPadding(data, desiredMsgLength = 12, paddingChar = '\x00'):
+#     return data + paddingChar * (desiredMsgLength - len(data))

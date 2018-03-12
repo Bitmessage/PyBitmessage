@@ -64,11 +64,11 @@ class RandomTrackingDict(object):
             del self.dictionary[key]
             self.len -= 1
 
-    def setMaxPending(self, maxPending):
-        self.maxPending = maxPending
+    # def setMaxPending(self, maxPending):
+    #     self.maxPending = maxPending
 
-    def setPendingTimeout(self, pendingTimeout):
-        self.pendingTimeout = pendingTimeout
+    # def setPendingTimeout(self, pendingTimeout):
+    #     self.pendingTimeout = pendingTimeout
 
     def randomKeys(self, count=1):
         if self.len == 0 or ((self.pendingLen >= self.maxPending or

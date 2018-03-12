@@ -9,7 +9,6 @@
 
 import os
 import sys
-import StringIO
 from textwrap import *
 
 import time
@@ -35,7 +34,6 @@ import shutdown
 quit = False
 menutab = 1
 menu = ["Inbox", "Send", "Sent", "Your Identities", "Subscriptions", "Address Book", "Blacklist", "Network Status"]
-naptime = 100
 log = ""
 logpad = None
 inventorydata = 0
@@ -47,7 +45,6 @@ sentbox = []
 sentcur = 0
 addresses = []
 addrcur = 0
-addrcopy = 0
 subscriptions = []
 subcur = 0
 addrbook = []
@@ -71,7 +68,6 @@ class errLog:
     def flush(self):
         pass
 printlog = printLog()
-errlog = errLog()
 
 
 def cpair(a):

@@ -92,25 +92,25 @@ _socks4errors = ("request granted",
     "request rejected because the client program and identd report different user-ids",
     "unknown error")
 
-def setdefaultproxy(proxytype=None, addr=None, port=None, rdns=True, username=None, password=None):
-    """setdefaultproxy(proxytype, addr[, port[, rdns[, username[, password]]]])
-    Sets a default proxy which all further socksocket objects will use,
-    unless explicitly changed.
-    """
-    global _defaultproxy
-    _defaultproxy = (proxytype, addr, port, rdns, username, password)
+# def setdefaultproxy(proxytype=None, addr=None, port=None, rdns=True, username=None, password=None):
+#     """setdefaultproxy(proxytype, addr[, port[, rdns[, username[, password]]]])
+#     Sets a default proxy which all further socksocket objects will use,
+#     unless explicitly changed.
+#     """
+#     global _defaultproxy
+#     _defaultproxy = (proxytype, addr, port, rdns, username, password)
 
-def wrapmodule(module):
-    """wrapmodule(module)
-    Attempts to replace a module's socket library with a SOCKS socket. Must set
-    a default proxy using setdefaultproxy(...) first.
-    This will only work on modules that import socket directly into the namespace;
-    most of the Python Standard Library falls into this category.
-    """
-    if _defaultproxy != None:
-        module.socket.socket = socksocket
-    else:
-        raise GeneralProxyError((4, "no proxy specified"))
+# def wrapmodule(module):
+#     """wrapmodule(module)
+#     Attempts to replace a module's socket library with a SOCKS socket. Must set
+#     a default proxy using setdefaultproxy(...) first.
+#     This will only work on modules that import socket directly into the namespace;
+#     most of the Python Standard Library falls into this category.
+#     """
+#     if _defaultproxy != None:
+#         module.socket.socket = socksocket
+#     else:
+#         raise GeneralProxyError((4, "no proxy specified"))
 
 class socksocket(socket.socket):
     """socksocket([family[, type[, proto]]]) -> socket object
@@ -287,17 +287,17 @@ class socksocket(socket.socket):
         boundport = struct.unpack(">H", self.__recvall(2))[0]
         return ip
     
-    def getproxysockname(self):
-        """getsockname() -> address info
-        Returns the bound IP address and port number at the proxy.
-        """
-        return self.__proxysockname
+    # def getproxysockname(self):
+    #     """getsockname() -> address info
+    #     Returns the bound IP address and port number at the proxy.
+    #     """
+    #     return self.__proxysockname
 
-    def getproxypeername(self):
-        """getproxypeername() -> address info
-        Returns the IP and port number of the proxy.
-        """
-        return _orgsocket.getpeername(self)
+    # def getproxypeername(self):
+    #     """getproxypeername() -> address info
+    #     Returns the IP and port number of the proxy.
+    #     """
+    #     return _orgsocket.getpeername(self)
 
     def getpeername(self):
         """getpeername() -> address info
@@ -306,8 +306,8 @@ class socksocket(socket.socket):
         """
         return self.__proxypeername
 
-    def getproxytype(self):
-        return self.__proxy[0]
+    # def getproxytype(self):
+    #     return self.__proxy[0]
 
     def __negotiatesocks4(self,destaddr,destport):
         """__negotiatesocks4(self,destaddr,destport)

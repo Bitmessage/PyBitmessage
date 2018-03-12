@@ -302,7 +302,7 @@ def poll_poller(timeout=0.0, map=None):
 
 # Aliases for backward compatibility
 poll = select_poller
-poll2 = poll3 = poll_poller
+# poll2 = poll3 = poll_poller
 
 def epoll_poller(timeout=0.0, map=None):
     """A poller which uses epoll(), supported on Linux 2.5.44 and newer."""
@@ -468,7 +468,7 @@ class dispatcher:
     connected = False
     accepting = False
     connecting = False
-    closing = False
+    # closing = False
     addr = None
     ignore_log_types = frozenset(['warning'])
     poller_registered = False
@@ -563,7 +563,7 @@ class dispatcher:
         self.poller_registered = False
 
     def create_socket(self, family=socket.AF_INET, socket_type=socket.SOCK_STREAM):
-        self.family_and_type = family, socket_type
+        # self.family_and_type = family, socket_type
         sock = socket.socket(family, socket_type)
         sock.setblocking(0)
         self.set_socket(sock)
@@ -762,7 +762,7 @@ class dispatcher:
             self.handle_expt()
 
     def handle_error(self):
-        nil, t, v, tbinfo = compact_traceback()
+        _, t, v, tbinfo = compact_traceback()
 
         # sometimes a user repr method will crash.
         try:
@@ -811,28 +811,28 @@ class dispatcher:
 # [for more sophisticated usage use asynchat.async_chat]
 # ---------------------------------------------------------------------------
 
-class dispatcher_with_send(dispatcher):
+# class dispatcher_with_send(dispatcher):
 
-    def __init__(self, sock=None, map=None):
-        dispatcher.__init__(self, sock, map)
-        self.out_buffer = b''
+#     def __init__(self, sock=None, map=None):
+#         dispatcher.__init__(self, sock, map)
+#         self.out_buffer = b''
 
-    def initiate_send(self):
-        num_sent = 0
-        num_sent = dispatcher.send(self, self.out_buffer[:512])
-        self.out_buffer = self.out_buffer[num_sent:]
+#     def initiate_send(self):
+#         num_sent = 0
+#         num_sent = dispatcher.send(self, self.out_buffer[:512])
+#         self.out_buffer = self.out_buffer[num_sent:]
 
-    def handle_write(self):
-        self.initiate_send()
+#     def handle_write(self):
+#         self.initiate_send()
 
-    def writable(self):
-        return (not self.connected) or len(self.out_buffer)
+#     def writable(self):
+#         return (not self.connected) or len(self.out_buffer)
 
-    def send(self, data):
-        if self.debug:
-            self.log_info('sending %s' % repr(data))
-        self.out_buffer = self.out_buffer + data
-        self.initiate_send()
+#     def send(self, data):
+#         if self.debug:
+#             self.log_info('sending %s' % repr(data))
+#         self.out_buffer = self.out_buffer + data
+#         self.initiate_send()
 
 # ---------------------------------------------------------------------------
 # used for debugging.
@@ -892,53 +892,53 @@ def close_all(map=None, ignore_all=False):
 if os.name == 'posix':
     import fcntl
 
-    class file_wrapper:
-        # Here we override just enough to make a file
-        # look like a socket for the purposes of asyncore.
-        # The passed fd is automatically os.dup()'d
+    # class file_wrapper:
+    #     # Here we override just enough to make a file
+    #     # look like a socket for the purposes of asyncore.
+    #     # The passed fd is automatically os.dup()'d
 
-        def __init__(self, fd):
-            self.fd = os.dup(fd)
+    #     def __init__(self, fd):
+    #         self.fd = os.dup(fd)
 
-        def recv(self, *args):
-            return os.read(self.fd, *args)
+    #     def recv(self, *args):
+    #         return os.read(self.fd, *args)
 
-        def send(self, *args):
-            return os.write(self.fd, *args)
+    #     def send(self, *args):
+    #         return os.write(self.fd, *args)
 
-        def getsockopt(self, level, optname, buflen=None):
-            if (level == socket.SOL_SOCKET and
-                optname == socket.SO_ERROR and
-                not buflen):
-                return 0
-            raise NotImplementedError("Only asyncore specific behaviour "
-                                      "implemented.")
+    #     def getsockopt(self, level, optname, buflen=None):
+    #         if (level == socket.SOL_SOCKET and
+    #             optname == socket.SO_ERROR and
+    #             not buflen):
+    #             return 0
+    #         raise NotImplementedError("Only asyncore specific behaviour "
+    #                                   "implemented.")
 
-        read = recv
-        write = send
+    #     read = recv
+    #     write = send
 
-        def close(self):
-            os.close(self.fd)
+    #     def close(self):
+    #         os.close(self.fd)
 
-        def fileno(self):
-            return self.fd
+    #     def fileno(self):
+    #         return self.fd
 
-    class file_dispatcher(dispatcher):
+    # class file_dispatcher(dispatcher):
 
-        def __init__(self, fd, map=None):
-            dispatcher.__init__(self, None, map)
-            self.connected = True
-            try:
-                fd = fd.fileno()
-            except AttributeError:
-                pass
-            self.set_file(fd)
-            # set it to non-blocking mode
-            flags = fcntl.fcntl(fd, fcntl.F_GETFL, 0)
-            flags = flags | os.O_NONBLOCK
-            fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+    #     def __init__(self, fd, map=None):
+    #         dispatcher.__init__(self, None, map)
+    #         self.connected = True
+    #         try:
+    #             fd = fd.fileno()
+    #         except AttributeError:
+    #             pass
+    #         self.set_file(fd)
+    #         # set it to non-blocking mode
+    #         flags = fcntl.fcntl(fd, fcntl.F_GETFL, 0)
+    #         flags = flags | os.O_NONBLOCK
+    #         fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
-        def set_file(self, fd):
-            self.socket = file_wrapper(fd)
-            self._fileno = self.socket.fileno()
-            self.add_channel()
+    #     def set_file(self, fd):
+    #         self.socket = file_wrapper(fd)
+    #         self._fileno = self.socket.fileno()
+    #         self.add_channel()

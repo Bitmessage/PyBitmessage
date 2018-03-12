@@ -28,8 +28,8 @@ def encrypt(msg,hexPubkey):
 def decrypt(msg,hexPrivkey):
     return makeCryptor(hexPrivkey).decrypt(msg)
 # Decrypts message with an existing pyelliptic.ECC.ECC object
-def decryptFast(msg,cryptor):
-    return cryptor.decrypt(msg)
+# def decryptFast(msg,cryptor):
+#     return cryptor.decrypt(msg)
 # Signs with hex private key
 def sign(msg,hexPrivkey):
     # pyelliptic is upgrading from SHA1 to SHA256 for signing. We must 

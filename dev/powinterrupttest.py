@@ -44,6 +44,5 @@ signal.signal(signal.SIGTERM, signal_handler)
 bso = ctypes.CDLL(os.path.join("bitmsghash", "bitmsghash.so"))
 
 bmpow = bso.BitmessagePOW
-bmpow.restype = ctypes.c_ulonglong
 
 _doCPoW(2**44, "")

@@ -71,13 +71,13 @@ class Proxy(AdvancedDispatcher):
             raise ValueError
         self.__class__._onion_proxy = address
 
-    @property
-    def onion_auth(self):
-        return self.__class__._onion_auth
+    # @property
+    # def onion_auth(self):
+    #     return self.__class__._onion_auth
 
-    @onion_auth.setter
-    def onion_auth(self, authTuple):
-        self.__class__._onion_auth = authTuple
+    # @onion_auth.setter
+    # def onion_auth(self, authTuple):
+    #     self.__class__._onion_auth = authTuple
 
     def __init__(self, address):
         if not isinstance(address, state.Peer):

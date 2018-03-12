@@ -20,15 +20,15 @@ def saveKnownNodes(dirName = None):
         with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
             pickle.dump(knownNodes, output)
 
-def increaseRating(peer):
-    increaseAmount = 0.1
-    maxRating = 1
-    with knownNodesLock:
-        for stream in knownNodes.keys():
-            try:
-                knownNodes[stream][peer]["rating"] = min(knownNodes[stream][peer]["rating"] + increaseAmount, maxRating)
-            except KeyError:
-                pass
+# def increaseRating(peer):
+#     increaseAmount = 0.1
+#     maxRating = 1
+#     with knownNodesLock:
+#         for stream in knownNodes.keys():
+#             try:
+#                 knownNodes[stream][peer]["rating"] = min(knownNodes[stream][peer]["rating"] + increaseAmount, maxRating)
+#             except KeyError:
+#                 pass
 
 def decreaseRating(peer):
     decreaseAmount = 0.1

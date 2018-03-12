@@ -5,16 +5,6 @@ from binascii import hexlify, unhexlify
 
 #from debug import logger
 
-#There is another copy of this function in Bitmessagemain.py
-def convertIntToString(n):
-    a = __builtins__.hex(n)
-    if a[-1:] == 'L':
-        a = a[:-1]
-    if (len(a) % 2) == 0:
-        return unhexlify(a[2:])
-    else:
-        return unhexlify('0'+a[2:])
-
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 def encodeBase58(num, alphabet=ALPHABET):

@@ -42,7 +42,7 @@ class InventoryStorage(Storage, collections.MutableMapping):
     def clean(self):
         raise NotImplementedError
 
-class MailboxStorage(Storage, collections.MutableMapping):
-    def __init__(self):
+# class MailboxStorage(Storage, collections.MutableMapping):
+#     def __init__(self):
 #        super(self.__class__, self).__init__()
-        pass
+#        pass
