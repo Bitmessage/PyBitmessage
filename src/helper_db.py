@@ -9,6 +9,9 @@ from helper_sql import sqlExecute, sqlQuery
 
 __all__ = ["search_sql", "check_match"]
 
+_groups = ("blacklist", "whitelist", "subscriptions", "addressbook")
+_groups_enable = ("blacklist", "whitelist", "subscriptions")
+
 
 # + genAckPayload
 def put_sent(
@@ -93,8 +96,18 @@ def put_pubkey(address, address_version, data, used_personally=None):
 
 
 def _in_group_already(address, group="addressbook"):
-    return sqlQuery(
-        "SELECT enabled FROM %s WHERE address=?" % group, address)
+    if group not in _groups:
+        return True
+    # elif group in _groups_enable:
+    #     try:
+    #         return sqlQuery(
+    #             "SELECT enabled FROM %s WHERE address=?" % group, address
+    #         )[-1][0]
+    #     except IndexError:
+    #         return
+    else:
+        return sqlQuery(
+            "SELECT * FROM %s WHERE address=?" % group, address)
 
 
 def put_addresslist(label, address, group="blacklist", enabled=True):
@@ -148,6 +161,8 @@ def get_addressbook():
 
 def get_addresslist(group="blacklist"):
     """Generator for address list given by group arg"""
+    if group not in _groups:
+        return
     queryreturn = sqlQuery("SELECT * FROM %s" % group)
     for row in queryreturn:
         yield row
@@ -158,6 +173,8 @@ def get_label(address, group="addressbook"):
     Get address label from address list given by group arg
     (default is addressbook)
     """
+    if group not in _groups:
+        return
     queryreturn = sqlQuery(
         "SELECT label FROM %s WHERE address=?" % group, address)
     try:
@@ -168,6 +185,8 @@ def get_label(address, group="addressbook"):
 
 def set_label(address, label, group="addressbook"):
     """Set address label in the address list given by group arg"""
+    if group not in _groups:
+        return
     sqlExecute("UPDATE %s set label=? WHERE address=?" % group, label, address)
 
 
