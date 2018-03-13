@@ -4,7 +4,6 @@ from threading import RLock
 from inventory import Inventory
 import network.connectionpool
 from network.dandelion import Dandelion
-from network.stats import pendingDownload
 from randomtrackingdict import RandomTrackingDict
 from state import missingObjects
 
@@ -55,7 +54,7 @@ class ObjectTracker(object):
     def clean(self):
         if self.lastCleaned < time.time() - ObjectTracker.invCleanPeriod:
             if haveBloom:
-                if pendingDownload() == 0:
+                if len(missingObjects) == 0:
                     self.initInvBloom()
                 self.initAddrBloom()
             else:
