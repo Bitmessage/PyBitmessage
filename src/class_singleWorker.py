@@ -19,7 +19,7 @@ import helper_inbox
 from helper_generic import addDataPadding
 import helper_msgcoding
 from helper_threading import *
-from inventory import Inventory, PendingUpload
+from inventory import Inventory
 import l10n
 import protocol
 import queues
@@ -199,7 +199,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
-        PendingUpload().add(inventoryHash)
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
@@ -289,7 +288,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
-        PendingUpload().add(inventoryHash)
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
@@ -379,7 +377,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
-        PendingUpload().add(inventoryHash)
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
@@ -510,7 +507,6 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType = 3
             Inventory()[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
-            PendingUpload().add(inventoryHash)
             logger.info('sending inv (within sendBroadcast function) for object: ' + hexlify(inventoryHash))
             queues.invQueue.put((streamNumber, inventoryHash))
 
@@ -834,7 +830,6 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType = 2
             Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
-            PendingUpload().add(inventoryHash)
             if BMConfigParser().has_section(toaddress) or not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Sent at %1").arg(l10n.formatTimestamp()))))
             else:
@@ -941,7 +936,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
-        PendingUpload().add(inventoryHash)
         logger.info('sending inv (for the getpubkey message)')
         queues.invQueue.put((streamNumber, inventoryHash))
         
