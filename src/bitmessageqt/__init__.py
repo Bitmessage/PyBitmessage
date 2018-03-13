@@ -47,9 +47,7 @@ from account import (
     GatewayAccount, MailchuckAccount, AccountColor)
 import dialogs
 from helper_generic import powQueueSize
-from inventory import (
-    PendingDownloadQueue, PendingUpload,
-    PendingUploadDeadlineException)
+from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import knownnodes
 import paths
@@ -2701,10 +2699,10 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or PendingUpload().len() > 0):
+        if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
                     _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
-                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, PendingUpload().len()) + "\n\n" + 
+                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, pendingUpload()) + "\n\n" + 
                     _translate("MainWindow", "Wait until these tasks finish?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.No:
@@ -2712,16 +2710,14 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
-        if PendingDownloadQueue.totalSize() > 0:
+        if pendingDownload() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, PendingDownloadQueue.totalSize()),
+                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, pendingDownload()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
-            else:
-                PendingDownloadQueue.stop()
 
         if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
@@ -2752,7 +2748,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while PendingDownloadQueue.totalSize() > 0:
+            while pendingDownload() > 0:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2794,19 +2790,18 @@ class MyForm(settingsmixin.SMainWindow):
             # check if upload (of objects created locally) pending
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for objects to be sent... %1%").arg(50))
-            try:
-                while PendingUpload().progress() < 1:
-                    self.updateStatusBar(_translate(
-                        "MainWindow",
-                        "Waiting for objects to be sent... %1%"
-                        ).arg(int(50 + 20 * PendingUpload().progress()))
-                    )
-                    time.sleep(0.5)
-                    QtCore.QCoreApplication.processEvents(
-                        QtCore.QEventLoop.AllEvents, 1000
-                    )
-            except PendingUploadDeadlineException:
-                pass
+            maxPendingUpload = max(1, pendingUpload())
+                   
+            while pendingUpload() > 1:
+                self.updateStatusBar(_translate(
+                    "MainWindow",
+                    "Waiting for objects to be sent... %1%"
+                    ).arg(int(50 + 20 * (pendingUpload()/maxPendingUpload)))
+                )
+                time.sleep(0.5)
+                QtCore.QCoreApplication.processEvents(
+                    QtCore.QEventLoop.AllEvents, 1000
+                )
 
             QtCore.QCoreApplication.processEvents(
                 QtCore.QEventLoop.AllEvents, 1000
