@@ -3,8 +3,10 @@
 A menu plugin showing QR-Code for bitmessage address in modal dialog.
 """
 
-from PyQt4 import QtGui, QtCore
+import urllib
+
 import qrcode
+from PyQt4 import QtGui, QtCore
 
 from pybitmessage.tr import _translate
 
@@ -46,7 +48,7 @@ class QRCodeDialog(QtGui.QDialog):
         font.setWeight(75)
         self.label.setFont(font)
         self.label.setAlignment(
-            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         buttonBox = QtGui.QDialogButtonBox(self)
         buttonBox.setOrientation(QtCore.Qt.Horizontal)
         buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok)
@@ -63,9 +65,11 @@ class QRCodeDialog(QtGui.QDialog):
 
     def render(self, text):
         """Draw QR-code and address in labels"""
+        pixmap = qrcode.make(text, image_factory=Image).pixmap()
+        self.image.setPixmap(pixmap)
         self.label.setText(text)
-        self.image.setPixmap(
-            qrcode.make(text, image_factory=Image).pixmap())
+        self.label.setToolTip(text)
+        self.label.setFixedWidth(pixmap.width())
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 
@@ -77,7 +81,13 @@ def connect_plugin(form):
             dialog = form.qrcode_dialog
         except AttributeError:
             form.qrcode_dialog = dialog = QRCodeDialog(form)
-        dialog.render('bitmessage:' + str(form.getCurrentAccount()))
+        account = form.getCurrentItem()
+        label = account._getLabel()
+        dialog.render(
+            'bitmessage:%s' % account.address + (
+                '?' + urllib.urlencode({'label': label.encode('utf-8')})
+                if label != account.address else '')
+        )
         dialog.exec_()
 
     return on_action_ShowQR, _translate("MainWindow", "Show QR-code")
