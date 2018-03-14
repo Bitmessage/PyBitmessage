@@ -112,8 +112,7 @@ if __name__ == "__main__":
         zip_safe=False,
         entry_points={
             'bitmessage.gui.menu': [
-                'popMenuYourIdentities.qrcode = '
-                'pybitmessage.plugins.qrcodeui [qrcode]'
+                'address.qrcode = pybitmessage.plugins.menu_qrcode [qrcode]'
             ],
             'bitmessage.notification.message': [
                 'notify2 = pybitmessage.plugins.notification_notify2'
