@@ -84,13 +84,13 @@ class varintDecodeError(Exception):
 
 
 def decodeVarint(data):
-    """
-    Decodes an encoded varint to an integer and returns it.
+    """Decode an encoded varint.
+
+    Decode an encoded varint to an integer and returns it.
     Per protocol v3, the encoded value must be encoded with
     the minimum amount of data possible or else it is malformed.
     Returns a tuple: (theEncodedValue, theSizeOfTheVarintInBytes)
     """
-
     if len(data) == 0:
         return (0, 0)
     firstByte, = unpack('>B', data[0:1])
@@ -178,8 +178,10 @@ def encodeAddress(version, stream, ripe):
 
 
 def decodeAddress(address):
-    '''returns (status, address version number, stream number, data
-    (almost certainly a ripe hash))'''
+    """Decode Addressmethod.
+
+    returns (status, address version number, stream number, data
+    (almost certainly a ripe hash))."""
 
     address = str(address).strip()
 
@@ -190,8 +192,8 @@ def decodeAddress(address):
     if integer == 0:
         status = 'invalidcharacters'
         return status, 0, 0, ""
-    '''after converting to hex, the string will be prepended with a 0x and
-     appended with a L'''
+    # after converting to hex, the string will be prepended with a 0x and
+    # appended with a L
     hexdata = hex(integer)[2:-1]
 
     if len(hexdata) % 2 != 0:
