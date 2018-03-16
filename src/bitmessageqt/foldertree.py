@@ -510,6 +510,12 @@ class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
         self.address = address
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
+    def data(self, role):
+        if role == QtCore.Qt.ToolTipRole:
+            return self.address
+        if role == QtCore.Qt.DecorationRole:
+            return
+        return super(Ui_AddressBookWidgetItemAddress, self).data(role)
 
 class AddressBookCompleter(QtGui.QCompleter):
     def __init__(self):
