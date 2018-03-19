@@ -799,7 +799,7 @@ class singleWorker(threading.Thread, StoppableThread):
                             self.requestPubKey(toaddress)
                             continue
                             # on with the next msg on which we can do some work
-                            # At this point we know that we have the necessary 
+                            # At this point we know that we have the necessary
                             # pubkey in the pubkeys table.
 
             TTL *= 2**retryNumber

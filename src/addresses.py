@@ -51,7 +51,6 @@ def decodeBase58(string, alphabet=ALPHABET):
     """
     base = len(alphabet)
     num = 0
-
     try:
         for char in string:
             num *= base
@@ -253,12 +252,14 @@ def decodeAddress(address):
         embeddedRipeData = data[bytesUsedByVersionNumber +
                                 bytesUsedByStreamNumber:-4]
         if len(embeddedRipeData) == 19:
-            return status, addressVersionNumber, streamNumber, '\x00' + embeddedRipeData
+            return status, addressVersionNumber, streamNumber, \
+                '\x00', embeddedRipeData
         elif len(embeddedRipeData) == 20:
-            return status, addressVersionNumber, streamNumber, embeddedRipeData
+            return status, addressVersionNumber, streamNumber, \
+                embeddedRipeData
         elif len(embeddedRipeData) == 18:
-            return status, addressVersionNumber, streamNumber, '\x00\x00'
-            + embeddedRipeData
+            return status, addressVersionNumber, streamNumber, \
+                '\x00\x00', embeddedRipeData
         elif len(embeddedRipeData) < 18:
             return 'ripetooshort', 0, 0, ""
         elif len(embeddedRipeData) > 20:
