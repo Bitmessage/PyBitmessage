@@ -5,8 +5,8 @@ PREV_VERSION=0.4.4
 VERSION=0.6.0
 RELEASE=1
 SOURCEDIR=.
-ARCH_TYPE=`uname -m`
-CURRDIR=`pwd`
+ARCH_TYPE=$(uname -m)
+CURRDIR=$(pwd)
 SOURCE=~/ebuild/${APP}-${VERSION}.tar.gz
 
 
@@ -29,5 +29,4 @@ mv ../${APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
 # rename the root directory without the version number
-mv ../${APP}-${VERSION} ../${APP}
-
+mv ../${APP}-${VERSION} ../${APP} 
