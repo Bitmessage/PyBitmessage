@@ -3,8 +3,8 @@
 For an up-to-date version of these instructions, please visit the
 [Bitmessage Wiki](https://bitmessage.org/wiki/Compiling_instructions).
 
-PyBitmessage can be run either straight from source or from an installed
-package.
+PyBitmessage can be run either straight from python source or from an installed
+package using e.g. apt or octopi.
 
 ## Dependencies
 Before running PyBitmessage, make sure you have all the necessary dependencies
