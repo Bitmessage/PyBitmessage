@@ -253,13 +253,13 @@ def decodeAddress(address):
                                 bytesUsedByStreamNumber:-4]
         if len(embeddedRipeData) == 19:
             return status, addressVersionNumber, streamNumber, \
-                '\x00', embeddedRipeData
+                '\x00' + embeddedRipeData
         elif len(embeddedRipeData) == 20:
             return status, addressVersionNumber, streamNumber, \
                 embeddedRipeData
         elif len(embeddedRipeData) == 18:
             return status, addressVersionNumber, streamNumber, \
-                '\x00\x00', embeddedRipeData
+                '\x00\x00' + embeddedRipeData
         elif len(embeddedRipeData) < 18:
             return 'ripetooshort', 0, 0, ""
         elif len(embeddedRipeData) > 20:
@@ -281,7 +281,7 @@ def decodeAddress(address):
         else:
             x00string = '\x00' * (20 - len(embeddedRipeData))
             return status, addressVersionNumber, streamNumber,\
-                x00string, embeddedRipeData
+                x00string + embeddedRipeData
 
 
 def addBMIfNotPresent(address):
