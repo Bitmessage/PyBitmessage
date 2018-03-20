@@ -30,6 +30,10 @@ logger.setLevel(logging.ERROR)
 
 
 def check_hashlib():
+    """Do hashlib check.
+
+    The hashlib module check with version as if it included or not in The Python Standard library , its a module containing an interface to the most popular hashing algorithms. hashlib implements some of the algorithms, however if  OpenSSL installed, hashlib is able to use this algorithms as well.
+    """
     if sys.hexversion < 0x020500F0:
         logger.error(
             'The hashlib module is not included\
@@ -53,6 +57,11 @@ def check_hashlib():
 
 
 def check_sqlite():
+     """Do sqlite check.
+
+    Simply check sqlite3 module if exist or not with hexversion
+    support in python version for specifieed platform.
+    """
     if sys.hexversion < 0x020500F0:
         logger.error(
             'The sqlite3 module is not included in this\
@@ -107,6 +116,11 @@ def check_sqlite():
 
 
 def check_openssl():
+    """Do openssl dependency check.
+
+    Here we are checking for openssl with its all dependent libraries
+    and version checking.
+    """
     try:
         import ctypes
     except ImportError:
@@ -186,6 +200,12 @@ def check_openssl():
 
 
 def check_curses():
+     """Do curses dependency check.
+
+    Here we are checking for curses if available or not with check 
+    as interface requires the pythondialog\ package and the dialog
+    utility.
+    """
     if sys.hexversion < 0x20600F0:
         logger.error(
             'The curses interface requires the pythondialog\
@@ -216,6 +236,11 @@ def check_curses():
 
 
 def check_pyqt():
+    """Do pyqt dependency check.
+
+    Here we are checking for PyQt4 with its version, as for it require
+    PyQt 4.7 or later.
+    """
     try:
         import PyQt4.QtCore
     except ImportError:
@@ -272,6 +297,11 @@ def check_pyqt():
 
 
 def check_msgpack():
+    """Do sgpack module check.
+
+    simply checking if msgpack package with all its dependency 
+    is available or not as recommended for messages coding.
+    """
     try:
         import msgpack
     except ImportError:
@@ -317,6 +347,13 @@ def check_msgpack():
 
 
 def check_dependencies(verbose=False, optional=False):
+    """Do dependency check.
+
+    It identifies project dependencies and checks if there are
+    any known, publicly disclosed, vulnerabilities.basically
+    scan applications (and their dependent libraries) so that
+    easily identify any known vulnerable components.
+    """
     if verbose:
         logger.setLevel(logging.INFO)
 
@@ -360,4 +397,5 @@ def check_dependencies(verbose=False, optional=False):
 
 
 if __name__ == '__main__':
+    """Check Dependencies"""
     check_dependencies(True, True)
