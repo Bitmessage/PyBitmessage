@@ -1555,6 +1555,8 @@ class MyForm(settingsmixin.SMainWindow):
                 BMConfigParser().save()
             elif dialog.radioButtonConfigureNetwork.isChecked():
                 self.click_actionSettings()
+            else:
+                self._firstrun = False
 
     def showMigrationWizard(self, level):
         self.migrationWizardInstance = Ui_MigrationWizard(["a"])
