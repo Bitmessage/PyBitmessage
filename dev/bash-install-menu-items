@@ -1,0 +1,25 @@
+
+this is how the menu looks, if you run   BMinstallMenu :
+
+
+   1. echo " clone BitMessage repo below current dir   " ;  git clone      "https  ...  invisible but works  - bash quirk 
+   2. echo " check dependencies i.e. py modules etc.   " ;  cd ./PyBitmessage/ ; python2 checkdeps.py ; cd ..                   
+   3. echo " inject standard KEYS.DAT file             " ;  cp  ./keys.dat                   PyBitmessage/src                   
+   4. echo " run new BM from py source                 " ;  pushd . ; cd  PyBitmessage/src ; ./bitmessagemain.py ;         popd 
+   5. echo " pull    BM update from github             " ;  pushd . ; cd  PyBitmessage/ ; git pull ;                       popd 
+   6. echo " fetch all                                 " ;  pushd . ; cd  PyBitmessage/ ; git fetch --all;                 popd 
+   7. echo " git hard reset                            " ;  pushd . ; cd  PyBitmessage/ ; git reset --hard origin/master ; popd 
+   8. echo " delete unimportant files                  " ;  rm ./PyBitmessage/* ; cd PyBitmessage ; rm -rf man dev build packages desktop ; cd .. 
+   9. echo   fill in your own instruction here     
+
+ENTER quits menu - please choose  1 to 9 ==> 
+
+
+
+
+
+
+
+
+
+
