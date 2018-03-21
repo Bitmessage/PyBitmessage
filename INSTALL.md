@@ -6,6 +6,8 @@ For an up-to-date version of these instructions, please visit the
 PyBitmessage can be run either straight from source or from an installed
 package.
 
+To run straight from source, a handy Linux bash menu named "BMinstallMenu" can be found under /dev. It covers clone, update and run as well as some more options. You can get from zero to running BM solely via this menu.
+
 ## Dependencies
 Before running PyBitmessage, make sure you have all the necessary dependencies
 installed on your system.
