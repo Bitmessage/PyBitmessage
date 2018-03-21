@@ -12,6 +12,7 @@ import traceback
 from addresses import calculateInventoryHash
 from debug import logger
 from helper_random import randomBytes
+import helper_random
 from inventory import Inventory
 import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
@@ -132,7 +133,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     if elemCount > maxAddrCount:
                         elemCount = maxAddrCount
                     # only if more recent than 3 hours
-                    addrs[stream] = random.sample(filtered.items(), elemCount)
+                    addrs[stream] = helper_random.randomsample(filtered.items(), elemCount)
                 # sent 250 only if the remote isn't interested in it
                 if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streams:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
@@ -140,14 +141,14 @@ class TCPConnection(BMProto, TLSDispatcher):
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
-                    addrs[stream * 2] = random.sample(filtered.items(), elemCount)
+                    addrs[stream * 2] = helper_random.randomsample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streams:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
                         if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
-                    addrs[stream * 2 + 1] = random.sample(filtered.items(), elemCount)
+                    addrs[stream * 2 + 1] = helper_random.randomsample(filtered.items(), elemCount)
         for substream in addrs.keys():
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))

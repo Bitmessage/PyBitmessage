@@ -1,6 +1,7 @@
 import random
 from threading import RLock
 from time import time
+import helper_random
 
 class RandomTrackingDict(object):
     maxPending = 10
@@ -82,7 +83,7 @@ class RandomTrackingDict(object):
             available = self.len - self.pendingLen
             if count > available:
                 count = available
-            randomIndex = random.sample(range(self.len - self.pendingLen), count)
+            randomIndex = helper_random.randomsample(range(self.len - self.pendingLen), count)
             retval = [self.indexDict[i] for i in randomIndex]
 
             for i in sorted(randomIndex, reverse=True):
