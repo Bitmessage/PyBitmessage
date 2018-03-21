@@ -1,0 +1,217 @@
+#!/bin/bash 
+########################################################################################
+
+#     usage example:       menu     pwd whoami ls ps 
+
+#     giving you a menu with 4 options to execute in bash shell / Konsole 
+
+
+
+# call in bash as:    . menu1    # if  menu1  is the file name with this script in it
+# usage e.g.:
+# menu ls  "ls -l"  "echo  list dir ; clear ; ls -la "   clear
+# q, Q or 0 or empty_string i.e. ENTER-key alone     always exits the menu
+
+
+# click-launch from Dolphin file-manager in KDE: associate shell script  open-action command:  konsole -e %f
+# under right-cick,  FILE TYPE OPTIONS,  ...  advanced option, do not tag "run in Terminal"
+# so you get a  "open action"  rather than an "execute action" , but it does what you expect.
+
+
+# to set as a bash lib func  : copy the text  between the upper and lower ###### lines into your ~/.bashrc file
+menu()
+{
+local IFS=$' \t\n'
+local num n=1 opt item cmd
+
+clear
+
+## Use default setting of IFS,  Loop though the command-line arguments
+echo
+for item
+do
+  printf " %3d. %s\n" "$n" "${item%%:*}"
+  n=$(( $n + 1 ))
+done
+
+## If there are fewer than 10 items, set option to accept key without ENTER
+echo    
+if [ $# -lt 10 ]
+then
+  opt=-sn1
+else
+  opt=
+fi
+
+read -p "ENTER quits menu - please choose  1 to $# ==> " $opt num   ## Get response from user
+
+## Check that user entry is valid
+case $num in
+   [qQ0]   | "" ) clear ; return ;;   ## q, Q or 0 or "" exits
+  *[!0-9]* | 0* )                     ## invalid entry
+
+  printf "\aInvalid menu choice : %s\n" "$num" >&2
+  return 1
+  ;;
+esac
+
+echo
+if     [ "$num" -le "$#" ]  ## Check that number is <= to the number of menu items
+then
+  eval  ${!num}             ## eval  "${!num#*:}"  # Execute it using indirect expansion,  breaking stuff  :-(
+else
+  printf "\aInvalid menu choice: %s\n" "$num" >&2
+  return 1
+fi
+}
+############################################################################################## 
+
+
+
+
+
+
+
+
+#----------------------------------------------------------- 
+# "Here-document" containing nice standard keys.dat with 3 chans and 1 nuked ID / pml , dropped into thwe cwd, i.e.  .
+
+# note that a nuked address is kind of useless , since its key was published. It still is kinda broadcast fun though.
+# You have no privacy using a nuked key - 
+# much like you don't have privacy while using a key which someone has stolen from you.
+
+(
+cat <<'EOFherefile'
+
+[bitmessagesettings]
+apienabled = true
+apiport = 8442
+apiinterface = 127.0.0.1
+apipassword = password0000
+apiusername = username0000
+blackwhitelist = black
+daemon = false
+defaultnoncetrialsperbyte = 1000
+defaultpayloadlengthextrabytes = 1000
+dontconnect = True
+dontsendack = False
+hidetrayconnectionnotifications = True
+identiconsuffix = AAAAAAAAAAAA
+keysencrypted = false
+maxacceptablenoncetrialsperbyte = 20000000000
+maxacceptablepayloadlengthextrabytes = 20000000000
+maxdownloadrate = 0
+maxoutboundconnections = 1
+maxuploadrate = 0
+messagesencrypted = false
+minimizeonclose = false
+minimizetotray = False
+namecoinrpchost = localhost
+namecoinrpcpassword = 
+namecoinrpcport = 8336
+namecoinrpctype = namecoind
+namecoinrpcuser = 
+onionbindip = 127.0.0.1
+onionhostname = AAAAAAAAAAAAAAAA.onion
+onionport = 8444
+opencl = None
+port = 8444
+replybelow = False
+sendoutgoingconnections = True
+settingsversion = 10
+showtraynotifications = False
+smtpdeliver = 
+socksauthentication = False
+sockshostname = 127.0.0.1
+sockslisten = False
+sockspassword = 
+socksport = 9150
+socksproxytype = none
+socksusername = 
+startintray = False
+startonlogon = False
+stopresendingafterxdays = 5.0
+stopresendingafterxmonths = 5.0
+timeformat = %%a, %%d %%b %%Y  %%H:%%M
+trayonclose = False
+ttl = 1381224
+upnp = False
+useidenticons = False
+userlocale = en
+willinglysendtomobile = False
+
+[BM-2cWy7cvHoq3f1rYMerRJp8PT653jjSuEdY]
+label = [chan] bitmessage
+enabled = true
+decoy = false
+chan = true
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5K42shDERM5g7Kbi3JT5vsAWpXMqRhWZpX835M2pdSoqQQpJMYm
+privencryptionkey = 5HwugVWm31gnxtoYcvcK7oywH2ezYTh6Y4tzRxsndAeMi6NHqpA
+
+[BM-2cUzsvYoNbKNNuDnJtdPVS2pbSHzNJyqdD]
+label = [chan] find-new-chan
+enabled = true
+decoy = false
+chan = true
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5JrsTVeBZYUxYeK5WQgiESBxpfMvqMp2bdvu7FyY356rMqzTdiB
+privencryptionkey = 5KXBMwknxy585jkR3TVZuYgBjAawtGfWUp98cmaWvFjAZwC2yaN
+
+[BM-2cW67GEKkHGonXKZLCzouLLxnLym3azS8r]
+label = [chan]   general
+enabled = true
+decoy = false
+chan = true
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5Jnbdwc4u4DG9ipJxYLznXSvemkRFueQJNHujAQamtDDoX3N1eQ
+privencryptionkey = 5JrDcFtQDv5ydcHRW6dfGUEvThoxCCLNEUaxQfy8LXXgTJzVAcq
+
+[BM-2cTaRF4nbj4ByCTH13SUMouK8nHXBLaLmS]
+label = NUKED ADDRESS LmS 
+enabled = true
+decoy = false
+chan = false
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5J9gVWmW9XCjJo1CdymosipSuWRLp2ovaUkJ2JGFc9T1A9SHJvB 
+privencryptionkey = 5HrrrckD7RPYhiBeRPAqmUUv73ajYnHKgsC2Q2f3AqK9hptr7aN
+mailinglist = false
+mailinglistname = nuked_PML
+lastpubkeysendtime = 1469973237 
+
+EOFherefile
+) > keys.dat
+#----------------------------------------------------------- 
+
+
+
+
+
+
+
+
+
+#   useful in click-launch to add    ; read WAITNOW        #  which will wait for keypress before closing Konsole
+
+
+# now actually using the menu:
+
+# modify it to your liking        note you are then on  MASTER  branch , not on the newer  ver. 0.6.3   branch
+
+
+#  run through the options  1 2 3 4   in this order:   1 2 3 4
+
+menu                                                                                                                         \
+'echo " clone BitMessage repo below current dir   " ;  git clone      "https://github.com/Bitmessage/PyBitmessage.git"     ' \
+'echo " check dependencies i.e. py modules etc.   " ;  cd ./PyBitmessage/ ; python2 checkdeps.py ; cd ..                   ' \
+'echo " inject standard KEYS.DAT file             " ;  cp  ./keys.dat                   PyBitmessage/src                   ' \
+'echo " run new BM from py source                 " ;  pushd . ; cd  PyBitmessage/src ; ./bitmessagemain.py ;         popd ' \
+'echo " pull    BM update from github             " ;  pushd . ; cd  PyBitmessage/ ; git pull ;                       popd ' \
+'echo " fetch all                                 " ;  pushd . ; cd  PyBitmessage/ ; git fetch --all;                 popd ' \
+'echo " git hard reset                            " ;  pushd . ; cd  PyBitmessage/ ; git reset --hard origin/master ; popd ' \
+'echo " delete unimportant files                  " ;  rm ./PyBitmessage/* ; cd PyBitmessage ; rm -rf man dev build packages desktop ; cd .. ' \
+'echo   fill in your own instruction here     :-)                                                                          '
