@@ -1,9 +1,11 @@
 import os
 import random
 from pyelliptic.openssl import OpenSSL
+NoneType = type(None)
+
 
 def randomBytes(n):
-	"""Method randomBytes."""
+    """Method randomBytes."""
     try:
         return os.urandom(n)
     except NotImplementedError:
@@ -30,7 +32,7 @@ def randomsample(population, k):
     return random.sample(population, k)
 
 
-def randomrandrange(x, y):
+def randomrandrange(x, y=None):
     """Method randomRandrange.
 
     return a randomly selected element from
@@ -38,4 +40,7 @@ def randomrandrange(x, y):
     choice(range(start, stop)),
     but doesnt actually build a range object.
     """
-    return random.randrange(x, y)
+    if isinstance(y, NoneType):
+        return random.randrange(x)
+    else:
+        return random.randrange(x, y)

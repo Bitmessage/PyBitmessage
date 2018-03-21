@@ -1,6 +1,7 @@
 from collections import deque
 import Queue
 import random
+import helper_random
 
 class MultiQueue(Queue.Queue):
     defaultQueueCount = 10
@@ -24,7 +25,7 @@ class MultiQueue(Queue.Queue):
     # Put a new item in the queue
     def _put(self, item):
         #self.queue.append(item)
-        self.queues[random.randrange(self.queueCount)].append((item))
+        self.queues[helper_random.randomrandrange(self.queueCount)].append((item))
 
     # Get an item from the queue
     def _get(self):
