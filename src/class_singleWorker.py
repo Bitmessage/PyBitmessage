@@ -25,6 +25,7 @@ import protocol
 import queues
 import state
 from binascii import hexlify, unhexlify
+import helper_random
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -157,8 +158,8 @@ class singleWorker(threading.Thread, StoppableThread):
         myAddress = shared.myAddressesByHash[hash]
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
-        
-        TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+
+        TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))# 28 days from now plus or minus five minutes
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x01' # object type: pubkey
@@ -228,8 +229,9 @@ class singleWorker(threading.Thread, StoppableThread):
             return
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
-        
-        TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+
+        TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
+        # 28 days from now plus or minus five minutes
         embeddedTime = int(time.time() + TTL)
         signedTimeForProtocolV2 = embeddedTime - TTL
         """
@@ -314,7 +316,8 @@ class singleWorker(threading.Thread, StoppableThread):
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
         
-        TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+        TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
+        # 28 days from now plus or minus five minutes
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x01' # object type: pubkey
@@ -433,7 +436,8 @@ class singleWorker(threading.Thread, StoppableThread):
                 TTL = 28 * 24 * 60 * 60
             if TTL < 60*60:
                 TTL = 60*60
-            TTL = int(TTL + random.randrange(-300, 300))# add some randomness to the TTL
+            TTL = int(TTL + helper_random.randomrandrange(-300, 300))
+            # add some randomness to the TTL
             embeddedTime = int(time.time() + TTL)
             payload = pack('>Q', embeddedTime)
             payload += '\x00\x00\x00\x03' # object type: broadcast
@@ -619,15 +623,16 @@ class singleWorker(threading.Thread, StoppableThread):
                                 toaddress, tr._translate("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                             self.requestPubKey(toaddress)
                             continue #on with the next msg on which we can do some work
-            
+
             # At this point we know that we have the necessary pubkey in the pubkeys table.
-            
+
             TTL *= 2**retryNumber
             if TTL > 28 * 24 * 60 * 60:
                 TTL = 28 * 24 * 60 * 60
-            TTL = int(TTL + random.randrange(-300, 300))# add some randomness to the TTL
+            TTL = int(TTL + helper_random.randomrandrange(-300, 300))
+            # add some randomness to the TTL
             embeddedTime = int(time.time() + TTL)
-            
+
             if not BMConfigParser().has_section(toaddress): # if we aren't sending this to ourselves or a chan
                 shared.ackdataForWhichImWatching[ackdata] = 0
                 queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
@@ -907,7 +912,7 @@ class singleWorker(threading.Thread, StoppableThread):
         TTL *= 2**retryNumber
         if TTL > 28*24*60*60:
             TTL = 28*24*60*60
-        TTL = TTL + random.randrange(-300, 300) # add some randomness to the TTL
+        TTL = TTL + helper_random.randomrandrange(-300, 300)# add some randomness to the TTL
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', embeddedTime)
         payload += '\x00\x00\x00\x00' # object type: getpubkey
@@ -969,7 +974,8 @@ class singleWorker(threading.Thread, StoppableThread):
             TTL = 7*24*60*60 # 1 week
         else:
             TTL = 28*24*60*60 # 4 weeks
-        TTL = int(TTL + random.randrange(-300, 300)) # Add some randomness to the TTL
+        TTL = int(TTL + helper_random.randomrandrange(-300, 300))
+        # Add some randomness to the TTL
         embeddedTime = int(time.time() + TTL)
 
         # type/version/stream already included 
