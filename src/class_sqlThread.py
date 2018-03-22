@@ -15,7 +15,7 @@ import random
 import state
 import string
 import tr#anslate
-
+import helper_random
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
 # won't let us just use locks.
@@ -263,7 +263,7 @@ class sqlThread(threading.Thread):
         if not BMConfigParser().has_option('bitmessagesettings', 'useidenticons'):
             BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
         if not BMConfigParser().has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
-            BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+            BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(helper_random.randomchoice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12)))# a twelve character pseudo-password to salt the identicons
 
         #Add settings to support no longer resending messages after a certain period of time even if we never get an ack
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 7:

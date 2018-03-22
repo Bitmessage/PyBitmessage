@@ -56,6 +56,7 @@ from threading import current_thread
 import warnings
 
 import os
+import helper_random
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
      ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ENOTSOCK, EINTR, ETIMEDOUT, \
@@ -230,13 +231,13 @@ def select_poller(timeout=0.0, map=None):
             if err.args[0] in (WSAENOTSOCK, ):
                 return
 
-        for fd in random.sample(r, len(r)):
+        for fd in helper_random.randomsample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
             read(obj)
 
-        for fd in random.sample(w, len(w)):
+        for fd in helper_random.randomsample(w, len(w)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -292,7 +293,7 @@ def poll_poller(timeout=0.0, map=None):
         except socket.error as err:
             if err.args[0] in (EBADF, WSAENOTSOCK, EINTR):
                 return
-        for fd, flags in random.sample(r, len(r)):
+        for fd, flags in helper_random.randomsample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -349,7 +350,7 @@ def epoll_poller(timeout=0.0, map=None):
             if err.args[0] != EINTR:
                 raise
             r = []
-        for fd, flags in random.sample(r, len(r)):
+        for fd, flags in helper_random.randomsample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -403,7 +404,7 @@ def kqueue_poller(timeout=0.0, map=None):
 
         events = kqueue_poller.pollster.control(updates, selectables, timeout)
         if len(events) > 1:
-            events = random.sample(events, len(events))
+            events = helper_random.randomsample(events, len(events))
 
         for event in events:
             fd = event.ident

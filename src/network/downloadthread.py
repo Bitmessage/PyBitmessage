@@ -10,6 +10,7 @@ from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 import protocol
 from state import missingObjects
+import helper_random
 
 class DownloadThread(threading.Thread, StoppableThread):
     minPending = 200
@@ -41,7 +42,7 @@ class DownloadThread(threading.Thread, StoppableThread):
             requested = 0
             # Choose downloading peers randomly
             connections = [x for x in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
-            random.shuffle(connections)
+            helper_random.randomshuffle(connections)
             try:
                 requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
             except ZeroDivisionError:

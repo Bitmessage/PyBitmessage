@@ -11,14 +11,20 @@ def randomBytes(n):
     except NotImplementedError:
         return OpenSSL.rand(n)
 
+
 def randomshuffle(population):
     """Method randomShuffle.
 
     shuffle the sequence x in place.
     shuffles the elements in list in place,
     so they are in a random order.
+    As Shuffle will alter data in-place,
+    so its input must be a mutable sequence.
+    In contrast, sample produces a new list
+    and its input can be much more varied
+    (tuple, string, xrange, bytearray, set, etc)
     """
-    return random.shuffle(population)
+    random.shuffle(population)
 
 
 def randomsample(population, k):
@@ -27,7 +33,8 @@ def randomsample(population, k):
     return a k length list of unique elements
     chosen from the population sequence.
     Used for random sampling
-    without replacement
+    without replacement, its called
+    partial shuffle.
     """
     return random.sample(population, k)
 
@@ -44,3 +51,13 @@ def randomrandrange(x, y=None):
         return random.randrange(x)
     else:
         return random.randrange(x, y)
+
+
+def randomchoice(population):
+    """Method randomchoice.
+
+    Return a random element from the non-empty
+    sequence seq. If seq is empty, raises
+    IndexError.
+    """
+    return random.choice(population)
