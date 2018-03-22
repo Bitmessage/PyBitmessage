@@ -260,7 +260,7 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n' % err
+                ' address. %s\n', err
             )
             return
 
@@ -332,7 +332,7 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n' % err
+                ' address. %s\n', err
             )
             return
 
@@ -398,7 +398,7 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n' % err
+                ' address. %s\n', err
             )
             return
 
@@ -454,7 +454,7 @@ class singleWorker(threading.Thread, StoppableThread):
         except Exception as err:
             logger.error(
                 'Error: Couldn\'t add the lastpubkeysendtime'
-                ' to the keys.dat file. Error message: %s' % err
+                ' to the keys.dat file. Error message: %s', err
             )
 
     def sendBroadcast(self):
@@ -930,10 +930,10 @@ class singleWorker(threading.Thread, StoppableThread):
                             defaults.networkDefaultPayloadLengthExtraBytes
                     logger.debug(
                         'Using averageProofOfWorkNonceTrialsPerByte: %s'
-                        ' and payloadLengthExtraBytes: %s.' % (
-                            requiredAverageProofOfWorkNonceTrialsPerByte,
-                            requiredPayloadLengthExtraBytes
-                        ))
+                        ' and payloadLengthExtraBytes: %s.',
+                        requiredAverageProofOfWorkNonceTrialsPerByte,
+                        requiredPayloadLengthExtraBytes
+                    )
                     queues.UISignalQueue.put((
                         'updateSentItemStatusByAckdata', (
                             ackdata,
@@ -1013,11 +1013,11 @@ class singleWorker(threading.Thread, StoppableThread):
                                 " the keys.dat file. Could not encrypt"
                                 " message. %1"
                             ).arg(l10n.formatTimestamp()))
-                    ))  # log or show the address maybe?
+                    ))
                     logger.error(
                         'Error within sendMsg. Could not read the keys'
-                        ' from the keys.dat file for our own address. %s\n'
-                        % err)
+                        ' from the keys.dat file for our own address. %s\n',
+                        err)
                     continue
                 privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
                     privEncryptionKeyBase58))
