@@ -1,6 +1,4 @@
-{
-  "language": "python",
-  "os": "linux",
-  "group": "stable",
-  "dist": "trusty"
-}
+
+language: python
+python:
+- "2.7" 
