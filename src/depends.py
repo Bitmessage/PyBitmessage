@@ -50,8 +50,9 @@ def check_hashlib():
         return False
     return True
 
+
 def check_sqlite():
-     """Do sqlite check.
+    """Do sqlite check.
 
     Simply check sqlite3 module if exist or not with hexversion
     support in python version for specifieed platform.
