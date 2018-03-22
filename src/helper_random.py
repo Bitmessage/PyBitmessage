@@ -4,8 +4,8 @@ from pyelliptic.openssl import OpenSSL
 NoneType = type(None)
 
 
-def randomBytes(n):
-    """Method randomBytes."""
+def randombytes(n):
+    """Method randombytes."""
     try:
         return os.urandom(n)
     except NotImplementedError:
@@ -13,7 +13,7 @@ def randomBytes(n):
 
 
 def randomshuffle(population):
-    """Method randomShuffle.
+    """Method randomshuffle.
 
     shuffle the sequence x in place.
     shuffles the elements in list in place,
@@ -28,7 +28,7 @@ def randomshuffle(population):
 
 
 def randomsample(population, k):
-    """Method randomSample.
+    """Method randomsample.
 
     return a k length list of unique elements
     chosen from the population sequence.
@@ -40,7 +40,7 @@ def randomsample(population, k):
 
 
 def randomrandrange(x, y=None):
-    """Method randomRandrange.
+    """Method randomrandrange.
 
     return a randomly selected element from
     range(start, stop). This is equivalent to

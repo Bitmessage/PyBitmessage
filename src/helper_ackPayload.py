@@ -16,22 +16,22 @@ from addresses import encodeVarint
 def genAckPayload(streamNumber=1, stealthLevel=0):
     if (stealthLevel==2):      # Generate privacy-enhanced payload
         # Generate a dummy privkey and derive the pubkey
-        dummyPubKeyHex = highlevelcrypto.privToPub(hexlify(helper_random.randomBytes(32)))
+        dummyPubKeyHex = highlevelcrypto.privToPub(hexlify(helper_random.randombytes(32)))
         # Generate a dummy message of random length
         # (the smallest possible standard-formatted message is 234 bytes)
-        dummyMessage = helper_random.randomBytes(random.randint(234, 800))
+        dummyMessage = helper_random.randombytes(random.randint(234, 800))
         # Encrypt the message using standard BM encryption (ECIES)
         ackdata = highlevelcrypto.encrypt(dummyMessage, dummyPubKeyHex)
         acktype = 2  # message
         version = 1
 
     elif (stealthLevel==1):    # Basic privacy payload (random getpubkey)
-        ackdata = helper_random.randomBytes(32)
+        ackdata = helper_random.randombytes(32)
         acktype = 0  # getpubkey
         version = 4
 
     else:            # Minimum viable payload (non stealth)
-        ackdata = helper_random.randomBytes(32)
+        ackdata = helper_random.randombytes(32)
         acktype = 2  # message
         version = 1
 
