@@ -392,9 +392,9 @@ class singleWorker(threading.Thread, StoppableThread):
         dataToEncrypt = protocol.getBitfield(myAddress)
 
         try:
-            privSigningKeyHex, privEncryptionKeyHex, \
-                pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
-                    myAddress)
+            # , privEncryptionKeyHex
+            privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
+                self._getKeysForAddress(myAddress)
         except Exception as err:
             logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
@@ -482,9 +482,9 @@ class singleWorker(threading.Thread, StoppableThread):
             # We need to convert our private keys to public keys in order
             # to include them.
             try:
-                privSigningKeyHex, privEncryptionKeyHex, \
-                    pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
-                        fromaddress)
+                # , privEncryptionKeyHex
+                privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
+                    self._getKeysForAddress(fromaddress)
             except:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -639,7 +639,8 @@ class singleWorker(threading.Thread, StoppableThread):
         for row in queryreturn:
             toaddress, fromaddress, subject, message, \
                 ackdata, status, TTL, retryNumber, encoding = row
-            toStatus, toAddressVersionNumber, toStreamNumber, toRipe = \
+            # toStatus
+            _, toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toaddress)
             # fromStatus, , ,fromRipe
             _, fromAddressVersionNumber, fromStreamNumber, _ = \

@@ -192,8 +192,8 @@ def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
-        status, addressVersionNumber, streamNumber, hash = \
-            decodeAddress(address)
+        # status
+        _, addressVersionNumber, streamNumber, hash = decodeAddress(address)
         if addressVersionNumber == 2:
             broadcastSendersForWhichImWatching[hash] = 0
         # Now, for all addresses, even version 2 addresses,
@@ -304,7 +304,8 @@ def decryptAndCheckPubkeyPayload(data, address):
     particular address.
     """
     try:
-        status, addressVersion, streamNumber, ripe = decodeAddress(address)
+        # status
+        _, addressVersion, streamNumber, ripe = decodeAddress(address)
 
         readPosition = 20  # bypass the nonce, time, and object type
         embeddedAddressVersion, varintLength = \
