@@ -154,7 +154,8 @@ def reloadMyAddressHashes():
         isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
-            status, addressVersionNumber, streamNumber, hash = \
+            # status
+            _, addressVersionNumber, streamNumber, hash = \
                 decodeAddress(addressInKeysFile)
             if addressVersionNumber in (2, 3, 4):
                 # Returns a simple 32 bytes of information encoded

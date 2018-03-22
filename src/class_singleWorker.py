@@ -70,7 +70,8 @@ class singleWorker(threading.Thread, StoppableThread):
             ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
         for row in queryreturn:
             toAddress, = row
-            toStatus, toAddressVersionNumber, toStreamNumber, toRipe = \
+            # toStatus
+            _, toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toAddress)
             if toAddressVersionNumber <= 3:
                 state.neededPubkeys[toAddress] = 0
@@ -239,8 +240,8 @@ class singleWorker(threading.Thread, StoppableThread):
                     myAddress = addressInKeysFile
                     break"""
         myAddress = shared.myAddressesByHash[hash]
-        status, addressVersionNumber, streamNumber, hash = decodeAddress(
-            myAddress)
+        # status
+        _, addressVersionNumber, streamNumber, hash = decodeAddress(myAddress)
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
@@ -325,9 +326,9 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += protocol.getBitfield(myAddress)
 
         try:
-            privSigningKeyHex, privEncryptionKeyHex, \
-                pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
-                    myAddress)
+            # , privEncryptionKeyHex
+            privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
+                self._getKeysForAddress(myAddress)
         except Exception as err:
             logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
@@ -469,7 +470,8 @@ class singleWorker(threading.Thread, StoppableThread):
 
         for row in queryreturn:
             fromaddress, subject, body, ackdata, TTL, encoding = row
-            status, addressVersionNumber, streamNumber, ripe = \
+            # status
+            _, addressVersionNumber, streamNumber, ripe = \
                 decodeAddress(fromaddress)
             if addressVersionNumber <= 1:
                 logger.error(
@@ -639,8 +641,9 @@ class singleWorker(threading.Thread, StoppableThread):
                 ackdata, status, TTL, retryNumber, encoding = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toaddress)
-            fromStatus, fromAddressVersionNumber, fromStreamNumber, \
-                fromRipe = decodeAddress(fromaddress)
+            # fromStatus, , ,fromRipe
+            _, fromAddressVersionNumber, fromStreamNumber, _ = \
+                decodeAddress(fromaddress)
 
             # We may or may not already have the pubkey
             # for this toAddress. Let's check.
