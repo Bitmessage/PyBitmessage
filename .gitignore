@@ -13,3 +13,4 @@ build/lib.*
 build/temp.*
 dist
 *.egg-info
+*~
