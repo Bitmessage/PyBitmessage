@@ -1,4 +1,9 @@
-
 language: python
 python:
-- "2.7" 
+  - "2.7" 
+sudo: 
+  - required
+install:
+  - python2 setup.py build
+script: 
+- bash ./TravisRunner
