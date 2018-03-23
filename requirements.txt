@@ -1,0 +1,13 @@
+setuptools==38.5.2
+numpy==1.13.3
+AppKit==0.2.8
+PyQt4==4.11.4
+dialog==0.2.0
+gi==1.2
+msgpack_python==0.5.6
+prctl==1.0.1
+pybloom==1.1
+pybloomfiltermmap==0.3.15
+pydenticon==0.3.1
+pyopencl==2018.1.1
+qrcode==6.0
