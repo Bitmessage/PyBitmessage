@@ -204,8 +204,9 @@ class Main:
         daemon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "hcd",
-                ["help", "curses", "daemon"])
+            opts, args = getopt.getopt(
+                sys.argv[1:], "hcdt",
+                ["help", "curses", "daemon", "test"])
 
         except getopt.GetoptError:
             self.usage()
@@ -219,11 +220,13 @@ class Main:
                 daemon = True
             elif opt in ("-c", "--curses"):
                 state.curses = True
+            elif opt in ("-t", "test"):
+                daemon = 10
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
 
-        if daemon:
+        if daemon == 1:
             with shared.printLock:
                 print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
@@ -341,6 +344,10 @@ class Main:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
         if daemon:
+            sleep(daemon)
+            if daemon > 1:
+                # make testing
+                self.stop()
             while state.shutdown == 0:
                 sleep(1)
 
@@ -407,6 +414,7 @@ Options:
   -h, --help            show this help message and exit
   -c, --curses          use curses (text mode) interface
   -d, --daemon          run in daemon (background) mode
+  -t, --test            dryrun, make testing
 
 All parameters are optional.
 '''
