@@ -1,6 +1,8 @@
 PyBitmessage
 ============
 
+[![Join the chat at https://gitter.im/Bitmessage/PyBitmessage](https://badges.gitter.im/Bitmessage/PyBitmessage.svg)](https://gitter.im/Bitmessage/PyBitmessage?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Bitmessage is a P2P communications protocol used to send encrypted messages to
 another person or to many subscribers. It is decentralized and trustless,
 meaning that you need-not inherently trust any entities like root certificate
