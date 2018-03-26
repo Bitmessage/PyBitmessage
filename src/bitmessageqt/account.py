@@ -131,7 +131,7 @@ class BMAccount(object):
         self.toAddress = toAddress
         self.fromAddress = fromAddress
         if isinstance(subject, unicode):
-            self.subject = str(subject)
+            self.subject = subject.encode('utf-8', 'ignore').decode('utf-8')    ####  str(subject)  not ascii
         else:
             self.subject = subject
         self.message = message
