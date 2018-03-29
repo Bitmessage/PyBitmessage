@@ -1,4 +1,3 @@
 setuptools
 numpy
 gi
-msgpack_python
