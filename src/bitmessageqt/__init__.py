@@ -798,22 +798,19 @@ class MyForm(settingsmixin.SMainWindow):
             "valueChanged(int)"), self.updateTTL)
 
         self.initSettings()
-            
-        # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
-        try:
-            options = {}
-            options["type"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpctype')
-            options["host"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpchost')
-            options["port"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpcport')
-            options["user"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpcuser')
-            options["password"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpcpassword')
-            nc = namecoinConnection(options)
-            if nc.test()[0] == 'failed':
-                self.ui.pushButtonFetchNamecoinID.hide()
-        except:
-            logger.error('There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button')
+
+        self.namecoin = namecoinConnection()
+
+        # Check to see whether we can connect to namecoin.
+        # Hide the 'Fetch Namecoin ID' button if we can't.
+        if BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'dontconnect'
+                ) or self.namecoin.test()[0] == 'failed':
+            logger.warning(
+                'There was a problem testing for a Namecoin daemon. Hiding the'
+                ' Fetch Namecoin ID button')
             self.ui.pushButtonFetchNamecoinID.hide()
-            
+
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
         self.updateHumanFriendlyTTLDescription(TTL)
@@ -2690,6 +2687,10 @@ class MyForm(settingsmixin.SMainWindow):
             'bitmessagesettings', 'dontconnect', str(dontconnect_option))
         BMConfigParser().save()
         self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
+
+        self.ui.pushButtonFetchNamecoinID.setHidden(
+            dontconnect_option or self.namecoin.test()[0] == 'failed'
+        )
 
     # Quit selected from menu or application indicator
     def quit(self):
