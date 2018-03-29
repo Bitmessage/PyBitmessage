@@ -1,6 +1,5 @@
 setuptools
 numpy
-PyQt4
 gi
 msgpack_python
 pyopencl
