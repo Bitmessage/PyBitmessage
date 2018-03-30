@@ -233,8 +233,9 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
                 and self.type != AccountMixin.SUBSCRIPTION:
             BMConfigParser().set(
                 str(self.address), 'label',
-                str(value).toString().toUtf8()
-                if isinstance(value, QtCore.QVariant) else str(value)
+                str(value.toString().toUtf8())
+                if isinstance(value, QtCore.QVariant)
+                else value.encode('utf-8')
             )
             BMConfigParser().save()
         return super(Ui_AddressWidget, self).setData(column, role, value)
