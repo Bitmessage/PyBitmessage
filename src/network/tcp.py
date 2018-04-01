@@ -172,7 +172,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     if Dandelion().hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
-                    self.objectsNewToThem[objHash] = time.time()
+                    #self.objectsNewToThem[objHash] = time.time()
         objectCount = 0
         payload = b''
         # Now let us start appending all of these hashes together. They will be
