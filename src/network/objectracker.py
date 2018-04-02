@@ -104,6 +104,7 @@ class ObjectTracker(object):
                         del i.objectsNewToThem[hashid]
                 except KeyError:
                     pass
+        self.objectsNewToMe.setLastObject()
 
     def hasAddr(self, addr):
         if haveBloom:

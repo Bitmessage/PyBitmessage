@@ -12,6 +12,7 @@ class RandomTrackingDict(object):
         self.len = 0
         self.pendingLen = 0
         self.lastPoll = 0
+        self.lastObject = 0
         self.lock = RLock()
 
     def __len__(self):
@@ -71,14 +72,18 @@ class RandomTrackingDict(object):
     def setPendingTimeout(self, pendingTimeout):
         self.pendingTimeout = pendingTimeout
 
+    def setLastObject(self):
+        self.lastObject = time()
+
     def randomKeys(self, count=1):
         if self.len == 0 or ((self.pendingLen >= self.maxPending or
             self.pendingLen == self.len) and self.lastPoll +
             self.pendingTimeout > time()):
             raise KeyError
-        # reset if we've requested all
         with self.lock:
-            if self.pendingLen == self.len:
+            # reset if we've requested all
+            # or if last object received too long time ago
+            if self.pendingLen == self.len or self.lastObject + self.pendingTimeout > time():
                 self.pendingLen = 0
             available = self.len - self.pendingLen
             if count > available:

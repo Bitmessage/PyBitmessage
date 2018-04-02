@@ -49,12 +49,15 @@ class DownloadThread(threading.Thread, StoppableThread):
                 requestChunk = 1
             for i in connections:
                 now = time.time()
+                # avoid unnecessary delay
+                if i.skipUntil >= now:
+                    continue
                 try:
                     request = i.objectsNewToMe.randomKeys(requestChunk)
                 except KeyError:
                     continue
                 payload = bytearray()
-                payload.extend(addresses.encodeVarint(len(request)))
+                chunkCount = 0
                 for chunk in request:
                     if chunk in Inventory() and not Dandelion().hasHash(chunk):
                         try:
@@ -63,12 +66,14 @@ class DownloadThread(threading.Thread, StoppableThread):
                             pass
                         continue
                     payload.extend(chunk)
+                    chunkCount += 1
                     missingObjects[chunk] = now
-                if not payload:
+                if not chunkCount:
                     continue
+                payload[0:0] = addresses.encodeVarint(chunkCount)
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
-                logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
-                requested += len(request)
+                logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, chunkCount)
+                requested += chunkCount
             if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
                 self.cleanPending()
             if not requested:
