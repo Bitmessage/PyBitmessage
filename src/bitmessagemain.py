@@ -221,12 +221,12 @@ class Main:
             elif opt in ("-c", "--curses"):
                 state.curses = True
             elif opt in ("-t", "test"):
-                daemon = 10
+                state.testmode = True
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
 
-        if daemon == 1:
+        if daemon:
             with shared.printLock:
                 print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
@@ -343,11 +343,10 @@ class Main:
         else:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
-        if daemon:
-            sleep(daemon)
-            if daemon > 1:
-                # make testing
-                self.stop()
+        if state.testmode:
+            sleep(10)
+            self.stop()
+        if daemon or state.testmode:
             while state.shutdown == 0:
                 sleep(1)
 
