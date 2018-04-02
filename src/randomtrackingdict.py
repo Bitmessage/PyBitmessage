@@ -73,6 +73,7 @@ class RandomTrackingDict(object):
         self.pendingTimeout = pendingTimeout
 
     def setLastObject(self):
+        """Update timestamp for tracking of received objects"""
         self.lastObject = time()
 
     def randomKeys(self, count=1):
