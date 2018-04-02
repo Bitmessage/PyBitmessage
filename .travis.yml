@@ -3,5 +3,4 @@ python:
         - "2.7"
 install:
         - pip install -r requirements.txt
-        - sudo apt-get install python-msgpack python-qt4 python-pyopencl
 script: src/bitmessagemain.py -t
