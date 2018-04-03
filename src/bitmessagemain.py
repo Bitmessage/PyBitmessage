@@ -327,7 +327,7 @@ class Main:
 
         if (daemon == False and 
             BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon') == False and
-            not state.testmode:
+            not state.testmode):
             if state.curses == False:
                 if not depends.check_pyqt():
                     sys.exit(
