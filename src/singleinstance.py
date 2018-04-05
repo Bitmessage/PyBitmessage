@@ -26,7 +26,7 @@ class singleinstance:
         self.lockPid = None
         self.lockfile = os.path.normpath(os.path.join(state.appdata, 'singleton%s.lock' % flavor_id))
 
-        if not self.daemon and not state.curses:
+        if not self.daemon and not state.curses and not state.testmode:
             # Tells the already running (if any) application to get focus.
             import bitmessageqt
             bitmessageqt.init()
@@ -58,7 +58,7 @@ class singleinstance:
         else:  # non Windows
             self.fp = open(self.lockfile, 'a+')
             try:
-                if self.daemon and self.lockPid != os.getpid():
+                if self.daemon and not state.testmode and self.lockPid != os.getpid():
                     fcntl.lockf(self.fp, fcntl.LOCK_EX) # wait for parent to finish
                 else:
                     fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -75,7 +75,7 @@ class singleinstance:
     def cleanup(self):
         if not self.initialized:
             return
-        if self.daemon and self.lockPid == os.getpid():
+        if self.daemon and not state.testmode and self.lockPid == os.getpid():
             # these are the two initial forks while daemonizing
             try:
                 if sys.platform == 'win32':
