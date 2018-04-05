@@ -35,22 +35,24 @@ def doCleanShutdown():
     while state.shutdown == 1:
         time.sleep(.1)
     
-    # This one last useless query will guarantee that the previous flush committed and that the
-    # objectProcessorThread committed before we close the program.
-    sqlQuery('SELECT address FROM subscriptions')
-    logger.info('Finished flushing inventory.')
-    sqlStoredProcedure('exit')
-    
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
     time.sleep(.25)
 
     for thread in threading.enumerate():
-        if thread is not threading.currentThread() and isinstance(thread, StoppableThread):
+        if (thread is not threading.currentThread() and
+            isinstance(thread, StoppableThread) and
+            thread.name != 'SQL'):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
 
-    # flush queued
+    # This one last useless query will guarantee that the previous flush committed and that the
+    # objectProcessorThread committed before we close the program.
+    sqlQuery('SELECT address FROM subscriptions')
+    logger.info('Finished flushing inventory.')
+    sqlStoredProcedure('exit')
+
+    # flush queues
     for queue in (workerQueue, UISignalQueue, addressGeneratorQueue, objectProcessorQueue):
         while True:
             try:
