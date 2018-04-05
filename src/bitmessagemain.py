@@ -325,7 +325,7 @@ class Main:
             upnpThread = upnp.uPnPThread()
             upnpThread.start()
 
-        if (daemon == False and 
+        if (daemon == False and
             BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon') == False and
             not state.testmode):
             if state.curses == False:
