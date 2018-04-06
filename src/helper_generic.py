@@ -1,5 +1,5 @@
 """This module is to perform generic oprations for threading."""
-"""and some conversion operations."""
+"""And some conversion operations."""
 
 import socket
 import sys
@@ -12,6 +12,7 @@ import shared
 from debug import logger
 import queues
 import shutdown
+from debug import logger
 
 
 def powQueueSize():
@@ -20,8 +21,8 @@ def powQueueSize():
         try:
             if thread.name == "singleWorker":
                 curWorkerQueue += thread.busy
-        except Exception:
-            print ""
+        except Exception as err:
+            logger.info("Thread error %s", err)
     return curWorkerQueue
 
 
@@ -57,10 +58,6 @@ def signal_handler(signal, frame):
     logger.error("Got signal %i in %s/%s", signal,
         current_process().name,
         threading.current_thread().name)
-    if current_process().name == "RegExParser":
-        # on Windows this isn't triggered, but it's fine,
-        # it has its own process termination thing
-        raise SystemExit
     if "PoolWorker" in current_process().name:
         raise SystemExit
     if threading.current_thread().name not in (
