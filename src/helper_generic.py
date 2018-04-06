@@ -1,5 +1,8 @@
-"""This module is to perform generic oprations for threading."""
-"""And some conversion operations."""
+"""
+Helper Generic perform generic oprations for threading.
+
+Also perform some conversion operations.
+"""
 
 import socket
 import sys
@@ -12,7 +15,6 @@ import shared
 from debug import logger
 import queues
 import shutdown
-from debug import logger
 
 
 def powQueueSize():
