@@ -1,3 +1,6 @@
+"""This module is to perform generic oprations for threading."""
+"""and some conversion operations."""
+
 import socket
 import sys
 from binascii import hexlify, unhexlify
