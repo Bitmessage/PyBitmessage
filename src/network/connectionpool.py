@@ -16,6 +16,7 @@ import network.asyncore_pollchoose as asyncore
 import protocol
 from singleton import Singleton
 import state
+import helper_random
 
 @Singleton
 class BMConnectionPool(object):
@@ -156,7 +157,7 @@ class BMConnectionPool(object):
             if established < BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections"):
                 for i in range(state.maximumNumberOfHalfOpenConnections - pending):
                     try:
-                        chosen = chooseConnection(random.choice(self.streams))
+                        chosen = chooseConnection(helper_random.randomchoice(self.streams))
                     except ValueError:
                         continue
                     if chosen in self.outboundConnections:

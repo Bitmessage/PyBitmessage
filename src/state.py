@@ -55,3 +55,5 @@ def resetNetworkProtocolAvailability():
 resetNetworkProtocolAvailability()
 
 dandelion = 0
+
+testmode = False

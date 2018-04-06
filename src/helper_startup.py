@@ -12,6 +12,7 @@ from distutils.version import StrictVersion
 from namecoin import ensureNamecoinOptions
 import paths
 import state
+import helper_random
 
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 
@@ -103,7 +104,7 @@ def loadConfig():
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         BMConfigParser().set('bitmessagesettings', 'userlocale', 'system')
         BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
-        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(helper_random.randomchoice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12)))# a twelve character pseudo-password to salt the identicons
         BMConfigParser().set('bitmessagesettings', 'replybelow', 'False')
         BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
         BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')

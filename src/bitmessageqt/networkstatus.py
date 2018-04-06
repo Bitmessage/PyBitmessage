@@ -3,7 +3,7 @@ import time
 import shared
 
 from tr import _translate
-from inventory import Inventory, PendingDownloadQueue, PendingUpload
+from inventory import Inventory
 import knownnodes
 import l10n
 import network.stats
