@@ -1,3 +1,5 @@
+"""This module is for generating ack payload."""
+
 import highlevelcrypto
 import helper_random
 from binascii import hexlify
@@ -13,6 +15,7 @@ from addresses import encodeVarint
 
 
 def genAckPayload(streamNumber=1, stealthLevel=0):
+    """Generate and return payload obj."""
     if (stealthLevel == 2):      # Generate privacy-enhanced payload
         # Generate a dummy privkey and derive the pubkey
         dummyPubKeyHex = highlevelcrypto.privToPub(
