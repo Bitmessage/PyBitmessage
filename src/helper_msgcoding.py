@@ -1,4 +1,5 @@
-#!/usr/bin/python2.7
+"""Helper msgcoding for checking validations."""
+# !/usr/bin/python2.7
 
 try:
     import msgpack
@@ -75,7 +76,8 @@ class MsgDecode(object):
         self.encoding = encoding
         if self.encoding == BITMESSAGE_ENCODING_EXTENDED:
             self.decodeExtended(data)
-        elif self.encoding in [BITMESSAGE_ENCODING_SIMPLE, BITMESSAGE_ENCODING_TRIVIAL]:
+        elif self.encoding in [BITMESSAGE_ENCODING_SIMPLE,
+            BITMESSAGE_ENCODING_TRIVIAL]:
             self.decodeSimple(data)
         else:
             self.body = _translate("MsgDecode", "The message has an unknown encoding.\nPerhaps you should upgrade Bitmessage.")
@@ -140,7 +142,6 @@ class MsgDecode(object):
         self.body = body
 
 if __name__ == '__main__':
-    import random
     messageData = {
         "subject": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(40)),
         "body": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(10000))
@@ -148,14 +149,19 @@ if __name__ == '__main__':
     obj1 = MsgEncode(messageData, 1)
     obj2 = MsgEncode(messageData, 2)
     obj3 = MsgEncode(messageData, 3)
-    print "1:%i 2:%i 3:%i" %(len(obj1.data), len(obj2.data), len(obj3.data))
+    print "1:%i 2:%i 3:%i" % (len(obj1.data), len(obj2.data), len(obj3.data))
 
     obj1e = MsgDecode(1, obj1.data)
     # no subject in trivial encoding
-    assert messageData["body"] == obj1e.body
+    if not messageData.get("body") == obj1e.body:
+        raise AssertionError()
     obj2e = MsgDecode(2, obj2.data)
-    assert messageData["subject"] == obj2e.subject
-    assert messageData["body"] == obj2e.body
+    if not messageData["subject"] == obj2e.subject:
+        raise AssertionError()
+    if not messageData["body"] == obj2e.body:
+        raise AssertionError()
     obj3e = MsgDecode(3, obj3.data)
-    assert messageData["subject"] == obj3e.subject
-    assert messageData["body"] == obj3e.body
+    if not messageData["subject"] == obj3e.subject:
+        raise AssertionError()
+    if not messageData["body"] == obj3e.body:
+        raise AssertionError()
