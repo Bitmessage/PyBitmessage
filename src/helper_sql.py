@@ -1,9 +1,14 @@
+"""Helper Sql performs sql operations."""
+
 import threading
 import Queue
 
-sqlSubmitQueue = Queue.Queue() #SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks. SQL objects can only be called from one thread.
+sqlSubmitQueue = Queue.Queue()  # SQLITE3 is so thread-unsafe that they won't
+# even let you call it from different threads using your own locks. SQL
+# objects #can only be called from one thread.
 sqlReturnQueue = Queue.Queue()
 sqlLock = threading.Lock()
+
 
 def sqlQuery(sqlStatement, *args):
     sqlLock.acquire()
@@ -11,12 +16,11 @@ def sqlQuery(sqlStatement, *args):
 
     if args == ():
         sqlSubmitQueue.put('')
-    elif type(args[0]) in [list, tuple]:
+    elif isinstance(args[0], (list, tuple)):
         sqlSubmitQueue.put(args[0])
     else:
         sqlSubmitQueue.put(args)
-    
-    queryreturn, rowcount = sqlReturnQueue.get()
+    queryreturn, _ = sqlReturnQueue.get()
     sqlLock.release()
 
     return queryreturn
@@ -37,14 +41,14 @@ def sqlExecuteChunked(sqlStatement, idCount, *args):
             sqlExecuteChunked.chunkSize - (len(args) - idCount)
         ):
             chunk_slice = args[
-                i:i+sqlExecuteChunked.chunkSize - (len(args) - idCount)
+                i:i + sqlExecuteChunked.chunkSize - (len(args) - idCount)
             ]
             sqlSubmitQueue.put(
                 sqlStatement.format(','.join('?' * len(chunk_slice)))
             )
             # first static args, and then iterative chunk
             sqlSubmitQueue.put(
-                args[0:len(args)-idCount] + chunk_slice
+                args[0:len(args) - idCount] + chunk_slice
             )
             retVal = sqlReturnQueue.get()
             totalRowCount += retVal[1]
@@ -60,7 +64,6 @@ def sqlExecute(sqlStatement, *args):
         sqlSubmitQueue.put('')
     else:
         sqlSubmitQueue.put(args)
-    
     queryreturn, rowcount = sqlReturnQueue.get()
     sqlSubmitQueue.put('commit')
     sqlLock.release()
@@ -71,25 +74,27 @@ def sqlStoredProcedure(procName):
     sqlSubmitQueue.put(procName)
     sqlLock.release()
 
+
 class SqlBulkExecute:
     def __enter__(self):
         sqlLock.acquire()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, value, traceback):
         sqlSubmitQueue.put('commit')
         sqlLock.release()
 
-    def execute(self, sqlStatement, *args):
+    @staticmethod
+    def execute(sqlStatement, *args):
         sqlSubmitQueue.put(sqlStatement)
-        
         if args == ():
             sqlSubmitQueue.put('')
         else:
             sqlSubmitQueue.put(args)
         sqlReturnQueue.get()
 
-    def query(self, sqlStatement, *args):
+    @staticmethod
+    def query(sqlStatement, *args):
         sqlSubmitQueue.put(sqlStatement)
 
         if args == ():
@@ -97,4 +102,3 @@ class SqlBulkExecute:
         else:
             sqlSubmitQueue.put(args)
         return sqlReturnQueue.get()
-
