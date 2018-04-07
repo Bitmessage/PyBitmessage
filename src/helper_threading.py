@@ -7,6 +7,7 @@ try:
     import prctl
 
     def set_thread_name(name):
+        """Set a name for the thread for python internal use."""
         prctl.set_name(name)
 
     def _thread_name_hack(self):
@@ -17,6 +18,7 @@ try:
     threading.Thread._Thread__bootstrap = _thread_name_hack
 except ImportError:
     def set_thread_name(name):
+        """Set the thread name for external use (visible from the OS)."""
         threading.current_thread().name = name
 
 
