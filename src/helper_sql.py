@@ -64,7 +64,7 @@ def sqlExecute(sqlStatement, *args):
         sqlSubmitQueue.put('')
     else:
         sqlSubmitQueue.put(args)
-    queryreturn, rowcount = sqlReturnQueue.get()
+    _, rowcount = sqlReturnQueue.get()
     sqlSubmitQueue.put('commit')
     sqlLock.release()
     return rowcount
