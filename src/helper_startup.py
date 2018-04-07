@@ -13,9 +13,9 @@ import paths
 import state
 import helper_random
 
-storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may
-# de-select Portable Mode in the settings if they want the config files to
-# stay in the application data folder.
+StoreConfigFilesInSameDirectoryAsProgramByDefault = False
+# The user may de-select Portable Mode in the settings if they want the config
+# files to stay in the application data folder.
 
 
 def _loadTrustedPeer():
@@ -130,7 +130,7 @@ def loadConfig():
 
         ensureNamecoinOptions()
 
-        if storeConfigFilesInSameDirectoryAsProgramByDefault:
+        if StoreConfigFilesInSameDirectoryAsProgramByDefault:
             # Just use the same directory as the program and forget about
             # the appdata folder
             state.appdata = ''

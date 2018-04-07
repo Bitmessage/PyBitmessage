@@ -3,14 +3,15 @@
 import threading
 import Queue
 
-sqlSubmitQueue = Queue.Queue()  # SQLITE3 is so thread-unsafe that they won't
-# even let you call it from different threads using your own locks. SQL
-# objects #can only be called from one thread.
+sqlSubmitQueue = Queue.Queue()
+# SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks.
+# SQL objects #can only be called from one thread.
 sqlReturnQueue = Queue.Queue()
 sqlLock = threading.Lock()
 
 
 def sqlQuery(sqlStatement, *args):
+    """SQLLITE execute statement and return query."""
     sqlLock.acquire()
     sqlSubmitQueue.put(sqlStatement)
 
@@ -76,6 +77,8 @@ def sqlStoredProcedure(procName):
 
 
 class SqlBulkExecute:
+    """This is used when you have to execute the same statement in a cycle."""
+
     def __enter__(self):
         sqlLock.acquire()
         return self
@@ -86,19 +89,10 @@ class SqlBulkExecute:
 
     @staticmethod
     def execute(sqlStatement, *args):
+        """Used for statements that do not return results."""
         sqlSubmitQueue.put(sqlStatement)
         if args == ():
             sqlSubmitQueue.put('')
         else:
             sqlSubmitQueue.put(args)
         sqlReturnQueue.get()
-
-    @staticmethod
-    def query(sqlStatement, *args):
-        sqlSubmitQueue.put(sqlStatement)
-
-        if args == ():
-            sqlSubmitQueue.put('')
-        else:
-            sqlSubmitQueue.put(args)
-        return sqlReturnQueue.get()
