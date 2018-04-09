@@ -218,10 +218,12 @@ class Main:
                 sys.exit()
             elif opt in ("-d", "--daemon"):
                 daemon = True
+                state.enableGUI = False # run without a UI
             elif opt in ("-c", "--curses"):
                 state.curses = True
             elif opt in ("-t", "--test"):
                 state.testmode = daemon = True
+                state.enableGUI = False # run without a UI
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
@@ -241,15 +243,19 @@ class Main:
             state.dandelion = 0
 
         helper_bootstrap.knownNodes()
-        # Start the address generation thread
-        addressGeneratorThread = addressGenerator()
-        addressGeneratorThread.daemon = True  # close the main program even if there are threads left
-        addressGeneratorThread.start()
 
-        # Start the thread that calculates POWs
-        singleWorkerThread = singleWorker()
-        singleWorkerThread.daemon = True  # close the main program even if there are threads left
-        singleWorkerThread.start()
+        # Not needed if objproc is disabled
+        if state.enableObjProc:
+
+            # Start the address generation thread
+            addressGeneratorThread = addressGenerator()
+            addressGeneratorThread.daemon = True  # close the main program even if there are threads left
+            addressGeneratorThread.start()
+
+            # Start the thread that calculates POWs
+            singleWorkerThread = singleWorker()
+            singleWorkerThread.daemon = True  # close the main program even if there are threads left
+            singleWorkerThread.start()
 
         # Start the SQL thread
         sqlLookup = sqlThread()
@@ -259,73 +265,84 @@ class Main:
         Inventory() # init
         Dandelion() # init, needs to be early because other thread may access it early
 
-        # SMTP delivery thread
-        if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
-            smtpDeliveryThread = smtpDeliver()
-            smtpDeliveryThread.start()
+        # Enable object processor and SMTP only if objproc enabled
+        if state.enableObjProc:
 
-        # SMTP daemon thread
-        if daemon and BMConfigParser().safeGetBoolean("bitmessagesettings", "smtpd"):
-            smtpServerThread = smtpServer()
-            smtpServerThread.start()
+            # SMTP delivery thread
+            if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
+                smtpDeliveryThread = smtpDeliver()
+                smtpDeliveryThread.start()
 
-        # Start the thread that calculates POWs
-        objectProcessorThread = objectProcessor()
-        objectProcessorThread.daemon = False  # DON'T close the main program even the thread remains. This thread checks the shutdown variable after processing each object.
-        objectProcessorThread.start()
+            # SMTP daemon thread
+            if daemon and BMConfigParser().safeGetBoolean("bitmessagesettings", "smtpd"):
+                smtpServerThread = smtpServer()
+                smtpServerThread.start()
+
+            # Start the thread that calculates POWs
+            objectProcessorThread = objectProcessor()
+            objectProcessorThread.daemon = False  # DON'T close the main program even the thread remains. This thread checks the shutdown variable after processing each object.
+            objectProcessorThread.start()
 
         # Start the cleanerThread
         singleCleanerThread = singleCleaner()
         singleCleanerThread.daemon = True  # close the main program even if there are threads left
         singleCleanerThread.start()
 
-        shared.reloadMyAddressHashes()
-        shared.reloadBroadcastSendersForWhichImWatching()
+        # Not needed if objproc disabled
+        if state.enableObjProc:
+            shared.reloadMyAddressHashes()
+            shared.reloadBroadcastSendersForWhichImWatching()
 
-        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-            try:
-                apiNotifyPath = BMConfigParser().get(
-                    'bitmessagesettings', 'apinotifypath')
-            except:
-                apiNotifyPath = ''
-            if apiNotifyPath != '':
-                with shared.printLock:
-                    print('Trying to call', apiNotifyPath)
+            # API is also objproc dependent
+            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
+                try:
+                    apiNotifyPath = BMConfigParser().get(
+                        'bitmessagesettings', 'apinotifypath')
+                except:
+                    apiNotifyPath = ''
+                if apiNotifyPath != '':
+                    with shared.printLock:
+                        print('Trying to call', apiNotifyPath)
 
-                call([apiNotifyPath, "startingUp"])
-            singleAPIThread = singleAPI()
-            singleAPIThread.daemon = True  # close the main program even if there are threads left
-            singleAPIThread.start()
+                    call([apiNotifyPath, "startingUp"])
+                singleAPIThread = singleAPI()
+                singleAPIThread.daemon = True  # close the main program even if there are threads left
+                singleAPIThread.start()
 
-        BMConnectionPool()
-        asyncoreThread = BMNetworkThread()
-        asyncoreThread.daemon = True
-        asyncoreThread.start()
-        for i in range(BMConfigParser().getint("threads", "receive")):
-            receiveQueueThread = ReceiveQueueThread(i)
-            receiveQueueThread.daemon = True
-            receiveQueueThread.start()
-        announceThread = AnnounceThread()
-        announceThread.daemon = True
-        announceThread.start()
-        state.invThread = InvThread()
-        state.invThread.daemon = True
-        state.invThread.start()
-        state.addrThread = AddrThread()
-        state.addrThread.daemon = True
-        state.addrThread.start()
-        state.downloadThread = DownloadThread()
-        state.downloadThread.daemon = True
-        state.downloadThread.start()
+        # start network components if networking is enabled
+        if state.enableNetwork:
+            BMConnectionPool()
+            asyncoreThread = BMNetworkThread()
+            asyncoreThread.daemon = True
+            asyncoreThread.start()
+            for i in range(BMConfigParser().getint("threads", "receive")):
+                receiveQueueThread = ReceiveQueueThread(i)
+                receiveQueueThread.daemon = True
+                receiveQueueThread.start()
+            announceThread = AnnounceThread()
+            announceThread.daemon = True
+            announceThread.start()
+            state.invThread = InvThread()
+            state.invThread.daemon = True
+            state.invThread.start()
+            state.addrThread = AddrThread()
+            state.addrThread.daemon = True
+            state.addrThread.start()
+            state.downloadThread = DownloadThread()
+            state.downloadThread.daemon = True
+            state.downloadThread.start()
 
-        connectToStream(1)
+            connectToStream(1)
 
-        if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
-            import upnp
-            upnpThread = upnp.uPnPThread()
-            upnpThread.start()
+            if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
+                import upnp
+                upnpThread = upnp.uPnPThread()
+                upnpThread.start()
+        else:
+            # Populate with hardcoded value (same as connectToStream above)
+            state.streamsInWhichIAmParticipating.append(1)
 
-        if daemon == False and BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon') == False:
+        if daemon == False or state.enableGUI: # FIXME redundant?
             if state.curses == False:
                 if not depends.check_pyqt():
                     sys.exit(

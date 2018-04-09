@@ -12,6 +12,7 @@ import threading
 import traceback
 
 import shared
+import state
 from debug import logger
 import queues
 import shutdown
@@ -66,7 +67,7 @@ def signal_handler(signal, frame):
         "PyBitmessage", "MainThread"):
         return
     logger.error("Got signal %i", signal)
-    if shared.thisapp.daemon:
+    if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?
         shutdown.doCleanShutdown()
     else:
         allThreadTraceback(frame)
