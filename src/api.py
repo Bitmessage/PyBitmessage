@@ -1,7 +1,7 @@
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2016 The Bitmessage developers
 
-comment= """
+comment = """
 This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
@@ -12,14 +12,16 @@ if __name__ == "__main__":
     import sys
     sys.exit(0)
 
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 import base64
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 import json
+
 from binascii import hexlify, unhexlify
 
 import shared
 import time
-from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
+from addresses import (decodeAddress, addBMIfNotPresent, decodeVarint,
+    calculateInventoryHash, varintDecodeError)
 from bmconfigparser import BMConfigParser
 import defaults
 import helper_inbox
@@ -27,14 +29,13 @@ import helper_sent
 import hashlib
 
 import state
-from pyelliptic.openssl import OpenSSL
 import queues
 import shutdown
 from struct import pack
 import network.stats
 
 # Classes
-from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
+from helper_sql import sqlQuery, sqlExecute, SqlBulkExecute, sqlStoredProcedure
 from helper_ackPayload import genAckPayload
 from debug import logger
 from inventory import Inventory
@@ -445,7 +446,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if len(addressGeneratorReturnValue) == 0:
             raise APIError(24, 'Chan address is already present.')
         #TODO: this variable is not used to anything
-        createdAddress = addressGeneratorReturnValue[0] # in case we ever want it for anything.
+        createdAddress = addressGeneratorReturnValue[0]  # in case we ever want it for anything.
         return "success"
 
     def HandleLeaveChan(self, params):
@@ -652,10 +653,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 4:
             toAddress, fromAddress, subject, message = params
             encodingType = 2
-            TTL = 4*24*60*60
+            TTL = 4 * 24 * 60 * 60
         elif len(params) == 5:
             toAddress, fromAddress, subject, message, encodingType = params
-            TTL = 4*24*60*60
+            TTL = 4 * 24 * 60 * 60
         elif len(params) == 6:
             toAddress, fromAddress, subject, message, encodingType, TTL = params
         if encodingType not in [2, 3]:
@@ -664,10 +665,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         message = self._decode(message, "base64")
         if len(subject + message) > (2 ** 18 - 500):
             raise APIError(27, 'Message is too long.')
-        if TTL < 60*60:
-            TTL = 60*60
-        if TTL > 28*24*60*60:
-            TTL = 28*24*60*60
+        if TTL < 60 * 60:
+            TTL = 60 * 60
+        if TTL > 28 * 24 * 60 * 60:
+            TTL = 28 * 24 * 60 * 60
         toAddress = addBMIfNotPresent(toAddress)
         fromAddress = addBMIfNotPresent(fromAddress)
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
@@ -690,8 +691,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              subject, 
              message, 
              ackdata, 
-             int(time.time()), # sentTime (this won't change)
-             int(time.time()), # lastActionTime
+             int(time.time()),  # sentTime (this won't change)
+             int(time.time()),  # lastActionTime
              0, 
              'msgqueued', 
              0, 
@@ -719,10 +720,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if len(params) == 3:
             fromAddress, subject, message = params
             encodingType = 2
-            TTL = 4*24*60*60
+            TTL = 4 * 24 * 60 * 60
         elif len(params) == 4:
             fromAddress, subject, message, encodingType = params
-            TTL = 4*24*60*60
+            TTL = 4 * 24 * 60 * 60
         elif len(params) == 5:
             fromAddress, subject, message, encodingType, TTL = params
         if encodingType not in [2, 3]:
@@ -731,10 +732,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         message = self._decode(message, "base64")
         if len(subject + message) > (2 ** 18 - 500):
             raise APIError(27, 'Message is too long.')
-        if TTL < 60*60:
-            TTL = 60*60
-        if TTL > 28*24*60*60:
-            TTL = 28*24*60*60
+        if TTL < 60 * 60:
+            TTL = 60 * 60
+        if TTL > 28 * 24 * 60 * 60:
+            TTL = 28 * 24 * 60 * 60
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
@@ -742,24 +743,25 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 fromAddress, 'enabled')
         except:
             raise APIError(13, 'could not find your fromAddress in the keys.dat file.')
+        streamNumber = decodeAddress(fromAddress)[2]
         ackdata = genAckPayload(streamNumber, 0)
         toAddress = '[Broadcast subscribers]'
         ripe = ''
 
-        t = ('', 
-             toAddress, 
-             ripe, 
-             fromAddress, 
-             subject, 
-             message, 
-             ackdata, 
-             int(time.time()), # sentTime (this doesn't change)
-             int(time.time()), # lastActionTime
-             0, 
-             'broadcastqueued', 
-             0, 
-             'sent', 
-             2, 
+        t = ('',
+             toAddress,
+             ripe,
+             fromAddress,
+             subject,
+             message,
+             ackdata,
+             int(time.time()),  # sentTime (this doesn't change)
+             int(time.time()),  # lastActionTime
+             0,
+             'broadcastqueued',
+             0,
+             'sent',
+             2,
              TTL)
         helper_sent.insert(t)
 
@@ -1066,5 +1068,3 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         except Exception as e:
             logger.exception(e)
             return "API Error 0021: Unexpected API Failure - %s" % str(e)
-
-
