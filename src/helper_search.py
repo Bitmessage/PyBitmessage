@@ -1,6 +1,9 @@
-#!/usr/bin/python2.7
+"""Helper search is is used to perform search operation from sql."""
 
-from helper_sql import *
+# !/usr/bin/python2.7
+
+from helper_sql import sqlQuery
+from tr import _translate as search_translate
 
 try:
     from PyQt4 import QtGui
@@ -8,13 +11,8 @@ try:
 except Exception:
     haveQt = False
 
-def search_translate (context, text):
-    if haveQt:
-        return QtGui.QApplication.translate(context, text)
-    else:
-        return text.lower()
 
-def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where = None, what = None, unreadOnly = False):
+def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
     if what is not None and what != "":
         what = "%" + what + "%"
         if where == search_translate("MainWindow", "To"):
@@ -68,7 +66,8 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
         sqlStatementBase += " ORDER BY lastactiontime"
     return sqlQuery(sqlStatementBase, sqlArguments)
 
-def check_match(toAddress, fromAddress, subject, message, where = None, what = None):
+
+def check_match(toAddress, fromAddress, subject, message, where=None, what=None):
     if what is not None and what != "":
         if where in (search_translate("MainWindow", "To"), search_translate("MainWindow", "All")):
             if what.lower() not in toAddress.lower():
