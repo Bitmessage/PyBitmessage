@@ -5,7 +5,11 @@ import threading
 
 try:
     import prctl
-
+except ImportError:
+    def set_thread_name(name):
+        """Set the thread name for external use (visible from the OS)."""
+        threading.current_thread().name = name
+else:
     def set_thread_name(name):
         """Set a name for the thread for python internal use."""
         prctl.set_name(name)
@@ -16,10 +20,6 @@ try:
 
     threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
     threading.Thread._Thread__bootstrap = _thread_name_hack
-except ImportError:
-    def set_thread_name(name):
-        """Set the thread name for external use (visible from the OS)."""
-        threading.current_thread().name = name
 
 
 class StoppableThread(object):
