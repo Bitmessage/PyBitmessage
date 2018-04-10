@@ -25,10 +25,8 @@ import getopt
 # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 import signal
 import socket
-from datetime import datetime
+import time
 from struct import pack
-from subprocess import call
-from time import sleep
 
 from helper_startup import (
     isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
@@ -189,6 +187,20 @@ class Main:
             elif opt in ("-t", "--test"):
                 state.testmode = daemon = True
                 state.enableGUI = False  # run without a UI
+                # Fallback: in case when no api command was issued
+                state.last_api_response = time.time()
+                # Apply special settings
+                config = BMConfigParser()
+                config.set(
+                    'bitmessagesettings', 'apienabled', 'true')
+                config.set(
+                    'bitmessagesettings', 'apiusername', 'username')
+                config.set(
+                    'bitmessagesettings', 'apipassword', 'password')
+                config.set(
+                    'bitmessagesettings', 'apinotifypath',
+                    os.path.join(app_dir, 'tests', 'apinotify_handler.py')
+                )
 
         # is the application already running?  If yes then exit.
         if state.enableGUI and not state.curses and not depends.check_pyqt():
@@ -206,7 +218,7 @@ class Main:
             )
         shared.thisapp = singleinstance("", daemon)
 
-        if daemon and not state.testmode:
+        if daemon:
             with shared.printLock:
                 print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
@@ -346,12 +358,11 @@ class Main:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
         if daemon:
-            if state.testmode:
-                sleep(30)
-                # make testing
-                self.stop()
             while state.shutdown == 0:
-                sleep(1)
+                time.sleep(1)
+                if (state.testmode and
+                        time.time() - state.last_api_response >= 30):
+                    self.stop()
 
     def daemonize(self):
         grandfatherPid = os.getpid()
@@ -362,7 +373,7 @@ class Main:
                 shared.thisapp.cleanup()
                 # wait until grandchild ready
                 while True:
-                    sleep(1)
+                    time.sleep(1)
                 os._exit(0)
         except AttributeError:
             # fork not implemented
@@ -383,7 +394,7 @@ class Main:
                 shared.thisapp.cleanup()
                 # wait until child ready
                 while True:
-                    sleep(1)
+                    time.sleep(1)
                 os._exit(0)
         except AttributeError:
             # fork not implemented

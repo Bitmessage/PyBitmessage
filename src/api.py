@@ -1456,7 +1456,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def _handle_request(self, method, params):
         if method not in self.handlers:
             raise APIError(20, 'Invalid method: %s' % method)
-        return self.handlers[method](self, params)
+        result = self.handlers[method](self, params)
+        state.last_api_response = time.time()
+        return result
 
     def _dispatch(self, method, params):
         # pylint: disable=attribute-defined-outside-init
