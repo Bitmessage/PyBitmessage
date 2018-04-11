@@ -22,6 +22,9 @@ class TestAPI(unittest.TestCase):
                 print('API start detected!')
                 return
 
+    def _add_random_address(self, label):
+        return self.api.createRandomAddress(base64.encodestring(label))
+
     def test_user_password(self):
         api_wrong = xmlrpclib.ServerProxy("http://test:wrong@127.0.0.1:8442/")
         self.assertEqual(
@@ -37,6 +40,7 @@ class TestAPI(unittest.TestCase):
         )
 
     def test_arithmetic(self):
+        """add API command"""
         self.assertEqual(self.api.add(69, 42), 111)
 
     def test_invalid_method(self):
@@ -73,8 +77,11 @@ class TestAPI(unittest.TestCase):
         # "API Error 0021: Unexpected API Failure -
         #  cannot concatenate 'str' and 'int' objects"
 
-    # def test_create_random_address(self):
-    #     pass
+    def test_create_random_address(self):
+        addr = self._add_random_address('random_1')
+        self.assertRegexpMatches(addr, r'^BM-')
+        self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
+        self.assertEqual(self.api.deleteAddress(addr), 'success')
 
     def test_addressbook(self):
         # Initially it's empty
@@ -102,3 +109,7 @@ class TestAPI(unittest.TestCase):
             json.loads(self.api.listAddressBookEntries()).get('addresses'),
             []
         )
+
+    # def test_send_broadcast(self):
+    #     addr = self._add_random_address('random_2')
+        
