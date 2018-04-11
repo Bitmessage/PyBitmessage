@@ -61,7 +61,7 @@ def doCleanShutdown():
             except Queue.Empty:
                 break
 
-    if shared.thisapp.daemon:
+    if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?
         logger.info('Clean shutdown complete.')
         shared.thisapp.cleanup()
         os._exit(0)

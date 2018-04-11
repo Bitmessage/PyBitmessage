@@ -65,7 +65,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
-            if shared.thisapp.daemon:
+            if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?
                 queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
@@ -120,7 +120,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                     if "Errno 28" in str(err):
                         logger.fatal('(while receiveDataThread knownnodes.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
                         queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
-                        if shared.thisapp.daemon:
+                        if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?
                             os._exit(0)
                 shared.needToWriteKnownNodesToDisk = False
 
