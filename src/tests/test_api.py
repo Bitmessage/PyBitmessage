@@ -26,6 +26,7 @@ class TestAPI(unittest.TestCase):
         return self.api.createRandomAddress(base64.encodestring(label))
 
     def test_user_password(self):
+        """Trying to connect with wrong username/password"""
         api_wrong = xmlrpclib.ServerProxy("http://test:wrong@127.0.0.1:8442/")
         self.assertEqual(
             api_wrong.clientStatus(),
@@ -34,28 +35,32 @@ class TestAPI(unittest.TestCase):
         )
 
     def test_connection(self):
+        """API command 'helloWorld'"""
         self.assertEqual(
             self.api.helloWorld('hello', 'world'),
             'hello-world'
         )
 
     def test_arithmetic(self):
-        """add API command"""
+        """API command 'add'"""
         self.assertEqual(self.api.add(69, 42), 111)
 
     def test_invalid_method(self):
+        """Issuing nonexistent command 'test'"""
         self.assertEqual(
             self.api.test(),
             'API Error 0020: Invalid method: test'
         )
 
     def test_list_addresses(self):
+        """Checking the return of API command 'listAddresses'"""
         self.assertEqual(
             json.loads(self.api.listAddresses()).get('addresses'),
             self.addresses
         )
 
     def test_decode_address(self):
+        """Checking the return of API command 'decodeAddress'"""
         result = json.loads(
             self.api.decodeAddress('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'))
         self.assertEqual(result.get('status'), 'success')
@@ -63,6 +68,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(result['streamNumber'], 1)
 
     def test_create_deterministic_addresses(self):
+        """API command 'getDeterministicAddress': with various params"""
         seed = base64.encodestring(
             'TIGER, tiger, burning bright. In the forests of the night')
         self.assertEqual(
@@ -73,17 +79,25 @@ class TestAPI(unittest.TestCase):
             self.api.getDeterministicAddress(seed, 3, 1),
             'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
         )
-        # The following for version 2:
-        # "API Error 0021: Unexpected API Failure -
-        #  cannot concatenate 'str' and 'int' objects"
+        self.assertRegexpMatches(
+            self.api.getDeterministicAddress(seed, 2, 1),
+            r'^API Error 0002:'
+        )
+        # This is here until the streams will be implemented
+        self.assertRegexpMatches(
+            self.api.getDeterministicAddress(seed, 3, 2),
+            r'API Error 0003:'
+        )
 
     def test_create_random_address(self):
+        """API command 'createRandomAddress': basic BM-address validation"""
         addr = self._add_random_address('random_1')
         self.assertRegexpMatches(addr, r'^BM-')
         self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
         self.assertEqual(self.api.deleteAddress(addr), 'success')
 
     def test_addressbook(self):
+        """Testing API commands for addressbook manipulations"""
         # Initially it's empty
         self.assertEqual(
             json.loads(self.api.listAddressBookEntries()).get('addresses'),
@@ -110,6 +124,16 @@ class TestAPI(unittest.TestCase):
             []
         )
 
-    # def test_send_broadcast(self):
-    #     addr = self._add_random_address('random_2')
-        
+    def test_send_broadcast(self):
+        """API command 'sendBroadcast': ensure it returns ackData"""
+        addr = self._add_random_address('random_2')
+        ack = self.api.sendBroadcast(
+            addr, base64.encodestring('test_subject'),
+            base64.encodestring('test message')
+        )
+        try:
+            int(ack, 16)
+        except ValueError:
+            self.fail('sendBroadcast returned error or ackData is not hex')
+        finally:
+            self.assertEqual(self.api.deleteAddress(addr), 'success')
