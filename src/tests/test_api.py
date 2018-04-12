@@ -8,6 +8,9 @@ from test_process import TestProcessProto
 
 class TestAPI(TestProcessProto):
     _process_cmd = ['pybitmessage', '-t']
+    _seed = base64.encodestring(
+        'TIGER, tiger, burning bright. In the forests of the night'
+    )
 
     @classmethod
     def setUpClass(cls):
@@ -68,23 +71,21 @@ class TestAPI(TestProcessProto):
 
     def test_create_deterministic_addresses(self):
         """API command 'getDeterministicAddress': with various params"""
-        seed = base64.encodestring(
-            'TIGER, tiger, burning bright. In the forests of the night')
         self.assertEqual(
-            self.api.getDeterministicAddress(seed, 4, 1),
+            self.api.getDeterministicAddress(self._seed, 4, 1),
             'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
         )
         self.assertEqual(
-            self.api.getDeterministicAddress(seed, 3, 1),
+            self.api.getDeterministicAddress(self._seed, 3, 1),
             'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
         )
         self.assertRegexpMatches(
-            self.api.getDeterministicAddress(seed, 2, 1),
+            self.api.getDeterministicAddress(self._seed, 2, 1),
             r'^API Error 0002:'
         )
         # This is here until the streams will be implemented
         self.assertRegexpMatches(
-            self.api.getDeterministicAddress(seed, 3, 2),
+            self.api.getDeterministicAddress(self._seed, 3, 2),
             r'API Error 0003:'
         )
 
@@ -136,3 +137,28 @@ class TestAPI(TestProcessProto):
             self.fail('sendBroadcast returned error or ackData is not hex')
         finally:
             self.assertEqual(self.api.deleteAddress(addr), 'success')
+
+    def test_chan(self):
+        """Testing chan creation/joining"""
+        # Cheate chan with known address
+        self.assertEqual(
+            self.api.createChan(self._seed),
+            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
+        )
+        # cleanup
+        self.assertEqual(
+            self.api.leaveChan('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'),
+            'success'
+        )
+        # Join chan with addresses of version 3 or 4
+        for addr in (
+                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
+                'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
+        ):
+            self.assertEqual(self.api.joinChan(self._seed, addr), 'success')
+            self.assertEqual(self.api.leaveChan(addr), 'success')
+        # Joining with wrong address should fail
+        self.assertRegexpMatches(
+            self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
+            r'^API Error 0008:'
+        )
