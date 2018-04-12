@@ -1,26 +1,25 @@
-import unittest
-import subprocess
 import xmlrpclib
 import base64
 import json
-import os
-import tempfile
 from time import sleep
 
+from test_process import TestProcessProto
 
-class TestAPI(unittest.TestCase):
+
+class TestAPI(TestProcessProto):
+    _process_cmd = ['pybitmessage', '-t']
+
     @classmethod
     def setUpClass(cls):
-        subprocess.call(['pybitmessage', '-t'])
+        super(TestAPI, cls).setUpClass()
         cls.addresses = []
         cls.api = xmlrpclib.ServerProxy(
             "http://username:password@127.0.0.1:8442/")
-        for tick in range(0, 10):
-            sleep(1)
-            if os.path.isfile(os.path.join(
-                    tempfile.gettempdir(), '.api_started')):
+        for tick in range(0, 5):
+            if cls._get_readline('.api_started'):
                 print('API start detected!')
                 return
+            sleep(1)
 
     def _add_random_address(self, label):
         return self.api.createRandomAddress(base64.encodestring(label))
