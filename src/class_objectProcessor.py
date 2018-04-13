@@ -28,6 +28,7 @@ import state
 import tr
 from debug import logger
 import l10n
+from addresses import calculateInventoryHash
 
 class objectProcessor(threading.Thread):
     """
