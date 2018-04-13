@@ -342,7 +342,7 @@ class Main:
             # Populate with hardcoded value (same as connectToStream above)
             state.streamsInWhichIAmParticipating.append(1)
 
-        if daemon == False or state.enableGUI: # FIXME redundant?
+        if daemon == False and state.enableGUI: # FIXME redundant?
             if state.curses == False:
                 if not depends.check_pyqt():
                     sys.exit(
