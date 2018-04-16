@@ -1,12 +1,17 @@
-import xmlrpclib
+"""
+Tests using API.
+"""
+
 import base64
 import json
+import xmlrpclib
 from time import sleep
 
 from test_process import TestProcessProto
 
 
 class TestAPI(TestProcessProto):
+    """A test case for API"""
     _process_cmd = ['pybitmessage', '-t']
     _seed = base64.encodestring(
         'TIGER, tiger, burning bright. In the forests of the night'
@@ -14,11 +19,12 @@ class TestAPI(TestProcessProto):
 
     @classmethod
     def setUpClass(cls):
+        """Setup XMLRPC proxy for pybitmessage API"""
         super(TestAPI, cls).setUpClass()
         cls.addresses = []
         cls.api = xmlrpclib.ServerProxy(
             "http://username:password@127.0.0.1:8442/")
-        for tick in range(0, 5):
+        for _ in range(0, 5):
             if cls._get_readline('.api_started'):
                 print('API start detected!')
                 return

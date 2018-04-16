@@ -1,19 +1,27 @@
-import unittest
-import subprocess
+"""
+Common reusable code for tests and tests for pybitmessage process.
+"""
+
 import os
 import signal
+import subprocess
 import tempfile
 import time
+import unittest
 
 import psutil
 
 
 def put_signal_file(path, filename):
+    """Creates file, presence of which is a signal about some event."""
     with open(os.path.join(path, filename), 'wb') as outfile:
         outfile.write(str(time.time()))
 
 
 class TestProcessProto(unittest.TestCase):
+    """Test case implementing common logic for external testing:
+    it starts pybitmessage in setUpClass() and stops it in tearDownClass()
+    """
     _process_cmd = ['pybitmessage', '-d']
     _threads_count = 14
     _files = (
@@ -23,6 +31,7 @@ class TestProcessProto(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """Setup environment and start pybitmessage"""
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
         put_signal_file(cls.home, 'unittest.lock')
         subprocess.call(cls._process_cmd)
@@ -48,6 +57,7 @@ class TestProcessProto(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """Ensures that pybitmessage stopped and removes files"""
         cls.process.send_signal(signal.SIGTERM)
         try:
             cls.process.wait(5)
@@ -80,6 +90,7 @@ class TestProcessProto(unittest.TestCase):
 
 
 class TestProcess(TestProcessProto):
+    """A test case for pybitmessage process"""
     def test_process_name(self):
         """Check PyBitmessage process name"""
         self.assertEqual(self.process.name(), 'PyBitmessage')

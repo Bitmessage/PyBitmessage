@@ -1,3 +1,7 @@
+"""
+Tests for core.
+"""
+
 import unittest
 
 
@@ -8,5 +12,6 @@ class TestCore(unittest.TestCase):
 
 
 def run():
+    """Starts all tests defined in this module"""
     suite = unittest.TestLoader().loadTestsFromTestCase(TestCore)
     return unittest.TextTestRunner(verbosity=2).run(suite)

@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+"""
+Utility configured as apinotifypath in bitmessagesettings
+when pybitmessage started in test mode.
+"""
 
 import sys
 import tempfile
+
 from test_process import put_signal_file
 
 
