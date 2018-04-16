@@ -367,7 +367,15 @@ class Main:
                         time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
+            from tests import core
+            test_core_result = core.run()
+            state.enableGUI = True
             self.stop()
+            sys.exit(
+                'Core tests failed!'
+                if test_core_result.errors or test_core_result.failures
+                else 0
+            )
 
     def daemonize(self):
         grandfatherPid = os.getpid()
