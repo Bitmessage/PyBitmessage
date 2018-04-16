@@ -1,6 +1,6 @@
 import os
 
-import shared
+import state
 
 # This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
 class translateClass:
@@ -18,10 +18,10 @@ def _translate(context, text, disambiguation = None, encoding = None, n = None):
 
 def translateText(context, text, n = None):
     try:
-        is_daemon = shared.thisapp.daemon
+        enableGUI = state.enableGUI
     except AttributeError:  # inside the plugin
-        is_daemon = False
-    if not is_daemon:
+        enableGUI = True
+    if enableGUI:
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
