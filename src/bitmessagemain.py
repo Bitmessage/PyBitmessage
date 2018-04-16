@@ -185,7 +185,10 @@ class Main:
             elif opt in ("-c", "--curses"):
                 state.curses = True
             elif opt in ("-t", "--test"):
-                state.testmode = daemon = True
+                state.testmode = True
+                if os.path.isfile(os.path.join(
+                        state.appdata, 'unittest.lock')):
+                    daemon = True
                 state.enableGUI = False  # run without a UI
                 # Fallback: in case when no api command was issued
                 state.last_api_response = time.time()
@@ -363,6 +366,8 @@ class Main:
                 if (state.testmode and
                         time.time() - state.last_api_response >= 30):
                     self.stop()
+        elif not state.enableGUI:
+            self.stop()
 
     def daemonize(self):
         grandfatherPid = os.getpid()

@@ -3,21 +3,30 @@ import subprocess
 import os
 import signal
 import tempfile
-from time import sleep
+import time
 
 import psutil
+
+
+def put_signal_file(path, filename):
+    with open(os.path.join(path, filename), 'wb') as outfile:
+        outfile.write(str(time.time()))
 
 
 class TestProcessProto(unittest.TestCase):
     _process_cmd = ['pybitmessage', '-d']
     _threads_count = 14
-    _files = ('keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat')
+    _files = (
+        'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
+        '.api_started', 'unittest.lock'
+    )
 
     @classmethod
     def setUpClass(cls):
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
+        put_signal_file(cls.home, 'unittest.lock')
         subprocess.call(cls._process_cmd)
-        sleep(5)
+        time.sleep(5)
         cls.pid = int(cls._get_readline('singleton.lock'))
         cls.process = psutil.Process(cls.pid)
 
@@ -78,6 +87,8 @@ class TestProcess(TestProcessProto):
     def test_files(self):
         """Check existence of PyBitmessage files"""
         for pfile in self._files:
+            if pfile.startswith('.'):
+                continue
             self.assertIsNot(
                 self._get_readline(pfile), None,
                 'Failed to read file %s' % pfile
