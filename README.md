@@ -27,3 +27,5 @@ References
 * [Protocol Specification](https://bitmessage.org/wiki/Protocol_specification)
 * [Whitepaper](https://bitmessage.org/bitmessage.pdf)
 * [Installation](https://bitmessage.org/wiki/Compiling_instructions)
+* [Discuss on Reddit](https://www.reddit.com/r/bitmessage)
+* [Chat on Gitter](https://gitter.im/Bitmessage/PyBitmessage)
