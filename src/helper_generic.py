@@ -4,18 +4,19 @@ Helper Generic perform generic operations for threading.
 Also perform some conversion operations.
 """
 
+
 import socket
 import sys
-from binascii import hexlify, unhexlify
-from multiprocessing import current_process
 import threading
 import traceback
+import multiprocessing
+from binascii import hexlify, unhexlify
 
 import shared
 import state
-from debug import logger
 import queues
 import shutdown
+from debug import logger
 
 
 def powQueueSize():
@@ -58,15 +59,16 @@ def allThreadTraceback(frame):
 
 
 def signal_handler(signal, frame):
+    process = multiprocessing.current_process()
     logger.error(
         'Got signal %i in %s/%s',
-        signal, current_process().name, threading.current_thread().name
+        signal, process.name, threading.current_thread().name
     )
-    if current_process().name == "RegExParser":
+    if process.name == "RegExParser":
         # on Windows this isn't triggered, but it's fine,
         # it has its own process termination thing
         raise SystemExit
-    if "PoolWorker" in current_process().name:
+    if "PoolWorker" in process.name:
         raise SystemExit
     if threading.current_thread().name not in ("PyBitmessage", "MainThread"):
         return
