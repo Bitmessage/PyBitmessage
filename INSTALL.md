@@ -43,7 +43,7 @@ That's it! *Honestly*!
 
 #### Windows
 On Windows you can download an executable for Bitmessage
-[here](https://bitmessage.org/download/windows/Bitmessage.exe).
+[here](https://github.com/Bitmessage/PyBitmessage/releases/download/0.6.3.2/Bitmessage_x86_0.6.3.2.exe).
 
 However, if you would like to run PyBitmessage via Python in Windows, you can
 go [here](https://bitmessage.org/wiki/Compiling_instructions#Windows) for
