@@ -12,7 +12,7 @@ from src.version import softwareVersion
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
     'notify2': ['notify2'],
-    'pyopencl': ['pyopencl'],
+    'opencl': ['pyopencl', 'numpy'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
@@ -22,7 +22,7 @@ EXTRAS_REQUIRE = {
         'curses',  # src/depends.py
         'python2-pythondialog',  # src/depends.py
         'm2r',  # fab build_docs
-    ],
+    ]
 }
 
 
@@ -49,6 +49,9 @@ if __name__ == "__main__":
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
+
+    with open(os.path.join(here, 'requirements.txt'), 'r') as f:
+        requirements = list(f.readlines())
 
     bitmsghash = Extension(
         'pybitmessage.bitmsghash.bitmsghash',
@@ -80,7 +83,8 @@ if __name__ == "__main__":
             import umsgpack
             installRequires.append("umsgpack")
         except ImportError:
-            packages += ['pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
+            packages += [
+                'pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
 
     dist = setup(
         name='pybitmessage',
@@ -96,6 +100,7 @@ if __name__ == "__main__":
         # TODO: add keywords
         #keywords='',
         install_requires=installRequires,
+        tests_require=requirements,
         extras_require=EXTRAS_REQUIRE,
         classifiers=[
             "License :: OSI Approved :: MIT License"
