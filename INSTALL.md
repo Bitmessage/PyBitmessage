@@ -3,7 +3,12 @@
 For an up-to-date version of these instructions, please visit the
 [Bitmessage Wiki](https://bitmessage.org/wiki/Compiling_instructions).
 
-PyBitmessage can be run either straight from source or from an installed
+PyBitmessage can be run in either one of two ways:
+
+- straight from source
+ 
+ or 
+- from an installed
 package.
 
 ## Dependencies
