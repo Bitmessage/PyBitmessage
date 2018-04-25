@@ -23,9 +23,10 @@ Here's a list of dependencies needed for PyBitmessage
 
 ## Running PyBitmessage
 PyBitmessage can be run in two ways: 
--straight from source 
-or 
--via a package which is installed on your system. Since PyBitmessage is Beta, it is best to run
+- straight from source
+
+ or 
+- via a package which is installed on your system. Since PyBitmessage is Beta, it is best to run
 PyBitmessage from source, so that you may update as needed.
 
 #### Updating
