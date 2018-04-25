@@ -3,7 +3,7 @@ from __future__ import division
 import time
 import threading
 import hashlib
-from struct import pack
+from struct import pack, unpack
 # used when the API must execute an outside program
 from subprocess import call
 from binascii import hexlify, unhexlify
@@ -137,6 +137,11 @@ class singleWorker(threading.Thread, StoppableThread):
                     self.sendBroadcast()
                 except:
                     pass
+            elif command == 'sendrawobject':
+                try:
+                    self.sendRawObject(data)
+                except:
+                    pass
             elif command == 'doPOWForMyV2Pubkey':
                 try:
                     self.doPOWForMyV2Pubkey(data)
@@ -225,6 +230,18 @@ class singleWorker(threading.Thread, StoppableThread):
         payload = pack('>Q', nonce) + payload
         # inventoryHash = calculateInventoryHash(payload)
         return payload
+
+    def sendRawObject(self, data):
+        queueItemID, payload = data
+        endOfLifeTime, = unpack('>Q', payload[:8])
+        TTL = min(28 * 24 * 60 * 60, max(300, endOfLifeTime - int(time.time())))
+        payload = self._doPOWDefaults(
+            payload, TTL, log_prefix='(For raw object)')
+
+        if protocol.checkAndShareObjectWithPeers(payload) == 0:
+            queues.processedRawObjectsQueue.put((queueItemID, "failed"))
+        else:
+            queues.processedRawObjectsQueue.put((queueItemID, hexlify(calculateInventoryHash(payload))))
 
     # This function also broadcasts out the pubkey message
     # once it is done with the POW

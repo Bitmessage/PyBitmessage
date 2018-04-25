@@ -22,10 +22,12 @@ import shared
 import time
 from addresses import (decodeAddress, addBMIfNotPresent, decodeVarint,
     calculateInventoryHash, varintDecodeError)
+import protocol
 from bmconfigparser import BMConfigParser
 import defaults
 import helper_inbox
 import helper_sent
+import helper_random
 import hashlib
 
 import state
@@ -63,6 +65,7 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
         while state.shutdown == 0:
             self.handle_request()
 
+queuedRawObjects = {}
 
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
@@ -951,6 +954,79 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         data += ']}'
         return data
 
+    def HandleDisseminateRawObject(self, params):
+        if len(params) != 1:
+            raise APIError(0, 'I need 1 parameter!')
+        payload = self._decode(params[0], "hex")
+
+        if protocol.checkAndShareObjectWithPeers(payload) == 0:
+            raise APIError(30, 'Invalid object or insufficient POW')
+        else:
+            return hexlify(calculateInventoryHash(payload))
+
+    def HandleQueueRawObject(self, params):
+        if len(params) != 1:
+            raise APIError(0, 'I need 1 parameter!')
+        payload = self._decode(params[0], "hex")
+        queueItemID = helper_random.randomBytes(32)
+        queues.workerQueue.put(('sendrawobject', (queueItemID, payload)))
+        queuedRawObjects[queueItemID] = "queued"
+        return hexlify(queueItemID)
+
+    def HandleCheckQueuedRawObject(self, params):
+        if len(params) != 1:
+            raise APIError(0, 'I need 1 parameter!')
+        queueItemID, = params
+        if len(queueItemID) != 64:
+            raise APIError(19, 'The length of queue item ID should be 32 bytes (encoded in hex thus 64 characters).')
+        queueItemID = self._decode(queueItemID, "hex")
+
+        while True:
+            try:
+                ID, result = queues.processedRawObjectsQueue.get_nowait()
+                queuedRawObjects[ID] = result
+            except:
+                break
+
+        result = queuedRawObjects.get(queueItemID, "notfound")
+        if result == "failed" or len(result) == 64:
+            del queuedRawObjects[queueItemID]
+        return result
+
+    def HandleGetRawObject(self, params):
+        if len(params) != 1:
+            raise APIError(0, 'I need 1 parameter!')
+        inventoryHash, = params
+        if len(inventoryHash) != 64:
+            raise APIError(19, 'The length of hash should be 32 bytes (encoded in hex thus 64 characters).')
+        inventoryHash = self._decode(inventoryHash, "hex")
+
+        try:
+            inventoryItem = Inventory()[inventoryHash]
+        except:
+            raise APIError(31, 'Object not found.')
+        else:
+            return json.dumps({'hash':hexlify(inventoryHash),'objectType':inventoryItem.type,'streamNumber':inventoryItem.stream,'payload':hexlify(inventoryItem.payload),'expiresTime':inventoryItem.expires,'tag':hexlify(inventoryItem.tag)}, indent=4, separators=(',', ': '))
+
+    def HandleListRawObjects(self, params):
+        if len(params) != 4:
+            raise APIError(0, 'I need 4 parameters!')
+        objectType, streamNumber, sliceStart, sliceEnd = params
+        if type(sliceStart) is not int or type(sliceEnd) is not int:
+            raise APIError(32, 'Invalid slice boundaries')
+
+        result = []
+        inventory = Inventory()
+        for i in inventory:
+            inventoryItem = inventory[str(i)]
+            if objectType != -1 and inventoryItem.type != objectType:
+                continue
+            if streamNumber != 0 and inventoryItem.stream != streamNumber:
+                continue
+            result.append({'hash':hexlify(i),'slice':hexlify(inventoryItem.payload[sliceStart:sliceEnd])})
+
+        return json.dumps(result, indent=4, separators=(',', ': '))
+
     def HandleClientStatus(self, params):
         if len(network.stats.connectedHostsList()) == 0:
             networkStatus = 'notConnected'
@@ -1039,6 +1115,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['disseminatePubkey'] = HandleDissimatePubKey
     handlers['getMessageDataByDestinationHash'] = HandleGetMessageDataByDestinationHash
     handlers['getMessageDataByDestinationTag'] = HandleGetMessageDataByDestinationHash
+    handlers['disseminateRawObject'] = HandleDisseminateRawObject
+    handlers['queueRawObject'] = HandleQueueRawObject
+    handlers['checkQueuedRawObject'] = HandleCheckQueuedRawObject
+    handlers['getRawObject'] = HandleGetRawObject
+    handlers['listRawObjects'] = HandleListRawObjects
     handlers['clientStatus'] = HandleClientStatus
     handlers['decodeAddress'] = HandleDecodeAddress
     handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
