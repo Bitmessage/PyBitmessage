@@ -959,6 +959,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need 1 parameter!')
         payload = self._decode(params[0], "hex")
 
+        # FIXME: obsolete function
         if protocol.checkAndShareObjectWithPeers(payload) == 0:
             raise APIError(30, 'Invalid object or insufficient POW')
         else:
