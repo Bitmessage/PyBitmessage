@@ -1,3 +1,5 @@
+"""Convenience functions for random operations. Not suitable for security / cryptography operations."""
+
 import os
 import random
 from pyelliptic.openssl import OpenSSL
@@ -48,9 +50,9 @@ def randomrandrange(x, y=None):
     but doesnt actually build a range object.
     """
     if isinstance(y, NoneType):
-        return random.randrange(x)
+        return random.randrange(x)  # nosec
     else:
-        return random.randrange(x, y)
+        return random.randrange(x, y)  # nosec
 
 
 def randomchoice(population):
@@ -60,4 +62,4 @@ def randomchoice(population):
     sequence seq. If seq is empty, raises
     IndexError.
     """
-    return random.choice(population)
+    return random.choice(population)  # nosec

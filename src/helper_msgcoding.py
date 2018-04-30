@@ -140,7 +140,6 @@ class MsgDecode(object):
         self.body = body
 
 if __name__ == '__main__':
-    import random
     messageData = {
         "subject": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(40)),
         "body": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(10000))
