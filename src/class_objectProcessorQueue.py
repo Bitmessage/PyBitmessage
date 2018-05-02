@@ -20,7 +20,7 @@ class ObjectProcessorQueue(Queue.Queue):
     def get(self, block = True, timeout = None):
         try:
             item = Queue.Queue.get(self, block, timeout)
-        except Queue.Empty as e:
+        except Queue.Empty:
             raise Queue.Empty()
         with self.sizeLock:
             self.curSize -= len(item[1])

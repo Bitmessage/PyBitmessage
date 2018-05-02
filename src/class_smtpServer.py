@@ -6,7 +6,6 @@ from email.header import decode_header
 import re
 import signal
 import smtpd
-import socket
 import threading
 import time
 
@@ -16,7 +15,6 @@ from debug import logger
 from helper_sql import sqlExecute
 from helper_ackPayload import genAckPayload
 from helper_threading import StoppableThread
-from pyelliptic.openssl import OpenSSL
 import queues
 from version import softwareVersion
 
@@ -68,7 +66,6 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
         stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
-        t = ()
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
             '',
@@ -97,7 +94,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 ret.append(unicode(h[0], h[1]))
             else:
                 ret.append(h[0].decode("utf-8", errors='replace'))
-            
+
         return ret
 
 
@@ -151,7 +148,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                     raise Exception("Bad domain %s", domain)
                 logger.debug("Sending %s to %s about %s", sender, rcpt, msg_subject)
                 self.send(sender, rcpt, msg_subject, body)
-                logger.info("Relayed %s to %s", sender, rcpt) 
+                logger.info("Relayed %s to %s", sender, rcpt)
             except Exception as err:
                 logger.error( "Bad to %s: %s", to, repr(err))
                 continue
@@ -162,21 +159,11 @@ class smtpServer(threading.Thread, StoppableThread):
         threading.Thread.__init__(self, name="smtpServerThread")
         self.initStop()
         self.server = smtpServerPyBitmessage(('127.0.0.1', LISTENPORT), None)
-        
+
     def stopThread(self):
         super(smtpServer, self).stopThread()
         self.server.close()
         return
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        for ip in ('127.0.0.1', BMConfigParser().get('bitmessagesettings', 'onionbindip')):
-        for ip in ('127.0.0.1'):
-            try:
-                s.connect((ip, LISTENPORT))
-                s.shutdown(socket.SHUT_RDWR)
-                s.close()
-                break
-            except:
-                pass
 
     def run(self):
         asyncore.loop(1)

@@ -5,6 +5,7 @@
 - make the pull request against the ["v0.6" branch](https://github.com/Bitmessage/PyBitmessage/tree/v0.6)
 - it should be possible to do a fast-forward merge of the pull requests
 - PGP-sign the commits included in the pull request
+- try to use a good editor that removes trailing whitespace, highlights potential python issues and uses unix line endings
 - You can get paid for merged commits if you register at [Tip4Commit](https://tip4commit.com/github/Bitmessage/PyBitmessage)
 
 If for some reason you don't want to use github, you can submit the patch using Bitmessage to the "bitmessage" chan, or to one of the developers.
