@@ -1027,7 +1027,7 @@ def run(stdscr):
             curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK) # orangish
     
     # Init list of address in 'Your Identities' tab
-    configSections = BMConfigParser().addressses()
+    configSections = BMConfigParser().addresses()
     for addressInKeysFile in configSections:
         isEnabled = BMConfigParser().getboolean(addressInKeysFile, "enabled")
         addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
