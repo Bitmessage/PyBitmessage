@@ -5,7 +5,7 @@ from helper_sql import *
 try:
     from PyQt4 import QtGui
     haveQt = True
-except Exception:
+except ImportError:
     haveQt = False
 
 def search_translate (context, text):

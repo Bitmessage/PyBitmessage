@@ -91,6 +91,7 @@ class SqlBulkExecute:
     def execute(sqlStatement, *args):
         """Used for statements that do not return results."""
         sqlSubmitQueue.put(sqlStatement)
+
         if args == ():
             sqlSubmitQueue.put('')
         else:
