@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 # import sys
@@ -17,12 +18,39 @@ knownNodesTrimAmount = 2000
 knownNodesForgetRating = -0.5
 
 
+def json_serialize_knownnodes(output):
+    _serialized = []
+    for stream, peers in knownNodes.iteritems():
+        for peer, info in peers.iteritems():
+            _serialized.append({
+                'stream': stream, 'peer': peer._asdict(), 'info': info
+            })
+    json.dump(_serialized, output, indent=4)
+
+
+def json_deserialize_knownnodes(source):
+    for node in json.load(source):
+        peer = node['peer']
+        peer['host'] = str(peer['host'])
+        knownNodes[node['stream']][state.Peer(**peer)] = node['info']
+
+
+def pickle_deserialize_old_knownnodes(source):
+    knownNodes = pickle.load(source)
+    # the old format was {Peer:lastseen, ...}
+    # the new format is {Peer:{"lastseen":i, "rating":f}}
+    for stream in knownNodes.keys():
+        for node, params in knownNodes[stream].items():
+            if isinstance(params, (float, int)):
+                addKnownNode(stream, node, params)
+
+
 def saveKnownNodes(dirName=None):
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
         with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
-            pickle.dump(knownNodes, output)
+            json_serialize_knownnodes(output)
 
 
 def addKnownNode(stream, peer, lastseen=None, is_self=False):
@@ -39,17 +67,14 @@ def readKnownNodes():
     try:
         with open(state.appdata + 'knownnodes.dat', 'rb') as source:
             with knownNodesLock:
-                knownNodes = pickle.load(source)
+                try:
+                    json_deserialize_knownnodes(source)
+                except ValueError:
+                    source.seek(0)
+                    pickle_deserialize_old_knownnodes(source)
     except (IOError, OSError):
-        logger.warning(
+        logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
-    else:
-        # the old format was {Peer:lastseen, ...}
-        # the new format is {Peer:{"lastseen":i, "rating":f}}
-        for stream in knownNodes.keys():
-            for node, params in knownNodes[stream].items():
-                if isinstance(params, (float, int)):
-                    addKnownNode(stream, node, params)
 
     config = BMConfigParser()
     # if config.safeGetInt('bitmessagesettings', 'settingsversion') > 10:
