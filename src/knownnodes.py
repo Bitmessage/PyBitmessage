@@ -1,12 +1,15 @@
 import os
 import pickle
+# import sys
 import threading
+import time
 
 import state
 from bmconfigparser import BMConfigParser
+from debug import logger
 
 knownNodesLock = threading.Lock()
-knownNodes = {}
+knownNodes = {stream: {} for stream in range(1, 4)}
 
 knownNodesTrimAmount = 2000
 
@@ -20,6 +23,46 @@ def saveKnownNodes(dirName=None):
     with knownNodesLock:
         with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
             pickle.dump(knownNodes, output)
+
+
+def addKnownNode(stream, peer, lastseen=None, is_self=False):
+    if lastseen is None:
+        lastseen = time.time()
+    knownNodes[stream][peer] = {
+        "lastseen": lastseen,
+        "rating": 0,
+        "self": is_self,
+    }
+
+
+def readKnownNodes():
+    try:
+        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
+            with knownNodesLock:
+                knownNodes = pickle.load(source)
+    except (IOError, OSError):
+        logger.warning(
+            'Failed to read nodes from knownnodes.dat', exc_info=True)
+    else:
+        # the old format was {Peer:lastseen, ...}
+        # the new format is {Peer:{"lastseen":i, "rating":f}}
+        for stream in knownNodes.keys():
+            for node, params in knownNodes[stream].items():
+                if isinstance(params, (float, int)):
+                    addKnownNode(stream, node, params)
+
+    config = BMConfigParser()
+    # if config.safeGetInt('bitmessagesettings', 'settingsversion') > 10:
+    #     sys.exit(
+    #         'Bitmessage cannot read future versions of the keys file'
+    #         ' (keys.dat). Run the newer version of Bitmessage.')
+
+    # your own onion address, if setup
+    onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
+    if onionhostname and ".onion" in onionhostname:
+        onionport = config.safeGetInt('bitmessagesettings', 'onionport')
+        if onionport:
+            addKnownNode(1, state.Peer(onionhostname, onionport), is_self=True)
 
 
 def increaseRating(peer):
