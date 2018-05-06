@@ -777,7 +777,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need one parameter!')
         ackdata, = params
         if len(ackdata) < 76:
-            raise APIError(15, 'The length of ackData should be at least 38 bytes (encoded in hex thus 76 characters).')
+            # The length of ackData should be at least 38 bytes (76 hex digits)
+            raise APIError(15, 'Invalid ackData object size.')
         ackdata = self._decode(ackdata, "hex")
         queryreturn = sqlQuery(
             '''SELECT status FROM sent where ackdata=?''',
