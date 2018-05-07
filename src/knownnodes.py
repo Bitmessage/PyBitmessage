@@ -19,6 +19,9 @@ knownNodesForgetRating = -0.5
 
 
 def json_serialize_knownnodes(output):
+    """
+    Reorganize knownnodes dict and write it as JSON to output
+    """
     _serialized = []
     for stream, peers in knownNodes.iteritems():
         for peer, info in peers.iteritems():
@@ -29,6 +32,9 @@ def json_serialize_knownnodes(output):
 
 
 def json_deserialize_knownnodes(source):
+    """
+    Read JSON from source and make knownnodes dict
+    """
     for node in json.load(source):
         peer = node['peer']
         peer['host'] = str(peer['host'])
@@ -36,9 +42,12 @@ def json_deserialize_knownnodes(source):
 
 
 def pickle_deserialize_old_knownnodes(source):
+    """
+    Unpickle source and reorganize knownnodes dict if it's in old format
+    the old format was {Peer:lastseen, ...}
+    the new format is {Peer:{"lastseen":i, "rating":f}}
+    """
     knownNodes = pickle.load(source)
-    # the old format was {Peer:lastseen, ...}
-    # the new format is {Peer:{"lastseen":i, "rating":f}}
     for stream in knownNodes.keys():
         for node, params in knownNodes[stream].items():
             if isinstance(params, (float, int)):
@@ -54,10 +63,8 @@ def saveKnownNodes(dirName=None):
 
 
 def addKnownNode(stream, peer, lastseen=None, is_self=False):
-    if lastseen is None:
-        lastseen = time.time()
     knownNodes[stream][peer] = {
-        "lastseen": lastseen,
+        "lastseen": lastseen or time.time(),
         "rating": 0,
         "self": is_self,
     }
