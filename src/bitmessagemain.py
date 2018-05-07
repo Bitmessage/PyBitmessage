@@ -371,9 +371,10 @@ class Main:
 
         if daemon:
             if state.testmode:
-                sleep(30)
-                # make testing
-                self.stop()
+                # sleep(30)
+                # Generate Random Numner and wait until synchronisation finishes              
+                if rndm().generateRandomNumber():
+                    self.stop()
             while state.shutdown == 0:
                 sleep(1)
 
@@ -440,7 +441,7 @@ Options:
   -h, --help            show this help message and exit
   -c, --curses          use curses (text mode) interface
   -d, --daemon          run in daemon (background) mode
-  -t, --test            dryrun, make testing
+  -t, --test            this is only for developers for testing purpose
 
 All parameters are optional.
 '''
