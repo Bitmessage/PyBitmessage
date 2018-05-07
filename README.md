@@ -29,3 +29,4 @@ References
 * [Installation](https://bitmessage.org/wiki/Compiling_instructions)
 * [Discuss on Reddit](https://www.reddit.com/r/bitmessage)
 * [Chat on Gitter](https://gitter.im/Bitmessage/PyBitmessage)
+
