@@ -527,7 +527,7 @@ class objectProcessor(threading.Thread):
                 except:
                     apiNotifyPath = ''
                 if apiNotifyPath != '':
-                    call([apiNotifyPath, "newMessage"])  # nosec
+                    call([apiNotifyPath, "newMessage"])
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
@@ -776,7 +776,7 @@ class objectProcessor(threading.Thread):
             except:
                 apiNotifyPath = ''
             if apiNotifyPath != '':
-                call([apiNotifyPath, "newBroadcast"])  # nosec
+                call([apiNotifyPath, "newBroadcast"])
 
         # Display timing data
         logger.info('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
