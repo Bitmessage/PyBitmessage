@@ -2,6 +2,7 @@
 
 - try to explain what the code is about
 - try to follow [PEP0008](https://www.python.org/dev/peps/pep-0008/)
+- make the pull request against the ["v0.6" branch](https://github.com/Bitmessage/PyBitmessage/tree/v0.6)
 - PGP-sign the commits included in the pull request
 - try to use a good editor that removes trailing whitespace, highlights potential python issues and uses unix line endings
 - You can get paid for merged commits if you register at [Tip4Commit](https://tip4commit.com/github/Bitmessage/PyBitmessage)
