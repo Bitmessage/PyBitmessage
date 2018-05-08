@@ -4,7 +4,7 @@ Common reusable code for tests and tests for pybitmessage process.
 
 import os
 import signal
-import subprocess
+import subprocess  # nosec
 import tempfile
 import time
 import unittest
@@ -34,7 +34,7 @@ class TestProcessProto(unittest.TestCase):
         """Setup environment and start pybitmessage"""
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
         put_signal_file(cls.home, 'unittest.lock')
-        subprocess.call(cls._process_cmd)
+        subprocess.call(cls._process_cmd)  # nosec
         time.sleep(5)
         cls.pid = int(cls._get_readline('singleton.lock'))
         cls.process = psutil.Process(cls.pid)

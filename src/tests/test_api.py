@@ -4,7 +4,7 @@ Tests using API.
 
 import base64
 import json
-import xmlrpclib
+import xmlrpclib  # nosec
 from time import sleep
 
 from test_process import TestProcessProto

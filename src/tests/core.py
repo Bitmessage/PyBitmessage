@@ -3,7 +3,7 @@ Tests for core and those that do not work outside
 (because of import error for example)
 """
 
-import random
+import random  # nosec
 import string
 import unittest
 
@@ -17,10 +17,10 @@ class TestCore(unittest.TestCase):
         """test encoding and decoding (originally from helper_msgcoding)"""
         msg_data = {
             'subject': ''.join(
-                random.choice(string.ascii_lowercase + string.digits)
+                random.choice(string.ascii_lowercase + string.digits)  # nosec
                 for _ in range(40)),
             'body': ''.join(
-                random.choice(string.ascii_lowercase + string.digits)
+                random.choice(string.ascii_lowercase + string.digits)  # nosec
                 for _ in range(10000))
         }
 
