@@ -1267,7 +1267,7 @@ class singleWorker(threading.Thread, StoppableThread):
                     except:
                         apiNotifyPath = ''
                     if apiNotifyPath != '':
-                        call([apiNotifyPath, "newMessage"])  # nosec
+                        call([apiNotifyPath, "newMessage"])
 
     def requestPubKey(self, toAddress):
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
