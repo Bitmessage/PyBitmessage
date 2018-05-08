@@ -230,7 +230,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                 # need it if we end up passing the info to the API.
                 listOfNewAddressesToSendOutThroughTheAPI = []
 
-                for i in range(numberOfAddressesToMake):
+                for _ in range(numberOfAddressesToMake):
                     # This next section is a little bit strange. We're
                     # going to generate keys over and over until we find
                     # one that has a RIPEMD hash that starts with either

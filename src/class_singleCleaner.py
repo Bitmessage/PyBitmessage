@@ -1,3 +1,22 @@
+"""
+The singleCleaner class is a timer-driven thread that cleans data structures
+to free memory, resends messages when a remote node doesn't respond, and
+sends pong messages to keep connections alive if the network isn't busy.
+It cleans these data structures in memory:
+inventory (moves data to the on-disk sql database)
+inventorySets (clears then reloads data out of sql database)
+
+It cleans these tables on the disk:
+inventory (clears expired objects)
+pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
+knownNodes (clears addresses which have not been online for over 3 days)
+
+It resends messages when there has been no response:
+resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
+resends msg messages in 5 days (then 10 days, then 20 days, etc...)
+
+"""
+
 import gc
 import threading
 import shared
@@ -14,25 +33,6 @@ from debug import logger
 import knownnodes
 import queues
 import state
-
-"""
-The singleCleaner class is a timer-driven thread that cleans data structures 
-to free memory, resends messages when a remote node doesn't respond, and 
-sends pong messages to keep connections alive if the network isn't busy.
-It cleans these data structures in memory:
-inventory (moves data to the on-disk sql database)
-inventorySets (clears then reloads data out of sql database)
-
-It cleans these tables on the disk:
-inventory (clears expired objects)
-pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
-knownNodes (clears addresses which have not been online for over 3 days)
-
-It resends messages when there has been no response:
-resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
-resends msg messages in 5 days (then 10 days, then 20 days, etc...)
-
-"""
 
 
 class singleCleaner(threading.Thread, StoppableThread):
@@ -61,7 +61,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
             Inventory().flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
-            
+
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.

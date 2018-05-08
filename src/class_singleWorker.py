@@ -5,7 +5,7 @@ import threading
 import hashlib
 from struct import pack
 # used when the API must execute an outside program
-from subprocess import call
+from subprocess import call  # nosec
 from binascii import hexlify, unhexlify
 
 import tr
@@ -228,7 +228,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
     # This function also broadcasts out the pubkey message
     # once it is done with the POW
-    def doPOWForMyV2Pubkey(self, hash):
+    def doPOWForMyV2Pubkey(self, adressHash):
         # Look up my stream number based on my address hash
         """configSections = shared.config.addresses()
         for addressInKeysFile in configSections:
@@ -239,9 +239,9 @@ class singleWorker(threading.Thread, StoppableThread):
                 if hash == hashFromThisParticularAddress:
                     myAddress = addressInKeysFile
                     break"""
-        myAddress = shared.myAddressesByHash[hash]
+        myAddress = shared.myAddressesByHash[adressHash]
         # status
-        _, addressVersionNumber, streamNumber, hash = decodeAddress(myAddress)
+        _, addressVersionNumber, streamNumber, adressHash = decodeAddress(myAddress)
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
@@ -293,31 +293,31 @@ class singleWorker(threading.Thread, StoppableThread):
     # does the necessary POW and sends it out. If it *is* a chan then it
     # assembles the pubkey and stores is in the pubkey table so that we can
     # send messages to "ourselves".
-    def sendOutOrStoreMyV3Pubkey(self, hash):
+    def sendOutOrStoreMyV3Pubkey(self, adressHash):
         try:
-            myAddress = shared.myAddressesByHash[hash]
+            myAddress = shared.myAddressesByHash[adressHash]
         except:
             # The address has been deleted.
             return
         if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
             logger.info('This is a chan address. Not sending pubkey.')
             return
-        status, addressVersionNumber, streamNumber, hash = decodeAddress(
+        _, addressVersionNumber, streamNumber, adressHash = decodeAddress(
             myAddress)
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
         embeddedTime = int(time.time() + TTL)
+
         # signedTimeForProtocolV2 = embeddedTime - TTL
-        """
-        According to the protocol specification, the expiresTime
-        along with the pubkey information is signed. But to be
-        backwards compatible during the upgrade period, we shall sign
-        not the expiresTime but rather the current time. There must be
-        precisely a 28 day difference between the two. After the upgrade
-        period we'll switch to signing the whole payload with the
-        expiresTime time.
-        """
+        # According to the protocol specification, the expiresTime
+        # along with the pubkey information is signed. But to be
+        # backwards compatible during the upgrade period, we shall sign
+        # not the expiresTime but rather the current time. There must be
+        # precisely a 28 day difference between the two. After the upgrade
+        # period we'll switch to signing the whole payload with the
+        # expiresTime time.
+
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x01'  # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
@@ -379,7 +379,7 @@ class singleWorker(threading.Thread, StoppableThread):
         if shared.BMConfigParser().safeGetBoolean(myAddress, 'chan'):
             logger.info('This is a chan address. Not sending pubkey.')
             return
-        status, addressVersionNumber, streamNumber, hash = decodeAddress(
+        _, addressVersionNumber, streamNumber, addressHash = decodeAddress(
             myAddress)
 
         # 28 days from now plus or minus five minutes
@@ -419,7 +419,7 @@ class singleWorker(threading.Thread, StoppableThread):
         # when they want to send a message.
         doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
             encodeVarint(addressVersionNumber) +
-            encodeVarint(streamNumber) + hash
+            encodeVarint(streamNumber) + addressHash
         ).digest()).digest()
         payload += doubleHashOfAddressData[32:]  # the tag
         signature = highlevelcrypto.sign(
@@ -462,6 +462,7 @@ class singleWorker(threading.Thread, StoppableThread):
         # Reset just in case
         sqlExecute(
             '''UPDATE sent SET status='broadcastqueued' '''
+
             '''WHERE status = 'doingbroadcastpow' ''')
         queryreturn = sqlQuery(
             '''SELECT fromaddress, subject, message, '''
@@ -848,7 +849,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
                 # to bypass the address version whose length is definitely 1
                 readPosition = 1
-                streamNumber, streamNumberLength = decodeVarint(
+                _, streamNumberLength = decodeVarint(
                     pubkeyPayload[readPosition:readPosition + 10])
                 readPosition += streamNumberLength
                 behaviorBitfield = pubkeyPayload[readPosition:readPosition + 4]
@@ -925,7 +926,7 @@ class singleWorker(threading.Thread, StoppableThread):
                     # regardless of what they say is allowed in order
                     # to get our message to propagate through the network.
                     if requiredAverageProofOfWorkNonceTrialsPerByte < \
-                            defaults.networkDefaultProofOfWorkNonceTrialsPerByte:  
+                            defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
                         requiredAverageProofOfWorkNonceTrialsPerByte = \
                             defaults.networkDefaultProofOfWorkNonceTrialsPerByte
                     if requiredPayloadLengthExtraBytes < \

@@ -11,9 +11,7 @@ import helper_sql
 from namecoin import ensureNamecoinOptions
 import paths
 import queues
-import random
 import state
-import string
 import tr#anslate
 import helper_random
 # This thread exists because SQLITE3 is so un-threadsafe that we must
@@ -26,11 +24,11 @@ class sqlThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
 
-    def run(self):        
+    def run(self):
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
-        
+
         self.cur.execute('PRAGMA secure_delete = true')
 
         try:
@@ -178,24 +176,11 @@ class sqlThread(threading.Thread):
         self.cur.execute(
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
-        
+
         if not BMConfigParser().has_option('bitmessagesettings', 'sockslisten'):
             BMConfigParser().set('bitmessagesettings', 'sockslisten', 'false')
-            
+
         ensureNamecoinOptions()
-            
-        """# Add a new column to the inventory table to store the first 20 bytes of encrypted messages to support Android app
-        item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
-        if int(self.cur.fetchall()[0][0]) == 1:
-            print 'upgrading database'
-            item = '''ALTER TABLE inventory ADD first20bytesofencryptedmessage blob DEFAULT '' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
-            item = '''update settings set value=? WHERE key='version';'''
-            parameters = (2,)
-            self.cur.execute(item, parameters)"""
 
         # Let's get rid of the first20bytesofencryptedmessage field in the inventory table.
         item = '''SELECT value FROM settings WHERE key='version';'''
@@ -239,9 +224,6 @@ class sqlThread(threading.Thread):
         # Raise the default required difficulty from 1 to 2
         # With the change to protocol v3, this is obsolete.
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 6:
-            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
-                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
-                """
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '7')
 
         # Add a new column to the pubkeys table to store the address version.
@@ -259,7 +241,7 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (5,)
             self.cur.execute(item, parameters)
-            
+
         if not BMConfigParser().has_option('bitmessagesettings', 'useidenticons'):
             BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
         if not BMConfigParser().has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
@@ -271,7 +253,7 @@ class sqlThread(threading.Thread):
                 'bitmessagesettings', 'stopresendingafterxdays', '')
             BMConfigParser().set(
                 'bitmessagesettings', 'stopresendingafterxmonths', '')
-            BMConfigParser().set('bitmessagesettings', 'settingsversion', '8') 
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '8')
 
         # Add a new table: objectprocessorqueue with which to hold objects
         # that have yet to be processed if the user shuts down Bitmessage.
@@ -286,7 +268,7 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (6,)
             self.cur.execute(item, parameters)
-        
+
         # changes related to protocol v3
 		#    In table inventory and objectprocessorqueue, objecttype is now an integer (it was a human-friendly string previously)
         item = '''SELECT value FROM settings WHERE key='version';'''
@@ -303,8 +285,8 @@ class sqlThread(threading.Thread):
             parameters = (7,)
             self.cur.execute(item, parameters)
             logger.debug('Finished dropping and recreating the inventory table.')
-        
-        # With the change to protocol version 3, reset the user-settable difficulties to 1    
+
+        # With the change to protocol version 3, reset the user-settable difficulties to 1
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 8:
             BMConfigParser().set('bitmessagesettings','defaultnoncetrialsperbyte', str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
             BMConfigParser().set('bitmessagesettings','defaultpayloadlengthextrabytes', str(defaults.networkDefaultPayloadLengthExtraBytes))
@@ -313,7 +295,7 @@ class sqlThread(threading.Thread):
             BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
             BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(previousSmallMessageDifficulty * 1000))
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '9')
-                
+
         # Adjust the required POW values for each of this user's addresses to conform to protocol v3 norms.
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 9:
             for addressInKeysFile in BMConfigParser().addressses():
@@ -332,7 +314,7 @@ class sqlThread(threading.Thread):
             BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '10')
             BMConfigParser().save()
-            
+
         # sanity check
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
             BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(defaults.ridiculousDifficulty * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
@@ -361,7 +343,7 @@ class sqlThread(threading.Thread):
             logger.debug('Finished clearing currently held pubkeys.')
 
         # Add a new column to the inbox table to store the hash of the message signature.
-        # We'll use this as temporary message UUID in order to detect duplicates. 
+        # We'll use this as temporary message UUID in order to detect duplicates.
         item = '''SELECT value FROM settings WHERE key='version';'''
         parameters = ''
         self.cur.execute(item, parameters)
@@ -374,11 +356,11 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (9,)
             self.cur.execute(item, parameters)
-            
-        # TTL is now user-specifiable. Let's add an option to save whatever the user selects. 
+
+        # TTL is now user-specifiable. Let's add an option to save whatever the user selects.
         if not BMConfigParser().has_option('bitmessagesettings', 'ttl'):
             BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
-        # We'll also need a `sleeptill` field and a `ttl` field. Also we can combine 
+        # We'll also need a `sleeptill` field and a `ttl` field. Also we can combine
         # the pubkeyretrynumber and msgretrynumber into one.
         item = '''SELECT value FROM settings WHERE key='version';'''
         parameters = ''
@@ -399,16 +381,16 @@ class sqlThread(threading.Thread):
             logger.info('In messages.dat database, finished making TTL-related changes.')
             logger.debug('In messages.dat database, adding address field to the pubkeys table.')
             # We're going to have to calculate the address for each row in the pubkeys
-            # table. Then we can take out the hash field. 
+            # table. Then we can take out the hash field.
             self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
             self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
             queryResult = self.cur.fetchall()
             from addresses import encodeAddress
             for row in queryResult:
-                hash, addressVersion = row
+                addressHash, addressVersion = row
                 address = encodeAddress(addressVersion, 1, hash)
                 item = '''UPDATE pubkeys SET address=? WHERE hash=?;'''
-                parameters = (address, hash)
+                parameters = (address, addressHash)
                 self.cur.execute(item, parameters)
             # Now we can remove the hash field from the pubkeys table.
             self.cur.execute(
@@ -423,7 +405,7 @@ class sqlThread(threading.Thread):
             self.cur.execute( '''DROP TABLE pubkeys_backup''')
             logger.debug('In messages.dat database, done adding address field to the pubkeys table and removing the hash field.')
             self.cur.execute('''update settings set value=10 WHERE key='version';''')
-        
+
         if not BMConfigParser().has_option('bitmessagesettings', 'onionhostname'):
             BMConfigParser().set('bitmessagesettings', 'onionhostname', '')
         if not BMConfigParser().has_option('bitmessagesettings', 'onionport'):
@@ -445,10 +427,10 @@ class sqlThread(threading.Thread):
             BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
 
         BMConfigParser().save()
-        
+
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right above this line!
-        
+
         try:
             testpayload = '\x00\x00'
             t = ('1234', 1, testpayload, '12345678', 'no')
