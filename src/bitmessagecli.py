@@ -1378,7 +1378,7 @@ def UI(usrInput): #Main user menu
     elif usrInput == "generateaddress": #Generates a new address
         uInput = userInput('\nWould you like to create a (D)eterministic or (R)andom address?').lower()
 
-        if uInput == "d" or uInput == "deterministic": #Creates a deterministic address
+        if uInput in ["d", "deterministic"]: #Creates a deterministic address
             deterministic = True
 
             #lbl = raw_input('Label the new address:') #currently not possible via the api
