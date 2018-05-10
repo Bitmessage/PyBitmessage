@@ -112,7 +112,7 @@ def code_quality(top=10, verbose=True, details=False, fix=False, filename=None):
     fix = coerce_bool(fix)
     end = int(top) if int(top) else -1
 
-    with hide('warnings', 'running'):  # pylint: disable=not-context-manager
+    with hide('warnings', 'running', 'stdout'):  # pylint: disable=not-context-manager
         with virtualenv(VENV_ROOT):
             if filename:
                 filename = os.path.abspath(filename)
@@ -123,7 +123,10 @@ def code_quality(top=10, verbose=True, details=False, fix=False, filename=None):
                     file_list = [filename]
             else:
                 with cd(PROJECT_ROOT):  # pylint: disable=not-context-manager
-                    file_list = run('find . -name "*.py"').split("\n")
+                    file_list = [
+                        os.path.abspath(i.rstrip('\r'))
+                        for i in run('find . -name "*.py"').split("\n")
+                    ]
 
     if fix:
         for path_to_file in file_list:
@@ -137,6 +140,7 @@ def code_quality(top=10, verbose=True, details=False, fix=False, filename=None):
     # Sort and slice
     for item in sorted(
             results,
+            reverse=True,
             key=lambda x: x['total_violations']
     )[:end]:
 
