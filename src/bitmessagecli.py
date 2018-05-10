@@ -559,7 +559,7 @@ def genAdd(lbl,deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe): #
     else:
         return 'Entry Error'
 
-def delMilAddr(): #Generate address
+def delMilAddr(): #Delete address
     global usrPrompt
     try:
         response = api.listAddresses2()
@@ -1376,7 +1376,7 @@ def UI(usrInput): #Main user menu
     elif usrInput == "generateaddress": #Generates a new address
         uInput = userInput('\nWould you like to create a (D)eterministic or (R)andom address?').lower()
 
-        if uInput == "d" or uInput == "determinstic": #Creates a deterministic address
+        if uInput in ["d", "deterministic"]: #Creates a deterministic address
             deterministic = True
 
             #lbl = raw_input('Label the new address:') #currently not possible via the api
