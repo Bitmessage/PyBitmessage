@@ -1,4 +1,5 @@
 # Codacy uses Bandit.
 
 # Asserts are accepted throughout the project.
-skips: ['B101']
+# invalid names will be fixed in the future.
+skips: ['B101', 'C0103']
