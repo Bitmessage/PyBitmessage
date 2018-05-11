@@ -11,7 +11,7 @@ from fabvenv import virtualenv
 from fabfile.lib import pycodestyle, flake8, pylint, autopep8, PROJECT_ROOT, VENV_ROOT, coerce_bool, flatten
 
 
-def get_results_for_tools_applied_to_file_list(file_list):
+def get_results(file_list):
     """Take a list of files and resuln the results of applying the tools"""
     results = []
     for path_to_file in file_list:
@@ -132,7 +132,7 @@ def code_quality(top=10, verbose=True, details=False, fix=False, filename=None):
         for path_to_file in file_list:
             autopep8(path_to_file)
 
-    results = get_results_for_tools_applied_to_file_list(file_list)
+    results = get_results(file_list)
 
     if verbose:
         print "\ntotal pycodestyle flake8 pylint path_to_file\n"
