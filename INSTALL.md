@@ -3,7 +3,12 @@
 For an up-to-date version of these instructions, please visit the
 [Bitmessage Wiki](https://bitmessage.org/wiki/Compiling_instructions).
 
-PyBitmessage can be run either straight from source or from an installed
+PyBitmessage can be run in either one of two ways:
+
+- straight from source
+ 
+ or 
+- from an installed
 package.
 
 ## Dependencies
@@ -17,8 +22,11 @@ Here's a list of dependencies needed for PyBitmessage
 - (Fedora & Redhat only) openssl-compat-bitcoin-libs 
 
 ## Running PyBitmessage
-PyBitmessage can be run two ways: straight from source or via a package which
-is installed on your system. Since PyBitmessage is Beta, it is best to run
+PyBitmessage can be run in two ways: 
+- straight from source
+
+ or 
+- via a package which is installed on your system. Since PyBitmessage is Beta, it is best to run
 PyBitmessage from source, so that you may update as needed.
 
 #### Updating
@@ -43,7 +51,7 @@ That's it! *Honestly*!
 
 #### Windows
 On Windows you can download an executable for Bitmessage
-[here](https://bitmessage.org/download/windows/Bitmessage.exe).
+[here](https://github.com/Bitmessage/PyBitmessage/releases/download/0.6.3.2/Bitmessage_x86_0.6.3.2.exe).
 
 However, if you would like to run PyBitmessage via Python in Windows, you can
 go [here](https://bitmessage.org/wiki/Compiling_instructions#Windows) for

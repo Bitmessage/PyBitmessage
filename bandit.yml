@@ -1,0 +1,4 @@
+# Codacy uses Bandit.
+
+# Asserts are accepted throughout the project.
+skips: ['B101']

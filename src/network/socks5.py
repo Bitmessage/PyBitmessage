@@ -39,7 +39,7 @@ class Socks5(Proxy):
         return True
 
     def state_auth_1(self):
-        ret = struct.unpack('BB', self.read_buf)
+        ret = struct.unpack('BB', self.read_buf[:2])
         if ret[0] != 5:
             # general error
             raise GeneralProxyError(1)

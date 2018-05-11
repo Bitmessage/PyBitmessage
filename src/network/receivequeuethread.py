@@ -12,6 +12,7 @@ from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.bmproto import BMProto
+from network.advanceddispatcher import UnknownStateError
 from queues import receiveDataQueue
 import protocol
 import state
@@ -40,14 +41,21 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             # or the connection is to be aborted
 
             try:
-                BMConnectionPool().getConnectionByAddr(dest).process()
+                connection = BMConnectionPool().getConnectionByAddr(dest)
             # KeyError = connection object not found
-            # AttributeError = state isn't implemented
-            except (KeyError, AttributeError):
+            except KeyError:
+                receiveDataQueue.task_done()
+                continue
+            try:
+                connection.process()
+            # UnknownStateError = state isn't implemented
+            except (UnknownStateError):
                 pass
             except socket.error as err:
                 if err.errno == errno.EBADF:
-                    BMConnectionPool().getConnectionByAddr(dest).set_state("close", 0)
+                    connection.set_state("close", 0)
                 else:
                     logger.error("Socket error: %s", str(err))
+            except:
+                logger.error("Error processing", exc_info=True)
             receiveDataQueue.task_done()

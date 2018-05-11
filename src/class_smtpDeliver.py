@@ -19,7 +19,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
     def __init__(self, parent=None):
         threading.Thread.__init__(self, name="smtpDeliver")
         self.initStop()
-        
+
     def stopThread(self):
         try:
             queues.UISignallerQueue.put(("stopThread", "data"))

@@ -224,7 +224,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                         continue
                     newRouter = Router(resp, ip)
                     for router in self.routers:
-                        if router.location == newRouter.location:
+                        if router.routerPath == newRouter.routerPath:
                             break
                     else:
                         logger.debug("Found UPnP router at %s", ip)

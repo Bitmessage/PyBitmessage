@@ -1,12 +1,8 @@
 SOURCES	= 	../addresses.py\
 			../bitmessagemain.py\
 			../class_addressGenerator.py\
-			../class_outgoingSynSender.py\
 			../class_objectProcessor.py\
-			../class_receiveDataThread.py\
-			../class_sendDataThread.py\
 			../class_singleCleaner.py\
-			../class_singleListener.py\
 			../class_singleWorker.py\
 			../class_sqlThread.py\
 			../helper_bitcoin.py\

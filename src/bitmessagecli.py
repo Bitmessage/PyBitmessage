@@ -375,10 +375,9 @@ def bmSettings(): #Allows the viewing and modification of keys.dat settings.
         main()
 
 def validAddress(address):
-    address_information = api.decodeAddress(address)
-    address_information = eval(address_information)
+    address_information = json.loads(api.decodeAddress(address))
         
-    if 'success' in str(address_information.get('status')).lower():
+    if 'success' in str(address_information['status']).lower():
         return True
     else:
         return False
@@ -560,7 +559,7 @@ def genAdd(lbl,deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe): #
     else:
         return 'Entry Error'
 
-def delMilAddr(): #Generate address
+def delMilAddr(): #Delete address
     global usrPrompt
     try:
         response = api.listAddresses2()
@@ -1346,15 +1345,14 @@ def UI(usrInput): #Main user menu
 
     elif usrInput == "addinfo":
         tmp_address = userInput('\nEnter the Bitmessage Address.')
-        address_information = api.decodeAddress(tmp_address)
-        address_information = eval(address_information)
+        address_information = json.loads(api.decodeAddress(tmp_address))
 
         print '\n------------------------------'
         
-        if 'success' in str(address_information.get('status')).lower():
+        if 'success' in str(address_information['status']).lower():
             print ' Valid Address'            
-            print ' Address Version: %s' % str(address_information.get('addressVersion'))
-            print ' Stream Number: %s' % str(address_information.get('streamNumber'))
+            print ' Address Version: %s' % str(address_information['addressVersion'])
+            print ' Stream Number: %s' % str(address_information['streamNumber'])
         else:
             print ' Invalid Address !'
 
@@ -1378,7 +1376,7 @@ def UI(usrInput): #Main user menu
     elif usrInput == "generateaddress": #Generates a new address
         uInput = userInput('\nWould you like to create a (D)eterministic or (R)andom address?').lower()
 
-        if uInput == "d" or uInput == "determinstic": #Creates a deterministic address
+        if uInput in ["d", "deterministic"]: #Creates a deterministic address
             deterministic = True
 
             #lbl = raw_input('Label the new address:') #currently not possible via the api

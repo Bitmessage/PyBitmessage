@@ -4,14 +4,14 @@ import sys
 import os
 import pyelliptic.openssl
 
-#Only really old versions of Python don't have sys.hexversion. We don't support
-#them. The logging module was introduced in Python 2.3
+# Only really old versions of Python don't have sys.hexversion. We don't
+# support them. The logging module was introduced in Python 2.3
 if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     sys.stdout.write('Python version: ' + sys.version)
     sys.stdout.write('PyBitmessage requires Python 2.7.3 or greater (but not Python 3)')
     sys.exit()
 
-#We can now use logging so set up a simple configuration
+# We can now use logging so set up a simple configuration
 import logging
 formatter = logging.Formatter(
     '%(levelname)s: %(message)s'
@@ -22,9 +22,20 @@ logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
 
-#We need to check hashlib for RIPEMD-160, as it won't be available if OpenSSL is
-#not linked against or the linked OpenSSL has RIPEMD disabled.
+# We need to check hashlib for RIPEMD-160, as it won't be available
+# if OpenSSL is not linked against or the linked OpenSSL has RIPEMD
+# disabled.
+
+
 def check_hashlib():
+    """Do hashlib check.
+
+    The hashlib module check with version as if it included or not
+    in The Python Standard library , its a module containing an
+    interface to the most popular hashing algorithms. hashlib
+    implements some of the algorithms, however if  OpenSSL
+    installed, hashlib is able to use this algorithms as well.
+    """
     if sys.hexversion < 0x020500F0:
         logger.error('The hashlib module is not included in this version of Python.')
         return False
@@ -39,7 +50,13 @@ def check_hashlib():
         return False
     return True
 
+
 def check_sqlite():
+    """Do sqlite check.
+
+    Simply check sqlite3 module if exist or not with hexversion
+    support in python version for specifieed platform.
+    """
     if sys.hexversion < 0x020500F0:
         logger.error('The sqlite3 module is not included in this version of Python.')
         if sys.platform.startswith('freebsd'):
@@ -80,6 +97,11 @@ def check_sqlite():
             conn.close()
 
 def check_openssl():
+    """Do openssl dependency check.
+
+    Here we are checking for openssl with its all dependent libraries
+    and version checking.
+    """
     try:
         import ctypes
     except ImportError:
@@ -93,7 +115,7 @@ def check_openssl():
             import os.path
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
     else:
-        paths = ['libcrypto.so']
+        paths = ['libcrypto.so', 'libcrypto.so.1.0.0']
     if sys.platform == 'darwin':
         paths.extend([
             'libcrypto.dylib',
@@ -143,6 +165,12 @@ def check_openssl():
 
 #TODO: The minimum versions of pythondialog and dialog need to be determined
 def check_curses():
+    """Do curses dependency check.
+
+    Here we are checking for curses if available or not with check 
+    as interface requires the pythondialog\ package and the dialog
+    utility.
+    """
     if sys.hexversion < 0x20600F0:
         logger.error('The curses interface requires the pythondialog package and the dialog utility.')
         return False
@@ -166,6 +194,11 @@ def check_curses():
     return True
 
 def check_pyqt():
+    """Do pyqt dependency check.
+
+    Here we are checking for PyQt4 with its version, as for it require
+    PyQt 4.7 or later.
+    """
     try:
         import PyQt4.QtCore
     except ImportError:
@@ -201,6 +234,11 @@ def check_pyqt():
     return passed
 
 def check_msgpack():
+    """Do sgpack module check.
+
+    simply checking if msgpack package with all its dependency 
+    is available or not as recommended for messages coding.
+    """
     try:
         import msgpack
     except ImportError:
@@ -229,6 +267,13 @@ def check_msgpack():
     return True
 
 def check_dependencies(verbose = False, optional = False):
+    """Do dependency check.
+
+    It identifies project dependencies and checks if there are
+    any known, publicly disclosed, vulnerabilities.basically
+    scan applications (and their dependent libraries) so that
+    easily identify any known vulnerable components.
+    """
     if verbose:
         logger.setLevel(logging.INFO)
 
@@ -261,5 +306,6 @@ def check_dependencies(verbose = False, optional = False):
         sys.exit()
 
 if __name__ == '__main__':
+    """Check Dependencies"""
     check_dependencies(True, True)
 

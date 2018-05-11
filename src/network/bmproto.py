@@ -23,6 +23,7 @@ from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 import shared
 import state
 import protocol
+import helper_random
 
 class BMProtoError(ProxyError):
     errorCodes = ("Protocol error")
@@ -278,7 +279,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if time.time() < self.skipUntil:
             return True
         #TODO make this more asynchronous
-        random.shuffle(items)
+        helper_random.randomshuffle(items)
         for i in map(str, items):
             if Dandelion().hasHash(i) and \
                     self != Dandelion().objectChildStem(i):

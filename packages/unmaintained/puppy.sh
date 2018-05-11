@@ -5,7 +5,7 @@ PREV_VERSION=0.4.4
 VERSION=0.6.0
 RELEASE=1
 BUILDDIR=~/petbuild
-CURRDIR=`pwd`
+CURRDIR=$(pwd)
 PROJECTDIR=${BUILDDIR}/${APP}-${VERSION}-${RELEASE}
 
 # Update version numbers automatically - so you don't have to

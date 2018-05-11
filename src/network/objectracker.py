@@ -54,8 +54,7 @@ class ObjectTracker(object):
     def clean(self):
         if self.lastCleaned < time.time() - ObjectTracker.invCleanPeriod:
             if haveBloom:
-                # FIXME
-                if PendingDownloadQueue().size() == 0:
+                if len(missingObjects) == 0:
                     self.initInvBloom()
                 self.initAddrBloom()
             else:
@@ -105,6 +104,7 @@ class ObjectTracker(object):
                         del i.objectsNewToThem[hashid]
                 except KeyError:
                     pass
+        self.objectsNewToMe.setLastObject()
 
     def hasAddr(self, addr):
         if haveBloom:

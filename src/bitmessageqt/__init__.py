@@ -47,9 +47,7 @@ from account import (
     GatewayAccount, MailchuckAccount, AccountColor)
 import dialogs
 from helper_generic import powQueueSize
-from inventory import (
-    PendingDownloadQueue, PendingUpload,
-    PendingUploadDeadlineException)
+from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import knownnodes
 import paths
@@ -256,6 +254,18 @@ class MyForm(settingsmixin.SMainWindow):
             self.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuYourIdentities)
+
+        # load all gui.menu plugins with prefix 'address'
+        self.menu_plugins = {'address': []}
+        for plugin in get_plugins('gui.menu', 'address'):
+            try:
+                handler, title = plugin(self)
+            except TypeError:
+                continue
+            self.menu_plugins['address'].append(
+                self.ui.addressContextMenuToolbarYourIdentities.addAction(
+                    title, handler
+                ))
 
     def init_chan_popup_menu(self, connectSignal=True):
         # Popup menu for the Channels tab
@@ -788,22 +798,19 @@ class MyForm(settingsmixin.SMainWindow):
             "valueChanged(int)"), self.updateTTL)
 
         self.initSettings()
-            
-        # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
-        try:
-            options = {}
-            options["type"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpctype')
-            options["host"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpchost')
-            options["port"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpcport')
-            options["user"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpcuser')
-            options["password"] = BMConfigParser().get('bitmessagesettings', 'namecoinrpcpassword')
-            nc = namecoinConnection(options)
-            if nc.test()[0] == 'failed':
-                self.ui.pushButtonFetchNamecoinID.hide()
-        except:
-            logger.error('There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button')
+
+        self.namecoin = namecoinConnection()
+
+        # Check to see whether we can connect to namecoin.
+        # Hide the 'Fetch Namecoin ID' button if we can't.
+        if BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'dontconnect'
+                ) or self.namecoin.test()[0] == 'failed':
+            logger.warning(
+                'There was a problem testing for a Namecoin daemon. Hiding the'
+                ' Fetch Namecoin ID button')
             self.ui.pushButtonFetchNamecoinID.hide()
-            
+
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
         self.updateHumanFriendlyTTLDescription(TTL)
@@ -1545,6 +1552,8 @@ class MyForm(settingsmixin.SMainWindow):
                 BMConfigParser().save()
             elif dialog.radioButtonConfigureNetwork.isChecked():
                 self.click_actionSettings()
+            else:
+                self._firstrun = False
 
     def showMigrationWizard(self, level):
         self.migrationWizardInstance = Ui_MigrationWizard(["a"])
@@ -1729,6 +1738,8 @@ class MyForm(settingsmixin.SMainWindow):
                         sent.item(i, 3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
+        if type(ackdata) is str:
+            ackdata = QtCore.QByteArray(ackdata)
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
@@ -2232,7 +2243,7 @@ class MyForm(settingsmixin.SMainWindow):
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
-            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) != fromAddress:
+            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) not in (fromAddress, None, False):
                 continue
             elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
                 continue
@@ -2240,7 +2251,7 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
-            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)', 'replace'))
+            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8', 'replace'))
             sent.setCurrentCell(0, 0)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
@@ -2677,6 +2688,10 @@ class MyForm(settingsmixin.SMainWindow):
         BMConfigParser().save()
         self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
 
+        self.ui.pushButtonFetchNamecoinID.setHidden(
+            dontconnect_option or self.namecoin.test()[0] == 'failed'
+        )
+
     # Quit selected from menu or application indicator
     def quit(self):
         '''quit_msg = "Are you sure you want to exit Bitmessage?"
@@ -2699,10 +2714,10 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or PendingUpload().len() > 0):
+        if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
                     _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
-                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, PendingUpload().len()) + "\n\n" + 
+                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, pendingUpload()) + "\n\n" + 
                     _translate("MainWindow", "Wait until these tasks finish?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.No:
@@ -2710,16 +2725,14 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
-        if PendingDownloadQueue.totalSize() > 0:
+        if pendingDownload() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, PendingDownloadQueue.totalSize()),
+                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, pendingDownload()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
-            else:
-                PendingDownloadQueue.stop()
 
         if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
@@ -2750,7 +2763,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while PendingDownloadQueue.totalSize() > 0:
+            while pendingDownload() > 0:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2792,19 +2805,18 @@ class MyForm(settingsmixin.SMainWindow):
             # check if upload (of objects created locally) pending
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for objects to be sent... %1%").arg(50))
-            try:
-                while PendingUpload().progress() < 1:
-                    self.updateStatusBar(_translate(
-                        "MainWindow",
-                        "Waiting for objects to be sent... %1%"
-                        ).arg(int(50 + 20 * PendingUpload().progress()))
-                    )
-                    time.sleep(0.5)
-                    QtCore.QCoreApplication.processEvents(
-                        QtCore.QEventLoop.AllEvents, 1000
-                    )
-            except PendingUploadDeadlineException:
-                pass
+            maxPendingUpload = max(1, pendingUpload())
+                   
+            while pendingUpload() > 1:
+                self.updateStatusBar(_translate(
+                    "MainWindow",
+                    "Waiting for objects to be sent... %1%"
+                    ).arg(int(50 + 20 * (pendingUpload()/maxPendingUpload)))
+                )
+                time.sleep(0.5)
+                QtCore.QCoreApplication.processEvents(
+                    QtCore.QEventLoop.AllEvents, 1000
+                )
 
             QtCore.QCoreApplication.processEvents(
                 QtCore.QEventLoop.AllEvents, 1000
@@ -3424,6 +3436,10 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuSubscriptions.addSeparator()
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
             self.popMenuSubscriptions.addSeparator()
+            # preloaded gui.menu plugins with prefix 'address'
+            for plugin in self.menu_plugins['address']:
+                self.popMenuSubscriptions.addAction(plugin)
+            self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
         self.popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
@@ -3834,12 +3850,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
             self.popMenuYourIdentities.addAction(self.actionEmailGateway)
             self.popMenuYourIdentities.addSeparator()
+            if currentItem.type != AccountMixin.ALL:
+                # preloaded gui.menu plugins with prefix 'address'
+                for plugin in self.menu_plugins['address']:
+                    self.popMenuYourIdentities.addAction(plugin)
+            self.popMenuYourIdentities.addSeparator()
         self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
-
-        if get_plugins:
-            for plugin in get_plugins(
-                    'gui.menu', 'popMenuYourIdentities'):
-                plugin(self)
 
         self.popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
@@ -3859,6 +3875,10 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 self.popMenu.addAction(self.actionEnable)
             self.popMenu.addAction(self.actionSetAvatar)
+            self.popMenu.addSeparator()
+            # preloaded gui.menu plugins with prefix 'address'
+            for plugin in self.menu_plugins['address']:
+                self.popMenu.addAction(plugin)
             self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionMarkAllRead)
         self.popMenu.exec_(
