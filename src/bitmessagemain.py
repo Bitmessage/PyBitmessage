@@ -66,6 +66,7 @@ from network.downloadthread import DownloadThread
 import helper_bootstrap
 import helper_generic
 import helper_threading
+import std_io # for STDIO modes
 
 
 def connectToStream(streamNumber):
@@ -205,8 +206,8 @@ class Main:
 
         try:
             opts, args = getopt.getopt(
-                sys.argv[1:], "hcdt",
-                ["help", "curses", "daemon", "test"])
+                sys.argv[1:], "hcdtn",
+                ["help", "curses", "daemon", "test", "mode-netcat"])
 
         except getopt.GetoptError:
             self.usage()
@@ -224,6 +225,14 @@ class Main:
             elif opt in ("-t", "--test"):
                 state.testmode = daemon = True
                 state.enableGUI = False # run without a UI
+            elif opt in ("-n", "--mode-netcat"):
+                # STDIO MODES - reconfigure threads for netcat mode
+                state.enableNetwork = True  # enable networking
+                state.enableObjProc = False # disable object processing
+                state.enableGUI = False   # headless
+                state.enableSTDIO = True  # enable STDIO
+                # STDIN to invQueue, STDOUT from objectProcessorQueue
+                std_io.stdInputMode = 'netcat'
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
@@ -263,7 +272,12 @@ class Main:
         sqlLookup.start()
 
         Inventory() # init
-        Dandelion() # init, needs to be early because other thread may access it early
+
+        # start network components if networking is enabled
+        if state.enableNetwork:
+            Dandelion() # init, needs to be early because other thread may access it early
+        else:
+            state.dandelion = 0
 
         # Enable object processor and SMTP only if objproc enabled
         if state.enableObjProc:
@@ -282,6 +296,12 @@ class Main:
             objectProcessorThread = objectProcessor()
             objectProcessorThread.daemon = False  # DON'T close the main program even the thread remains. This thread checks the shutdown variable after processing each object.
             objectProcessorThread.start()
+
+        elif state.enableSTDIO and std_io.stdInputMode == 'netcat':
+            # Start the thread that outputs objects to stdout in netcat mode
+            objectStdOutThread = std_io.objectStdOut()
+            objectStdOutThread.daemon = False # same as objectProcessorThread
+            objectStdOutThread.start()
 
         # Start the cleanerThread
         singleCleanerThread = singleCleaner()
@@ -308,6 +328,12 @@ class Main:
                 singleAPIThread = singleAPI()
                 singleAPIThread.daemon = True  # close the main program even if there are threads left
                 singleAPIThread.start()
+
+        # STDIO MODES - Start the STDIN thread
+        if state.enableSTDIO:
+            stdinThread = std_io.stdInput(sys.stdin)
+            stdinThread.daemon = True
+            stdinThread.start()
 
         # start network components if networking is enabled
         if state.enableNetwork:
@@ -440,7 +466,10 @@ Options:
   -h, --help            show this help message and exit
   -c, --curses          use curses (text mode) interface
   -d, --daemon          run in daemon (background) mode
+
+Advanced modes:
   -t, --test            dryrun, make testing
+  -n, --mode-netcat     no GUI, read and write raw objects on STDIO
 
 All parameters are optional.
 '''
