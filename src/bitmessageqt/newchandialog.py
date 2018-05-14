@@ -15,8 +15,6 @@ class NewChanDialog(QtGui.QDialog, RetranslateMixin):
         self.parent = parent
         self.chanAddress.setValidator(AddressValidator(self.chanAddress, self.chanPassPhrase, self.validatorFeedback, self.buttonBox, False))
         self.chanPassPhrase.setValidator(PassPhraseValidator(self.chanPassPhrase, self.chanAddress, self.validatorFeedback, self.buttonBox, False))
-        QtCore.QObject.connect(self.chanAddress, QtCore.SIGNAL('textEdited()'), self.chanAddress.validator(), QtCore.SLOT('checkData(self)'))
-        QtCore.QObject.connect(self.chanPassPhrase, QtCore.SIGNAL('textEdited()'), self.chanPassPhrase.validator(), QtCore.SLOT('checkData(self)'))
 
         self.timer = QtCore.QTimer()
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.delayedUpdateStatus)
@@ -37,8 +35,10 @@ class NewChanDialog(QtGui.QDialog, RetranslateMixin):
             addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.chanAddress.text().toUtf8()), str_chan + ' ' + str(self.chanPassPhrase.text().toUtf8()), self.chanPassPhrase.text().toUtf8(), True))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if len(addressGeneratorReturnValue) > 0 and addressGeneratorReturnValue[0] != 'chan name does not match address':
-            UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Successfully created / joined chan %1").arg(str(self.chanPassPhrase.text().toUtf8()))))
-            self.parent.ui.tabWidget.setCurrentIndex(3)
+            UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Successfully created / joined chan %1").arg(unicode(self.chanPassPhrase.text()))))
+            self.parent.ui.tabWidget.setCurrentIndex(
+                self.parent.ui.tabWidget.indexOf(self.parent.ui.chans)
+            )
             self.done(QtGui.QDialog.Accepted)
         else:
             UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Chan creation / joining failed")))

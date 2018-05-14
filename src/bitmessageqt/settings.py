@@ -165,7 +165,7 @@ class Ui_settingsDialog(object):
         self.lineEditMaxOutboundConnections.setSizePolicy(sizePolicy)
         self.lineEditMaxOutboundConnections.setMaximumSize(QtCore.QSize(60, 16777215))
         self.lineEditMaxOutboundConnections.setObjectName(_fromUtf8("lineEditMaxOutboundConnections"))
-        self.lineEditMaxOutboundConnections.setValidator(QtGui.QIntValidator(0, 4096, self.lineEditMaxOutboundConnections))
+        self.lineEditMaxOutboundConnections.setValidator(QtGui.QIntValidator(0, 8, self.lineEditMaxOutboundConnections))
         self.gridLayout_9.addWidget(self.lineEditMaxOutboundConnections, 2, 2, 1, 1)
         self.gridLayout_4.addWidget(self.groupBox_3, 2, 0, 1, 1)
         self.groupBox_2 = QtGui.QGroupBox(self.tabNetworkSettings)

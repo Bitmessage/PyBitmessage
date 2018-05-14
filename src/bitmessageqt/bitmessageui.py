@@ -337,6 +337,9 @@ class Ui_MainWindow(object):
         self.labelHumanFriendlyTTLDescription.setMinimumSize(QtCore.QSize(45, 0))
         self.labelHumanFriendlyTTLDescription.setObjectName(_fromUtf8("labelHumanFriendlyTTLDescription"))
         self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription, 1, QtCore.Qt.AlignLeft)
+        self.pushButtonClear = QtGui.QPushButton(self.send)
+        self.pushButtonClear.setObjectName(_fromUtf8("pushButtonClear"))
+        self.horizontalLayout_5.addWidget(self.pushButtonClear, 0, QtCore.Qt.AlignRight)
         self.pushButtonSend = QtGui.QPushButton(self.send)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
         self.horizontalLayout_5.addWidget(self.pushButtonSend, 0, QtCore.Qt.AlignRight)
@@ -586,6 +589,8 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon.fromTheme(_fromUtf8("dialog-password"))
         self.actionManageKeys.setIcon(icon)
         self.actionManageKeys.setObjectName(_fromUtf8("actionManageKeys"))
+        self.actionNetworkSwitch = QtGui.QAction(MainWindow)
+        self.actionNetworkSwitch.setObjectName(_fromUtf8("actionNetworkSwitch"))
         self.actionExit = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("application-exit"))
         self.actionExit.setIcon(icon)
@@ -621,6 +626,7 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionManageKeys)
         self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
+        self.menuFile.addAction(self.actionNetworkSwitch)
         self.menuFile.addAction(self.actionExit)
         self.menuSettings.addAction(self.actionSettings)
         self.menuHelp.addAction(self.actionHelp)
@@ -631,8 +637,12 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
-        self.tabWidgetSend.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(
+            self.tabWidget.indexOf(self.inbox)
+        )
+        self.tabWidgetSend.setCurrentIndex(
+            self.tabWidgetSend.indexOf(self.sendDirect)
+        )
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tableWidgetInbox, self.textEditInboxMessage)
         MainWindow.setTabOrder(self.textEditInboxMessage, self.comboBoxSendFrom)
@@ -640,6 +650,16 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.lineEditTo, self.lineEditSubject)
         MainWindow.setTabOrder(self.lineEditSubject, self.textEditMessage)
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonAddSubscription)
+
+    def updateNetworkSwitchMenuLabel(self, dontconnect=None):
+        if dontconnect is None:
+            dontconnect = BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'dontconnect')
+        self.actionNetworkSwitch.setText(
+            _translate("MainWindow", "Go online", None)
+            if dontconnect else
+            _translate("MainWindow", "Go offline", None)
+        )
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
@@ -684,6 +704,7 @@ class Ui_MainWindow(object):
         except:
             pass
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))
+        self.pushButtonClear.setText(_translate("MainWindow", "Clear", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.treeWidgetSubscriptions.headerItem().setText(0, _translate("MainWindow", "Subscriptions", None))

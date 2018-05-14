@@ -19,6 +19,8 @@ import state
 
 bitmsglib = 'bitmsghash.so'
 
+bmpow = None
+
 def _set_idle():
     if 'linux' in sys.platform:
         os.nice(20)
@@ -237,6 +239,9 @@ def resetPoW():
 # init
 def init():
     global bitmsglib, bso, bmpow
+
+    openclpow.initCL()
+
     if "win32" == sys.platform:
         if ctypes.sizeof(ctypes.c_voidp) == 4:
             bitmsglib = 'bitmsghash32.dll'
@@ -266,9 +271,18 @@ def init():
     else:
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
-            logger.info("Loaded C PoW DLL %s", bitmsglib)
+        except OSError:
+            import glob
+            try:
+                bso = ctypes.CDLL(glob.glob(os.path.join(
+                    paths.codePath(), "bitmsghash", "bitmsghash*.so"
+                ))[0])
+            except (OSError, IndexError):
+                bso = None
         except:
             bso = None
+        else:
+            logger.info("Loaded C PoW DLL %s", bitmsglib)
     if bso:
         try:
             bmpow = bso.BitmessagePOW
@@ -277,7 +291,5 @@ def init():
             bmpow = None
     else:
         bmpow = None
-
-init()
-if bmpow is None:
-    buildCPoW()
+    if bmpow is None:
+        buildCPoW()

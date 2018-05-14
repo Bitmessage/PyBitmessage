@@ -14,6 +14,7 @@ from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlExecute
+from helper_ackPayload import genAckPayload
 from helper_threading import StoppableThread
 from pyelliptic.openssl import OpenSSL
 import queues
@@ -65,7 +66,8 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
     def send(self, fromAddress, toAddress, subject, message):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
-        ackdata = OpenSSL.rand(32)
+        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        ackdata = genAckPayload(streamNumber, stealthLevel)
         t = ()
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -115,7 +117,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             sender, domain = p.sub(r'\1', mailfrom).split("@")
             if domain != SMTPDOMAIN:
                 raise Exception("Bad domain %s", domain)
-            if sender not in BMConfigParser().sections():
+            if sender not in BMConfigParser().addresses():
                 raise Exception("Nonexisting user %s", sender)
         except Exception as err:
             logger.debug("Bad envelope from %s: %s", mailfrom, repr(err))
@@ -125,7 +127,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 sender, domain = msg_from.split("@")
                 if domain != SMTPDOMAIN:
                     raise Exception("Bad domain %s", domain)
-                if sender not in BMConfigParser().sections():
+                if sender not in BMConfigParser().addresses():
                     raise Exception("Nonexisting user %s", sender)
             except Exception as err:
                 logger.error("Bad headers from %s: %s", msg_from, repr(err))

@@ -1,7 +1,7 @@
+import gc
 import threading
 import shared
 import time
-import sys
 import os
 
 import tr#anslate
@@ -9,10 +9,10 @@ from bmconfigparser import BMConfigParser
 from helper_sql import *
 from helper_threading import *
 from inventory import Inventory
+from network.connectionpool import BMConnectionPool
 from debug import logger
 import knownnodes
 import queues
-import protocol
 import state
 
 """
@@ -36,12 +36,15 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 
 class singleCleaner(threading.Thread, StoppableThread):
+    cycleLength = 300
+    expireDiscoveredPeers = 300
 
     def __init__(self):
         threading.Thread.__init__(self, name="singleCleaner")
         self.initStop()
 
     def run(self):
+        gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
             shared.maximumLengthOfTimeToBotherResendingMessages = (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
@@ -49,18 +52,20 @@ class singleCleaner(threading.Thread, StoppableThread):
             # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
+        # initial wait
+        if state.shutdown == 0:
+            self.stop.wait(singleCleaner.cycleLength)
+
         while state.shutdown == 0:
             queues.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
             Inventory().flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
             
-            protocol.broadcastToSendDataQueues((
-                0, 'pong', 'no data')) # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
+            if shared.thisapp.daemon:
                 queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
@@ -88,13 +93,24 @@ class singleCleaner(threading.Thread, StoppableThread):
 
             # cleanup old nodes
             now = int(time.time())
-            toDelete = []
             with knownnodes.knownNodesLock:
                 for stream in knownnodes.knownNodes:
-                    for node in knownnodes.knownNodes[stream].keys():
-                        if now - knownnodes.knownNodes[stream][node] > 2419200: # 28 days
-                            shared.needToWriteKownNodesToDisk = True
-                            del knownnodes.knownNodes[stream][node]
+                    keys = knownnodes.knownNodes[stream].keys()
+                    for node in keys:
+                        try:
+                            # scrap old nodes
+                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200: # 28 days
+                                shared.needToWriteKnownNodesToDisk = True
+                                del knownnodes.knownNodes[stream][node]
+                                continue
+                            # scrap old nodes with low rating
+                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 10800 and knownnodes.knownNodes[stream][node]["rating"] <= knownnodes.knownNodesForgetRating:
+                                shared.needToWriteKnownNodesToDisk = True
+                                del knownnodes.knownNodes[stream][node]
+                                continue
+                        except TypeError:
+                            print "Error in %s" % (str(node))
+                    keys = []
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
@@ -104,14 +120,33 @@ class singleCleaner(threading.Thread, StoppableThread):
                     if "Errno 28" in str(err):
                         logger.fatal('(while receiveDataThread knownnodes.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
                         queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
-                        if shared.daemon:
+                        if shared.thisapp.daemon:
                             os._exit(0)
                 shared.needToWriteKnownNodesToDisk = False
 
+#            # clear download queues
+#            for thread in threading.enumerate():
+#                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
+#                    thread.downloadQueue.clear()
+
+            # inv/object tracking
+            for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+                connection.clean()
+
+            # discovery tracking
+            exp = time.time() - singleCleaner.expireDiscoveredPeers
+            reaper = (k for k, v in state.discoveredPeers.items() if v < exp)
+            for k in reaper:
+                try:
+                    del state.discoveredPeers[k]
+                except KeyError:
+                    pass
             # TODO: cleanup pending upload / download
 
+            gc.collect()
+
             if state.shutdown == 0:
-                self.stop.wait(300)
+                self.stop.wait(singleCleaner.cycleLength)
 
 
 def resendPubkeyRequest(address):

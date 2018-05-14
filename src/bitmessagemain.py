@@ -22,11 +22,14 @@ depends.check_dependencies()
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from singleinstance import singleinstance
+import errno
 import socket
 import ctypes
 from struct import pack
 from subprocess import call
-import time
+from time import sleep
+from random import randint
+import getopt
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
@@ -42,18 +45,27 @@ import threading
 from class_sqlThread import sqlThread
 from class_singleCleaner import singleCleaner
 from class_objectProcessor import objectProcessor
-from class_outgoingSynSender import outgoingSynSender
-from class_singleListener import singleListener
 from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
 from class_smtpDeliver import smtpDeliver
 from class_smtpServer import smtpServer
 from bmconfigparser import BMConfigParser
 
+from inventory import Inventory
+
+from network.connectionpool import BMConnectionPool
+from network.dandelion import Dandelion
+from network.networkthread import BMNetworkThread
+from network.receivequeuethread import ReceiveQueueThread
+from network.announcethread import AnnounceThread
+from network.invthread import InvThread
+from network.addrthread import AddrThread
+from network.downloadthread import DownloadThread
+
 # Helper Functions
 import helper_bootstrap
 import helper_generic
-from helper_threading import *
+import helper_threading
 
 
 def connectToStream(streamNumber):
@@ -62,13 +74,13 @@ def connectToStream(streamNumber):
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
         # Some XP and Vista systems can only have 10 outgoing connections at a time.
-        maximumNumberOfHalfOpenConnections = 9
+        state.maximumNumberOfHalfOpenConnections = 9
     else:
-        maximumNumberOfHalfOpenConnections = 64
+        state.maximumNumberOfHalfOpenConnections = 64
     try:
         # don't overload Tor
         if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
-            maximumNumberOfHalfOpenConnections = 4
+            state.maximumNumberOfHalfOpenConnections = 4
     except:
         pass
     
@@ -80,13 +92,13 @@ def connectToStream(streamNumber):
         if streamNumber*2+1 not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber*2+1] = {}
 
-    for i in range(maximumNumberOfHalfOpenConnections):
-        a = outgoingSynSender()
-        a.setup(streamNumber, selfInitiatedConnections)
-        a.start()
+    BMConnectionPool().connectToStream(streamNumber)
 
-def _fixWinsock():
-    if not ('win32' in sys.platform) and not ('win64' in sys.platform):
+def _fixSocket():
+    if sys.platform.startswith('linux'):
+        socket.SO_BINDTODEVICE = 25
+
+    if not sys.platform.startswith('win'):
         return
 
     # Python 2 on Windows doesn't define a wrapper for
@@ -137,7 +149,7 @@ def _fixWinsock():
         socket.IPV6_V6ONLY = 27
 
 # This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, StoppableThread):
+class singleAPI(threading.Thread, helper_threading.StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
         self.initStop()
@@ -154,8 +166,25 @@ class singleAPI(threading.Thread, StoppableThread):
             pass
 
     def run(self):
-        se = StoppableXMLRPCServer((BMConfigParser().get('bitmessagesettings', 'apiinterface'), BMConfigParser().getint(
-            'bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
+        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        try:
+            from errno import WSAEADDRINUSE
+        except (ImportError, AttributeError):
+            errno.WSAEADDRINUSE = errno.EADDRINUSE
+        for attempt in range(50):
+            try:
+                if attempt > 0:
+                    port = randint(32767, 65535)
+                se = StoppableXMLRPCServer((BMConfigParser().get('bitmessagesettings', 'apiinterface'), port),
+                    MySimpleXMLRPCRequestHandler, True, True)
+            except socket.error as e:
+                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
+                    continue
+            else:
+                if attempt > 0:
+                    BMConfigParser().set("bitmessagesettings", "apiport", str(port))
+                    BMConfigParser().save()
+                break
         se.register_introspection_functions()
         se.serve_forever()
 
@@ -169,14 +198,27 @@ if shared.useVeryEasyProofOfWorkForTesting:
         defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
 class Main:
-    def start(self, daemon=False):
-        _fixWinsock()
+    def start(self):
+        _fixSocket()
 
-        shared.daemon = daemon
+        daemon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon')
 
-        # get curses flag
-        if '-c' in sys.argv:
-            state.curses = True
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "hcd",
+                ["help", "curses", "daemon"])
+
+        except getopt.GetoptError:
+            self.usage()
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                self.usage()
+                sys.exit()
+            elif opt in ("-d", "--daemon"):
+                daemon = True
+            elif opt in ("-c", "--curses"):
+                state.curses = True
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
@@ -187,6 +229,13 @@ class Main:
             self.daemonize()
 
         self.setSignalHandler()
+
+        helper_threading.set_thread_name("PyBitmessage")
+
+        state.dandelion = BMConfigParser().safeGetInt('network', 'dandelion')
+        # dandelion requires outbound connections, without them, stem objects will get stuck forever
+        if state.dandelion and not BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
+            state.dandelion = 0
 
         helper_bootstrap.knownNodes()
         # Start the address generation thread
@@ -203,6 +252,9 @@ class Main:
         sqlLookup = sqlThread()
         sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
         sqlLookup.start()
+
+        Inventory() # init
+        Dandelion() # init, needs to be early because other thread may access it early
 
         # SMTP delivery thread
         if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
@@ -242,13 +294,29 @@ class Main:
             singleAPIThread.daemon = True  # close the main program even if there are threads left
             singleAPIThread.start()
 
+        BMConnectionPool()
+        asyncoreThread = BMNetworkThread()
+        asyncoreThread.daemon = True
+        asyncoreThread.start()
+        for i in range(BMConfigParser().getint("threads", "receive")):
+            receiveQueueThread = ReceiveQueueThread(i)
+            receiveQueueThread.daemon = True
+            receiveQueueThread.start()
+        announceThread = AnnounceThread()
+        announceThread.daemon = True
+        announceThread.start()
+        state.invThread = InvThread()
+        state.invThread.daemon = True
+        state.invThread.start()
+        state.addrThread = AddrThread()
+        state.addrThread.daemon = True
+        state.addrThread.start()
+        state.downloadThread = DownloadThread()
+        state.downloadThread.daemon = True
+        state.downloadThread.start()
+
         connectToStream(1)
 
-        singleListenerThread = singleListener()
-        singleListenerThread.setup(selfInitiatedConnections)
-        singleListenerThread.daemon = True  # close the main program even if there are threads left
-        singleListenerThread.start()
-        
         if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
             import upnp
             upnpThread = upnp.uPnPThread()
@@ -272,32 +340,76 @@ class Main:
         else:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
-            while True:
-                time.sleep(20)
+        if daemon:
+            while state.shutdown == 0:
+                sleep(1)
 
     def daemonize(self):
-        if os.fork():
-            exit(0)
-        shared.thisapp.lock() # relock
+        grandfatherPid = os.getpid()
+        parentPid = None
+        try:
+            if os.fork():
+                # unlock
+                shared.thisapp.cleanup()
+                # wait until grandchild ready
+                while True:
+                    sleep(1)
+                os._exit(0)
+        except AttributeError:
+            # fork not implemented
+            pass
+        else:
+            parentPid = os.getpid()
+            shared.thisapp.lock() # relock
         os.umask(0)
-        os.setsid()
-        if os.fork():
-            exit(0)
-        shared.thisapp.lock() # relock
+        try:
+            os.setsid()
+        except AttributeError:
+            # setsid not implemented
+            pass
+        try:
+            if os.fork():
+                # unlock
+                shared.thisapp.cleanup()
+                # wait until child ready
+                while True:
+                    sleep(1)
+                os._exit(0)
+        except AttributeError:
+            # fork not implemented
+            pass
+        else:
+            shared.thisapp.lock() # relock
         shared.thisapp.lockPid = None # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
-        si = file('/dev/null', 'r')
-        so = file('/dev/null', 'a+')
-        se = file('/dev/null', 'a+', 0)
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
+        if not sys.platform.startswith('win'):
+            si = file(os.devnull, 'r')
+            so = file(os.devnull, 'a+')
+            se = file(os.devnull, 'a+', 0)
+            os.dup2(si.fileno(), sys.stdin.fileno())
+            os.dup2(so.fileno(), sys.stdout.fileno())
+            os.dup2(se.fileno(), sys.stderr.fileno())
+        if parentPid:
+            # signal ready
+            os.kill(parentPid, signal.SIGTERM)
+            os.kill(grandfatherPid, signal.SIGTERM)
 
     def setSignalHandler(self):
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         signal.signal(signal.SIGTERM, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    def usage(self):
+        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
+        print '''
+Options:
+  -h, --help            show this help message and exit
+  -c, --curses          use curses (text mode) interface
+  -d, --daemon          run in daemon (background) mode
+
+All parameters are optional.
+'''
 
     def stop(self):
         with shared.printLock:
@@ -316,8 +428,7 @@ class Main:
 
 def main():
     mainprogram = Main()
-    mainprogram.start(
-        BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
+    mainprogram.start()
 
 if __name__ == "__main__":
     main()

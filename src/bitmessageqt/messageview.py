@@ -53,19 +53,24 @@ class MessageView(QtGui.QTextBrowser):
 
     def confirmURL(self, link):
         if link.scheme() == "mailto":
-            QtGui.QApplication.activeWindow().ui.lineEditTo.setText(link.path())
+            window = QtGui.QApplication.activeWindow()
+            window.ui.lineEditTo.setText(link.path())
             if link.hasQueryItem("subject"):
-                QtGui.QApplication.activeWindow().ui.lineEditSubject.setText(link.queryItemValue("subject"))
+                window.ui.lineEditSubject.setText(
+                    link.queryItemValue("subject"))
             if link.hasQueryItem("body"):
-                QtGui.QApplication.activeWindow().ui.textEditMessage.setText(link.queryItemValue("body"))
-            QtGui.QApplication.activeWindow().setSendFromComboBox()
-            QtGui.QApplication.activeWindow().ui.tabWidgetSend.setCurrentIndex(0)
-            QtGui.QApplication.activeWindow().ui.tabWidget.setCurrentIndex(1)
-            QtGui.QApplication.activeWindow().ui.textEditMessage.setFocus()
+                window.ui.textEditMessage.setText(
+                    link.queryItemValue("body"))
+            window.setSendFromComboBox()
+            window.ui.tabWidgetSend.setCurrentIndex(0)
+            window.ui.tabWidget.setCurrentIndex(
+                window.ui.tabWidget.indexOf(window.ui.send)
+            )
+            window.ui.textEditMessage.setFocus()
             return
         reply = QtGui.QMessageBox.warning(self,
             QtGui.QApplication.translate("MessageView", "Follow external link"),
-            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(str(link.toString())),
+            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(unicode(link.toString())),
             QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
@@ -98,7 +103,7 @@ class MessageView(QtGui.QTextBrowser):
             if self.mode == MessageView.MODE_HTML:
                 pos = self.out.find(">", self.outpos)
                 if pos > self.outpos:
-                    self.outpos = pos
+                    self.outpos = pos + 1
             cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
             cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
         self.verticalScrollBar().setValue(position)

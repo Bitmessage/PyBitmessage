@@ -32,7 +32,7 @@ import knownnodes
 from debug import logger
 import paths
 import protocol
-from inventory import Inventory, PendingDownload, PendingUpload
+from inventory import Inventory, PendingDownloadQueue, PendingUpload
 import queues
 import state
 import throttle
@@ -56,7 +56,6 @@ class receiveDataThread(threading.Thread):
         HOST,
         port,
         streamNumber,
-        someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
         selfInitiatedConnections,
         sendDataThreadQueue,
         objectHashHolderInstance):
@@ -79,8 +78,8 @@ class receiveDataThread(threading.Thread):
             self.initiatedConnection = True
             for stream in self.streamNumber:
                 self.selfInitiatedConnections[stream][self] = 0
-        self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
         self.objectHashHolderInstance = objectHashHolderInstance
+        self.downloadQueue = PendingDownloadQueue()
         self.startTime = time.time()
 
     def run(self):
@@ -123,11 +122,11 @@ class receiveDataThread(threading.Thread):
                     select.select([self.sslSock if isSSL else self.sock], [], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
-                logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
+                logger.error('sock.recv error. Closing receiveData thread, %s', str(err))
                 break
             # print 'Received', repr(self.data)
             if len(self.data) == dataLen: # If self.sock.recv returned no data:
-                logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
+                logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread')
                 break
             else:
                 self.processData()
@@ -147,7 +146,6 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
-        PendingDownload().threadEnd()
         queues.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
@@ -240,10 +238,20 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
         if self.data == '': # if there are no more messages
+            toRequest = []
             try:
-                self.sendgetdata(PendingDownload().pull(100))
-            except Queue.Full:
+                for i in range(len(self.downloadQueue.pending), 100):
+                    while True:
+                        hashId = self.downloadQueue.get(False)
+                        if not hashId in Inventory():
+                            toRequest.append(hashId)
+                            break
+                        # don't track download for duplicates
+                        self.downloadQueue.task_done(hashId)
+            except Queue.Empty:
                 pass
+            if len(toRequest) > 0:
+                self.sendgetdata(toRequest)
         self.processData()
 
     def sendpong(self, payload):
@@ -282,6 +290,8 @@ class receiveDataThread(threading.Thread):
                 try:
                     self.sslSock.do_handshake()
                     logger.debug("TLS handshake success")
+                    if sys.version_info >= (2, 7, 9):
+                        logger.debug("TLS protocol version: %s", self.sslSock.version())
                     break
                 except ssl.SSLError as e:
                     if sys.hexversion >= 0x02070900:
@@ -302,8 +312,12 @@ class receiveDataThread(threading.Thread):
                             logger.debug("Waiting for SSL socket handhake write")
                             select.select([], [self.sslSock], [], 10)
                             continue
-                    logger.error("SSL socket handhake failed: %s, shutting down connection", str(e))
+                    logger.error("SSL socket handhake failed: shutting down connection, %s", str(e))
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail %s' % (str(e))))
+                    return False
+                except socket.error as err:
+                    logger.debug('SSL socket handshake failed, shutting down connection, %s', str(err))
+                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
                     return False
                 except Exception:
                     logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
@@ -403,7 +417,7 @@ class receiveDataThread(threading.Thread):
         bigInvList = {}
         for stream in self.streamNumber:
             for hash in Inventory().unexpired_hashes_by_stream(stream):
-                if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
+                if not self.objectHashHolderInstance.hasHash(hash):
                     bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
@@ -472,6 +486,7 @@ class receiveDataThread(threading.Thread):
     def recobject(self, data):
         self.messageProcessingStartTime = time.time()
         lengthOfTimeWeShouldUseToProcessThisMessage = shared.checkAndShareObjectWithPeers(data)
+        self.downloadQueue.task_done(calculateInventoryHash(data))
         
         """
         Sleeping will help guarantee that we can process messages faster than a 
@@ -504,9 +519,8 @@ class receiveDataThread(threading.Thread):
         for stream in self.streamNumber:
             objectsNewToMe -= Inventory().hashes_by_stream(stream)
         logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
-        for item in objectsNewToMe:
-            PendingDownload().add(item)
-            self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
+        for item in random.sample(objectsNewToMe, len(objectsNewToMe)):
+            self.downloadQueue.put(item)
 
     # Send a getdata message to our peer to request the object with the given
     # hash
@@ -626,17 +640,18 @@ class receiveDataThread(threading.Thread):
                     knownnodes.knownNodes[recaddrStream] = {}
             peerFromAddrMessage = state.Peer(hostStandardFormat, recaddrPort)
             if peerFromAddrMessage not in knownnodes.knownNodes[recaddrStream]:
-                knownnodes.trimKnownNodes(recaddrStream)
                 # only if recent
                 if timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):
-                    logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
                     # bootstrap provider?
                     if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
                         BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                        knownnodes.trimKnownNodes(recaddrStream)
                         with knownnodes.knownNodesLock:
-                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 10800
+                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 86400 # penalise initially by 1 day
+                        logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
+                        shared.needToWriteKnownNodesToDisk = True
                     # normal mode
-                    else:
+                    elif len(knownnodes.knownNodes[recaddrStream]) < 20000:
                         with knownnodes.knownNodesLock:
                             knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
                         hostDetails = (
@@ -644,7 +659,8 @@ class receiveDataThread(threading.Thread):
                             recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
                         protocol.broadcastToSendDataQueues((
                             recaddrStream, 'advertisepeer', hostDetails))
-                    shared.needToWriteKnownNodesToDisk = True
+                        logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
+                        shared.needToWriteKnownNodesToDisk = True
             # only update if normal mode
             elif BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') < \
                 BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):

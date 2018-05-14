@@ -45,7 +45,8 @@ class UISignaler(QThread):
                     "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
                     toAddress, fromLabel, fromAddress, subject, message, ackdata)
             elif command == 'updateNetworkStatusTab':
-                self.emit(SIGNAL("updateNetworkStatusTab()"))
+                outbound, add, destination = data
+                self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), outbound, add, destination)
             elif command == 'updateNumberOfMessagesProcessed':
                 self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
             elif command == 'updateNumberOfPubkeysProcessed':

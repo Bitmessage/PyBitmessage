@@ -22,7 +22,8 @@ class SafeHTMLParser(HTMLParser):
     replaces_pre = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"]]
     replaces_post = [["\n", "<br/>"], ["\t", "&nbsp;&nbsp;&nbsp;&nbsp;"], ["  ", "&nbsp; "], ["  ", "&nbsp; "], ["<br/> ", "<br/>&nbsp;"]]
     src_schemes = [ "data" ]
-    uriregex1 = re.compile(r'(?i)\b((?:(https?|ftp|bitcoin):(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?]))')
+    #uriregex1 = re.compile(r'(?i)\b((?:(https?|ftp|bitcoin):(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?]))')
+    uriregex1 = re.compile(r'((https?|ftp|bitcoin):(?:/{1,3}|[a-z0-9%])(?:[a-zA-Z]|[0-9]|[$-_@.&+#]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)')
     uriregex2 = re.compile(r'<a href="([^"]+)&amp;')
     emailregex = re.compile(r'\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b')
 
@@ -53,20 +54,20 @@ class SafeHTMLParser(HTMLParser):
         self.allow_external_src = False
 
     def add_if_acceptable(self, tag, attrs = None):
-        if not tag in SafeHTMLParser.acceptable_elements:
+        if tag not in SafeHTMLParser.acceptable_elements:
             return
         self.sanitised += "<"
         if inspect.stack()[1][3] == "handle_endtag":
             self.sanitised += "/"
         self.sanitised += tag
-        if not attrs is None:
+        if attrs is not None:
             for attr, val in attrs:
                 if tag == "img" and attr == "src" and not self.allow_picture:
                     val = ""
                 elif attr == "src" and not self.allow_external_src:
                     url = urlparse(val)
                     if url.scheme not in SafeHTMLParser.src_schemes:
-                        val == ""
+                        val = ""
                 self.sanitised += " " + quote_plus(attr)
                 if not (val is None):
                     self.sanitised += "=\"" + val + "\""

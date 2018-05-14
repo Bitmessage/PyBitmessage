@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>602</width>
-    <height>252</height>
+    <height>254</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,12 +18,12 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_3">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,1">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,0">
      <property name="spacing">
       <number>20</number>
      </property>
      <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
+      <enum>QLayout::SetNoConstraint</enum>
      </property>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -31,7 +31,7 @@
         <number>20</number>
        </property>
        <property name="sizeConstraint">
-        <enum>QLayout::SetFixedSize</enum>
+        <enum>QLayout::SetMinimumSize</enum>
        </property>
        <item>
         <widget class="QLabel" name="labelTotalConnections">
@@ -85,17 +85,26 @@
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
          </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
          <property name="showDropIndicator" stdset="0">
           <bool>false</bool>
          </property>
          <property name="alternatingRowColors">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::NoSelection</enum>
          </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
          <attribute name="horizontalHeaderCascadingSectionResizes">
-          <bool>false</bool>
+          <bool>true</bool>
+         </attribute>
+         <attribute name="horizontalHeaderDefaultSectionSize">
+          <number>80</number>
          </attribute>
          <attribute name="horizontalHeaderHighlightSections">
           <bool>false</bool>
@@ -108,12 +117,42 @@
          </attribute>
          <column>
           <property name="text">
-           <string>Stream #</string>
+           <string>Peer</string>
+          </property>
+          <property name="toolTip">
+           <string>IP address or hostname</string>
           </property>
          </column>
          <column>
           <property name="text">
-           <string>Connections</string>
+           <string>Rating</string>
+          </property>
+          <property name="toolTip">
+           <string>PyBitmessage tracks the success rate of connection attempts to individual nodes. The rating ranges from -1 to 1 and affects the likelihood of selecting the node in the future</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>User agent</string>
+          </property>
+          <property name="toolTip">
+           <string>Peer's self-reported software</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>TLS</string>
+          </property>
+          <property name="toolTip">
+           <string>Connection encryption</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Stream #</string>
+          </property>
+          <property name="toolTip">
+           <string>List of streams negotiated between you and the peer</string>
           </property>
          </column>
         </widget>
@@ -124,6 +163,9 @@
       <layout class="QVBoxLayout" name="verticalLayout_6">
        <property name="spacing">
         <number>4</number>
+       </property>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetNoConstraint</enum>
        </property>
        <item>
         <widget class="QLabel" name="labelStartupTime">

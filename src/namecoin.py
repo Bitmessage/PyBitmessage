@@ -129,12 +129,14 @@ class namecoinConnection (object):
     # Test the connection settings.  This routine tries to query a "getinfo"
     # command, and builds either an error message or a success message with
     # some info from it.
-    def test (self):
+    def test(self):
         try:
             if self.nmctype == "namecoind":
-                res = self.callRPC ("getinfo", [])
-                vers = res["version"]
-                
+                try:
+                    vers = self.callRPC("getinfo", [])["version"]
+                except RPCError:
+                    vers = self.callRPC("getnetworkinfo", [])["version"]
+
                 v3 = vers % 100
                 vers = vers / 100
                 v2 = vers % 100
@@ -160,7 +162,11 @@ class namecoinConnection (object):
 
         except Exception:
             logger.info("Namecoin connection test failure")
-            return ('failed', "The connection to namecoin failed.")
+            return (
+                'failed',
+                tr._translate(
+                    "MainWindow", "The connection to namecoin failed.")
+            )
 
     # Helper routine that actually performs an JSON RPC call.
     def callRPC (self, method, params):

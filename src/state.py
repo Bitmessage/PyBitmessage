@@ -21,6 +21,14 @@ curses = False
 
 sqlReady = False # set to true by sqlTread when ready for processing
 
+maximumNumberOfHalfOpenConnections = 0
+
+invThread = None
+addrThread = None
+downloadThread = None
+
+ownAddresses = {}
+
 # If the trustedpeer option is specified in keys.dat then this will
 # contain a Peer which will be connected to instead of using the
 # addresses advertised by other peers. The client will only connect to
@@ -33,6 +41,11 @@ sqlReady = False # set to true by sqlTread when ready for processing
 # security.
 trustedPeer = None
 
+discoveredPeers = {}
+
+# tracking pending downloads globally, for stats
+missingObjects = {}
+
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 def resetNetworkProtocolAvailability():
@@ -40,3 +53,5 @@ def resetNetworkProtocolAvailability():
     networkProtocolAvailability = {'IPv4': None, 'IPv6': None, 'onion': None}
 
 resetNetworkProtocolAvailability()
+
+dandelion = 0

@@ -44,7 +44,7 @@ class singleinstance:
                 # file already exists, we try to remove (in case previous execution was interrupted)
                 if os.path.exists(self.lockfile):
                     os.unlink(self.lockfile)
-                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC)
             except OSError:
                 type, e, tb = sys.exc_info()
                 if e.errno == 13:
@@ -52,8 +52,11 @@ class singleinstance:
                     sys.exit(-1)
                 print(e.errno)
                 raise
+            else:
+                pidLine = "%i\n" % self.lockPid
+                os.write(self.fd, pidLine)
         else:  # non Windows
-            self.fp = open(self.lockfile, 'w')
+            self.fp = open(self.lockfile, 'a+')
             try:
                 if self.daemon and self.lockPid != os.getpid():
                     fcntl.lockf(self.fp, fcntl.LOCK_EX) # wait for parent to finish
@@ -63,12 +66,26 @@ class singleinstance:
             except IOError:
                 print 'Another instance of this application is already running'
                 sys.exit(-1)
+            else:
+                pidLine = "%i\n" % self.lockPid
+                self.fp.truncate(0)
+                self.fp.write(pidLine)
+                self.fp.flush()
 
     def cleanup(self):
         if not self.initialized:
             return
         if self.daemon and self.lockPid == os.getpid():
             # these are the two initial forks while daemonizing
+            try:
+                if sys.platform == 'win32':
+                    if hasattr(self, 'fd'):
+                        os.close(self.fd)
+                else:
+                    fcntl.lockf(self.fp, fcntl.LOCK_UN)
+            except Exception, e:
+                pass
+
             return
         print "Cleaning up lockfile"
         try:

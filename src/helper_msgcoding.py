@@ -1,10 +1,16 @@
 #!/usr/bin/python2.7
 
-import msgpack
+try:
+    import msgpack
+except ImportError:
+    try:
+        import umsgpack as msgpack
+    except ImportError:
+        import fallback.umsgpack.umsgpack as msgpack
 import string
 import zlib
 
-import shared
+from bmconfigparser import BMConfigParser
 from debug import logger
 import messagetypes
 from tr import _translate
@@ -13,6 +19,19 @@ BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
 BITMESSAGE_ENCODING_SIMPLE = 2
 BITMESSAGE_ENCODING_EXTENDED = 3
+
+
+class MsgEncodeException(Exception):
+    pass
+
+
+class MsgDecodeException(Exception):
+    pass
+
+
+class DecompressionSizeException(MsgDecodeException):
+    def __init__(self, size):
+        self.size = size
 
 
 class MsgEncode(object):
@@ -27,7 +46,7 @@ class MsgEncode(object):
         elif self.encoding == BITMESSAGE_ENCODING_TRIVIAL:
             self.encodeTrivial(message)
         else:
-            raise ValueError("Unknown encoding %i" % (encoding))
+            raise MsgEncodeException("Unknown encoding %i" % (encoding))
 
     def encodeExtended(self, message):
         try:
@@ -35,10 +54,10 @@ class MsgEncode(object):
             self.data = zlib.compress(msgpack.dumps(msgObj.encode(message)), 9)
         except zlib.error:
             logger.error("Error compressing message")
-            raise
+            raise MsgEncodeException("Error compressing message")
         except msgpack.exceptions.PackException:
             logger.error("Error msgpacking message")
-            raise
+            raise MsgEncodeException("Error msgpacking message")
         self.length = len(self.data)
 
     def encodeSimple(self, message):
@@ -62,29 +81,42 @@ class MsgDecode(object):
             self.subject = _translate("MsgDecode", "Unknown encoding")
 
     def decodeExtended(self, data):
+        dc = zlib.decompressobj()
+        tmp = ""
+        while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
+            try:
+                got = dc.decompress(data, BMConfigParser().safeGetInt("zlib", "maxsize") + 1 - len(tmp))
+                # EOF
+                if got == "":
+                    break
+                tmp += got
+                data = dc.unconsumed_tail
+            except zlib.error:
+                logger.error("Error decompressing message")
+                raise MsgDecodeException("Error decompressing message")
+        else:
+            raise DecompressionSizeException(len(tmp))
+
         try:
-            tmp = msgpack.loads(zlib.decompress(data))
-        except zlib.error:
-            logger.error("Error decompressing message")
-            raise
+            tmp = msgpack.loads(tmp)
         except (msgpack.exceptions.UnpackException,
                 msgpack.exceptions.ExtraData):
             logger.error("Error msgunpacking message")
-            raise
+            raise MsgDecodeException("Error msgunpacking message")
 
         try:
             msgType = tmp[""]
         except KeyError:
             logger.error("Message type missing")
-            raise
+            raise MsgDecodeException("Message type missing")
 
         msgObj = messagetypes.constructObject(tmp)
         if msgObj is None:
-            raise ValueError("Malformed message")
+            raise MsgDecodeException("Malformed message")
         try:
             msgObj.process()
         except:
-            raise ValueError("Malformed message")
+            raise MsgDecodeException("Malformed message")
         if msgType == "message":
             self.subject = msgObj.subject
             self.body = msgObj.body

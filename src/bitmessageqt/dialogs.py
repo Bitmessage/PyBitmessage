@@ -1,42 +1,76 @@
-from PyQt4 import QtCore, QtGui
-from addaddressdialog import Ui_AddAddressDialog
-from addresses import decodeAddress
+from PyQt4 import QtGui
 from tr import _translate
+from retranslateui import RetranslateMixin
+import widgets
+
+from newchandialog import NewChanDialog
+from address_dialogs import (
+    AddAddressDialog, NewAddressDialog, NewSubscriptionDialog,
+    RegenerateAddressesDialog, SpecialAddressBehaviorDialog, EmailGatewayDialog
+)
+
+import paths
+from version import softwareVersion
 
 
-class AddAddressDialog(QtGui.QDialog):
+__all__ = [
+    "NewChanDialog", "AddAddressDialog", "NewAddressDialog",
+    "NewSubscriptionDialog", "RegenerateAddressesDialog",
+    "SpecialAddressBehaviorDialog", "EmailGatewayDialog"
+]
 
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_AddAddressDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtCore.QObject.connect(self.ui.lineEditAddress, QtCore.SIGNAL(
-            "textChanged(QString)"), self.addressChanged)
 
-    def addressChanged(self, QString):
-        status, a, b, c = decodeAddress(str(QString))
-        if status == 'missingbm':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address should start with ''BM-''"))
-        elif status == 'checksumfailed':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
-        elif status == 'versiontoohigh':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
-        elif status == 'invalidcharacters':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address contains invalid characters."))
-        elif status == 'ripetooshort':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too short."))
-        elif status == 'ripetoolong':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too long."))
-        elif status == 'varintmalformed':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is malformed."))
-        elif status == 'success':
-            self.ui.labelAddressCheck.setText(
-                _translate("MainWindow", "Address is valid."))
+class AboutDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(AboutDialog, self).__init__(parent)
+        widgets.load('about.ui', self)
+        last_commit = paths.lastCommit()
+        version = softwareVersion
+        commit = last_commit.get('commit')
+        if commit:
+            version += '-' + commit[:7]
+        self.labelVersion.setText(
+            self.labelVersion.text().replace(
+                ':version:', version
+                ).replace(':branch:', commit or 'v%s' % version)
+        )
+        self.labelVersion.setOpenExternalLinks(True)
+
+        try:
+            self.label_2.setText(
+                self.label_2.text().replace(
+                    '2017', str(last_commit.get('time').year)
+                ))
+        except AttributeError:
+            pass
+
+        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+
+
+class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None, config=None):
+        super(IconGlossaryDialog, self).__init__(parent)
+        widgets.load('iconglossary.ui', self)
+
+        # FIXME: check the window title visibility here
+        self.groupBox.setTitle('')
+
+        self.labelPortNumber.setText(_translate(
+            "iconGlossaryDialog",
+            "You are using TCP port %1. (This can be changed in the settings)."
+            ).arg(config.getint('bitmessagesettings', 'port')))
+        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+
+
+class HelpDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(HelpDialog, self).__init__(parent)
+        widgets.load('help.ui', self)
+        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+
+
+class ConnectDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(ConnectDialog, self).__init__(parent)
+        widgets.load('connect.ui', self)
+        self.setFixedSize(QtGui.QWidget.sizeHint(self))

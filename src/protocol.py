@@ -23,9 +23,23 @@ from version import softwareVersion
 #Service flags
 NODE_NETWORK = 1
 NODE_SSL = 2
+NODE_DANDELION = 8
 
 #Bitfield flags
 BITFIELD_DOESACK = 1
+
+#Error types
+STATUS_WARNING = 0
+STATUS_ERROR = 1
+STATUS_FATAL = 2
+
+#Object types
+OBJECT_GETPUBKEY = 0
+OBJECT_PUBKEY = 1
+OBJECT_MSG = 2
+OBJECT_BROADCAST = 3
+OBJECT_I2P = 0x493250
+OBJECT_ADDR = 0x61646472
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
@@ -33,6 +47,8 @@ eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
+
+VersionPacket = Struct('>LqQ20s4s36sH')
 
 # Bitfield
 
@@ -54,7 +70,7 @@ def isBitSetWithinBitfield(fourByteString, n):
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
 
-# data handling
+# ip addresses
 
 def encodeHost(host):
     if host.find('.onion') > -1:
@@ -72,6 +88,58 @@ def networkType(host):
         return 'IPv4'
     else:
         return 'IPv6'
+
+def checkIPAddress(host, private=False):
+    if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+        hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
+        return checkIPv4Address(host[12:], hostStandardFormat, private)
+    elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+        # Onion, based on BMD/bitcoind
+        hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+        if private:
+            return False
+        return hostStandardFormat
+    else:
+        hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
+        if hostStandardFormat == "":
+            # This can happen on Windows systems which are not 64-bit compatible 
+            # so let us drop the IPv6 address. 
+            return False
+        return checkIPv6Address(host, hostStandardFormat, private)
+
+def checkIPv4Address(host, hostStandardFormat, private=False):
+    if host[0] == '\x7F': # 127/8
+        if not private:
+            logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
+        return hostStandardFormat if private else False
+    if host[0] == '\x0A': # 10/8
+        if not private:
+            logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
+        return hostStandardFormat if private else False
+    if host[0:2] == '\xC0\xA8': # 192.168/16
+        if not private:
+            logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
+        return hostStandardFormat if private else False
+    if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
+        if not private:
+            logger.debug('Ignoring IP address in private range:' + hostStandardFormat)
+        return hostStandardFormat if private else False
+    return False if private else hostStandardFormat
+
+def checkIPv6Address(host, hostStandardFormat, private=False):
+    if host == ('\x00' * 15) + '\x01':
+        if not private:
+            logger.debug('Ignoring loopback address: ' + hostStandardFormat)
+        return False
+    if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
+        if not private:
+            logger.debug ('Ignoring local address: ' + hostStandardFormat)
+        return hostStandardFormat if private else False
+    if (ord(host[0]) & 0xfe) == 0xfc:
+        if not private:
+            logger.debug ('Ignoring unique local address: ' + hostStandardFormat)
+        return hostStandardFormat if private else False
+    return False if private else hostStandardFormat
 
 # checks
 
@@ -121,10 +189,15 @@ def CreatePacket(command, payload=''):
     b[Header.size:] = payload
     return bytes(b)
 
-def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server = False):
+def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server = False, nodeid = None):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
+    # bitflags of the services I offer.
+    payload += pack('>q', 
+            NODE_NETWORK |
+            (NODE_SSL if haveSSL(server) else 0) |
+            (NODE_DANDELION if state.dandelion else 0)
+            )
     payload += pack('>q', int(time.time()))
 
     payload += pack(
@@ -136,7 +209,12 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server 
         payload += encodeHost(remoteHost)
         payload += pack('>H', remotePort)  # remote IPv6 and port
 
-    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
+    # bitflags of the services I offer.
+    payload += pack('>q',
+            NODE_NETWORK |
+            (NODE_SSL if haveSSL(server) else 0) |
+            (NODE_DANDELION if state.dandelion else 0)
+            )
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
     # we have a separate extPort and
@@ -152,7 +230,10 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server 
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'port'))
 
     random.seed()
-    payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
+    if nodeid is not None:
+        payload += nodeid[0:8]
+    else:
+        payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
     userAgent = '/PyBitmessage:' + softwareVersion + '/'
     payload += encodeVarint(len(userAgent))
     payload += userAgent

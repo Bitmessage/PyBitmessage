@@ -5,6 +5,7 @@ import re
 import sys
 import inspect
 from helper_sql import *
+from helper_ackPayload import genAckPayload
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from foldertree import AccountMixin
@@ -13,7 +14,7 @@ from utils import str_broadcast_subscribers
 import time
 
 def getSortedAccounts():
-    configSections = filter(lambda x: x != 'bitmessagesettings', BMConfigParser().sections())
+    configSections = BMConfigParser().addresses()
     configSections.sort(cmp = 
         lambda x,y: cmp(unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(), unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
         )
@@ -166,7 +167,8 @@ class GatewayAccount(BMAccount):
         
     def send(self):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        ackdata = OpenSSL.rand(32)
+        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        ackdata = genAckPayload(streamNumber, stealthLevel)
         t = ()
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',

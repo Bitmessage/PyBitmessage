@@ -22,7 +22,7 @@ from bmconfigparser import BMConfigParser
 import highlevelcrypto
 #import helper_startup
 from helper_sql import *
-from inventory import Inventory, PendingDownload
+from inventory import Inventory
 from queues import objectProcessorQueue
 import protocol
 import state
@@ -49,7 +49,7 @@ clientHasReceivedIncomingConnections = False #used by API command clientStatus
 numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
-daemon = False
+
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
 timeOffsetWrongCount = 0
@@ -110,29 +110,27 @@ def reloadMyAddressHashes():
     #myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
-    configSections = BMConfigParser().sections()
     hasEnabledKeys = False
-    for addressInKeysFile in configSections:
-        if addressInKeysFile <> 'bitmessagesettings':
-            isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
-            if isEnabled:
-                hasEnabledKeys = True
-                status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
-                    # Returns a simple 32 bytes of information encoded in 64 Hex characters,
-                    # or null if there was an error.
-                    privEncryptionKey = hexlify(decodeWalletImportFormat(
-                            BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
+    for addressInKeysFile in BMConfigParser().addresses():
+        isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
+        if isEnabled:
+            hasEnabledKeys = True
+            status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
+            if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
+                # Returns a simple 32 bytes of information encoded in 64 Hex characters,
+                # or null if there was an error.
+                privEncryptionKey = hexlify(decodeWalletImportFormat(
+                        BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
 
-                    if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
-                        myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
-                        myAddressesByHash[hash] = addressInKeysFile
-                        tag = hashlib.sha512(hashlib.sha512(encodeVarint(
-                            addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()[32:]
-                        myAddressesByTag[tag] = addressInKeysFile
+                if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
+                    myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
+                    myAddressesByHash[hash] = addressInKeysFile
+                    tag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                        addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()[32:]
+                    myAddressesByTag[tag] = addressInKeysFile
 
-                else:
-                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
+            else:
+                logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)
@@ -342,22 +340,18 @@ def checkAndShareObjectWithPeers(data):
     """
     if len(data) > 2 ** 18:
         logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     # Let us check to make sure that the proof of work is sufficient.
     if not protocol.isProofOfWorkSufficient(data):
         logger.info('Proof of work is insufficient.')
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     
     endOfLifeTime, = unpack('>Q', data[8:16])
     if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800: # The TTL may not be larger than 28 days + 3 hours of wiggle room
         logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s' % endOfLifeTime)
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     if endOfLifeTime - int(time.time()) < - 3600: # The EOL time was more than an hour ago. That's too much.
         logger.info('This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s' % endOfLifeTime)
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     intObjectType, = unpack('>I', data[16:20])
     try:
@@ -436,8 +430,6 @@ def _checkAndShareGetpubkeyWithPeers(data):
     if len(data) < 42:
         logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
         return
-    if len(data) > 200:
-        logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20  # bypass the nonce, time, and object type
     requestedAddressVersionNumber, addressVersionLength = decodeVarint(

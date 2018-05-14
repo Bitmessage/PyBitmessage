@@ -20,6 +20,7 @@ import curses
 import dialog
 from dialog import Dialog
 from helper_sql import *
+from helper_ackPayload import genAckPayload
 
 from addresses import *
 import ConfigParser
@@ -778,7 +779,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     if len(shared.connectedHostsList) == 0:
                         set_background_title(d, "Not connected warning")
                         scrollbox(d, unicode("Because you are not currently connected to the network, "))
-                    ackdata = OpenSSL.rand(32)
+                    stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+                    ackdata = genAckPayload(streamNumber, stealthLevel)
                     sqlExecute(
                         "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         "",
@@ -802,7 +804,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             set_background_title(d, "Empty sender error")
             scrollbox(d, unicode("You must specify an address to send the message from."))
         else:
-            ackdata = OpenSSL.rand(32)
+            # dummy ackdata, no need for stealth
+            ackdata = genAckPayload(streamNumber, 0)
             recv = BROADCAST_STR
             ripe = ""
             sqlExecute(
@@ -927,7 +930,7 @@ def loadSent():
             statstr = "Message sent at "+t+"."
         elif status == "doingmsgpow":
             statstr = "The proof of work required to send the message has been queued."
-        elif status == "askreceived":
+        elif status == "ackreceived":
             t = l10n.formatTimestamp(lastactiontime, False)
             statstr = "Acknowledgment of the message received at "+t+"."
         elif status == "broadcastqueued":
@@ -1024,20 +1027,19 @@ def run(stdscr):
             curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK) # orangish
     
     # Init list of address in 'Your Identities' tab
-    configSections = BMConfigParser().sections()
+    configSections = BMConfigParser().addressses()
     for addressInKeysFile in configSections:
-        if addressInKeysFile != "bitmessagesettings":
-            isEnabled = BMConfigParser().getboolean(addressInKeysFile, "enabled")
-            addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
-            # Set address color
-            if not isEnabled:
-                addresses[len(addresses)-1].append(8) # gray
-            elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan'):
-                addresses[len(addresses)-1].append(9) # orange
-            elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist'):
-                addresses[len(addresses)-1].append(5) # magenta
-            else:
-                addresses[len(addresses)-1].append(0) # black
+        isEnabled = BMConfigParser().getboolean(addressInKeysFile, "enabled")
+        addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
+        # Set address color
+        if not isEnabled:
+            addresses[len(addresses)-1].append(8) # gray
+        elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan'):
+            addresses[len(addresses)-1].append(9) # orange
+        elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist'):
+            addresses[len(addresses)-1].append(5) # magenta
+        else:
+            addresses[len(addresses)-1].append(0) # black
     addresses.reverse()
     
     stdscr.clear()

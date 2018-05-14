@@ -9,33 +9,37 @@ import knownnodes
 import socks
 import state
 
+
+def addKnownNode(stream, peer, lastseen=None, self=False):
+    if lastseen is None:
+        lastseen = time.time()
+    knownnodes.knownNodes[stream][peer] = {
+        "lastseen": lastseen,
+        "rating": 0,
+        "self": self,
+    }
+
+
 def knownNodes():
     try:
-        # We shouldn't have to use the knownnodes.knownNodesLock because this had
-        # better be the only thread accessing knownNodes right now.
-        pickleFile = open(state.appdata + 'knownnodes.dat', 'rb')
-        loadedKnownNodes = pickle.load(pickleFile)
-        pickleFile.close()
-        # The old format of storing knownNodes was as a 'host: (port, time)'
-        # mapping. The new format is as 'Peer: time' pairs. If we loaded
-        # data in the old format, transform it to the new style.
-        for stream, nodes in loadedKnownNodes.items():
-            knownnodes.knownNodes[stream] = {}
-            for node_tuple in nodes.items():
-                try:
-                    host, (port, lastseen) = node_tuple
-                    peer = state.Peer(host, port)
-                except:
-                    peer, lastseen = node_tuple
-                knownnodes.knownNodes[stream][peer] = lastseen
+        with open(state.appdata + 'knownnodes.dat', 'rb') as pickleFile:
+            with knownnodes.knownNodesLock:
+                knownnodes.knownNodes = pickle.load(pickleFile)
+            # the old format was {Peer:lastseen, ...}
+            # the new format is {Peer:{"lastseen":i, "rating":f}}
+            for stream in knownnodes.knownNodes.keys():
+                for node, params in knownnodes.knownNodes[stream].items():
+                    if isinstance(params, (float, int)):
+                        addKnownNode(stream, node, params)
     except:
         knownnodes.knownNodes = defaultKnownNodes.createDefaultKnownNodes(state.appdata)
     # your own onion address, if setup
     if BMConfigParser().has_option('bitmessagesettings', 'onionhostname') and ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname'):
-        knownnodes.knownNodes[1][state.Peer(BMConfigParser().get('bitmessagesettings', 'onionhostname'), BMConfigParser().getint('bitmessagesettings', 'onionport'))] = int(time.time())
+        addKnownNode(1, state.Peer(BMConfigParser().get('bitmessagesettings', 'onionhostname'), BMConfigParser().getint('bitmessagesettings', 'onionport')), self=True)
     if BMConfigParser().getint('bitmessagesettings', 'settingsversion') > 10:
         logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit
+
 
 def dns():
     # DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
@@ -43,21 +47,31 @@ def dns():
     # defaultKnownNodes.py. Hopefully either they are up to date or the user
     # has run Bitmessage recently without SOCKS turned on and received good
     # bootstrap nodes using that method.
-    if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none':
+    def try_add_known_node(stream, addr, port, method=''):
         try:
-            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                logger.info('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
-                knownnodes.knownNodes[1][state.Peer(item[4][0], 8080)] = int(time.time())
-        except:
-            logger.error('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
-        try:
-            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                logger.info ('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
-                knownnodes.knownNodes[1][state.Peer(item[4][0], 8444)] = int(time.time())
-        except:
-            logger.error('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
-    elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
-        knownnodes.knownNodes[1][state.Peer('quzwelsuziwqgpt2.onion', 8444)] = int(time.time())
+            socket.inet_aton(addr)
+        except (TypeError, socket.error):
+            return
+        logger.info(
+            'Adding %s to knownNodes based on %s DNS bootstrap method',
+            addr, method)
+        addKnownNode(stream, state.Peer(addr, port))
+
+    proxy_type = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
+
+    if proxy_type == 'none':
+        for port in [8080, 8444]:
+            try:
+                for item in socket.getaddrinfo(
+                        'bootstrap%s.bitmessage.org' % port, 80):
+                    try_add_known_node(1, item[4][0], port)
+            except:
+                logger.error(
+                    'bootstrap%s.bitmessage.org DNS bootstrapping failed.',
+                    port, exc_info=True
+                )
+    elif proxy_type == 'SOCKS5':
+        addKnownNode(1, state.Peer('quzwelsuziwqgpt2.onion', 8444))
         logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
         for port in [8080, 8444]:
             logger.debug("Resolving %i through SOCKS...", port)
@@ -88,9 +102,9 @@ def dns():
             except:
                 logger.error("SOCKS DNS resolving failed", exc_info=True)
             else:
-                if ip is not None:
-                    logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
-                    knownnodes.knownNodes[1][state.Peer(ip, port)] = time.time()
+                try_add_known_node(1, ip, port, 'SOCKS')
     else:
-        logger.info('DNS bootstrap skipped because the proxy type does not support DNS resolution.')
-
+        logger.info(
+            'DNS bootstrap skipped because the proxy type does not support'
+            ' DNS resolution.'
+        )

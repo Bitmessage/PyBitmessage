@@ -39,8 +39,8 @@ class sendDataThread(threading.Thread):
         sock,
         HOST,
         PORT,
-        streamNumber,
-            someObjectsOfWhichThisRemoteNodeIsAlreadyAware):
+        streamNumber
+        ):
         self.sock = sock
         self.peer = state.Peer(HOST, PORT)
         self.name = "sendData-" + self.peer.host.replace(":", ".") # log parser field separator
@@ -52,7 +52,6 @@ class sendDataThread(threading.Thread):
             1  # This must be set using setRemoteProtocolVersion command which is sent through the self.sendDataThreadQueue queue.
         self.lastTimeISentData = int(
             time.time())  # If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
-        self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
         if streamNumber == -1:  # This was an incoming connection.
             self.initiatedConnection = False
         else:
@@ -105,8 +104,8 @@ class sendDataThread(threading.Thread):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
-                if e.errno in (errno.EPIPE, errno.ECONNRESET, errno.EHOSTUNREACH, errno.ETIMEDOUT):
-                    logger.debug('Connection error (EPIPE/ECONNRESET/EHOSTUNREACH/ETIMEDOUT)')
+                if e.errno in (errno.EPIPE, errno.ECONNRESET, errno.EHOSTUNREACH, errno.ETIMEDOUT, errno.ECONNREFUSED):
+                    logger.debug('Connection error: %s', str(e))
                     return False
                 raise
             throttle.SendThrottle().wait(amountSent)
@@ -165,8 +164,7 @@ class sendDataThread(threading.Thread):
                     if self.connectionIsOrWasFullyEstablished: # only send inv messages if we have send and heard a verack from the remote node
                         payload = ''
                         for hash in data:
-                            if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                                payload += hash
+                            payload += hash
                         if payload != '':
                             payload = encodeVarint(len(payload)/32) + payload
                             packet = protocol.CreatePacket('inv', payload)
@@ -176,7 +174,6 @@ class sendDataThread(threading.Thread):
                                 logger.error('sendinv: self.sock.sendall failed')
                                 break
                 elif command == 'pong':
-                    self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware.clear() # To save memory, let us clear this data structure from time to time. As its function is to help us keep from sending inv messages to peers which sent us the same inv message mere seconds earlier, it will be fine to clear this data structure from time to time.
                     if self.lastTimeISentData < (int(time.time()) - 298):
                         # Send out a pong message to keep the connection alive.
                         logger.debug('Sending pong to ' + str(self.peer) + ' to keep connection alive.')

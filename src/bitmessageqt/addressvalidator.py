@@ -15,6 +15,8 @@ class AddressPassPhraseValidatorMixin():
         self.buttonBox = buttonBox
         self.addressMandatory = addressMandatory
         self.isValid = False
+        # save default text
+        self.okButtonLabel = self.buttonBox.button(QtGui.QDialogButtonBox.Ok).text()
 
     def setError(self, string):
         if string is not None and self.feedBackObject is not None:
@@ -26,6 +28,10 @@ class AddressPassPhraseValidatorMixin():
         self.isValid = False
         if self.buttonBox:
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setEnabled(False)
+            if string is not None and self.feedBackObject is not None:
+                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(_translate("AddressValidator", "Invalid"))
+            else:
+                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(_translate("AddressValidator", "Validating..."))
 
     def setOK(self, string):
         if string is not None and self.feedBackObject is not None:
@@ -37,6 +43,7 @@ class AddressPassPhraseValidatorMixin():
         self.isValid = True
         if self.buttonBox:
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setEnabled(True)
+            self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(self.okButtonLabel)
 
     def checkQueue(self):
         gotOne = False

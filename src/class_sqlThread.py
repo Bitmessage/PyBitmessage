@@ -316,7 +316,7 @@ class sqlThread(threading.Thread):
                 
         # Adjust the required POW values for each of this user's addresses to conform to protocol v3 norms.
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 9:
-            for addressInKeysFile in BMConfigParser().sections():
+            for addressInKeysFile in BMConfigParser().addressses():
                 try:
                     previousTotalDifficulty = float(BMConfigParser().getint(addressInKeysFile, 'noncetrialsperbyte')) / 320
                     previousSmallMessageDifficulty = float(BMConfigParser().getint(addressInKeysFile, 'payloadlengthextrabytes')) / 14000

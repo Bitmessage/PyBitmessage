@@ -13,15 +13,16 @@ from helper_sql import *
 from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled
 import paths
-from proofofwork import bmpow
+import proofofwork
 from pyelliptic.openssl import OpenSSL
 import queues
-import shared
+import network.stats
 import state
 from version import softwareVersion
 
 # this is BM support address going to Peter Surda
-SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
+OLD_SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
+SUPPORT_ADDRESS = 'BM-2cUdgkDDAahwPAU6oD2A7DnjqZz3hgY832'
 SUPPORT_LABEL = 'PyBitmessage support'
 SUPPORT_MY_LABEL = 'My new address'
 SUPPORT_SUBJECT = 'Support request'
@@ -53,6 +54,7 @@ Connected hosts: {}
 '''
 
 def checkAddressBook(myapp):
+    sqlExecute('''DELETE from addressbook WHERE address=?''', OLD_SUPPORT_ADDRESS)
     queryreturn = sqlQuery('''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
     if queryreturn == []:
         sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS)
@@ -85,9 +87,9 @@ def createSupportMessage(myapp):
         return
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
-    
+
     version = softwareVersion
-    commit = paths.lastCommit()
+    commit = paths.lastCommit().get('commit')
     if commit:
         version += " GIT " + commit
 
@@ -111,7 +113,7 @@ def createSupportMessage(myapp):
     if paths.frozen:
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
-    cpow = "True" if bmpow else "False"
+    cpow = "True" if proofofwork.bmpow else "False"
     #cpow = QtGui.QApplication.translate("Support", cpow)
     openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
     #openclpow = QtGui.QApplication.translate("Support", openclpow)
@@ -124,11 +126,15 @@ def createSupportMessage(myapp):
         upnp = BMConfigParser().get('bitmessagesettings', 'upnp')
     except:
         upnp = "N/A"
-    connectedhosts = len(shared.connectedHostsList)
+    connectedhosts = len(network.stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
-    myapp.ui.tabWidgetSend.setCurrentIndex(0)
+    myapp.ui.tabWidgetSend.setCurrentIndex(
+        myapp.ui.tabWidgetSend.indexOf(myapp.ui.sendDirect)
+    )
     # send tab
-    myapp.ui.tabWidget.setCurrentIndex(1)
+    myapp.ui.tabWidget.setCurrentIndex(
+        myapp.ui.tabWidget.indexOf(myapp.ui.send)
+    )
