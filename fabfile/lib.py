@@ -32,8 +32,7 @@ def coerce_bool(value):
     ):
         return True
     else:
-        print "Bad boolean value {}".format(value)
-        sys.exit(1)
+        sys.exit("Bad boolean value {}".format(value))
 
 
 def flatten(data):

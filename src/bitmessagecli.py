@@ -622,53 +622,6 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
     return 'Entry Error'
 
 
-def delMilAddr():
-    """Delete address"""
-
-    global usrPrompt
-    try:
-        response = api.listAddresses2()
-        # if api is too old just return then fail
-        if "API Error 0020" in response:
-            return
-        addresses = json.loads(response)
-        for entry in addresses['addresses']:
-            if entry['label'].decode('base64')[:6] == "random":
-                api.deleteAddress(entry['address'])
-    except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-
-
-def genMilAddr():
-    """Generate address"""
-    global usrPrompt
-    maxn = 0
-    try:
-        response = api.listAddresses2()
-        if "API Error 0020" in response:
-            return
-        addresses = json.loads(response)
-        for entry in addresses['addresses']:
-            if entry['label'].decode('base64')[:6] == "random":
-                newn = int(entry['label'].decode('base64')[6:])
-                if maxn < newn:
-                    maxn = newn
-    except:
-        print "\n Some error\n"
-    print "\n    Starting at " + str(maxn) + "\n"
-    for i in range(maxn, 10000):
-        lbl = "random" + str(i)
-        addressLabel = lbl.encode('base64')
-        try:
-            api.createRandomAddress(addressLabel)  # generatedAddress =
-        except:
-            print '\n     Connection Error\n'
-            usrPrompt = 0
-            main()
-
-
 def saveFile(fileName, fileData):
     """Allows attachments and messages/broadcats to be saved"""
 

@@ -32,9 +32,8 @@ Furthermore, you can use -- to run arbitrary shell commands rather than tasks:
  * Install Fabric, fabric-virtualenv, virtualenvwrapper system-wide (log in to a new terminal afterwards if you're installing
    virtualenvwrappers for the first time)
     $ sudo apt install Fabric virtualenvwrapper; sudo pip install fabric-virtualenv
- * Create a virtualenv called pybitmessage and install fabfile/requirements.txt
-    $ mkvirtualenv --system-site-packages pybitmessage-devops
-    $ pip install -r fabfile/requirements.txt
+   Create a virtualenv called pybitmessage and install fabfile/requirements.txt
+    $ mkvirtualenv -r fabfile/requirements.txt --system-site-packages pybitmessage-devops
  * Ensure you can ssh localhost with no intervention, which may include:
    * settings in ~/.ssh/config
    * authorized_keys file
@@ -51,5 +50,5 @@ There are a number of advantages that should benefit us:
  * All developers can run the same commands, if the underlying command sequence for a task changes (after review, obv)
    the user does not have to care
  * Tasks can be combined either programmatically or on the commandline and run in series or parallel
- * Whoee environemnts can be managed very effectively in conjunction with a configuration management system
+ * Whole environments can be managed very effectively in conjunction with a configuration management system
 

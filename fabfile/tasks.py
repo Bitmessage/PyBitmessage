@@ -89,7 +89,7 @@ def code_quality(top=10, verbose=True, details=False, fix=False, filename=None):
     Check code quality.
 
     By default this command will analyse each Python file in the project with a variety of tools and display the count
-    or details of the violations discovered, sorted by most iolations first.
+    or details of the violations discovered, sorted by most violations first.
 
     Default usage:
 
