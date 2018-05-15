@@ -1,16 +1,21 @@
-"""A library of functions and constrants for tasks to make use of."""
+# pylint: disable=not-context-manager
+"""
+A library of functions and constants for tasks to make use of.
+
+"""
 
 import os
 import sys
 
 from fabric.api import run, hide
-from fabric.context_managers import settings
+from fabric.context_managers import settings, shell_env
 from fabvenv import virtualenv
 
 
 FABRIC_ROOT = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.dirname(FABRIC_ROOT)
 VENV_ROOT = os.path.expanduser(os.path.join('~', '.virtualenvs', 'pybitmessage-devops'))
+PYTHONPATH = os.path.join(PROJECT_ROOT, 'src',)
 
 
 def coerce_bool(value):
@@ -49,7 +54,7 @@ def flatten(data):
 def pycodestyle(path_to_file):
     """Run pycodestyle on a file"""
     with virtualenv(VENV_ROOT):
-        with hide('warnings', 'running', 'stdout', 'stderr'):  # pylint: disable=not-context-manager
+        with hide('warnings', 'running', 'stdout', 'stderr'):
             with settings(warn_only=True):
                 return run(
                     'pycodestyle --config={0} {1}'.format(
@@ -65,7 +70,7 @@ def pycodestyle(path_to_file):
 def flake8(path_to_file):
     """Run flake8 on a file"""
     with virtualenv(VENV_ROOT):
-        with hide('warnings', 'running', 'stdout'):  # pylint: disable=not-context-manager
+        with hide('warnings', 'running', 'stdout'):
             with settings(warn_only=True):
                 return run(
                     'flake8 --config={0} {1}'.format(
@@ -81,26 +86,65 @@ def flake8(path_to_file):
 def pylint(path_to_file):
     """Run pylint on a file"""
     with virtualenv(VENV_ROOT):
-        with hide('warnings', 'running', 'stdout', 'stderr'):  # pylint: disable=not-context-manager
+        with hide('warnings', 'running', 'stdout', 'stderr'):
             with settings(warn_only=True):
-                return run(
-                    'pylint --rcfile={0} {1}'.format(
-                        os.path.join(
-                            PROJECT_ROOT,
-                            'setup.cfg',
+                with shell_env(PYTHONPATH=PYTHONPATH):
+                    return run(
+                        'pylint --rcfile={0} {1}'.format(
+                            os.path.join(
+                                PROJECT_ROOT,
+                                'setup.cfg',
+                            ),
+                            path_to_file,
                         ),
-                        path_to_file,
-                    ),
-                )
+                    )
 
 
 def autopep8(path_to_file):
     """Run autopep8 on a file"""
     with virtualenv(VENV_ROOT):
-        with hide('running'):  # pylint: disable=not-context-manager
+        with hide('running'):
             with settings(warn_only=True):
                 return run(
                     "autopep8 --experimental --aggressive --aggressive -i --max-line-length=119 {}".format(
                         path_to_file
                     ),
                 )
+
+
+def get_filtered_pycodestyle_output(path_to_file):
+    """Clean up the raw results for pycodestyle"""
+
+    return [
+        i
+        for i in pycodestyle(path_to_file).split(os.linesep)
+        if i
+    ]
+
+
+def get_filtered_flake8_output(path_to_file):
+    """Clean up the raw results for flake8"""
+
+    return [
+        i
+        for i in flake8(path_to_file).split(os.linesep)
+        if i
+    ]
+
+
+def get_filtered_pylint_output(path_to_file):
+    """Clean up the raw results for pylint"""
+
+    return [
+        i
+        for i in pylint(path_to_file).split(os.linesep)
+        if all([
+            i,
+            not i.startswith(' '),
+            not i.startswith('\r'),
+            not i.startswith('-'),
+            not i.startswith('Y'),
+            not i.startswith('*'),
+            not i.startswith('Using config file'),
+        ])
+    ]

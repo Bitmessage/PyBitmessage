@@ -1,12 +1,12 @@
 # pylint: disable=too-many-lines,broad-except,too-many-instance-attributes,global-statement,too-few-public-methods
 # pylint: disable=too-many-statements,too-many-branches,attribute-defined-outside-init,too-many-arguments,no-member
-# pylint: disable=unused-argument,no-self-use,too-many-locals,unused-variable,too-many-nested-blocks,ungrouped-imports
+# pylint: disable=unused-argument,no-self-use,too-many-locals,unused-variable,too-many-nested-blocks
 # pylint: disable=too-many-return-statements,protected-access,super-init-not-called,non-parent-init-called
 """
 Initialise the QT interface
 """
 
-from src.debug import logger  # pylint: disable=wrong-import-order
+from debug import logger  # pylint: disable=wrong-import-order
 
 import hashlib
 import locale
@@ -34,38 +34,49 @@ except ImportError:
 
 from sqlite3 import register_adapter
 
-from src import (
-    shared, defaults, queues, shutdown, state, openclpow, knownnodes, paths, l10n, helper_search, debug, upnp,
-)
-from src.bitmessageqt import sound, support, dialogs
-from src.bitmessageqt.foldertree import (
+import debug  # pylint: disable=ungrouped-imports
+import defaults
+import helper_search
+import knownnodes
+import l10n
+import openclpow
+import paths
+import queues
+import shared
+import shutdown
+import state
+import upnp
+
+from bitmessageqt import sound, support, dialogs
+from bitmessageqt.foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget, MessageList_AddressWidget,
     MessageList_SubjectWidget, Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress,
 )
-from src.bitmessageqt.account import (
+from bitmessageqt.account import (
     getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount, GatewayAccount, MailchuckAccount, AccountColor,
 )
-from src.bitmessageqt.bitmessageui import Ui_MainWindow, settingsmixin
-from src.bitmessageqt.messageview import MessageView
-from src.bitmessageqt.migrationwizard import Ui_MigrationWizard
-from src.bitmessageqt.settings import Ui_settingsDialog
-from src.bitmessageqt.utils import str_broadcast_subscribers, avatarize
-from src.bitmessageqt.uisignaler import UISignaler
-from src.bitmessageqt.statusbar import BMStatusBar
-from src.proofofwork import getPowType
-from src.tr import _translate
-from src.addresses import decodeAddress, addBMIfNotPresent
-from src.bmconfigparser import BMConfigParser
-from src.namecoin import namecoinConnection
-from src.helper_ackPayload import genAckPayload
-from src.helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
-from src.helper_generic import powQueueSize
-from src.network.stats import pendingDownload, pendingUpload
-from src.network.asyncore_pollchoose import set_rates
+from bitmessageqt.bitmessageui import Ui_MainWindow, settingsmixin
+from bitmessageqt.messageview import MessageView
+from bitmessageqt.migrationwizard import Ui_MigrationWizard
+from bitmessageqt.settings import Ui_settingsDialog
+from bitmessageqt.utils import str_broadcast_subscribers, avatarize
+from bitmessageqt.uisignaler import UISignaler
+from bitmessageqt.statusbar import BMStatusBar
+
+from addresses import decodeAddress, addBMIfNotPresent
+from bmconfigparser import BMConfigParser
+from namecoin import namecoinConnection
+from helper_ackPayload import genAckPayload
+from helper_generic import powQueueSize
+from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
+from network.stats import pendingDownload, pendingUpload
+from network.asyncore_pollchoose import set_rates
+from proofofwork import getPowType
+from tr import _translate
 
 
 try:
-    from src.plugins.plugin import get_plugin, get_plugins
+    from plugins.plugin import get_plugin, get_plugins
 except ImportError:
     get_plugins = False
 
@@ -1489,7 +1500,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
         messagelist = self.getCurrentMessagelist()
         folder = self.getCurrentFolder()
         if event.key() == QtCore.Qt.Key_Delete:
-            if isinstance(focus, [MessageView, QtGui.QTableWidget]):
+            if isinstance(focus, (MessageView, QtGui.QTableWidget)):
                 if folder == "sent":
                     self.on_action_SentTrash()
                 else:
@@ -3623,7 +3634,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                 self.ui.tableWidgetInbox,
                 self.ui.tableWidgetInboxChans,
                 self.ui.tableWidgetInboxSubscriptions)
-        elif not isinstance(messageLists, [list, tuple]):
+        elif not isinstance(messageLists, (list, tuple)):
             messageLists = (messageLists)
         for messageList in messageLists:
             if row is not None:
@@ -4751,7 +4762,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
     def updateStatusBar(self, data):
         """TBC"""
 
-        if isinstance(data, [tuple, list]):
+        if isinstance(data, (tuple, list)):
             option = data[1]
             message = data[0]
         else:

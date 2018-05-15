@@ -35,7 +35,7 @@ Furthermore, you can use -- to run arbitrary shell commands rather than tasks:
    Create a virtualenv called pybitmessage and install fabfile/requirements.txt
     $ mkvirtualenv -r fabfile/requirements.txt --system-site-packages pybitmessage-devops
  * Ensure you can ssh localhost with no intervention, which may include:
-   * settings in ~/.ssh/config
+   * ssh [sshd_config server] and [ssh_config client] configuration
    * authorized_keys file
    * load ssh key
    * check(!) and accept the host key
@@ -52,3 +52,35 @@ There are a number of advantages that should benefit us:
  * Tasks can be combined either programmatically or on the commandline and run in series or parallel
  * Whole environments can be managed very effectively in conjunction with a configuration management system
 
+<a name="sshd_config"></a>
+# /etc/ssh/sshd_config
+
+If you're going to be using ssh to connect to localhost you want to avoid weakening your security. The best way of
+doing this is blocking port 22 with a firewall. As a belt and braces approach you can also edit the
+/etc/ssh/sshd_config file to restrict login further:
+
+```
+PubkeyAuthentication no
+
+...
+
+Match ::1
+    PubkeyAuthentication yes
+```
+Adapted from [stackexchange](https://unix.stackexchange.com/questions/406245/limit-ssh-access-to-specific-clients-by-ip-address)
+
+<a name="ssh_config"></a>
+# ~/.ssh/config
+
+Fabric will honour your ~/.ssh/config file for your convenience. Since you will spend more time with this key unlocked
+than others you should use a different key:
+
+```
+Host localhost
+    HostName localhost
+    IdentityFile ~/.ssh/id_rsa_localhost
+
+Host github
+    HostName github.com
+    IdentityFile ~/.ssh/id_rsa_github
+```
