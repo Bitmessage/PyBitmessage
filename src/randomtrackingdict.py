@@ -1,6 +1,7 @@
 import random
 from threading import RLock
 from time import time
+import helper_random
 
 class RandomTrackingDict(object):
     maxPending = 10
@@ -11,6 +12,7 @@ class RandomTrackingDict(object):
         self.len = 0
         self.pendingLen = 0
         self.lastPoll = 0
+        self.lastObject = 0
         self.lock = RLock()
 
     def __len__(self):
@@ -70,19 +72,24 @@ class RandomTrackingDict(object):
     def setPendingTimeout(self, pendingTimeout):
         self.pendingTimeout = pendingTimeout
 
+    def setLastObject(self):
+        """Update timestamp for tracking of received objects"""
+        self.lastObject = time()
+
     def randomKeys(self, count=1):
         if self.len == 0 or ((self.pendingLen >= self.maxPending or
             self.pendingLen == self.len) and self.lastPoll +
             self.pendingTimeout > time()):
             raise KeyError
-        # reset if we've requested all
         with self.lock:
-            if self.pendingLen == self.len:
+            # reset if we've requested all
+            # or if last object received too long time ago
+            if self.pendingLen == self.len or self.lastObject + self.pendingTimeout > time():
                 self.pendingLen = 0
             available = self.len - self.pendingLen
             if count > available:
                 count = available
-            randomIndex = random.sample(range(self.len - self.pendingLen), count)
+            randomIndex = helper_random.randomsample(range(self.len - self.pendingLen), count)
             retval = [self.indexDict[i] for i in randomIndex]
 
             for i in sorted(randomIndex, reverse=True):

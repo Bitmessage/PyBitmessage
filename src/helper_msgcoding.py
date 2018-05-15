@@ -14,6 +14,7 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 import messagetypes
 from tr import _translate
+import helper_random
 
 BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
@@ -139,10 +140,9 @@ class MsgDecode(object):
         self.body = body
 
 if __name__ == '__main__':
-    import random
     messageData = {
-        "subject": ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(40)),
-        "body": ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(10000))
+        "subject": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(40)),
+        "body": ''.join(helper_random.randomchoice(string.ascii_lowercase + string.digits) for _ in range(10000))
     }
     obj1 = MsgEncode(messageData, 1)
     obj2 = MsgEncode(messageData, 2)

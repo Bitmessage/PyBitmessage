@@ -1,6 +1,6 @@
 import socket
 import defaultKnownNodes
-import pickle
+import pickle  # nosec
 import time
 
 from bmconfigparser import BMConfigParser
@@ -24,7 +24,7 @@ def knownNodes():
     try:
         with open(state.appdata + 'knownnodes.dat', 'rb') as pickleFile:
             with knownnodes.knownNodesLock:
-                knownnodes.knownNodes = pickle.load(pickleFile)
+                knownnodes.knownNodes = pickle.load(pickleFile)  # nosec
             # the old format was {Peer:lastseen, ...}
             # the new format is {Peer:{"lastseen":i, "rating":f}}
             for stream in knownnodes.knownNodes.keys():
