@@ -643,8 +643,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             if addressVersionNumber == 1:
                 displayMsg = _translate(
                     "MainWindow",
-                    ('One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer '
-                     'supported. May we delete it now?')).arg(addressInKeysFile)
+                    'One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer '
+                     'supported. May we delete it now?').arg(addressInKeysFile)
                 reply = QtGui.QMessageBox.question(
                     self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
@@ -1042,8 +1042,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             else:
                 totalUnread[row[1]] = row[2]
         queryReturn = sqlQuery(
-            ("SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox "
-             "WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder"),
+            "SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox "
+             "WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder",
             str_broadcast_subscribers)
         broadcastsUnread = {}
         for row in queryReturn:
@@ -1091,7 +1091,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
         if sortingEnabled:
             tableWidget.setSortingEnabled(False)
         tableWidget.insertRow(0)
-        for i, item in enumerate(items):
+        for i, _ in enumerate(items):
             tableWidget.setItem(0, i, items[i])
         if sortingEnabled:
             tableWidget.setSortingEnabled(True)
@@ -2096,6 +2096,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
     def click_pushButtonSend(self):
         """
         TBC
+
+        Regarding the line below `if len(message) > (2 ** 18 - 500):`:
 
         The whole network message must fit in 2^18 bytes.
         Let's assume 500 bytes of overhead. If someone wants to get that

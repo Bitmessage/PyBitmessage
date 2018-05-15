@@ -29,10 +29,11 @@ Furthermore, you can use -- to run arbitrary shell commands rather than tasks:
 
 # Getting started
 
- * Install Fabric, fabric-virtualenv, virtualenvwrapper system-wide (log in to a new terminal afterwards if you're installing
-   virtualenvwrappers for the first time)
-    $ sudo apt install Fabric virtualenvwrapper; sudo pip install fabric-virtualenv
-   Create a virtualenv called pybitmessage and install fabfile/requirements.txt
+ * Install [Fabric](http://docs.fabfile.org/en/1.14/usage/fab.html), 
+   [fabric-virtualenv](https://pypi.org/project/fabric-virtualenv/) and
+   [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/) 
+   system-wide using your preferred method.
+ * Create a virtualenv called pybitmessage and install fabfile/requirements.txt
     $ mkvirtualenv -r fabfile/requirements.txt --system-site-packages pybitmessage-devops
  * Ensure you can ssh localhost with no intervention, which may include:
    * ssh [sshd_config server] and [ssh_config client] configuration
