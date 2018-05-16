@@ -158,8 +158,8 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
     if fix:
         for item in sort_and_slice(results, top):
             autopep8(item['path_to_file'])
-    # Recalculate results after autopep8 to surprise the user the least
-    results = get_tool_results(file_list)
+        # Recalculate results after autopep8 to surprise the user the least
+        results = get_tool_results(file_list)
 
     print_results(results, top, verbose, details)
     sys.exit(sum([item['total_violations'] for item in results]))
