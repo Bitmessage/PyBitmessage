@@ -6,8 +6,6 @@
 Initialise the QT interface
 """
 
-from debug import logger  # pylint: disable=wrong-import-order
-
 import hashlib
 import locale
 import os
@@ -17,6 +15,9 @@ import sys
 import textwrap
 import time
 from datetime import datetime, timedelta
+
+import debug
+from debug import logger
 
 
 try:
@@ -32,9 +33,8 @@ except ImportError:
     sys.exit()
 
 
-from sqlite3 import register_adapter
+from sqlite3 import register_adapter  # pylint: disable=wrong-import-order
 
-import debug  # pylint: disable=ungrouped-imports
 import defaults
 import helper_search
 import knownnodes
@@ -644,7 +644,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                 displayMsg = _translate(
                     "MainWindow",
                     'One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer '
-                     'supported. May we delete it now?').arg(addressInKeysFile)
+                    'supported. May we delete it now?'
+                ).arg(addressInKeysFile)
                 reply = QtGui.QMessageBox.question(
                     self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
@@ -1043,7 +1044,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                 totalUnread[row[1]] = row[2]
         queryReturn = sqlQuery(
             "SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox "
-             "WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder",
+            "WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder",
             str_broadcast_subscribers)
         broadcastsUnread = {}
         for row in queryReturn:
