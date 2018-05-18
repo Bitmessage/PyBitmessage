@@ -334,7 +334,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object = BMObject(nonce, expiresTime, objectType, version, streamNumber, self.payload, self.payloadOffset)
 
         if len(self.payload) - self.payloadOffset > BMProto.maxObjectPayloadSize:
-            logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(self.payload) - self.payloadOffset)
+            logger.info('The payload length of this object is too large (%d bytes). Ignoring it.' % (len(self.payload) - self.payloadOffset))
             raise BMProtoExcessiveDataError()
 
         try:
