@@ -273,7 +273,6 @@ def check_openssl():
     if sys.platform == 'win32':
         paths = ['libeay32.dll']
         if getattr(sys, 'frozen', False):
-            import os.path
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
     else:
         paths = ['libcrypto.so', 'libcrypto.so.1.0.0']
