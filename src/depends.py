@@ -435,10 +435,9 @@ def check_dependencies(verbose=False, optional=False):
             ' or greater is required.')
         has_all_dependencies = False
 
-    check_functions = [
-        check_hashlib, check_sqlite, check_openssl, check_msgpack]
+    check_functions = [check_hashlib, check_sqlite, check_openssl]
     if optional:
-        check_functions.extend([check_pyqt, check_curses])
+        check_functions.extend([check_msgpack, check_pyqt, check_curses])
 
     # Unexpected exceptions are handled here
     for check in check_functions:
