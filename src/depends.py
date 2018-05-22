@@ -452,8 +452,3 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage cannot start. One or more dependencies are'
             ' unavailable.'
         )
-
-
-if __name__ == '__main__':
-    """Check Dependencies"""
-    check_dependencies(True, True)
