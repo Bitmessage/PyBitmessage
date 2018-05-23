@@ -168,13 +168,14 @@ def checkSocksIP(host):
 
 def isProofOfWorkSufficient(data,
                             nonceTrialsPerByte=0,
-                            payloadLengthExtraBytes=0):
+                            payloadLengthExtraBytes=0,
+                            recvTime=0):
     if nonceTrialsPerByte < defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
         nonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
     if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
         payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
     endOfLifeTime, = unpack('>Q', data[8:16])
-    TTL = endOfLifeTime - int(time.time())
+    TTL = endOfLifeTime - (recvTime if recvTime else int(time.time()))
     if TTL < 300:
         TTL = 300
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
