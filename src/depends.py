@@ -10,7 +10,7 @@ import sys
 if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     sys.exit(
         'Python version: %s\n'
-        'PyBitmessage requires Python 2.7.3 or greater (but not Python 3)'
+        'PyBitmessage requires Python 2.7.4 or greater (but not Python 3)'
         % sys.version
     )
 
@@ -419,18 +419,19 @@ def check_dependencies(verbose=False, optional=False):
 
     has_all_dependencies = True
 
-    # Python 2.7.3 is the required minimum. Python 3+ is not supported,
-    # but it is still useful to provide information about our other
-    # requirements.
+    # Python 2.7.4 is the required minimum.
+    # (https://bitmessage.org/forum/index.php?topic=4081.0)
+    # Python 3+ is not supported, but it is still useful to provide
+    # information about our other requirements.
     logger.info('Python version: %s', sys.version)
-    if sys.hexversion < 0x20703F0:
+    if sys.hexversion < 0x20704F0:
         logger.error(
-            'PyBitmessage requires Python 2.7.3 or greater'
+            'PyBitmessage requires Python 2.7.4 or greater'
             ' (but not Python 3+)')
         has_all_dependencies = False
     if sys.hexversion >= 0x3000000:
         logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.3'
+            'PyBitmessage does not support Python 3+. Python 2.7.4'
             ' or greater is required.')
         has_all_dependencies = False
 
