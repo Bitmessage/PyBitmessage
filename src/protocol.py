@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import base64
 from binascii import hexlify
 import hashlib
+import os
 import random
 import socket
 import ssl
@@ -86,6 +87,9 @@ def isBitSetWithinBitfield(fourByteString, n):
     n = 31 - n
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
+
+
+# ip addresses
 
 
 def encodeHost(host):
@@ -214,6 +218,9 @@ def isProofOfWorkSufficient(data,
                               ((TTL * (len(data) + payloadLengthExtraBytes)) / (2 ** 16))))
 
 
+# Packet creation
+
+
 def CreatePacket(command, payload=''):
     """Construct and return a number of bytes from a payload"""
     payload_length = len(payload)
@@ -299,6 +306,9 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     return CreatePacket('error', payload)
 
 
+# Packet decoding
+
+
 def decryptAndCheckPubkeyPayload(data, address):
     """
     Version 4 pubkeys are encrypted. This function is run when we already have the
@@ -335,8 +345,8 @@ def decryptAndCheckPubkeyPayload(data, address):
         toAddress, cryptorObject = state.neededPubkeys[tag]
         if toAddress != address:
             logger.critical(
-                ('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. '
-                 'This is very peculiar. toAddress: %s, address %s'),
+                'decryptAndCheckPubkeyPayload failed due to toAddress mismatch.'
+                ' This is very peculiar. toAddress: %s, address %s',
                 toAddress,
                 address)
             # the only way I can think that this could happen is if someone encodes their address data two different
@@ -393,14 +403,13 @@ def decryptAndCheckPubkeyPayload(data, address):
         # Everything checked out. Insert it into the pubkeys table.
 
         logger.info(
-            'within decryptAndCheckPubkeyPayload, addressVersion: %s, streamNumber: %s \n\
-            ripe %s\n\
-            publicSigningKey in hex: %s\n\
-            publicEncryptionKey in hex: %s', addressVersion,
-            streamNumber,
-            hexlify(ripe),
-            hexlify(publicSigningKey),
-            hexlify(publicEncryptionKey)
+            os.linesep.join([
+                'within decryptAndCheckPubkeyPayload,'
+                ' addressVersion: %s, streamNumber: %s' % addressVersion, streamNumber,
+                'ripe %s' % hexlify(ripe),
+                'publicSigningKey in hex: %s' % hexlify(publicSigningKey),
+                'publicEncryptionKey in hex: %s' % hexlify(publicEncryptionKey),
+            ])
         )
 
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
@@ -459,14 +468,14 @@ def checkAndShareObjectWithPeers(data):
         return 0.6
     except varintDecodeError as err:
         logger.debug(
-            ("There was a problem with a varint while checking to see whether it was appropriate to share an object "
-             "with peers. Some details: %s"),
-            err)
+            "There was a problem with a varint while checking to see whether it was appropriate to share an object"
+            " with peers. Some details: %s", err
+        )
     except Exception:
         logger.critical(
-            ('There was a problem while checking to see whether it was appropriate to share an object with peers. '
-             'This is definitely a bug! \n%s'),
-            traceback.format_exc())
+            'There was a problem while checking to see whether it was appropriate to share an object with peers.'
+            ' This is definitely a bug! %s%s' % os.linesep, traceback.format_exc()
+        )
     return 0
 
 
