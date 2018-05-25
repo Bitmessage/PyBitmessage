@@ -170,12 +170,23 @@ def isProofOfWorkSufficient(data,
                             nonceTrialsPerByte=0,
                             payloadLengthExtraBytes=0,
                             recvTime=0):
+    """
+    Validate an object's Proof of Work using method described in:
+        https://bitmessage.org/wiki/Proof_of_work
+    Arguments:
+        int nonceTrialsPerByte (default: from default.py)
+        int payloadLengthExtraBytes (default: from default.py)
+        float recvTime (optional) UNIX epoch time when object was
+          received from the network (default: current system time)
+    Returns:
+        True if PoW valid and sufficient, False in all other cases
+    """
     if nonceTrialsPerByte < defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
         nonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
     if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
         payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
     endOfLifeTime, = unpack('>Q', data[8:16])
-    TTL = endOfLifeTime - (recvTime if recvTime else int(time.time()))
+    TTL = endOfLifeTime - (int(recvTime) if recvTime else int(time.time()))
     if TTL < 300:
         TTL = 300
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
