@@ -2,19 +2,25 @@
 """
 Fabric tasks for PyBitmessage devops operations.
 
-# pylint: disable=not-context-manager
+Note that where tasks declare params to be bools, they use coerce_bool() and so will accept any commandline (string)
+representation of true or false that coerce_bool() understands.
+
 """
 
 import os
 import sys
 
-from fabric.api import run, task, hide, cd
+from fabric.api import run, task, hide, cd, settings, sudo
+from fabric.contrib.project import rsync_project
 from fabvenv import virtualenv
 
 from fabfile.lib import (
     autopep8, PROJECT_ROOT, VENV_ROOT, coerce_bool, flatten,
     get_filtered_pycodestyle_output, get_filtered_flake8_output, get_filtered_pylint_output,
 )
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')))  # noqa:E402
+from version import softwareVersion  # pylint: disable=wrong-import-position
 
 
 def get_tool_results(file_list):
@@ -28,9 +34,9 @@ def get_tool_results(file_list):
         result['pylint_violations'] = get_filtered_pylint_output(path_to_file)
         result['path_to_file'] = path_to_file
         result['total_violations'] = sum([
-                len(result['pycodestyle_violations']),
-                len(result['flake8_violations']),
-                len(result['pylint_violations']),
+            len(result['pycodestyle_violations']),
+            len(result['flake8_violations']),
+            len(result['pylint_violations']),
         ])
         results.append(result)
     return results
@@ -116,6 +122,43 @@ def generate_file_list(filename):
     return file_list
 
 
+def create_dependency_graphs():
+    """
+    To better understand the relationship between methods, dependency graphs can be drawn between functions and
+    methods.
+
+    Since the resulting images are large and could be out of date on the next commit, storing them in the repo is
+    pointless. Instead, it makes sense to build a dependency graph for a particular, documented version of the code.
+
+    .. todo:: Consider saving a hash of the intermediate dotty file so unnecessary image generation can be avoided.
+
+    """
+    with virtualenv(VENV_ROOT):
+        with hide('running', 'stdout'):
+
+            # .. todo:: consider a better place to put this, use a particular commit
+            with cd(PROJECT_ROOT):
+                with settings(warn_only=True):
+                    if run('stat pyan').return_code:
+                        run('git clone https://github.com/davidfraser/pyan.git')
+            with cd(os.path.join(PROJECT_ROOT, 'pyan')):
+                run('git checkout pre-python3')
+
+            # .. todo:: Use better settings. This is MVP to make a diagram
+            with cd(PROJECT_ROOT):
+                file_list = run("find . -type f -name '*.py' ! -path './src/.eggs/*'").split('\r\n')
+                for cmd in [
+                        'neato -Goverlap=false -Tpng > deps-neato.png',
+                        'sfdp -Goverlap=false -Tpng > deps-sfdp.png',
+                        'dot -Goverlap=false -Tpng > deps-dot.png',
+                ]:
+                    pyan_cmd = './pyan/pyan.py {} --dot'.format(' '.join(file_list))
+                    sed_cmd = r"sed s'/http\-old/http_old/'g"  # dot doesn't like dashes
+                    run('|'.join([pyan_cmd, sed_cmd, cmd]))
+
+                run('mv *.png docs/_build/html/_static/')
+
+
 @task
 def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
     """
@@ -136,11 +179,9 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
     :type details: bool, default False
     :param fix: Run autopep8 aggressively on the displayed file(s)
     :type fix: bool, default False
-    :param filename: Rather than analysing all files and displaying / fixing the top N, just analyse / display / fix
-    the specified file
+    :param filename: Don't test/fix the top N, just the specified file
     :type filename: string, valid path to a file, default all files in the project
-    :return: This fabric task has an exit status equal to the total number of violations and uses stdio but it does
-    not return anything if you manage to call it successfully from Python
+    :return: None, exit status equals total number of violations
     :rtype: None
 
     Intended to be temporary until we have improved code quality and have safeguards to maintain it in place.
@@ -163,3 +204,93 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
 
     print_results(results, top, verbose, details)
     sys.exit(sum([item['total_violations'] for item in results]))
+
+
+@task
+def build_docs(dep_graph=False, apidoc=True):
+    """
+    Build the documentation locally.
+
+    :param dep_graph: Build the dependency graphs
+    :type dep_graph: Bool, default False
+    :param apidoc: Build the automatically generated rst files from the source code
+    :type apidoc: Bool, default True
+
+    Default usage:
+
+        $ fab -H localhost build_docs
+
+    Implementation:
+
+    First, a dependency graph is generated and converted into an image that is referenced in the development page.
+
+    Next, the sphinx-apidoc command is (usually) run which searches the code. As part of this it loads the modules and
+    if this has side-effects then they will be evident. Any documentation strings that make use of Python documentation
+    conventions (like parameter specification) or the Restructured Text (RsT) syntax will be extracted.
+
+    Next, the `make html` command is run to generate HTML output. Other formats (epub, pdf) are available.
+
+    .. todo:: support other languages
+
+    """
+
+    apidoc = coerce_bool(apidoc)
+
+    if coerce_bool(dep_graph):
+        create_dependency_graphs()
+
+    with virtualenv(VENV_ROOT):
+        with hide('running'):
+
+            apidoc_result = 0
+            if apidoc:
+                run('mkdir -p {}'.format(os.path.join(PROJECT_ROOT, 'docs', 'autodoc')))
+                with cd(os.path.join(PROJECT_ROOT, 'docs', 'autodoc')):
+                    with settings(warn_only=True):
+                        run('rm *.rst')
+                with cd(os.path.join(PROJECT_ROOT, 'docs')):
+                    apidoc_result = run('sphinx-apidoc -o autodoc ..').return_code
+
+            with cd(os.path.join(PROJECT_ROOT, 'docs')):
+                make_result = run('make html').return_code
+                return_code = apidoc_result + make_result
+
+    sys.exit(return_code)
+
+
+@task
+def push_docs(path=None):
+    """
+    Upload the generated docs to a public server.
+
+    Default usage:
+
+        $ fab -H localhost push_docs
+
+    .. todo:: support other languages
+    .. todo:: integrate with configuration management data to get web root and webserver restart command
+
+    """
+
+    # Making assumptions
+    WEB_ROOT = path if path is not None else os.path.join('var', 'www', 'html', 'pybitmessage', 'en', 'latest')
+    VERSION_ROOT = os.path.join(os.path.dirname(WEB_ROOT), softwareVersion)
+
+    rsync_project(
+        remote_dir=VERSION_ROOT,
+        local_dir=os.path.join(PROJECT_ROOT, 'docs', '_build', 'html')
+    )
+    result = run('ln -sf {0} {1}'.format(WEB_ROOT, VERSION_ROOT))
+    if result.return_code:
+        print 'Linking the new release failed'
+
+    # More assumptions
+    sudo('systemctl restart apache2')
+
+
+@task
+def clean():
+    """Clean up files generated by fabric commands."""
+    with hide('running', 'stdout'):
+        with cd(PROJECT_ROOT):
+            run(r"find . -name '*.pyc' -exec rm '{}' \;")
