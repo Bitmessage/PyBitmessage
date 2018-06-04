@@ -1,37 +1,40 @@
 #!/usr/bin/python2.7
-# Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2018 The Bitmessage developers
-# Distributed under the MIT/X11 software license. See the accompanying
-# file COPYING or http://www.opensource.org/licenses/mit-license.php.
+# pylint: disable=no-self-use,too-many-branches,too-many-statements,too-many-locals
+"""
+bitmessagemain.py
+=================
 
-# Right now, PyBitmessage only support connecting to stream 1. It doesn't
-# yet contain logic to expand into further streams.
+Copyright (c) 2012-2016 Jonathan Warren
+Copyright (c) 2012-2018 The Bitmessage developers
+Distributed under the MIT/X11 software license. See the accompanying
+file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-# The software version variable is now held in shared.py
+Right now, PyBitmessage only support connecting to stream 1. It doesn't
+yet contain logic to expand into further streams.
 
-import os
-import sys
+The software version variable is now held in shared.py
 
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
+"""
 
+from __future__ import absolute_import
 
-import depends
-depends.check_dependencies()
-
-# Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
-import signal
-# The next 3 are used for the API
-from singleinstance import singleinstance
-import errno
-import socket
 import ctypes
+import errno
+import getopt
+import os
+import signal
+import socket
+import sys
+import threading
+from random import randint
 from struct import pack
 from subprocess import call
 from time import sleep
-from random import randint
-import getopt
+
+
+# Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
+# The next 3 are used for the API
+from singleinstance import singleinstance
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import (
@@ -39,11 +42,11 @@ from helper_startup import (
 )
 
 import defaults
+import depends
 import shared
 import knownnodes
 import state
 import shutdown
-import threading
 
 # Classes
 from class_sqlThread import sqlThread
@@ -72,7 +75,12 @@ import helper_generic
 import helper_threading
 
 
+depends.check_dependencies()
+
+
 def connectToStream(streamNumber):
+    """Connect to a stream"""
+
     state.streamsInWhichIAmParticipating.append(streamNumber)
     selfInitiatedConnections[streamNumber] = {}
 
@@ -93,10 +101,10 @@ def connectToStream(streamNumber):
     with knownnodes.knownNodesLock:
         if streamNumber not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber] = {}
-        if streamNumber*2 not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber*2] = {}
-        if streamNumber*2+1 not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber*2+1] = {}
+        if streamNumber * 2 not in knownnodes.knownNodes:
+            knownnodes.knownNodes[streamNumber * 2] = {}
+        if streamNumber * 2 + 1 not in knownnodes.knownNodes:
+            knownnodes.knownNodes[streamNumber * 2 + 1] = {}
 
     BMConnectionPool().connectToStream(streamNumber)
 
@@ -114,6 +122,8 @@ def _fixSocket():
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
 
         def inet_ntop(family, host):
+            """Convert IPv4 and IPv6 addresses from binary to text form"""
+
             if family == socket.AF_INET:
                 if len(host) != 4:
                     raise ValueError("invalid IPv4 host")
@@ -135,6 +145,8 @@ def _fixSocket():
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
 
         def inet_pton(family, host):
+            """Convert IPv4 and IPv6 addresses from text to binary form"""
+
             buf = "\0" * 28
             lengthBuf = pack("I", len(buf))
             if stringToAddress(str(host),
@@ -158,13 +170,15 @@ def _fixSocket():
         socket.IPV6_V6ONLY = 27
 
 
-# This thread, of which there is only one, runs the API.
 class singleAPI(threading.Thread, helper_threading.StoppableThread):
+    """This thread, of which there is only one, runs the API."""
+
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
         self.initStop()
 
     def stopThread(self):
+        """Stop the API thread"""
         super(singleAPI, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -178,9 +192,10 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
             pass
 
     def run(self):
+        """Run the API thread"""
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         try:
-            from errno import WSAEADDRINUSE
+            from errno import WSAEADDRINUSE  # pylint: disable=unused-variable
         except (ImportError, AttributeError):
             errno.WSAEADDRINUSE = errno.EADDRINUSE
         for attempt in range(50):
@@ -215,15 +230,18 @@ if shared.useVeryEasyProofOfWorkForTesting:
         defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
 
-class Main:
+class Main(object):
+    """The main app"""
+
     def start(self):
+        """Start the main app"""
         _fixSocket()
 
         daemon = BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'daemon')
 
         try:
-            opts, args = getopt.getopt(
+            opts, _ = getopt.getopt(
                 sys.argv[1:], "hcdt",
                 ["help", "curses", "daemon", "test"])
 
@@ -231,7 +249,7 @@ class Main:
             self.usage()
             sys.exit(2)
 
-        for opt, arg in opts:
+        for opt, _ in opts:
             if opt in ("-h", "--help"):
                 self.usage()
                 sys.exit()
@@ -249,7 +267,7 @@ class Main:
 
         if daemon and not state.testmode:
             with shared.printLock:
-                print('Running as a daemon. Send TERM signal to end.')
+                print 'Running as a daemon. Send TERM signal to end.'
             self.daemonize()
 
         self.setSignalHandler()
@@ -381,8 +399,7 @@ class Main:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
         elif daemon is False:
             if state.curses:
-                # if depends.check_curses():
-                print('Running with curses')
+                print 'Running with curses'
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
             elif depends.check_pyqt():
@@ -411,6 +428,7 @@ class Main:
                 sleep(1)
 
     def daemonize(self):
+        """Daemonise"""
         grandfatherPid = os.getpid()
         parentPid = None
         try:
@@ -420,7 +438,7 @@ class Main:
                 # wait until grandchild ready
                 while True:
                     sleep(1)
-                os._exit(0)
+                sys.exit(0)
         except AttributeError:
             # fork not implemented
             pass
@@ -441,7 +459,7 @@ class Main:
                 # wait until child ready
                 while True:
                     sleep(1)
-                os._exit(0)
+                sys.exit(0)
         except AttributeError:
             # fork not implemented
             pass
@@ -463,11 +481,13 @@ class Main:
             os.kill(grandfatherPid, signal.SIGTERM)
 
     def setSignalHandler(self):
+        """Register signal handlers"""
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         signal.signal(signal.SIGTERM, helper_generic.signal_handler)
-        # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def usage(self):
+        """Print usage message"""
+
         print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
         print '''
 Options:
@@ -480,12 +500,18 @@ All parameters are optional.
 '''
 
     def stop(self):
+        """Stop the daemon"""
         with shared.printLock:
-            print('Stopping Bitmessage Deamon.')
+            print 'Stopping Bitmessage Daemon.'
         shutdown.doCleanShutdown()
 
-    # TODO: nice function but no one is using this
     def getApiAddress(self):
+        """
+        Return the address and port the API is configured to use
+
+        .. todo:: nice function but no one is using this
+        """
+
         if not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'apienabled'):
             return None
@@ -495,14 +521,10 @@ All parameters are optional.
 
 
 def main():
+    """Create and start the main app"""
     mainprogram = Main()
     mainprogram.start()
 
 
 if __name__ == "__main__":
     main()
-
-
-# So far, the creation of and management of the Bitmessage protocol and this
-# client is a one-man operation. Bitcoin tips are quite appreciated.
-# 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
