@@ -1,12 +1,26 @@
 #!/usr/bin/env python2.7
+# pylint: disable=no-self-use
+"""
+newaddresswizard.py
+===================
+"""
+
+import sys
+import time
+
 from PyQt4 import QtCore, QtGui
 
+
 class NewAddressWizardIntroPage(QtGui.QWizardPage):
+    """The introduction page for the new address wizard"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardIntroPage, self).__init__()
         self.setTitle("Creating a new address")
 
-        label = QtGui.QLabel("This wizard will help you create as many addresses as you like. Indeed, creating and abandoning addresses is encouraged.\n\n"
+        label = QtGui.QLabel(
+            "This wizard will help you create as many addresses as you like."
+            " Indeed, creating and abandoning addresses is encouraged.\n\n"
             "What type of address would you like? Would you like to send emails or not?\n"
             "You can still change your mind later, and register/unregister with an email service provider.\n\n")
         label.setWordWrap(True)
@@ -22,30 +36,35 @@ class NewAddressWizardIntroPage(QtGui.QWizardPage):
         layout.addWidget(self.emailAsWell)
         layout.addWidget(self.onlyBM)
         self.setLayout(layout)
-        
+
     def nextId(self):
+        """Page 1 or 4"""
+
         if self.emailAsWell.isChecked():
             return 4
-        else:
-            return 1
-    
+        return 1
+
 
 class NewAddressWizardRngPassphrasePage(QtGui.QWizardPage):
+    """The user chose a random or passphrase-based address"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardRngPassphrasePage, self).__init__()
         self.setTitle("Random or Passphrase")
 
-        label = QtGui.QLabel("<html><head/><body><p>You may generate addresses by using either random numbers or by using a passphrase. "
-            "If you use a passphrase, the address is called a &quot;deterministic&quot; address. "
-            "The \'Random Number\' option is selected by default but deterministic addresses have several pros and cons:</p>"
-            "<table border=0><tr><td><span style=\" font-weight:600;\">Pros:</span></td><td><span style=\" font-weight:600;\">Cons:</span></td></tr>"
-            "<tr><td>You can recreate your addresses on any computer from memory. "
-            "You need-not worry about backing up your keys.dat file as long as you can remember your passphrase.</td>"
-            "<td>You must remember (or write down) your passphrase if you expect to be able "
-            "to recreate your keys if they are lost. "
-#            "You must remember the address version number and the stream number along with your passphrase. "
-            "If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you."
-            "</p></body></html>")
+        label = QtGui.QLabel(
+            "<html><head/><body><p>You may generate addresses by using either random numbers or by using a passphrase."
+            " If you use a passphrase, the address is called a &quot;deterministic&quot; address."
+            " The \'Random Number\' option is selected by default but deterministic addresses have several pros and"
+            " cons:</p><table border=0><tr><td><span style=\" font-weight:600;\">Pros:</span></td>"
+            " <td><span style=\" font-weight:600;\">Cons:</span></td></tr>"
+            " <tr><td>You can recreate your addresses on any computer from memory."
+            " You need-not worry about backing up your keys.dat file as long as you can remember your passphrase.</td>"
+            " <td>You must remember (or write down) your passphrase if you expect to be able"
+            " to recreate your keys if they are lost."
+            # "You must remember the address version number and the stream number along with your passphrase. "
+            " If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your"
+            " messages and send messages as you.</p></body></html>")
         label.setWordWrap(True)
 
         self.randomAddress = QtGui.QRadioButton("Use a random number generator to make an address")
@@ -59,14 +78,18 @@ class NewAddressWizardRngPassphrasePage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """Page 2"""
+
         if self.randomAddress.isChecked():
             return 2
-        else:
-            return 3
+        return 3
+
 
 class NewAddressWizardRandomPage(QtGui.QWizardPage):
+    """The user chose a new random address"""
+
     def __init__(self, addresses):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardRandomPage, self).__init__()
         self.setTitle("Random")
 
         label = QtGui.QLabel("Random address.")
@@ -75,10 +98,11 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
         labelLabel = QtGui.QLabel("Label (not shown to anyone except you):")
         self.labelLineEdit = QtGui.QLineEdit()
 
-        self.radioButtonMostAvailable = QtGui.QRadioButton("Use the most available stream\n"
+        self.radioButtonMostAvailable = QtGui.QRadioButton(
+            "Use the most available stream\n"
             "(best if this is the first of many addresses you will create)")
         self.radioButtonExisting = QtGui.QRadioButton("Use the same stream as an existing address\n"
-            "(saves you some bandwidth and processing power)")
+                                                      "(saves you some bandwidth and processing power)")
         self.radioButtonMostAvailable.setChecked(True)
         self.comboBoxExisting = QtGui.QComboBox()
         self.comboBoxExisting.setEnabled(False)
@@ -86,10 +110,10 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
 
         for address in addresses:
             self.comboBoxExisting.addItem(address)
-        
-#        self.comboBoxExisting.setObjectName(_fromUtf8("comboBoxExisting"))
-        self.checkBoxEighteenByteRipe = QtGui.QCheckBox("Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter")
-        
+
+        self.checkBoxEighteenByteRipe = QtGui.QCheckBox(
+            "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter")
+
         layout = QtGui.QGridLayout()
         layout.addWidget(label, 0, 0)
         layout.addWidget(labelLabel, 1, 0)
@@ -100,24 +124,27 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
         layout.addWidget(self.checkBoxEighteenByteRipe, 6, 0)
         self.setLayout(layout)
 
-        QtCore.QObject.connect(self.radioButtonExisting, QtCore.SIGNAL("toggled(bool)"), self.comboBoxExisting.setEnabled)
-        
+        QtCore.QObject.connect(  # pylint: disable=no-member
+            self.radioButtonExisting,
+            QtCore.SIGNAL("toggled(bool)"),
+            self.comboBoxExisting.setEnabled)
+
         self.registerField("label", self.labelLineEdit)
         self.registerField("radioButtonMostAvailable", self.radioButtonMostAvailable)
         self.registerField("radioButtonExisting", self.radioButtonExisting)
         self.registerField("comboBoxExisting", self.comboBoxExisting)
 
-#        self.emailAsWell = QtGui.QRadioButton("Combined email and bitmessage account")
-#        self.onlyBM = QtGui.QRadioButton("Bitmessage-only account (no email)")
-#        self.emailAsWell.setChecked(True)
-
     def nextId(self):
+        """Page 6"""
+
         return 6
 
-        
+
 class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
+    """The user chose a passphrase-based address"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardPassphrasePage, self).__init__()
         self.setTitle("Passphrase")
 
         label = QtGui.QLabel("Deterministric address.")
@@ -126,7 +153,8 @@ class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
         passphraseLabel = QtGui.QLabel("Passphrase")
         self.lineEditPassphrase = QtGui.QLineEdit()
         self.lineEditPassphrase.setEchoMode(QtGui.QLineEdit.Password)
-        self.lineEditPassphrase.setInputMethodHints(QtCore.Qt.ImhHiddenText|QtCore.Qt.ImhNoAutoUppercase|QtCore.Qt.ImhNoPredictiveText)
+        self.lineEditPassphrase.setInputMethodHints(
+            QtCore.Qt.ImhHiddenText | QtCore.Qt.ImhNoAutoUppercase | QtCore.Qt.ImhNoPredictiveText)
         retypePassphraseLabel = QtGui.QLabel("Retype passphrase")
         self.lineEditPassphraseAgain = QtGui.QLineEdit()
         self.lineEditPassphraseAgain.setEchoMode(QtGui.QLineEdit.Password)
@@ -135,11 +163,11 @@ class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
         self.spinBoxNumberOfAddressesToMake = QtGui.QSpinBox()
         self.spinBoxNumberOfAddressesToMake.setMinimum(1)
         self.spinBoxNumberOfAddressesToMake.setProperty("value", 8)
-#        self.spinBoxNumberOfAddressesToMake.setObjectName(_fromUtf8("spinBoxNumberOfAddressesToMake"))
+
         label2 = QtGui.QLabel("In addition to your passphrase, you must remember these numbers:")
         label3 = QtGui.QLabel("Address version number: 4")
         label4 = QtGui.QLabel("Stream number: 1")
-        
+
         layout = QtGui.QGridLayout()
         layout.addWidget(label, 0, 0, 1, 4)
         layout.addWidget(passphraseLabel, 1, 0, 1, 4)
@@ -155,34 +183,39 @@ class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """Page 6"""
+
         return 6
 
-        
+
 class NewAddressWizardEmailProviderPage(QtGui.QWizardPage):
+    """The user choses the email gateway address type"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardEmailProviderPage, self).__init__()
         self.setTitle("Choose email provider")
 
         label = QtGui.QLabel("Currently only Mailchuck email gateway is available "
-            "(@mailchuck.com email address). In the future, maybe other gateways will be available. "
-            "Press Next.")
+                             "(@mailchuck.com email address). In the future, maybe other gateways will be available. "
+                             "Press Next.")
         label.setWordWrap(True)
-
-#        self.mailchuck = QtGui.QRadioButton("Mailchuck email gateway (@mailchuck.com)")
-#        self.mailchuck.setChecked(True)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
-#        layout.addWidget(self.mailchuck)
+
         self.setLayout(layout)
 
     def nextId(self):
+        """Page 5"""
+
         return 5
 
-        
+
 class NewAddressWizardEmailAddressPage(QtGui.QWizardPage):
+    """The user provides their email gateway detauils"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardEmailAddressPage, self).__init__()
         self.setTitle("Email address")
 
         label = QtGui.QLabel("Choosing an email address. Address must end with @mailchuck.com")
@@ -192,8 +225,9 @@ class NewAddressWizardEmailAddressPage(QtGui.QWizardPage):
         self.specificEmail.setChecked(True)
         self.emailLineEdit = QtGui.QLineEdit()
         self.randomEmail = QtGui.QRadioButton("Generate a random email address")
-        
-        QtCore.QObject.connect(self.specificEmail, QtCore.SIGNAL("toggled(bool)"), self.emailLineEdit.setEnabled)
+
+        QtCore.QObject.connect(  # pylint: disable=no-member
+            self.specificEmail, QtCore.SIGNAL("toggled(bool)"), self.emailLineEdit.setEnabled)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
@@ -203,33 +237,37 @@ class NewAddressWizardEmailAddressPage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """Page 6"""
+
         return 6
 
-        
+
 class NewAddressWizardWaitPage(QtGui.QWizardPage):
+    """Wait for the address to be generated"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardWaitPage, self).__init__()
         self.setTitle("Wait")
-        
+
         self.label = QtGui.QLabel("Wait!")
         self.label.setWordWrap(True)
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMinimum(0)
         self.progressBar.setMaximum(100)
         self.progressBar.setValue(0)
-        
-#        self.emailAsWell = QtGui.QRadioButton("Combined email and bitmessage account")
-#        self.onlyBM = QtGui.QRadioButton("Bitmessage-only account (no email)")
-#        self.emailAsWell.setChecked(True)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.label)
         layout.addWidget(self.progressBar)
-#        layout.addWidget(self.emailAsWell)
-#        layout.addWidget(self.onlyBM)
+
         self.setLayout(layout)
 
     def update(self, i):
+        """
+        Update the progress bar
+
+        .. todo:: remove print statement?
+        """
         if i == 101 and self.wizard().currentId() == 6:
             self.wizard().button(QtGui.QWizard.NextButton).click()
             return
@@ -239,15 +277,17 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
         self.progressBar.setValue(i)
         if i == 50:
             self.emit(QtCore.SIGNAL('completeChanged()'))
-            
+
     def isComplete(self):
-#        print "val = " + str(self.progressBar.value())
+        """Predicate to indicate progress is complete"""
+
         if self.progressBar.value() >= 50:
             return True
-        else:
-            return False
-    
+        return False
+
     def initializePage(self):
+        """Initialize the underlying QWizardPage"""
+
         if self.field("emailAsWell").toBool():
             val = "yes/"
         else:
@@ -258,19 +298,23 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
             val += "no"
 
         self.label.setText("Wait! " + val)
-#        self.wizard().button(QtGui.QWizard.NextButton).setEnabled(False)
+
         self.progressBar.setValue(0)
         self.thread = NewAddressThread()
         self.connect(self.thread, self.thread.signal, self.update)
         self.thread.start()
-    
+
     def nextId(self):
+        """Page 10"""
+
         return 10
 
-        
+
 class NewAddressWizardConclusionPage(QtGui.QWizardPage):
+    """The user is informed their address has been created"""
+
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(NewAddressWizardConclusionPage, self).__init__()
         self.setTitle("All done!")
 
         label = QtGui.QLabel("You successfully created a new address.")
@@ -278,14 +322,17 @@ class NewAddressWizardConclusionPage(QtGui.QWizardPage):
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
-        self.setLayout(layout)        
+        self.setLayout(layout)
+
 
 class Ui_NewAddressWizard(QtGui.QWizard):
+    """The wizard is a collection of pages"""
+
     def __init__(self, addresses):
-        super(QtGui.QWizard, self).__init__()
+        super(Ui_NewAddressWizard, self).__init__()
 
         self.pages = {}
-        
+
         page = NewAddressWizardIntroPage()
         self.setPage(0, page)
         self.setStartId(0)
@@ -308,45 +355,45 @@ class Ui_NewAddressWizard(QtGui.QWizard):
         self.adjustSize()
         self.show()
 
+
 class NewAddressThread(QtCore.QThread):
+    # pylint: disable=missing-docstring
+
     def __init__(self):
         QtCore.QThread.__init__(self)
         self.signal = QtCore.SIGNAL("signal")
 
     def __del__(self):
         self.wait()
-        
+
     def createDeterministic(self):
         pass
-        
+
     def createPassphrase(self):
         pass
-    
+
     def broadcastAddress(self):
         pass
-    
+
     def registerMailchuck(self):
         pass
-    
+
     def waitRegistration(self):
         pass
 
     def run(self):
-        import time
         for i in range(1, 101):
-            time.sleep(0.1) # artificial time delay
+            time.sleep(0.1)  # artificial time delay
             self.emit(self.signal, i)
         self.emit(self.signal, 101)
-#        self.terminate()
+
 
 if __name__ == '__main__':
-
-    import sys
 
     app = QtGui.QApplication(sys.argv)
 
     wizard = Ui_NewAddressWizard(["a", "b", "c", "d"])
-    if (wizard.exec_()):
+    if wizard.exec_():
         print "Email: " + ("yes" if wizard.field("emailAsWell").toBool() else "no")
         print "BM: " + ("yes" if wizard.field("onlyBM").toBool() else "no")
     else:
