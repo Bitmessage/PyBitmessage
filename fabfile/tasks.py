@@ -1,8 +1,6 @@
 # pylint: disable=not-context-manager
 """
 Fabric tasks for PyBitmessage devops operations.
-
-# pylint: disable=not-context-manager
 """
 
 import os
@@ -12,7 +10,7 @@ from fabric.api import run, task, hide, cd
 from fabvenv import virtualenv
 
 from fabfile.lib import (
-    autopep8, PROJECT_ROOT, VENV_ROOT, coerce_bool, flatten,
+    autopep8, PROJECT_ROOT, VENV_ROOT, coerce_bool, flatten, filelist_from_git, default_hosts,
     get_filtered_pycodestyle_output, get_filtered_flake8_output, get_filtered_pylint_output,
 )
 
@@ -28,9 +26,9 @@ def get_tool_results(file_list):
         result['pylint_violations'] = get_filtered_pylint_output(path_to_file)
         result['path_to_file'] = path_to_file
         result['total_violations'] = sum([
-                len(result['pycodestyle_violations']),
-                len(result['flake8_violations']),
-                len(result['pylint_violations']),
+            len(result['pycodestyle_violations']),
+            len(result['flake8_violations']),
+            len(result['pylint_violations']),
         ])
         results.append(result)
     return results
@@ -39,7 +37,7 @@ def get_tool_results(file_list):
 def print_results(results, top, verbose, details):
     """Print an item with the appropriate verbosity / detail"""
 
-    if verbose:
+    if verbose and results:
         print ''.join(
             [
                 os.linesep,
@@ -117,7 +115,8 @@ def generate_file_list(filename):
 
 
 @task
-def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
+@default_hosts(['localhost'])
+def code_quality(verbose=True, details=False, fix=False, filename=None, top=10, rev=None):
     """
     Check code quality.
 
@@ -128,6 +127,8 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
 
     $ fab -H localhost code_quality
 
+    :param rev: If not None, act on files changed since this commit. 'cached/staged' and 'working' have special meaning
+    :type rev: str or None, default None
     :param top: Display / fix only the top N violating files, a value of 0 will display / fix all files
     :type top: int, default 10
     :param verbose: Display a header and the counts, without this you just get the filenames in order
@@ -146,13 +147,14 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
     Intended to be temporary until we have improved code quality and have safeguards to maintain it in place.
 
     """
+    # pylint: disable=too-many-arguments
 
     verbose = coerce_bool(verbose)
     details = coerce_bool(details)
     fix = coerce_bool(fix)
     top = int(top) or -1
 
-    file_list = generate_file_list(filename)
+    file_list = generate_file_list(filename) if not rev else filelist_from_git(rev)
     results = get_tool_results(file_list)
 
     if fix:
@@ -163,3 +165,18 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10):
 
     print_results(results, top, verbose, details)
     sys.exit(sum([item['total_violations'] for item in results]))
+
+
+@task
+@default_hosts(['localhost'])
+def test():
+    """Run tests on the code"""
+
+    with cd(PROJECT_ROOT):
+        with virtualenv(VENV_ROOT):
+
+            run('pip uninstall -y pybitmessage')
+            run('python setup.py install')
+
+            run('pybitmessage -t')
+            run('python setup.py test')
