@@ -263,7 +263,7 @@ class Main:
                 'bitmessagesettings', 'sendoutgoingconnections'):
             state.dandelion = 0
 
-        helper_bootstrap.knownNodes()
+        knownnodes.readKnownNodes()
 
         # Not needed if objproc is disabled
         if state.enableObjProc:
