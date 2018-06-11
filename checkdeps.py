@@ -1,4 +1,13 @@
-"""Check dependendies and give recommendations about how to satisfy them"""
+"""
+Check dependendies and give recommendations about how to satisfy them
+
+Limitations:
+
+    * Does not detect whether packages are already installed. Solving this requires writing more of a configuration
+    management system. Or we could switch to an existing one.
+    * Not fully PEP508 compliant. Not slightly. It makes bold assumptions about the simplicity of the contents of
+    EXTRAS_REQUIRE. This is fine because most developers do, too.
+"""
 
 from distutils.errors import CompileError
 try:
@@ -11,6 +20,29 @@ except ImportError:
 from importlib import import_module
 import os
 import sys
+
+from setup import EXTRAS_REQUIRE
+
+
+PROJECT_ROOT = os.path.abspath('..')
+sys.path.insert(0, PROJECT_ROOT)
+
+# OS-specific dependencies for optional components listed in EXTRAS_REQUIRE
+EXTRAS_REQUIRE_DEPS = {
+    # The values from setup.EXTRAS_REQUIRE
+    'python_prctl': {
+        # The packages needed for this requirement, by OS
+        "OpenBSD": [""],
+        "FreeBSD": [""],
+        "Debian": ["libcap-dev"],
+        "Ubuntu": [""],
+        "Ubuntu 12": [""],
+        "openSUSE": [""],
+        "Fedora": [""],
+        "Guix": [""],
+        "Gentoo": [""],
+    },
+}
 
 PACKAGE_MANAGER = {
     "OpenBSD": "pkg_add",
@@ -199,12 +231,35 @@ if not compiler:
 if prereqs:
     mandatory = list(x for x in prereqs if "optional" not in PACKAGES[x] or not PACKAGES[x]["optional"])
     optional = list(x for x in prereqs if "optional" in PACKAGES[x] and PACKAGES[x]["optional"])
+
     if mandatory:
         print "Missing mandatory dependencies: %s" % (" ".join(mandatory))
     if optional:
         print "Missing optional dependencies: %s" % (" ".join(optional))
         for package in optional:
             print PACKAGES[package].get('description')
+
+# Install the system dependencies of optional extras_require components
+OPSYS = detectOS()
+CMD = PACKAGE_MANAGER[OPSYS] if OPSYS in PACKAGE_MANAGER else 'UNKNOWN_INSTALLER'
+for lhs, rhs in EXTRAS_REQUIRE.items():
+    if rhs and any([
+        EXTRAS_REQUIRE_DEPS[x][OPSYS]
+        for x in rhs
+        if x in EXTRAS_REQUIRE_DEPS
+    ]):
+        rhs_cmd = ''.join([
+            CMD,
+            ' ',
+            ' '.join([
+                ''. join([
+                    xx for xx in EXTRAS_REQUIRE_DEPS[x][OPSYS]
+                ])
+                for x in rhs
+                if x in EXTRAS_REQUIRE_DEPS
+            ]),
+        ])
+        print "Optional dependency `pip install .[{}]` would require `{}` to be run as root".format(lhs, rhs_cmd)
 
 if (not compiler or prereqs) and detectOS() in PACKAGE_MANAGER:
     print "You can install the missing dependencies by running, as root:"
