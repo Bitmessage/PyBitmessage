@@ -1,0 +1,15 @@
+#!/home/coffeedogs/.virtualenvs/pybitmessage-devops/bin/python
+
+import os
+import sys
+
+import pkg_resources
+
+import pybitmessage.pathmagic
+
+dist = pkg_resources.get_distribution('pybitmessage')
+script_file = os.path.join(dist.location, dist.key, 'bitmessagemain.py')
+new_globals = globals()
+new_globals.update(__file__=script_file)
+
+execfile(script_file, new_globals)
