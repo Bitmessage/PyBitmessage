@@ -1,17 +1,19 @@
 """Helper Start performs all the startup operations."""
 
 import ConfigParser
-from bmconfigparser import BMConfigParser
 import defaults
-import sys
 import os
-import platform
-from distutils.version import StrictVersion
-
-from namecoin import ensureNamecoinOptions
 import paths
+import platform
+
+import sys
 import state
+
 import helper_random
+
+from bmconfigparser import BMConfigParser
+from distutils.version import StrictVersion
+from namecoin import ensureNamecoinOptions
 
 StoreConfigFilesInSameDirectoryAsProgramByDefault = False
 # The user may de-select Portable Mode in the settings if they want the config
@@ -73,9 +75,9 @@ def loadConfig():
         if 'linux' in sys.platform:
             BMConfigParser().set(
                 'bitmessagesettings', 'minimizetotray', 'false')
-                              # This isn't implimented yet and when True on
-                              # Ubuntu causes Bitmessage to disappear while
-                              # running when minimized.
+                    #  This isn't implimented yet and when True on
+                    #  Ubuntu causes Bitmessage to disappear while
+                    #  running when minimized.
         else:
             BMConfigParser().set(
                 'bitmessagesettings', 'minimizetotray', 'true')
@@ -107,20 +109,26 @@ def loadConfig():
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         BMConfigParser().set('bitmessagesettings', 'userlocale', 'system')
         BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
-        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(helper_random.randomchoice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12)))# a twelve character pseudo-password to salt the identicons
+        BMConfigParser().set(
+            'bitmessagesettings', 'identiconsuffix',
+            ''.join(
+                helper_random.randomchoice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+                for x in range(12))
+        )  # a twelve character pseudo-password to salt the identicons
+
         BMConfigParser().set('bitmessagesettings', 'replybelow', 'False')
         BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
         BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
         BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
         BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
-         #start:UI setting to stop trying to send messages after X days/months
+        #  start:UI setting to stop trying to send messages after X days/months
         BMConfigParser().set(
             'bitmessagesettings', 'stopresendingafterxdays', '')
         BMConfigParser().set(
             'bitmessagesettings', 'stopresendingafterxmonths', '')
-        #BMConfigParser().set(
+        #  BMConfigParser().set(
         #    'bitmessagesettings', 'timeperiod', '-1')
-        #end
+        #  end
 
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
@@ -144,6 +152,7 @@ def loadConfig():
         BMConfigParser().save()
 
     _loadTrustedPeer()
+
 
 def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
     try:

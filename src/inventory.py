@@ -6,9 +6,9 @@ import storage.sqlite
 import storage.filesystem
 
 @Singleton
-class Inventory():
+class Inventory(object):
     def __init__(self):
-        #super(self.__class__, self).__init__()
+        # super(self.__class__, self).__init__()
         self._moduleName = BMConfigParser().safeGet("inventory", "storage")
         self._inventoryClass = getattr(getattr(storage, self._moduleName), "{}Inventory".format(self._moduleName.title()))
         self._realInventory = self._inventoryClass()

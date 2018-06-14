@@ -1,12 +1,13 @@
 #!/usr/bin/env python2.7
 
 import os
-import sys
 import shutil
+
 from setuptools import setup, Extension
 from setuptools.command.install import install
 
 from src.version import softwareVersion
+
 
 class InstallCmd(install):
     def run(self):

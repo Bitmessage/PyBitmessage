@@ -1,25 +1,29 @@
-from os import environ, path
 import sys
 import re
+
+from os import environ, path
 from datetime import datetime
+from namecoin import MAC_OS_ERROR
 
 # When using py2exe or py2app, the variable frozen is added to the sys
 # namespace.  This can be used to setup a different code path for 
 # binary distributions vs source distributions.
-frozen = getattr(sys,'frozen', None)
+frozen = getattr(sys, 'frozen', None)
+
 
 def lookupExeFolder():
     if frozen:
         if frozen == "macosx_app":
             # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
-            exeFolder = path.dirname(path.dirname(path.dirname(path.dirname(sys.executable)))) + path.sep
+            exe_folder = path.dirname(path.dirname(path.dirname(path.dirname(sys.executable)))) + path.sep
         else:
-            exeFolder = path.dirname(sys.executable) + path.sep
+            exe_folder = path.dirname(sys.executable) + path.sep
     elif __file__:
-        exeFolder = path.dirname(__file__) + path.sep
+        exe_folder = path.dirname(__file__) + path.sep
     else:
-        exeFolder = ''
-    return exeFolder
+        exe_folder = ''
+    return exe_folder
+
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
@@ -31,11 +35,10 @@ def lookupAppdataFolder():
         if "HOME" in environ:
             dataFolder = path.join(environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
-            stringToLog = 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
             if 'logger' in globals():
-                logger.critical(stringToLog)
+                logger.critical(MAC_OS_ERROR)
             else:
-                print stringToLog
+                print MAC_OS_ERROR
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
@@ -50,7 +53,7 @@ def lookupAppdataFolder():
         # Migrate existing data to the proper location if this is an existing install
         try:
             move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
-            stringToLog = "Moving data folder to %s" % (dataFolder)
+            stringToLog = "Moving data folder to %s" % dataFolder
             if 'logger' in globals():
                 logger.info(stringToLog)
             else:
@@ -60,15 +63,17 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
-    
+
+
 def codePath():
     if frozen == "macosx_app":
         codePath = environ.get("RESOURCEPATH")
-    elif frozen: # windows
+    elif frozen:  # windows
         codePath = sys._MEIPASS
     else:    
         codePath = path.dirname(__file__)
     return codePath
+
 
 def tail(f, lines=20):
     total_lines_wanted = lines
@@ -78,7 +83,7 @@ def tail(f, lines=20):
     block_end_byte = f.tell()
     lines_to_go = total_lines_wanted
     block_number = -1
-    blocks = [] # blocks of size BLOCK_SIZE, in reverse order starting
+    blocks = []  # blocks of size BLOCK_SIZE, in reverse order starting
                 # from the end of the file
     while lines_to_go > 0 and block_end_byte > 0:
         if (block_end_byte - BLOCK_SIZE > 0):

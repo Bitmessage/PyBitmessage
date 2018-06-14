@@ -2,6 +2,8 @@ from binascii import hexlify
 from bmconfigparser import BMConfigParser
 import pyelliptic
 from pyelliptic import arithmetic as a, OpenSSL
+
+
 def makeCryptor(privkey):
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
@@ -9,29 +11,43 @@ def makeCryptor(privkey):
     pubkey_bin = '\x02\xca\x00\x20' + public_key[1:-32] + '\x00\x20' + public_key[-32:]
     cryptor = pyelliptic.ECC(curve='secp256k1',privkey=privkey_bin,pubkey=pubkey_bin)
     return cryptor
+
+
 def hexToPubkey(pubkey):
     pubkey_raw = a.changebase(pubkey[2:],16,256,minlen=64)
     pubkey_bin = '\x02\xca\x00 '+pubkey_raw[:32]+'\x00 '+pubkey_raw[32:]
     return pubkey_bin
+
+
 def makePubCryptor(pubkey):
     pubkey_bin = hexToPubkey(pubkey)
     return pyelliptic.ECC(curve='secp256k1',pubkey=pubkey_bin)
+
+
 # Converts hex private key into hex public key
 def privToPub(privkey):
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
     return hexlify(public_key)
+
+
 # Encrypts message with hex public key
-def encrypt(msg,hexPubkey):
+def encrypt(msg, hexPubkey):
     return pyelliptic.ECC(curve='secp256k1').encrypt(msg,hexToPubkey(hexPubkey))
+
+
 # Decrypts message with hex private key
-def decrypt(msg,hexPrivkey):
+def decrypt(msg, hexPrivkey):
     return makeCryptor(hexPrivkey).decrypt(msg)
+
+
 # Decrypts message with an existing pyelliptic.ECC.ECC object
-def decryptFast(msg,cryptor):
+def decryptFast(msg, cryptor):
     return cryptor.decrypt(msg)
+
+
 # Signs with hex private key
-def sign(msg,hexPrivkey):
+def sign(msg, hexPrivkey):
     # pyelliptic is upgrading from SHA1 to SHA256 for signing. We must 
     # upgrade PyBitmessage gracefully. 
     # https://github.com/yann2192/pyelliptic/pull/33
@@ -45,8 +61,10 @@ def sign(msg,hexPrivkey):
         return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
     else:
         raise ValueError("Unknown digest algorithm %s" % (digestAlg))
+
+
 # Verifies with hex public key
-def verify(msg,sig,hexPubkey):
+def verify(msg, sig, hexPubkey):
     # As mentioned above, we must upgrade gracefully to use SHA256. So
     # let us check the signature using both SHA1 and SHA256 and if one
     # of them passes then we will be satisfied. Eventually this can 
@@ -63,6 +81,7 @@ def verify(msg,sig,hexPubkey):
         return makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.EVP_sha256)
     except:
         return False
+
 
 # Does an EC point multiplication; turns a private key into a public key.
 def pointMult(secret):
@@ -98,4 +117,3 @@ def pointMult(secret):
             import time
             traceback.print_exc()
             time.sleep(0.2)
-    

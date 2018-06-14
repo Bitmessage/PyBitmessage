@@ -1,24 +1,21 @@
-#import shared
-#import time
-#from multiprocessing import Pool, cpu_count
+import ctypes
 import hashlib
-from struct import unpack, pack
-from subprocess import call
+import openclpow
+import os
+import paths
+import queues
+import state
 import sys
 import time
+import tr
+
 from bmconfigparser import BMConfigParser
 from debug import logger
-import paths
-import openclpow
-import queues
-import tr
-import os
-import ctypes
+from struct import unpack, pack
+from subprocess import call
 
-import state
 
 bitmsglib = 'bitmsghash.so'
-
 bmpow = None
 
 def _set_idle():
@@ -27,7 +24,7 @@ def _set_idle():
     else:
         try:
             sys.getwindowsversion()
-            import win32api,win32process,win32con  # @UnresolvedImport
+            import win32api, win32process,win32con  # @UnresolvedImport
             pid = win32api.GetCurrentProcessId()
             handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
             win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
@@ -35,13 +32,28 @@ def _set_idle():
             #Windows 64-bit
             pass
 
+
+def _unpack_hashlib(nonce, initialHash):
+    """
+
+    :param nonce:
+    :param initialHash:
+    :return:
+    """
+    return \
+        unpack('>Q', hashlib.sha512(
+            hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8]
+               )
+
+
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
     trialValue = float('inf')
     while trialValue > target:
         nonce += pool_size
-        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, = _unpack_hashlib(nonce, initialHash)
     return [trialValue, nonce]
+
 
 def _doSafePoW(target, initialHash):
     logger.debug("Safe PoW start")
@@ -49,7 +61,7 @@ def _doSafePoW(target, initialHash):
     trialValue = float('inf')
     while trialValue > target and state.shutdown == 0:
         nonce += 1
-        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, = _unpack_hashlib(nonce, initialHash)
     if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("Safe PoW done")
@@ -104,7 +116,7 @@ def _doCPoW(target, initialHash):
     out_m = ctypes.c_ulonglong(m)
     logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
-    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    trialValue, = _unpack_hashlib(nonce, initialHash)
     if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("C PoW done")
@@ -113,7 +125,7 @@ def _doCPoW(target, initialHash):
 def _doGPUPoW(target, initialHash):
     logger.debug("GPU PoW start")
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
-    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    trialValue, = _unpack_hashlib(nonce, initialHash)
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
