@@ -2510,13 +2510,13 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
             if (
-                treeWidget == self.ui.treeWidgetYourIdentities
-                and self.getCurrentAccount(treeWidget) not in (fromAddress, None, False)
+                    treeWidget == self.ui.treeWidgetYourIdentities and
+                    self.getCurrentAccount(treeWidget) not in (fromAddress, None, False)
             ):
                 continue
             elif (
-                treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
-                and self.getCurrentAccount(treeWidget) != toAddress
+                    treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and
+                    self.getCurrentAccount(treeWidget) != toAddress
             ):
                 continue
             elif not helper_search.check_match(
@@ -2562,9 +2562,9 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             ):
                 continue
             if (
-                tableWidget == inbox
-                and self.getCurrentAccount(treeWidget) == acct.address
-                and self.getCurrentFolder(treeWidget) in ["inbox", None]
+                    tableWidget == inbox and
+                    self.getCurrentAccount(treeWidget) == acct.address and
+                    self.getCurrentFolder(treeWidget) in ["inbox", None]
             ):
                 ret = self.addMessageListItemInbox(
                     inbox,
@@ -2577,9 +2577,9 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                     0,
                 )
             elif (
-                treeWidget == self.ui.treeWidgetYourIdentities
-                and self.getCurrentAccount(treeWidget) is None
-                and self.getCurrentFolder(treeWidget) in ["inbox", "new", None]
+                    treeWidget == self.ui.treeWidgetYourIdentities and
+                    self.getCurrentAccount(treeWidget) is None and
+                    self.getCurrentFolder(treeWidget) in ["inbox", "new", None]
             ):
                 ret = self.addMessageListItemInbox(
                     tableWidget,
@@ -2604,12 +2604,12 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                     unicode(acct.fromLabel, 'utf-8')),
                 sound.SOUND_UNKNOWN
             )
+        # pylint: disable=undefined-loop-variable
         if (
-            self.getCurrentAccount() is not None
-            and (
-                self.getCurrentFolder(treeWidget) not in ("inbox", None)  # pylint: disable=undefined-loop-variable
-                or self.getCurrentAccount(treeWidget) != acct.address  # pylint: disable=undefined-loop-variable
-            )
+                self.getCurrentAccount() is not None and (
+                    self.getCurrentFolder(treeWidget) not in ("inbox", None) or
+                    self.getCurrentAccount(treeWidget) != acct.address
+                )
         ):
             # Ubuntu should notify of new message irespective of
             # whether it's in current message list or not
@@ -2619,6 +2619,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                 dialogs.EmailGatewayDialog(
                     self, BMConfigParser(), acct).exec_()
+        # pylint: enable=undefined-loop-variable
 
     def click_pushButtonAddAddressBook(self, dialog=None):
         """TBC"""
@@ -2777,8 +2778,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                     upnpThread.start()
 
             if (
-                BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none'
-                and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS'
+                    BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none' and
+                    self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS'
             ):
                 if shared.statusIconColor != 'red':
                     QtGui.QMessageBox.about(
@@ -2792,8 +2793,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                              "Bitmessage now to close existing connections (if any).")))
 
             if (
-                BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS'
-                and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS'
+                    BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and
+                    self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS'
             ):
                 self.statusbar.clearMessage()
             state.resetNetworkProtocolAvailability()  # just in case we changed something in the network connectivity
@@ -2861,8 +2862,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             acceptableDifficultyChanged = False
 
             if (
-                float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
-                or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0
+                    float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or
+                    float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0
             ):
                 if BMConfigParser().get(
                         'bitmessagesettings',
@@ -2881,8 +2882,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                     ) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
 
             if (
-                float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
-                or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
+                    float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or
+                    float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
             ):
                 if BMConfigParser().get(
                         'bitmessagesettings',
@@ -2910,8 +2911,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             # start:UI setting to stop trying to send messages after X days/months
             # I'm open to changing this UI to something else if someone has a better idea.
             if (
-                self.settingsDialogInstance.ui.lineEditDays.text() == ''
-                and self.settingsDialogInstance.ui.lineEditMonths.text() == ''
+                    self.settingsDialogInstance.ui.lineEditDays.text() == '' and
+                    self.settingsDialogInstance.ui.lineEditMonths.text() == ''
             ):  # We need to handle this special case. Bitmessage has its default behavior. The input is blank/blank
                 BMConfigParser().set('bitmessagesettings', 'stopresendingafterxdays', '')
                 BMConfigParser().set('bitmessagesettings', 'stopresendingafterxmonths', '')
@@ -2932,8 +2933,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                 self.settingsDialogInstance.ui.lineEditDays.setText("0")
             if lineEditDaysIsValidFloat or lineEditMonthsIsValidFloat:
                 if (
-                    float(self.settingsDialogInstance.ui.lineEditDays.text()) >= 0
-                    and float(self.settingsDialogInstance.ui.lineEditMonths.text()) >= 0
+                        float(self.settingsDialogInstance.ui.lineEditDays.text()) >= 0 and
+                        float(self.settingsDialogInstance.ui.lineEditMonths.text()) >= 0
                 ):
                     shared.maximumLengthOfTimeToBotherResendingMessages = sum(
                         float(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60,
@@ -4246,6 +4247,7 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
 
     def on_action_ClipboardMessagelist(self):
         """TBC"""
+        # pylint: disable=too-many-boolean-expressions
 
         tableWidget = self.getCurrentMessagelist()
         currentColumn = tableWidget.currentColumn()
@@ -4263,12 +4265,11 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             otherAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.UserRole)
         account = accountClass(myAddress)
         if (
-            isinstance(account, GatewayAccount)
-            and otherAddress == account.relayAddress
-            and (
-                 currentColumn in [0, 2] and self.getCurrentFolder() == "sent"
-                 or currentColumn in [1, 2] and self.getCurrentFolder() != "sent"
-            )
+                isinstance(account, GatewayAccount) and
+                otherAddress == account.relayAddress and (
+                    currentColumn in [0, 2] and self.getCurrentFolder() == "sent" or
+                    currentColumn in [1, 2] and self.getCurrentFolder() != "sent"
+                )
         ):
 
             text = str(tableWidget.item(currentRow, currentColumn).label)
@@ -4614,9 +4615,9 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
             return
         # only account names of normal addresses (no chans/mailinglists)
         if (
-            not isinstance(item, Ui_AddressWidget)
-            or not self.getCurrentTreeWidget()
-            or self.getCurrentTreeWidget().currentItem() is None
+                not isinstance(item, Ui_AddressWidget) or
+                not self.getCurrentTreeWidget() or
+                self.getCurrentTreeWidget().currentItem() is None
         ):
             return
 
@@ -4687,8 +4688,8 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                 self.updateUnreadStatus(tableWidget, currentRow, msgid)
             # propagate
             if (
-                folder != 'sent'
-                and sqlExecute('''UPDATE inbox SET read=1 WHERE msgid=? AND read=0''', msgid) > 0
+                    folder != 'sent' and
+                    sqlExecute('''UPDATE inbox SET read=1 WHERE msgid=? AND read=0''', msgid) > 0
             ):
                 self.propagateUnreadCount()
 
