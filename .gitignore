@@ -13,3 +13,6 @@ build/lib.*
 build/temp.*
 dist
 *.egg-info
+
+# Pycharm idea files excluded
+.idea/*
