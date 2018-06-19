@@ -1385,23 +1385,24 @@ class MyForm(settingsmixin.SMainWindow):  # pylint: disable=too-many-public-meth
                 # elapsed time since the last sound was played
                 dt = datetime.now() - self.lastSoundTime
                 # suppress sounds which are more frequent than the threshold
-                if not dt.total_seconds() < self.maxSoundFrequencySec:
+                if dt.total_seconds() < self.maxSoundFrequencySec:
+                    return
 
-                    # the sound is for an address which exists in the address book
-                    if category is sound.SOUND_KNOWN:
-                        soundFilename = state.appdata + 'sounds/known'
-                    # the sound is for an unknown address
-                    elif category is sound.SOUND_UNKNOWN:
-                        soundFilename = state.appdata + 'sounds/unknown'
-                    # initial connection sound
-                    elif category is sound.SOUND_CONNECTED:
-                        soundFilename = state.appdata + 'sounds/connected'
-                    # disconnected sound
-                    elif category is sound.SOUND_DISCONNECTED:
-                        soundFilename = state.appdata + 'sounds/disconnected'
-                    # sound when the connection status becomes green
-                    elif category is sound.SOUND_CONNECTION_GREEN:
-                        soundFilename = state.appdata + 'sounds/green'
+            # the sound is for an address which exists in the address book
+            if category is sound.SOUND_KNOWN:
+                soundFilename = state.appdata + 'sounds/known'
+            # the sound is for an unknown address
+            elif category is sound.SOUND_UNKNOWN:
+                soundFilename = state.appdata + 'sounds/unknown'
+            # initial connection sound
+            elif category is sound.SOUND_CONNECTED:
+                soundFilename = state.appdata + 'sounds/connected'
+            # disconnected sound
+            elif category is sound.SOUND_DISCONNECTED:
+                soundFilename = state.appdata + 'sounds/disconnected'
+            # sound when the connection status becomes green
+            elif category is sound.SOUND_CONNECTION_GREEN:
+                soundFilename = state.appdata + 'sounds/green'
 
         if soundFilename is None:
             logger.warning("Probably wrong category number in playSound()")
