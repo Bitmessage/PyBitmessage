@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """
 Check dependendies and give recommendations about how to satisfy them
 
@@ -9,111 +10,23 @@ Limitations:
     EXTRAS_REQUIRE. This is fine because most developers do, too.
 """
 
+import os
 from distutils.errors import CompileError
 try:
     from setuptools.dist import Distribution
     from setuptools.extension import Extension
     from setuptools.command.build_ext import build_ext
     HAVE_SETUPTOOLS = True
+    # another import from setuptools is in setup.py
+    from setup import EXTRAS_REQUIRE
 except ImportError:
     HAVE_SETUPTOOLS = False
+    EXTRAS_REQUIRE = []
+
 from importlib import import_module
-import os
-import sys
 
-from setup import EXTRAS_REQUIRE
+from src.depends import detectOS, PACKAGES, PACKAGE_MANAGER
 
-
-PROJECT_ROOT = os.path.abspath('..')
-sys.path.insert(0, PROJECT_ROOT)
-
-# OS-specific dependencies for optional components listed in EXTRAS_REQUIRE
-EXTRAS_REQUIRE_DEPS = {
-    # The values from setup.EXTRAS_REQUIRE
-    'python_prctl': {
-        # The packages needed for this requirement, by OS
-        "OpenBSD": [""],
-        "FreeBSD": [""],
-        "Debian": ["libcap-dev"],
-        "Ubuntu": [""],
-        "Ubuntu 12": [""],
-        "openSUSE": [""],
-        "Fedora": [""],
-        "Guix": [""],
-        "Gentoo": [""],
-    },
-}
-
-PACKAGE_MANAGER = {
-    "OpenBSD": "pkg_add",
-    "FreeBSD": "pkg install",
-    "Debian": "apt-get install",
-    "Ubuntu": "apt-get install",
-    "Ubuntu 12": "apt-get install",
-    "openSUSE": "zypper install",
-    "Fedora": "dnf install",
-    "Guix": "guix package -i",
-    "Gentoo": "emerge"
-}
-
-PACKAGES = {
-    "PyQt4": {
-        "OpenBSD": "py-qt4",
-        "FreeBSD": "py27-qt4",
-        "Debian": "python-qt4",
-        "Ubuntu": "python-qt4",
-        "Ubuntu 12": "python-qt4",
-        "openSUSE": "python-qt",
-        "Fedora": "PyQt4",
-        "Guix": "python2-pyqt@4.11.4",
-        "Gentoo": "dev-python/PyQt4",
-        'optional': True,
-        'description': "You only need PyQt if you want to use the GUI. " \
-                       "When only running as a daemon, this can be skipped.\n" \
-                       "However, you would have to install it manually " \
-                       "because setuptools does not support PyQt."
-    },
-    "msgpack": {
-        "OpenBSD": "py-msgpack",
-        "FreeBSD": "py27-msgpack-python",
-        "Debian": "python-msgpack",
-        "Ubuntu": "python-msgpack",
-        "Ubuntu 12": "msgpack-python",
-        "openSUSE": "python-msgpack-python",
-        "Fedora": "python2-msgpack",
-        "Guix": "python2-msgpack",
-        "Gentoo": "dev-python/msgpack",
-        "optional": True,
-        "description": "python-msgpack is recommended for improved performance of message encoding/decoding"
-    },
-    "pyopencl": {
-        "FreeBSD": "py27-pyopencl",
-        "Debian": "python-pyopencl",
-        "Ubuntu": "python-pyopencl",
-        "Ubuntu 12": "python-pyopencl",
-        "Fedora": "python2-pyopencl",
-        "openSUSE": "",
-        "OpenBSD": "",
-        "Guix": "",
-        "Gentoo": "dev-python/pyopencl",
-        "optional": True,
-        'description': "If you install pyopencl, you will be able to use " \
-                       "GPU acceleration for proof of work. \n" \
-                       "You also need a compatible GPU and drivers."
-    },
-    "setuptools": {
-        "OpenBSD": "py-setuptools",
-        "FreeBSD": "py27-setuptools",
-        "Debian": "python-setuptools",
-        "Ubuntu": "python-setuptools",
-        "Ubuntu 12": "python-setuptools",
-        "Fedora": "python2-setuptools",
-        "openSUSE": "python-setuptools",
-        "Guix": "python2-setuptools",
-        "Gentoo": "",
-        "optional": False,
-    }
-}
 
 COMPILING = {
     "Debian": "build-essential libssl-dev",
@@ -123,46 +36,23 @@ COMPILING = {
     "optional": False,
 }
 
-def detectOSRelease():
-    with open("/etc/os-release", 'r') as osRelease:
-        version = None
-        for line in osRelease:
-            if line.startswith("NAME="):
-                line = line.lower()
-                if "fedora" in line:
-                    detectOS.result = "Fedora"
-                elif "opensuse" in line:
-                    detectOS.result = "openSUSE"
-                elif "ubuntu" in line:
-                    detectOS.result = "Ubuntu"
-                elif "debian" in line:
-                    detectOS.result = "Debian"
-                elif "gentoo" in line or "calculate" in line:
-                    detectOS.result = "Gentoo"
-                else:
-                    detectOS.result = None
-            if line.startswith("VERSION_ID="):
-                try:
-                    version = float(line.split("=")[1].replace("\"", ""))
-                except ValueError:
-                    pass
-        if detectOS.result == "Ubuntu" and version < 14:
-            detectOS.result = "Ubuntu 12"
+# OS-specific dependencies for optional components listed in EXTRAS_REQUIRE
+EXTRAS_REQUIRE_DEPS = {
+    # The values from setup.EXTRAS_REQUIRE
+    'python_prctl': {
+        # The packages needed for this requirement, by OS
+        "OpenBSD": [""],
+        "FreeBSD": [""],
+        "Debian": ["libcap-dev python-prctl"],
+        "Ubuntu": ["libcap-dev python-prctl"],
+        "Ubuntu 12": ["libcap-dev python-prctl"],
+        "openSUSE": [""],
+        "Fedora": ["prctl"],
+        "Guix": [""],
+        "Gentoo": ["dev-python/python-prctl"],
+    },
+}
 
-def detectOS():
-    if detectOS.result is not None:
-        return detectOS.result
-    if sys.platform.startswith('openbsd'):
-        detectOS.result = "OpenBSD"
-    elif sys.platform.startswith('freebsd'):
-        detectOS.result = "FreeBSD"
-    elif sys.platform.startswith('win'):
-        detectOS.result = "Windows"
-    elif os.path.isfile("/etc/os-release"):
-        detectOSRelease()
-    elif os.path.isfile("/etc/config.scm"):
-        detectOS.result = "Guix"
-    return detectOS.result
 
 def detectPrereqs(missing=True):
     available = []
@@ -176,18 +66,21 @@ def detectPrereqs(missing=True):
                 available.append(module)
     return available
 
+
 def prereqToPackages():
     if not detectPrereqs():
         return
-    print "%s %s" % (
+    print("%s %s" % (
         PACKAGE_MANAGER[detectOS()], " ".join(
-            PACKAGES[x][detectOS()] for x in detectPrereqs()))
+            PACKAGES[x][detectOS()] for x in detectPrereqs())))
+
 
 def compilerToPackages():
     if not detectOS() in COMPILING:
         return
-    print "%s %s" % (
-        PACKAGE_MANAGER[detectOS.result], COMPILING[detectOS.result])
+    print("%s %s" % (
+        PACKAGE_MANAGER[detectOS.result], COMPILING[detectOS.result]))
+
 
 def testCompiler():
     if not HAVE_SETUPTOOLS:
@@ -214,30 +107,30 @@ def testCompiler():
         fullPath = os.path.join(cmd.build_lib, cmd.get_ext_filename("bitmsghash"))
         return os.path.isfile(fullPath)
 
-detectOS.result = None
-prereqs = detectPrereqs()
 
+prereqs = detectPrereqs()
 compiler = testCompiler()
 
 if (not compiler or prereqs) and detectOS() in PACKAGE_MANAGER:
-    print "It looks like you're using %s. " \
-    "It is highly recommended to use the package manager\n" \
-    "to install the missing dependencies." % (detectOS.result)
+    print(
+        "It looks like you're using %s. "
+        "It is highly recommended to use the package manager\n"
+        "to install the missing dependencies." % detectOS.result)
 
 if not compiler:
-    print "Building the bitmsghash module failed.\n" \
-        "You may be missing a C++ compiler and/or the OpenSSL headers."
+    print(
+        "Building the bitmsghash module failed.\n"
+        "You may be missing a C++ compiler and/or the OpenSSL headers.")
 
 if prereqs:
-    mandatory = list(x for x in prereqs if "optional" not in PACKAGES[x] or not PACKAGES[x]["optional"])
-    optional = list(x for x in prereqs if "optional" in PACKAGES[x] and PACKAGES[x]["optional"])
-
+    mandatory = [x for x in prereqs if not PACKAGES[x].get("optional")]
+    optional = [x for x in prereqs if PACKAGES[x].get("optional")]
     if mandatory:
-        print "Missing mandatory dependencies: %s" % (" ".join(mandatory))
+        print("Missing mandatory dependencies: %s" % " ".join(mandatory))
     if optional:
-        print "Missing optional dependencies: %s" % (" ".join(optional))
+        print("Missing optional dependencies: %s" % " ".join(optional))
         for package in optional:
-            print PACKAGES[package].get('description')
+            print(PACKAGES[package].get('description'))
 
 # Install the system dependencies of optional extras_require components
 OPSYS = detectOS()
@@ -259,12 +152,14 @@ for lhs, rhs in EXTRAS_REQUIRE.items():
                 if x in EXTRAS_REQUIRE_DEPS
             ]),
         ])
-        print "Optional dependency `pip install .[{}]` would require `{}` to be run as root".format(lhs, rhs_cmd)
+        print(
+            "Optional dependency `pip install .[{}]` would require `{}`"
+            " to be run as root".format(lhs, rhs_cmd))
 
-if (not compiler or prereqs) and detectOS() in PACKAGE_MANAGER:
-    print "You can install the missing dependencies by running, as root:"
+if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
+    print("You can install the missing dependencies by running, as root:")
     if not compiler:
         compilerToPackages()
     prereqToPackages()
 else:
-    print "All the dependencies satisfied, you can install PyBitmessage"
+    print("All the dependencies satisfied, you can install PyBitmessage")
