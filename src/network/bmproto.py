@@ -300,7 +300,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def _command_inv(self, dandelion=False):
         items = self.decode_payload_content("l32s")
 
-        if len(items) >= BMProto.maxObjectCount:
+        if len(items) > BMProto.maxObjectCount:
             logger.error("Too many items in %sinv message!", "d" if dandelion else "")
             raise BMProtoExcessiveDataError()
         else:
