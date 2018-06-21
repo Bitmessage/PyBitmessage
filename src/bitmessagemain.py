@@ -51,8 +51,6 @@ from class_singleCleaner import singleCleaner
 from class_objectProcessor import objectProcessor
 from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
-from class_smtpDeliver import smtpDeliver
-from class_smtpServer import smtpServer
 from bmconfigparser import BMConfigParser
 
 from inventory import Inventory
@@ -310,12 +308,14 @@ class Main:
             # SMTP delivery thread
             if daemon and BMConfigParser().safeGet(
                     "bitmessagesettings", "smtpdeliver", '') != '':
+                from class_smtpDeliver import smtpDeliver
                 smtpDeliveryThread = smtpDeliver()
                 smtpDeliveryThread.start()
 
             # SMTP daemon thread
             if daemon and BMConfigParser().safeGetBoolean(
                     "bitmessagesettings", "smtpd"):
+                from class_smtpServer import smtpServer
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
 
