@@ -80,7 +80,11 @@ class TestUtils(unittest.TestCase):
 
 class TestSolver(unittest.TestCase):
     def setUp(self):
-        self.solver = self.Solver(codePath)
+        try:
+            self.solver = self.Solver(codePath)
+        except gpusolver.GPUSolverError:
+            self.skipTest("OpenCL unavailable")
+
         self.solver.setParallelism(1)
 
     def testSearch(self):
