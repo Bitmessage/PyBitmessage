@@ -18,9 +18,9 @@ import utils
 codePath = os.path.dirname(__file__)
 
 if hasattr(sys, "winver"):
-	dumbsolver.libcrypto = ctypes.WinDLL("libcrypto.dll")
+    dumbsolver.libcrypto = ctypes.WinDLL("libcrypto.dll")
 else:
-	dumbsolver.libcrypto = ctypes.CDLL(ctypes.util.find_library("crypto"))
+    dumbsolver.libcrypto = ctypes.CDLL(ctypes.util.find_library("crypto"))
 
 nonce = binascii.unhexlify("9ca6790a249679f8")
 expiryTime = 1525845600
