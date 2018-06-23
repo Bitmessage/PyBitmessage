@@ -47,12 +47,12 @@ class WorkProver(threading.Thread):
 
         try:
             self.availableSolvers["fast"] = fastsolver.FastSolver(codePath)
-        except:
+        except fastsolver.FastSolverError:
             pass
 
         try:
             self.availableSolvers["gpu"] = gpusolver.GPUSolver(codePath, GPUVendors)
-        except:
+        except gpusolver.GPUSolverError:
             pass
 
         try:

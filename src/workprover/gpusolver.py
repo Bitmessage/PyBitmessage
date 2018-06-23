@@ -14,8 +14,11 @@ class GPUSolver(object):
     def __init__(self, codePath, vendors = None):
         global pyopencl, numpy
 
-        import pyopencl
-        import numpy
+        try:
+            import pyopencl
+            import numpy
+        except ImportError:
+            raise GPUSolverError()
 
         device = None
 
@@ -30,7 +33,7 @@ class GPUSolver(object):
 
                 break
         else:
-            raise Exception()
+            raise GPUSolverError()
 
         context = pyopencl.Context(devices = [device])
 

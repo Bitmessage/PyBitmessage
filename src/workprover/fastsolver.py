@@ -4,6 +4,9 @@ import platform
 import subprocess
 import ctypes
 
+class FastSolverError(Exception):
+	pass
+
 def loadFastSolver(codePath):
     if hasattr(sys, "winver"):
         suffix = "-32"
@@ -13,7 +16,10 @@ def loadFastSolver(codePath):
 
         path = os.path.join(codePath, "fastsolver/libfastsolver{}.dll".format(suffix))
 
-        return ctypes.WinDLL(path)
+        try:
+            return ctypes.WinDLL(path)
+        except:
+            raise FastSolverError()
 
     makePath = os.path.join(codePath, "fastsolver")
     path = os.path.join(codePath, "fastsolver/libfastsolver.so")
@@ -21,12 +27,15 @@ def loadFastSolver(codePath):
     try:
         return ctypes.CDLL(path)
     except:
-        if not hasattr(sys, "frozen"):
+        if hasattr(sys, "frozen"):
+            raise FastSolverError()
+
+        try:
             subprocess.call(["make", "-C", makePath])
 
             return ctypes.CDLL(path)
-        else:
-            raise Exception()
+        except:
+            raise FastSolverError()
 
 class FastSolver(object):
     def __init__(self, codePath):
