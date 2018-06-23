@@ -28,6 +28,14 @@ logger = logging.getLogger('both')
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
 
+OS_RELEASE = {
+    "fedora": "Fedora",
+    "opensuse": "openSUSE",
+    "ubuntu": "Ubuntu",
+    "gentoo": "Gentoo",
+    "calculate": "Gentoo"
+}
+
 PACKAGE_MANAGER = {
     "OpenBSD": "pkg_add",
     "FreeBSD": "pkg install",
@@ -128,20 +136,9 @@ def detectOSRelease():
         version = None
         for line in osRelease:
             if line.startswith("NAME="):
-                line = line.lower()
-                if "fedora" in line:
-                    detectOS.result = "Fedora"
-                elif "opensuse" in line:
-                    detectOS.result = "openSUSE"
-                elif "ubuntu" in line:
-                    detectOS.result = "Ubuntu"
-                elif "debian" in line:
-                    detectOS.result = "Debian"
-                elif "gentoo" in line or "calculate" in line:
-                    detectOS.result = "Gentoo"
-                else:
-                    detectOS.result = None
-            if line.startswith("VERSION_ID="):
+                detectOS.result = OS_RELEASE.get(
+                    line.split("=")[-1].strip().lower())
+            elif line.startswith("VERSION_ID="):
                 try:
                     version = float(line.split("=")[1].replace("\"", ""))
                 except ValueError:
