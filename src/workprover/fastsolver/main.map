@@ -1,0 +1,4 @@
+{
+    global: fastsolver_*;
+    local: *;
+};
