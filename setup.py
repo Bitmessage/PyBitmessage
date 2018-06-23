@@ -59,7 +59,8 @@ if __name__ == "__main__":
         'pybitmessage.pyelliptic',
         'pybitmessage.socks',
         'pybitmessage.storage',
-        'pybitmessage.plugins'
+        'pybitmessage.plugins',
+        'pybitmessage.workprover'
     ]
 
     # this will silently accept alternative providers of msgpack
