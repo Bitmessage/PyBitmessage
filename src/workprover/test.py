@@ -185,21 +185,22 @@ class TestWorkProver(unittest.TestCase):
         self.thread.commandsQueue.put(("shutdown", ))
         self.thread.join()
 
-loader = unittest.TestLoader()
-
-suite = unittest.TestSuite([
-    loader.loadTestsFromTestCase(TestUtils),
-    loader.loadTestsFromTestCase(TestDumbSolver),
-    loader.loadTestsFromTestCase(TestForkingSolver),
-    loader.loadTestsFromTestCase(TestFastSolver),
-    loader.loadTestsFromTestCase(TestGPUSolver),
-    loader.loadTestsFromTestCase(TestWorkProver)
-])
+def load_tests(loader, tests, pattern):
+    return unittest.TestSuite([
+        loader.loadTestsFromTestCase(TestUtils),
+        loader.loadTestsFromTestCase(TestDumbSolver),
+        loader.loadTestsFromTestCase(TestForkingSolver),
+        loader.loadTestsFromTestCase(TestFastSolver),
+        loader.loadTestsFromTestCase(TestGPUSolver),
+        loader.loadTestsFromTestCase(TestWorkProver)
+    ])
 
 if __name__ == "__main__":
     import multiprocessing
 
     multiprocessing.freeze_support()
 
+    loader = unittest.TestLoader()
     runner = unittest.TextTestRunner()
-    runner.run(suite)
+
+    runner.run(load_tests(loader, [], None))
