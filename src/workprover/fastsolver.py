@@ -5,7 +5,7 @@ import subprocess
 import ctypes
 
 class FastSolverError(Exception):
-	pass
+    pass
 
 def loadFastSolver(codePath):
     if hasattr(sys, "winver"):
