@@ -1,9 +1,9 @@
 import hashlib
-import struct
-import time
 import math
-import sys
 import os
+import struct
+import sys
+import time
 
 def calculateInitialHash(initialPayload):
     return hashlib.sha512(initialPayload).digest()

@@ -1,8 +1,8 @@
-import sys
+import ctypes
 import os.path
 import platform
 import subprocess
-import ctypes
+import sys
 
 class FastSolverError(Exception):
     pass

@@ -1,5 +1,5 @@
-import os
 import multiprocessing
+import os
 import struct
 
 import dumbsolver

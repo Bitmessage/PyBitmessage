@@ -1,6 +1,6 @@
 import ctypes
-import struct
 import hashlib
+import struct
 
 import utils
 

@@ -1,16 +1,16 @@
-import sys
-import multiprocessing
-import time
-import struct
-import threading
 import Queue
 import collections
+import multiprocessing
+import struct
+import sys
+import threading
+import time
 
-import utils
 import dumbsolver
-import forkingsolver
 import fastsolver
+import forkingsolver
 import gpusolver
+import utils
 
 timeout = .5
 

@@ -1,6 +1,6 @@
 import hashlib
-import struct
 import os.path
+import struct
 
 import utils
 
@@ -15,8 +15,8 @@ class GPUSolver(object):
         global pyopencl, numpy
 
         try:
-            import pyopencl
             import numpy
+            import pyopencl
         except ImportError:
             raise GPUSolverError()
 

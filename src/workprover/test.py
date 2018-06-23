@@ -1,19 +1,19 @@
 #!/usr/bin/env python2.7
 
-import unittest
-import os.path
 import binascii
-import struct
 import ctypes
 import ctypes.util
+import os.path
+import struct
 import sys
+import unittest
 
 import __init__
-import utils
 import dumbsolver
-import forkingsolver
 import fastsolver
+import forkingsolver
 import gpusolver
+import utils
 
 codePath = os.path.dirname(__file__)
 
