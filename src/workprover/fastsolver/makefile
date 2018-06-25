@@ -1,8 +1,9 @@
-CFLAGS += -std=gnu99 -Wall -Wextra -pedantic -O3 -fPIC
-LDFLAGS += -shared -lpthread -lcrypto -Wl,-version-script=main.map
+CFLAGS += -std=gnu99 -Wall -Wextra -pedantic -O3 -fPIC -fvisibility=hidden
+LDFLAGS += -shared
+LDLIBS = -lpthread -lcrypto
 
-libfastsolver.so: main.map common.o pthread.o
-	$(CC) $(LDFLAGS) -o $@ common.o pthread.o
+libfastsolver.so: common.o pthread.o
+	$(CC) $(LDFLAGS) -o $@ common.o pthread.o $(LDLIBS)
 
 common.o: common.h common.c
 pthread.o: common.h pthread.c

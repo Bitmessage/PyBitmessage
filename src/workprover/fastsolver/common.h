@@ -1,6 +1,12 @@
 #ifndef COMMON_H
     #define COMMON_H
 
+    #ifdef _WIN32
+        #define EXPORT __declspec(dllexport)
+    #else
+        #define EXPORT __attribute__ ((visibility("default")))
+    #endif
+
     extern volatile int run;
 
     #define SEED_LENGTH (32 + 8)

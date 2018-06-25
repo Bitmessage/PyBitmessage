@@ -76,7 +76,7 @@ static int initialize(void) {
     return 1;
 }
 
-size_t fastsolver_add(void) {
+EXPORT size_t fastsolver_add(void) {
     if (initialize() == 0) {
         return threads_count;
     }
@@ -100,7 +100,7 @@ size_t fastsolver_add(void) {
     return threads_count;
 }
 
-size_t fastsolver_remove(size_t count) {
+EXPORT size_t fastsolver_remove(size_t count) {
     size_t i;
 
     EnterCriticalSection(&lock);
@@ -119,7 +119,7 @@ size_t fastsolver_remove(size_t count) {
     return threads_count;
 }
 
-int fastsolver_search(
+EXPORT int fastsolver_search(
     char *local_nonce,
     unsigned long long *local_iterations_count,
     const char *local_initial_hash,

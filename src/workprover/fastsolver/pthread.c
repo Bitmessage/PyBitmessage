@@ -104,7 +104,7 @@ static int initialize(void) {
     error_lock: return 0;
 }
 
-size_t fastsolver_add(void) {
+EXPORT size_t fastsolver_add(void) {
     #ifdef SCHED_IDLE
         int policy = SCHED_IDLE;
     #else
@@ -135,7 +135,7 @@ size_t fastsolver_add(void) {
     return threads_count;
 }
 
-size_t fastsolver_remove(size_t count) {
+EXPORT size_t fastsolver_remove(size_t count) {
     size_t i;
 
     pthread_mutex_lock(&lock);
@@ -154,7 +154,7 @@ size_t fastsolver_remove(size_t count) {
     return threads_count;
 }
 
-int fastsolver_search(
+EXPORT int fastsolver_search(
     char *local_nonce,
     unsigned long long *local_iterations_count,
     const char *local_initial_hash,

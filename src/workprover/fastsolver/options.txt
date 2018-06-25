@@ -1,1 +1,1 @@
-/Ox /MD common.c winapi.c /link /DLL /OUT:libfastsolver.dll /EXPORT:fastsolver_add /EXPORT:fastsolver_remove /EXPORT:fastsolver_search libcrypto.lib
+/Ox /MD common.c winapi.c /link /DLL /OUT:libfastsolver.dll libcrypto.lib
