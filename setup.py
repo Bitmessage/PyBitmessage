@@ -12,7 +12,7 @@ from src.version import softwareVersion
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
     'notify2': ['notify2'],
-    'pyopencl': ['pyopencl'],
+    'pyopencl': ['numpy', 'pyopencl'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound']
@@ -102,8 +102,9 @@ if __name__ == "__main__":
         package_dir={'pybitmessage': 'src'},
         packages=packages,
         package_data={'': [
-            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
-            'translations/*.ts', 'translations/*.qm',
+            'bitmessageqt/*.ui', 'translations/*.ts', 'translations/*.qm',
+            'bitmsghash/*.cl', 'workprover/*.cl', 'workprover/fastsolver/*',
+            'sslkeys/*.pem',
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
         data_files=[
