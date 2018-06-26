@@ -180,7 +180,11 @@ class TCPConnection(BMProto, TLSDispatcher):
         for hash, storedValue in bigInvList.items():
             payload += hash
             objectCount += 1
-            if objectCount >= BMProto.maxObjectCount:
+
+            # Remove -1 below when sufficient time has passed for users to
+            # upgrade to versions of PyBitmessage that accept inv with 50,000
+            # items
+            if objectCount >= BMProto.maxObjectCount - 1:
                 sendChunk()
                 payload = b''
                 objectCount = 0
