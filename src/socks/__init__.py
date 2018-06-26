@@ -5,14 +5,15 @@ Copyright 2006 Dan-Haim. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-3. Neither the name of Dan Haim nor the names of his contributors may be used
-   to endorse or promote products derived from this software without specific
-   prior written permission.
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of Dan Haim nor the names of his contributors may be used
+    to endorse or promote products derived from this software without specific
+    prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY DAN HAIM "AS IS" AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -146,19 +147,32 @@ class socksocket(socket.socket):
     def setproxy(self, proxytype=None, addr=None, port=None, rdns=True, username=None, password=None):
         """setproxy(proxytype, addr[, port[, rdns[, username[, password]]]])
         Sets the proxy to be used.
-        proxytype -    The type of the proxy to be used. Three types
-                are supported: PROXY_TYPE_SOCKS4 (including socks4a),
-                PROXY_TYPE_SOCKS5 and PROXY_TYPE_HTTP
-        addr -        The address of the server (IP or DNS).
-        port -        The port of the server. Defaults to 1080 for SOCKS
-                servers and 8080 for HTTP proxy servers.
-        rdns -        Should DNS queries be preformed on the remote side
-                (rather than the local side). The default is True.
-                Note: This has no effect with SOCKS4 servers.
-        username -    Username to authenticate with to the server.
-                The default is no authentication.
-        password -    Password to authenticate with to the server.
-                Only relevant when username is also provided.
+
+         proxytype
+           The type of the proxy to be used. Three types
+           are supported: PROXY_TYPE_SOCKS4 (including socks4a),
+           PROXY_TYPE_SOCKS5 and PROXY_TYPE_HTTP
+
+        addr
+           The address of the server (IP or DNS).
+
+        port
+           The port of the server. Defaults to 1080 for SOCKS
+           servers and 8080 for HTTP proxy servers.
+
+        rdns
+           Should DNS queries be preformed on the remote side
+           (rather than the local side). The default is True.
+           Note: This has no effect with SOCKS4 servers.
+
+        username
+           Username to authenticate with to the server.
+           The default is no authentication.
+
+        password
+           Password to authenticate with to the server.
+           Only relevant when username is also provided.
+
         """
         self.__proxy = (proxytype, addr, port, rdns, username, password)
 
@@ -207,7 +221,7 @@ class socksocket(socket.socket):
                 raise Socks5AuthError((2, _socks5autherrors[2]))
             else:
                 raise GeneralProxyError((1, _generalerrors[1]))
-                
+
     def __connectsocks5(self, destaddr, destport):
         # Now we can request the actual connection
         req = struct.pack('BBB', 0x05, 0x01, 0x00)
@@ -286,7 +300,7 @@ class socksocket(socket.socket):
             raise GeneralProxyError((1,_generalerrors[1]))
         boundport = struct.unpack(">H", self.__recvall(2))[0]
         return ip
-    
+
     def getproxysockname(self):
         """getsockname() -> address info
         Returns the bound IP address and port number at the proxy.

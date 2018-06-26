@@ -1,5 +1,6 @@
 #! python
 
+import subprocess
 import sys
 import os
 import pyelliptic.openssl
@@ -145,7 +146,10 @@ def check_openssl():
         except OSError:
             continue
         logger.info('OpenSSL Name: ' + library._name)
-        openssl_version, openssl_hexversion, openssl_cflags = pyelliptic.openssl.get_version(library)
+        try:
+            openssl_version, openssl_hexversion, openssl_cflags = pyelliptic.openssl.get_version(library)
+        except AttributeError:  # sphinx chokes
+            return True
         if not openssl_version:
             logger.error('Cannot determine version of this OpenSSL library.')
             return False
@@ -167,7 +171,7 @@ def check_openssl():
 def check_curses():
     """Do curses dependency check.
 
-    Here we are checking for curses if available or not with check 
+    Here we are checking for curses if available or not with check
     as interface requires the pythondialog\ package and the dialog
     utility.
     """
@@ -185,6 +189,12 @@ def check_curses():
     except ImportError:
         logger.error('The curses interface can not be used. The pythondialog package is not available.')
         return False
+    try:
+        subprocess.check_call('which dialog')
+    except subprocess.CalledProcessError:
+        logger.error('Curses requires the `dialog` command to be installed as well as the python library.')
+        return False
+
     logger.info('pythondialog Package Version: ' + dialog.__version__)
     dialog_util_version = dialog.Dialog().cached_backend_version
     #The pythondialog author does not like Python2 str, so we have to use
@@ -236,7 +246,7 @@ def check_pyqt():
 def check_msgpack():
     """Do sgpack module check.
 
-    simply checking if msgpack package with all its dependency 
+    simply checking if msgpack package with all its dependency
     is available or not as recommended for messages coding.
     """
     try:
@@ -300,7 +310,7 @@ def check_dependencies(verbose = False, optional = False):
         except:
             logger.exception(check.__name__ + ' failed unexpectedly.')
             has_all_dependencies = False
-        
+
     if not has_all_dependencies:
         logger.critical('PyBitmessage cannot start. One or more dependencies are unavailable.')
         sys.exit()
