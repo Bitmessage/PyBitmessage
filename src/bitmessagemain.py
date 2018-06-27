@@ -51,8 +51,6 @@ from class_singleCleaner import singleCleaner
 from class_objectProcessor import objectProcessor
 from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
-from class_smtpDeliver import smtpDeliver
-from class_smtpServer import smtpServer
 from bmconfigparser import BMConfigParser
 
 from inventory import Inventory
@@ -245,6 +243,19 @@ class Main:
                 state.enableGUI = False  # run without a UI
 
         # is the application already running?  If yes then exit.
+        if state.enableGUI and not state.curses and not depends.check_pyqt():
+            sys.exit(
+                'PyBitmessage requires PyQt unless you want'
+                ' to run it as a daemon and interact with it'
+                ' using the API. You can download PyQt from '
+                'http://www.riverbankcomputing.com/software/pyqt/download'
+                ' or by searching Google for \'PyQt Download\'.'
+                ' If you want to run in daemon mode, see '
+                'https://bitmessage.org/wiki/Daemon\n'
+                'You can also run PyBitmessage with'
+                ' the new curses interface by providing'
+                ' \'-c\' as a commandline argument.'
+            )
         shared.thisapp = singleinstance("", daemon)
 
         if daemon and not state.testmode:
@@ -297,12 +308,14 @@ class Main:
             # SMTP delivery thread
             if daemon and BMConfigParser().safeGet(
                     "bitmessagesettings", "smtpdeliver", '') != '':
+                from class_smtpDeliver import smtpDeliver
                 smtpDeliveryThread = smtpDeliver()
                 smtpDeliveryThread.start()
 
             # SMTP daemon thread
             if daemon and BMConfigParser().safeGetBoolean(
                     "bitmessagesettings", "smtpd"):
+                from class_smtpServer import smtpServer
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
 
@@ -381,26 +394,14 @@ class Main:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
         elif daemon is False:
             if state.curses:
-                # if depends.check_curses():
+                if not depends.check_curses():
+                    sys.exit()
                 print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
-            elif depends.check_pyqt():
+            else:
                 import bitmessageqt
                 bitmessageqt.run()
-            else:
-                sys.exit(
-                    'PyBitmessage requires PyQt unless you want'
-                    ' to run it as a daemon and interact with it'
-                    ' using the API. You can download PyQt from '
-                    'http://www.riverbankcomputing.com/software/pyqt/download'
-                    ' or by searching Google for \'PyQt Download\'.'
-                    ' If you want to run in daemon mode, see '
-                    'https://bitmessage.org/wiki/Daemon\n'
-                    'You can also run PyBitmessage with'
-                    ' the new curses interface by providing'
-                    ' \'-c\' as a commandline argument.'
-                )
 
         if daemon:
             if state.testmode:

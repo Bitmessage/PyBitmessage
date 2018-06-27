@@ -3,6 +3,7 @@
 **.DS_Store
 src/build
 src/dist
+src/.eggs
 src/.project
 src/.pydevproject
 src/.settings/
@@ -13,3 +14,6 @@ build/lib.*
 build/temp.*
 dist
 *.egg-info
+docs/_*/*
+docs/autodoc/
+pyan/

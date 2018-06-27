@@ -1,52 +1,196 @@
-#! python
+"""
+Utility functions to check the availability of dependencies
+and suggest how it may be installed
+"""
 
 import sys
-import os
-import pyelliptic.openssl
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
 if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
-    sys.stdout.write('Python version: ' + sys.version)
-    sys.stdout.write('PyBitmessage requires Python 2.7.3 or greater (but not Python 3)')
-    sys.exit()
+    sys.exit(
+        'Python version: %s\n'
+        'PyBitmessage requires Python 2.7.4 or greater (but not Python 3)'
+        % sys.version
+    )
+
+import logging
+import os
+from importlib import import_module
 
 # We can now use logging so set up a simple configuration
-import logging
 formatter = logging.Formatter(
     '%(levelname)s: %(message)s'
 )
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(formatter)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('both')
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
+
+OS_RELEASE = {
+    "fedora": "Fedora",
+    "opensuse": "openSUSE",
+    "ubuntu": "Ubuntu",
+    "gentoo": "Gentoo",
+    "calculate": "Gentoo"
+}
+
+PACKAGE_MANAGER = {
+    "OpenBSD": "pkg_add",
+    "FreeBSD": "pkg install",
+    "Debian": "apt-get install",
+    "Ubuntu": "apt-get install",
+    "Ubuntu 12": "apt-get install",
+    "openSUSE": "zypper install",
+    "Fedora": "dnf install",
+    "Guix": "guix package -i",
+    "Gentoo": "emerge"
+}
+
+PACKAGES = {
+    "PyQt4": {
+        "OpenBSD": "py-qt4",
+        "FreeBSD": "py27-qt4",
+        "Debian": "python-qt4",
+        "Ubuntu": "python-qt4",
+        "Ubuntu 12": "python-qt4",
+        "openSUSE": "python-qt",
+        "Fedora": "PyQt4",
+        "Guix": "python2-pyqt@4.11.4",
+        "Gentoo": "dev-python/PyQt4",
+        "optional": True,
+        "description":
+        "You only need PyQt if you want to use the GUI."
+        " When only running as a daemon, this can be skipped.\n"
+        "However, you would have to install it manually"
+        " because setuptools does not support PyQt."
+    },
+    "msgpack": {
+        "OpenBSD": "py-msgpack",
+        "FreeBSD": "py27-msgpack-python",
+        "Debian": "python-msgpack",
+        "Ubuntu": "python-msgpack",
+        "Ubuntu 12": "msgpack-python",
+        "openSUSE": "python-msgpack-python",
+        "Fedora": "python2-msgpack",
+        "Guix": "python2-msgpack",
+        "Gentoo": "dev-python/msgpack",
+        "optional": True,
+        "description":
+        "python-msgpack is recommended for improved performance of"
+        " message encoding/decoding"
+    },
+    "pyopencl": {
+        "FreeBSD": "py27-pyopencl",
+        "Debian": "python-pyopencl",
+        "Ubuntu": "python-pyopencl",
+        "Ubuntu 12": "python-pyopencl",
+        "Fedora": "python2-pyopencl",
+        "openSUSE": "",
+        "OpenBSD": "",
+        "Guix": "",
+        "Gentoo": "dev-python/pyopencl",
+        "optional": True,
+        "description":
+        "If you install pyopencl, you will be able to use"
+        " GPU acceleration for proof of work.\n"
+        "You also need a compatible GPU and drivers."
+    },
+    "setuptools": {
+        "OpenBSD": "py-setuptools",
+        "FreeBSD": "py27-setuptools",
+        "Debian": "python-setuptools",
+        "Ubuntu": "python-setuptools",
+        "Ubuntu 12": "python-setuptools",
+        "Fedora": "python2-setuptools",
+        "openSUSE": "python-setuptools",
+        "Guix": "python2-setuptools",
+        "Gentoo": "dev-python/setuptools",
+        "optional": False,
+    }
+}
+
+
+def detectOS():
+    if detectOS.result is not None:
+        return detectOS.result
+    if sys.platform.startswith('openbsd'):
+        detectOS.result = "OpenBSD"
+    elif sys.platform.startswith('freebsd'):
+        detectOS.result = "FreeBSD"
+    elif sys.platform.startswith('win'):
+        detectOS.result = "Windows"
+    elif os.path.isfile("/etc/os-release"):
+        detectOSRelease()
+    elif os.path.isfile("/etc/config.scm"):
+        detectOS.result = "Guix"
+    return detectOS.result
+
+
+detectOS.result = None
+
+
+def detectOSRelease():
+    with open("/etc/os-release", 'r') as osRelease:
+        version = None
+        for line in osRelease:
+            if line.startswith("NAME="):
+                detectOS.result = OS_RELEASE.get(
+                    line.split("=")[-1].strip().lower())
+            elif line.startswith("VERSION_ID="):
+                try:
+                    version = float(line.split("=")[1].replace("\"", ""))
+                except ValueError:
+                    pass
+        if detectOS.result == "Ubuntu" and version < 14:
+            detectOS.result = "Ubuntu 12"
+
+
+def try_import(module, log_extra=False):
+    try:
+        return import_module(module)
+    except ImportError:
+        module = module.split('.')[0]
+        logger.error('The %s module is not available.', module)
+        if log_extra:
+            logger.error(log_extra)
+            dist = detectOS()
+            logger.error(
+                'On %s, try running "%s %s" as root.',
+                dist, PACKAGE_MANAGER[dist], PACKAGES[module][dist])
+        return False
+
 
 # We need to check hashlib for RIPEMD-160, as it won't be available
 # if OpenSSL is not linked against or the linked OpenSSL has RIPEMD
 # disabled.
-
-
 def check_hashlib():
     """Do hashlib check.
 
     The hashlib module check with version as if it included or not
-    in The Python Standard library , its a module containing an
+    in The Python Standard library, it's a module containing an
     interface to the most popular hashing algorithms. hashlib
     implements some of the algorithms, however if  OpenSSL
     installed, hashlib is able to use this algorithms as well.
     """
     if sys.hexversion < 0x020500F0:
-        logger.error('The hashlib module is not included in this version of Python.')
+        logger.error(
+            'The hashlib module is not included in this version of Python.')
         return False
     import hashlib
     if '_hashlib' not in hashlib.__dict__:
-        logger.error('The RIPEMD-160 hash algorithm is not available. The hashlib module is not linked against OpenSSL.')
+        logger.error(
+            'The RIPEMD-160 hash algorithm is not available.'
+            ' The hashlib module is not linked against OpenSSL.')
         return False
     try:
         hashlib.new('ripemd160')
     except ValueError:
-        logger.error('The RIPEMD-160 hash algorithm is not available. The hashlib module utilizes an OpenSSL library with RIPEMD disabled.')
+        logger.error(
+            'The RIPEMD-160 hash algorithm is not available.'
+            ' The hashlib module utilizes an OpenSSL library with'
+            ' RIPEMD disabled.')
         return False
     return True
 
@@ -58,35 +202,48 @@ def check_sqlite():
     support in python version for specifieed platform.
     """
     if sys.hexversion < 0x020500F0:
-        logger.error('The sqlite3 module is not included in this version of Python.')
+        logger.error(
+            'The sqlite3 module is not included in this version of Python.')
         if sys.platform.startswith('freebsd'):
-            logger.error('On FreeBSD, try running "pkg install py27-sqlite3" as root.')
-        return False
-    try:
-        import sqlite3
-    except ImportError:
-        logger.error('The sqlite3 module is not available')
+            logger.error(
+                'On FreeBSD, try running "pkg install py27-sqlite3" as root.')
         return False
 
-    logger.info('sqlite3 Module Version: ' + sqlite3.version)
-    logger.info('SQLite Library Version: ' + sqlite3.sqlite_version)
-    #sqlite_version_number formula: https://sqlite.org/c3ref/c_source_id.html
-    sqlite_version_number = sqlite3.sqlite_version_info[0] * 1000000 + sqlite3.sqlite_version_info[1] * 1000 + sqlite3.sqlite_version_info[2]
+    sqlite3 = try_import('sqlite3')
+    if not sqlite3:
+        return False
+
+    logger.info('sqlite3 Module Version: %s', sqlite3.version)
+    logger.info('SQLite Library Version: %s', sqlite3.sqlite_version)
+    # sqlite_version_number formula: https://sqlite.org/c3ref/c_source_id.html
+    sqlite_version_number = (
+        sqlite3.sqlite_version_info[0] * 1000000 +
+        sqlite3.sqlite_version_info[1] * 1000 +
+        sqlite3.sqlite_version_info[2]
+    )
 
     conn = None
     try:
         try:
             conn = sqlite3.connect(':memory:')
             if sqlite_version_number >= 3006018:
-                sqlite_source_id = conn.execute('SELECT sqlite_source_id();').fetchone()[0]
-                logger.info('SQLite Library Source ID: ' + sqlite_source_id)
+                sqlite_source_id = conn.execute(
+                    'SELECT sqlite_source_id();'
+                ).fetchone()[0]
+                logger.info('SQLite Library Source ID: %s', sqlite_source_id)
             if sqlite_version_number >= 3006023:
-                compile_options = ', '.join(map(lambda row: row[0], conn.execute('PRAGMA compile_options;')))
-                logger.info('SQLite Library Compile Options: ' + compile_options)
-            #There is no specific version requirement as yet, so we just use the
-            #first version that was included with Python.
+                compile_options = ', '.join(map(
+                    lambda row: row[0],
+                    conn.execute('PRAGMA compile_options;')
+                ))
+                logger.info(
+                    'SQLite Library Compile Options: %s', compile_options)
+            # There is no specific version requirement as yet, so we just
+            # use the first version that was included with Python.
             if sqlite_version_number < 3000008:
-                logger.error('This version of SQLite is too old. PyBitmessage requires SQLite 3.0.8 or later')
+                logger.error(
+                    'This version of SQLite is too old.'
+                    ' PyBitmessage requires SQLite 3.0.8 or later')
                 return False
             return True
         except sqlite3.Error:
@@ -96,19 +253,20 @@ def check_sqlite():
         if conn:
             conn.close()
 
+
 def check_openssl():
     """Do openssl dependency check.
 
     Here we are checking for openssl with its all dependent libraries
     and version checking.
     """
-    try:
-        import ctypes
-    except ImportError:
-        logger.error('Unable to check OpenSSL. The ctypes module is not available.')
+
+    ctypes = try_import('ctypes')
+    if not ctypes:
+        logger.error('Unable to check OpenSSL.')
         return False
 
-    #We need to emulate the way PyElliptic searches for OpenSSL.
+    # We need to emulate the way PyElliptic searches for OpenSSL.
     if sys.platform == 'win32':
         paths = ['libeay32.dll']
         if getattr(sys, 'frozen', False):
@@ -138,135 +296,128 @@ def check_openssl():
 
     cflags_regex = re.compile(r'(?:OPENSSL_NO_)(AES|EC|ECDH|ECDSA)(?!\w)')
 
+    import pyelliptic.openssl
+
     for path in paths:
-        logger.info('Checking OpenSSL at ' + path)
+        logger.info('Checking OpenSSL at %s', path)
         try:
             library = ctypes.CDLL(path)
         except OSError:
             continue
-        logger.info('OpenSSL Name: ' + library._name)
-        openssl_version, openssl_hexversion, openssl_cflags = pyelliptic.openssl.get_version(library)
+        logger.info('OpenSSL Name: %s', library._name)
+        try:
+            openssl_version, openssl_hexversion, openssl_cflags = \
+                pyelliptic.openssl.get_version(library)
+        except AttributeError:  # sphinx chokes
+            return True
         if not openssl_version:
             logger.error('Cannot determine version of this OpenSSL library.')
             return False
-        logger.info('OpenSSL Version: ' + openssl_version)
-        logger.info('OpenSSL Compile Options: ' + openssl_cflags)
-        #PyElliptic uses EVP_CIPHER_CTX_new and EVP_CIPHER_CTX_free which were
-        #introduced in 0.9.8b.
+        logger.info('OpenSSL Version: %s', openssl_version)
+        logger.info('OpenSSL Compile Options: %s', openssl_cflags)
+        # PyElliptic uses EVP_CIPHER_CTX_new and EVP_CIPHER_CTX_free which were
+        # introduced in 0.9.8b.
         if openssl_hexversion < 0x90802F:
-            logger.error('This OpenSSL library is too old. PyBitmessage requires OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC), ECDH, and ECDSA enabled.')
+            logger.error(
+                'This OpenSSL library is too old. PyBitmessage requires'
+                ' OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC),'
+                ' ECDH, and ECDSA enabled.')
             return False
         matches = cflags_regex.findall(openssl_cflags)
         if len(matches) > 0:
-            logger.error('This OpenSSL library is missing the following required features: ' + ', '.join(matches) + '. PyBitmessage requires OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC), ECDH, and ECDSA enabled.')
+            logger.error(
+                'This OpenSSL library is missing the following required'
+                ' features: %s. PyBitmessage requires OpenSSL 0.9.8b'
+                ' or later with AES, Elliptic Curves (EC), ECDH,'
+                ' and ECDSA enabled.', ', '.join(matches))
             return False
         return True
     return False
 
-#TODO: The minimum versions of pythondialog and dialog need to be determined
+
+# TODO: The minimum versions of pythondialog and dialog need to be determined
 def check_curses():
     """Do curses dependency check.
 
-    Here we are checking for curses if available or not with check 
+    Here we are checking for curses if available or not with check
     as interface requires the pythondialog\ package and the dialog
     utility.
     """
     if sys.hexversion < 0x20600F0:
-        logger.error('The curses interface requires the pythondialog package and the dialog utility.')
+        logger.error(
+            'The curses interface requires the pythondialog package and'
+            ' the dialog utility.')
         return False
+    curses = try_import('curses')
+    if not curses:
+        logger.error('The curses interface can not be used.')
+        return False
+
+    logger.info('curses Module Version: %s', curses.version)
+
+    dialog = try_import('dialog')
+    if not dialog:
+        logger.error('The curses interface can not be used.')
+        return False
+
+    import subprocess
+
     try:
-        import curses
-    except ImportError:
-        logger.error('The curses interface can not be used. The curses module is not available.')
+        subprocess.check_call('which dialog')
+    except subprocess.CalledProcessError:
+        logger.error(
+            'Curses requires the `dialog` command to be installed as well as'
+            ' the python library.')
         return False
-    logger.info('curses Module Version: ' + curses.version)
-    try:
-        import dialog
-    except ImportError:
-        logger.error('The curses interface can not be used. The pythondialog package is not available.')
-        return False
-    logger.info('pythondialog Package Version: ' + dialog.__version__)
+
+    logger.info('pythondialog Package Version: %s', dialog.__version__)
     dialog_util_version = dialog.Dialog().cached_backend_version
-    #The pythondialog author does not like Python2 str, so we have to use
-    #unicode for just the version otherwise we get the repr form which includes
-    #the module and class names along with the actual version.
-    logger.info('dialog Utility Version' + unicode(dialog_util_version))
+    # The pythondialog author does not like Python2 str, so we have to use
+    # unicode for just the version otherwise we get the repr form which
+    # includes the module and class names along with the actual version.
+    logger.info('dialog Utility Version %s', unicode(dialog_util_version))
     return True
+
 
 def check_pyqt():
     """Do pyqt dependency check.
 
     Here we are checking for PyQt4 with its version, as for it require
-    PyQt 4.7 or later.
+    PyQt 4.8 or later.
     """
-    try:
-        import PyQt4.QtCore
-    except ImportError:
-        logger.error('The PyQt4 package is not available. PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
-        if sys.platform.startswith('openbsd'):
-            logger.error('On OpenBSD, try running "pkg_add py-qt4" as root.')
-        elif sys.platform.startswith('freebsd'):
-            logger.error('On FreeBSD, try running "pkg install py27-qt4" as root.')
-        elif os.path.isfile("/etc/os-release"):
-            with open("/etc/os-release", 'rt') as osRelease:
-                for line in osRelease:
-                    if line.startswith("NAME="):
-                        if "fedora" in line.lower():
-                            logger.error('On Fedora, try running "dnf install PyQt4" as root.')
-                        elif "opensuse" in line.lower():
-                            logger.error('On openSUSE, try running "zypper install python-qt" as root.')
-                        elif "ubuntu" in line.lower():
-                            logger.error('On Ubuntu, try running "apt-get install python-qt4" as root.')
-                        elif "debian" in line.lower():
-                            logger.error('On Debian, try running "apt-get install python-qt4" as root.')
-                        else:
-                            logger.error('If your package manager does not have this package, try running "pip install PyQt4".')
+    QtCore = try_import(
+        'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
+
+    if not QtCore:
         return False
-    logger.info('PyQt Version: ' + PyQt4.QtCore.PYQT_VERSION_STR)
-    logger.info('Qt Version: ' + PyQt4.QtCore.QT_VERSION_STR)
+
+    logger.info('PyQt Version: %s', QtCore.PYQT_VERSION_STR)
+    logger.info('Qt Version: %s', QtCore.QT_VERSION_STR)
     passed = True
-    if PyQt4.QtCore.PYQT_VERSION < 0x40800:
-        logger.error('This version of PyQt is too old. PyBitmessage requries PyQt 4.8 or later.')
+    if QtCore.PYQT_VERSION < 0x40800:
+        logger.error(
+            'This version of PyQt is too old. PyBitmessage requries'
+            ' PyQt 4.8 or later.')
         passed = False
-    if PyQt4.QtCore.QT_VERSION < 0x40700:
-        logger.error('This version of Qt is too old. PyBitmessage requries Qt 4.7 or later.')
+    if QtCore.QT_VERSION < 0x40700:
+        logger.error(
+            'This version of Qt is too old. PyBitmessage requries'
+            ' Qt 4.7 or later.')
         passed = False
     return passed
+
 
 def check_msgpack():
     """Do sgpack module check.
 
-    simply checking if msgpack package with all its dependency 
+    simply checking if msgpack package with all its dependency
     is available or not as recommended for messages coding.
     """
-    try:
-        import msgpack
-    except ImportError:
-        logger.error(
-            'The msgpack package is not available.'
-            'It is highly recommended for messages coding.')
-        if sys.platform.startswith('openbsd'):
-            logger.error('On OpenBSD, try running "pkg_add py-msgpack" as root.')
-        elif sys.platform.startswith('freebsd'):
-            logger.error('On FreeBSD, try running "pkg install py27-msgpack-python" as root.')
-        elif os.path.isfile("/etc/os-release"):
-            with open("/etc/os-release", 'rt') as osRelease:
-                for line in osRelease:
-                    if line.startswith("NAME="):
-                        if "fedora" in line.lower():
-                            logger.error('On Fedora, try running "dnf install python2-msgpack" as root.')
-                        elif "opensuse" in line.lower():
-                            logger.error('On openSUSE, try running "zypper install python-msgpack-python" as root.')
-                        elif "ubuntu" in line.lower():
-                            logger.error('On Ubuntu, try running "apt-get install python-msgpack" as root.')
-                        elif "debian" in line.lower():
-                            logger.error('On Debian, try running "apt-get install python-msgpack" as root.')
-                        else:
-                            logger.error('If your package manager does not have this package, try running "pip install msgpack-python".')
+    return try_import(
+        'msgpack', 'It is highly recommended for messages coding.') is not False
 
-    return True
 
-def check_dependencies(verbose = False, optional = False):
+def check_dependencies(verbose=False, optional=False):
     """Do dependency check.
 
     It identifies project dependencies and checks if there are
@@ -279,33 +430,36 @@ def check_dependencies(verbose = False, optional = False):
 
     has_all_dependencies = True
 
-    #Python 2.7.3 is the required minimum. Python 3+ is not supported, but it is
-    #still useful to provide information about our other requirements.
+    # Python 2.7.4 is the required minimum.
+    # (https://bitmessage.org/forum/index.php?topic=4081.0)
+    # Python 3+ is not supported, but it is still useful to provide
+    # information about our other requirements.
     logger.info('Python version: %s', sys.version)
-    if sys.hexversion < 0x20703F0:
-        logger.error('PyBitmessage requires Python 2.7.3 or greater (but not Python 3+)')
+    if sys.hexversion < 0x20704F0:
+        logger.error(
+            'PyBitmessage requires Python 2.7.4 or greater'
+            ' (but not Python 3+)')
         has_all_dependencies = False
     if sys.hexversion >= 0x3000000:
-        logger.error('PyBitmessage does not support Python 3+. Python 2.7.3 or greater is required.')
+        logger.error(
+            'PyBitmessage does not support Python 3+. Python 2.7.4'
+            ' or greater is required.')
         has_all_dependencies = False
 
-    check_functions = [check_hashlib, check_sqlite, check_openssl, check_msgpack]
+    check_functions = [check_hashlib, check_sqlite, check_openssl]
     if optional:
-        check_functions.extend([check_pyqt, check_curses])
+        check_functions.extend([check_msgpack, check_pyqt, check_curses])
 
-    #Unexpected exceptions are handled here
+    # Unexpected exceptions are handled here
     for check in check_functions:
         try:
             has_all_dependencies &= check()
         except:
-            logger.exception(check.__name__ + ' failed unexpectedly.')
+            logger.exception('%s failed unexpectedly.', check.__name__)
             has_all_dependencies = False
-        
+
     if not has_all_dependencies:
-        logger.critical('PyBitmessage cannot start. One or more dependencies are unavailable.')
-        sys.exit()
-
-if __name__ == '__main__':
-    """Check Dependencies"""
-    check_dependencies(True, True)
-
+        sys.exit(
+            'PyBitmessage cannot start. One or more dependencies are'
+            ' unavailable.'
+        )

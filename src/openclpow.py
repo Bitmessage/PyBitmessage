@@ -20,10 +20,11 @@ vendors = []
 hash_dt = None
 
 try:
-    import numpy
     import pyopencl as cl
-except:
+    import numpy
+except ImportError:
     libAvailable = False
+
 
 def initCL():
     global ctx, queue, program, hash_dt, libAvailable
