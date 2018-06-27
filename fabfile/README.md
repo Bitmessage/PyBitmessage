@@ -85,3 +85,17 @@ Host github
     HostName github.com
     IdentityFile ~/.ssh/id_rsa_github
 ```
+
+# Ideas for further development
+
+## Smaller 
+
+ * Decorators and context managers are useful for accepting common params like verbosity, force or doing command-level help
+ * if `git status` or `git status --staged` produce results, prefer that to generate the file list
+
+
+## Larger
+
+ * Support documentation translations, aim for current transifex'ed languages
+ * Fabric 2 is finally out, go @bitprophet! Invoke/Fabric2 is a rewrite of Fabric supporting Python3. Probably makes
+ sense for us to stick to the battle-hardened 1.x branch, at least until we support Python3.

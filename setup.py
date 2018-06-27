@@ -15,7 +15,14 @@ EXTRAS_REQUIRE = {
     'pyopencl': ['numpy', 'pyopencl'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
-    'sound;platform_system=="Windows"': ['winsound']
+    'sound;platform_system=="Windows"': ['winsound'],
+    'docs': [
+        'sphinx',  # fab build_docs
+        'graphviz',  # fab build_docs
+        'curses',  # src/depends.py
+        'python2-pythondialog',  # src/depends.py
+        'm2r',  # fab build_docs
+    ],
 }
 
 

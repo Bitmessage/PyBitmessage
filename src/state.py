@@ -2,7 +2,7 @@ import collections
 
 neededPubkeys = {}
 streamsInWhichIAmParticipating = []
-sendDataQueues = [] #each sendData thread puts its queue in this list.
+sendDataQueues = []  # each sendData thread puts its queue in this list.
 
 # For UPnP
 extPort = None
@@ -13,21 +13,22 @@ socksIP = None
 # Network protocols availability, initialised below
 networkProtocolAvailability = None
 
-appdata = '' #holds the location of the application data storage directory
+appdata = ''  # holds the location of the application data storage directory
 
-shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
-
+# Set to 1 by the doCleanShutdown function.
+# Used to tell the proof of work worker threads to exit.
+shutdown = 0
 
 # Component control flags - set on startup, do not change during runtime
 #     The defaults are for standalone GUI (default operating mode)
-enableNetwork = True # enable network threads
-enableObjProc = True # enable object processing threads
-enableAPI = True # enable API (if configured)
-enableGUI = True # enable GUI (QT or ncurses)
-enableSTDIO = False # enable STDIO threads
+enableNetwork = True  # enable network threads
+enableObjProc = True  # enable object processing threads
+enableAPI = True  # enable API (if configured)
+enableGUI = True  # enable GUI (QT or ncurses)
+enableSTDIO = False  # enable STDIO threads
 curses = False
 
-sqlReady = False # set to true by sqlTread when ready for processing
+sqlReady = False  # set to true by sqlTread when ready for processing
 
 maximumNumberOfHalfOpenConnections = 0
 
@@ -56,9 +57,11 @@ missingObjects = {}
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
+
 def resetNetworkProtocolAvailability():
     global networkProtocolAvailability
     networkProtocolAvailability = {'IPv4': None, 'IPv6': None, 'onion': None}
+
 
 resetNetworkProtocolAvailability()
 
