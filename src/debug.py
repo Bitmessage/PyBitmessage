@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Logging and debuging facility
 =============================
@@ -11,7 +10,7 @@ Levels:
       Confirmation that things are working as expected.
    WARNING
       An indication that something unexpected happened, or indicative of some problem in the
-      near future (e.g. ‘disk space low’). The software is still working as expected.
+      near future (e.g. 'disk space low'). The software is still working as expected.
    ERROR
       Due to a more serious problem, the software has not been able to perform some function.
    CRITICAL
@@ -113,10 +112,10 @@ def configureLogging():
     return True
 
 
-if __name__ == "__main__":
+# TODO (xj9): Get from a config file.
+# logger = logging.getLogger('console_only')
 
-    # TODO (xj9): Get from a config file.
-    #logger = logging.getLogger('console_only')
+def initLogging():
     if configureLogging():
         if '-c' in sys.argv:
             logger = logging.getLogger('file_only')
@@ -124,8 +123,8 @@ if __name__ == "__main__":
             logger = logging.getLogger('both')
     else:
         logger = logging.getLogger('default')
-else:
-    logger = logging.getLogger('default')
+    return logger
+
 
 def restartLoggingInUpdatedAppdataLocation():
     global logger
@@ -133,11 +132,8 @@ def restartLoggingInUpdatedAppdataLocation():
         logger.removeHandler(i)
         i.flush()
         i.close()
-    if configureLogging():
-        if '-c' in sys.argv:
-            logger = logging.getLogger('file_only')
-        else:
-            logger = logging.getLogger('both')
-    else:
-        logger = logging.getLogger('default')
+    logger = initLogging()
 
+
+# !
+logger = initLogging()
