@@ -23,7 +23,7 @@ import shared
 from bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
 import defaults
-from namecoin import namecoinConnection
+import namecoin
 from messageview import MessageView
 from migrationwizard import Ui_MigrationWizard
 from foldertree import (
@@ -797,7 +797,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.initSettings()
 
-        self.namecoin = namecoinConnection()
+        namecoin.ensureNamecoinOptions()
+        self.namecoin = namecoin.namecoinConnection()
 
         # Check to see whether we can connect to namecoin.
         # Hide the 'Fetch Namecoin ID' button if we can't.

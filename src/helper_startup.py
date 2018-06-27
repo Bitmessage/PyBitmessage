@@ -8,7 +8,6 @@ import os
 import platform
 from distutils.version import StrictVersion
 
-from namecoin import ensureNamecoinOptions
 import paths
 import state
 import helper_random
@@ -129,8 +128,6 @@ def loadConfig():
         # existing users. To do that, search the class_sqlThread.py file for the
         # text: "right above this line!"
 
-        ensureNamecoinOptions()
-
         if StoreConfigFilesInSameDirectoryAsProgramByDefault:
             # Just use the same directory as the program and forget about
             # the appdata folder
@@ -145,6 +142,7 @@ def loadConfig():
         BMConfigParser().save()
 
     _loadTrustedPeer()
+
 
 def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
     try:
