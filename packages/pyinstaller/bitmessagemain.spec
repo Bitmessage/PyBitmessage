@@ -54,6 +54,8 @@ else:
 a.binaries += [('libeay32.dll', openSSLPath + 'libeay32.dll', 'BINARY'),
 	(os.path.join('bitmsghash', 'bitmsghash%i.dll' % (arch)), os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % (arch)), 'BINARY'),
 	(os.path.join('bitmsghash', 'bitmsghash.cl'), os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
+	("workprover/fastsolver/libfastsolver-{}.dll".format(arch), os.path.join(srcPath, "workprover/fastsolver/libfastsolver-{}.dll".format(arch)), "BINARY"),
+	("workprover/gpusolver.cl", os.path.join(srcPath, "workprover/gpusolver.cl"), "BINARY"),
 	(os.path.join('sslkeys', 'cert.pem'), os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
 	(os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
 	]

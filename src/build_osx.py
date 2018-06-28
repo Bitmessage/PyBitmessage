@@ -10,6 +10,8 @@ mainscript = ["bitmessagemain.py"]
 DATA_FILES = [
     ('', ['sslkeys', 'images']),
     ('bitmsghash', ['bitmsghash/bitmsghash.cl', 'bitmsghash/bitmsghash.so']),
+    ("workprover", ["gpusolver.cl"]),
+    ("workprover/fastsolver", ["libfastsolver.so"]),
     ('translations', glob('translations/*.qm')),
     ('ui', glob('bitmessageqt/*.ui')),
     ('translations', glob(str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)) + '/qt_??.qm')),
