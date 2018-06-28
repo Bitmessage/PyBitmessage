@@ -11,53 +11,31 @@ class GPUSolverError(Exception):
     pass
 
 class GPUSolver(object):
-    def __init__(self, codePath, vendors = None):
-        global pyopencl, numpy
+    def __init__(self, codePath, vendor = None):
+        global pyopencl
 
         try:
-            import numpy
             import pyopencl
         except ImportError:
             raise GPUSolverError()
 
-        device = None
-
         for i in pyopencl.get_platforms():
-            if vendors is not None and i.vendor not in vendors:
+            if vendor is not None and i.vendor != vendor:
                 continue
 
             devices = i.get_devices(device_type = pyopencl.device_type.GPU)
 
             if len(devices) != 0:
-                device = devices[0]
+                self.device = devices[0]
 
                 break
         else:
             raise GPUSolverError()
 
-        context = pyopencl.Context(devices = [device])
-
-        computeUnitsCount = device.get_info(pyopencl.device_info.MAX_COMPUTE_UNITS)
-        workGroupSize = device.get_info(pyopencl.device_info.MAX_WORK_GROUP_SIZE)
-
-        self.parallelism = workGroupSize * computeUnitsCount
-        self.batchSize = self.parallelism * 256
-
-        self.queue = pyopencl.CommandQueue(context, device)
-
         with open(os.path.join(codePath, "gpusolver.cl")) as file:
-            source = file.read()
+            self.source = file.read()
 
-        program = pyopencl.Program(context, source).build()
-
-        self.hostOutput = numpy.zeros(1 + self.batchSize, numpy.uint32)
-        self.hostInput = numpy.zeros(1 + 8 + 1, numpy.uint64)
-
-        self.output = pyopencl.Buffer(context, pyopencl.mem_flags.READ_WRITE, 4 * (1 + self.batchSize))
-        self.input = pyopencl.Buffer(context, pyopencl.mem_flags.READ_ONLY, 8 * (1 + 8 + 1))
-
-        self.kernel = program.search
-        self.kernel.set_args(self.output, self.input)
+        self.status = None
 
     def search(self, initialHash, target, seed, timeout):
         startTime = utils.getTimePoint()
@@ -102,5 +80,32 @@ class GPUSolver(object):
             if utils.getTimePoint() - startTime >= timeout:
                 return None, self.batchSize * i
 
-    def setParallelism(self, parallelism):
-        pass
+    def setConfiguration(self, configuration):
+        global numpy
+
+        if numpy is not None:
+            return
+
+        import numpy
+
+        context = pyopencl.Context(devices = [self.device])
+
+        computeUnitsCount = self.device.get_info(pyopencl.device_info.MAX_COMPUTE_UNITS)
+        workGroupSize = self.device.get_info(pyopencl.device_info.MAX_WORK_GROUP_SIZE)
+
+        self.batchSize = workGroupSize * computeUnitsCount * 256
+
+        self.queue = pyopencl.CommandQueue(context, self.device)
+
+        program = pyopencl.Program(context, self.source).build()
+
+        self.hostOutput = numpy.zeros(1 + self.batchSize, numpy.uint32)
+        self.hostInput = numpy.zeros(1 + 8 + 1, numpy.uint64)
+
+        self.output = pyopencl.Buffer(context, pyopencl.mem_flags.READ_WRITE, 4 * (1 + self.batchSize))
+        self.input = pyopencl.Buffer(context, pyopencl.mem_flags.READ_ONLY, 8 * (1 + 8 + 1))
+
+        self.kernel = program.search
+        self.kernel.set_args(self.output, self.input)
+
+        self.status = self.batchSize

@@ -24,7 +24,7 @@ class DumbSolver(object):
         self.firstHash = ctypes.create_string_buffer(64)
         self.secondHash = ctypes.create_string_buffer(64)
 
-        self.parallelism = 1
+        self.status = None
 
     def search(self, initialHash, target, seed, timeout):
         startTime = utils.getTimePoint()
@@ -66,5 +66,5 @@ class DumbSolver(object):
             if utils.getTimePoint() - startTime >= timeout:
                 return None, 256 * i
 
-    def setParallelism(self, parallelism):
+    def setConfiguration(self, configuration):
         pass

@@ -12,7 +12,7 @@ from src.version import softwareVersion
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
     'notify2': ['notify2'],
-    'pyopencl': ['numpy', 'pyopencl'],
+    'pyopencl': ['pyopencl', 'numpy'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],

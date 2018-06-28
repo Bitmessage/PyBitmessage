@@ -85,7 +85,7 @@ class TestSolver(unittest.TestCase):
         except gpusolver.GPUSolverError:
             self.skipTest("OpenCL unavailable")
 
-        self.solver.setParallelism(1)
+        self.solver.setConfiguration(self.configuration)
 
     def testSearch(self):
         nonce = None
@@ -101,19 +101,23 @@ class TestSolver(unittest.TestCase):
         self.assertTrue(utils.checkProof(nonce, initialHash, target))
 
     def tearDown(self):
-        self.solver.setParallelism(0)
+        self.solver.setConfiguration(None)
 
 class TestDumbSolver(TestSolver):
     Solver = dumbsolver.DumbSolver
+    configuration = None
 
 class TestForkingSolver(TestSolver):
     Solver = forkingsolver.ForkingSolver
+    configuration = 1
 
 class TestFastSolver(TestSolver):
     Solver = fastsolver.FastSolver
+    configuration = 1
 
 class TestGPUSolver(TestSolver):
     Solver = gpusolver.GPUSolver
+    configuration = None
 
 class TestWorkProver(unittest.TestCase):
     def setUp(self):

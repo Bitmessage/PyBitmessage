@@ -58,6 +58,7 @@ class FastSolver(object):
         self.iterationsCount = ctypes.c_ulonglong()
 
         self.parallelism = 0
+        self.status = 0
 
     def search(self, initialHash, target, seed, timeout):
         found = self.libfastsolver.fastsolver_search(
@@ -70,11 +71,16 @@ class FastSolver(object):
         else:
             return None, self.iterationsCount.value
 
-    def setParallelism(self, parallelism):
-        parallelism = min(4096, parallelism)
+    def setConfiguration(self, configuration):
+        if configuration is None:
+            parallelism = 0
+        else:
+            parallelism = min(4096, configuration)
 
         for i in xrange(self.parallelism, parallelism):
             self.parallelism = self.libfastsolver.fastsolver_add()
 
         if parallelism < self.parallelism:
             self.parallelism = self.libfastsolver.fastsolver_remove(self.parallelism - parallelism)
+
+        self.status = parallelism

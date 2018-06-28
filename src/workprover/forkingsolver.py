@@ -5,6 +5,11 @@ import struct
 import dumbsolver
 
 def setIdle():
+    if hasattr(os, "nice"):
+        os.nice(40)
+
+        return
+
     try:
         import psutil
 
@@ -23,13 +28,8 @@ def setIdle():
         handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, PID)
 
         win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
-
-        return
     except:
         pass
-
-    if hasattr(os, "nice"):
-        os.nice(40)
 
 def threadFunction(local, remote, codePath, threadNumber):
     remote.close()
@@ -60,7 +60,7 @@ class ForkingSolver(object):
         self.pipes = []
         self.processes = []
 
-        self.parallelism = 0
+        self.status = 0
 
         self.codePath = codePath
 
@@ -80,10 +80,13 @@ class ForkingSolver(object):
 
         return bestNonce, totalIterationsCount
 
-    def setParallelism(self, parallelism):
-        parallelism = min(4096, parallelism)
+    def setConfiguration(self, configuration):
+        if configuration is None:
+            parallelism = 0
+        else:
+            parallelism = min(4096, configuration)
 
-        for i in xrange(self.parallelism, parallelism):
+        for i in xrange(len(self.processes), parallelism):
             local, remote = multiprocessing.Pipe()
 
             process = multiprocessing.Process(target = threadFunction, args = (remote, local, self.codePath, i))
@@ -94,13 +97,13 @@ class ForkingSolver(object):
             self.pipes.append(local)
             self.processes.append(process)
 
-        for i in xrange(parallelism, self.parallelism):
+        for i in xrange(parallelism, len(self.processes)):
             pipe = self.pipes.pop()
 
             pipe.send(("shutdown", ))
             pipe.close()
 
-        for i in xrange(parallelism, self.parallelism):
+        for i in xrange(parallelism, len(self.processes)):
             self.processes.pop().join()
 
-        self.parallelism = parallelism
+        self.status = parallelism

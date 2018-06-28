@@ -28,7 +28,7 @@ class Task(object):
         self.target = target
 
 class WorkProver(threading.Thread):
-    def __init__(self, codePath, GPUVendors, seed, statusUpdated):
+    def __init__(self, codePath, GPUVendor, seed, statusUpdated):
         super(self.__class__, self).__init__()
 
         self.availableSolvers = {
@@ -51,7 +51,7 @@ class WorkProver(threading.Thread):
             pass
 
         try:
-            self.availableSolvers["gpu"] = gpusolver.GPUSolver(codePath, GPUVendors)
+            self.availableSolvers["gpu"] = gpusolver.GPUSolver(codePath, GPUVendor)
         except gpusolver.GPUSolverError:
             pass
 
@@ -81,32 +81,31 @@ class WorkProver(threading.Thread):
         if self.statusUpdated is None:
             return
 
-        if self.solver is None:
-            parallelism = 0
-        else:
-            parallelism = self.solver.parallelism
+        status = None
 
-        self.statusUpdated((self.solverName, parallelism, self.speed))
+        if self.solver is not None:
+            status = self.solver.status
 
-    def setSolver(self, name, parallelism):
+        self.statusUpdated((self.solverName, status, self.speed))
+
+    def setSolver(self, name, configuration):
         if name is None and self.solverName is None:
             pass
         elif name == self.solverName:
-            if self.solver.parallelism != parallelism:
-                self.solver.setParallelism(parallelism)
+            self.solver.setConfiguration(configuration)
         else:
             if self.solver is not None:
-                self.solver.setParallelism(0)
+                self.solver.setConfiguration(None)
                 self.solverName = None
                 self.solver = None
 
             if name is not None:
                 if name not in self.availableSolvers:
-                    name, parallelism = "dumb", 1
+                    name, configuration = "dumb", None
 
                 self.solverName = name
                 self.solver = self.availableSolvers[name]
-                self.solver.setParallelism(parallelism)
+                self.solver.setConfiguration(configuration)
 
         self.notifyStatus()
 
@@ -175,7 +174,7 @@ class WorkProver(threading.Thread):
         self.currentTaskID = self.tasks[self.currentTaskID].next
 
     def shutdown(self):
-        self.setSolver(None, 0)
+        self.setSolver(None, None)
 
         for i in self.tasks.keys():
             self.cancelTask(i)
