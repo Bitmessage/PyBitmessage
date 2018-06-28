@@ -8,8 +8,13 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 """
 
 import base64
+import errno
 import hashlib
 import json
+import random  # nosec
+import socket
+import subprocess
+import threading
 import time
 from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
@@ -23,6 +28,7 @@ from bmconfigparser import BMConfigParser
 import defaults
 import helper_inbox
 import helper_sent
+import helper_threading
 
 import state
 import queues
@@ -58,6 +64,68 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
     def serve_forever(self):
         while state.shutdown == 0:
             self.handle_request()
+
+
+# This thread, of which there is only one, runs the API.
+class singleAPI(threading.Thread, helper_threading.StoppableThread):
+    def __init__(self):
+        threading.Thread.__init__(self, name="singleAPI")
+        self.initStop()
+
+    def stopThread(self):
+        super(singleAPI, self).stopThread()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((
+                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
+                BMConfigParser().getint('bitmessagesettings', 'apiport')
+            ))
+            s.shutdown(socket.SHUT_RDWR)
+            s.close()
+        except:
+            pass
+
+    def run(self):
+        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        try:
+            from errno import WSAEADDRINUSE
+        except (ImportError, AttributeError):
+            errno.WSAEADDRINUSE = errno.EADDRINUSE
+        for attempt in range(50):
+            try:
+                if attempt > 0:
+                    port = random.randint(32767, 65535)
+                se = StoppableXMLRPCServer(
+                    (BMConfigParser().get(
+                        'bitmessagesettings', 'apiinterface'),
+                     port),
+                    MySimpleXMLRPCRequestHandler, True, True)
+            except socket.error as e:
+                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
+                    continue
+            else:
+                if attempt > 0:
+                    BMConfigParser().set(
+                        "bitmessagesettings", "apiport", str(port))
+                    BMConfigParser().save()
+                break
+        se.register_introspection_functions()
+
+        apiNotifyPath = BMConfigParser().safeGet(
+            'bitmessagesettings', 'apinotifypath')
+
+        if apiNotifyPath:
+            logger.info('Trying to call %s', apiNotifyPath)
+            try:
+                subprocess.call([apiNotifyPath, "startingUp"])
+            except OSError:
+                logger.warning(
+                    'Failed to call %s, removing apinotifypath setting',
+                    apiNotifyPath)
+                BMConfigParser().remove_option(
+                    'bitmessagesettings', 'apinotifypath')
+
+        se.serve_forever()
 
 
 # This is one of several classes that constitute the API
