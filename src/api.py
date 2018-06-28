@@ -8,41 +8,33 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
-
 from __future__ import absolute_import
 
 import base64
 import hashlib
 import json
-from struct import pack
 import time
 from binascii import hexlify, unhexlify
-
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
+from struct import pack
 
-import shared
-from addresses import (
-    decodeAddress, addBMIfNotPresent, decodeVarint,
-    calculateInventoryHash, varintDecodeError)
-from bmconfigparser import BMConfigParser
+from version import softwareVersion
+
 import defaults
 import helper_inbox
 import helper_sent
-
-import state
-import queues
-import shutdown
 import network.stats
-
-# Classes
-from helper_sql import sqlQuery, sqlExecute, SqlBulkExecute, sqlStoredProcedure
-from helper_ackPayload import genAckPayload
-from debug import logger
-from inventory import Inventory
-from version import softwareVersion
-
-# Helper Functions
 import proofofwork
+import queues
+import shared
+import shutdown
+import state
+from addresses import addBMIfNotPresent, calculateInventoryHash, decodeAddress, decodeVarint, varintDecodeError
+from bmconfigparser import BMConfigParser
+from debug import logger
+from helper_ackPayload import genAckPayload
+from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
+from inventory import Inventory
 
 str_chan = '[chan]'
 
@@ -116,7 +108,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             response = self.server._marshaled_dispatch(  # pylint: disable=protected-access
                 data, getattr(self, '_dispatch', None)
             )
-        except:  # This should only happen if the module is buggy
+        except BaseException:  # This should only happen if the module is buggy
             # internal error, report as HTTP server error
             self.send_response(500)
             self.end_headers()
@@ -328,7 +320,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         label = self._decode(label, "base64")
         try:
             unicode(label, 'utf-8')
-        except:
+        except BaseException:
             raise APIError(17, 'Label is not valid UTF-8 data.')
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
@@ -505,7 +497,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         try:
             unicode(passphrase, 'utf-8')
             label = str_chan + ' ' + passphrase
-        except:
+        except BaseException:
             label = str_chan + ' ' + repr(passphrase)
 
         addressVersionNumber = 4
@@ -538,7 +530,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         try:
             unicode(passphrase, 'utf-8')
             label = str_chan + ' ' + passphrase
-        except:
+        except BaseException:
             label = str_chan + ' ' + repr(passphrase)
 
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(  # pylint: disable=unused-variable
@@ -925,7 +917,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         try:
             fromAddressEnabled = BMConfigParser().getboolean(
                 fromAddress, 'enabled')
-        except:
+        except BaseException:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
         if not fromAddressEnabled:
@@ -997,7 +989,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         self._verifyAddress(fromAddress)
         try:
             BMConfigParser().getboolean(fromAddress, 'enabled')
-        except:
+        except BaseException:
             raise APIError(
                 13, 'could not find your fromAddress in the keys.dat file.')
         streamNumber = decodeAddress(fromAddress)[2]
@@ -1060,7 +1052,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             label = self._decode(label, "base64")
             try:
                 unicode(label, 'utf-8')
-            except:
+            except BaseException:
                 raise APIError(17, 'Label is not valid UTF-8 data.')
         if len(params) > 2:
             raise APIError(0, 'I need either 1 or 2 parameters!')
@@ -1147,7 +1139,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     'POW took', int(time.time() - powStartTime), 'seconds.',
                     nonce / (time.time() - powStartTime), 'nonce trials per second.',
                 )
-            except:
+            except BaseException:
                 pass
         encryptedPayload = pack('>Q', nonce) + encryptedPayload
         toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]

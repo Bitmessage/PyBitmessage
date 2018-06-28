@@ -7,23 +7,23 @@ Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-por
 from __future__ import absolute_import
 
 import httplib
-from random import randint
 import socket
-from struct import unpack
 import threading
 import time
 import urllib2
+from random import randint
+from struct import unpack
 from urlparse import urlparse
 from xml.dom.minidom import Document, parseString
 
-from bmconfigparser import BMConfigParser
-from debug import logger
-from network.connectionpool import BMConnectionPool
-from helper_threading import StoppableThread
 import queues
 import shared
 import state
 import tr
+from bmconfigparser import BMConfigParser
+from debug import logger
+from helper_threading import StoppableThread
+from network.connectionpool import BMConnectionPool
 
 
 def createRequestXML(service, action, arguments=None):
@@ -85,7 +85,7 @@ class UPnPError(Exception):
 
 
 class Router:  # pylint: disable=old-style-class
-    """TBC"""
+    """Encapulate routing"""
     name = ""
     path = ""
     address = None

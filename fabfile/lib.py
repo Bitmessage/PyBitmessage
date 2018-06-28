@@ -5,14 +5,13 @@ A library of functions and constants for tasks to make use of.
 """
 
 import os
-import sys
 import re
+import sys
 from functools import wraps
 
-from fabric.api import run, hide, cd, env
+from fabric.api import cd, env, hide, run
 from fabric.context_managers import settings, shell_env
 from fabvenv import virtualenv
-
 
 FABRIC_ROOT = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.dirname(FABRIC_ROOT)
@@ -80,7 +79,12 @@ def filelist_from_git(rev=None):
             clean = re.sub('\n', '', clean)
             for line in clean.split('\r'):
                 if line.endswith(".py"):
-                    results.append(os.path.abspath(line))
+                    with settings(warn_only=True):
+                        with hide('warnings'):
+                            if run('stat {}'.format(os.path.abspath(line))).succeeded:
+                                results.append(os.path.abspath(line))
+                            else:
+                                print 'Deleted file {} skipped.'.format(line)
             return results
 
 
@@ -131,6 +135,22 @@ def pylint(path_to_file):
                             path_to_file,
                         ),
                     )
+
+
+def isort(path_to_file):
+    """Run isort on a file"""
+    with virtualenv(VENV_ROOT):
+        with hide('warnings', 'running', 'stdout', 'stderr'):
+            with settings(warn_only=True):
+                with shell_env(PYTHONPATH=PYTHONPATH):
+                    returnable = run(
+                        'isort {0}'.format(
+                            path_to_file,
+                        ),
+                    )
+                    # isort takes the view that a sorted file in is an error
+                    returnable.return_code = not returnable.return_code
+                    return returnable
 
 
 def autopep8(path_to_file):

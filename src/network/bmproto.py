@@ -11,25 +11,26 @@ import socket
 import struct
 import time
 
+import addresses
+import helper_random
+import knownnodes
+import network.connectionpool
+import protocol
+import shared
+import state
 from bmconfigparser import BMConfigParser
 from debug import logger
 from inventory import Inventory
-import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
+from network.bmobject import (
+    BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError, BMObjectInsufficientPOWError, BMObjectInvalidDataError,
+    BMObjectInvalidError, BMObjectUnwantedStreamError
+)
 from network.dandelion import Dandelion
-from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, \
-    BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
-import network.connectionpool
 from network.node import Node
 from network.objectracker import ObjectTracker
 from network.proxy import ProxyError
-
-import addresses
-from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
-import shared
-import state
-import protocol
-import helper_random
+from queues import addrQueue, invQueue, objectProcessorQueue, portCheckerQueue
 
 
 class BMProtoError(ProxyError):
@@ -74,7 +75,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.local = False
 
     def bm_proto_reset(self):
-        """TBC"""
+        """Reset the bitmessage object parser"""
         self.magic = None
         self.command = None
         self.payloadLength = 0
@@ -86,7 +87,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object = None
 
     def state_bm_header(self):
-        """Predicate to indicate the prescence of a header"""
+        """Predicate (with logging) to indicate the prescence of a header"""
 
         self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(
             self.read_buf[:protocol.Header.size])
@@ -106,7 +107,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def state_bm_command(self):
-        """TBC"""
+        """Predicate (with logging) to indicate the presence of a command"""
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
             logger.debug("Bad checksum, ignoring")
@@ -295,16 +296,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             raise BMProtoInsufficientDataError()
 
     def bm_command_error(self):
-        """TBC"""
+        """Decode an error message and log it"""
         # pylint: disable=unused-variable
         fatalStatus, banTime, inventoryVector, errorText = self.decode_payload_content("vvlsls")
         logger.error("%s:%i error: %i, %s", self.destination.host, self.destination.port, fatalStatus, errorText)
         return True
 
     def bm_command_getdata(self):
-        """TBC"""
+        """Decode object data, conditionally append a newly created object to the write buffer"""
         items = self.decode_payload_content("l32s")
-        # ..todo:: skip?
+        # .. todo:: skip?
         if time.time() < self.skipUntil:
             return True
         # .. todo:: make this more asynchronous
@@ -349,13 +350,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def bm_command_inv(self):
-        """TBC"""
+        """Non-dandelion announce"""
         return self._command_inv(False)
 
     def bm_command_dinv(self):
-        """
-        Dandelion stem announce
-        """
+        """Dandelion stem announce"""
         return self._command_inv(True)
 
     def bm_command_object(self):
@@ -442,12 +441,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def bm_command_portcheck(self):
-        """TBC"""
+        """Add a job port of a peer"""
         portCheckerQueue.put(state.Peer(self.destination, self.peerNode.port))
         return True
 
     def bm_command_ping(self):
-        """TBC"""
+        """Respond to a ping"""
         self.append_write_buf(protocol.CreatePacket('pong'))
         return True
 
@@ -457,8 +456,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def bm_command_verack(self):
-        """TBC"""
-
+        """Return True if a verack has been sent, False otherwise"""
         self.verackReceived = True
         if self.verackSent:
             if self.isSSL:
@@ -469,7 +467,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def bm_command_version(self):
-        """TBC"""
+        """Determine and log protocol version and other details"""
 
         self.remoteProtocolVersion, self.services, self.timestamp, self.sockNode, self.peerNode, self.nonce, \
             self.userAgent, self.streams = self.decode_payload_content("IQQiiQlsLv")
@@ -547,7 +545,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     logger.debug('Closed connection to %s because we are already connected to that IP.',
                                  str(self.destination))
                     return False
-            except:
+            except BaseException:
                 pass
         if not self.isOutbound:
             # incoming from a peer we're connected to as outbound, or server full

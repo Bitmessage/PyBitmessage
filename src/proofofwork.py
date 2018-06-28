@@ -11,17 +11,16 @@ import hashlib
 import os
 import sys
 import time
-from struct import unpack, pack
+from struct import pack, unpack
 from subprocess import call
 
-import paths
 import openclpow
+import paths
 import queues
-import tr
 import state
+import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
-
 
 bitmsglib = 'bitmsghash.so'
 bmpow = None
@@ -132,18 +131,13 @@ def _doGPUPoW(target, initialHash):
     trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
-        queues.UISignalQueue.put(
-            (
-                'updateStatusBar',
-                (
-                    tr._translate(
-                        "MainWindow",
-                        'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.'
-                    ),
-                    1
-                )
-            )
-        )
+        queues.UISignalQueue.put((
+            'updateStatusBar', (
+                tr._translate(
+                    "MainWindow",
+                    'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.'
+                ),
+                1)))
         logger.error(
             "Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.",
             deviceNames)
@@ -198,7 +192,7 @@ def getPowType():
 
 
 def notifyBuild(tried=False):
-    """TBC"""
+    """Notify the user of the success or otherwise of building the PoW C module"""
 
     if bmpow:
         queues.UISignalQueue.put(('updateStatusBar', (tr._translate(
@@ -221,7 +215,7 @@ def notifyBuild(tried=False):
 
 
 def buildCPoW():
-    """TBC"""
+    """Attempt to build the PoW C module"""
     if bmpow is not None:
         return
     if paths.frozen is not None:
@@ -250,7 +244,7 @@ def run(target, initialHash):
     """Run the proof of work thread"""
 
     if state.shutdown != 0:
-        raise
+        raise  # pylint: disable=misplaced-bare-raise
     target = int(target)
     if openclpow.openclEnabled():
         try:
@@ -287,7 +281,7 @@ def run(target, initialHash):
 
 
 def resetPoW():
-    """TBC"""
+    """Initialise the OpenCL PoW"""
     openclpow.initCL()
 
 
@@ -295,7 +289,7 @@ def resetPoW():
 
 
 def init():
-    """TBC"""
+    """Initialise PoW"""
     # pylint: disable=global-statement
     global bitmsglib, bmpow
 

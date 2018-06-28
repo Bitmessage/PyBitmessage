@@ -31,49 +31,32 @@ from struct import pack
 from subprocess import call
 from time import sleep
 
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
-
-# Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
-# The next 3 are used for the API
-from singleinstance import singleinstance
-
-from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
-from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
-)
-
 import defaults
 import depends
-import shared
-import knownnodes
-import state
-import shutdown
-
-# Classes
-from class_sqlThread import sqlThread
-from class_singleCleaner import singleCleaner
-from class_objectProcessor import objectProcessor
-from class_singleWorker import singleWorker
-from class_addressGenerator import addressGenerator
-from bmconfigparser import BMConfigParser
-
-from inventory import Inventory
-
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
-from network.networkthread import BMNetworkThread
-from network.receivequeuethread import ReceiveQueueThread
-from network.announcethread import AnnounceThread
-from network.invthread import InvThread
-from network.addrthread import AddrThread
-from network.downloadthread import DownloadThread
-
-# Helper Functions
-import helper_bootstrap
 import helper_generic
 import helper_threading
+import knownnodes
+import shared
+import shutdown
+import state
+from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
+from bmconfigparser import BMConfigParser
+from class_addressGenerator import addressGenerator
+from class_objectProcessor import objectProcessor
+from class_singleCleaner import singleCleaner
+from class_singleWorker import singleWorker
+from class_sqlThread import sqlThread
+from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
+from inventory import Inventory
+from network.addrthread import AddrThread
+from network.announcethread import AnnounceThread
+from network.connectionpool import BMConnectionPool
+from network.dandelion import Dandelion
+from network.downloadthread import DownloadThread
+from network.invthread import InvThread
+from network.networkthread import BMNetworkThread
+from network.receivequeuethread import ReceiveQueueThread
+from singleinstance import singleinstance
 
 depends.check_dependencies()
 
@@ -95,7 +78,7 @@ def connectToStream(streamNumber):
         if BMConfigParser().get(
                 'bitmessagesettings', 'socksproxytype') != 'none':
             state.maximumNumberOfHalfOpenConnections = 4
-    except:
+    except BaseException:
         pass
 
     with knownnodes.knownNodesLock:
@@ -188,7 +171,7 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
             ))
             s.shutdown(socket.SHUT_RDWR)
             s.close()
-        except:
+        except BaseException:
             pass
 
     def run(self):
@@ -364,11 +347,11 @@ class Main(object):
                 try:
                     apiNotifyPath = BMConfigParser().get(
                         'bitmessagesettings', 'apinotifypath')
-                except:
+                except BaseException:
                     apiNotifyPath = ''
                 if apiNotifyPath != '':
                     with shared.printLock:
-                        print('Trying to call', apiNotifyPath)
+                        print 'Trying to call', apiNotifyPath
 
                     call([apiNotifyPath, "startingUp"])
                 singleAPIThread = singleAPI()
@@ -414,7 +397,7 @@ class Main(object):
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
-                print('Running with curses')
+                print 'Running with curses'
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
             elif state.kivy:

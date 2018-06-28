@@ -4,23 +4,23 @@ Fabric tasks for PyBitmessage devops operations.
 
 Note that where tasks declare params to be bools, they use coerce_bool() and so will accept any commandline (string)
 representation of true or false that coerce_bool() understands.
-
 """
 
 import os
 import sys
 
-from fabric.api import run, task, hide, cd, settings, sudo
+from fabric.api import cd, hide, run, settings, sudo, task
 from fabric.contrib.project import rsync_project
 from fabvenv import virtualenv
 
-from fabfile.lib import (
-    autopep8, PROJECT_ROOT, VENV_ROOT, coerce_bool, flatten, filelist_from_git, default_hosts,
-    get_filtered_pycodestyle_output, get_filtered_flake8_output, get_filtered_pylint_output,
-)
+import fabfile.app_path  # pylint: disable=unused-import
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')))  # noqa:E402
-from version import softwareVersion  # pylint: disable=wrong-import-position
+from version import softwareVersion
+
+from fabfile.lib import (
+    PROJECT_ROOT, VENV_ROOT, autopep8, coerce_bool, default_hosts, filelist_from_git, flatten,
+    get_filtered_flake8_output, get_filtered_pycodestyle_output, get_filtered_pylint_output, isort
+)
 
 
 def get_tool_results(file_list):
@@ -69,6 +69,7 @@ def print_results(results, top, verbose, details):
         print line
 
         if details:
+            print
             print "pycodestyle:"
             for detail in flatten(item['pycodestyle_violations']):
                 print detail
@@ -107,7 +108,7 @@ def generate_file_list(filename):
             if filename:
                 filename = os.path.abspath(filename)
                 if not os.path.exists(filename):
-                    print "Bad filename, specify a Python file"
+                    print "Bad filename {}, specify a Python file".format(filename)
                     sys.exit(1)
                 else:
                     file_list = [filename]
@@ -201,8 +202,16 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10, 
     results = get_tool_results(file_list)
 
     if fix:
-        for item in sort_and_slice(results, top):
-            autopep8(item['path_to_file'])
+        if filename:
+            sorted_and_sliced = [{'path_to_file': os.path.abspath(filename)}]
+        else:
+            sorted_and_sliced = sort_and_slice(results, top)
+
+        for item in sorted_and_sliced:
+            path_to_file = item['path_to_file']
+            print 'Applying automatic fixes to {}'.format(path_to_file)
+            isort(path_to_file)
+            autopep8(path_to_file)
         # Recalculate results after autopep8 to surprise the user the least
         results = get_tool_results(file_list)
 

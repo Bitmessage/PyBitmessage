@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,c-extension-no-member
 """
-Form implementation generated from reading ui file 'bitmessageui.ui'
+bitmessageui.py
+===============
 
-Created: Mon Mar 23 22:18:07 2015
-     by: PyQt4 UI code generator 4.10.4
-
-WARNING! All changes made in this file will be lost!
+Originally generated from reading ui file 'bitmessageui.ui'. Since then maintained manually.
 """
-
-from __future__ import absolute_import
 
 import sys
 
 from PyQt4 import QtCore, QtGui
 
+from bitmessageqt import settingsmixin
+from bitmessageqt.blacklist import Blacklist
+from bitmessageqt.foldertree import AddressBookCompleter
+from bitmessageqt.messagecompose import MessageCompose
+from bitmessageqt.messageview import MessageView
+from bitmessageqt.networkstatus import NetworkStatus
 from bmconfigparser import BMConfigParser
-from . import bitmessage_icons_rc  # pylint: disable=unused-import
-from . import settingsmixin
-from .messageview import MessageView
-from .messagecompose import MessageCompose
-from .networkstatus import NetworkStatus
-from .blacklist import Blacklist
-from .foldertree import AddressBookCompleter
-
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -760,7 +754,7 @@ class Ui_MainWindow(object):
         hours = 48
         try:
             hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl') / 60 / 60)
-        except:
+        except BaseException:
             pass
         self.labelHumanFriendlyTTLDescription.setText(
             _translate(

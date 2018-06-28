@@ -105,4 +105,14 @@ forums for instructions on how to create a package on OS X.
 Please note that some versions of OS X don't work.
 
 #### Windows
-## TODO: Create Windows package creation instructions
+
+Run `python setup.py bdist_wininst` and this will create an appropriate installer executable in `dist/`.
+
+# Troubleshooting
+
+## Working in a virtualenv
+If you get the error about importing PyQt4 when using a virtualenv, run these commands (adjusted to suit your venv name and site-wide PyQt4 installation)
+
+`ln -s /usr/lib/python2.7/dist-packages/PyQt4 ~/.virtualenvs/pybitmessage-devops/lib/python2.7/site-packages/`
+`ln -s /usr/lib/python2.7/dist-packages/sip.x86_64-linux-gnu.so ~/.virtualenvs/pybitmessage-devops/lib/python2.7/site-packages/`
+

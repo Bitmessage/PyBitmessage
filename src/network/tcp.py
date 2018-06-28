@@ -4,34 +4,31 @@ tcp.py
 ======
 """
 
-from __future__ import absolute_import
-
 import math
-import time
-import socket
 import random
+import socket
+import time
 
-from debug import logger
-from helper_random import randomBytes
-import helper_random
-from inventory import Inventory
-import knownnodes
-from network.advanceddispatcher import AdvancedDispatcher
-
-from network.bmproto import BMProto
-import network.connectionpool
-from network.dandelion import Dandelion
-import network.asyncore_pollchoose as asyncore
-from network.objectracker import ObjectTracker
-from network.socks5 import Socks5Connection
-from network.socks4a import Socks4aConnection
-from network.tls import TLSDispatcher
 import addresses
-from bmconfigparser import BMConfigParser
-from queues import invQueue, UISignalQueue, receiveDataQueue
+import helper_random
+import knownnodes
+import network.asyncore_pollchoose as asyncore
+import network.connectionpool
+import protocol
 import shared
 import state
-import protocol
+from bmconfigparser import BMConfigParser
+from debug import logger
+from helper_random import randomBytes
+from inventory import Inventory
+from network.advanceddispatcher import AdvancedDispatcher
+from network.bmproto import BMProto
+from network.dandelion import Dandelion
+from network.objectracker import ObjectTracker
+from network.socks4a import Socks4aConnection
+from network.socks5 import Socks5Connection
+from network.tls import TLSDispatcher
+from queues import UISignalQueue, invQueue, receiveDataQueue
 
 
 class TCPConnection(BMProto, TLSDispatcher):  # pylint: disable=too-many-instance-attributes
