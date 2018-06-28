@@ -17,3 +17,5 @@ dist
 docs/_*/*
 docs/autodoc/
 pyan/
+build/scripts-2.7/
+desktop/icons/

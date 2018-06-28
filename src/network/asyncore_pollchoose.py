@@ -53,13 +53,15 @@ import select
 import socket
 import sys
 import time
-from threading import current_thread
 import warnings
-from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
-    ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
-    ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ENOTSOCK, EINTR, ETIMEDOUT, \
-    EADDRINUSE, \
-    errorcode
+from errno import (
+    EADDRINUSE, EAGAIN, EALREADY, EBADF, ECONNABORTED, ECONNREFUSED, ECONNRESET, EHOSTUNREACH, EINPROGRESS, EINTR,
+    EINVAL, EISCONN, ENETUNREACH, ENOTCONN, ENOTSOCK, EPIPE, ESHUTDOWN, ETIMEDOUT, EWOULDBLOCK, errorcode
+)
+from threading import current_thread
+
+import helper_random
+
 try:
     from errno import WSAEWOULDBLOCK
 except (ImportError, AttributeError):
@@ -77,7 +79,6 @@ try:
     from errno import WSAEADDRINUSE  # pylint: disable=unused-import
 except (ImportError, AttributeError):
     WSAEADDRINUSE = EADDRINUSE
-import helper_random
 
 
 _DISCONNECTED = frozenset((
@@ -128,7 +129,7 @@ def read(obj):
         obj.handle_read_event()
     except _reraised_exceptions:
         raise
-    except:
+    except BaseException:
         obj.handle_error()
 
 
@@ -141,7 +142,7 @@ def write(obj):
         obj.handle_write_event()
     except _reraised_exceptions:
         raise
-    except:
+    except BaseException:
         obj.handle_error()
 
 
@@ -209,7 +210,7 @@ def _exception(obj):
         obj.handle_expt_event()
     except _reraised_exceptions:
         raise
-    except:
+    except BaseException:
         obj.handle_error()
 
 
@@ -232,7 +233,7 @@ def readwrite(obj, flags):
             obj.handle_close()
     except _reraised_exceptions:
         raise
-    except:
+    except BaseException:
         obj.handle_error()
 
 
@@ -788,7 +789,7 @@ class dispatcher:
     def log_info(self, message, log_type='info'):
         """Conditionally print a message"""
         if log_type not in self.ignore_log_types:
-            print '%s: %s' % log_type, message
+            print '%s: %s' % (log_type, message)
 
     def handle_read_event(self):
         """Handle a read event"""
@@ -850,7 +851,7 @@ class dispatcher:
         # sometimes a user repr method will crash.
         try:
             self_repr = repr(self)
-        except:
+        except BaseException:
             self_repr = '<__repr__(self) failed for object at %0x>' % id(self)
 
         self.log_info(
@@ -975,7 +976,7 @@ def close_all(map=None, ignore_all=False):
                 raise
         except _reraised_exceptions:
             raise
-        except:
+        except BaseException:
             if not ignore_all:
                 raise
     map.clear()

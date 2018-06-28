@@ -1,13 +1,20 @@
 #!/usr/bin/env python2.7
+"""
+setup.py
+========
+
+Install the pybitmessage package and dependencies.
+"""
+
+from __future__ import print_function
 
 import os
 import shutil
 
-from setuptools import setup, Extension
+from setuptools import Extension, setup
 from setuptools.command.install import install
 
 from src.version import softwareVersion
-
 
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
@@ -16,17 +23,25 @@ EXTRAS_REQUIRE = {
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
-    'docs': [
-        'sphinx',  # fab build_docs
+    'devops': [
+        'autopep8',  # fab code_quality
+        'fabric==1.14.0',
+        'fabric-virtualenv',
+        'flake8==3.4.1',  # https://github.com/PyCQA/pycodestyle/issues/741
         'graphviz',  # fab build_docs
-        'curses',  # src/depends.py
-        'python2-pythondialog',  # src/depends.py
+        'isort',  # fab code_quality
         'm2r',  # fab build_docs
+        'pycodestyle==2.3.1',  # https://github.com/PyCQA/pycodestyle/issues/741
+        'pylint',  # fab code_quality
+        'python2-pythondialog',  # src/depends.py
+        'sphinx',  # fab build_docs
     ],
 }
 
 
 class InstallCmd(install):
+    """Install PyBitmessage"""
+
     def run(self):
         # prepare icons directories
         try:
@@ -46,6 +61,7 @@ class InstallCmd(install):
 
 
 if __name__ == "__main__":
+
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
@@ -63,21 +79,21 @@ if __name__ == "__main__":
         'pybitmessage.bitmessagecurses',
         'pybitmessage.messagetypes',
         'pybitmessage.network',
+        'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
         'pybitmessage.socks',
         'pybitmessage.storage',
-        'pybitmessage.plugins'
     ]
 
     # this will silently accept alternative providers of msgpack
     # if they are already installed
 
     try:
-        import msgpack
+        import msgpack  # pylint: disable=unused-import
         installRequires.append("msgpack-python")
     except ImportError:
         try:
-            import umsgpack
+            import umsgpack  # pylint: disable=unused-import
             installRequires.append("umsgpack")
         except ImportError:
             packages += ['pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
@@ -89,12 +105,10 @@ if __name__ == "__main__":
         "a P2P communications protocol",
         long_description=README,
         license='MIT',
-        # TODO: add author info
-        #author='',
-        #author_email='',
+        author='The Bitmessage Team',
+        author_email='surda@economicsofbitcoin.com',
         url='https://bitmessage.org',
-        # TODO: add keywords
-        #keywords='',
+        keywords='bitmessage pybitmessage',
         install_requires=installRequires,
         extras_require=EXTRAS_REQUIRE,
         classifiers=[
@@ -114,11 +128,11 @@ if __name__ == "__main__":
         ]},
         data_files=[
             ('share/applications/',
-                ['desktop/pybitmessage.desktop']),
+             ['desktop/pybitmessage.desktop']),
             ('share/icons/hicolor/scalable/apps/',
-                ['desktop/icons/scalable/pybitmessage.svg']),
+             ['desktop/icons/scalable/pybitmessage.svg']),
             ('share/icons/hicolor/24x24/apps/',
-                ['desktop/icons/24x24/pybitmessage.png'])
+             ['desktop/icons/24x24/pybitmessage.png'])
         ],
         ext_modules=[bitmsghash],
         zip_safe=False,
@@ -141,9 +155,6 @@ if __name__ == "__main__":
                 'libmessaging ='
                 'pybitmessage.plugins.indicator_libmessaging [gir]'
             ],
-            # 'console_scripts': [
-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
-            # ]
         },
         scripts=['src/pybitmessage'],
         cmdclass={'install': InstallCmd}

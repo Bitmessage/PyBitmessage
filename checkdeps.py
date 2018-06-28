@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# pylint: disable=no-name-in-module,import-error; PyCQA/pylint/issues/73
 """
 Check dependendies and give recommendations about how to satisfy them
 
@@ -10,9 +11,15 @@ Limitations:
     EXTRAS_REQUIRE. This is fine because most developers do, too.
 """
 
+from __future__ import print_function
+
 import os
 import sys
 from distutils.errors import CompileError
+from importlib import import_module
+
+from src.depends import PACKAGE_MANAGER, PACKAGES, detectOS
+
 try:
     from setuptools.dist import Distribution
     from setuptools.extension import Extension
@@ -23,10 +30,6 @@ try:
 except ImportError:
     HAVE_SETUPTOOLS = False
     EXTRAS_REQUIRE = []
-
-from importlib import import_module
-
-from src.depends import detectOS, PACKAGES, PACKAGE_MANAGER
 
 
 COMPILING = {
@@ -52,10 +55,23 @@ EXTRAS_REQUIRE_DEPS = {
         "Guix": [""],
         "Gentoo": ["dev-python/python-prctl"],
     },
+    'devops': {
+        "OpenBSD": [""],
+        "FreeBSD": [""],
+        "Debian": ["libncurses5-dev"],
+        "Ubuntu": [""],
+        "Ubuntu 12": [""],
+        "openSUSE": [""],
+        "Fedora": [""],
+        "Guix": [""],
+        "Gentoo": [""],
+    },
+
 }
 
 
 def detectPrereqs(missing=True):
+    """Detect pre-requesits of PACKAGES from src.depends"""
     available = []
     for module in PACKAGES:
         try:
@@ -69,6 +85,7 @@ def detectPrereqs(missing=True):
 
 
 def prereqToPackages():
+    """Detect OS-specific package depenedncies"""
     if not detectPrereqs():
         return
     print("%s %s" % (
@@ -77,6 +94,7 @@ def prereqToPackages():
 
 
 def compilerToPackages():
+    """Detect OS-specific compiler packages"""
     if not detectOS() in COMPILING:
         return
     print("%s %s" % (
@@ -84,6 +102,7 @@ def compilerToPackages():
 
 
 def testCompiler():
+    """Test the compiler and dependencies"""
     if not HAVE_SETUPTOOLS:
         # silent, we can't test without setuptools
         return True
@@ -140,9 +159,9 @@ for lhs, rhs in EXTRAS_REQUIRE.items():
     if OPSYS is None:
         break
     if rhs and any([
-        EXTRAS_REQUIRE_DEPS[x][OPSYS]
-        for x in rhs
-        if x in EXTRAS_REQUIRE_DEPS
+            EXTRAS_REQUIRE_DEPS[x][OPSYS]
+            for x in rhs
+            if x in EXTRAS_REQUIRE_DEPS
     ]):
         rhs_cmd = ''.join([
             CMD,

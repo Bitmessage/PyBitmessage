@@ -12,19 +12,20 @@ This is an example of a daemon client for PyBitmessage 0.6.2, by .dok (Version 0
 TODO: fix the following (currently ignored) violations:
 
 """
+from __future__ import absolute_import
 
-import xmlrpclib
 import datetime
 import imghdr
-import ntpath
 import json
-import socket
-import time
-import sys
+import ntpath
 import os
+import socket
+import sys
+import time
+import xmlrpclib
+import pathmagic
 
 from bmconfigparser import BMConfigParser
-
 
 api = ''
 keysName = 'keys.dat'

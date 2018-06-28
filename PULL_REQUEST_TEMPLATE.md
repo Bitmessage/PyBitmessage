@@ -15,7 +15,28 @@
 ### Tests
 
 - If there has been a change to the code, there's a good possibility there should be a corresponding change to the tests
-- If you can't run `fab tests` successfully, ask for someone to run it against your branch
+- If you can't run `fab tests` successfully, ask for someone to run it against your branch. If you can't (and know that this fab task is not working yet), at least make sure the following commands work:
+
+  - Make sure the installer still works (this may be insufficient if files are deleted) and that the installed version
+    works.
+
+      - `python setup.py install --record files.txt; tr '\n' '\0' < files.txt | xargs -0 rm -f --; python setup.py install`
+      - `pybitmessage`
+
+  - And as root:
+
+      - `sudo python setup.py install --record files.txt; tr '\n' '\0' < files.txt | xargs -0 sudo rm -f --; sudo python setup.py install`
+      - `pybitmessage`
+
+  - Make sure the apps still work portably:
+
+      - `./src/bitmessagemain.py`
+      - `./src/bitmessagecli.py`
+
+  - Make sure the travis test still works (currently just `pybitmessage -t` but check travis.yml for changes
+
+ - Ideally, try this in a virtualenv, as a user with no venv, system-wide as root and on windows with `python setup.py bdist_wininst
+; dist/Bitmessage_x64_0.6.3.2.exe` followed by uninstalling through add/remove progragrams and re-installing (actual filename may vary).
 
 ## Translations
 
