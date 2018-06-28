@@ -6,8 +6,10 @@ A library of functions and constants for tasks to make use of.
 
 import os
 import sys
+import re
+from functools import wraps
 
-from fabric.api import run, hide
+from fabric.api import run, hide, cd, env
 from fabric.context_managers import settings, shell_env
 from fabvenv import virtualenv
 
@@ -16,6 +18,14 @@ FABRIC_ROOT = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.dirname(FABRIC_ROOT)
 VENV_ROOT = os.path.expanduser(os.path.join('~', '.virtualenvs', 'pybitmessage-devops'))
 PYTHONPATH = os.path.join(PROJECT_ROOT, 'src',)
+
+
+def coerce_list(value):
+    """Coerce a value into a list"""
+    if isinstance(value, str):
+        return value.split(',')
+    else:
+        sys.exit("Bad string value {}".format(value))
 
 
 def coerce_bool(value):
@@ -49,6 +59,29 @@ def flatten(data):
         else:
             result.append(item)
     return result
+
+
+def filelist_from_git(rev=None):
+    """Return a list of files based on git output"""
+    cmd = 'git diff --name-only'
+    if rev:
+        if rev in ['cached', 'staged']:
+            cmd += ' --{}'.format(rev)
+        elif rev == 'working':
+            pass
+        else:
+            cmd += ' -r {}'.format(rev)
+
+    with cd(PROJECT_ROOT):
+        with hide('running', 'stdout'):
+            results = []
+            ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+            clean = ansi_escape.sub('', run(cmd))
+            clean = re.sub('\n', '', clean)
+            for line in clean.split('\r'):
+                if line.endswith(".py"):
+                    results.append(os.path.abspath(line))
+            return results
 
 
 def pycodestyle(path_to_file):
@@ -148,3 +181,20 @@ def get_filtered_pylint_output(path_to_file):
             not i.startswith('Using config file'),
         ])
     ]
+
+
+def default_hosts(hosts):
+    """Decorator to apply default hosts to a task"""
+
+    def real_decorator(func):
+        """Manipulate env"""
+        env.hosts = env.hosts or hosts
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            """Original function called from here"""
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return real_decorator

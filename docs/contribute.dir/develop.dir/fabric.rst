@@ -1,0 +1,2 @@
+.. mdinclude:: fabfile/README.md
+

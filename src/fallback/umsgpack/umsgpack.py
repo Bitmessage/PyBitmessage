@@ -205,7 +205,7 @@ load = None
 loads = None
 
 compatibility = False
-"""
+u"""
 Compatibility mode boolean.
 
 When compatibility mode is enabled, u-msgpack-python will serialize both
