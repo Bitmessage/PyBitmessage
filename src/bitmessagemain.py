@@ -383,8 +383,14 @@ def main():
 
 # See "workprover/Readme.md"
 
-import pyelliptic.openssl
+import os
+import sys
 
+app_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(app_dir)
+sys.path.insert(0, app_dir)
+
+import pyelliptic.openssl
 import workprover.dumbsolver
 
 workprover.dumbsolver.libcrypto = pyelliptic.openssl.OpenSSL._lib
@@ -393,14 +399,6 @@ if __name__ == "__main__":
     import multiprocessing
 
     multiprocessing.freeze_support()
-
-    import os
-    import sys
-
-    app_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(app_dir)
-    sys.path.insert(0, app_dir)
-
 
     import depends
     depends.check_dependencies()
