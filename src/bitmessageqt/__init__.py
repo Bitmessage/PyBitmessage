@@ -255,6 +255,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         # load all gui.menu plugins with prefix 'address'
         self.menu_plugins = {'address': []}
+        if not get_plugins:
+            return
         for plugin in get_plugins('gui.menu', 'address'):
             try:
                 handler, title = plugin(self)
