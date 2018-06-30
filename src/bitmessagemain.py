@@ -9,67 +9,6 @@
 
 # The software version variable is now held in shared.py
 
-import os
-import sys
-
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
-
-
-import depends
-depends.check_dependencies()
-
-# Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
-import signal
-# The next 3 are used for the API
-from singleinstance import singleinstance
-import errno
-import socket
-import ctypes
-from struct import pack
-from subprocess import call
-from time import sleep
-from random import randint
-import getopt
-
-from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
-from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
-)
-
-import defaults
-import shared
-import knownnodes
-import state
-import shutdown
-import threading
-
-# Classes
-from class_sqlThread import sqlThread
-from class_singleCleaner import singleCleaner
-from class_objectProcessor import objectProcessor
-from class_singleWorker import singleWorker
-from class_addressGenerator import addressGenerator
-from bmconfigparser import BMConfigParser
-
-from inventory import Inventory
-
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
-from network.networkthread import BMNetworkThread
-from network.receivequeuethread import ReceiveQueueThread
-from network.announcethread import AnnounceThread
-from network.invthread import InvThread
-from network.addrthread import AddrThread
-from network.downloadthread import DownloadThread
-
-# Helper Functions
-import helper_bootstrap
-import helper_generic
-import helper_threading
-
-
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
     selfInitiatedConnections[streamNumber] = {}
@@ -154,63 +93,6 @@ def _fixSocket():
         socket.IPPROTO_IPV6 = 41
     if not hasattr(socket, 'IPV6_V6ONLY'):
         socket.IPV6_V6ONLY = 27
-
-
-# This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, helper_threading.StoppableThread):
-    def __init__(self):
-        threading.Thread.__init__(self, name="singleAPI")
-        self.initStop()
-
-    def stopThread(self):
-        super(singleAPI, self).stopThread()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.connect((
-                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
-                BMConfigParser().getint('bitmessagesettings', 'apiport')
-            ))
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-        except:
-            pass
-
-    def run(self):
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
-        try:
-            from errno import WSAEADDRINUSE
-        except (ImportError, AttributeError):
-            errno.WSAEADDRINUSE = errno.EADDRINUSE
-        for attempt in range(50):
-            try:
-                if attempt > 0:
-                    port = randint(32767, 65535)
-                se = StoppableXMLRPCServer(
-                    (BMConfigParser().get(
-                        'bitmessagesettings', 'apiinterface'),
-                     port),
-                    MySimpleXMLRPCRequestHandler, True, True)
-            except socket.error as e:
-                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
-                    continue
-            else:
-                if attempt > 0:
-                    BMConfigParser().set(
-                        "bitmessagesettings", "apiport", str(port))
-                    BMConfigParser().save()
-                break
-        se.register_introspection_functions()
-        se.serve_forever()
-
-
-# This is a list of current connections (the thread pointers at least)
-selfInitiatedConnections = {}
-
-if shared.useVeryEasyProofOfWorkForTesting:
-    defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
-    defaults.networkDefaultPayloadLengthExtraBytes = int(
-        defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
 
 class Main:
@@ -499,10 +381,87 @@ def main():
     mainprogram = Main()
     mainprogram.start()
 
+# See "workprover/Readme.md"
+
+import pyelliptic.openssl
+
+import workprover.dumbsolver
+
+workprover.dumbsolver.libcrypto = pyelliptic.openssl.OpenSSL._lib
 
 if __name__ == "__main__":
-    main()
+    import multiprocessing
 
+    multiprocessing.freeze_support()
+
+    import os
+    import sys
+
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(app_dir)
+    sys.path.insert(0, app_dir)
+
+
+    import depends
+    depends.check_dependencies()
+
+    # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
+    import signal
+    # The next 3 are used for the API
+    from singleinstance import singleinstance
+    import errno
+    import socket
+    import ctypes
+    from struct import pack
+    from subprocess import call
+    from time import sleep
+    import getopt
+
+    from api import singleAPI
+    from helper_startup import (
+        isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
+    )
+
+    import defaults
+    import shared
+    import knownnodes
+    import state
+    import shutdown
+
+    # Classes
+    from class_sqlThread import sqlThread
+    from class_singleCleaner import singleCleaner
+    from class_objectProcessor import objectProcessor
+    from class_singleWorker import singleWorker
+    from class_addressGenerator import addressGenerator
+    from bmconfigparser import BMConfigParser
+
+    from inventory import Inventory
+
+    from network.connectionpool import BMConnectionPool
+    from network.dandelion import Dandelion
+    from network.networkthread import BMNetworkThread
+    from network.receivequeuethread import ReceiveQueueThread
+    from network.announcethread import AnnounceThread
+    from network.invthread import InvThread
+    from network.addrthread import AddrThread
+    from network.downloadthread import DownloadThread
+
+    # Helper Functions
+    import helper_bootstrap
+    import helper_generic
+    import helper_threading
+
+    # This is a list of current connections (the thread pointers at least)
+    selfInitiatedConnections = {}
+
+    if shared.useVeryEasyProofOfWorkForTesting:
+        defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
+        defaults.networkDefaultPayloadLengthExtraBytes = int(
+            defaults.networkDefaultPayloadLengthExtraBytes / 100)
+
+    main()
 
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.

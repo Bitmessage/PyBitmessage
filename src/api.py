@@ -10,8 +10,11 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 import base64
 import hashlib
 import json
+import socket
+import threading
 import time
 from binascii import hexlify, unhexlify
+from random import randint
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
 
@@ -23,6 +26,7 @@ from bmconfigparser import BMConfigParser
 import defaults
 import helper_inbox
 import helper_sent
+import helper_threading
 
 import state
 import queues
@@ -1297,3 +1301,49 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             logger.exception(e)
 
             return "API Error 0021: Unexpected API Failure - %s" % e
+
+# This thread, of which there is only one, runs the API.
+class singleAPI(threading.Thread, helper_threading.StoppableThread):
+    def __init__(self):
+        threading.Thread.__init__(self, name="singleAPI")
+        self.initStop()
+
+    def stopThread(self):
+        super(singleAPI, self).stopThread()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((
+                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
+                BMConfigParser().getint('bitmessagesettings', 'apiport')
+            ))
+            s.shutdown(socket.SHUT_RDWR)
+            s.close()
+        except:
+            pass
+
+    def run(self):
+        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        try:
+            from errno import WSAEADDRINUSE
+        except (ImportError, AttributeError):
+            errno.WSAEADDRINUSE = errno.EADDRINUSE
+        for attempt in range(50):
+            try:
+                if attempt > 0:
+                    port = randint(32767, 65535)
+                se = StoppableXMLRPCServer(
+                    (BMConfigParser().get(
+                        'bitmessagesettings', 'apiinterface'),
+                     port),
+                    MySimpleXMLRPCRequestHandler, True, True)
+            except socket.error as e:
+                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
+                    continue
+            else:
+                if attempt > 0:
+                    BMConfigParser().set(
+                        "bitmessagesettings", "apiport", str(port))
+                    BMConfigParser().save()
+                break
+        se.register_introspection_functions()
+        se.serve_forever()
