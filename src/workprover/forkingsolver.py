@@ -89,7 +89,12 @@ class ForkingSolver(object):
         for i in xrange(len(self.processes), parallelism):
             local, remote = multiprocessing.Pipe()
 
-            process = multiprocessing.Process(target = threadFunction, args = (remote, local, self.codePath, i))
+            process = multiprocessing.Process(
+                target = threadFunction,
+                args = (remote, local, self.codePath, i),
+                name = "ForkingSolver"
+            )
+
             process.start()
 
             remote.close()

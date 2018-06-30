@@ -109,11 +109,11 @@ class TestDumbSolver(TestSolver):
 
 class TestForkingSolver(TestSolver):
     Solver = forkingsolver.ForkingSolver
-    configuration = 1
+    configuration = 3
 
 class TestFastSolver(TestSolver):
     Solver = fastsolver.FastSolver
-    configuration = 1
+    configuration = 3
 
 class TestGPUSolver(TestSolver):
     Solver = gpusolver.GPUSolver
