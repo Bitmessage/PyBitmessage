@@ -92,12 +92,16 @@ class LoginScreen(BoxLayout):
                     return None
 
     def sayexit(self):
+        """This method will exit the application screen."""
         print("**************************EXITING FROM APPLICATION*****************************")
         shutdown.doCleanShutdown()
         Window.close()
 
 
 class MainApp(App):
-
+    """The App class is the base for creating Kivy applications
+    Think of it as your main entry point into the Kivy run loop."""
     def build(self):
+        """To initialize an app with a widget tree, we need to override the build()
+        method in our app class and return the widget tree which we have constructed.."""
         return LoginScreen()
