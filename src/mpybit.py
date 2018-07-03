@@ -1,45 +1,51 @@
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.core.window import Window
-from os import environ
+import threading
 
-# environ['BITMESSAGE_HOME'] = '~/home/cis/Desktop/pybit'
-# environ['HOME'] = '~/home/cis/Desktop/pybit'
+import time
+
+
+from addresses import addBMIfNotPresent, decodeAddress
 
 from bmconfigparser import BMConfigParser
+
 from helper_ackPayload import genAckPayload
-from addresses import decodeAddress, addBMIfNotPresent
-from class_sqlThread import sqlThread
-from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
-import time
+
+
+from helper_sql import sqlExecute
+
+
+from kivy.app import App
+from kivy.core.window import Window
+from kivy.uix.boxlayout import BoxLayout
+
 import queues
-import state
-import threading
+
 import shutdown
-from inventory import Inventory
 statusIconColor = 'red'
 
 
-class Login_Screen(BoxLayout):
-
+class LoginScreen(BoxLayout):
+    """This will use for sending message to recipents from mobile client."""
 
     def send(self):
-        # print(len(Inventory()), "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
-        # print(len(Inventory().unexpired_hashes_by_stream(1)), "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDdd")
+        """Send used for sending message with title and body."""
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
         label = "CisDevelper"
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
-        print("BREAK POINT STARTING @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-        queues.addressGeneratorQueue.put( (
-            'createRandomAddress', 4, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes )
+        print("BREAK POINT STARTING")
+        queues.addressGeneratorQueue.put(
+                                        (
+                                            'createRandomAddress', 4,
+                                            streamNumberForAddress, label, 1,
+                                            "", eighteenByteRipe, nonceTrialsPerByte,
+                                            payloadLengthExtraBytes
+                                        )
         )
         print(BMConfigParser().sections(), "BMConfigParser().sections()")
         fromAddress = queues.apiAddressGeneratorReturnQueue.get()
-        print("BREAK POINT ENDING //////////////////////////////////////////////////////////////////")
-        # toAddress = "BM-NBqmcWH5XJMmXCVxD4HVTNPe3naGgHgE"
+        print("BREAK POINT ENDING")
         toAddress = "BM-2cWyUfBdY2FbgyuCb7abFZ49JYxSzUhNFe"
         message = self.ids.user_input.text
         subject = 'Test'
@@ -48,7 +54,8 @@ class Login_Screen(BoxLayout):
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '':
-                status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
+                status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                    toAddress)
                 if status == 'success':
                     toAddress = addBMIfNotPresent(toAddress)
 
@@ -61,7 +68,6 @@ class Login_Screen(BoxLayout):
                     stealthLevel = BMConfigParser().safeGetInt(
                         'bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(streamNumber, stealthLevel)
-                    t = ()
                     sqlExecute(
                         '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                         '',
@@ -79,34 +85,19 @@ class Login_Screen(BoxLayout):
                         'sent',
                         encoding,
                         BMConfigParser().getint('bitmessagesettings', 'ttl'))
-                    toLabel = ''
-                    # queryreturn = sqlQuery('''select status from sent''')
-                    # if queryreturn != []:
-                    #     for row in queryreturn:
-                    #         print(row, "YZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZYZZYZYZYZYZYZYZYZYZY")
-                    #         toLabel, = row
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print("sqlExecute successfully #####    ##################")
-                    
-                    # App.get_running_app().stop()
-                    # Window.close()
-                    # shutdown.doCleanShutdown()
-                    for i in threading.enumerate(): 
-                        print (i.name)
-                    # from threading import Timer
-                    # t = Timer(300.0, connectedHostsList())
-                    # t.start()
-                    # print(connectedHostsList())
-                    print("calling connectios")
+                    for i in threading.enumerate():
+                        print(i.name)
                     return None
 
-    def say_exit(self):
-        print ("**************************EXITING FROM APPLICATION*****************************")
+    def sayexit(self):
+        print("**************************EXITING FROM APPLICATION*****************************")
         shutdown.doCleanShutdown()
         Window.close()
 
+
 class MainApp(App):
 
-
     def build(self):
-        return Login_Screen()
+        return LoginScreen()
