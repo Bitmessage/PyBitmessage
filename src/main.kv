@@ -1,0 +1,16 @@
+<Login_Screen>:
+    BoxLayout:
+        AnchorLayout:
+            TextInput:
+                id: user_input
+
+    BoxLayout:
+        Button:
+            id: sendmessage
+            text: 'SendMessage'
+            on_press: root.send()
+
+        Button:
+            id: btnExit
+            text: "Exit"
+            on_press: root.say_exit()
