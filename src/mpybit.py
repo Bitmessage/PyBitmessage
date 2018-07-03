@@ -1,7 +1,4 @@
-import threading
-
 import time
-
 
 from addresses import addBMIfNotPresent, decodeAddress
 
@@ -9,9 +6,7 @@ from bmconfigparser import BMConfigParser
 
 from helper_ackPayload import genAckPayload
 
-
 from helper_sql import sqlExecute
-
 
 from kivy.app import App
 from kivy.core.window import Window
@@ -27,25 +22,21 @@ class LoginScreen(BoxLayout):
     """This will use for sending message to recipents from mobile client."""
 
     def send(self):
-        """Send used for sending message with title and body."""
+        """This used for sending message with subject and body."""
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
         label = "CisDevelper"
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
-        print("BREAK POINT STARTING")
-        queues.addressGeneratorQueue.put(
-                                        (
-                                            'createRandomAddress', 4,
-                                            streamNumberForAddress, label, 1,
-                                            "", eighteenByteRipe, nonceTrialsPerByte,
-                                            payloadLengthExtraBytes
-                                        )
-        )
+        queues.addressGeneratorQueue.put((
+            'createRandomAddress', 4,
+            streamNumberForAddress, label, 1,
+            "", eighteenByteRipe, nonceTrialsPerByte,
+            payloadLengthExtraBytes
+        ))
         print(BMConfigParser().sections(), "BMConfigParser().sections()")
         fromAddress = queues.apiAddressGeneratorReturnQueue.get()
-        print("BREAK POINT ENDING")
         toAddress = "BM-2cWyUfBdY2FbgyuCb7abFZ49JYxSzUhNFe"
         message = self.ids.user_input.text
         subject = 'Test'
@@ -86,14 +77,10 @@ class LoginScreen(BoxLayout):
                         encoding,
                         BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     queues.workerQueue.put(('sendmessage', toAddress))
-                    print("sqlExecute successfully #####    ##################")
-                    for i in threading.enumerate():
-                        print(i.name)
                     return None
 
     def sayexit(self):
         """This method will exit the application screen."""
-        print("**************************EXITING FROM APPLICATION*****************************")
         shutdown.doCleanShutdown()
         Window.close()
 
