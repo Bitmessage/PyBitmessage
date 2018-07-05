@@ -69,7 +69,6 @@ import helper_bootstrap
 import helper_generic
 import helper_threading
 
-
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
     selfInitiatedConnections[streamNumber] = {}
@@ -390,18 +389,22 @@ class Main:
             # Populate with hardcoded value (same as connectToStream above)
             state.streamsInWhichIAmParticipating.append(1)
 
-        if not state.enableGUI:
-            BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
-        elif daemon is False:
+        if daemon is False and state.enableGUI:
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
                 print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
+            elif state.kivy:
+                BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+                from mpybit import MainApp
+                MainApp().run()
             else:
                 import bitmessageqt
                 bitmessageqt.run()
+        else:
+            BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
         if daemon:
             if state.testmode:

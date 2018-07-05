@@ -68,3 +68,5 @@ resetNetworkProtocolAvailability()
 dandelion = 0
 
 testmode = False
+
+kivy = False
