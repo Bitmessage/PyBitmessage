@@ -10,7 +10,8 @@ from helper_sql import sqlExecute
 
 from kivy.app import App
 from kivy.core.window import Window
-from kivy.uix.boxlayout import BoxLayout
+# from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 
 import queues
 
@@ -18,7 +19,7 @@ import shutdown
 statusIconColor = 'red'
 
 
-class LoginScreen(BoxLayout):
+class LoginScreen(GridLayout):
     """This will use for sending message to recipents from mobile client."""
 
     def send(self):

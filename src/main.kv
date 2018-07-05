@@ -1,16 +1,27 @@
+<CustomButton@Button>:
+    font_size: 26
 <LoginScreen>:
+    padding: 200
+    spacing: 10
+    rows:2
+
     BoxLayout:
         AnchorLayout:
             TextInput:
                 id: user_input
+                font_size: 65
+                hint_text: "enter text"
 
     BoxLayout:
+        spacing: 10
         Button:
+            background_color: (1.0, 2.0, 8.0, 1.0)
             id: sendmessage
             text: 'SendMessage'
             on_press: root.send()
 
         Button:
+            background_color: (1.0, 2.0, 8.0, 1.0)
             id: btnExit
             text: "Exit"
             on_press: root.sayexit()
