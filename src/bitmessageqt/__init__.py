@@ -627,8 +627,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.replyFromTab = None
 
         # so that quit won't loop
-        self.quitAccepted = False
-        
+        self.wait = self.quitAccepted = False
+
         self.init_file_menu()
         self.init_inbox_popup_menu()
         self.init_identities_popup_menu()
@@ -2709,7 +2709,7 @@ class MyForm(settingsmixin.SMainWindow):
     # Quit selected from menu or application indicator
     def quit(self):
         """Quit the bitmessageqt application"""
-        if self.quitAccepted:
+        if self.quitAccepted and not self.wait:
             return
 
         self.show()
@@ -2761,7 +2761,7 @@ class MyForm(settingsmixin.SMainWindow):
                 QtGui.QMessageBox.Cancel
             )
             if reply == QtGui.QMessageBox.Yes:
-                waitForSync = True
+                self.wait = waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
@@ -2781,7 +2781,7 @@ class MyForm(settingsmixin.SMainWindow):
             )
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
-                waitForSync = True
+                self.wait = waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
@@ -2903,11 +2903,6 @@ class MyForm(settingsmixin.SMainWindow):
 
         trayonclose = BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'trayonclose')
-
-        # always ignore, it shuts down by itself
-        if self.quitAccepted:
-            event.accept()
-            return
 
         event.ignore()
         if not trayonclose:
