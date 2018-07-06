@@ -2708,14 +2708,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     # Quit selected from menu or application indicator
     def quit(self):
-        '''quit_msg = "Are you sure you want to exit Bitmessage?"
-        reply = QtGui.QMessageBox.question(self, 'Message',
-                         quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-
-        if reply is QtGui.QMessageBox.No:
-            return
-        '''
-
+        """Quit the bitmessageqt application"""
         if self.quitAccepted:
             return
 
@@ -2729,20 +2722,44 @@ class MyForm(settingsmixin.SMainWindow):
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
         if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
-                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
-                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, pendingUpload()) + "\n\n" + 
-                    _translate("MainWindow", "Wait until these tasks finish?"),
-                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+            reply = QtGui.QMessageBox.question(
+                self, _translate("MainWindow", "Proof of work pending"),
+                _translate(
+                    "MainWindow",
+                    "%n object(s) pending proof of work", None,
+                    QtCore.QCoreApplication.CodecForTr, powQueueSize()
+                ) + ", " +
+                _translate(
+                    "MainWindow",
+                    "%n object(s) waiting to be distributed", None,
+                    QtCore.QCoreApplication.CodecForTr, pendingUpload()
+                ) + "\n\n" +
+                _translate(
+                    "MainWindow", "Wait until these tasks finish?"),
+                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
+                QtGui.QMessageBox.Cancel,
+                QtGui.QMessageBox.Cancel
+            )
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
         if pendingDownload() > 0:
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, pendingDownload()),
-                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+            reply = QtGui.QMessageBox.question(
+                self, _translate("MainWindow", "Synchronisation pending"),
+                _translate(
+                    "MainWindow",
+                    "Bitmessage hasn't synchronised with the network,"
+                    " %n object(s) to be downloaded. If you quit now,"
+                    " it may cause delivery delays. Wait until the"
+                    " synchronisation finishes?", None,
+                    QtCore.QCoreApplication.CodecForTr, pendingDownload()
+                ),
+                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
+                QtGui.QMessageBox.Cancel,
+                QtGui.QMessageBox.Cancel
+            )
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
@@ -2750,9 +2767,18 @@ class MyForm(settingsmixin.SMainWindow):
 
         if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
-                    _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?"),
-                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+            reply = QtGui.QMessageBox.question(
+                self, _translate("MainWindow", "Not connected"),
+                _translate(
+                    "MainWindow",
+                    "Bitmessage isn't connected to the network. If you"
+                    " quit now, it may cause delivery delays. Wait until"
+                    " connected and the synchronisation finishes?"
+                ),
+                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
+                QtGui.QMessageBox.Cancel,
+                QtGui.QMessageBox.Cancel
+            )
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
                 waitForSync = True
@@ -2773,7 +2799,9 @@ class MyForm(settingsmixin.SMainWindow):
                     QtCore.QEventLoop.AllEvents, 1000
                 )
 
-        # this probably will not work correctly, because there is a delay between the status icon turning red and inventory exchange, but it's better than nothing.
+        # this probably will not work correctly, because there is a delay
+        # between the status icon turning red and inventory exchange,
+        # but it's better than nothing.
         if waitForSync:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
@@ -2795,9 +2823,8 @@ class MyForm(settingsmixin.SMainWindow):
                 if curWorkerQueue > 0:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Waiting for PoW to finish... %1%"
-                        ).arg(50 * (maxWorkerQueue - curWorkerQueue)
-                              / maxWorkerQueue)
-                    )
+                    ).arg(50 * (maxWorkerQueue - curWorkerQueue) /
+                          maxWorkerQueue))
                     time.sleep(0.5)
                     QtCore.QCoreApplication.processEvents(
                         QtCore.QEventLoop.AllEvents, 1000
@@ -2820,13 +2847,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for objects to be sent... %1%").arg(50))
             maxPendingUpload = max(1, pendingUpload())
-                   
+
             while pendingUpload() > 1:
                 self.updateStatusBar(_translate(
                     "MainWindow",
                     "Waiting for objects to be sent... %1%"
-                    ).arg(int(50 + 20 * (pendingUpload()/maxPendingUpload)))
-                )
+                ).arg(int(50 + 20 * (pendingUpload() / maxPendingUpload))))
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2869,18 +2895,14 @@ class MyForm(settingsmixin.SMainWindow):
         logger.info("Shutdown complete")
         super(MyForm, myapp).close()
         # return
-        os._exit(0)
+        sys.exit()
 
     # window close event
     def closeEvent(self, event):
         self.appIndicatorHide()
-        trayonclose = False
 
-        try:
-            trayonclose = BMConfigParser().getboolean(
-                'bitmessagesettings', 'trayonclose')
-        except Exception:
-            pass
+        trayonclose = BMConfigParser().safeGetBoolean(
+            'bitmessagesettings', 'trayonclose')
 
         # always ignore, it shuts down by itself
         if self.quitAccepted:
