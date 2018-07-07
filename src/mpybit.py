@@ -1,5 +1,7 @@
 import time
 
+from debug import logger
+
 from addresses import addBMIfNotPresent, decodeAddress
 
 from bmconfigparser import BMConfigParser
@@ -23,7 +25,7 @@ class LoginScreen(GridLayout):
     """This will use for sending message to recipents from mobile client."""
 
     def send(self):
-        """This used for sending message with subject and body."""
+        """It is used for sending message with subject and body."""
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
         label = "CisDevelper"
@@ -36,13 +38,11 @@ class LoginScreen(GridLayout):
             "", eighteenByteRipe, nonceTrialsPerByte,
             payloadLengthExtraBytes
         ))
-        print(BMConfigParser().sections(), "BMConfigParser().sections()")
         fromAddress = queues.apiAddressGeneratorReturnQueue.get()
         toAddress = "BM-2cWyUfBdY2FbgyuCb7abFZ49JYxSzUhNFe"
         message = self.ids.user_input.text
         subject = 'Test'
         encoding = 3
-        print("message: ", self.ids.user_input.text)
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '':
@@ -52,11 +52,11 @@ class LoginScreen(GridLayout):
                     toAddress = addBMIfNotPresent(toAddress)
 
                     if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                        print("addressVersionNumber > 4 or addressVersionNumber <= 1")
+                        logger.info("addressVersionNumber > 4 or addressVersionNumber <= 1")
                     if streamNumber > 1 or streamNumber == 0:
-                        print("streamNumber > 1 or streamNumber == 0")
+                        logger.info("streamNumber > 1 or streamNumber == 0")
                     if statusIconColor == 'red':
-                        print("shared.statusIconColor == 'red'")
+                        logger.info("shared.statusIconColor == 'red'")
                     stealthLevel = BMConfigParser().safeGetInt(
                         'bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(streamNumber, stealthLevel)
@@ -81,7 +81,7 @@ class LoginScreen(GridLayout):
                     return None
 
     def sayexit(self):
-        """This method will exit the application screen."""
+        """Method will exit the application screen."""
         shutdown.doCleanShutdown()
         Window.close()
 
@@ -89,7 +89,9 @@ class LoginScreen(GridLayout):
 class MainApp(App):
     """The App class is the base for creating Kivy applications
     Think of it as your main entry point into the Kivy run loop."""
+
     def build(self):
-        """To initialize an app with a widget tree, we need to override the build()
-        method in our app class and return the widget tree which we have constructed.."""
+        """To initialize an app with a widget tree, we need to override the build().
+        method in our app class and return the widget tree which we have constructed..
+        """
         return LoginScreen()
