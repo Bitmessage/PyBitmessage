@@ -1773,8 +1773,8 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 else:
                     uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
                     if uInput in inputShorts['yes']:
-                        nextNum -= 1
-                        numMessages -= 1
+                        #nextNum -= 1
+                        #numMessages -= 1
                         ret = delMsg(msgNum, messageID)
                         print ret
 
@@ -1812,8 +1812,8 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
                 uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
                 if uInput in inputShorts['yes']:
-                    nextNum -= 1
-                    numMessages -= 1
+                    #nextNum -= 1
+                    #numMessages -= 1
                     ret = delMsg(msgNum, messageID)
                     print ret
 
