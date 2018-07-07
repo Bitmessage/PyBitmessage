@@ -2684,6 +2684,19 @@ class MyForm(settingsmixin.SMainWindow):
     def network_switch(self):
         dontconnect_option = not BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'dontconnect')
+        reply = QtGui.QMessageBox.question(
+            self, _translate("MainWindow", "Disconnecting")
+            if dontconnect_option else _translate("MainWindow", "Connecting"),
+            _translate(
+                "MainWindow",
+                "Bitmessage will now drop all connectins. Are you sure?"
+            ) if dontconnect_option else _translate(
+                "MainWindow",
+                "Bitmessage will now start connecting to network. Are you sure?"
+            ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel,
+            QtGui.QMessageBox.Cancel)
+        if reply != QtGui.QMessageBox.Yes:
+            return
         BMConfigParser().set(
             'bitmessagesettings', 'dontconnect', str(dontconnect_option))
         BMConfigParser().save()
