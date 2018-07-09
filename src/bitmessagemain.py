@@ -389,7 +389,7 @@ class Main:
             # Populate with hardcoded value (same as connectToStream above)
             state.streamsInWhichIAmParticipating.append(1)
 
-        if daemon is False and state.enableGUI:
+        if not daemon and state.enableGUI:
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
@@ -398,7 +398,7 @@ class Main:
                 bitmessagecurses.runwrapper()
             elif state.kivy:
                 BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
-                from mpybit import MainApp
+                from bitmessagekivy.mpybit import MainApp
                 MainApp().run()
             else:
                 import bitmessageqt
