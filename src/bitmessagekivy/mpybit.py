@@ -1,5 +1,10 @@
 import time
 
+from kivy.app import App
+from kivy.core.window import Window
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
+
 from debug import logger
 
 from addresses import addBMIfNotPresent, decodeAddress
@@ -10,18 +15,13 @@ from helper_ackPayload import genAckPayload
 
 from helper_sql import sqlExecute
 
-from kivy.app import App
-from kivy.core.window import Window
-# from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-
 import queues
 
 import shutdown
 statusIconColor = 'red'
 
 
-class LoginScreen(GridLayout):
+class LoginScreen(BoxLayout):
     """This will use for sending message to recipents from mobile client."""
 
     def send(self):
