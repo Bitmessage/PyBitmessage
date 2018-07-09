@@ -22,36 +22,35 @@ import socket
 import time
 import sys
 import os
+import inspect
+import re
+
 
 from bmconfigparser import BMConfigParser
-
+from collections import OrderedDict
 
 api = ''
 keysName = 'keys.dat'
 keysPath = 'keys.dat'
 usrPrompt = 0  # 0 = First Start, 1 = prompt, 2 = no prompt if the program is starting up
 
-knownAddresses = {'addresses':[]}
-
-import inspect
-import re
+knownAddresses = dict({'addresses': []})
 
 cmdstr = 'buildknownaddresses'
 
-from collections import OrderedDict
 # menu by this order
-cmdTbl = OrderedDict({})
+cmdTbl = OrderedDict()
 cmdTbl['Command'] = 'Description'
 cmdTbl['s1'] = '-'
-cmdTbl['help'] = 'This file'
+cmdTbl['help'] = 'This help'
 cmdTbl['daemon'] = 'Try to start PyBitmessage daemon locally'
 cmdTbl['apiTest'] = 'Daemon API connection tests'
 cmdTbl['status'] = 'Get the summary of running daemon'
 cmdTbl['addInfo'] = 'Request detailed info to a address'
 cmdTbl['bmSettings'] = 'PyBitmessage settings "keys.dat"'
 cmdTbl['exit'] = 'Use anytime to return to main menu'
-cmdTbl['quit'] = 'Quits this CLI'
-cmdTbl['shutdown'] = 'Shut down the connecte able daemon via. API'
+cmdTbl['quit'] = 'Quit this CLI'
+cmdTbl['shutdown'] = 'Shutdown the connectable daemon via. API'
 cmdTbl['s2'] = '-'
 cmdTbl['listAddresses'] = 'List user\'s addresse(s) (Senders)'
 cmdTbl['generateAddress'] = 'Generate a new sender address'
@@ -77,26 +76,26 @@ cmdTbl['news'] = 'List all "unread" inbox message heads'
 cmdTbl['send'] = 'Send out new message or broadcast'
 cmdTbl['s8'] = '-'
 cmdTbl['read'] = 'Read a message from in(out)box'
-cmdTbl['readAll'] = 'Mard "read" for all in(out)box message(s)'
-cmdTbl['unreadAll'] = 'Mark "unread" for all in(out)box message(s)'
+cmdTbl['readAll'] = 'Mard "read" for all inbox message(s)'
+cmdTbl['unreadAll'] = 'Mark "unread" for all inbox message(s)'
 cmdTbl['s9'] = '-'
-cmdTbl['save'] = 'Save(Dump) a in(out)box message'
-cmdTbl['delete'] = 'Delete a(ll) in(out)box messages'
+cmdTbl['save'] = 'Save(Dump) a in(out)box message to disk'
+cmdTbl['delete'] = 'Delete a(ll) in(out)box messages from remote'
+cmdShorts = dict()
 
-cmdShorts = {}
+retStrings = dict({'none': '\n', 'usercancel': '\n     User canceled.\n', 'invalidinput': '\n     Invalid input.\n', 'invalidindex': '\n     Invalid message index.\n', 'invalidaddr': '\n     Invalid address.\n', 'indexoutofbound': '\n     Reach end of index.\n', })
+inputShorts = dict({'yes': ['y', 'yes'], 'no': ['n', 'no'], 'exit': ['e', 'ex', 'exit'], 'save': ['save', 's', 'sv'], 'deterministic': ['d', 'dt'], 'random': ['r', 'rd', 'random'], 'message': ['m', 'msg', 'message'], 'broadcast': ['b', 'br', 'brd', 'broadcast'], 'inbox': ['i', 'in', 'ib', 'inbox'], 'outbox': ['o', 'ou', 'out', 'ob', 'outbox'], 'dump': ['d', 'dp', 'dump'], 'save': ['s', 'sa', 'save'], 'reply': ['r', 'rp', 'reply'], 'forward': ['f', 'fw', 'forward'], 'delete': ['d', 'del', 'delete'], 'all': ['a', 'all'], })
 
-retStrings = {'0': '\n', '1': '\n     User canceled.\n', '2': '\n     Invalid input\n', '3': '\n     Invalid message index.\n', '4': '\n     Invalid address.\n', }
-inputShorts = {'yes':['y', 'yes'], 'no':['n', 'no'], 'exit':['e', 'ex', 'exit'], 'save':['save','s', 'sv'], 'deterministic':['d','dt'], 'random':['r', 'rd', 'random'], 'message':['m', 'msg', 'message'], 'broadcast':['b', 'br', 'brd', 'broadcast'], 'inbox':['i', 'in', 'ib', 'inbox'], 'outbox':['o', 'ou', 'out', 'ob', 'outbox'], 'dump':['d', 'dp', 'dump'], 'save':['s', 'sa', 'save'], 'reply':['r', 'rp' ,'reply'], 'forward':['f', 'fw', 'forward'], 'delete':['d', 'del', 'delete'], 'all':['a', 'all'], }
+inputs = dict()
 
-inputs = {}
 
 def duplicated(out):
 
     global cmdShorts
 
-    seen = {}
-    dups = []
-    dcmds = {}
+    seen = dict()
+    dups = list()
+    dcmds = dict()
     for x in out:
         if x not in seen:
             seen[x] = 1
@@ -115,12 +114,12 @@ def cmdGuess():
 
     global cmdTbl, cmdShorts
 
-    cmdWords = ['dae','mon','api','Test','fo','Set','tings','list','Addresses','gene','rate','dress','Address','Boo','Entries','entry','lete','subscrips','scribe','reate','oin','lea','build','Known','in','out','box','new','end','ead','eave','un','ve','ubs','shut','down','tatus','All','get','bke','quit','exit']
-    cmdWords2 = ['api','Test','info','Settings','list','add','Addresses','gene','rate','Address','Boo','Entries','entry','lete','subscrips','scribe','reate','oin','lea','build','Known','inbox','outbox','box','new','end','ead','eave','ubs','shut','down','tatus','All','get','bke','creat','join','read','delete','news','send','uit','xit','un','lea','ve']
+    cmdWords = ['dae', 'mon', 'api', 'Test', 'fo', 'Set', 'tings', 'list', 'Addresses', 'gene', 'rate', 'dress', 'Address', 'Boo', 'Entries', 'entry', 'lete', 'subscrips', 'scribe', 'reate', 'oin', 'lea', 'build', 'Known', 'in', 'out', 'box', 'new', 'end', 'ead', 'eave', 'un', 've', 'ubs', 'shut', 'down', 'tatus', 'All', 'get', 'bke', 'quit', 'exit']
+    cmdWords2 = ['api', 'Test', 'info', 'Settings', 'list', 'add', 'Addresses', 'gene', 'rate', 'Address', 'Boo', 'Entries', 'entry', 'lete', 'subscrips', 'scribe', 'reate', 'oin', 'lea', 'build', 'Known', 'inbox', 'outbox', 'box', 'new', 'end', 'ead', 'eave', 'ubs', 'shut', 'down', 'tatus', 'All', 'get', 'bke', 'creat', 'join', 'read', 'delete', 'news', 'send', 'uit', 'xit', 'un', 'lea', 've']
     cmdWords.sort(key=lambda item: (-len(item), item))
     cmdWords2.sort(key=lambda item: (-len(item), item))
 
-    out = []
+    out = list()
     # shorten1
     for cmd in cmdTbl:
         lcmd = cmd.lower()
@@ -130,6 +129,7 @@ def cmdGuess():
         cmdShorts[cmd] = [cmd.lower(), lcmd]
         out.append(lcmd)
 
+    cmdShorts['help'] = list(['help', 'h', '?'])
     dcmds = duplicated(out)
     if any(dcmds):
         print '\n     cmdGuess Fail!'
@@ -157,6 +157,7 @@ def cmdGuess():
         print '     Change your "cmdWords2" please.\n'
         return False
 
+    cmdShorts['Command'] = ''
     return True
 
 
@@ -176,8 +177,11 @@ def showCmdTbl():
         des = cmdTbl[cmd]
         if len(des) > 45:
             des = des[:42] + '...'
-        if des == '-': print ''.join([5 * ' ','|', 24 * '-', '|', 46 * '-', '|'])
-        else: print ''.join([5 * ' ','| ', 
+        if des == '-':
+            print ''.join([5 * ' ', '|', 24 * '-', '|', 46 * '-', '|'])
+        else:
+            print ''.join([5 * ' ',
+                           '| ',
                             lcmd.ljust(23),
                             '| ',
                             des.ljust(45),
@@ -189,14 +193,15 @@ def inputAddress(prompt='What is the address?'):
 
     global usrPrompt, retStrings
 
-    retres = '4'
+    retres = 'invalidaddr'
     src = retStrings[retres]
     while True:
         address = userInput(prompt + '\nTry again or')
         if not validAddress(address):
             print src
             continue
-        else: break	
+        else:
+            break
 
     return address
 
@@ -214,13 +219,13 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
             elif cinput in alter:
                 break
             elif int(cinput) < 0 or (maximum >= 0 and int(cinput) > maximum):
-                retres = '3'
+                retres = 'invalidindex'
                 src = retStrings[retres]
                 print src
             else:
                 break
         except:
-            retres = '2'
+            retres = 'invalidinput'
             src = retStrings[retres]
             print src
 
@@ -230,12 +235,10 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 def userInput(message):
     """Checks input for exit or quit. Also formats for input, etc"""
 
-    global usrPrompt, cmdstr
+    global usrPrompt, cmdstr, inputs
 
     stack = list(inspect.stack())
     where = ''
-    #for item in stack:
-            #print item
     where = ''.join([
         str(stack[3][2]),
         stack[3][3],
@@ -245,17 +248,7 @@ def userInput(message):
         stack[3][3],
         cmdstr
         ])
-    last = '' if where not in inputs.keys() else inputs[where]
-    print ''.join([
-#        '\n',
-#        where,
-        '\n',
-        message,
-        ' (exit) to cancel.',
-        '\nPress Enter to input default [',
-        last,
-        ']: ',
-        ])
+    print ('\n%s (exit) to cancel.\nPress Enter to input default [%s]: ' % (message, inputs.get(where, '')))
     uInput = raw_input('> ')
 
     if uInput.lower() == 'exit':  # Returns the user to the main menu
@@ -316,8 +309,8 @@ def configInit():
     with open(keysName, 'wb') as configfile:
         BMConfigParser().write(configfile)
 
-    print '     ' + str(keysName) + ' Initalized in the same directory as daemon.py'
-    print '     You will now need to configure the ' + str(keysName) + ' file.\n'
+    print('     {0} Initalized in the same directory as this CLI.'
+          '     You will now need to configure the {0} file.\n'.format(keysName))
 
 
 def apiInit(apiEnabled):
@@ -446,7 +439,7 @@ def apiData():
                 print '\n     Trying Again.\n'
                 usrPrompt = 0
                 main()
-                return  ''
+                return ''
 
             else:
                 print '\n     Invalid Input.\n'
@@ -550,7 +543,7 @@ def bmSettings():
     print '     sockspassword = ' + sockspassword
     print ' '
 
-    retres = '1'
+    retres = 'usercancel'
     src = retStrings[retres]
     uInput = userInput('Would you like to modify any of these settings, (n)o or (Y)es?').lower()
 
@@ -659,7 +652,7 @@ def getAddress(passphrase, vNumber, sNumber):
         print '     Getting address:', passphrase
         response = api.getDeterministicAddress(passphrase, vNumber, sNumber)
         if "API Error" in response:
-            return '\n     ' + response +'\n'
+            return '\n     ' + response + '\n'
     except:
         print '\n     Connection Error\n'
         usrPrompt = 0
@@ -680,7 +673,7 @@ def subscribe(address, label):
         print '     Subscribing address:', label
         response = api.addSubscription(address, label)
         if "API Error" in response:
-            return '\n     ' + response +'\n'
+            return '\n     ' + response + '\n'
     except:
         print '\n     Connection Error\n'
         usrPrompt = 0
@@ -699,7 +692,7 @@ def unsubscribe(address):
         print '     unSubscribing address:', address
         response = api.deleteSubscription(address)
         if "API Error" in response:
-            return '\n     ' + response +'\n'
+            return '\n     ' + response + '\n'
     except:
         print '\n     Connection Error\n'
         usrPrompt = 0
@@ -718,7 +711,7 @@ def listSubscriptions():
         print '     Subscribed list retriving...'
         response = api.listSubscriptions()
         if "API Error" in response:
-            return '\n     ' + response +'\n'
+            return '\n     ' + response + '\n'
         jsonAddresses = json.loads(response)['subscriptions']
         numAddresses = len(jsonAddresses)
     except:
@@ -732,7 +725,7 @@ def listSubscriptions():
     print '     |---|-------------------|-------------------------------------|-------|'
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
         label = (jsonAddresses[addNum]['label'].decode('base64')).encode(
-            'utf')              # may still misdiplay in some consoles
+            'utf-8')              # may still misdiplay in some consoles
         address = str(jsonAddresses[addNum]['address'])
         enabled = str(jsonAddresses[addNum]['enabled'])
 
@@ -849,7 +842,7 @@ def listAdd():
     print '     |---|-------------------|-------------------------------------|--|-------|'
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
         label = (jsonAddresses[addNum]['label']).encode(
-            'utf')              # may still misdiplay in some consoles
+            'utf-8')              # may still misdiplay in some consoles
         address = str(jsonAddresses[addNum]['address'])
         stream = str(jsonAddresses[addNum]['stream'])
         enabled = str(jsonAddresses[addNum]['enabled'])
@@ -920,16 +913,8 @@ def dump2File(fileName, fileData, deCoded):
     global inputShorts
 
     # This section finds all invalid characters and replaces them with ~
-    fileName = fileName.replace(" ", "_")
-    fileName = fileName.replace("/", "~")
-    # fileName = fileName.replace("\\", "~") How do I get this to work...?
-    fileName = fileName.replace(":", "~")
-    fileName = fileName.replace("*", "~")
-    fileName = fileName.replace("?", "~")
-    fileName = fileName.replace('"', "~")
-    fileName = fileName.replace("<", "~")
-    fileName = fileName.replace(">", "~")
-    fileName = fileName.replace("|", "~")
+    for s in ' /\\:*?"<>|':
+        fileName = fileName.replace(s, '~')
 
     directory = os.path.abspath('attachments')
 
@@ -944,7 +929,7 @@ def dump2File(fileName, fileData, deCoded):
     if not deCoded:
         x = filter(lambda z: not re.match(r'^\s*$', z), fileData)
         trydecode = False
-        if len(x) % 4 == 0: # check by length before decode.
+        if len(x) % 4 == 0:  # check by length before decode.
             trydecode = True
         else:
             print ''.join([
@@ -955,12 +940,13 @@ def dump2File(fileName, fileData, deCoded):
                 '\n     FileName: "{}"'.format(fileName),
                 ])
             uInput = userInput('Try to decode it anyway, (n)o or (Y)es?')
-            if uInput not in inputShorts['no']: trydecode = True
+            if uInput not in inputShorts['no']:
+                trydecode = True
 
         if trydecode is True:
             try:
                 y = x.decode('base64', 'strict')
-                if x == y.encode('base64').replace('\n',''):  # double check decoded string.
+                if x == y.encode('base64').replace('\n', ''):  # double check decoded string.
                     fileData = y
                 else:
                     print '\n     Failed on "BASE64" re-encode checking.\n'
@@ -1178,7 +1164,8 @@ def sendMsg(toAddress, fromAddress, subject, message):
         except:
             print '\n     Connection Error\n'
             uInput = userInput('Would you like to try again, (n)o or (Y)es?').lower()
-            if uInput in inputShorts['no']: break
+            if uInput in inputShorts['no']:
+                break
 
     return ''
 
@@ -1280,7 +1267,8 @@ def sendBrd(fromAddress, subject, message):
         except:
             print '\n     Connection Error\n'
             uInput = userInput('Would you like to try again, no or (Y)es?').lower()
-            if uInput in inputShorts['no']: break
+            if uInput in inputShorts['no']:
+                break
 
     return ''
 
@@ -1304,7 +1292,7 @@ def inbox(unreadOnly=False, pageNum=20):
 
     messagesPrinted = 0
     messagesUnread = 0
-    for msgNum in range(0, numMessages):  # processes all of the messages in the inbox
+    for msgNum in range(numMessages - 1, 0, -1):  # processes all of the messages in the inbox
         messageID = messageIds[msgNum]['msgid']
         try:
             print '     -----------------------------------'
@@ -1329,7 +1317,9 @@ def inbox(unreadOnly=False, pageNum=20):
                     messagesUnread += 1
 
             if messagesPrinted % pageNum == 0 and messagesPrinted != 0:
-                userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum + pageNum if msgNum + pageNum < numMessages - 1 else numMessages - 1))
+                uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum))
+                if uInput == 'exit':
+                    break
         except:
             print '\n     Retrive failed on:', messageID
             pass
@@ -1337,7 +1327,7 @@ def inbox(unreadOnly=False, pageNum=20):
     print '     -----------------------------------'
     print '     There are %d unread messages of %d messages in the inbox.' % (messagesUnread, numMessages)
     print '     -----------------------------------'
-    
+
     return ''
 
 
@@ -1373,7 +1363,9 @@ def outbox(pageNum=20):
         print '     Base64Len:', str(len(message['message']))
 
         if msgNum % pageNum == 0 and msgNum != 0:
-            userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum + pageNum if msgNum + pageNum < numMessages - 1 else numMessages - 1))
+                uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum))
+                if uInput == 'exit':
+                    break
 
     print '     -----------------------------------'
     print '     There are ', numMessages, ' messages in the outbox.'
@@ -1390,31 +1382,35 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
     # Hard way search attachments
     while True:  # Allows multiple messages to be downloaded/saved
         try:
-            attPos = content.index(';base64,', attPos) + 9 # Finds the attachment position
+            attPos = content.index(';base64,', attPos) + 9  # Finds the attachment position
             attEndPos = content.index('/>', attPos) - 1  # Finds the end of the attachment
 
-            attPre = attPos - 9 # back for ;base64, | <img src=";base64, | <attachment src=";base64,
+            attPre = attPos - 9  # back for ;base64, | <img src=";base64, | <attachment src=";base64,
             # try remove prefix <xxxx | <xxxxxxxxxxx
             pBack = 0
             if attPre >= (msgPos + 12):
-                if '<' == content[attPre - 12]: pBack = 12
+                if '<' == content[attPre - 12]:
+                    pBack = 12
             elif attPre - msgPos + 5 >= 0:
-                if '<' == content[attPre - 5]: pBack = 5
+                if '<' == content[attPre - 5]:
+                    pBack = 5
             attPre = attPre - pBack
 
             try:
                 fnPos = content.index('alt="', msgPos, attPos) + 5  # Finds position of the filename
                 fnEndPos = content.index('" src=', msgPos, attPos)  # Finds the end position
-                #fnLen = fnEndPos - fnPos #Finds the length of the filename
+                # fnLen = fnEndPos - fnPos #Finds the length of the filename
                 fn = content[fnPos:fnEndPos]
 
-                attPre = fnPos - 5 # back for alt=" | <img alt=" | <attachment alt="
+                attPre = fnPos - 5  # back for alt=" | <img alt=" | <attachment alt="
                 # try remove prefix <xxxx | <xxxxxxxxxxx
                 pBack = 0
                 if attPre >= (msgPos + 12):
-                    if '<' == content[attPre - 12]: pBack = 12
+                    if '<' == content[attPre - 12]:
+                        pBack = 12
                 elif attPre - msgPos + 5 >= 0:
-                    if '<' == content[attPre - 5]: pBack = 5
+                    if '<' == content[attPre - 5]:
+                        pBack = 5
                 attPre = attPre - pBack
 
             except:
@@ -1423,9 +1419,9 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
 
             this_attachment = content[attPos:attEndPos]
             x = filter(lambda z: not re.match(r'^\s*$', z), this_attachment)
-            # x = x.replace('\n','').strip()
+            # x = x.replace('\n', '').strip()
             trydecode = False
-            if len(x) % 4 == 0: # check by length before decode.
+            if len(x) % 4 == 0:  # check by length before decode.
                 trydecode = True
             else:
                 print ''.join([
@@ -1436,11 +1432,12 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
                     '\n     FileName: "{}"'.format(fn),
                 ])
                 uInput = userInput('Try to decode anyway, (n)o or (Y)es?')
-                if uInput not in inputShorts['no']: trydecode = True
+                if uInput not in inputShorts['no']:
+                    trydecode = True
             if trydecode is True:
                 try:
                     y = x.decode('base64', 'strict')
-                    if x == y.encode('base64').replace('\n',''):  # double check decoded string.
+                    if x == y.encode('base64').replace('\n', ''):  # double check decoded string.
                         print '     This embeded message decoded successfully:', fn
                         if askSave is True:
                             uInput = userInput('Download the "decoded" attachment, (y)es or (No)?\nName: {},'.format(fn)).lower()
@@ -1468,13 +1465,13 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
                     print '\n     Failed on decode this emdeded "BASE64" encoded like message.\n'
 
             else:
-                 print '\n    Skiped a embeded "BASE64" encoded like message.'
- 
+                print '\n    Skiped a embeded "BASE64" encoded like message.'
+
             if attEndPos != msgPos:
                 textmsg = textmsg + content[msgPos:attEndPos]
                 msgPos = attEndPos
 
-        except: # ValueError:            
+        except:  # ValueError:
             textmsg = textmsg + content[msgPos:]
             break
 
@@ -1526,8 +1523,8 @@ def readSentMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False)
     print '    ', 74 * '-'
 
     if cmd == 'save':
-        src = dump2File('outbox_' + subject, textmsg, withAtta)
-        print src
+        ret = dump2File('outbox_' + subject, textmsg, withAtta)
+        print ret
 
     return ''
 
@@ -1569,16 +1566,16 @@ def readMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False):
     print '    ', 74 * '-'
 
     if cmd == 'save':
-        src = dump2File('inbox_' + subject + str(full), textmsg, withAtta)
-        print src
-    
+        ret = dump2File('inbox_' + subject + str(full), textmsg, withAtta)
+        print ret
+
     return ''
 
 
 def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
     """Allows you to reply to the message you are currently on. Saves typing in the addresses and subject."""
 
-    global usrPrompt, inputShorts
+    global usrPrompt, inputShorts, retStrings
 
     forwardORreply = forwardORreply.lower()  # makes it lowercase
     try:
@@ -1599,16 +1596,29 @@ def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
     textmsg = ''
     textmsg = attDetect(content, textmsg, subject, True)
 
+    if forwardORreply == 'forward':
+        attachMessage = ''.join([
+            '> To: ', fwdFrom,
+            '\n> From: ', fromAdd,
+            '\n> Subject: ', subject,
+            '\n> Received: ', recvTime,
+            '\n> Message:',
+            ])
+    else:
+        attachMessage = ''
+    for line in textmsg.splitlines():
+        attachMessage = attachMessage + '> ' + line + '\n'
+
     fromAdd = message['toAddress']  # Address it was sent To, now the From address
     fwdFrom = message['fromAddress']  # Address it was sent To, will attached to fwd
     recvTime = datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
 
     if forwardORreply == 'reply':
         toAdd = message['fromAddress']  # Address it was From, now the To address
-        subject = "Re: " + subject
+        subject = "Re: " + re.sub('^Re: *', '', subject)
 
     elif forwardORreply == 'forward':
-        subject = "Fwd: " + subject
+        subject = "Fwd: " + re.sub('^Fwd: *', '', subject)
         toAdd = inputAddress("What is the To Address?")
 
     else:
@@ -1619,36 +1629,37 @@ def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
 
     subject = subject.encode('base64')
 
+    newMessage = ''
     while True:
         try:
-            newMessage = ''.join([
+            print ''.join([
+                '     Drafting:\n',
+                newMessage,
+                '     -----------------------------------',
+                ])
+            newMessage += ''.join([
                 '\n',
                 raw_input('Continue enter your message line by line, end with <CTL-D>.\n> '),
                 ])
         except EOFError:
             break
 
+    retres = 'usercancel'
+    src = retStrings[retres]
     uInput = userInput('Would you like to add an attachment, (y)es or (N)o?').lower()
     if uInput in inputShorts['yes']:
         newMessage = newMessage + '\n\n' + attachment()
 
     newMessage = newMessage + '\n\n------------------------------------------------------\n'
-    attachMessage = ''
-    if forwardORreply == 'forward':
-        attachMessage = ''.join([
-            '> To: ', fwdFrom,
-            '\n> From: ', fromAdd,
-            '\n> Subject: ', subject ,
-            '\n> Received: ', recvTime ,
-            '\n> Message:',
-            ])
-    for line in textmsg.splitlines():
-        attachMessage = attachMessage + '> ' + line + '\n'
     newMessage = newMessage + attachMessage
     newMessage = newMessage.encode('base64')
 
-    src = sendMsg(toAdd, fromAdd, subject, newMessage)
-    print src
+    print newMessage
+    uInput = userInput('Realy want to send upper message, (n)o or (Y)es?').lower()
+    if uInput not in inputShorts['no']:
+        src = sendMsg(toAdd, fromAdd, subject, newMessage)
+
+    return src
 
 
 def delMsg(msgNum=-1, messageID=''):
@@ -1721,7 +1732,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
         main()
         return ''
 
-    retres = '1'
+    retres = 'usercancel'
     src = retStrings[retres]
     if cmd != 'delete':
         msgNum = int(inputIndex('Input the index of the message to {} [0-{}]: '.format(cmd, numMessages - 1), numMessages - 1))
@@ -1732,7 +1743,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
             return ''
 
         nextNum = msgNum
-        while msgNum >= 0: # save, read
+        while msgNum >= 0:  # save, read
             nextNum += 1
             messageID = messageIds[msgNum]['msgid']
             if cmd == 'save':
@@ -1773,14 +1784,16 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 else:
                     uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
                     if uInput in inputShorts['yes']:
-                        #nextNum -= 1
-                        #numMessages -= 1
+                        # nextNum -= 1
+                        # numMessages -= 1
                         ret = delMsg(msgNum, messageID)
                         print ret
 
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
+                retres = 'indexoutofbound'
+                src = retStrings[retres]
             else:
                 msgNum = -1
 
@@ -1804,7 +1817,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
         else:
             nextNum = msgNum = int(uInput)
-            while msgNum >= 0: # save, read
+            while msgNum >= 0:  # save, read
                 nextNum += 1
                 messageID = messageIds[msgNum]['msgid']
                 ret = readMsg(cmd, msgNum, messageID)
@@ -1812,15 +1825,16 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
                 uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
                 if uInput in inputShorts['yes']:
-                    #nextNum -= 1
-                    #numMessages -= 1
+                    # nextNum -= 1
+                    # numMessages -= 1
                     ret = delMsg(msgNum, messageID)
                     print ret
 
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                     msgNum = nextNum if uInput not in inputShorts['no'] else -1
-
+                    retres = 'indexoutofbound'
+                    src = retStrings[retres]
                 else:
                     msgNum = -1
 
@@ -1841,26 +1855,26 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
         numMessages = len(messageIds)
     except:
         print '\n     Connection Error'
- 
+
     if numMessages < 1:
         print '     Zero message founded.\n'
         usrPrompt = 1
         main()
         return ''
 
-    retres = '1'
+    retres = 'usercancel'
     src = retStrings[retres]
     if cmd != 'delete':
         msgNum = int(inputIndex('Input the index of the message open [0-{}]: '.format(numMessages - 1), numMessages - 1))
         if msgNum < 0:
-            retres = '1'
+            retres = 'usercancel'
             print retStrings[retres]
             usrPrompt = 1
             main()
             return ''
 
         nextNum = msgNum
-        while msgNum >= 0: # save, read
+        while msgNum >= 0:  # save, read
             nextNum += 1
             messageID = messageIds[msgNum]['msgid']
             if cmd == 'save':
@@ -1875,7 +1889,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                 print ret
 
             # Gives the user the option to delete the message
-            retres = '1'
+            retres = 'usercancel'
             src = retStrings[retres]
             uInput = userInput('Would you like to (s)ave, (d)ump or Delete this message directly?').lower()
 
@@ -1898,7 +1912,8 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
-
+                retres = 'indexoutofbound'
+                src = retStrings[retres]
             else:
                 msgNum = -1
 
@@ -1919,10 +1934,10 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                     ret = delSentMsg(msgNum, messageIds[msgNum]['msgid'])
                     print ret
                 src = ''
-                
+
         else:
             nextNum = msgNum = int(uInput)
-            while msgNum >= 0: # save, read
+            while msgNum >= 0:  # save, read
                 nextNum += 1
 
                 messageID = messageIds[msgNum]['msgid']
@@ -1939,7 +1954,8 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                     msgNum = nextNum if uInput not in inputShorts['no'] else -1
-
+                    retres = 'indexoutofbound'
+                    src = retStrings[retres]
                 else:
                     msgNum = -1
 
@@ -1979,7 +1995,7 @@ def buildKnownAddresses():
                         isnew = False
                         break
                 if isnew is True:
-                    newentry.append({'label':entry['label'].decode('base64').encode('utf'), 'address':entry['address']})
+                    newentry.append({'label': entry['label'].decode('base64').encode('utf-8'), 'address': entry['address']})
     except:
         pass
         print '\n     Connection Error\n'
@@ -2005,7 +2021,7 @@ def buildKnownAddresses():
                         isnew = False
                         break
                 if isnew is True:
-                    newentry.append({'label':entry['label'].encode('utf'), 'address':entry['address']})
+                    newentry.append({'label': entry['label'].encode('utf-8'), 'address': entry['address']})
     except:
         pass
         print '\n     Connection Error\n'
@@ -2036,7 +2052,7 @@ def listAddressBookEntries(printKnown=False):
         print '     |        Label       |                Address                |'
         print '     |--------------------|---------------------------------------|'
         for entry in addressBook['addresses']:
-            label = entry['label'].decode('base64').encode('utf') if not printKnown else entry['label']
+            label = entry['label'].decode('base64').encode('utf-8') if not printKnown else entry['label']
             address = entry['address']
             if len(label) > 19:
                 label = label[:16] + '...'
@@ -2078,7 +2094,7 @@ def deleteAddressFromAddressBook(address):
         print '     Deleting...', address
         response = api.deleteAddressBookEntry(address)
         if "API Error" in response:
-            #return getAPIErrorCode(response)
+            # return getAPIErrorCode(response)
             return '\n     ' + response + '\n'
     except:
         print '\n     Connection Error\n'
@@ -2106,7 +2122,7 @@ def markMessageReadbit(msgNum=-1, messageID='', read=False):
         print '     Marking...', str(msgNum)
         response = api.getInboxMessageByID(messageID, read)
         if "API Error" in response:
-            #return getAPIErrorCode(response)
+            # return getAPIErrorCode(response)
             return '\n     ' + response + '\n'
     except:
         print '\n     Connection Error\n'
@@ -2132,6 +2148,9 @@ def markAllMessagesReadbit(read=False):
         main()
         return ''
 
+    if numMessages < 1:
+        print '     Zero message founded.\n'
+
     for msgNum in range(0, numMessages):  # processes all of the messages in the inbox
         src = markMessageReadbit(msgNum, messageIds[msgNum]['msgid'], read)
         print src
@@ -2154,7 +2173,6 @@ def addInfo(address):
         usrPrompt = 0
         main()
         return ''
-
 
     print '------------------------------'
 
@@ -2191,12 +2209,13 @@ def clientStatus():
         print '    ', key, ':', str(client_status[key])
     print '     InboxMessages:', str(inumMessages)
     print '     OutboxMessages:', str(onumMessages)
-   # print '     Message.dat:', str(boxSize)
-   # print '     knownNodes.dat:', str(knownNodes)
-   # print '     debug.log:', str(debugSize)
+    # print '     Message.dat:', str(boxSize)
+    # print '     knownNodes.dat:', str(knownNodes)
+    # print '     debug.log:', str(debugSize)
     print '     ------------------------------\n'
 
     return ''
+
 
 def shutdown():
     """Shutdown the API"""
@@ -2227,12 +2246,12 @@ def UI(cmdInput):
         if not cmdGuess():
             raise SystemExit('\n     Bye\n')
 
-    if cmdInput == "help" or cmdInput == "h" or cmdInput == "?":
+    if cmdInput in cmdShorts['help']:
         showCmdTbl()
         main()
 
     elif cmdInput in cmdShorts['daemon']:
-        src= "TODO: Start daemon locally."
+        src = "TODO: Start daemon locally."
 
     elif cmdInput in cmdShorts['apiTest']:  # tests the API Connection.
         print '     API connection test has:',
@@ -2335,7 +2354,7 @@ def UI(cmdInput):
             src = sendMsg(null, null, null, null)
 
     elif cmdInput in cmdShorts['delete']:
-        withAtta=True
+        withAtta = True
         uInput = userInput('Would you like to delete message(s) from the (i)nbox or (O)utbox?').lower()
 
         if uInput in inputShorts['inbox']:
@@ -2345,7 +2364,7 @@ def UI(cmdInput):
             src = toReadOutbox(cmd='delete', withAtta=withAtta)
 
     elif cmdInput in cmdShorts['read']:  # Opens a message from the inbox for viewing.
-        withAtta=False
+        withAtta = False
         uInput = userInput('Would you like to read a message from the (i)nbox or (O)utbox?').lower()
 
         if uInput in inputShorts['inbox']:
@@ -2360,14 +2379,16 @@ def UI(cmdInput):
         if uInput in inputShorts['inbox']:
             withAtta = True
             uInput = userInput('Would you like to decode and (s)ave or (D)ump directly?').lower()
-            if uInput in inputShorts['save']: withAtta = False
+            if uInput in inputShorts['save']:
+                withAtta = False
             src = toReadInbox(cmd='save', trunck=-1, withAtta=withAtta)
 
         else:
             withAtta = True
             uInput = userInput('Would you like to decode and (s)ave or (D)ump directly?').lower()
-            if uInput in inputShorts['save']: withAtta = False
-            
+            if uInput in inputShorts['save']:
+                withAtta = False
+
             src = toReadOutbox(cmd='save', trunck=-1, withAtta=withAtta)
 
     elif cmdInput in cmdShorts['quit']:
@@ -2402,7 +2423,7 @@ def UI(cmdInput):
         src = shutdown()
 
     else:
-        src = '\n     "' + cmdInput  + '" is not a command.\n'
+        src = '\n     "' + cmdInput + '" is not a command.\n'
 
     print src
     usrPrompt = 1
@@ -2429,24 +2450,17 @@ def main():
             print '     Use the command "apiTest" or "bmSettings" to resolve this issue.'
             print '     ****************************************************************\n'
 
-        print ''.join([
-            '\nType (H)elp for a list of commands.\nPress Enter for default cmd [',
-            cmdstr,
-            ']: ',
-            ]) # Startup message
+        print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdstr)  # Startup message
         usrPrompt = 2
 
     elif usrPrompt == 1:
-        print ''.join([
-            '\nType (H)elp for a list of commands.\nPress Enter for default cmd [',
-            cmdstr,
-            ']: ',
-            ]) # Startup message
+        print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdstr)  # Startup message
         usrPrompt = 2
 
     try:
         cmdInput = (raw_input('>').lower()).replace(" ", "")
-        if cmdInput != '': cmdstr = cmdInput
+        if cmdInput != '':
+            cmdstr = cmdInput
         UI(cmdstr)
     except EOFError:
         UI("quit")
