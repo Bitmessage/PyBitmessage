@@ -13,30 +13,28 @@ TODO: fix the following (currently ignored) violations:
 
 """
 
-import xmlrpclib
-import datetime
 import imghdr
 import ntpath
 import json
-import socket
-import time
 import sys
 import os
+import xmlrpclib
+import socket
+import time
+import datetime
 import inspect
 import re
 
-
 from bmconfigparser import BMConfigParser
+import ConfigParser
 from collections import OrderedDict
 
 api = ''
 keysName = 'keys.dat'
 keysPath = 'keys.dat'
 usrPrompt = 0  # 0 = First Start, 1 = prompt, 2 = no prompt if the program is starting up
-
 knownAddresses = dict({'addresses': []})
-
-cmdstr = 'buildknownaddresses'
+cmdStr = 'buildknownaddresses'
 
 # menu by this order
 cmdTbl = OrderedDict()
@@ -68,7 +66,7 @@ cmdTbl['create'] = 'Create a channel'
 cmdTbl['join'] = 'Join to a channel'
 cmdTbl['leave'] = 'Leave from a channel'
 cmdTbl['s6'] = '-'
-cmdTbl['buildKnownAddresses'] = 'Retrive addresse(s) label for message heads'
+cmdTbl['buildKnownAddresses'] = 'Retrieve addresse(s) label for message heads'
 cmdTbl['s7'] = '-'
 cmdTbl['inbox'] = 'List all inbox message heads'
 cmdTbl['outbox'] = 'List all outbox message heads heads'
@@ -83,7 +81,7 @@ cmdTbl['save'] = 'Save(Dump) a in(out)box message to disk'
 cmdTbl['delete'] = 'Delete a(ll) in(out)box messages from remote'
 cmdShorts = dict()
 
-retStrings = dict({'none': '\n', 'usercancel': '\n     User canceled.\n', 'invalidinput': '\n     Invalid input.\n', 'invalidindex': '\n     Invalid message index.\n', 'invalidaddr': '\n     Invalid address.\n', 'indexoutofbound': '\n     Reach end of index.\n', })
+retStrings = dict({'none': '', 'usercancel': '\n     User canceled.\n', 'invalidinput': '\n     Invalid input.\n', 'invalidindex': '\n     Invalid message index.\n', 'invalidaddr': '\n     Invalid address.\n', 'indexoutofbound': '\n     Reach end of index.\n', })
 inputShorts = dict({'yes': ['y', 'yes'], 'no': ['n', 'no'], 'exit': ['e', 'ex', 'exit'], 'save': ['save', 's', 'sv'], 'deterministic': ['d', 'dt'], 'random': ['r', 'rd', 'random'], 'message': ['m', 'msg', 'message'], 'broadcast': ['b', 'br', 'brd', 'broadcast'], 'inbox': ['i', 'in', 'ib', 'inbox'], 'outbox': ['o', 'ou', 'out', 'ob', 'outbox'], 'dump': ['d', 'dp', 'dump'], 'save': ['s', 'sa', 'save'], 'reply': ['r', 'rp', 'reply'], 'forward': ['f', 'fw', 'forward'], 'delete': ['d', 'del', 'delete'], 'all': ['a', 'all'], })
 
 inputs = dict()
@@ -189,12 +187,20 @@ def showCmdTbl():
     print ''.join([5 * ' ', 73 * '-'])
 
 
+class inputException(Exception):
+    def __init__(self, resKey):
+        Exception.__init__(self, resKey)
+        self.resKey =  resKey
+
+    def __str__(self):
+        return self.resKey
+
+
 def inputAddress(prompt='What is the address?'):
 
     global usrPrompt, retStrings
 
-    retres = 'invalidaddr'
-    src = retStrings[retres]
+    src = retStrings['invalidaddr']
     while True:
         address = userInput(prompt + '\nTry again or')
         if not validAddress(address):
@@ -208,25 +214,30 @@ def inputAddress(prompt='What is the address?'):
 
 def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
-    global usrPrompt, retStrings
+    global usrPrompt, retStrings, retStrings
 
     while True:
-        cinput = userInput(prompt + '\nTry again or').lower()
+        cinput = userInput(prompt + '\nTry again, (c) or').lower()
         try:
             if cinput == "c":
                 cinput = '-1'
-                break
+                raise inputException('usercancel')
+
             elif cinput in alter:
                 break
+
             elif int(cinput) < 0 or (maximum >= 0 and int(cinput) > maximum):
-                retres = 'invalidindex'
-                src = retStrings[retres]
+                src = retStrings['invalidindex']
                 print src
+
             else:
                 break
-        except:
-            retres = 'invalidinput'
-            src = retStrings[retres]
+
+        except inputException as e:
+            raise inputException(e)
+
+        except ValueError:
+            src = retStrings['invalidinput']
             print src
 
     return cinput
@@ -235,10 +246,9 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 def userInput(message):
     """Checks input for exit or quit. Also formats for input, etc"""
 
-    global usrPrompt, cmdstr, inputs
+    global usrPrompt, cmdStr, retStrings
 
     stack = list(inspect.stack())
-    where = ''
     where = ''.join([
         str(stack[3][2]),
         stack[3][3],
@@ -246,18 +256,16 @@ def userInput(message):
         stack[1][3],
         str(stack[1][2]),
         stack[3][3],
-        cmdstr
+        cmdStr
         ])
     print ('\n%s (exit) to cancel.\nPress Enter to input default [%s]: ' % (message, inputs.get(where, '')))
     uInput = raw_input('> ')
 
     if uInput.lower() == 'exit':  # Returns the user to the main menu
-        usrPrompt = 1
-        main()
-        return ''
+        raise inputException('usercancel')
 
     elif uInput == '':  # Return last value.
-        return last
+        return inputs.get(where, '')
 
     else:
         inputs[where] = uInput
@@ -268,6 +276,7 @@ def userInput(message):
 def restartBmNotify():
     """Prompt the user to restart Bitmessage"""
 
+    print
     print '     *******************************************************************'
     print '     WARNING: If Bitmessage is running locally, you must restart it now.'
     print '     *******************************************************************\n'
@@ -309,15 +318,16 @@ def configInit():
     with open(keysName, 'wb') as configfile:
         BMConfigParser().write(configfile)
 
-    print('     {0} Initalized in the same directory as this CLI.'
+    print('     {0} Initalized in the same directory as this CLI.\n'
           '     You will now need to configure the {0} file.\n'.format(keysName))
 
 
 def apiInit(apiEnabled):
     """Initialise the API"""
 
-    global usrPrompt
+    global usrPrompt, keysPath
     BMConfigParser().read(keysPath)
+    isValid = False
 
     if apiEnabled is False:  # API information there but the api is disabled.
         uInput = userInput('The API is not enabled. Would you like to do that now, (Y)es or (N)o?').lower()
@@ -329,24 +339,21 @@ def apiInit(apiEnabled):
 
             print 'Done'
             restartBmNotify()
-            return True
+            isValid = True
 
         elif uInput == "n":
-            print '     \n************************************************************'
+            print
+            print '     ************************************************************'
             print '            Daemon will not work when the API is disabled.       '
             print '     Please refer to the Bitmessage Wiki on how to setup the API.'
             print '     ************************************************************\n'
-            usrPrompt = 1
-            main()
 
         else:
             print '\n     Invalid Entry\n'
-            usrPrompt = 1
-            main()
 
     elif apiEnabled:  # API correctly setup
         # Everything is as it should be
-        return True
+        isValid = True
 
     else:  # API information was not present.
         print '\n     ' + str(keysPath) + ' not properly configured!\n'
@@ -363,11 +370,6 @@ def apiInit(apiEnabled):
 
             if (daemon != 'true' and daemon != 'false'):
                 print '\n     Invalid Entry for Daemon.\n'
-                uInput = 1
-                main()
-                return ''
-
-            print '     -----------------------------------\n'
 
             # sets the bitmessage port to stop the warning about the api not properly
             # being setup. This is in the event that the keys.dat is in a different
@@ -384,18 +386,18 @@ def apiInit(apiEnabled):
 
             print '     Finished configuring the keys.dat file with API information.\n'
             restartBmNotify()
-            return True
+            isValid = True
 
         elif uInput == "n":
+            print
             print '     ***********************************************************'
             print '     Please refer to the Bitmessage Wiki on how to setup the API.'
             print '     ***********************************************************\n'
-            usrPrompt = 1
-            main()
+
         else:
             print '     \nInvalid entry\n'
-            usrPrompt = 1
-            main()
+
+    return isValid
 
 
 def apiData():
@@ -405,48 +407,46 @@ def apiData():
     global keysPath
     global usrPrompt
 
+    print '\n     Configure file searching:', os.path.realpath(keysPath)
     BMConfigParser().read(keysPath)  # First try to load the config file (the keys.dat file) from the program directory
 
     try:
         BMConfigParser().get('bitmessagesettings', 'port')
         appDataFolder = ''
-    except:
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+        pass
         # Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
         appDataFolder = lookupAppdataFolder()
         keysPath = appDataFolder + keysPath
+        print '\n     Configure file searching:', os.path.realpath(keysPath)
         BMConfigParser().read(keysPath)
 
         try:
             BMConfigParser().get('bitmessagesettings', 'port')
-        except:
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
             # keys.dat was not there either, something is wrong.
-            print '     ******************************************************************'
-            print '     There was a problem trying to access the Bitmessage keys.dat file'
-            print '                    or keys.dat is not set up correctly'
-            print '       Make sure that daemon is in the same directory as Bitmessage. '
-            print '     ******************************************************************\n'
+            print
+            print '     *************************************************************'
+            print '        WARNING: There was a problem on accessing congfigure file.'
+            print '     Make sure that daemon is in the same directory as Bitmessage. '
+            print '     *************************************************************\n'
 
-            uInput = userInput('Would you like to create a keys.dat in the local directory, (Y)es or (N)o?').lower()
+            finalCheck = False
+            uInput = userInput('Would you like to create a "keys.dat" file in current working directory, (Y)es or (N)o?').lower()
 
             if (uInput == "y" or uInput == "yes"):
                 configInit()
                 keysPath = keysName
-                usrPrompt = 0
-                main()
-                return ''
+                finalCheck = True
 
             elif (uInput == "n" or uInput == "no"):
                 print '\n     Trying Again.\n'
-                usrPrompt = 0
-                main()
-                return ''
 
             else:
                 print '\n     Invalid Input.\n'
 
-            usrPrompt = 1
-            main()
-            return ''
+            if not finalCheck:
+                return ''
 
     try:  # checks to make sure that everyting is configured correctly. Excluding apiEnabled, it is checked after
         BMConfigParser().get('bitmessagesettings', 'apiport')
@@ -454,8 +454,11 @@ def apiData():
         BMConfigParser().get('bitmessagesettings', 'apiusername')
         BMConfigParser().get('bitmessagesettings', 'apipassword')
 
-    except:
-        apiInit("")  # Initalize the keys.dat file with API information
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+        isValid = apiInit("")  # Initalize the keys.dat file with API information
+        if not isValid:
+            print '\n      Config file not valid.\n'
+            return ''
 
     # keys.dat file was found or appropriately configured, allow information retrieval
     # apiEnabled =
@@ -469,7 +472,7 @@ def apiData():
     apiPassword = BMConfigParser().get('bitmessagesettings', 'apipassword')
 
     ret = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface + ":" + str(apiPort) + "/"
-    print '\n     API data successfully imported.\n     ' + ret
+    print '\n     API data successfully imported from: "{}"\n     {}'.format(os.path.realpath(keysPath), ret)
 
     # Build the api credentials
     return ret
@@ -483,7 +486,11 @@ def apiTest():
 
     try:
         response = api.add(2, 3)
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return False
     except:
+        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
         return False
 
     return response == 5
@@ -495,15 +502,14 @@ def bmSettings():
     global keysPath
     global usrPrompt, inputShorts, retStrings
 
-    keysPath = 'keys.dat'
+    #keysPath = 'keys.dat'
 
     BMConfigParser().read(keysPath)  # Read the keys.dat
     try:
+        print '     Configure file loading:', os.path.realpath(keysPath)
         port = BMConfigParser().get('bitmessagesettings', 'port')
-    except:
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
         print '\n     File not found.\n'
-        usrPrompt = 0
-        main()
         return ''
 
     startonlogon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'startonlogon')
@@ -521,6 +527,7 @@ def bmSettings():
     socksusername = BMConfigParser().get('bitmessagesettings', 'socksusername')
     sockspassword = BMConfigParser().get('bitmessagesettings', 'sockspassword')
 
+    print
     print '     -----------------------------------'
     print '     |   Current Bitmessage Settings   |'
     print '     -----------------------------------'
@@ -543,11 +550,10 @@ def bmSettings():
     print '     sockspassword = ' + sockspassword
     print ' '
 
-    retres = 'usercancel'
-    src = retStrings[retres]
+    src = retStrings['usercancel']
     uInput = userInput('Would you like to modify any of these settings, (n)o or (Y)es?').lower()
 
-    if uInput not in inputShorts['no']:
+    if uInput not in ['n', 'no']:
         while True:  # loops if they mistype the setting name, they can exit the loop with 'exit'
             invalidInput = False
             uInput = userInput('What setting would you like to modify?').lower()
@@ -636,8 +642,11 @@ def validAddress(address):
             print '\n     ' + response + '\n'
             return False
         address_information = json.loads(response)
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        print '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
+        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return 'success' in str(address_information['status']).lower()
 
@@ -653,14 +662,13 @@ def getAddress(passphrase, vNumber, sNumber):
         response = api.getDeterministicAddress(passphrase, vNumber, sNumber)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     print '     Address:', response
-    return ''
 
 
 def subscribe(address, label):
@@ -674,11 +682,11 @@ def subscribe(address, label):
         response = api.addSubscription(address, label)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n    ' + response
 
@@ -693,11 +701,11 @@ def unsubscribe(address):
         response = api.deleteSubscription(address)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     ' + response
 
@@ -714,12 +722,13 @@ def listSubscriptions():
             return '\n     ' + response + '\n'
         jsonAddresses = json.loads(response)['subscriptions']
         numAddresses = len(jsonAddresses)
-    except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
 
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
+    except:
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
+    print
     print '     -----------------------------------------------------------------------'
     print '     | # |       Label       |               Address               |Enabled|'
     print '     |---|-------------------|-------------------------------------|-------|'
@@ -764,11 +773,11 @@ def createChan(password):
         response = api.createChan(base64)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     ' + response
 
@@ -789,11 +798,11 @@ def joinChan():
         response = api.joinChan(password, address)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     ' + response
 
@@ -809,11 +818,11 @@ def leaveChan():
         response = api.leaveChan(address)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     ' + response
 
@@ -830,18 +839,19 @@ def listAdd():
             return '\n     ' + response + '\n'
         jsonAddresses = json.loads(response)['addresses']
         numAddresses = len(jsonAddresses)  # Number of addresses
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 1
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     # print '\nAddress Index,Label,Address,Stream,Enabled\n'
+    print
     print '     --------------------------------------------------------------------------'
     print '     | # |       Label       |               Address               |S#|Enabled|'
     print '     |---|-------------------|-------------------------------------|--|-------|'
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
-        label = (jsonAddresses[addNum]['label']).encode(
+        label = jsonAddresses[addNum]['label'].encode(
             'utf-8')              # may still misdiplay in some consoles
         address = str(jsonAddresses[addNum]['address'])
         stream = str(jsonAddresses[addNum]['stream'])
@@ -885,11 +895,11 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
             response = api.createRandomAddress(addressLabel)
             if "API Error" in response:
                 return '\n     ' + response + '\n'
+
+        except (socket.error, xmlrpclib.ProtocolError) as e:
+            return '\n     %s.\n' % str(e)
         except:
-            print '\n     Connection Error\n'
-            usrPrompt = 0
-            main()
-            return ''
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     else:  # Generates a new deterministic address with the user inputs.
         passPhrase = passphrase.encode('base64')
@@ -898,11 +908,11 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
             response = api.createDeterministicAddresses(passPhrase, numOfAdd, addVNum, streamNum, ripe)
             if "API Error" in response:
                 return '\n     ' + response + '\n'
+
+        except (socket.error, xmlrpclib.ProtocolError) as e:
+            return '\n     %s.\n' % str(e)
         except:
-            print '\n     Connection Error\n'
-            usrPrompt = 0
-            main()
-            return ''
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     Address:', response
 
@@ -921,8 +931,12 @@ def dump2File(fileName, fileData, deCoded):
     if not os.path.exists(directory):
         try:
             os.makedirs(directory)
+
+        except OSError as e:
+            return '\n     %s.\n' % str(e)
+            # return '\n     Failed creating ' + directory + '\n'
         except:
-            return '\n     Failed creating ' + directory + '\n'
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     filePath = os.path.join(directory, fileName)
 
@@ -950,8 +964,8 @@ def dump2File(fileName, fileData, deCoded):
                     fileData = y
                 else:
                     print '\n     Failed on "BASE64" re-encode checking.\n'
-            except:
-                pass
+
+            except ValueError:
                 return '\n     Failed on "BASE64" decoding.\n'
         else:
             print '\n     Not "BASE64" contents, dump to file directly.'
@@ -959,8 +973,12 @@ def dump2File(fileName, fileData, deCoded):
     try:
         with open(filePath, 'wb+') as path_to_file:
                 path_to_file.write(fileData)
+
+    except IOError as e:
+        return '\n     %s.\n' % str(e)
+        # return '\n     Failed on operating: "' + filePath + '"\n'
     except:
-        return '\n     Failed on operating: "' + filePath + '"\n'
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '     Successfully saved to: "' + filePath + '"'
 
@@ -1001,18 +1019,17 @@ def attachment():
             uInput = userInput('Are you sure you still want to attach it, (y)es or (N)o?').lower()
 
             if uInput not in inputShorts['yes']:
-                print '\n     Attachment discarded.'
-                return ''
+                return '\n     Attachment discarded.'
+
         elif invSize > 184320.0:  # If larger than 180MB, discard.
-            print '\n     Attachment too big, maximum allowed size:180MB'
-            main()
-            return ''
+            return '\n     Attachment too big, maximum allowed size:180MB\n'
 
         pathLen = len(str(ntpath.basename(filePath)))  # Gets the length of the filepath excluding the filename
         fileName = filePath[(len(str(filePath)) - pathLen):]  # reads the filename
 
         filetype = imghdr.what(filePath)  # Tests if it is an image file
         if filetype is not None:
+            print
             print '     ---------------------------------------------------'
             print '     Attachment detected as an Image.'
             print '     <img> tags will automatically be included,'
@@ -1084,11 +1101,11 @@ def sendMsg(toAddress, fromAddress, subject, message):
                 return '\n     ' + response + '\n'
             jsonAddresses = json.loads(response)['addresses']
             numAddresses = len(jsonAddresses)  # Number of addresses
+
+        except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+            return '\n     %s.\n' % str(e)
         except:
-            print '\n     Connection Error\n'
-            usrPrompt = 0
-            main()
-            return ''
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
         if numAddresses > 1:  # Ask what address to send from if multiple addresses
             found = False
@@ -1157,15 +1174,21 @@ def sendMsg(toAddress, fromAddress, subject, message):
                 if "API Error" in status:
                     return '     ' + status + '\n'
 
+            except (socket.error, xmlrpclib.ProtocolError) as e:
+                print '\n     %s.\n' % str(e)
+                # return '     Message status fetching failed: ' + status + '\n'
             except:
-                return '     Message status fetching failed: ' + status + '\n'
+                print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
             return '     Message Status:' + status
-        except:
-            print '\n     Connection Error\n'
+
+        except (socket.error, xmlrpclib.ProtocolError) as e:
+            print '\n     %s.\n' % str(e)
             uInput = userInput('Would you like to try again, (n)o or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
+        except:
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return ''
 
@@ -1183,21 +1206,16 @@ def sendBrd(fromAddress, subject, message):
                 return '\n     ' + response + '\n'
             jsonAddresses = json.loads(response)['addresses']
             numAddresses = len(jsonAddresses)  # Number of addresses
+
+        except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+            return '\n     %s.\n' % str(e)
         except:
-            print '\n     Connection Error\n'
-            usrPrompt = 0
-            main()
-            return ''
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
         if numAddresses > 1:  # Ask what address to send from if multiple addresses
             found = False
             while True:
                 fromAddress = userInput('Enter an Address or Address Label to send from.')
-
-                if fromAddress == "exit":
-                    usrPrompt = 1
-                    main()
-                    return ''
 
                 for addNum in range(0, numAddresses):  # processes all of the addresses
                     label = jsonAddresses[addNum]['label']
@@ -1260,15 +1278,21 @@ def sendBrd(fromAddress, subject, message):
                 if "API Error" in status:
                     return '\n     ' + status + '\n'
 
+            except (socket.error, xmlrpclib.ProtocolError) as e:
+                print '\n     %s.\n' % str(e)
+                # return '     Message status fetching failed: ' + response + '\n'
             except:
-                return '     Message status fetching failed: ' + response + '\n'
+                print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
             return '     Message Status:' + status
-        except:
-            print '\n     Connection Error\n'
+
+        except (socket.error, xmlrpclib.ProtocolError) as e:
+            print '\n     %s.\n' % str(e)
             uInput = userInput('Would you like to try again, no or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
+        except:
+            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return ''
 
@@ -1284,15 +1308,15 @@ def inbox(unreadOnly=False, pageNum=20):
             return '\n     ' + response + '\n'
         messageIds = json.loads(response)['inboxMessageIds']
         numMessages = len(messageIds)
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     messagesPrinted = 0
     messagesUnread = 0
-    for msgNum in range(numMessages - 1, 0, -1):  # processes all of the messages in the inbox
+    for msgNum in range(numMessages - 1, -1, -1):  # processes all of the messages in the inbox
         messageID = messageIds[msgNum]['msgid']
         try:
             print '     -----------------------------------'
@@ -1317,12 +1341,17 @@ def inbox(unreadOnly=False, pageNum=20):
                     messagesUnread += 1
 
             if messagesPrinted % pageNum == 0 and messagesPrinted != 0:
-                uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum))
-                if uInput == 'exit':
-                    break
+                uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
+
+        except inputException as e:
+            raise inputException(str(e))
+
+        except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+            print '\n     %s.\n' % str(e)
+            print '\n     Retrieve failed on:', msgNum, messageID
         except:
-            print '\n     Retrive failed on:', messageID
-            pass
+            print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
 
     print '     -----------------------------------'
     print '     There are %d unread messages of %d messages in the inbox.' % (messagesUnread, numMessages)
@@ -1342,13 +1371,13 @@ def outbox(pageNum=20):
             return '\n     ' + response + '\n'
         outboxMessages = json.loads(response)
         numMessages = len(outboxMessages['sentMessages'])
-    except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
 
-    for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
+    except:
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
+    for msgNum in range(numMessages - 1, -1, -1):  # processes all of the messages in the outbox
         message = outboxMessages['sentMessages'][msgNum]
         print '     -----------------------------------'
         print '     Outbox index: {}/{}'.format(msgNum, numMessages - 1)  # message index
@@ -1363,9 +1392,7 @@ def outbox(pageNum=20):
         print '     Base64Len:', str(len(message['message']))
 
         if msgNum % pageNum == 0 and msgNum != 0:
-                uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum))
-                if uInput == 'exit':
-                    break
+            uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
 
     print '     -----------------------------------'
     print '     There are ', numMessages, ' messages in the outbox.'
@@ -1413,7 +1440,7 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
                         pBack = 5
                 attPre = attPre - pBack
 
-            except:
+            except ValueError:
                 fn = 'notdetected'
             fn = '{}_attachment_{}_{}'.format(attPrefix, str(attPos), fn)
 
@@ -1460,9 +1487,11 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
                     else:
                         print '\n     Failed on decode this embeded "BASE64" like message on re-encode check.\n'
 
-                except:
+                except ValueError:
                     pass
                     print '\n     Failed on decode this emdeded "BASE64" encoded like message.\n'
+                except:
+                    print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
             else:
                 print '\n    Skiped a embeded "BASE64" encoded like message.'
@@ -1471,9 +1500,12 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
                 textmsg = textmsg + content[msgPos:attEndPos]
                 msgPos = attEndPos
 
-        except:  # ValueError:
+        except ValueError:
             textmsg = textmsg + content[msgPos:]
             break
+        except:
+            print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
 
     return textmsg
 
@@ -1494,11 +1526,11 @@ def readSentMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False)
             if "API Error" in response:
                 return '\n     ' + response + '\n'
             message = json.loads(response)['sentMessage'][0]
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     subject = message['subject'].decode('base64')
     content = message['message'].decode('base64')
@@ -1539,11 +1571,11 @@ def readMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False):
         if "API Error" in response:
             return '\n     ' + response + '\n'
         message = json.loads(response)['inboxMessage'][0]
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     subject = message['subject'].decode('base64')
     content = message['message'].decode('base64')
@@ -1584,11 +1616,11 @@ def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
         if "API Error" in response:
             return '\n     ' + response + '\n'
         message = json.loads(response)['inboxMessage'][0]
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     content = message['message'].decode('base64')  # Message that you are replying too.
     subject = message['subject'].decode('base64')
@@ -1622,10 +1654,7 @@ def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
         toAdd = inputAddress("What is the To Address?")
 
     else:
-        print '\n     Invalid Selection. Reply or Forward only'
-        usrPrompt = 1
-        main()
-        return ''
+        return '\n     Invalid Selection. Reply or Forward only'
 
     subject = subject.encode('base64')
 
@@ -1644,8 +1673,7 @@ def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
         except EOFError:
             break
 
-    retres = 'usercancel'
-    src = retStrings[retres]
+    src = retStrings['usercancel']
     uInput = userInput('Would you like to add an attachment, (y)es or (N)o?').lower()
     if uInput in inputShorts['yes']:
         newMessage = newMessage + '\n\n' + attachment()
@@ -1671,11 +1699,11 @@ def delMsg(msgNum=-1, messageID=''):
         response = api.trashMessage(messageID)
         if "API Error" in response:
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     ' + response
 
@@ -1702,11 +1730,11 @@ def delSentMsg(msgNum=-1, messageID=''):
             response = api.trashSentMessage(messageID)
             if "API Error" in response:
                 return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '\n     ' + response
 
@@ -1723,63 +1751,50 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
             print '\n     ' + response + '\n'
         messageIds = json.loads(response)['inboxMessageIds']
         numMessages = len(messageIds)
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.' % str(e)
     except:
-        print '\n     Connection Error'
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     if numMessages < 1:
-        print '     Zero message founded.\n'
-        usrPrompt = 1
-        main()
-        return ''
+        return '     Zero message found.\n'
 
-    retres = 'usercancel'
-    src = retStrings[retres]
+    src = retStrings['usercancel']
     if cmd != 'delete':
         msgNum = int(inputIndex('Input the index of the message to {} [0-{}]: '.format(cmd, numMessages - 1), numMessages - 1))
-        if msgNum < 0:
-            print src
-            usrPrompt = 1
-            main()
-            return ''
 
         nextNum = msgNum
+        ret = ''
         while msgNum >= 0:  # save, read
             nextNum += 1
             messageID = messageIds[msgNum]['msgid']
             if cmd == 'save':
                 ret = readMsg(cmd, msgNum, messageID, trunck, withAtta)
-                print ret
-                usrPrompt = 1
-                main()
-                return ''
+                return ret
 
             else:
                 ret = readMsg(cmd, msgNum, messageID)
-                print ret
+            print ret
 
             uInput = userInput('Would you like to set this message to unread, (y)es or (N)o?').lower()
             if uInput in inputShorts['yes']:
                 ret = markMessageReadbit(msgNum, messageID, False)
-                print ret
 
             else:
                 uInput = userInput('Would you like to (f)orward, (r)eply, (s)ave, (d)ump or Delete this message?').lower()
 
                 if uInput in inputShorts['reply']:
                     ret = replyMsg(msgNum, messageID, 'reply')
-                    print ret
 
                 elif uInput in inputShorts['forward']:
                     ret = replyMsg(msgNum, messageID, 'forward')
-                    print ret
 
                 elif uInput in inputShorts['save']:
                     ret = readMsg('save', msgNum, messageID, withAtta=False)
-                    print ret
 
                 elif uInput in inputShorts['dump']:
                     ret = readMsg('save', msgNum, messageID, withAtta=True)
-                    print ret
 
                 else:
                     uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
@@ -1787,23 +1802,17 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                         # nextNum -= 1
                         # numMessages -= 1
                         ret = delMsg(msgNum, messageID)
-                        print ret
 
+            print ret
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
-                retres = 'indexoutofbound'
-                src = retStrings[retres]
+                src = retStrings['indexoutofbound']
             else:
                 msgNum = -1
 
     else:
         uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-{}]: '.format(numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
-        if uInput not in inputShorts['all'][0] and int(uInput) < 0:
-            print src
-            usrPrompt = 1
-            main()
-            return ''
 
         if uInput in inputShorts['all']:
             ret = inbox(False)
@@ -1833,8 +1842,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                     msgNum = nextNum if uInput not in inputShorts['no'] else -1
-                    retres = 'indexoutofbound'
-                    src = retStrings[retres]
+                    src = retStrings['indexoutofbound']
                 else:
                     msgNum = -1
 
@@ -1853,53 +1861,40 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
             print '\n     ' + response + '\n'
         messageIds = json.loads(response)['sentMessageIds']
         numMessages = len(messageIds)
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.' % str(e)
     except:
-        print '\n     Connection Error'
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     if numMessages < 1:
-        print '     Zero message founded.\n'
-        usrPrompt = 1
-        main()
-        return ''
+        return '     Zero message found.\n'
 
-    retres = 'usercancel'
-    src = retStrings[retres]
+    src = retStrings['usercancel']
     if cmd != 'delete':
         msgNum = int(inputIndex('Input the index of the message open [0-{}]: '.format(numMessages - 1), numMessages - 1))
-        if msgNum < 0:
-            retres = 'usercancel'
-            print retStrings[retres]
-            usrPrompt = 1
-            main()
-            return ''
 
         nextNum = msgNum
+        ret = ''
         while msgNum >= 0:  # save, read
             nextNum += 1
             messageID = messageIds[msgNum]['msgid']
             if cmd == 'save':
                 ret = readSentMsg(cmd, msgNum, messageID, trunck, withAtta)
-                print ret
-                usrPrompt = 1
-                main()
-                return ''
+                return ret
 
             else:
                 ret = readSentMsg(cmd, msgNum, messageID)
-                print ret
 
+            print ret
             # Gives the user the option to delete the message
-            retres = 'usercancel'
-            src = retStrings[retres]
             uInput = userInput('Would you like to (s)ave, (d)ump or Delete this message directly?').lower()
 
             if uInput in inputShorts['save']:
                 ret = readSentMsg('save', msgNum, messageID, withAtta=False)
-                print ret
 
             elif uInput in inputShorts['dump']:
                 ret = readSentMsg('save', msgNum, messageID, withAtta=True)
-                print ret
 
             else:
                 uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
@@ -1907,23 +1902,17 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                     nextNum -= 1
                     numMessages -= 1
                     ret = delSentMsg(msgNum, messageID)
-                    print ret
 
+            print ret
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
-                retres = 'indexoutofbound'
-                src = retStrings[retres]
+                src = retStrings['indexoutofbound']
             else:
                 msgNum = -1
 
     else:
         uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-{}]: '.format(numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
-        if uInput not in inputShorts['all'][0] and int(uInput) < 0:
-            print src
-            usrPrompt = 1
-            main()
-            return ''
 
         if uInput in inputShorts['all']:
             ret = outbox()
@@ -1954,8 +1943,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                     msgNum = nextNum if uInput not in inputShorts['no'] else -1
-                    retres = 'indexoutofbound'
-                    src = retStrings[retres]
+                    src = retStrings['indexoutofbound']
                 else:
                     msgNum = -1
 
@@ -1996,9 +1984,11 @@ def buildKnownAddresses():
                         break
                 if isnew is True:
                     newentry.append({'label': entry['label'].decode('base64').encode('utf-8'), 'address': entry['address']})
-    except:
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
         pass
-        print '\n     Connection Error\n'
+        print '\n     %s.\n' % str(e)
+    except:
+        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     if any(newentry):
         for new in newentry:
@@ -2022,9 +2012,12 @@ def buildKnownAddresses():
                         break
                 if isnew is True:
                     newentry.append({'label': entry['label'].encode('utf-8'), 'address': entry['address']})
-    except:
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
         pass
-        print '\n     Connection Error\n'
+        print '\n     %s.\n' % str(e)
+    except:
+        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     if any(newentry):
         for new in newentry:
@@ -2048,6 +2041,7 @@ def listAddressBookEntries(printKnown=False):
         else:
             addressBook = knownAddresses
 
+        print
         print '     --------------------------------------------------------------'
         print '     |        Label       |                Address                |'
         print '     |--------------------|---------------------------------------|'
@@ -2059,10 +2053,10 @@ def listAddressBookEntries(printKnown=False):
             print '     | ' + label.ljust(19) + '| ' + address.ljust(37) + ' |'
         print '     --------------------------------------------------------------'
 
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return ''
 
@@ -2077,12 +2071,9 @@ def addAddressToAddressBook(address, label):
         response = api.addAddressBookEntry(address, label.encode('base64'))
         if "API Error" in response:
             return '\n     ' + response + '\n'
-    except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
 
-    return ''
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
 
 
 def deleteAddressFromAddressBook(address):
@@ -2096,10 +2087,11 @@ def deleteAddressFromAddressBook(address):
         if "API Error" in response:
             # return getAPIErrorCode(response)
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return ''
 
@@ -2124,10 +2116,11 @@ def markMessageReadbit(msgNum=-1, messageID='', read=False):
         if "API Error" in response:
             # return getAPIErrorCode(response)
             return '\n     ' + response + '\n'
+
+    except (socket.error, xmlrpclib.ProtocolError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return ''
 
@@ -2142,14 +2135,14 @@ def markAllMessagesReadbit(read=False):
             return '\n     ' + response + '\n'
         messageIds = json.loads(response)['inboxMessageIds']
         numMessages = len(messageIds)
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     if numMessages < 1:
-        print '     Zero message founded.\n'
+        print '     Zero message found.\n'
 
     for msgNum in range(0, numMessages):  # processes all of the messages in the inbox
         src = markMessageReadbit(msgNum, messageIds[msgNum]['msgid'], read)
@@ -2168,11 +2161,11 @@ def addInfo(address):
         if "API Error" in response:
             return '\n     ' + response + '\n'
         addinfo = json.loads(response)
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     print '------------------------------'
 
@@ -2198,11 +2191,11 @@ def clientStatus():
         inumMessages = len(inboxMessageIds['inboxMessageIds'])
         outboxMessageIds = json.loads(api.getAllSentMessageIDs())
         onumMessages = len(outboxMessageIds['sentMessageIds'])
+
+    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
+        return '\n     %s.\n' % str(e)
     except:
-        print '\n     Connection Error\n'
-        usrPrompt = 0
-        main()
-        return ''
+        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     print '     ------------------------------'
     for key in client_status.keys():
@@ -2227,18 +2220,14 @@ def shutdown():
             return '\n     ' + response + '\n'
         return response
     except socket.error:
-        print '\n     Connection Error\n'
-        pass
-
-    return ''
+        return '\n     %s.\n' % str(e)
 
 
 def UI(cmdInput):
     """Main user menu"""
 
-    global usrPrompt, inputShorts, cmdShorts
+    global usrPrompt, inputShorts, cmdShorts, retStrings
 
-    retid = 0
     src = 'MUST WRONG'
     uInput = ''
 
@@ -2247,8 +2236,7 @@ def UI(cmdInput):
             raise SystemExit('\n     Bye\n')
 
     if cmdInput in cmdShorts['help']:
-        showCmdTbl()
-        main()
+        src = showCmdTbl()
 
     elif cmdInput in cmdShorts['daemon']:
         src = "TODO: Start daemon locally."
@@ -2331,7 +2319,7 @@ def UI(cmdInput):
     elif cmdInput in cmdShorts['leave']:
         src = leaveChan()
 
-    elif cmdInput in cmdShorts['buildKnownAddresses']:  # Retrive all of the addressbooks
+    elif cmdInput in cmdShorts['buildKnownAddresses']:  # Retrieve all of the addressbooks
         src = buildKnownAddresses()
         print src,
         src = listAddressBookEntries(True)
@@ -2425,46 +2413,70 @@ def UI(cmdInput):
     else:
         src = '\n     "' + cmdInput + '" is not a command.\n'
 
+    if src is None:
+        src = retStrings['none']
+        usrPrompt = 1
+    elif 'Connection' in src:
+        usrPrompt = 0
+    else:
+        usrPrompt = 1
+
     print src
-    usrPrompt = 1
-    main()
 
 
 def main():
     """Entrypoint for the CLI app"""
 
-    global api
-    global usrPrompt, cmdstr
+    global api, usrPrompt, cmdStr
 
     if usrPrompt == 0:
+        print
         print '     ------------------------------'
         print '     | Bitmessage Daemon by .dok  |'
         print '     | Version 0.3.1 for BM 0.6.2 |'
         print '     ------------------------------'
-        api = xmlrpclib.ServerProxy(apiData())  # Connect to BitMessage using these api credentials
 
-        if apiTest() is False:
-            print '     ****************************************************************'
-            print '        WARNING: You are not connected to the Bitmessage client.'
-            print '     Either Bitmessage is not running or your settings are incorrect.'
-            print '     Use the command "apiTest" or "bmSettings" to resolve this issue.'
-            print '     ****************************************************************\n'
+        conn = apiData()
+        if conn != '':
+            api = xmlrpclib.ServerProxy(conn)  # Connect to BitMessage using these api credentials
+            if apiTest() is False:
+                print
+                print '     ****************************************************************'
+                print '        WARNING: You are not connected to the Bitmessage client.'
+                print '     Either Bitmessage is not running or your settings are incorrect.'
+                print '     Use the command "apiTest" or "bmSettings" to resolve this issue.'
+                print '     ****************************************************************\n'
 
-        print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdstr)  # Startup message
-        usrPrompt = 2
+            print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdStr)  # Startup message
+            usrPrompt = 2
+        else:
+            print
+            print '     *****************************************************'
+            print '        WARNING: API not functionable till you finish the'
+            print '     configuration.'
+            print '     *****************************************************\n'
+            print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdStr)  # Startup message
+            usrPrompt = 0
 
     elif usrPrompt == 1:
-        print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdstr)  # Startup message
+        print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [{}]: '.format(cmdStr)  # Startup message
         usrPrompt = 2
 
     try:
-        cmdInput = (raw_input('>').lower()).replace(" ", "")
+        cmdInput = raw_input('>').lower().replace(" ", "")
         if cmdInput != '':
-            cmdstr = cmdInput
-        UI(cmdstr)
+            cmdStr = cmdInput  # save as last cmd for replay
+        UI(cmdStr)
+
     except EOFError:
         UI("quit")
 
 
 if __name__ == "__main__":
-    main()
+    while True:
+        try:
+            main()
+        except inputException as e:
+            print retStrings.get(e.resKey, '\n     Not defined error raised: %s.\n' % e.resKey)
+            usrPrompt = 1
+
