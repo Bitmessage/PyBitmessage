@@ -26,8 +26,8 @@ import inspect
 import re
 
 from bmconfigparser import BMConfigParser
-import ConfigParser
 from collections import OrderedDict
+import ConfigParser
 
 api = ''
 keysName = 'keys.dat'
@@ -187,7 +187,7 @@ def showCmdTbl():
     print ''.join([5 * ' ', 73 * '-'])
 
 
-class inputException(Exception):
+class InputException(Exception):
     def __init__(self, resKey):
         Exception.__init__(self, resKey)
         self.resKey =  resKey
@@ -212,6 +212,82 @@ def inputAddress(prompt='What is the address?'):
     return address
 
 
+class BMAPIWrapperConectionException(Exception):
+    def __init__(self, ex):
+        Exception.__init__(self, ex)
+        self.msg = str(ex)
+
+    def __str__(self):
+        return self.msg
+
+
+class BMAPIWrapper(str):
+
+    def __init__(self, conn='http://127.0.0.1:8442'):
+        self.conn = conn
+        print '     RPC initialed:', self.conn
+        self.xmlrpc = xmlrpclib.ServerProxy(self.conn)
+
+    def __getattr__(self, apiname):
+        attr = getattr(self.xmlrpc, apiname)
+        def wrapper(*args, **kwargs):
+            error = 0
+            result = ''
+            errormsg =''
+            try:
+                response = attr(*args, **kwargs)
+                # print response
+                if apiname in ['add', 'helloWorld', 'statusBar', '']:
+                    result = response
+                else:
+                    if "API Error" in response or 'RPC ' in response:
+                        error = 1
+                        errormsg = '\n     ' + response + '\n'
+                    else:
+                        try:
+                            if apiname in ['getAllInboxMessageIDs', 'getAllInboxMessageIds']:
+                                result = json.loads(response)['inboxMessageIds']
+                            elif apiname in ['getInboxMessageByID', 'getInboxMessageById']:
+                                result = json.loads(response)['inboxMessage']
+                            elif apiname in ['GetAllInboxMessages', 'getInboxMessagesByReceiver', 'getInboxMessagesByAddress']:
+                                result = json.loads(response)['inboxMessages']
+                            elif apiname in ['getAllSentMessageIDs', 'getAllSentMessageIds']:
+                                result = json.loads(response)['sentMessageIds']
+                            elif apiname in ['getAllSentMessages', 'getSentMessagesByAddress', 'getSentMessagesBySender', 'getSentMessageByAckData']:
+                                result = json.loads(response)['sentMessages']
+                            elif apiname in ['getSentMessageByID', 'getSentMessageById']:
+                                result = json.loads(response)['sentMessage']
+                            elif apiname in ['listAddressBookEntries', 'listAddressbook', 'listAddresses', 'listAddressbook', 'createDeterministicAddresses']:
+                                result = json.loads(response)['addresses']
+                            elif apiname in ['listSubscriptions']:
+                                result = json.loads(response)['subscriptions']
+                            elif apiname in ['decodeAddress', 'clientStatus', 'getMessageDataByDestinationHash', 'getMessageDataByDestinationTag']:
+                                result = json.loads(response)
+                            elif apiname in ['addSubscription', 'deleteSubscription', 'createChan', 'joinChan', 'leaveChan', 'sendMessage', 'sendBroadcast', 'getStatus', 'trashMessage', 'trashInboxMessage', 'trashSentMessageByAckData', 'trashSentMessage', 'addAddressBookEntry', 'addAddressbook', 'deleteAddressBookEntry', 'deleteAddressbook', 'createRandomAddress', 'getDeterministicAddress', 'deleteAddress','disseminatePreEncryptedMsg', 'disseminatePubkey', 'deleteAndVacuum', 'shutdown']:
+                                result = response
+                            else:
+                                error = 99
+                                errormsg = '\n     BMAPIWrapper error: unexpected api.\n'
+                        except ValueError as e:  # json.loads error
+                            error = 2
+                            result = response
+                            errormsg = '\n     Server returns unexpected data, maybe a network problem there?\n'
+
+            except (socket.error, xmlrpclib.ProtocolError) as e:  # Connection error
+                error = -1
+                result = ''
+                errormsg = '\n     Connection error: %s.\n' % str(e)
+            except Exception:  # Unexpected error
+                error = -99
+                result = ''
+                errormsg = '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
+            # print json.dumps({'error': error, 'result': result, 'errormsg': errormsg})
+            return {'error': error, 'result': result, 'errormsg': errormsg}
+
+        return wrapper
+
+
 def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
     global usrPrompt, retStrings, retStrings
@@ -221,7 +297,7 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
         try:
             if cinput == "c":
                 cinput = '-1'
-                raise inputException('usercancel')
+                raise InputException('usercancel')
 
             elif cinput in alter:
                 break
@@ -233,8 +309,8 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
             else:
                 break
 
-        except inputException as e:
-            raise inputException(e)
+        except InputException as e:
+            raise InputException(e)
 
         except ValueError:
             src = retStrings['invalidinput']
@@ -262,7 +338,7 @@ def userInput(message):
     uInput = raw_input('> ')
 
     if uInput.lower() == 'exit':  # Returns the user to the main menu
-        raise inputException('usercancel')
+        raise InputException('usercancel')
 
     elif uInput == '':  # Return last value.
         return inputs.get(where, '')
@@ -472,7 +548,7 @@ def apiData():
     apiPassword = BMConfigParser().get('bitmessagesettings', 'apipassword')
 
     ret = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface + ":" + str(apiPort) + "/"
-    print '\n     API data successfully imported from: "{}"\n     {}'.format(os.path.realpath(keysPath), ret)
+    print '\n     API data successfully imported.'
 
     # Build the api credentials
     return ret
@@ -480,20 +556,11 @@ def apiData():
 
 # End keys.dat interactions
 
-
 def apiTest():
     """Tests the API connection to bitmessage. Returns true if it is connected."""
 
-    try:
-        response = api.add(2, 3)
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return False
-    except:
-        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-        return False
-
-    return response == 5
+    response = api.add(2, 3)
+    return response['result'] == 5
 
 
 def bmSettings():
@@ -635,99 +702,60 @@ def bmSettings():
 def validAddress(address):
     """Predicate to test address validity"""
 
-    try:
-        print '     Validating...', address
-        response = api.decodeAddress(address)
-        if "API Error" in response:
-            print '\n     ' + response + '\n'
-            return False
-        address_information = json.loads(response)
+    print '     Validating...', address
+    response = api.decodeAddress(address)
+    if response['error'] != 0:
+        print response['errormsg']
+        return False
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        print '\n     %s.\n' % str(e)
-    except:
-        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return 'success' in str(address_information['status']).lower()
+    return 'success' in response['result']['status'].lower()
 
 
 def getAddress(passphrase, vNumber, sNumber):
     """Get a deterministic address"""
 
-    global usrPrompt
+    passPhrase = passphrase.encode('base64')  # passphrase must be encoded
+    print '     Getting address:', passphrase
+    response = api.getDeterministicAddress(passPhrase, vNumber, sNumber)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    passphrase = passphrase.encode('base64')  # passphrase must be encoded
-    try:
-        print '     Getting address:', passphrase
-        response = api.getDeterministicAddress(passphrase, vNumber, sNumber)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    print '     Address:', response
+    print '     Address:', response['result']
 
 
 def subscribe(address, label):
     """Subscribe to an address"""
 
-    global usrPrompt
-
     label = label.encode('base64')
-    try:
-        print '     Subscribing address:', label
-        response = api.addSubscription(address, label)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
+    print '     Subscribing address:', label
+    response = api.addSubscription(address, label)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n    ' + response
+    return '\n    ' + response['result']
 
 
 def unsubscribe(address):
     """Unsusbcribe from an address"""
 
-    global usrPrompt
+    print '     unSubscribing address:', address
+    response = api.deleteSubscription(address)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    try:
-        print '     unSubscribing address:', address
-        response = api.deleteSubscription(address)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n     ' + response
+    return '\n     ' + response['result']
 
 
 def listSubscriptions():
     """List subscriptions"""
 
-    global usrPrompt
+    print '     Subscribed list retriving...'
+    response = api.listSubscriptions()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    try:
-        print '     Subscribed list retriving...'
-        response = api.listSubscriptions()
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        jsonAddresses = json.loads(response)['subscriptions']
-        numAddresses = len(jsonAddresses)
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    jsonAddresses = response['result']
+    numAddresses = len(jsonAddresses)
     print
     print '     -----------------------------------------------------------------------'
     print '     | # |       Label       |               Address               |Enabled|'
@@ -765,27 +793,17 @@ def listSubscriptions():
 def createChan(password):
     """Create a channel"""
 
-    global usrPrompt
-
     base64 = password.encode('base64')
-    try:
-        print '     Channel creating...', password
-        response = api.createChan(base64)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
+    print '     Channel creating...', password
+    response = api.createChan(base64)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n     ' + response
+    return '\n     ' + response['result']
 
 
 def joinChan():
     """Join a channel"""
-
-    global usrPrompt
 
     uInput = ''
     address = inputAddress('Enter channel address')
@@ -793,58 +811,36 @@ def joinChan():
         uInput = userInput('Enter channel name[1~]')
     password = uInput.encode('base64')
 
-    try:
-        print '     Channel joining...', uInput
-        response = api.joinChan(password, address)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
+    print '     Channel joining...', uInput
+    response = api.joinChan(password, address)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n     ' + response
+    return '\n     ' + response['result']
 
 
 def leaveChan():
     """Leave a channel"""
 
-    global usrPrompt
-
     address = inputAddress("Enter channel address")
-    try:
-        print '     Channel leaving...', 'address'
-        response = api.leaveChan(address)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
+    print '     Channel leaving...', 'address'
+    response = api.leaveChan(address)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n     ' + response
+    return '\n     ' + response['result']
 
 
 def listAdd():
     """List all of the addresses and their info"""
 
-    global usrPrompt
+    print '     Retriving...', 'Senders'
+    response = api.listAddresses()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    try:
-        print '     Retriving...', 'Senders'
-        response = api.listAddresses()
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        jsonAddresses = json.loads(response)['addresses']
-        numAddresses = len(jsonAddresses)  # Number of addresses
-
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    jsonAddresses = response['result']
+    numAddresses = len(jsonAddresses)  # Number of addresses
     # print '\nAddress Index,Label,Address,Stream,Enabled\n'
     print
     print '     --------------------------------------------------------------------------'
@@ -890,31 +886,19 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
 
     if deterministic is False:  # Generates a new address with the user defined label. non-deterministic
         addressLabel = lbl.encode('base64')
-        try:
-            print '     Address requesting...', lbl
-            response = api.createRandomAddress(addressLabel)
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-
-        except (socket.error, xmlrpclib.ProtocolError) as e:
-            return '\n     %s.\n' % str(e)
-        except:
-            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+        print '     Address requesting...', lbl
+        response = api.createRandomAddress(addressLabel)
+        if response['error'] != 0:
+            return response['errormsg']
 
     else:  # Generates a new deterministic address with the user inputs.
         passPhrase = passphrase.encode('base64')
-        try:
-            print '     Address deterministic...', passphrase
-            response = api.createDeterministicAddresses(passPhrase, numOfAdd, addVNum, streamNum, ripe)
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
+        print '     Address deterministic...', passphrase
+        response = api.createDeterministicAddresses(passPhrase, numOfAdd, addVNum, streamNum, ripe)
+        if response['error'] != 0:
+            return response['errormsg']
 
-        except (socket.error, xmlrpclib.ProtocolError) as e:
-            return '\n     %s.\n' % str(e)
-        except:
-            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n     Address:', response
+    return '\n     Address:', response['result']
 
 
 def dump2File(fileName, fileData, deCoded):
@@ -935,7 +919,7 @@ def dump2File(fileName, fileData, deCoded):
         except OSError as e:
             return '\n     %s.\n' % str(e)
             # return '\n     Failed creating ' + directory + '\n'
-        except:
+        except Exception:
             return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     filePath = os.path.join(directory, fileName)
@@ -977,7 +961,7 @@ def dump2File(fileName, fileData, deCoded):
     except IOError as e:
         return '\n     %s.\n' % str(e)
         # return '\n     Failed on operating: "' + filePath + '"\n'
-    except:
+    except Exception:
         return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return '     Successfully saved to: "' + filePath + '"'
@@ -1094,18 +1078,13 @@ def sendMsg(toAddress, fromAddress, subject, message):
         toAddress = inputAddress("What is the To Address indeed?")
 
     if validAddress(fromAddress) is False:
-        try:
-            print '     Sender retriving...', fromAddress
-            response = api.listAddresses()
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            jsonAddresses = json.loads(response)['addresses']
-            numAddresses = len(jsonAddresses)  # Number of addresses
-
-        except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-            return '\n     %s.\n' % str(e)
-        except:
-            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+        print '     Sender retriving...', fromAddress
+        response = api.listAddresses()
+        if response['error'] != 0:
+            return response['errormsg']
+        
+        jsonAddresses = response['result']
+        numAddresses = len(jsonAddresses)  # Number of addresses
 
         if numAddresses > 1:  # Ask what address to send from if multiple addresses
             found = False
@@ -1162,33 +1141,25 @@ def sendMsg(toAddress, fromAddress, subject, message):
         message = message.encode('base64')
 
     while True:
-        try:
-            print '     Message sending...', subject.decode('base64')
-            ackData = api.sendMessage(toAddress, fromAddress, subject, message)
-            if "API Error" in ackData:
-                return '     ' + ackData + '\n'
-
-            try:
-                print '     Fetching send status...'
-                status = api.getStatus(ackData)
-                if "API Error" in status:
-                    return '     ' + status + '\n'
-
-            except (socket.error, xmlrpclib.ProtocolError) as e:
-                print '\n     %s.\n' % str(e)
-                # return '     Message status fetching failed: ' + status + '\n'
-            except:
-                print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-            return '     Message Status:' + status
-
-        except (socket.error, xmlrpclib.ProtocolError) as e:
-            print '\n     %s.\n' % str(e)
+        print '     Message sending...', subject.decode('base64')
+        ackData = api.sendMessage(toAddress, fromAddress, subject, message)
+        if ackData['error'] == 1:
+            return ackData['errormsg']
+        elif ackData['error'] != 0:
+            print ackData['errormsg']
             uInput = userInput('Would you like to try again, (n)o or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
-        except:
-            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
+    if ackData['error'] == 0:
+        print '     Fetching send status...'
+        status = api.getStatus(ackData['result'])
+        if status['error'] == 1:
+            return status['errormsg']
+        elif status['error'] != 0:
+            print status['errormsg']
+        else:
+            return '     Message Status:' + status['result']
 
     return ''
 
@@ -1198,19 +1169,13 @@ def sendBrd(fromAddress, subject, message):
 
     global usrPrompt, inputShorts
     if fromAddress == '':
+        print '     Retriving...', 'Senders'
+        response = api.listAddresses()
+        if response['error'] != 0:
+            return response['errormsg']
 
-        try:
-            print '     Retriving...', 'Senders'
-            response = api.listAddresses()
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            jsonAddresses = json.loads(response)['addresses']
-            numAddresses = len(jsonAddresses)  # Number of addresses
-
-        except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-            return '\n     %s.\n' % str(e)
-        except:
-            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+        jsonAddresses = response['result']
+        numAddresses = len(jsonAddresses)  # Number of addresses
 
         if numAddresses > 1:  # Ask what address to send from if multiple addresses
             found = False
@@ -1266,33 +1231,25 @@ def sendBrd(fromAddress, subject, message):
         message = message.encode('base64')
 
     while True:
-        try:
-            print '     Broadcast message sending...'
-            ackData = api.sendBroadcast(fromAddress, subject, message)
-            if "API Error" in ackData:
-                return '\n     ' + ackData + '\n'
-
-            try:
-                print '     Fetching send status...'
-                status = api.getStatus(ackData)
-                if "API Error" in status:
-                    return '\n     ' + status + '\n'
-
-            except (socket.error, xmlrpclib.ProtocolError) as e:
-                print '\n     %s.\n' % str(e)
-                # return '     Message status fetching failed: ' + response + '\n'
-            except:
-                print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-            return '     Message Status:' + status
-
-        except (socket.error, xmlrpclib.ProtocolError) as e:
+        print '     Broadcast message sending...'
+        ackData = api.sendBroadcast(fromAddress, subject, message)
+        if ackData['error'] == 1:
+            return ackData['errormsg']
+        elif status['error'] != 0:
             print '\n     %s.\n' % str(e)
             uInput = userInput('Would you like to try again, no or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
-        except:
-            return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+
+    if ackData['error'] == 0:
+        print '     Fetching send status...'
+        status = api.getStatus(ackData['result'])
+        if status['error'] == 1:
+            return status['errormsg']
+        elif status['error'] != 0:
+            print status['errormsg']
+        else:
+            return '     Message Status:' + status['result']
 
     return ''
 
@@ -1300,31 +1257,27 @@ def sendBrd(fromAddress, subject, message):
 def inbox(unreadOnly=False, pageNum=20):
     """Lists the messages by: message index, To Address Label, From Address Label, Subject, Received Time)"""
 
-    global usrPrompt
-    try:
-        print '     Inbox index fetching...'
-        response = api.getAllInboxMessageIDs()
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        messageIds = json.loads(response)['inboxMessageIds']
-        numMessages = len(messageIds)
+    print '     Inbox index fetching...'
+    response = api.getAllInboxMessageIDs()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    messageIds = response['result']
+    numMessages = len(messageIds)
     messagesPrinted = 0
     messagesUnread = 0
     for msgNum in range(numMessages - 1, -1, -1):  # processes all of the messages in the inbox
         messageID = messageIds[msgNum]['msgid']
-        try:
-            print '     -----------------------------------'
-            print '     Inbox message retriving...', messageID
-            response = api.getInboxMessageByID(messageID)
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            message = json.loads(response)['inboxMessage'][0]
+        print '     -----------------------------------'
+        print '     Inbox message retriving...', messageID
+        response = api.getInboxMessageByID(messageID)
+        if response['error'] == 1:
+            return response['errormsg']
+        elif response['error'] != 0:
+            print '\n     Retrieve failed on:', msgNum, messageID
+            print response['errormsg']
+        else:
+            message = response['result'][0]
             # if we are displaying all messages or if this message is unread then display it
             if not unreadOnly or not message['read']:
                 print '     -----------------------------------'
@@ -1340,18 +1293,12 @@ def inbox(unreadOnly=False, pageNum=20):
                 if not message['read']:
                     messagesUnread += 1
 
-            if messagesPrinted % pageNum == 0 and messagesPrinted != 0:
-                uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
+                if messagesPrinted % pageNum == 0 and messagesPrinted != 0:
+                    try:
+                        uInput = userInput('Paused on {}/{}, next [{}],'.format(msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
 
-        except inputException as e:
-            raise inputException(str(e))
-
-        except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-            print '\n     %s.\n' % str(e)
-            print '\n     Retrieve failed on:', msgNum, messageID
-        except:
-            print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+                    except InputException as e:
+                        raise InputException(str(e))
 
     print '     -----------------------------------'
     print '     There are %d unread messages of %d messages in the inbox.' % (messagesUnread, numMessages)
@@ -1363,22 +1310,15 @@ def inbox(unreadOnly=False, pageNum=20):
 def outbox(pageNum=20):
     """TBC"""
 
-    global usrPrompt
-    try:
-        print '     All outbox messages downloading...'
-        response = api.getAllSentMessages()
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        outboxMessages = json.loads(response)
-        numMessages = len(outboxMessages['sentMessages'])
+    print '     All outbox messages downloading...'
+    response = api.getAllSentMessages()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    outboxMessages = response['result']
+    numMessages = len(outboxMessages)
     for msgNum in range(numMessages - 1, -1, -1):  # processes all of the messages in the outbox
-        message = outboxMessages['sentMessages'][msgNum]
+        message = outboxMessages[msgNum]
         print '     -----------------------------------'
         print '     Outbox index: {}/{}'.format(msgNum, numMessages - 1)  # message index
         print '     Message ID:', message['msgid']
@@ -1490,7 +1430,7 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
                 except ValueError:
                     pass
                     print '\n     Failed on decode this emdeded "BASE64" encoded like message.\n'
-                except:
+                except Exception:
                     print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
             else:
@@ -1503,7 +1443,7 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
         except ValueError:
             textmsg = textmsg + content[msgPos:]
             break
-        except:
+        except Exception:
             print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
 
@@ -1513,24 +1453,19 @@ def attDetect(content='', textmsg='', attPrefix='', askSave=True):
 def readSentMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False):
     """Opens a sent message for reading"""
 
-    global usrPrompt
-    try:
-        print '     All outbox messages downloading...', str(msgNum)
-        if messageID == '':
-            response = api.getAllSentMessages()
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            message = json.loads(response)['sentMessages'][msgNum]
-        else:
-            response = api.getSentMessageByID(messageID)
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            message = json.loads(response)['sentMessage'][0]
+    print '     All outbox messages downloading...', str(msgNum)
+    if messageID == '':
+        response = api.getAllSentMessages()
+        if response['error'] != 0:
+            return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+        message = response['result'][msgNum]
+    else:
+        response = api.getSentMessageByID(messageID)
+        if response['error'] != 0:
+            return response['errormsg']
+
+        message = response['result'][0]
 
     subject = message['subject'].decode('base64')
     content = message['message'].decode('base64')
@@ -1555,7 +1490,7 @@ def readSentMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False)
     print '    ', 74 * '-'
 
     if cmd == 'save':
-        ret = dump2File('outbox_' + subject, textmsg, withAtta)
+        ret = dump2File('outbox_' + subject, textmsg, True)
         print ret
 
     return ''
@@ -1564,21 +1499,14 @@ def readSentMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False)
 def readMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False):
     """Open a message for reading"""
 
-    global usrPrompt
-    try:
-        print '     Inbox message reading...', str(msgNum)
-        response = api.getInboxMessageByID(messageID, True)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        message = json.loads(response)['inboxMessage'][0]
+    print '     Inbox message reading...', str(msgNum)
+    response = api.getInboxMessageByID(messageID, True)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    message = response['result'][0]
     subject = message['subject'].decode('base64')
-    content = message['message'].decode('base64')
+    content = message['message'].decode('base64')  # Message that you are replying too.
     full = len(content)
     textmsg = ''
     textmsg = content if withAtta else attDetect(content, textmsg, 'inbox_' + subject, cmd != 'save')
@@ -1598,7 +1526,7 @@ def readMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False):
     print '    ', 74 * '-'
 
     if cmd == 'save':
-        ret = dump2File('inbox_' + subject + str(full), textmsg, withAtta)
+        ret = dump2File('inbox_' + subject + str(full), textmsg, True)
         print ret
 
     return ''
@@ -1607,23 +1535,17 @@ def readMsg(cmd='read', msgNum=-1, messageID='', trunck=380, withAtta=False):
 def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
     """Allows you to reply to the message you are currently on. Saves typing in the addresses and subject."""
 
-    global usrPrompt, inputShorts, retStrings
+    global inputShorts, retStrings
 
     forwardORreply = forwardORreply.lower()  # makes it lowercase
-    try:
-        print '     Inbox message {}... {}'.format(forwardORreply, msgNum)
-        response = api.getInboxMessageByID(messageID, True)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        message = json.loads(response)['inboxMessage'][0]
+    print '     Inbox message {}... {}'.format(forwardORreply, msgNum)
+    response = api.getInboxMessageByID(messageID, True)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    content = message['message'].decode('base64')  # Message that you are replying too.
+    message = response['result'][0]
     subject = message['subject'].decode('base64')
+    content = message['message'].decode('base64')  # Message that you are replying too.
     full = len(content)
     textmsg = ''
     textmsg = attDetect(content, textmsg, subject, True)
@@ -1693,70 +1615,51 @@ def replyMsg(msgNum=-1, messageID='', forwardORreply=''):
 def delMsg(msgNum=-1, messageID=''):
     """Deletes a specified message from the inbox"""
 
-    global usrPrompt
-    try:
-        print '     Inbox message deleting...', messageID
-        response = api.trashMessage(messageID)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
+    print '     Inbox message deleting...', messageID
+    response = api.trashMessage(messageID)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return '\n     ' + response
+    return '\n     ' + response['result']
 
 
 def delSentMsg(msgNum=-1, messageID=''):
     """Deletes a specified message from the outbox"""
 
-    global usrPrompt
-    try:
-        if messageID == '':
-            print '     All outbox messages downloading...', str(msgNum)
-            response = api.getAllSentMessages()
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            outboxMessages = json.loads(response)['sentMessages']
-            # gets the message ackData via the message index number
-            ackData = outboxMessages[msgNum]['ackData']
-            print '     Outbox message deleting...', ackData
-            response = api.trashSentMessageByAckData(ackData)
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-        else:
-            print '     Outbox message deleting...', messageID
-            response = api.trashSentMessage(messageID)
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
+    if messageID == '':
+        print '     All outbox messages downloading...', str(msgNum)
+        response = api.getAllSentMessages()
+        if response['error'] != 0:
+            return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+        outboxMessages = response['result']
+        # gets the message ackData via the message index number
+        ackData = outboxMessages[msgNum]['ackData']
+        print '     Outbox message deleting...', ackData
+        response = api.trashSentMessageByAckData(ackData)
+        if response['error'] != 0:
+            return response['errormsg']
+    else:
+        print '     Outbox message deleting...', messageID
+        response = api.trashSentMessage(messageID)
+        if response['error'] != 0:
+            return response['errormsg']
 
-    return '\n     ' + response
+    return '\n     ' + response['result']
 
 
 def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
-    global usrPrompt, inputShorts, retStrings
+    global inputShorts, retStrings
 
     numMessages = 0
-    try:
-        print '     Inbox index fetching...'
-        response = api.getAllInboxMessageIDs()
-        if "API Error" in response:
-            print '\n     ' + response + '\n'
-        messageIds = json.loads(response)['inboxMessageIds']
-        numMessages = len(messageIds)
+    print '     Inbox index fetching...'
+    response = api.getAllInboxMessageIDs()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    messageIds = response['result']
+    numMessages = len(messageIds)
     if numMessages < 1:
         return '     Zero message found.\n'
 
@@ -1842,31 +1745,24 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                     msgNum = nextNum if uInput not in inputShorts['no'] else -1
-                    src = retStrings['indexoutofbound']
                 else:
                     msgNum = -1
+                    src = retStrings['indexoutofbound']
 
     return src
 
 
 def toReadOutbox(cmd='read', trunck=380, withAtta=False):
 
-    global usrPrompt, inputShorts, retStrings
+    global inputShorts, retStrings
 
-    numMessages = 0
-    try:
-        print '     Outbox index fetching...'
-        response = api.getAllSentMessageIDs()
-        if "API Error" in response:
-            print '\n     ' + response + '\n'
-        messageIds = json.loads(response)['sentMessageIds']
-        numMessages = len(messageIds)
+    print '     Outbox index fetching...'
+    response = api.getAllSentMessageIDs()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    messageIds = response['result']
+    numMessages = len(messageIds)
     if numMessages < 1:
         return '     Zero message found.\n'
 
@@ -1907,9 +1803,9 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
-                src = retStrings['indexoutofbound']
             else:
                 msgNum = -1
+                src = retStrings['indexoutofbound']
 
     else:
         uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-{}]: '.format(numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
@@ -1963,100 +1859,70 @@ def getLabelForAddress(address):
 def buildKnownAddresses():
     """Build known addresses"""
 
-    global usrPrompt
-
     # add from address book
     errors = ''
     newentry = []
-    try:
-        print '     Retriving...', 'Contacts'
-        response = api.listAddressBookEntries()
-        # if api is too old then fail
-        if "API Error" in response:
-            errors = response
-        else:
-            addresses = json.loads(response)
-            for entry in addresses['addresses']:
-                isnew = True
-                for old in knownAddresses['addresses']:
-                    if entry['address'] == old['address']:
-                        isnew = False
-                        break
-                if isnew is True:
-                    newentry.append({'label': entry['label'].decode('base64').encode('utf-8'), 'address': entry['address']})
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        pass
-        print '\n     %s.\n' % str(e)
-    except:
-        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    if any(newentry):
-        for new in newentry:
-            knownAddresses['addresses'].append(new)
+    print '     Retriving...', 'Contacts'
+    addresses = api.listAddressBookEntries()
+    if addresses['error'] != 0:
+        print addresses['errormsg']
+    else:
+        for entry in addresses['result']:
+            isnew = True
+            for old in knownAddresses['addresses']:
+                if entry['address'] == old['address']:
+                    isnew = False
+                    break
+            if isnew is True:
+                newentry.append({'label': entry['label'].decode('base64').encode('utf-8'), 'address': entry['address']})
+        if any(newentry):
+            for new in newentry:
+                knownAddresses['addresses'].append(new)
 
     newentry = []
-    # add from my addresses
-    try:
-        print '     Retriving...', 'Senders'
-        response = api.listAddresses()
-        # if api is too old just return then fail
-        if "API Error" in response:
-            errors += '\n     ' + response
-        else:
-            addresses = json.loads(response)
-            for entry in addresses['addresses']:
-                isnew = True
-                for old in knownAddresses['addresses']:
-                    if entry['address'] == old['address']:
-                        isnew = False
-                        break
-                if isnew is True:
-                    newentry.append({'label': entry['label'].encode('utf-8'), 'address': entry['address']})
+    print '     Retriving...', 'Senders'
+    addresses = api.listAddresses()
+    if addresses['error'] != 0:
+        print addresses['errormsg']
+    else:
+        for entry in addresses['result']:
+            isnew = True
+            for old in knownAddresses['addresses']:
+                if entry['address'] == old['address']:
+                    isnew = False
+                    break
+            if isnew is True:
+                newentry.append({'label': entry['label'].encode('utf-8'), 'address': entry['address']})
+        if any(newentry):
+            for new in newentry:
+                knownAddresses['addresses'].append(new)
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        pass
-        print '\n     %s.\n' % str(e)
-    except:
-        print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    if any(newentry):
-        for new in newentry:
-            knownAddresses['addresses'].append(new)
-
-    return errors if errors == '' else '\n     ' + errors + '\n'
+    return ''
 
 
 def listAddressBookEntries(printKnown=False):
     """List addressbook entries"""
 
-    global usrPrompt
+    if not printKnown:
+        print '     Retriving...', 'Contacts'
+        response = api.listAddressBookEntries()
+        if response['error'] != 0:
+            return response['errormsg']
+        addressBook = response['result']
+    else:
+        addressBook = knownAddresses['addresses']
 
-    try:
-        if not printKnown:
-            print '     Retriving...', 'Contacts'
-            response = api.listAddressBookEntries()
-            if "API Error" in response:
-                return '\n     ' + response + '\n'
-            addressBook = json.loads(response)
-        else:
-            addressBook = knownAddresses
-
-        print
-        print '     --------------------------------------------------------------'
-        print '     |        Label       |                Address                |'
-        print '     |--------------------|---------------------------------------|'
-        for entry in addressBook['addresses']:
-            label = entry['label'].decode('base64').encode('utf-8') if not printKnown else entry['label']
-            address = entry['address']
-            if len(label) > 19:
-                label = label[:16] + '...'
-            print '     | ' + label.ljust(19) + '| ' + address.ljust(37) + ' |'
-        print '     --------------------------------------------------------------'
-
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+    print
+    print '     --------------------------------------------------------------'
+    print '     |        Label       |                Address                |'
+    print '     |--------------------|---------------------------------------|'
+    for entry in addressBook:
+        label = entry['label'].decode('base64').encode('utf-8') if not printKnown else entry['label']
+        address = entry['address']
+        if len(label) > 19:
+            label = label[:16] + '...'
+        print '     | ' + label.ljust(19) + '| ' + address.ljust(37) + ' |'
+    print '     --------------------------------------------------------------'
 
     return ''
 
@@ -2064,42 +1930,29 @@ def listAddressBookEntries(printKnown=False):
 def addAddressToAddressBook(address, label):
     """Add an address to an addressbook"""
 
-    global usrPrompt
+    print '     Adding...', label
+    response = api.addAddressBookEntry(address, label.encode('base64'))
+    if response['error'] != 0:
+        return response['errormsg']
 
-    try:
-        print '     Adding...', label
-        response = api.addAddressBookEntry(address, label.encode('base64'))
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
+    return '\n     ' + response['result']
 
 
 def deleteAddressFromAddressBook(address):
     """Delete an address from an addressbook"""
 
-    global usrPrompt
+    print '     Deleting...', address
+    response = api.deleteAddressBookEntry(address)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    try:
-        print '     Deleting...', address
-        response = api.deleteAddressBookEntry(address)
-        if "API Error" in response:
-            # return getAPIErrorCode(response)
-            return '\n     ' + response + '\n'
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    return ''
+    return '\n     ' + response['result']
 
 
 def getAPIErrorCode(response):
     """Get API error code"""
 
-    if "API Error" in response:
+    if "API Error" in response or 'RPC ' in response:
         # if we got an API error return the number by getting the number
         # after the second space and removing the trailing colon
         return int(response.split()[2][:-1])
@@ -2108,41 +1961,28 @@ def getAPIErrorCode(response):
 def markMessageReadbit(msgNum=-1, messageID='', read=False):
     """Mark a mesasge as unread/read"""
 
-    global usrPrompt
+    print '     Marking...', str(msgNum),
+    response = api.getInboxMessageByID(messageID, read)
+    if response['error'] != 0:
+        print 'Failed.'
+        return response['errormsg']
 
-    try:
-        print '     Marking...', str(msgNum)
-        response = api.getInboxMessageByID(messageID, read)
-        if "API Error" in response:
-            # return getAPIErrorCode(response)
-            return '\n     ' + response + '\n'
-
-    except (socket.error, xmlrpclib.ProtocolError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    print 'OK.'
     return ''
 
 
 def markAllMessagesReadbit(read=False):
     """Mark all messages as unread/read"""
 
-    try:
-        print '     Inbox index fetching...', 'mark'
-        response = api.getAllInboxMessageIDs()
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        messageIds = json.loads(response)['inboxMessageIds']
-        numMessages = len(messageIds)
+    print '     Inbox index fetching...', 'mark'
+    response = api.getAllInboxMessageIDs()
+    if response['error'] != 0:
+        return response['errormsg']
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
+    messageIds = response['result']
+    numMessages = len(messageIds)
     if numMessages < 1:
-        print '     Zero message found.\n'
+        return '     Zero message found.\n'
 
     for msgNum in range(0, numMessages):  # processes all of the messages in the inbox
         src = markMessageReadbit(msgNum, messageIds[msgNum]['msgid'], read)
@@ -2153,28 +1993,19 @@ def markAllMessagesReadbit(read=False):
 
 def addInfo(address):
 
-    global usrPrompt
+    print '     Address decoding...', address
+    response = api.decodeAddress(address)
+    if response['error'] != 0:
+        return response['errormsg']
 
-    try:
-        print '     Address decoding...', address
-        response = api.decodeAddress(address)
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        addinfo = json.loads(response)
-
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-
-    print '------------------------------'
-
-    if 'success' in str(addinfo['status']).lower():
-        print ' Valid Address'
-        print ' Address Version: %s' % str(addinfo['addressVersion'])
-        print ' Stream Number: %s\n' % str(addinfo['streamNumber'])
+    addinfo = response['result']
+    print '     ------------------------------'
+    if 'success' in addinfo['status'].lower():
+        print '     Valid Address'
+        print '     Address Version: %s' % str(addinfo['addressVersion'])
+        print '     Stream Number: %s\n' % str(addinfo['streamNumber'])
     else:
-        print ' Invalid Address !\n'
+        print '\n     Invalid Address !\n'
 
     return ''
 
@@ -2182,20 +2013,16 @@ def addInfo(address):
 def clientStatus():
     """Print the client status"""
 
-    global usrPrompt
-
     try:
         print '     Client status fetching...'
-        client_status = json.loads(api.clientStatus())
-        inboxMessageIds = json.loads(api.getAllInboxMessageIDs())
-        inumMessages = len(inboxMessageIds['inboxMessageIds'])
-        outboxMessageIds = json.loads(api.getAllSentMessageIDs())
-        onumMessages = len(outboxMessageIds['sentMessageIds'])
+        client_status = api.clientStatus()['result']
+        inboxMessageIds = api.getAllInboxMessageIDs()
+        inumMessages = len(inboxMessageIds['result'])
+        outboxMessageIds = api.getAllSentMessageIDs()
+        onumMessages = len(outboxMessageIds['result'])
 
-    except (socket.error, xmlrpclib.ProtocolError, ValueError) as e:
-        return '\n     %s.\n' % str(e)
-    except:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+    except ValueError as e:
+        pass
 
     print '     ------------------------------'
     for key in client_status.keys():
@@ -2213,14 +2040,12 @@ def clientStatus():
 def shutdown():
     """Shutdown the API"""
 
-    try:
-        print '     Shutdown command sending...'
-        response = api.shutdown()
-        if "API Error" in response:
-            return '\n     ' + response + '\n'
-        return response
-    except socket.error:
-        return '\n     %s.\n' % str(e)
+    print '     Shutdown command sending...'
+    response = api.shutdown()
+    if response['error'] != 0:
+        return response['errormsg']
+
+    return '\n     ' + response['result']
 
 
 def UI(cmdInput):
@@ -2416,7 +2241,7 @@ def UI(cmdInput):
     if src is None:
         src = retStrings['none']
         usrPrompt = 1
-    elif 'Connection' in src:
+    elif 'Connection' in src or 'ProtocolError' in src:
         usrPrompt = 0
     else:
         usrPrompt = 1
@@ -2427,7 +2252,7 @@ def UI(cmdInput):
 def main():
     """Entrypoint for the CLI app"""
 
-    global api, usrPrompt, cmdStr
+    global conn, api, usrPrompt, cmdStr
 
     if usrPrompt == 0:
         print
@@ -2438,7 +2263,7 @@ def main():
 
         conn = apiData()
         if conn != '':
-            api = xmlrpclib.ServerProxy(conn)  # Connect to BitMessage using these api credentials
+            api = BMAPIWrapper(conn)
             if apiTest() is False:
                 print
                 print '     ****************************************************************'
@@ -2476,7 +2301,7 @@ if __name__ == "__main__":
     while True:
         try:
             main()
-        except inputException as e:
+        except InputException as e:
             print retStrings.get(e.resKey, '\n     Not defined error raised: %s.\n' % e.resKey)
             usrPrompt = 1
 
