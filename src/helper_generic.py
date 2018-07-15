@@ -18,18 +18,6 @@ import queues
 import shutdown
 from debug import logger
 
-
-def powQueueSize():
-    curWorkerQueue = queues.workerQueue.qsize()
-    for thread in threading.enumerate():
-        try:
-            if thread.name == "singleWorker":
-                curWorkerQueue += thread.busy
-        except Exception as err:
-            logger.info('Thread error %s', err)
-    return curWorkerQueue
-
-
 def convertIntToString(n):
     a = __builtins__.hex(n)
     if a[-1:] == 'L':

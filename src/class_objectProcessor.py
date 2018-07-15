@@ -114,30 +114,29 @@ class objectProcessor(threading.Thread):
                 break
 
     def checkackdata(self, data):
-        # Let's check whether this is a message acknowledgement bound for us.
-        if len(data) < 32:
+        ackData = data[16: ]
+
+        if len(ackData) < 16 or ackData not in state.watchedAckData:
+            logger.debug("This object is not an acknowledgement bound for us")
+
             return
 
-        # bypass nonce and time, retain object type/version/stream + body
-        readPosition = 16
+        logger.info("This object is an acknowledgement bound for us")
 
-        if data[readPosition:] in shared.ackdataForWhichImWatching:
-            logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[readPosition:]]
-            sqlExecute(
-                'UPDATE sent SET status=?, lastactiontime=?'
-                ' WHERE ackdata=?',
-                'ackreceived', int(time.time()), data[readPosition:])
-            queues.UISignalQueue.put((
-                'updateSentItemStatusByAckdata',
-                (data[readPosition:],
-                 tr._translate(
-                     "MainWindow",
-                     "Acknowledgement of the message received %1"
-                 ).arg(l10n.formatTimestamp()))
-            ))
-        else:
-            logger.debug('This object is not an acknowledgement bound for me.')
+        state.watchedAckData -= {ackData}
+
+        sqlExecute("""
+            UPDATE "sent" SET "status" = 'ackreceived', "lastactiontime" = ?
+            WHERE "status" IN ('doingmsgpow', 'msgsent') AND "ackdata" == ?;
+        """, int(time.time()), ackData)
+
+        queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+            ackData,
+            tr._translate(
+                "MainWindow",
+                "Acknowledgement of the message received %1"
+            ).arg(l10n.formatTimestamp())
+        )))
 
     def processgetpubkey(self, data):
         if len(data) > 200:
@@ -237,12 +236,8 @@ class objectProcessor(threading.Thread):
             'Found getpubkey-requested-hash in my list of EC hashes.'
             ' Telling Worker thread to do the POW for a pubkey message'
             ' and send it out.')
-        if requestedAddressVersionNumber == 2:
-            queues.workerQueue.put(('doPOWForMyV2Pubkey', requestedHash))
-        elif requestedAddressVersionNumber == 3:
-            queues.workerQueue.put(('sendOutOrStoreMyV3Pubkey', requestedHash))
-        elif requestedAddressVersionNumber == 4:
-            queues.workerQueue.put(('sendOutOrStoreMyV4Pubkey', myAddress))
+
+        queues.workerQueue.put(("sendMyPubkey", myAddress))
 
     def processpubkey(self, data):
         pubkeyProcessingStartTime = time.time()
@@ -396,20 +391,23 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
 
-            tag = data[readPosition:readPosition + 32]
-            if tag not in state.neededPubkeys:
-                logger.info(
-                    'We don\'t need this v4 pubkey. We didn\'t ask for it.')
-                return
+            tag = data[readPosition: readPosition + 32]
+            attributes = state.neededPubkeys.get(tag, None)
 
-            # Let us try to decrypt the pubkey
-            toAddress, _ = state.neededPubkeys[tag]
-            if shared.decryptAndCheckPubkeyPayload(data, toAddress) == \
-                    'successful':
-                # At this point we know that we have been waiting on this
-                # pubkey. This function will command the workerThread
-                # to start work on the messages that require it.
-                self.possibleNewPubkey(toAddress)
+            if attributes is None:
+                logger.info("We don't need this v4 pubkey. We didn't ask for it")
+            else:
+                address, cryptor = attributes
+
+                storedData = protocol.decryptAndCheckV4Pubkey(data, address, cryptor)
+
+                if storedData is not None:
+                    sqlExecute("""
+                        INSERT INTO "pubkeys" ("address", "addressversion", "transmitdata", "time", "usedpersonally")
+                        VALUES (?, 4, ?, ?, 'yes');
+                    """, address, storedData, int(time.time()))
+
+                    self.possibleNewPubkey(address)
 
         # Display timing data
         timeRequiredToProcessPubkey = time.time(
@@ -608,7 +606,7 @@ class objectProcessor(threading.Thread):
         # If the toAddress version number is 3 or higher and not one of
         # my chan addresses:
         if decodeAddress(toAddress)[1] >= 3 \
-                and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
+                and not BMConfigParser().has_section(toAddress):
             # If I'm not friendly with this person:
             if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):
                 requiredNonceTrialsPerByte = BMConfigParser().getint(
@@ -1015,42 +1013,42 @@ class objectProcessor(threading.Thread):
         have been waiting for. Let's check.
         """
 
-        # For address versions <= 3, we wait on a key with the correct
-        # address version, stream number and RIPE hash.
-        _, addressVersion, streamNumber, ripe = decodeAddress(address)
-        if addressVersion <= 3:
-            if address in state.neededPubkeys:
-                del state.neededPubkeys[address]
-                self.sendMessages(address)
-            else:
-                logger.debug(
-                    'We don\'t need this pub key. We didn\'t ask for it.'
-                    ' For address: %s', address)
-        # For address versions >= 4, we wait on a pubkey with the correct tag.
-        # Let us create the tag from the address and see if we were waiting
-        # for it.
-        elif addressVersion >= 4:
-            tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) + encodeVarint(streamNumber)
-                + ripe).digest()
-            ).digest()[32:]
-            if tag in state.neededPubkeys:
-                del state.neededPubkeys[tag]
-                self.sendMessages(address)
+        status, version, stream, ripe = decodeAddress(address)
 
-    def sendMessages(self, address):
-        """
-        This function is called by the possibleNewPubkey function when
-        that function sees that we now have the necessary pubkey
-        to send one or more messages.
-        """
-        logger.info('We have been awaiting the arrival of this pubkey.')
-        sqlExecute(
-            "UPDATE sent SET status='doingmsgpow', retrynumber=0"
-            " WHERE toaddress=?"
-            " AND (status='awaitingpubkey' OR status='doingpubkeypow')"
-            " AND folder='sent'", address)
-        queues.workerQueue.put(('sendmessage', ''))
+        if version <= 3:
+            needed = address in state.neededPubkeys
+            state.neededPubkeys.pop(address, None)
+        elif version == 4:
+            secretEncryptionKey, tag = protocol.calculateAddressTag(version, stream, ripe)
+
+            needed = tag in state.neededPubkeys
+            state.neededPubkeys.pop(tag, None)
+
+        if needed:
+            logger.info("We have been awaiting the arrival of this pubkey")
+
+            sqlExecute("""
+                UPDATE "sent" SET "status" = 'msgqueued'
+                WHERE "status" IN ('doingpubkeypow', 'awaitingpubkey') AND "toaddress" == ? AND "folder" == 'sent';
+            """, address)
+
+            queues.workerQueue.put(("sendmessage", ))
+
+            queued = sqlQuery("""
+                SELECT "ackdata" FROM "sent"
+                WHERE "status" == 'msgqueued' AND "toaddress" == ? AND "folder" == 'sent';
+            """, address)
+
+            for i, in queued:
+                queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                    i,
+                    tr._translate(
+                        "MainWindow",
+                        "Queued."
+                    )
+                )))
+        else:
+            logger.debug("We don't need this pubkey, we didn't ask for it: %s", address)
 
     def ackDataHasAValidHeader(self, ackData):
         if len(ackData) < protocol.Header.size:

@@ -1,6 +1,11 @@
 import collections
 
+# Single worker assumes, that object processor checks this dict only after a pubkey is added to the inventory or the "pubkeys" table
+# TODO: add locking?
+
 neededPubkeys = {}
+watchedAckData = set()
+
 streamsInWhichIAmParticipating = []
 sendDataQueues = []  # each sendData thread puts its queue in this list.
 

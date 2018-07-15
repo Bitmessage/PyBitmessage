@@ -47,6 +47,7 @@ class BMObject(object):
         self.inventoryHash = calculateInventoryHash(data)
         # copy to avoid memory issues
         self.data = bytearray(data)
+        # Doesn't matter if the payload is shorter, old version "getpubkey" objects must have 20-byte tags
         self.tag = self.data[payloadOffset:payloadOffset+32]
 
     def checkProofOfWorkSufficient(self):

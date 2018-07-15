@@ -74,6 +74,8 @@ class UISignaler(QThread):
             elif command == 'alert':
                 title, text, exitAfterUserClicksOk = data
                 self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
+            elif command == "updateWorkProverStatus":
+                self.emit(SIGNAL("updateWorkProverStatus(PyQt_PyObject)"), data)
             else:
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)

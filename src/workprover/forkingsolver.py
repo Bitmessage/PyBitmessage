@@ -38,21 +38,24 @@ def threadFunction(local, remote, codePath, threadNumber):
     solver = dumbsolver.DumbSolver(codePath)
 
     while True:
-        received = local.recv()
+        try:
+            received = local.recv()
 
-        command = received[0]
-        arguments = received[1: ]
+            command = received[0]
+            arguments = received[1: ]
 
-        if command == "search":
-            initialHash, target, seed, timeout = arguments
-            appendedSeed = seed + struct.pack(">Q", threadNumber)
+            if command == "search":
+                initialHash, target, seed, timeout = arguments
+                appendedSeed = seed + struct.pack(">Q", threadNumber)
 
-            nonce, iterationsCount = solver.search(initialHash, target, appendedSeed, timeout)
+                nonce, iterationsCount = solver.search(initialHash, target, appendedSeed, timeout)
 
-            local.send(("done", nonce, iterationsCount))
-        elif command == "shutdown":
-            local.close()
+                local.send(("done", nonce, iterationsCount))
+            elif command == "shutdown":
+                local.close()
 
+                return
+        except (EOFError, IOError):
             return
 
 class ForkingSolver(object):

@@ -201,7 +201,6 @@ class Main:
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
 
-            # Start the thread that calculates POWs
             objectProcessorThread = objectProcessor()
             # DON'T close the main program even the thread remains.
             # This thread checks the shutdown variable after processing
@@ -430,7 +429,7 @@ if __name__ == "__main__":
     from class_sqlThread import sqlThread
     from class_singleCleaner import singleCleaner
     from class_objectProcessor import objectProcessor
-    from class_singleWorker import singleWorker
+    from singleworker import singleWorker
     from class_addressGenerator import addressGenerator
     from bmconfigparser import BMConfigParser
 

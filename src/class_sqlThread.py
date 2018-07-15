@@ -14,6 +14,8 @@ import queues
 import state
 import tr#anslate
 import helper_random
+import addresses
+import binascii
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
 # won't let us just use locks.
@@ -165,16 +167,55 @@ class sqlThread(threading.Thread):
             logger.debug('Vacuuming message.dat. You might notice that the file size gets much smaller.')
             self.cur.execute( ''' VACUUM ''')
 
-        # After code refactoring, the possible status values for sent messages
-        # have changed.
-        self.cur.execute(
-            '''update sent set status='doingmsgpow' where status='doingpow'  ''')
-        self.cur.execute(
-            '''update sent set status='msgsent' where status='sentmessage'  ''')
-        self.cur.execute(
-            '''update sent set status='doingpubkeypow' where status='findingpubkey'  ''')
-        self.cur.execute(
-            '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
+        # Retry number now has no meaning for getpubkey messages
+
+        self.cur.execute("""
+            UPDATE "sent" SET "retrynumber" = 0
+            WHERE "status" IN (
+                'doingpubkeypow', 'awaitingpubkey',
+                'findingpubkey' -- Old name
+            );
+        """)
+
+        # Reset temporary message status values
+        # TODO: stop writing them to the database, they should exist only in memory
+
+        self.cur.execute("""
+            UPDATE "sent" SET "status" = 'broadcastqueued'
+            WHERE "status" == 'doingbroadcastpow';
+        """)
+
+        self.cur.execute("""
+            UPDATE "sent" SET "status" = 'msgqueued'
+            WHERE "status" IN (
+                'doingmsgpow', 'doingpubkeypow', 'awaitingpubkey',
+                'doingpow', 'findingpubkey' -- Old names
+            );
+        """)
+
+        # Update status values inherited from old versions
+
+        self.cur.execute("""UPDATE "sent" SET "status" = 'msgsent' WHERE "status" == 'sentmessage';""")
+        self.cur.execute("""UPDATE "sent" SET "status" = 'broadcastqueued' WHERE "status" == 'broadcastpending';""")
+
+        # Add tags to all objects
+
+        self.cur.execute("""SELECT "hash", "payload" FROM "inventory" WHERE "tag" == '';""")
+        updatingCursor = self.conn.cursor()
+
+        for ID, payload in self.cur:
+            readPosition = 20
+
+            version, readLength = addresses.decodeVarint(payload[readPosition: readPosition + 9])
+            readPosition += readLength
+
+            stream, readLength = addresses.decodeVarint(payload[readPosition: readPosition + 9])
+            readPosition += readLength
+
+            tag = buffer(payload[readPosition: readPosition + 32]) # May be shorter than 32 bytes for getpubkeys
+
+            updatingCursor.execute("""UPDATE "inventory" SET "tag" = ? WHERE "hash" == ?;""", (tag, ID))
+
         self.conn.commit()
 
         if not BMConfigParser().has_option('bitmessagesettings', 'sockslisten'):
@@ -475,6 +516,24 @@ class sqlThread(threading.Thread):
                 item = '''update settings set value=? WHERE key='lastvacuumtime';'''
                 parameters = (int(time.time()),)
                 self.cur.execute(item, parameters)
+
+        self.cur.execute("""SELECT "ackdata" FROM "sent" WHERE "status" == 'msgsent';""")
+        legacyAckData = []
+
+        for ackData, in self.cur:
+            logger.info("Watching for ack data: %s", binascii.hexlify(ackData))
+
+            if len(ackData) == 32:
+                legacyAckData.append(ackData)
+            else:
+                state.watchedAckData.add(ackData)
+
+        for i in legacyAckData:
+            ackData = "\x00\x00\x00\x02\x01\x01" + i
+
+            self.cur.execute("""UPDATE "sent" SET "ackdata" = ? WHERE "ackdata" == ?;""", (ackData, i))
+
+            state.watchedAckData.add(ackData)
 
         state.sqlReady = True
 

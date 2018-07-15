@@ -44,7 +44,6 @@ from account import (
     getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
     GatewayAccount, MailchuckAccount, AccountColor)
 import dialogs
-from helper_generic import powQueueSize
 from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import knownnodes
@@ -760,6 +759,8 @@ class MyForm(settingsmixin.SMainWindow):
             "newVersionAvailable(PyQt_PyObject)"), self.newVersionAvailable)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "updateWorkProverStatus(PyQt_PyObject)"), self.updateWorkProverStatus)
         self.UISignalThread.start()
 
         # Key press in tree view
@@ -808,6 +809,8 @@ class MyForm(settingsmixin.SMainWindow):
                 'There was a problem testing for a Namecoin daemon. Hiding the'
                 ' Fetch Namecoin ID button')
             self.ui.pushButtonFetchNamecoinID.hide()
+
+        self.POWTasksCount = 0
 
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
@@ -1036,7 +1039,7 @@ class MyForm(settingsmixin.SMainWindow):
         if status == 'awaitingpubkey':
             statusText = _translate(
                 "MainWindow", "Waiting for their encryption key. Will request it again soon.")
-        elif status == 'doingpowforpubkey':
+        elif status == 'doingpubkeypow':
             statusText = _translate(
                 "MainWindow", "Doing work necessary to request encryption key.")
         elif status == 'msgqueued':
@@ -1789,6 +1792,9 @@ class MyForm(settingsmixin.SMainWindow):
         QtGui.QMessageBox.critical(self, title, text, QtGui.QMessageBox.Ok)
         if exitAfterUserClicksOk:
             os._exit(0)
+
+    def updateWorkProverStatus(self, status):
+        self.POWTasksCount = status[3]
 
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
@@ -2712,9 +2718,9 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
+        if getPowType() == "python" and (self.POWTasksCount > 0 or pendingUpload() > 0):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
-                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
+                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, self.POWTasksCount) + ", " +
                     _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, pendingUpload()) + "\n\n" + 
                     _translate("MainWindow", "Wait until these tasks finish?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
@@ -2770,10 +2776,10 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForPow:
             # check if PoW queue empty
             maxWorkerQueue = 0
-            curWorkerQueue = powQueueSize()
+            curWorkerQueue = self.POWTasksCount
             while curWorkerQueue > 0:
                 # worker queue size
-                curWorkerQueue = powQueueSize()
+                curWorkerQueue = self.POWTasksCount
                 if curWorkerQueue > maxWorkerQueue:
                     maxWorkerQueue = curWorkerQueue
                 if curWorkerQueue > 0:

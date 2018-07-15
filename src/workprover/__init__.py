@@ -28,7 +28,9 @@ class Task(object):
         self.target = target
 
 class WorkProver(threading.Thread):
-    def __init__(self, codePath, GPUVendor, seed, statusUpdated):
+    # Seed must be 32 bytes
+
+    def __init__(self, codePath, GPUVendor, seed, statusUpdated, resultsQueue):
         super(self.__class__, self).__init__()
 
         self.availableSolvers = {
@@ -65,7 +67,11 @@ class WorkProver(threading.Thread):
         self.statusUpdated = statusUpdated
 
         self.commandsQueue = Queue.Queue()
-        self.resultsQueue = Queue.Queue()
+
+        if resultsQueue is None:
+            self.resultsQueue = Queue.Queue()
+        else:
+            self.resultsQueue = resultsQueue
 
         self.solverName = None
         self.solver = None
@@ -86,7 +92,7 @@ class WorkProver(threading.Thread):
         if self.solver is not None:
             status = self.solver.status
 
-        self.statusUpdated((self.solverName, status, self.speed))
+        self.statusUpdated((self.solverName, status, self.speed, len(self.tasks)))
 
     def setSolver(self, name, configuration):
         if name is None and self.solverName is None:
