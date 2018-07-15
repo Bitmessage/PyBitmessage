@@ -703,7 +703,7 @@ class BMAPIWrapper(object):
             proxied = proxy['proxy_type'] + ' | ' + proxy['proxy_path']
 
         try:
-            self.xmlrpc = Proxiedxmlrpclib(uri, verbose=True, allow_none=True, use_datetime=True, timeout=30, proxy=self.proxy)
+            self.xmlrpc = Proxiedxmlrpclib(uri, verbose=False, allow_none=True, use_datetime=True, timeout=30, proxy=self.proxy)
             print '\n     XML-RPC initialed on: "%s" (%s)' % (self.conn, proxied)
 
         except Exception as err:  # IOError, unsupported XML-RPC protocol/
