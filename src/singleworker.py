@@ -244,8 +244,10 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
         parallelism = bmconfigparser.BMConfigParser().safeGetInt("bitmessagesettings", "maxcores")
 
-        if parallelism is None:
+        if parallelism < 1:
             parallelism = self.workProver.defaultParallelism
+
+        debug.logger.info("Availabe solvers: %s", str(self.workProver.availableSolvers.keys()))
 
         if "gpu" in self.workProver.availableSolvers and GPUVendor is not None:
             self.workProver.commandsQueue.put(("setSolver", "gpu", None))
@@ -768,10 +770,10 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
                 if ackMessage is None:
                     newStatus = "msgsentnoackexpected"
+                    sleepTill = 0
                 else:
                     newStatus = "msgsent"
-
-                sleepTill = int(time.time() + TTL * 1.1)
+                    sleepTill = int(time.time() + TTL * 1.1)
 
                 helper_sql.sqlExecute("""
                     UPDATE "sent" SET "msgid" = ?, "status" = ?, "retrynumber" = ?,
