@@ -8,14 +8,13 @@ import os
 import platform
 from distutils.version import StrictVersion
 
-from namecoin import ensureNamecoinOptions
 import paths
 import state
 import helper_random
 
+# The user may de-select Portable Mode in the settings if they want
+# the config files to stay in the application data folder.
 StoreConfigFilesInSameDirectoryAsProgramByDefault = False
-# The user may de-select Portable Mode in the settings if they want the config
-# files to stay in the application data folder.
 
 
 def _loadTrustedPeer():
@@ -31,105 +30,98 @@ def _loadTrustedPeer():
 
 
 def loadConfig():
+    config = BMConfigParser()
     if state.appdata:
-        BMConfigParser().read(state.appdata + 'keys.dat')
+        config.read(state.appdata + 'keys.dat')
         # state.appdata must have been specified as a startup option.
-        try:
-            BMConfigParser().get('bitmessagesettings', 'settingsversion')
-            print 'Loading config files from directory specified on startup: ' + state.appdata
-            needToCreateKeysFile = False
-        except Exception:
-            needToCreateKeysFile = True
-
+        needToCreateKeysFile = config.safeGet(
+            'bitmessagesettings', 'settingsversion') is None
+        if not needToCreateKeysFile:
+            print(
+                'Loading config files from directory specified'
+                ' on startup: %s' % state.appdata)
     else:
-        BMConfigParser().read(paths.lookupExeFolder() + 'keys.dat')
+        config.read(paths.lookupExeFolder() + 'keys.dat')
         try:
-            BMConfigParser().get('bitmessagesettings', 'settingsversion')
+            config.get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from same directory as program.'
             needToCreateKeysFile = False
             state.appdata = paths.lookupExeFolder()
-        except Exception:
+        except:
             # Could not load the keys.dat file in the program directory.
             # Perhaps it is in the appdata directory.
             state.appdata = paths.lookupAppdataFolder()
-            BMConfigParser().read(state.appdata + 'keys.dat')
-            try:
-                BMConfigParser().get('bitmessagesettings', 'settingsversion')
+            config.read(state.appdata + 'keys.dat')
+            needToCreateKeysFile = config.safeGet(
+                'bitmessagesettings', 'settingsversion') is None
+            if not needToCreateKeysFile:
                 print 'Loading existing config files from', state.appdata
-                needToCreateKeysFile = False
-            except Exception:
-                needToCreateKeysFile = True
 
     if needToCreateKeysFile:
+
         # This appears to be the first time running the program; there is
         # no config file (or it cannot be accessed). Create config file.
-        BMConfigParser().add_section('bitmessagesettings')
-        BMConfigParser().set('bitmessagesettings', 'settingsversion', '10')
-        BMConfigParser().set('bitmessagesettings', 'port', '8444')
-        BMConfigParser().set(
-            'bitmessagesettings', 'timeformat', '%%c')
-        BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'black')
-        BMConfigParser().set('bitmessagesettings', 'startonlogon', 'false')
+        config.add_section('bitmessagesettings')
+        config.set('bitmessagesettings', 'settingsversion', '10')
+        config.set('bitmessagesettings', 'port', '8444')
+        config.set('bitmessagesettings', 'timeformat', '%%c')
+        config.set('bitmessagesettings', 'blackwhitelist', 'black')
+        config.set('bitmessagesettings', 'startonlogon', 'false')
         if 'linux' in sys.platform:
-            BMConfigParser().set(
-                'bitmessagesettings', 'minimizetotray', 'false')
-                              # This isn't implimented yet and when True on
-                              # Ubuntu causes Bitmessage to disappear while
-                              # running when minimized.
+            config.set('bitmessagesettings', 'minimizetotray', 'false')
+        # This isn't implimented yet and when True on
+        # Ubuntu causes Bitmessage to disappear while
+        # running when minimized.
         else:
-            BMConfigParser().set(
-                'bitmessagesettings', 'minimizetotray', 'true')
-        BMConfigParser().set(
-            'bitmessagesettings', 'showtraynotifications', 'true')
-        BMConfigParser().set('bitmessagesettings', 'startintray', 'false')
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
-        BMConfigParser().set(
-            'bitmessagesettings', 'sockshostname', 'localhost')
-        BMConfigParser().set('bitmessagesettings', 'socksport', '9050')
-        BMConfigParser().set(
-            'bitmessagesettings', 'socksauthentication', 'false')
-        BMConfigParser().set(
-            'bitmessagesettings', 'sockslisten', 'false')
-        BMConfigParser().set('bitmessagesettings', 'socksusername', '')
-        BMConfigParser().set('bitmessagesettings', 'sockspassword', '')
-        BMConfigParser().set('bitmessagesettings', 'keysencrypted', 'false')
-        BMConfigParser().set(
-            'bitmessagesettings', 'messagesencrypted', 'false')
-        BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
-        BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-            defaults.networkDefaultPayloadLengthExtraBytes))
-        BMConfigParser().set('bitmessagesettings', 'minimizeonclose', 'false')
-        BMConfigParser().set(
-            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-        BMConfigParser().set(
-            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
-        BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
-        BMConfigParser().set('bitmessagesettings', 'userlocale', 'system')
-        BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
-        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(helper_random.randomchoice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12)))# a twelve character pseudo-password to salt the identicons
-        BMConfigParser().set('bitmessagesettings', 'replybelow', 'False')
-        BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
-        BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
-        BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
-        BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
+            config.set('bitmessagesettings', 'minimizetotray', 'true')
+        config.set('bitmessagesettings', 'showtraynotifications', 'true')
+        config.set('bitmessagesettings', 'startintray', 'false')
+        config.set('bitmessagesettings', 'socksproxytype', 'none')
+        config.set('bitmessagesettings', 'sockshostname', 'localhost')
+        config.set('bitmessagesettings', 'socksport', '9050')
+        config.set('bitmessagesettings', 'socksauthentication', 'false')
+        # config.set('bitmessagesettings', 'sockslisten', 'false')
+        config.set('bitmessagesettings', 'socksusername', '')
+        config.set('bitmessagesettings', 'sockspassword', '')
+        config.set('bitmessagesettings', 'keysencrypted', 'false')
+        config.set('bitmessagesettings', 'messagesencrypted', 'false')
+        config.set(
+            'bitmessagesettings', 'defaultnoncetrialsperbyte',
+            str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+        config.set(
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes',
+            str(defaults.networkDefaultPayloadLengthExtraBytes))
+        config.set('bitmessagesettings', 'minimizeonclose', 'false')
+        # config.set(
+        #     'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
+        # config.set(
+        #     'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
+        #     '0')
+        config.set('bitmessagesettings', 'dontconnect', 'true')
+        # config.set('bitmessagesettings', 'userlocale', 'system')
+        # config.set('bitmessagesettings', 'useidenticons', 'True')
+        # config.set(
+        #     'bitmessagesettings', 'identiconsuffix',
+        #     ''.join(helper_random.randomchoice(
+        #         "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        #         ) for x in range(12)
+        #     ))  # a twelve character pseudo-password to salt the identicons
+        config.set('bitmessagesettings', 'replybelow', 'False')
+        config.set('bitmessagesettings', 'maxdownloadrate', '0')
+        config.set('bitmessagesettings', 'maxuploadrate', '0')
+        # config.set('bitmessagesettings', 'maxoutboundconnections', '8')
+        # config.set('bitmessagesettings', 'ttl', '367200')
 
-        #start:UI setting to stop trying to send messages after X days/months
-        BMConfigParser().set(
-            'bitmessagesettings', 'stopresendingafterxdays', '')
-        BMConfigParser().set(
-            'bitmessagesettings', 'stopresendingafterxmonths', '')
-        #BMConfigParser().set(
-        #    'bitmessagesettings', 'timeperiod', '-1')
-        #end
+        # UI setting to stop trying to send messages after X days/months
+        config.set('bitmessagesettings', 'stopresendingafterxdays', '')
+        config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
+        # config.set('bitmessagesettings', 'timeperiod', '-1')
 
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
         # the first time. But you must also add it to the keys.dat file of
-        # existing users. To do that, search the class_sqlThread.py file for the
-        # text: "right above this line!"
-
-        ensureNamecoinOptions()
+        # existing users. To do that, search the class_sqlThread.py file
+        # for the text: "right above this line!"
 
         if StoreConfigFilesInSameDirectoryAsProgramByDefault:
             # Just use the same directory as the program and forget about
@@ -142,15 +134,187 @@ def loadConfig():
                 os.makedirs(state.appdata)
         if not sys.platform.startswith('win'):
             os.umask(0o077)
-        BMConfigParser().save()
+        config.save()
+    else:
+        updateConfig()
 
     _loadTrustedPeer()
+
+
+def updateConfig():
+    config = BMConfigParser()
+    settingsversion = config.getint('bitmessagesettings', 'settingsversion')
+    if settingsversion == 1:
+        config.set('bitmessagesettings', 'socksproxytype', 'none')
+        config.set('bitmessagesettings', 'sockshostname', 'localhost')
+        config.set('bitmessagesettings', 'socksport', '9050')
+        config.set('bitmessagesettings', 'socksauthentication', 'false')
+        config.set('bitmessagesettings', 'socksusername', '')
+        config.set('bitmessagesettings', 'sockspassword', '')
+        config.set('bitmessagesettings', 'sockslisten', 'false')
+        config.set('bitmessagesettings', 'keysencrypted', 'false')
+        config.set('bitmessagesettings', 'messagesencrypted', 'false')
+        settingsversion = 2
+    # let class_sqlThread update SQL and continue
+    elif settingsversion == 4:
+        config.set(
+            'bitmessagesettings', 'defaultnoncetrialsperbyte',
+            str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+        config.set(
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes',
+            str(defaults.networkDefaultPayloadLengthExtraBytes))
+        settingsversion = 5
+
+    if settingsversion == 5:
+        config.set(
+            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
+        config.set(
+            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
+        settingsversion = 7
+
+    # Raise the default required difficulty from 1 to 2
+    # With the change to protocol v3, this is obsolete.
+    # if settingsversion == 6:
+    #     if int(shared.config.get(
+    #             'bitmessagesettings', 'defaultnoncetrialsperbyte'
+    #     )) == defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
+    #         shared.config.set(
+    #             'bitmessagesettings', 'defaultnoncetrialsperbyte',
+    #             str(
+    #                 defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+    #                 * 2)
+    #         )
+    #     settingsversion = 7
+
+    if not config.has_option('bitmessagesettings', 'sockslisten'):
+        config.set('bitmessagesettings', 'sockslisten', 'false')
+
+    if not config.has_option('bitmessagesettings', 'userlocale'):
+        config.set('bitmessagesettings', 'userlocale', 'system')
+
+    if not config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
+        config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
+
+    if not config.has_option('bitmessagesettings', 'useidenticons'):
+        config.set('bitmessagesettings', 'useidenticons', 'True')
+    if not config.has_option('bitmessagesettings', 'identiconsuffix'):
+        # acts as a salt
+        config.set(
+            'bitmessagesettings', 'identiconsuffix',
+            ''.join(helper_random.randomchoice(
+                "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+            ) for x in range(12)
+            ))  # a twelve character pseudo-password to salt the identicons
+
+    # Add settings to support no longer resending messages after
+    # a certain period of time even if we never get an ack
+    if settingsversion == 7:
+        config.set('bitmessagesettings', 'stopresendingafterxdays', '')
+        config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
+        settingsversion = 8
+
+    # With the change to protocol version 3, reset the user-settable
+    # difficulties to 1
+    if settingsversion == 8:
+        config.set(
+            'bitmessagesettings', 'defaultnoncetrialsperbyte',
+            str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+        config.set(
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes',
+            str(defaults.networkDefaultPayloadLengthExtraBytes))
+        previousTotalDifficulty = int(
+            config.getint(
+                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
+        ) / 320
+        previousSmallMessageDifficulty = int(
+            config.getint(
+                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')
+        ) / 14000
+        config.set(
+            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte',
+            str(previousTotalDifficulty * 1000))
+        config.set(
+            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
+            str(previousSmallMessageDifficulty * 1000))
+        settingsversion = 9
+
+    # Adjust the required POW values for each of this user's addresses
+    # to conform to protocol v3 norms.
+    if settingsversion == 9:
+        for addressInKeysFile in config.addresses():
+            try:
+                previousTotalDifficulty = float(
+                    config.getint(
+                        addressInKeysFile, 'noncetrialsperbyte')) / 320
+                previousSmallMessageDifficulty = float(
+                    config.getint(
+                        addressInKeysFile, 'payloadlengthextrabytes')) / 14000
+                if previousTotalDifficulty <= 2:
+                    previousTotalDifficulty = 1
+                if previousSmallMessageDifficulty < 1:
+                    previousSmallMessageDifficulty = 1
+                config.set(
+                    addressInKeysFile, 'noncetrialsperbyte',
+                    str(int(previousTotalDifficulty * 1000)))
+                config.set(
+                    addressInKeysFile, 'payloadlengthextrabytes',
+                    str(int(previousSmallMessageDifficulty * 1000)))
+            except Exception:
+                continue
+        config.set('bitmessagesettings', 'maxdownloadrate', '0')
+        config.set('bitmessagesettings', 'maxuploadrate', '0')
+        settingsversion = 10
+
+    # sanity check
+    if config.safeGetInt(
+            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
+        config.set(
+            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte',
+            str(defaults.ridiculousDifficulty *
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
+        )
+    if config.safeGetInt(
+        'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
+    ) == 0:
+        config.set(
+            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
+            str(defaults.ridiculousDifficulty *
+                defaults.networkDefaultPayloadLengthExtraBytes)
+        )
+
+    if not config.has_option('bitmessagesettings', 'onionhostname'):
+        config.set('bitmessagesettings', 'onionhostname', '')
+    if not config.has_option('bitmessagesettings', 'onionport'):
+        config.set('bitmessagesettings', 'onionport', '8444')
+    if not config.has_option('bitmessagesettings', 'onionbindip'):
+        config.set('bitmessagesettings', 'onionbindip', '127.0.0.1')
+    if not config.has_option('bitmessagesettings', 'smtpdeliver'):
+        config.set('bitmessagesettings', 'smtpdeliver', '')
+    if not config.has_option(
+            'bitmessagesettings', 'hidetrayconnectionnotifications'):
+        config.set(
+            'bitmessagesettings', 'hidetrayconnectionnotifications', 'false')
+    if config.safeGetInt('bitmessagesettings', 'maxoutboundconnections') < 1:
+        config.set('bitmessagesettings', 'maxoutboundconnections', '8')
+        print('WARNING: your maximum outbound connections must be a number.')
+
+    # TTL is now user-specifiable. Let's add an option to save
+    # whatever the user selects.
+    if not config.has_option('bitmessagesettings', 'ttl'):
+        config.set('bitmessagesettings', 'ttl', '367200')
+
+    config.set('bitmessagesettings', 'settingsversion', str(settingsversion))
+    config.save()
+
 
 def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
     try:
         if sys.platform[0:3] == "win":
             VER_THIS = StrictVersion(platform.version())
-            return StrictVersion("5.1.2600")<=VER_THIS and StrictVersion("6.0.6000")>=VER_THIS
+            return (
+                StrictVersion("5.1.2600") <= VER_THIS and
+                StrictVersion("6.0.6000") >= VER_THIS
+            )
         return False
     except Exception:
-        return False
+        pass

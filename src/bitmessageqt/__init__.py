@@ -23,7 +23,7 @@ import shared
 from bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
 import defaults
-from namecoin import namecoinConnection
+import namecoin
 from messageview import MessageView
 from migrationwizard import Ui_MigrationWizard
 from foldertree import (
@@ -254,6 +254,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         # load all gui.menu plugins with prefix 'address'
         self.menu_plugins = {'address': []}
+        if not get_plugins:
+            return
         for plugin in get_plugins('gui.menu', 'address'):
             try:
                 handler, title = plugin(self)
@@ -798,7 +800,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.initSettings()
 
-        self.namecoin = namecoinConnection()
+        namecoin.ensureNamecoinOptions()
+        self.namecoin = namecoin.namecoinConnection()
 
         # Check to see whether we can connect to namecoin.
         # Hide the 'Fetch Namecoin ID' button if we can't.

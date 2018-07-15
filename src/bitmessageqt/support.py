@@ -114,18 +114,13 @@ def createSupportMessage(myapp):
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if proofofwork.bmpow else "False"
-    #cpow = QtGui.QApplication.translate("Support", cpow)
-    openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
-    #openclpow = QtGui.QApplication.translate("Support", openclpow)
+    openclpow = str(
+        BMConfigParser().safeGet('bitmessagesettings', 'opencl')
+    ) if openclEnabled() else "None"
     locale = getTranslationLanguage()
-    try:
-        socks = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
-    except:
-        socks = "N/A"
-    try:
-        upnp = BMConfigParser().get('bitmessagesettings', 'upnp')
-    except:
-        upnp = "N/A"
+    socks = BMConfigParser().safeGet(
+        'bitmessagesettings', 'socksproxytype', "N/A")
+    upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))

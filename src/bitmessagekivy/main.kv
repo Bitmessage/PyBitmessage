@@ -1,0 +1,167 @@
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+
+<Display>:
+    BoxLayout:
+        orientation: "vertical"
+        BoxLayout: 
+            size_hint: 1, None
+            height: '48dp'
+            Button:
+                text: 'messages'
+                on_release: sm.current = 'screen_one'
+                background_color: (0,0,0,0)
+                color: 0,0,0,1
+            Button:
+                text: 'send'
+                on_release: sm.current = 'screen_two'
+                background_color: (0,0,0,0)
+                color: 0,0,0,1
+            Button:
+                text: 'subscription'
+                on_release: sm.current = 'screen_three'
+                background_color: (0,0,0,0)
+                color: 0,0,0,1
+            Button:
+                text: 'four'
+                on_release: sm.current = 'screen_four'
+                background_color: (0,0,0,0) 
+                color: 0,0,0,1
+
+            Button:
+                text: 'chans'
+                on_release: sm.current = 'screen_five'
+                background_color: (0,0,0,0) 
+                color: 0,0,0,1
+            Button:
+                text: 'blacklist'
+                on_release: sm.current = 'screen_six'
+                background_color: (0,0,0,0) 
+                color: 0,0,0,1
+
+        ScreenManager:
+            id: sm
+            transition: FadeTransition()
+            Screen_One:
+            Screen_Two:
+            Screen_three:
+            Screen_four:
+            Screen_five:
+            Screen_six:
+            EmailScreen:
+
+<Screen_One>:
+    name: 'screen_one'      
+    BoxLayout:
+        padding: 10,10,10,300
+        orientation: "vertical"
+        Button:
+            text: "create"
+            size_hint_y: 0.3
+            size_hint_x: 0.1
+            color: 0,0,0,1
+            background_color: (0,0,0,0)
+        Button:
+            text: "inbox"
+            background_color: (0,0,0,0)
+            size_hint_y: 0.3
+            size_hint_x: 0.1
+            color: 0,0,0,1
+        Button:
+            text: "new"
+            background_color: (0,0,0,0)
+            size_hint_y: 0.3
+            size_hint_x: 0.1
+            color: 0,0,0,1
+            on_press:
+                root.manager.current = 'email'
+        Button:
+            text: "sents"
+            background_color: (0,0,0,0)
+            size_hint_y: 0.3
+            size_hint_x: 0.1
+            color: 0,0,0,1
+
+<Screen_Two>:
+    name: 'screen_two'      
+    Label:
+        text: "Two"
+
+<Screen_three>:
+    name: 'screen_three'      
+    Label:
+        text: "Three"
+
+<Screen_four>:
+    name: 'screen_four'      
+    Label:
+        text: "four"
+
+<Screen_five>:
+    name: 'screen_five'      
+    Label:
+        text: "Two"
+
+<Screen_six>:
+    name: 'screen_six'      
+    Label:
+        text: "Two"
+
+<EmailScreen>:
+    name: 'email'
+    BoxLayout:
+        padding: 100,10,100,100
+        id: login_layout
+        orientation: "vertical"
+        GridLayout:
+            rows: 2
+            orientation: 'vertical'
+            spacing: 10
+            Label:
+                text: 'From: '
+                background_color: (0,0,0,0)
+                color: 0,0,0,1
+                font_size: 18
+                pos_hint: {"x":.15,"y":1}
+                text_size: root.width-20, 20
+
+            TextInput:
+                multiline:False
+                size_hint: 1,.4
+
+        GridLayout:
+            rows: 2
+            orientation: 'vertical'
+            Label:
+                text: 'To: '
+                background_color: (0,0,0,0)
+                color: 0,0,0,1
+                font_size: 18
+                pos_hint: {"x":.15,"y":.5}
+                text_size: root.width-20, 20
+
+            TextInput:
+                multiline:False
+                size_hint: 1,.4
+                pos_hint: {"x":.2,"y":.5}
+
+        GridLayout:
+            rows: 2
+            orientation: 'vertical'
+            Label:
+                text: 'Message'
+                background_color: (0,0,0,0)
+                color: 0,0,0,1
+                pos_hint: {"x":.15,"y":.5}
+                font_size: 18
+                text_size: root.width-20, 20
+
+            TextInput:
+                id: msg
+                multiline:True
+                size_hint: 1,2
+
+        Button:
+            text: "SEND"
+            size_hint_y: 0.1
+            size_hint_x: 0.2
+            pos_hint: {"x":.15,"y":1}

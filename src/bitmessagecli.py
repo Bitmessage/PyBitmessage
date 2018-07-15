@@ -572,7 +572,7 @@ def listAdd():
         if len(label) > 19:
             label = label[:16] + '...'
 
-        print ''.join(
+        print ''.join([
             '     |',
             str(addNum).ljust(3),
             '|',
@@ -584,13 +584,13 @@ def listAdd():
             '|',
             enabled.ljust(7),
             '|',
-        )
+        ])
 
-    print ''.join(
+    print ''.join([
         '     ',
         74 * '-',
         '\n',
-    )
+    ])
 
 
 def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
@@ -675,11 +675,11 @@ def attachment():
         round(invSize, 2)  # Rounds to two decimal places
 
         if invSize > 500.0:  # If over 500KB
-            print ''.join(
+            print ''.join([
                 '\n     WARNING:The file that you are trying to attach is ',
                 invSize,
                 'KB and will take considerable time to send.\n'
-            )
+            ])
             uInput = userInput('Are you sure you still want to attach it, (Y)es or (N)o?').lower()
 
             if uInput != "y":
@@ -931,11 +931,11 @@ def inbox(unreadOnly=False):
             print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
             print '     From:', getLabelForAddress(message['fromAddress'])  # Get the from address
             print '     Subject:', message['subject'].decode('base64')  # Get the subject
-            print ''.join(
+            print ''.join([
                 '     Received:',
                 datetime.datetime.fromtimestamp(
                     float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S'),
-            )
+            ])
             messagesPrinted += 1
             if not message['read']:
                 messagesUnread += 1
@@ -970,11 +970,11 @@ def outbox():
         print '     Subject:', outboxMessages['sentMessages'][msgNum]['subject'].decode('base64')  # Get the subject
         print '     Status:', outboxMessages['sentMessages'][msgNum]['status']  # Get the subject
 
-        print ''.join(
+        print ''.join([
             '     Last Action Time:',
             datetime.datetime.fromtimestamp(
                 float(outboxMessages['sentMessages'][msgNum]['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S'),
-        )
+        ])
 
         if msgNum % 20 == 0 and msgNum != 0:
             userInput('(Press Enter to continue or type (Exit) to return to the main menu.)').lower()  # uInput =
@@ -1040,11 +1040,11 @@ def readSentMsg(msgNum):
     print '     From:', getLabelForAddress(outboxMessages['sentMessages'][msgNum]['fromAddress'])
     print '     Subject:', outboxMessages['sentMessages'][msgNum]['subject'].decode('base64')  # Get the subject
     print '     Status:', outboxMessages['sentMessages'][msgNum]['status']  # Get the subject
-    print ''.join(
+    print ''.join([
         '     Last Action Time:',
         datetime.datetime.fromtimestamp(
             float(outboxMessages['sentMessages'][msgNum]['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S'),
-    )
+    ])
     print '     Message:\n'
     print message  # inboxMessages['inboxMessages'][msgNum]['message'].decode('base64')
     print ' '
@@ -1101,10 +1101,10 @@ def readMsg(msgNum):
     # Get the from address
     print '     From:', getLabelForAddress(inboxMessages['inboxMessages'][msgNum]['fromAddress'])
     print '     Subject:', inboxMessages['inboxMessages'][msgNum]['subject'].decode('base64')  # Get the subject
-    print ''.join(
+    print ''.join([
         '     Received:', datetime.datetime.fromtimestamp(
             float(inboxMessages['inboxMessages'][msgNum]['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S'),
-    )
+    ])
     print '     Message:\n'
     print message  # inboxMessages['inboxMessages'][msgNum]['message'].decode('base64')
     print ' '
