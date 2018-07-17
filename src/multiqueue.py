@@ -1,5 +1,9 @@
 from collections import deque
-import Queue
+try:
+    import Queue as Queue
+except ImportError:
+    import queue as Queue
+
 import random
 import helper_random
 

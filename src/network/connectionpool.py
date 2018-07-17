@@ -1,4 +1,8 @@
-from ConfigParser import NoOptionError, NoSectionError
+try:
+    from ConfigParser import NoOptionError, NoSectionError
+except ImportError:
+    from configparser import NoOptionError, NoSectionError
+
 import errno
 import socket
 import time

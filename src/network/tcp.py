@@ -315,7 +315,7 @@ if __name__ == "__main__":
     for host in (("127.0.0.1", 8448),):
         direct = TCPConnection(host)
         while len(asyncore.socket_map) > 0:
-            print "loop, state = %s" % (direct.state)
+            print ("loop, state = %s" % direct.state)
             asyncore.loop(timeout=10, count=1)
         continue
 

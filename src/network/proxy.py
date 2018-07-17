@@ -1,8 +1,12 @@
 import socket
 import time
 
-from advanceddispatcher import AdvancedDispatcher
-import asyncore_pollchoose as asyncore
+from .advanceddispatcher import AdvancedDispatcher
+try:
+    import asyncore_pollchoose as asyncore
+except ImportError:
+    import asyncore as asyncore
+
 from bmconfigparser import BMConfigParser
 from debug import logger
 import network.connectionpool

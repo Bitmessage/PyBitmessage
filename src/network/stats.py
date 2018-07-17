@@ -1,7 +1,11 @@
 import time
 
 from network.connectionpool import BMConnectionPool
-import asyncore_pollchoose as asyncore
+try:
+    import asyncore_pollchoose as asyncore
+except ImportError:
+    import asyncore as asyncore
+
 from state import missingObjects
 
 lastReceivedTimestamp = time.time()

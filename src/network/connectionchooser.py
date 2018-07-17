@@ -38,7 +38,7 @@ def chooseConnection(stream):
         try:
             rating = knownnodes.knownNodes[stream][peer]["rating"]
         except TypeError:
-            print "Error in %s" % (peer)
+            print("Error in %s" % peer)
             rating = 0
         if haveOnion:
             # onion addresses have a higher priority when SOCKS

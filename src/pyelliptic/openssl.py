@@ -8,6 +8,7 @@
 
 import sys
 import ctypes
+import traceback
 
 OpenSSL = None
 
@@ -72,7 +73,7 @@ class _OpenSSL:
         """
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
-        self._libreSSL = self._version.startswith("LibreSSL")
+        self._libreSSL = self._version.startswith(b"LibreSSL")
 
         self.pointer = ctypes.pointer
         self.c_int = ctypes.c_int
@@ -516,6 +517,7 @@ def loadOpenSSL():
             libdir.extend([
                 path.join(sys._MEIPASS, 'libcrypto.so'),
                 path.join(sys._MEIPASS, 'libssl.so'),
+                path.join(sys._MEIPASS, 'libcrypto.so.37'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.1.0'),
                 path.join(sys._MEIPASS, 'libssl.so.1.1.0'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.0.2'),
@@ -544,7 +546,9 @@ def loadOpenSSL():
         try:
             OpenSSL = _OpenSSL(library)
             return
-        except:
+        except Exception as err:
+            print (err)
+            traceback.print_exc()
             pass
     raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
 

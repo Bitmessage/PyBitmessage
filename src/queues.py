@@ -1,4 +1,8 @@
-import Queue
+try:
+    import Queue as Queue
+except ImportError:
+    import queue as Queue
+
 
 from class_objectProcessorQueue import ObjectProcessorQueue
 from multiqueue import MultiQueue

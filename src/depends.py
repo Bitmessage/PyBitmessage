@@ -137,7 +137,7 @@ def detectOSRelease():
         for line in osRelease:
             if line.startswith("NAME="):
                 detectOS.result = OS_RELEASE.get(
-                    line.replace('"', '').split("=")[-1].strip().lower())
+                    line.replace('"', '').split("=")[-1].strip().lower().split(" ")[0])
             elif line.startswith("VERSION_ID="):
                 try:
                     version = float(line.split("=")[1].replace("\"", ""))
@@ -294,7 +294,7 @@ def check_openssl():
     openssl_hexversion = None
     openssl_cflags = None
 
-    cflags_regex = re.compile(r'(?:OPENSSL_NO_)(AES|EC|ECDH|ECDSA)(?!\w)')
+    cflags_regex = re.compile(b'(?:OPENSSL_NO_)(AES|EC|ECDH|ECDSA)(?!\w)')
 
     import pyelliptic.openssl
 
@@ -444,7 +444,7 @@ def check_dependencies(verbose=False, optional=False):
         logger.error(
             'PyBitmessage does not support Python 3+. Python 2.7.4'
             ' or greater is required.')
-        has_all_dependencies = False
+        has_all_dependencies = True
 
     check_functions = [check_hashlib, check_sqlite, check_openssl]
     if optional:

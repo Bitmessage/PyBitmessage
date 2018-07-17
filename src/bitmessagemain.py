@@ -33,7 +33,7 @@ from time import sleep
 from random import randint
 import getopt
 
-from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
+from api import StoppableXMLRPCServer
 from helper_startup import (
     isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 )
@@ -188,7 +188,9 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
                     (BMConfigParser().get(
                         'bitmessagesettings', 'apiinterface'),
                      port),
-                    MySimpleXMLRPCRequestHandler, True, True)
+                    True, True)
+                sa = se.socket.getsockname()
+                print('Serving API on %s, port %d' % (sa[0], sa[1]))
             except socket.error as e:
                 if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
                     continue
@@ -198,7 +200,6 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
                         "bitmessagesettings", "apiport", str(port))
                     BMConfigParser().save()
                 break
-        se.register_introspection_functions()
         se.serve_forever()
 
 
@@ -472,8 +473,8 @@ class Main:
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def usage(self):
-        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
-        print '''
+        print('Usage: ' + sys.argv[0] + ' [OPTIONS]')
+        print('''
 Options:
   -h, --help            show this help message and exit
   -c, --curses          use curses (text mode) interface
@@ -481,7 +482,7 @@ Options:
   -t, --test            dryrun, make testing
 
 All parameters are optional.
-'''
+''')
 
     def stop(self):
         with shared.printLock:

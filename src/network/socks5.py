@@ -1,7 +1,7 @@
 import socket
 import struct
 
-from proxy import Proxy, ProxyError, GeneralProxyError
+from .proxy import Proxy, ProxyError, GeneralProxyError
 
 class Socks5AuthError(ProxyError):
     errorCodes = ("Succeeded",
@@ -173,4 +173,4 @@ class Socks5Resolver(Socks5):
         return True
 
     def resolved(self):
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        print("Resolved %s as %s" % (self.host, self.proxy_sock_name()))

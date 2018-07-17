@@ -56,10 +56,11 @@ def configureLogging():
             print(
                 'Failed to load logger configuration from %s, using default'
                 ' logging config\n%s' %
-                (os.path.join(state.appdata, 'logging.dat'), sys.exc_info()))
+                os.path.join(state.appdata, 'logging.dat'))
+            sys.exc_info()
         else:
             # no need to confuse the user if the logger config is missing entirely
-            print "Using default logger configuration"
+            print("Using default logger configuration")
 
     sys.excepthook = log_uncaught_exceptions
 

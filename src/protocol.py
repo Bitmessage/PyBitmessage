@@ -660,11 +660,11 @@ def broadcastToSendDataQueues(data):
 
 
 # sslProtocolVersion
-if sys.version_info >= (2, 7, 13):
+if sys.version_info >= (3, 5, 3):
     # this means TLSv1 or higher
     # in the future change to
     # ssl.PROTOCOL_TLS1.2
-    sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
+    sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member new in 3.5.3:alias PROTOCOL_SSLv23, and deprecated since 3.6
 elif sys.version_info >= (2, 7, 9):
     # this means any SSL/TLS. SSLv2 and 3 are excluded with an option after context is created
     sslProtocolVersion = ssl.PROTOCOL_SSLv23

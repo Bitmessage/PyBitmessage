@@ -346,7 +346,7 @@ def epoll_poller(timeout=0.0, map=None):
             if e.errno != EINTR:
                 raise
             r = []
-        except select.error, err:
+        except select.error as err:
             if err.args[0] != EINTR:
                 raise
             r = []

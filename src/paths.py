@@ -35,7 +35,7 @@ def lookupAppdataFolder():
             if 'logger' in globals():
                 logger.critical(stringToLog)
             else:
-                print stringToLog
+                print(stringToLog)
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
@@ -54,7 +54,7 @@ def lookupAppdataFolder():
             if 'logger' in globals():
                 logger.info(stringToLog)
             else:
-                print stringToLog
+                print(stringToLog)
         except IOError:
             # Old directory may not exist.
             pass
