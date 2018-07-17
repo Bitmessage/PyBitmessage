@@ -15,6 +15,7 @@ TODO: fix the following (currently ignored) violations:
 """
 
 import argparse
+import ConfigParser
 import imghdr
 import ntpath
 import json
@@ -45,7 +46,6 @@ import re
 import subprocess
 
 from collections import OrderedDict
-import ConfigParser
 
 usrPrompt = 0  # 0 = First Start, 1 = prompt, 2 = no prompt if the program is starting up
 api = ''
@@ -223,31 +223,6 @@ def showCmdTbl():
         else:
             print '| '.join([5 * ' ', lcmd.ljust(23), des.ljust(45), ''])
     print ''.join([5 * ' ', 73 * '-'])
-
-
-class InputException(Exception):
-    def __init__(self, resKey):
-        Exception.__init__(self, resKey)
-        self.resKey = resKey
-
-    def __str__(self):
-        return self.resKey
-
-
-def inputAddress(prompt='What is the address?'):
-
-    global retStrings
-
-    src = retStrings['invalidaddr']
-    while True:
-        address = userInput(prompt + '\nTry again or')
-        if not validAddress(address):
-            print src
-            continue
-        else:
-            break
-
-    return address
 
 
 class Config(object):
@@ -482,7 +457,7 @@ def start():
 
 # proxied start
 # original https://github.com/benhengx/xmlrpclibex
-# add basic auth support for top level host
+# add basic auth support for top level host while none/HTTP proxied
 
 
 class ProxyError(Exception): pass
@@ -823,7 +798,7 @@ class BMAPIWrapper(object):
                             result = response
                         else:
                             error = 99
-                            errormsg = '\n     BMAPIWrapper error: unexpected api.\n     %s\n' % helper
+                            errormsg = '\n     BMAPIWrapper error: unexpected api. <%s>\n' % apiname
                     except ValueError as err:  # json.loads error
                         error = 3
                         result = response
@@ -836,7 +811,6 @@ class BMAPIWrapper(object):
             except (ProxyError, GeneralProxyError, Socks5AuthError, Socks5Error, Socks4Error, HTTPError, socket.error, xmlrpclib.ProtocolError, xmlrpclib.Fault) as err:  # (xmlrpclib.Error, ConnectionError, socks.GeneralProxyError)
                 error = -2
                 errormsg = '\n     Connection error: %s.\n' % str(err)
-                pass
                 # traceback.print_exc()
             except Exception:  # /httplib.BadStatusLine: connection close immediatly
                 error = -99
@@ -848,6 +822,34 @@ class BMAPIWrapper(object):
 
         return wrapper
 
+
+class InputException(Exception):
+    def __init__(self, resKey):
+        Exception.__init__(self, resKey)
+        self.resKey = resKey
+
+    def __str__(self):
+        return self.resKey
+
+
+def inputAddress(prompt='What is the address?'):
+
+    global retStrings
+
+    src = retStrings['invalidaddr']
+    while True:
+        address = userInput(prompt + '\nTry again or')
+        if not validAddress(address):
+            print src
+            continue
+        else:
+            break
+
+    return address
+
+    def set_proxy(self, proxy=None):
+        self.proxy = proxy
+        self.__init__(self.conn, self.proxy)
 
 def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
@@ -871,7 +873,7 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
                 break
 
         except (InputException, KeyboardInterrupt) as err:
-            raise InputException(err)
+            raise
 
         except ValueError:
             src = retStrings['invalidinput']
@@ -1709,7 +1711,6 @@ def readMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
 
     return ''
 
-
 def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     """Allows you to reply to the message you are currently on. Saves typing in the addresses and subject."""
 
@@ -1891,7 +1892,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 src = retStrings['indexoutofbound']
 
     else:
-        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-%d]: ' % numMessages - 1, numMessages - 1, inputShorts['all'][0]).lower()
+        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
 
         if uInput in inputShorts['all']:
             ret = inbox(False)
@@ -1945,7 +1946,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
 
     src = retStrings['usercancel']
     if cmd != 'delete':
-        msgNum = int(inputIndex('Input the index of the message open [0-%d]: ' % numMessages - 1, numMessages - 1))
+        msgNum = int(inputIndex('Input the index of the message open [0-%d]: ' % (numMessages - 1), numMessages - 1))
 
         nextNum = msgNum
         ret = ''
@@ -1986,7 +1987,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                 src = retStrings['indexoutofbound']
 
     else:
-        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-%d]: ' % numMessages - 1, numMessages - 1, inputShorts['all'][0]).lower()
+        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
 
         if uInput in inputShorts['all']:
             ret = outbox()
