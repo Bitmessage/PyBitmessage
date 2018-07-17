@@ -3,12 +3,11 @@ from random import choice, sample, expovariate
 from threading import RLock
 from time import time
 
-from bmconfigparser import BMConfigParser
-import network.connectionpool
+import connectionpool
+import state
 from debug import logging
 from queues import invQueue
 from singleton import Singleton
-import state
 
 # randomise routes after 600 seconds
 REASSIGN_INTERVAL = 600
@@ -20,6 +19,7 @@ FLUFF_TRIGGER_MEAN_DELAY = 30
 MAX_STEMS = 2
 
 Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
+
 
 @Singleton
 class Dandelion():
@@ -39,27 +39,29 @@ class Dandelion():
             start = time()
         if average == 0:
             average = FLUFF_TRIGGER_MEAN_DELAY
-        return start + expovariate(1.0/average) + FLUFF_TRIGGER_FIXED_DELAY
+        return start + expovariate(1.0 / average) + FLUFF_TRIGGER_FIXED_DELAY
 
     def addHash(self, hashId, source=None, stream=1):
         if not state.dandelion:
             return
         with self.lock:
             self.hashMap[hashId] = Stem(
-                    self.getNodeStem(source),
-                    stream,
-                    self.poissonTimeout())
+                self.getNodeStem(source),
+                stream,
+                self.poissonTimeout())
 
     def setHashStream(self, hashId, stream=1):
         with self.lock:
             if hashId in self.hashMap:
                 self.hashMap[hashId] = Stem(
-                        self.hashMap[hashId].child,
-                        stream,
-                        self.poissonTimeout())
+                    self.hashMap[hashId].child,
+                    stream,
+                    self.poissonTimeout())
 
     def removeHash(self, hashId, reason="no reason specified"):
-        logging.debug("%s entering fluff mode due to %s.", ''.join('%02x'%ord(i) for i in hashId), reason)
+        logging.debug(
+            "%s entering fluff mode due to %s.",
+            ''.join('%02x' % ord(i) for i in hashId), reason)
         with self.lock:
             try:
                 del self.hashMap[hashId]
@@ -79,10 +81,13 @@ class Dandelion():
                 self.stem.append(connection)
                 for k in (k for k, v in self.nodeMap.iteritems() if v is None):
                     self.nodeMap[k] = connection
-                for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child is None}.iteritems():
-                    self.hashMap[k] = Stem(connection, v.stream, self.poissonTimeout())
+                for k, v in {
+                    k: v for k, v in self.hashMap.iteritems()
+                    if v.child is None
+                }.iteritems():
+                    self.hashMap[k] = Stem(
+                        connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
-
 
     def maybeRemoveStem(self, connection):
         # is the stem active?
@@ -90,10 +95,16 @@ class Dandelion():
             if connection in self.stem:
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
-                for k in (k for k, v in self.nodeMap.iteritems() if v == connection):
+                for k in (
+                    k for k, v in self.nodeMap.iteritems() if v == connection
+                ):
                     self.nodeMap[k] = None
-                for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child == connection}.iteritems():
-                    self.hashMap[k] = Stem(None, v.stream, self.poissonTimeout())
+                for k, v in {
+                    k: v for k, v in self.hashMap.iteritems()
+                    if v.child == connection
+                }.iteritems():
+                    self.hashMap[k] = Stem(
+                        None, v.stream, self.poissonTimeout())
 
     def pickStem(self, parent=None):
         try:
@@ -136,10 +147,13 @@ class Dandelion():
         with self.lock:
             try:
                 # random two connections
-                self.stem = sample(network.connectionpool.BMConnectionPool().outboundConnections.values(), MAX_STEMS)
+                self.stem = sample(
+                    connectionpool.BMConnectionPool(
+                    ).outboundConnections.values(), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = network.connectionpool.BMConnectionPool().outboundConnections.values()
+                self.stem = connectionpool.BMConnectionPool(
+                ).outboundConnections.values()
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time() + REASSIGN_INTERVAL

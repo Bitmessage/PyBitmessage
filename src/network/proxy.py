@@ -1,27 +1,28 @@
 import socket
 import time
 
-from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
+import state
+from advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import BMConfigParser
 from debug import logger
-import network.connectionpool
-import state
+
 
 class ProxyError(Exception):
-    errorCodes = ("UnknownError")
+    errorCodes = ("Unknown error",)
 
     def __init__(self, code=-1):
         self.code = code
         try:
-            self.message = self.__class__.errorCodes[self.code]
+            self.message = self.errorCodes[code]
         except IndexError:
-            self.message = self.__class__.errorCodes[-1]
+            self.message = self.errorCodes[-1]
         super(ProxyError, self).__init__(self.message)
 
 
 class GeneralProxyError(ProxyError):
-    errorCodes = ("Success",
+    errorCodes = (
+        "Success",
         "Invalid data",
         "Not connected",
         "Not available",
@@ -30,12 +31,13 @@ class GeneralProxyError(ProxyError):
         "Timed out",
         "Network unreachable",
         "Connection refused",
-        "Host unreachable")
+        "Host unreachable"
+    )
 
 
 class Proxy(AdvancedDispatcher):
-    # these are global, and if you change config during runtime, all active/new
-    # instances should change too
+    # these are global, and if you change config during runtime,
+    # all active/new instances should change too
     _proxy = ("127.0.0.1", 9050)
     _auth = None
     _onion_proxy = None
@@ -48,8 +50,9 @@ class Proxy(AdvancedDispatcher):
 
     @proxy.setter
     def proxy(self, address):
-        if not isinstance(address, tuple) or (len(address) < 2) or \
-                (not isinstance(address[0], str) or not isinstance(address[1], int)):
+        if (not isinstance(address, tuple) or len(address) < 2 or
+            not isinstance(address[0], str) or
+                not isinstance(address[1], int)):
             raise ValueError
         self.__class__._proxy = address
 
@@ -67,8 +70,10 @@ class Proxy(AdvancedDispatcher):
 
     @onion_proxy.setter
     def onion_proxy(self, address):
-        if address is not None and (not isinstance(address, tuple) or (len(address) < 2) or \
-                (not isinstance(address[0], str) or not isinstance(address[1], int))):
+        if address is not None and (
+            not isinstance(address, tuple) or len(address) < 2 or
+            not isinstance(address[0], str) or
+                not isinstance(address[1], int)):
             raise ValueError
         self.__class__._onion_proxy = address
 
@@ -88,15 +93,21 @@ class Proxy(AdvancedDispatcher):
         self.isOutbound = True
         self.fullyEstablished = False
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        if BMConfigParser().safeGetBoolean("bitmessagesettings", "socksauthentication"):
-            self.auth = (BMConfigParser().safeGet("bitmessagesettings", "socksusername"),
-                    BMConfigParser().safeGet("bitmessagesettings", "sockspassword"))
+        if BMConfigParser().safeGetBoolean(
+                "bitmessagesettings", "socksauthentication"):
+            self.auth = (
+                BMConfigParser().safeGet(
+                    "bitmessagesettings", "socksusername"),
+                BMConfigParser().safeGet(
+                    "bitmessagesettings", "sockspassword")
+            )
         else:
             self.auth = None
-        if address.host.endswith(".onion") and self.onion_proxy is not None:
-            self.connect(self.onion_proxy)
-        else:
-            self.connect(self.proxy)
+        self.connect(
+            self.onion_proxy
+            if address.host.endswith(".onion") and self.onion_proxy else
+            self.proxy
+        )
 
     def handle_connect(self):
         self.set_state("init")
@@ -104,7 +115,9 @@ class Proxy(AdvancedDispatcher):
             AdvancedDispatcher.handle_connect(self)
         except socket.error as e:
             if e.errno in asyncore._DISCONNECTED:
-                logger.debug("%s:%i: Connection failed: %s", self.destination.host, self.destination.port, str(e))
+                logger.debug(
+                    "%s:%i: Connection failed: %s",
+                    self.destination.host, self.destination.port, e)
                 return
         self.state_init()
 
