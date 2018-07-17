@@ -363,7 +363,7 @@ def check_curses():
     import subprocess
 
     try:
-        subprocess.check_call('which dialog')
+        subprocess.check_call('dialog')
     except subprocess.CalledProcessError:
         logger.error(
             'Curses requires the `dialog` command to be installed as well as'
