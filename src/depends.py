@@ -363,7 +363,7 @@ def check_curses():
     import subprocess
 
     try:
-        subprocess.check_call(       "dialog")
+        subprocess.check_call("dialog")
         #subprocess.check_call('which dialog') # no longer works
     except subprocess.CalledProcessError:
         logger.error(
