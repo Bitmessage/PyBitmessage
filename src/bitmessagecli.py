@@ -261,7 +261,7 @@ class Config(object):
         # action = self.subparsers.add_parser('api', help='Set API settings.')
         action.add_argument('--api_username', help='BMs API basic auth user name.', default=None, metavar='username')
         action.add_argument('--api_password', help='BMs API basic auth password.', default=None, metavar='password')
-        action.add_argument('--api_path', help='BMs API host address.', default=self.conn, metavar='ip:port')
+        action.add_argument('--api_path', help='BMs API host address.', default='127.0.0.1:8445', metavar='ip:port')
         action.add_argument('--api_type', help='BMs API hosts type.', default='HTTP', choices=["HTTP", "HTTPS"])
 
         # proxy settings
@@ -630,12 +630,12 @@ class Proxiedxmlrpclib(xmlrpclib.ServerProxy):
                  allow_none=0, use_datetime=0, timeout=None, proxy=None):
 
         scheme, netloc, path, x, xx, xxx = urlparse(uri)
-        api_username = unquote(urlparse(uri).username)
-        api_password = unquote(urlparse(uri).password)
+        api_username = urlparse(uri).username
+        api_password = urlparse(uri).password
         api_cred = None
         self.uri = uri
         if api_username and api_password:
-            api_cred = base64.encodestring('%s:%s' % (api_username, api_password)).strip()
+            api_cred = base64.encodestring('%s:%s' % (unquote(api_username), unquote(api_password))).strip()
             netloc = netloc.split('@')[1]
 
         if transport is None and (timeout or proxy):
