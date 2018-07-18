@@ -110,7 +110,6 @@ inputShorts = dict({
     'yes': ['y', 'yes'],
     'no': ['n', 'no'],
     'exit': ['e', 'ex', 'exit'],
-    'save': ['save', 's', 'sv'],
     'deterministic': ['d', 'dt'],
     'random': ['r', 'rd', 'random'],
     'message': ['m', 'msg', 'message'],
@@ -1087,7 +1086,9 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
 
 
 def getBase64Len(x=''):
-    return int(len(x)*(3/4)) - 2 if x[-2:] == '==' else 1 if x[-1] == '=' else 0
+
+    strip = len(x) if len(x) < 4 else 2 if x[-2:] == '==' else 1 if x[-1] == '=' else 0
+    return int(len(x) * 3 /4) - strip
 
 
 def dump2File(fileName, fileData, deCoded):
@@ -1122,7 +1123,7 @@ def dump2File(fileName, fileData, deCoded):
             print '\n'.join([
                 '     -----------------------------------',
                 '     Contents seems not "BASE64" encoded. (base on length check)',
-                '     Start[%d] ~ Ends[%d].' % (x[:3], x[-3:]),
+                '     Start[%s] ~ Ends[%s].' % (x[:3], x[-3:]),
                 '     About: %d(bytes).' % getBase64Len(x),
                 '     FileName: "%s"' % fileName,
                 ])
@@ -1331,6 +1332,8 @@ def sendMsg(toAddress, fromAddress, subject=None, message=None):
             uInput = userInput('Would you like to try again, (n)o or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
+        else:
+            break
 
     if ackData['error'] == 0:
         print '     Fetching send status...'
@@ -1418,6 +1421,8 @@ def sendBrd(fromAddress=None, subject=None, message=None):
             uInput = userInput('Would you like to try again, no or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
+        else:
+            break
 
     if ackData['error'] == 0:
         print '     Fetching send status...'
@@ -1466,7 +1471,7 @@ def inbox(unreadOnly=False, pageNum=20):
                 print '     From:', getLabelForAddress(message['fromAddress'])  # Get the from address
                 print '     Subject:', message['subject'].decode('base64')  # Get the subject
                 print '     Received:', datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
-                print '     Base64Len:', str(len(message['message']))
+                print '     Size: %d(bytes)' % getBase64Len(message['message'])
                 messagesPrinted += 1
                 if not message['read']:
                     messagesUnread += 1
@@ -1507,7 +1512,7 @@ def outbox(pageNum=20):
         print '     Status:', message['status']  # Get the status
         print '     Ack:', message['ackData']  # Get the ackData
         print '     Last Action Time:', datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S')
-        print '     Base64Len:', str(len(message['message']))
+        print '     Size: %d(bytes)' % getBase64Len(message['message'])
 
         if msgNum % pageNum == 0 and msgNum != 0:
             uInput = userInput('Paused on %d/%d, next [%d],' % (msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
@@ -1524,56 +1529,47 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
     global inputShorts
 
     attPos = msgPos = 0
+    counter = 0
+    prefixRe = re.compile(r'<(\w*)\s*[^<>]*src="[^"]*;base64,$')
+    suffixRe = re.compile(r'("\s*/?>)')
+    fnRe1 = re.compile(r'alt="([^"]*)"*\s*[^<>]*;base64,$')  # alt= preferred for attachment filename
+    fnRe2 = re.compile(r'src="([^"]*)"*\s*[^<>]*;base64,$')
     # Hard way search attachments
-    for counter in range(1, 3):  # Allows maximum 3 of attachments to be downloaded/saved
+    while counter < 4:  # Allows maximum 3 of attachments to be downloaded/saved
         try:
-            attPos = content.index(';base64,', attPos) + 9  # Finds the attachment position
-            attEndPos = content.index('/>', attPos) - 1  # Finds the end of the attachment
+            attEndPos = attPos = content.index(';base64,', attPos) + len(';base64,')  # Finds the attachment position
+            hasEnd = suffixRe.search(content[attPos:])
+            if hasEnd:
+                attEndPos = attPos + hasEnd.start() + len(hasEnd.group(1))
+            else:
+                raise ValueError
 
-            attPre = attPos - 9  # back for ;base64, | <img src=";base64, | <attachment src=";base64,
+            attPre = attPos - len(';base64,') - 1  # back forward searching based on ;base64
+            attOffset = attPos - msgPos
             # try remove prefix <xxxx | <xxxxxxxxxxx
-            pBack = 0
-            if attPre >= (msgPos + 12):
-                if '<' == content[attPre - 12]:
-                    pBack = 12
-            elif attPre - msgPos + 5 >= 0:
-                if '<' == content[attPre - 5]:
-                    pBack = 5
-            attPre = attPre - pBack
+            prefix_max = attOffset if attOffset <= 180 else 180  # define max forward searching for base64 embedded codes '<xxxx
+            prefixStr = content[attPos - prefix_max:attPos]
+            iscomplete = prefixRe.search(prefixStr)
+            if iscomplete and hasEnd.start() >= 4:  # too small not attachments, leave as is
+                havefn = fnRe1.search(prefixStr)
+                if not havefn:
+                    havefn = fnRe2.search(prefixStr)
+                fn = '%s_%d_%s_%s' % (attPrefix, attPos, iscomplete.group(1), havefn.group(1) if havefn else 'notdetected')
+                attPre = attPos - prefix_max + iscomplete.start()
 
-            try:
-                fnPos = content.index('alt="', msgPos, attPos) + 5  # Finds position of the filename
-                fnEndPos = content.index('" src=', msgPos, attPos)  # Finds the end position
-                # fnLen = fnEndPos - fnPos #Finds the length of the filename
-                fn = content[fnPos:fnEndPos]
-
-                attPre = fnPos - 5  # back for alt=" | <img alt=" | <attachment alt="
-                # try remove prefix <xxxx | <xxxxxxxxxxx
-                pBack = 0
-                if attPre >= (msgPos + 12):
-                    if '<' == content[attPre - 12]:
-                        pBack = 12
-                elif attPre - msgPos + 5 >= 0:
-                    if '<' == content[attPre - 5]:
-                        pBack = 5
-                attPre = attPre - pBack
-
-            except ValueError:
-                fn = 'notdetected'
-            fn = '%d_attachment_%d_%s' % (attPrefix, attPos, fn)
-
-            this_attachment = content[attPos:attEndPos]
+            this_attachment = content[attPos:attPos + hasEnd.start()]
             x = filter(lambda z: not re.match(r'^\s*$', z), this_attachment)
             # x = x.replace('\n', '').strip()
             trydecode = False
+            counter += 1
             if len(x) % 4 == 0:  # check by length before decode.
                 trydecode = True
             else:
                 print '\n'.join([
                     '     -----------------------------------',
                     '     Embeded mesaage seems not "BASE64" encoded. (base on length check)',
-                    '     Offset: %d, about: %d(bytes).' % (attPos, (int(len(x)*3/4)) - 2 if x[-2:] == '==' else 1 if x[-1] == '=' else 0),
-                    '     Start[%d] ~ Ends[%d].' % (x[:3], x[-3:]),
+                    '     Offset: %d, about: %d(bytes).' % (attPre, getBase64Len(x)),
+                    '     Start[%s] ~ Ends[%s].' % (x[:3], x[-3:]),
                     '     FileName: "%s"' % fn,
                 ])
                 uInput = userInput('Try to decode anyway, (n)o or (Y)es?')
@@ -1583,31 +1579,32 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
                 try:
                     y = x.decode('base64', 'strict')
                     if x == y.encode('base64').replace('\n', ''):  # double check decoded string.
-                        print '     This embeded message decoded successfully:', fn
                         if askSave is True:
-                            uInput = userInput('Download the "decoded" attachment, (y)es or (No)?\nName(%d): %s,' % (counter, fn)).lower()
+                            uInput = userInput('Download the "decoded" attachment, (y)es or (No)?\nNames[%d]: %s,' % (counter, fn)).lower()
                             if uInput in inputShorts['yes']:
                                 src = dump2File(fn, y, True)
+                            else:
+                                src = '     Attachment skiped[%d] "%s".' % (counter, fn)
                         else:
                             src = dump2File(fn, y, True)
 
                         print src
                         attmsg = '\n'.join([
                             '     -----------------------------------',
-                            '     Attachment: "%s"' % fn,
+                            '     Attachment[%d]: "%s"' % (counter, fn),
                             '     Size: %d(bytes)' % getBase64Len(x),
                             '     -----------------------------------',
                             ])
                         # remove base64 and '<att' prefix and suffix '/>' stuff
                         textmsg = textmsg + content[msgPos:attPre] + attmsg
-                        attEndPos += 3
                         msgPos = attEndPos
                     else:
                         print '\n     Failed on decode this embeded "BASE64" like message on re-encode check.\n'
 
                 except ValueError:
-                    pass
                     print '\n     Failed on decode this emdeded "BASE64" encoded like message.\n'
+                except InputException:
+                    raise
                 except Exception:
                     print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
@@ -1621,7 +1618,10 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
         except ValueError:
             textmsg = textmsg + content[msgPos:]
             break
+        except InputException:
+            raise
         except Exception:
+            traceback.print_exc()
             print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
     return textmsg
@@ -1630,8 +1630,8 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
 def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
     """Opens a sent message for reading"""
 
-    print '     All outbox messages downloading...', str(msgNum)
-    if messageID is None:
+    print '     All outbox messages downloading...', str(msgNum), messageID
+    if not messageID:
         response = api.getAllSentMessages()
         if response['error'] != 0:
             return response['errormsg']
@@ -1667,7 +1667,7 @@ def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=Fals
     print '    ', 74 * '-'
 
     if cmd == 'save':
-        ret = dump2File('outbox_' + subject, textmsg, withAtta)
+        ret = dump2File('outbox_' + subject, textmsg, True)
         print ret
 
     return ''
@@ -1703,7 +1703,7 @@ def readMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
     print '    ', 74 * '-'
 
     if cmd == 'save':
-        ret = dump2File('inbox_' + subject + str(full), textmsg, withAtta)
+        ret = dump2File('inbox_' + subject + str(full), textmsg, True)
         print ret
 
     return ''
@@ -1800,7 +1800,7 @@ def delMsg(msgNum=-1, messageID=None):
 def delSentMsg(msgNum=-1, messageID=None):
     """Deletes a specified message from the outbox"""
 
-    if messageID is None:
+    if not messageID:
         print '     All outbox messages downloading...', str(msgNum)
         response = api.getAllSentMessages()
         if response['error'] != 0:
@@ -2374,7 +2374,7 @@ def UI(cmdInput=None):
 
     elif cmdInput in cmdShorts['send']:  # Sends a message or broadcast
         uInput = userInput('Would you like to send a (b)roadcast or (M)essage?').lower()
-        null = ''
+        null = None
         if uInput in inputShorts['broadcast']:
             src = sendBrd(null, null, null)
         else:
