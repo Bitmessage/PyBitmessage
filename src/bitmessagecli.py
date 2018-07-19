@@ -852,10 +852,9 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
     global retStrings
 
     while True:
-        cinput = userInput(prompt + '\nTry again, (c) or').lower()
+        cinput = userInput(prompt + '\nTry again, (c) or').strip().lower()
         try:
             if cinput == "c":
-                cinput = '-1'
                 raise InputException('usercancel')
 
             elif cinput in alter:
@@ -1065,7 +1064,7 @@ def listAdd():
     return ''
 
 
-def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
+def genAdd(lbl=None, deterministic=False, passphrase=None, numOfAdd=None, addVNum=None, streamNum=None, ripe=None):
     """Generate address"""
 
     if deterministic is False:  # Generates a new address with the user defined label. non-deterministic
@@ -1154,7 +1153,7 @@ def dump2File(fileName, fileData, deCoded):
     except Exception:
         return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
 
-    return '     Successfully saved to: "' + filePath + '"'
+    return '     Successfully saved to: "%s"' % filePath
 
 
 def attachment():
@@ -1176,7 +1175,7 @@ def attachment():
                 with open(filePath):
                     break
             except IOError:
-                print '\n     Failed open file on: ', filePath + '\n'
+                print '\n     Failed open file on: "%s"\n' % filePath
 
         # print filesize, and encoding estimate with confirmation if file is over X size (1mb?)
         invSize = os.path.getsize(filePath)
@@ -1240,18 +1239,15 @@ Encoding:base64
 
 <attachment alt="%s" src="data:file/%s;base64, %s"/>""" % (fileName, invSize, fileName, fileName, data)
 
+        theAttachmentS = theAttachmentS + theAttachment
         uInput = userInput('Would you like to add another attachment, (y)es or (N)o?').lower()
-
-        if uInput in inputShorts['yes']:  # Allows multiple attachments to be added to one message
-            theAttachmentS = str(theAttachmentS) + str(theAttachment) + '\n\n'
-        else:
+        if uInput not in inputShorts['yes']:  # Allows multiple attachments to be added to one message
             break
 
-    theAttachmentS = theAttachmentS + theAttachment
     return theAttachmentS
 
 
-def sendMsg(toAddress, fromAddress, subject=None, message=None):
+def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=False, attachMessage=None):
     """
     With no arguments sent, sendMsg fills in the blanks.
     subject and message must be encoded before they are passed.
@@ -1259,10 +1255,11 @@ def sendMsg(toAddress, fromAddress, subject=None, message=None):
 
     global retStrings, inputShorts
 
-    if validAddress(toAddress) is False:
-        toAddress = inputAddress("What is the To Address indeed?")
+    if not isBrd:
+        if not (toAddress and validAddress(toAddress)):
+            toAddress = inputAddress("Input a valid message receiver:")
 
-    if validAddress(fromAddress) is False:
+    if not (fromAddress and validAddress(fromAddress)):
         print '     Sender retrieving...', fromAddress
         response = api.listAddresses()
         if response['error'] != 0:
@@ -1310,21 +1307,39 @@ def sendMsg(toAddress, fromAddress, subject=None, message=None):
         subject = subject.encode('base64')
 
     if message is None:
+        message = ''
         while True:
+            print '\n'.join([
+                '     Drafting:',
+                message,
+                '     -----------------------------------',
+                ])
             try:
-                message += '\n' + raw_input('Continue enter your message line by line, end with <CTL-D>.\n>')
+                message += '\n' + raw_input('Continue enter your message line by line, cancel with <CTL-D>.\n>')
             except EOFError:
                 break
 
-        uInput = userInput('Would you like to add an attachment, (y)es or (N)o?').lower()
+        uInput = userInput('Would you like to add attachments, (y)es or (N)o?').lower()
         if uInput in inputShorts['yes']:
             message = message + '\n\n' + attachment()
 
-        message = message.encode('base64')
+    if attachMessage:
+        message = message + '\n' + attachMessage
+
+    print message
+    message = message.encode('base64')
+    src = retStrings['usercancel']
+    uInput = userInput('Realy want to send upper message, (n)o or (Y)es?').lower()
+    if uInput in inputShorts['no']:
+        return src
 
     while True:
-        print '     Message sending...', subject.decode('base64')
-        ackData = api.sendMessage(toAddress, fromAddress, subject, message)
+        if isBrd:
+            print '     Broadcast message sending... (%s)' % subject.decode('base64')
+            ackData = api.sendBroadcast(fromAddress, subject, message)
+        else:
+            print '     Message sending... (%s)' % subject.decode('base64')
+            ackData = api.sendMessage(toAddress, fromAddress, subject, message)
         if ackData['error'] == 1:
             return ackData['errormsg']
         elif ackData['error'] != 0:
@@ -1333,6 +1348,7 @@ def sendMsg(toAddress, fromAddress, subject=None, message=None):
             if uInput in inputShorts['no']:
                 break
         else:
+            src = ''
             break
 
     if ackData['error'] == 0:
@@ -1345,96 +1361,7 @@ def sendMsg(toAddress, fromAddress, subject=None, message=None):
         else:
             return '     Message Status:' + status['result']
 
-    return ''
-
-
-def sendBrd(fromAddress=None, subject=None, message=None):
-    """Send a broadcast"""
-
-    global inputShorts
-    if fromAddress is None:
-        print '     Retrieving...', 'Senders'
-        response = api.listAddresses()
-        if response['error'] != 0:
-            return response['errormsg']
-
-        jsonAddresses = response['result']
-        numAddresses = len(jsonAddresses)  # Number of addresses
-
-        if numAddresses > 1:  # Ask what address to send from if multiple addresses
-            found = False
-            while True:
-                fromAddress = userInput('Enter an Address or Address Label to send from.')
-
-                for addNum in range(0, numAddresses):  # processes all of the addresses
-                    label = jsonAddresses[addNum]['label']
-                    address = jsonAddresses[addNum]['address']
-                    if fromAddress == label:  # address entered was a label and is found
-                        fromAddress = address
-                        found = True
-                        break
-
-                if found is False:
-                    if validAddress(fromAddress) is False:
-                        print '\n     Invalid Address. Please try again.\n'
-
-                    else:
-                        for addNum in range(0, numAddresses):  # processes all of the addresses
-                            address = jsonAddresses[addNum]['address']
-                            if fromAddress == address:  # address entered was a found in our addressbook.
-                                found = True
-                                break
-
-                        if found is False:
-                            print '\n     The address entered is not one of yours. Please try again.\n'
-
-                if found:
-                    break  # Address was found
-
-        else:  # Only one address in address book
-            print '     Using the only address in the addressbook to send from.\n'
-            fromAddress = jsonAddresses[0]['address']
-
-    if subject is None:
-        subject = userInput('Enter your Subject.')
-    subject = subject.encode('base64')
-    if message is None:
-        while True:
-            try:
-                message += '\n' + raw_input('Continue enter your message line by line, end with <CTL-D>.\n>')
-            except EOFError:
-                break
-
-        uInput = userInput('Would you like to add an attachment, (y)es or (N)o?').lower()
-        if uInput in inputShorts['yes']:
-            message = message + '\n\n' + attachment()
-
-        message = message.encode('base64')
-
-    while True:
-        print '     Broadcast message sending...'
-        ackData = api.sendBroadcast(fromAddress, subject, message)
-        if ackData['error'] == 1:
-            return ackData['errormsg']
-        elif status['error'] != 0:
-            print '\n     %s.\n' % str(err)
-            uInput = userInput('Would you like to try again, no or (Y)es?').lower()
-            if uInput in inputShorts['no']:
-                break
-        else:
-            break
-
-    if ackData['error'] == 0:
-        print '     Fetching send status...'
-        status = api.getStatus(ackData['result'])
-        if status['error'] == 1:
-            return status['errormsg']
-        elif status['error'] != 0:
-            print status['errormsg']
-        else:
-            return '     Message Status:' + status['result']
-
-    return ''
+    return src
 
 
 def inbox(unreadOnly=False, pageNum=20):
@@ -1469,9 +1396,9 @@ def inbox(unreadOnly=False, pageNum=20):
                 print '     Read:', message['read']
                 print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
                 print '     From:', getLabelForAddress(message['fromAddress'])  # Get the from address
-                print '     Subject:', message['subject'].decode('base64')  # Get the subject
                 print '     Received:', datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
                 print '     Size: %d(bytes)' % getBase64Len(message['message'])
+                print '     Subject:', message['subject'].decode('base64')  # Get the subject
                 messagesPrinted += 1
                 if not message['read']:
                     messagesUnread += 1
@@ -1508,11 +1435,11 @@ def outbox(pageNum=20):
         print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
         # Get the from address
         print '     From:', getLabelForAddress(message['fromAddress'])
-        print '     Subject:', message['subject'].decode('base64')  # Get the subject
         print '     Status:', message['status']  # Get the status
         print '     Ack:', message['ackData']  # Get the ackData
         print '     Last Action Time:', datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S')
         print '     Size: %d(bytes)' % getBase64Len(message['message'])
+        print '     Subject:', message['subject'].decode('base64')  # Get the subject
 
         if msgNum % pageNum == 0 and msgNum != 0:
             uInput = userInput('Paused on %d/%d, next [%d],' % (msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
@@ -1656,12 +1583,12 @@ def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=Fals
     print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
     # Get the from address
     print '     From:', getLabelForAddress(message['fromAddress'])
-    print '     Subject:', subject  # Get the subject
     print '     Status:', message['status']  # Get the status
     print '     Ack:', message['ackData']  # Get the ackData
 
     print '     Last Action Time:', datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S')
     print '     Length: %d/%d' % (trunck if trunck <= full else full, full)
+    print '     Subject:', subject  # Get the subject
     print '     Message:\n'
     print textmsg if trunck < 0 or len(textmsg) <= trunck else textmsg[:trunck] + '\n\n     ~< MESSAGE TOO LONG TRUNCKED TO SHOW >~'
     print '    ', 74 * '-'
@@ -1695,9 +1622,9 @@ def readMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
     print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
     # Get the from address
     print '     From:', getLabelForAddress(message['fromAddress'])
-    print '     Subject:', subject  # Get the subject
     print '     Received:', datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
     print '     Length: %d/%d' % (trunck if trunck <= full else full, full)
+    print '     Subject:', subject  # Get the subject
     print '     Message:\n'
     print textmsg if trunck < 0 or len(textmsg) <= trunck else textmsg[:trunck] + '\n\n     ~< MESSAGE TOO LONG TRUNCKED TO SHOW >~'
     print '    ', 74 * '-'
@@ -1723,26 +1650,26 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     message = response['result'][0]
     subject = message['subject'].decode('base64')
     content = message['message'].decode('base64')  # Message that you are replying too.
+    fromAdd = message['toAddress']  # Address it was sent To, now the From address
+    fwdFrom = message['fromAddress']  # Address it was sent To, will attached to fwd
+    recvTime = datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
+
     full = len(content)
     textmsg = ''
     textmsg = attDetect(content, textmsg, subject, True)
 
     if forwardORreply == 'forward':
         attachMessage = '\n'.join([
-            '> To: ', fwdFrom,
-            '> From: ', fromAdd,
-            '> Subject: ', subject,
-            '> Received: ', recvTime,
+            '> To: %s' % fromAdd,
+            '> From: %s' % fwdFrom,
+            '> Received: %s' % recvTime,
+            '> Subject: %s' % subject,
             '> Message:',
             ])
     else:
         attachMessage = ''
     for line in textmsg.splitlines():
-        attachMessage = attachMessage + '> ' + line + '\n'
-
-    fromAdd = message['toAddress']  # Address it was sent To, now the From address
-    fwdFrom = message['fromAddress']  # Address it was sent To, will attached to fwd
-    recvTime = datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
+        attachMessage = attachMessage + '\n> ' + line
 
     if forwardORreply == 'reply':
         toAdd = message['fromAddress']  # Address it was From, now the To address
@@ -1750,39 +1677,13 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
 
     elif forwardORreply == 'forward':
         subject = "Fwd: " + re.sub('^Fwd: *', '', subject)
-        toAdd = inputAddress("What is the To Address?")
+        toAdd = None
 
     else:
         return '\n     Invalid Selection. Reply or Forward only'
 
     subject = subject.encode('base64')
-
-    message = ''
-    while True:
-        try:
-            print '\n'.join([
-                '     Drafting:',
-                message,
-                '     -----------------------------------',
-                ])
-            message += '\n' + raw_input('Continue enter your message line by line, end with <CTL-D>.\n>')
-        except EOFError:
-            break
-
-    src = retStrings['usercancel']
-    uInput = userInput('Would you like to add an attachment, (y)es or (N)o?').lower()
-    if uInput in inputShorts['yes']:
-        message = message + '\n\n' + attachment()
-
-    message = message + '\n\n------------------------------------------------------\n'
-    message = message + attachMessage
-    message = message.encode('base64')
-
-    print message
-    uInput = userInput('Realy want to send upper message, (n)o or (Y)es?').lower()
-    if uInput not in inputShorts['no']:
-        src = sendMsg(toAdd, fromAdd, subject, message)
-
+    src = sendMsg(toAdd, fromAdd, subject, None, False, attachMessage)
     return src
 
 
@@ -1890,7 +1791,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 src = retStrings['indexoutofbound']
 
     else:
-        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
+        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'])
 
         if uInput in inputShorts['all']:
             ret = inbox(False)
@@ -1985,7 +1886,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                 src = retStrings['indexoutofbound']
 
     else:
-        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'][0]).lower()
+        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'])
 
         if uInput in inputShorts['all']:
             ret = outbox()
@@ -2272,7 +2173,10 @@ def UI(cmdInput=None):
         src = showCmdTbl()
 
     elif cmdInput in cmdShorts['daemon']:
-        src = start_daemon(getattr(config, 'start_daemon', ''))
+        dmUri = getattr(config, 'start_daemon', None)
+        if not dmUri:
+            dmUri = getattr(config, 'conn', None)
+        src = start_daemon(dmUri)
 
     elif cmdInput in cmdShorts['apiTest']:  # tests the API Connection.
         print '     API connection test has:',
@@ -2312,20 +2216,15 @@ def UI(cmdInput=None):
             streamNum = 1
             isRipe = userInput('Shorten the address, (Y)es or no?').lower()
 
-            if isRipe in inputShorts['yes']:
-                ripe = True
-                src = genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe)
-
-            else:
-                ripe = False
-                src = genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe)
+            ripe = isRipe in inputShorts['yes']
+            src = genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe)
 
         else:  # Creates a random address with user-defined label
             deterministic = False
-            lbl = null = None
+            lbl = None
             while lbl is None:
                 lbl = userInput('Input the label for the new address.')
-            src = genAdd(lbl, deterministic, null, null, null, null, null)
+            src = genAdd(lbl, deterministic)
 
     elif cmdInput in cmdShorts['getAddress']:  # Gets the address for/from a passphrase
         while len(uInput) < 6:
@@ -2374,11 +2273,8 @@ def UI(cmdInput=None):
 
     elif cmdInput in cmdShorts['send']:  # Sends a message or broadcast
         uInput = userInput('Would you like to send a (b)roadcast or (M)essage?').lower()
-        null = None
-        if uInput in inputShorts['broadcast']:
-            src = sendBrd(null, null, null)
-        else:
-            src = sendMsg(null, null, null, null)
+        isBrd = uInput in inputShorts['broadcast']
+        src = sendMsg(isBrd=isBrd)
 
     elif cmdInput in cmdShorts['delete']:
         withAtta = True
@@ -2466,7 +2362,7 @@ def UI(cmdInput=None):
 def CLI():
     """Entrypoint for the CLI app"""
 
-    global usrPrompt, config, api, cmdStr
+    global usrPrompt, api, cmdStr
 
     if usrPrompt == 0:
         if config.conn:
@@ -2510,8 +2406,6 @@ if __name__ == "__main__":
     config.parse()
     bms_allow = False
     socks_allow = False
-    if not config.arguments:  # Config parse failed, show the help screen and exit
-        config.parse()
 
     if config.action == 'main':
         try:
