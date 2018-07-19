@@ -14,7 +14,6 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
-from kivy.core.window import Window
 from os import environ
 import shutdown
 
@@ -31,7 +30,6 @@ class NavigateApp(App):
         print ("**************************EXITING FROM APPLICATION*****************************")
         App.get_running_app().stop()
         shutdown.doCleanShutdown()
-        Window.close()
 
 class Navigator(NavigationDrawer):
     image_source = StringProperty('images/me.jpg')
@@ -61,7 +59,15 @@ class Sent(Screen):
         self.add_widget(my_box1)
 
 class Trash(Screen):
-    pass
+    def __init__ (self,**kwargs):
+        super (Trash, self).__init__(**kwargs)
+        val_y = .1
+        val_z = 0
+        my_box1 = BoxLayout(orientation='vertical')
+        for i in range(1, 5):
+            my_box1.add_widget(Label(text="I am in trash", size_hint = (.3,.1), pos_hint = {'x': val_z,'top': val_y},color = (0,0,0,1), background_color = (0,0,0,0)))
+            val_y+=.1
+        self.add_widget(my_box1)
 
 
 class Dialog(Screen):
