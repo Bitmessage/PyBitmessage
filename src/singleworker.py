@@ -352,11 +352,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         debug.logger.info("Sending pubkey of %s", address)
 
         TTL = randomizeTTL(28 * 24 * 60 * 60)
-
-        if addressProperties.version > 2:
-            expiryTime = int(time.time() + TTL)
-        else:
-            expiryTime = None
+        expiryTime = int(time.time() + TTL)
 
         headlessPayload = struct.pack(">I", 1)
         headlessPayload += addresses.encodeVarint(addressProperties.version)
@@ -895,6 +891,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         debug.logger.info("Making request for version %s pubkey with tag: %s", version, binascii.hexlify(tag))
 
         TTL = randomizeTTL(28 * 24 * 60 * 60)
+        expiryTime = int(time.time() + TTL)
 
         headlessPayload = struct.pack(">I", 0)
         headlessPayload += addresses.encodeVarint(version)
@@ -936,7 +933,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         )))
 
         self.startWork(
-            ID, headlessPayload, TTL, None,
+            ID, headlessPayload, TTL, expiryTime,
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes,
             "(For getpubkey message)".format(version),

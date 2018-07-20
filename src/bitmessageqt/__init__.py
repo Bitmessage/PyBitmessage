@@ -30,7 +30,6 @@ from foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress)
-from settings import Ui_settingsDialog
 import settingsmixin
 import support
 import debug
@@ -55,6 +54,7 @@ import state
 from statusbar import BMStatusBar
 from network.asyncore_pollchoose import set_rates
 import sound
+import re
 
 
 try:
@@ -1797,7 +1797,7 @@ class MyForm(settingsmixin.SMainWindow):
             os._exit(0)
 
     def updateWorkProverStatus(self, status):
-        self.POWTasksCount = status[3]
+        self.POWTasksCount = status.tasksCount
 
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
@@ -4122,8 +4122,7 @@ class settingsDialog(QtGui.QDialog):
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_settingsDialog()
-        self.ui.setupUi(self)
+        self.ui = widgets.load("settings.ui", self)
         self.parent = parent
         self.ui.checkBoxStartOnLogon.setChecked(
             BMConfigParser().getboolean('bitmessagesettings', 'startonlogon'))
@@ -4169,6 +4168,41 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
+
+        self.ui.languageComboBox.addItem(
+            QtGui.QApplication.translate("settingsDialog", "System Settings", "system"),
+            "system"
+        )
+
+        localeRegexp = re.compile("bitmessage_(.*).qm$")
+        localeNames = {"eo": "Esperanto", "en_pirate": "Pirate English"}
+
+        for i in sorted(os.listdir(os.path.join(paths.codePath(), "translations"))):
+            match = localeRegexp.match(i)
+
+            if match is None:
+                continue
+
+            localeCode = match.group(1)
+
+            if localeCode in localeNames:
+                localeName = localeNames[localeCode]
+            else:
+                localeName = QtCore.QLocale(QtCore.QString(localeCode)).nativeLanguageName()
+
+                if localeName == "":
+                    localeName = localeCode
+
+            self.ui.languageComboBox.addItem(localeName, localeCode)
+
+        configuredLocale = BMConfigParser().safeGet("bitmessagesettings", "userlocale", "system")
+
+        for i in range(self.ui.languageComboBox.count()):
+            if self.ui.languageComboBox.itemData(i) == configuredLocale:
+                self.ui.languageComboBox.setCurrentIndex(i)
+
+                break
+
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             BMConfigParser().get('bitmessagesettings', 'port')))
@@ -4205,6 +4239,9 @@ class settingsDialog(QtGui.QDialog):
             BMConfigParser().get('bitmessagesettings', 'maxdownloadrate')))
         self.ui.lineEditMaxUploadRate.setText(str(
             BMConfigParser().get('bitmessagesettings', 'maxuploadrate')))
+        self.ui.lineEditMaxOutboundConnections.setValidator(
+            QtGui.QIntValidator(0, 8, self.ui.lineEditMaxOutboundConnections)
+        )
         self.ui.lineEditMaxOutboundConnections.setText(str(
             BMConfigParser().get('bitmessagesettings', 'maxoutboundconnections')))
 

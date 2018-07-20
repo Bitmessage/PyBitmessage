@@ -10,4 +10,4 @@ def resource_path(resFile):
             return os.path.join(baseDir, subDir, resFile)
 
 def load(resFile, widget):
-    uic.loadUi(resource_path(resFile), widget)
+    return uic.loadUi(resource_path(resFile), widget)

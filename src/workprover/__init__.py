@@ -27,6 +27,8 @@ class Task(object):
         self.expiryTime = expiryTime
         self.target = target
 
+Status = collections.namedtuple("Status", ["solverName", "solverStatus", "speed", "tasksCount"])
+
 class WorkProver(threading.Thread):
     # Seed must be 32 bytes
 
@@ -92,7 +94,7 @@ class WorkProver(threading.Thread):
         if self.solver is not None:
             status = self.solver.status
 
-        self.statusUpdated((self.solverName, status, self.speed, len(self.tasks)))
+        self.statusUpdated(Status(self.solverName, status, self.speed, len(self.tasks)))
 
     def setSolver(self, name, configuration):
         if name is None and self.solverName is None:
