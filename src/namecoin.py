@@ -34,7 +34,7 @@ import os
 import socket
 import sys
 
-import logging as logger
+from debug import logger
 import defaults
 import tr  # translate
 from bmconfigparser import BMConfigParser

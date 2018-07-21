@@ -19,14 +19,13 @@ import os
 from importlib import import_module
 
 # We can now use logging so set up a simple configuration
-formatter = logging.Formatter(
-    '%(levelname)s: %(message)s'
-)
+formatter = logging.Formatter('%(levelname)s: %(message)s')
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(formatter)
 logger = logging.getLogger('both')
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
+
 
 OS_RELEASE = {
     "Debian GNU/Linux".lower(): "Debian",
@@ -464,3 +463,6 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage cannot start. One or more dependencies are'
             ' unavailable.'
         )
+
+
+logger.setLevel(0)

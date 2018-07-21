@@ -2581,7 +2581,7 @@ class MyForm(settingsmixin.SMainWindow):
                 os.remove(state.appdata + 'knownnodes.dat')
                 previousAppdataLocation = state.appdata
                 state.appdata = paths.lookupExeFolder()
-                debug.restartLoggingInUpdatedAppdataLocation()
+                debug.resetLogging()
                 try:
                     os.remove(previousAppdataLocation + 'debug.log')
                     os.remove(previousAppdataLocation + 'debug.log.1')
@@ -2599,7 +2599,7 @@ class MyForm(settingsmixin.SMainWindow):
                 knownnodes.saveKnownNodes(state.appdata)
                 os.remove(paths.lookupExeFolder() + 'keys.dat')
                 os.remove(paths.lookupExeFolder() + 'knownnodes.dat')
-                debug.restartLoggingInUpdatedAppdataLocation()
+                debug.resetLogging()
                 try:
                     os.remove(paths.lookupExeFolder() + 'debug.log')
                     os.remove(paths.lookupExeFolder() + 'debug.log.1')
