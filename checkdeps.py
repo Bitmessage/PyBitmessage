@@ -137,6 +137,8 @@ if prereqs:
 OPSYS = detectOS()
 CMD = PACKAGE_MANAGER[OPSYS] if OPSYS in PACKAGE_MANAGER else 'UNKNOWN_INSTALLER'
 for lhs, rhs in EXTRAS_REQUIRE.items():
+    if OPSYS is None:
+        break
     if rhs and any([
         EXTRAS_REQUIRE_DEPS[x][OPSYS]
         for x in rhs
