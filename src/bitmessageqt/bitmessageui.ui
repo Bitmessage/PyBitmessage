@@ -14,7 +14,7 @@
    <string>Bitmessage</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+   <iconset>
     <normaloff>:/newPrefix/images/can-icon-24px.png</normaloff>:/newPrefix/images/can-icon-24px.png</iconset>
   </property>
   <property name="tabShape">
@@ -22,6 +22,42 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_10">
+    <item row="1" column="0">
+     <widget class="QWidget" name="rightStatusBar" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="workProverSpeed">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButtonStatusIcon">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>:/newPrefix/images/redicon.png</normaloff>:/newPrefix/images/redicon.png</iconset>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -58,7 +94,7 @@
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
-        <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/inbox.png</normaloff>:/newPrefix/images/inbox.png</iconset>
        </attribute>
        <attribute name="title">
@@ -257,7 +293,7 @@
       </widget>
       <widget class="QWidget" name="send">
        <attribute name="icon">
-        <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/send.png</normaloff>:/newPrefix/images/send.png</iconset>
        </attribute>
        <attribute name="title">
@@ -621,7 +657,7 @@
       </widget>
       <widget class="QWidget" name="subscriptions">
        <attribute name="icon">
-        <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/subscriptions.png</normaloff>:/newPrefix/images/subscriptions.png</iconset>
        </attribute>
        <attribute name="title">
@@ -829,7 +865,7 @@
       </widget>
       <widget class="QWidget" name="chans">
        <attribute name="icon">
-        <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/can-icon-16px.png</normaloff>:/newPrefix/images/can-icon-16px.png</iconset>
        </attribute>
        <attribute name="title">
@@ -1043,7 +1079,7 @@
       </widget>
       <widget class="Blacklist" name="blackwhitelist">
        <attribute name="icon">
-        <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/blacklist.png</normaloff>:/newPrefix/images/blacklist.png</iconset>
        </attribute>
        <attribute name="title">
@@ -1052,27 +1088,13 @@
       </widget>
       <widget class="NetworkStatus" name="networkstatus">
        <attribute name="icon">
-        <iconset resource="bitmessageqt.bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/networkstatus.png</normaloff>:/newPrefix/images/networkstatus.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Network Status</string>
        </attribute>
       </widget>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="pushButtonStatusIcon">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="icon">
-       <iconset resource="bitmessageqt.bitmessage_icons.qrc">
-        <normaloff>:/newPrefix/images/redicon.png</normaloff>:/newPrefix/images/redicon.png</iconset>
-      </property>
-      <property name="flat">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
    </layout>
@@ -1282,8 +1304,6 @@
   <tabstop>textEditMessage</tabstop>
   <tabstop>pushButtonAddSubscription</tabstop>
  </tabstops>
- <resources>
-  <include location="bitmessageqt.bitmessage_icons.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

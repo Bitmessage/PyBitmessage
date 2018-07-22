@@ -53,6 +53,7 @@ import state
 from network.asyncore_pollchoose import set_rates
 import sound
 import re
+import bitmessage_icons_rc # Loads icon resources
 
 
 try:
@@ -627,6 +628,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.ui.horizontalSliderTTL.setMaximumSize(QtCore.QSize(105, self.ui.pushButtonSend.height()))
 
+        self.statusbar = self.statusBar()
+        self.statusbar.insertPermanentWidget(0, self.ui.rightStatusBar)
+
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
         for addressInKeysFile in getSortedAccounts():
@@ -750,11 +754,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.ui.blackwhitelist.rerenderBlackWhiteList()
 
-        # Put the colored icon on the status bar
+        # The coloured icon on the status bar
 
-        self.statusbar = self.statusBar()
-
-        self.statusbar.insertPermanentWidget(0, self.ui.pushButtonStatusIcon)
         QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonStatusIcon)
 
@@ -1842,6 +1843,13 @@ class MyForm(settingsmixin.SMainWindow):
 
     def updateWorkProverStatus(self, status):
         self.POWTasksCount = status.tasksCount
+
+        if status.speed == 0:
+            self.ui.workProverSpeed.setText("")
+        else:
+            self.ui.workProverSpeed.setText(
+                _translate("MainWindow", "%1 kiH / s").arg("{:.1f}".format(status.speed / 1024))
+            )
 
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
