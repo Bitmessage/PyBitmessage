@@ -230,7 +230,7 @@ class Config(object):
         self.argv = argv
         self.action = None
         self.config_file = "client.dat"  # for initial default value
-        self.conn = 'HTTP://127.0.0.1:8445/'  # default API uri
+        self.conn = 'HTTP://127.0.0.1:8442/'  # default API uri
         self.createParser()
         self.createArguments()
 
@@ -261,7 +261,7 @@ class Config(object):
         # action = self.subparsers.add_parser('api', help='Set API settings.')
         action.add_argument('--api_username', help='BMs API basic auth user name.', default=None, metavar='username')
         action.add_argument('--api_password', help='BMs API basic auth password.', default=None, metavar='password')
-        action.add_argument('--api_path', help='BMs API host address.', default='127.0.0.1:8445', metavar='ip:port')
+        action.add_argument('--api_path', help='BMs API host address.', default=None, metavar='ip:port')
         action.add_argument('--api_type', help='BMs API hosts type.', default='HTTP', choices=["HTTP", "HTTPS"])
 
         # proxy settings
@@ -2415,11 +2415,13 @@ if __name__ == "__main__":
             import bmsettings as conninit
             bms_allow = True
             if hasattr(conninit, 'apiData'):
-                config.conn = conninit.apiData()
-                print '     BMs host uri:', config.conn, '\n'
+                apiData = conninit.apiData()
+                print '     BMs host uri from "keys.dat":', apiData, '\n'
+                if apiData:
+                    config.conn = apiData
+
         except Exception as err:
             print '     Depends check failed, command "bmSettings" disabled. (%s)' % err
-            pass
 
         try:
             print '- Try to get socks module for proxied...'
@@ -2445,10 +2447,25 @@ if __name__ == "__main__":
                 proxy[key] = getattr(config, key)
     config.proxy = proxy
     if getattr(config, 'api_path', None):
+        print '- API settings from command line or overide by "client.dat".'
         if getattr(config, 'api_username', None) and getattr(config, 'api_password', None):
             config.conn = '%s://%s:%s@%s/' % (config.api_type, config.api_username, config.api_password, config.api_path)
         else:
             config.conn = '%s://%s/' % (config.api_type, config.api_path)
+    elif config.conn:  # default or from "keys.dat"
+        print '- API settings from BMs config file "keys.dat" or default.'
+        uri = config.conn
+        scheme, netloc, path, x, xx, xxx = urlparse(uri)
+        api_username = urlparse(uri).username
+        api_password = urlparse(uri).password
+        is_https = scheme == 'https'
+        config.api_type = 'HTTPS' if is_https else 'HTTP'
+        if api_username and api_password:
+            config.api_username = api_username
+            config.api_password = api_password
+            netloc = netloc.split('@')[1]
+
+        config.api_path = netloc
 
     actions = Actions()
     start()
