@@ -168,5 +168,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
 
     def retranslateUi(self):
         super(NetworkStatus, self).retranslateUi()
+
+        tabs = self.parent().parent()
+        tabs.setTabText(tabs.indexOf(self), _translate("networkstatus", "Network Status"))
+
         self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
             l10n.formatTimestamp(self.startup)))

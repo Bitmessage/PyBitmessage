@@ -20,14 +20,13 @@ from debug import logger
 from tr import _translate
 from addresses import decodeAddress, addBMIfNotPresent
 import shared
-from bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
 import defaults
 import namecoin
 from messageview import MessageView
 from migrationwizard import Ui_MigrationWizard
 from foldertree import (
-    AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
+    AccountMixin, AddressBookCompleter, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress)
 import settingsmixin
@@ -51,7 +50,6 @@ from proofofwork import getPowType
 import queues
 import shutdown
 import state
-from statusbar import BMStatusBar
 from network.asyncore_pollchoose import set_rates
 import sound
 import re
@@ -584,8 +582,50 @@ class MyForm(settingsmixin.SMainWindow):
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_MainWindow()
+
+        self.UI = widgets.loadType("bitmessageui.ui")[0]
+
+        self.ui = self.UI()
         self.ui.setupUi(self)
+
+        self.ui.blackwhitelist.retranslateUi()
+        self.ui.networkstatus.retranslateUi()
+
+        addressBookCompleter = AddressBookCompleter()
+        addressBookCompleter.setCompletionMode(QtGui.QCompleter.PopupCompletion)
+        addressBookCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        addressBookCompleter.setModel(QtGui.QStringListModel())
+
+        self.ui.lineEditTo.setCompleter(addressBookCompleter)
+
+        self.ui.pushButtonAddAddressBook.resize(200, self.ui.pushButtonAddAddressBook.height())
+        self.ui.pushButtonAddChan.resize(200, self.ui.pushButtonAddChan.height())
+        self.ui.pushButtonAddSubscription.resize(200, self.ui.pushButtonAddSubscription.height())
+        self.ui.pushButtonFetchNamecoinID.resize(200, self.ui.pushButtonFetchNamecoinID.height())
+        self.ui.pushButtonNewAddress.resize(200, self.ui.pushButtonNewAddress.height())
+        self.ui.tableWidgetAddressBook.resize(200, self.ui.tableWidgetAddressBook.height())
+        self.ui.treeWidgetChans.resize(200, self.ui.treeWidgetChans.height())
+        self.ui.treeWidgetSubscriptions.resize(200, self.ui.treeWidgetSubscriptions.height())
+        self.ui.treeWidgetYourIdentities.resize(200, self.ui.treeWidgetYourIdentities.height())
+
+        # TODO: why we need splitters here if they are disabled?
+
+        self.ui.horizontalSplitter_2.handle(1).setEnabled(False)
+        self.ui.horizontalSplitter_6.handle(1).setEnabled(False)
+        self.ui.horizontalSplitterSearch.handle(1).setEnabled(False)
+        self.ui.verticalSplitter.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_2.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_2.handle(2).setEnabled(False)
+        self.ui.verticalSplitter_3.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_4.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_5.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_6.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_7.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_8.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_12.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_17.handle(1).setEnabled(False)
+
+        self.ui.horizontalSliderTTL.setMaximumSize(QtCore.QSize(105, self.ui.pushButtonSend.height()))
 
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
@@ -703,18 +743,19 @@ class MyForm(settingsmixin.SMainWindow):
             self.tabWidgetCurrentChanged
         )
 
+        # Initialize the blacklist or whitelist
+
+        if BMConfigParser().get("bitmessagesettings", "blackwhitelist") == "white":
+            self.ui.blackwhitelist.radioButtonWhitelist.click()
+
+        self.ui.blackwhitelist.rerenderBlackWhiteList()
+
         # Put the colored icon on the status bar
-        # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
-        self.setStatusBar(BMStatusBar())
+
         self.statusbar = self.statusBar()
 
-        self.pushButtonStatusIcon = QtGui.QPushButton(self)
-        self.pushButtonStatusIcon.setText('')
-        self.pushButtonStatusIcon.setIcon(
-            QtGui.QIcon(':/newPrefix/images/redicon.png'))
-        self.pushButtonStatusIcon.setFlat(True)
-        self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
-        QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
+        self.statusbar.insertPermanentWidget(0, self.ui.pushButtonStatusIcon)
+        QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonStatusIcon)
 
         self.numberOfMessagesProcessed = 0
@@ -1569,6 +1610,9 @@ class MyForm(settingsmixin.SMainWindow):
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
+            self.ui.blackwhitelist.retranslateUi()
+            self.ui.networkstatus.retranslateUi()
+            self.updateHumanFriendlyTTLDescription(BMConfigParser().getint("bitmessagesettings", "ttl"))
             self.init_inbox_popup_menu(False)
             self.init_identities_popup_menu(False)
             self.init_chan_popup_menu(False)
@@ -1599,7 +1643,7 @@ class MyForm(settingsmixin.SMainWindow):
         _notifications_enabled = not BMConfigParser().getboolean(
             'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
-            self.pushButtonStatusIcon.setIcon(
+            self.ui.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
@@ -1625,7 +1669,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'yellow':
             if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusbar.clearMessage()
-            self.pushButtonStatusIcon.setIcon(
+            self.ui.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
@@ -1643,7 +1687,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'green':
             if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusbar.clearMessage()
-            self.pushButtonStatusIcon.setIcon(
+            self.ui.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
             if not self.connected and _notifications_enabled:
@@ -2687,13 +2731,21 @@ class MyForm(settingsmixin.SMainWindow):
     def click_NewAddressDialog(self):
         dialogs.NewAddressDialog(self)
 
+    def updateNetworkSwitchMenuLabel(self, dontconnect = None):
+        if dontconnect is None:
+            dontconnect = BMConfigParser().safeGetBoolean("bitmessagesettings", "dontconnect")
+
+        self.ui.actionNetworkSwitch.setText(
+            _translate("MainWindow", "Go online" if dontconnect else "Go offline", None)
+        )
+
     def network_switch(self):
         dontconnect_option = not BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'dontconnect')
         BMConfigParser().set(
             'bitmessagesettings', 'dontconnect', str(dontconnect_option))
         BMConfigParser().save()
-        self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
+        self.updateNetworkSwitchMenuLabel(dontconnect_option)
 
         self.ui.pushButtonFetchNamecoinID.setHidden(
             dontconnect_option or self.namecoin.test()[0] == 'failed'
@@ -4122,7 +4174,11 @@ class settingsDialog(QtGui.QDialog):
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = widgets.load("settings.ui", self)
+        self.UI = widgets.loadType("settings.ui")[0]
+
+        self.ui = self.UI()
+        self.ui.setupUi(self)
+
         self.parent = parent
         self.ui.checkBoxStartOnLogon.setChecked(
             BMConfigParser().getboolean('bitmessagesettings', 'startonlogon'))
@@ -4474,7 +4530,7 @@ def run():
         'bitmessagesettings', 'dontconnect')
     if myapp._firstrun:
         myapp.showConnectDialog()  # ask the user if we may connect
-    myapp.ui.updateNetworkSwitchMenuLabel()
+    myapp.updateNetworkSwitchMenuLabel()
 
 #    try:
 #        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:

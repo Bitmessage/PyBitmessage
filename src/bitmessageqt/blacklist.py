@@ -240,3 +240,13 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
     def on_action_BlacklistSetAvatar(self):
         self.window().on_action_SetAvatar(self.tableWidgetBlacklist)
 
+    def retranslateUi(self):
+        super(self.__class__, self).retranslateUi()
+
+        tabs = self.parent().parent()
+
+        if BMConfigParser().get("bitmessagesettings", "blackwhitelist") == "black":
+            tabs.setTabText(tabs.indexOf(self), _translate("blacklist", "Blacklist"))
+        else:
+            tabs.setTabText(tabs.indexOf(self), _translate("blacklist", "Whitelist"))
+

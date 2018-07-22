@@ -999,7 +999,7 @@
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources>
-  <include location="bitmessage_icons.qrc"/>
+  <include location="bitmessageqt.bitmessage_icons.qrc"/>
  </resources>
  <connections>
   <connection>
