@@ -2891,7 +2891,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.updateStatusBar(_translate(
             "MainWindow", "Shutdown imminent... %1%").arg(100))
-        shared.thisapp.cleanup()
+
         logger.info("Shutdown complete")
         super(MyForm, myapp).close()
         # return
