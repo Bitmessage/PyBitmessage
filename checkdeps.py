@@ -134,27 +134,19 @@ if prereqs:
 
 # Install the system dependencies of optional extras_require components
 OPSYS = detectOS()
-CMD = PACKAGE_MANAGER[OPSYS] if OPSYS in PACKAGE_MANAGER else 'UNKNOWN_INSTALLER'
+CMD   = PACKAGE_MANAGER[OPSYS] if OPSYS in PACKAGE_MANAGER else 'UNKNOWN_INSTALLER'
 for lhs, rhs in EXTRAS_REQUIRE.items():
-    if rhs and any([
-        EXTRAS_REQUIRE_DEPS[x][OPSYS]
-        for x in rhs
-        if x in EXTRAS_REQUIRE_DEPS
-    ]):
-        rhs_cmd = ''.join([
-            CMD,
-            ' ',
-            ' '.join([
-                ''. join([
-                    xx for xx in EXTRAS_REQUIRE_DEPS[x][OPSYS]
-                ])
-                for x in rhs
-                if x in EXTRAS_REQUIRE_DEPS
-            ]),
-        ])
-        print(
-            "Optional dependency `pip install .[{}]` would require `{}`"
-            " to be run as root".format(lhs, rhs_cmd))
+    #print("rhs is " , rhs)
+    try:
+     if  rhs and any([        EXTRAS_REQUIRE_DEPS[x][OPSYS]        for x in rhs        if x in EXTRAS_REQUIRE_DEPS     ]):
+         #print("x is:  " , x )  ### too late
+         rhs_cmd = ''.join([    CMD,           ' ',
+             ' '.join([ ''. join([  xx for xx in EXTRAS_REQUIRE_DEPS[x][OPSYS]  ])
+                 for x in rhs
+                 if  x in EXTRAS_REQUIRE_DEPS    ]),      ])
+         print(  "Optional dependency `pip install .[{}]` would require `{}`" , " to be run as root".format(lhs, rhs_cmd))
+    except KeyError: pass # all is satisfied  - someone(TM)  needs to do this properly...
+
 
 if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
     print("You can install the missing dependencies by running, as root:")
