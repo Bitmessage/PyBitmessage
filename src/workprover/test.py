@@ -44,6 +44,7 @@ byteDifficulty = 1000
 lengthExtension = 1000
 
 target = 0x00000f903320b7f6
+difficulty = 1078000
 
 seed = binascii.unhexlify("3941c24a1256660a8f65d962954c406dab7bc449317fa087c4a3f1a3ca7d95fd")
 timeout = .5
@@ -56,8 +57,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(utils.calculateDoubleHash(payload), doubleHash)
 
     def testCalculateTarget(self):
-        self.assertEqual(utils.calculateTarget(1000, 1015, 1000, 1000), 0x00000843bf57fed2)
-        self.assertEqual(utils.calculateTarget(1000, 1016, 1000, 1000), 0x00000842b4a960c2)
+        self.assertEqual(utils.calculateTarget(1000, 1015, 1000, 1000), (0x00000843bf57fed2, 2030000))
+        self.assertEqual(utils.calculateTarget(1000, 1016, 1000, 1000), (0x00000842b4a960c2, 2031000))
 
     def testCheckProof(self):
         self.assertFalse(utils.checkProof(nonce, initialHash, 0x000002fe91eba355))
@@ -75,8 +76,8 @@ class TestUtils(unittest.TestCase):
         utils.time.time = originalTime
 
     def testEstimateMaximumIterationsCount(self):
-        self.assertEqual(utils.estimateMaximumIterationsCount(0x000fffffffffffff, .1), 512)
-        self.assertEqual(utils.estimateMaximumIterationsCount(target, .8), 1735168)
+        self.assertEqual(utils.estimateMaximumIterationsCount(4096, .1), 512)
+        self.assertEqual(utils.estimateMaximumIterationsCount(difficulty, .8), 1735168)
 
 class TestSolver(unittest.TestCase):
     def setUp(self):
@@ -135,6 +136,8 @@ class TestWorkProver(unittest.TestCase):
         linkID = next(iter(IDs))
 
         for i in xrange(len(IDs)):
+            self.assertGreaterEqual(self.thread.totalDifficulty, 0)
+
             self.assertIn(linkID, IDs)
 
             IDs.remove(linkID)

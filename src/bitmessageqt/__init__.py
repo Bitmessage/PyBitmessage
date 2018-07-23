@@ -54,6 +54,7 @@ from network.asyncore_pollchoose import set_rates
 import sound
 import re
 import bitmessage_icons_rc # Loads icon resources
+import workprover.utils
 
 
 try:
@@ -1876,10 +1877,16 @@ class MyForm(settingsmixin.SMainWindow):
 
         if status.speed == 0:
             self.ui.workProverSpeed.setText("")
+            self.ui.workProverSpeed.setToolTip("")
         else:
             self.ui.workProverSpeed.setText(
                 _translate("MainWindow", "%1 kiH / s").arg("{:.1f}".format(status.speed / 1024))
             )
+
+            self.ui.workProverSpeed.setToolTip("Difficulty: {}, 80 % completion time: {:.1f} s".format(
+                status.difficulty,
+                workprover.utils.estimateMaximumIterationsCount(status.difficulty, .8) / status.speed
+            ))
 
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):

@@ -19,7 +19,7 @@ def calculateTarget(length, TTL, byteDifficulty, lengthExtension):
 
     difficulty = byteDifficulty * (adjustedLength + timeEquivalent)
 
-    return 2 ** 64 / difficulty
+    return 2 ** 64 / difficulty, difficulty
 
 def checkProof(nonce, initialHash, target):
     proof = nonce + initialHash
@@ -34,13 +34,12 @@ def checkWorkSufficient(payload, byteDifficulty, lengthExtension):
     nonce = payload[: 8]
     initialHash = calculateInitialHash(payload[8: ])
 
-    target = calculateTarget(len(payload), minimumTTL, byteDifficulty, lengthExtension)
+    target, difficulty = calculateTarget(len(payload), minimumTTL, byteDifficulty, lengthExtension)
 
     return checkProof(nonce, initialHash, target)
 
-def estimateMaximumIterationsCount(target, probability):
+def estimateMaximumIterationsCount(difficulty, probability):
     coefficient = -math.log(1 - probability)
-    difficulty = 2. ** 64 / target
 
     return int(coefficient * difficulty + 255) / 256 * 256
 

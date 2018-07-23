@@ -21,13 +21,14 @@ class Task(object):
     previous = None
     next = None
 
-    def __init__(self, headlessPayload, TTL, expiryTime, target):
+    def __init__(self, headlessPayload, TTL, expiryTime, target, difficulty):
         self.headlessPayload = headlessPayload
         self.TTL = TTL
         self.expiryTime = expiryTime
         self.target = target
+        self.difficulty = difficulty
 
-Status = collections.namedtuple("Status", ["solverName", "solverStatus", "speed", "tasksCount"])
+Status = collections.namedtuple("Status", ["solverName", "solverStatus", "speed", "tasksCount", "difficulty"])
 
 class WorkProver(threading.Thread):
     # Seed must be 32 bytes
@@ -81,6 +82,7 @@ class WorkProver(threading.Thread):
         self.lastTime = utils.getTimePoint()
         self.timedIntervals = collections.deque()
         self.speed = 0
+        self.totalDifficulty = 0
 
         self.tasks = {}
         self.currentTaskID = None
@@ -94,7 +96,7 @@ class WorkProver(threading.Thread):
         if self.solver is not None:
             status = self.solver.status
 
-        self.statusUpdated(Status(self.solverName, status, self.speed, len(self.tasks)))
+        self.statusUpdated(Status(self.solverName, status, self.speed, len(self.tasks), self.totalDifficulty))
 
     def setSolver(self, name, configuration):
         if name is None and self.solverName is None:
@@ -145,11 +147,12 @@ class WorkProver(threading.Thread):
         self.notifyStatus()
 
     def addTask(self, ID, headlessPayload, TTL, expiryTime, byteDifficulty, lengthExtension):
-        target = utils.calculateTarget(8 + 8 + len(headlessPayload), TTL, byteDifficulty, lengthExtension)
+        target, difficulty = utils.calculateTarget(8 + 8 + len(headlessPayload), TTL, byteDifficulty, lengthExtension)
 
-        task = Task(headlessPayload, TTL, expiryTime, target)
+        task = Task(headlessPayload, TTL, expiryTime, target, difficulty)
 
         self.tasks[ID] = task
+        self.totalDifficulty += difficulty
 
         if self.currentTaskID is None:
             task.previous = ID
@@ -163,11 +166,14 @@ class WorkProver(threading.Thread):
             self.tasks[task.previous].next = ID
             self.tasks[task.next].previous = ID
 
+        self.notifyStatus()
+
     def cancelTask(self, ID):
         if ID not in self.tasks:
             return
 
         task = self.tasks.pop(ID)
+        self.totalDifficulty -= task.difficulty
 
         if len(self.tasks) == 0:
             self.currentTaskID = None
@@ -177,6 +183,8 @@ class WorkProver(threading.Thread):
 
             if self.currentTaskID == ID:
                 self.currentTaskID = task.next
+
+        self.notifyStatus()
 
     def nextTask(self):
         self.currentTaskID = self.tasks[self.currentTaskID].next
