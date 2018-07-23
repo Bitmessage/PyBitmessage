@@ -137,7 +137,7 @@ def detectOSRelease():
         for line in osRelease:
             if line.startswith("NAME="):
                 detectOS.result = OS_RELEASE.get(
-                    line.split("=")[-1].strip().lower())
+                    line.replace('"', '').split("=")[-1].strip().lower())
             elif line.startswith("VERSION_ID="):
                 try:
                     version = float(line.split("=")[1].replace("\"", ""))

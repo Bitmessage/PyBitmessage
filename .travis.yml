@@ -9,5 +9,6 @@ addons:
 install:
   - python setup.py install
 script:
+  - python checkdeps.py
   - pybitmessage -t
   - python setup.py test

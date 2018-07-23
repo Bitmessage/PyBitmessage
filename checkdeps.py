@@ -11,6 +11,7 @@ Limitations:
 """
 
 import os
+import sys
 from distutils.errors import CompileError
 try:
     from setuptools.dist import Distribution
@@ -161,5 +162,7 @@ if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
     if not compiler:
         compilerToPackages()
     prereqToPackages()
+    if mandatory:
+        sys.exit(1)
 else:
     print("All the dependencies satisfied, you can install PyBitmessage")
