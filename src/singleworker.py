@@ -901,9 +901,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             self.processMessage(*i)
 
     def cancelMessage(self, ackData, delete, trash):
-        #multpubky
-        #neededkeys
-
         ID = "ack", ackData
 
         if ID in self.startedWorks:
