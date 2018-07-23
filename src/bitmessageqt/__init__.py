@@ -373,6 +373,9 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Copy destination address to clipboard"),
             self.on_action_SentClipboard)
+        self.actionEditAndResend = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Edit and resend"), self.on_action_EditAndResend)
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Move to Trash"), self.on_action_SentTrash)
@@ -3344,6 +3347,72 @@ class MyForm(settingsmixin.SMainWindow):
             logger.exception('Message not saved', exc_info=True)
             self.updateStatusBar(_translate("MainWindow", "Write error."))
 
+    def on_action_EditAndResend(self):
+        tableWidget = self.getCurrentMessagelist()
+
+        if not tableWidget:
+            return
+
+        shiftPressed = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier != 0
+        folder = self.getCurrentFolder()
+        trash = not (folder == "trash" or shiftPressed)
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""
+                SELECT "status", "toaddress", "fromaddress", "subject", "message", "TTL" FROM "sent"
+                WHERE "ackdata" == ?;
+            """, ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status, destination, address, subject, body, TTL = queryReturn[0]
+
+            if status in ["broadcastqueued", "doingbroadcastpow", "broadcastsent", "broadcastcanceled"]:
+                self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
+
+                for j in range(self.ui.comboBoxSendFromBroadcast.count()):
+                    currentAddress = str(self.ui.comboBoxSendFromBroadcast.itemData(j).toPyObject())
+
+                    if currentAddress == address:
+                        self.ui.comboBoxSendFromBroadcast.setCurrentIndex(j)
+
+                        break
+
+                self.ui.lineEditSubjectBroadcast.setText(subject)
+                self.ui.textEditMessageBroadcast.setText(body)
+
+                self.ui.tabWidgetSend.setCurrentIndex(self.ui.tabWidgetSend.indexOf(self.ui.sendBroadcast))
+            else:
+                self.ui.comboBoxSendFrom.setCurrentIndex(0)
+
+                for j in range(self.ui.comboBoxSendFrom.count()):
+                    currentAddress = str(self.ui.comboBoxSendFrom.itemData(j).toPyObject())
+
+                    if currentAddress == address:
+                        self.ui.comboBoxSendFrom.setCurrentIndex(j)
+
+                        break
+
+                self.ui.lineEditTo.setText(destination)
+                self.ui.lineEditSubject.setText(subject)
+                self.ui.textEditMessage.setText(body)
+
+                self.ui.tabWidgetSend.setCurrentIndex(self.ui.tabWidgetSend.indexOf(self.ui.sendDirect))
+
+            # TODO: 3.192 fits better
+
+            self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1 / 3.199))
+
+            self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.indexOf(self.ui.send))
+
+            break
+
     def on_action_SentTrash(self):
         tableWidget = self.getCurrentMessagelist()
 
@@ -3358,7 +3427,6 @@ class MyForm(settingsmixin.SMainWindow):
             if i.column() != 3:
                 continue
 
-            currentRow = i.row()
             ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
 
             queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
@@ -3383,7 +3451,6 @@ class MyForm(settingsmixin.SMainWindow):
             if i.column() != 3:
                 continue
 
-            currentRow = i.row()
             ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
 
             queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
@@ -4130,13 +4197,18 @@ class MyForm(settingsmixin.SMainWindow):
         if showMenu:
             self.popMenuSent = QtGui.QMenu(self)
             self.popMenuSent.addAction(self.actionSentClipboard)
-            self.popMenuSent.addAction(self.actionTrashSentMessage)
+            self.popMenuSent.addSeparator()
+            self.popMenuSent.addAction(self.actionEditAndResend)
+
+            if forceSend:
+                self.popMenuSent.addAction(self.actionForceSend)
+
+            self.popMenuSent.addSeparator()
 
             if cancelSending:
                 self.popMenuSent.addAction(self.actionCancelSending)
 
-            if forceSend:
-                self.popMenuSent.addAction(self.actionForceSend)
+            self.popMenuSent.addAction(self.actionTrashSentMessage)
 
             self.popMenuSent.exec_(tableWidget.mapToGlobal(point))
 
