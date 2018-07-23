@@ -131,6 +131,7 @@ class objectProcessor(threading.Thread):
         """, int(time.time()), ackData)
 
         queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+            "ackreceived",
             ackData,
             tr._translate(
                 "MainWindow",
@@ -1041,6 +1042,7 @@ class objectProcessor(threading.Thread):
 
             for i, in queued:
                 queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                    "msgqueued",
                     i,
                     tr._translate(
                         "MainWindow",

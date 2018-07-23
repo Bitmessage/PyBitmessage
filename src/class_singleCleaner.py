@@ -60,6 +60,7 @@ def resendStaleMessages():
             """, ackData)
 
         queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+            "msgqueued",
             ackData,
             tr._translate(
                 "MainWindow",

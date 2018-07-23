@@ -38,10 +38,14 @@ import workprover
 #                                                          | +-> toodifficult --> forcepow -+
 #                                                          |                                |
 #                                                          +--------------------------------+
+#
+# Can also be "msgcanceled"
 
 # Broadcast status flow:
 #
 # broadcastqueued --> doingbroadcastpow --> broadcastsent
+#
+# Can also be "broadcastcanceled"
 
 # TODO: queued pubkey messages are not saved to the database, they disappear when the client is closed
 
@@ -191,6 +195,7 @@ def getDestinationAddressProperties(address):
 
         for i, in queued:
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "msgqueued",
                 i,
                 tr._translate(
                     "MainWindow",
@@ -282,8 +287,12 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
             if command == "sendmessage":
                 self.sendMessages()
+            elif command == "cancelMessage":
+                self.cancelMessage(*arguments)
             elif command == "sendbroadcast":
                 self.sendBroadcasts()
+            elif command == "cancelBroadcast":
+                self.cancelBroadcast(*arguments)
             elif command == "sendMyPubkey":
                 self.sendMyPubkey(*arguments)
             elif command == "requestPubkey":
@@ -316,9 +325,10 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
     def workDone(self, ID, nonce, expiryTime):
         debug.logger.info("Found proof of work %s", ID)
 
-        self.startedWorks[ID](nonce, expiryTime)
+        if ID in self.startedWorks:
+            self.startedWorks[ID](nonce, expiryTime)
 
-        del self.startedWorks[ID]
+            del self.startedWorks[ID]
 
     def sendMyPubkey(self, address):
         ID = "pubkey", address
@@ -426,6 +436,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             addressProperties = getMyAddressProperties(address)
         except:
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "broadcastqueued",
                 ackData,
                 tr._translate(
                     "MainWindow",
@@ -527,6 +538,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             """, inventoryHash, int(time.time()), ackData)
 
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "broadcastsent",
                 ackData,
                 tr._translate("MainWindow", "Broadcast sent on %1").arg(l10n.formatTimestamp())
             )))
@@ -543,6 +555,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         helper_sql.sqlExecute("""UPDATE "sent" SET "status" = 'doingbroadcastpow' WHERE "ackdata" == ?;""", ackData)
 
         queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+            "doingbroadcastpow",
             ackData,
             tr._translate(
                 "MainWindow",
@@ -568,6 +581,36 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             # Must be in a separate function because of the nested callback
 
             self.processBroadcast(*i)
+
+    def cancelBroadcast(self, ackData, delete, trash):
+        ID = "broadcast", ackData
+
+        if ID in self.startedWorks:
+            del self.startedWorks[ID]
+
+            self.workProver.commandsQueue.put(("cancelTask", ID))
+
+        helper_sql.sqlExecute("""
+            UPDATE "sent" SET "status" = 'broadcastcanceled'
+            WHERE "ackdata" == ? AND "status" != 'broadcastsent';
+        """, ackData)
+
+        if delete:
+            if trash:
+                helper_sql.sqlExecute("""UPDATE "sent" SET "folder" = 'trash' WHERE "ackdata" == ?;""", ackData)
+            else:
+                helper_sql.sqlExecute("""DELETE FROM "sent" WHERE "ackdata" == ?""", ackData)
+
+            queues.UISignalQueue.put(("deleteSentItemByAckData", ackData))
+        else:
+            queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "broadcastcanceled",
+                ackData,
+                tr._translate(
+                    "MainWindow",
+                    "Broadcast canceled."
+                )
+            )))
 
     def generateAckMessage(self, ackData, stream, TTL, callback):
         ID = "ack", ackData
@@ -616,6 +659,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             queues.workerQueue.put(("requestPubkey", destination))
 
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "awaitingpubkey",
                 ackData,
                 tr._translate(
                     "MainWindow",
@@ -634,6 +678,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             sourceProperties = getMyAddressProperties(source, defaultDifficulty)
         except:
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "msgqueued",
                 ackData,
                 tr._translate(
                     "MainWindow",
@@ -669,6 +714,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 helper_sql.sqlExecute("""UPDATE "sent" SET "status" = 'toodifficult' WHERE "ackdata" == ?;""", ackData)
 
                 queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                    "toodifficult",
                     ackData,
                     tr._translate(
                         "MainWindow",
@@ -733,6 +779,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 helper_sql.sqlExecute("""UPDATE "sent" SET "status" = 'badkey' WHERE "ackdata" == ?;""", ackData)
 
                 queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                    "badkey",
                     ackData,
                     tr._translate(
                         "MainWindow",
@@ -784,6 +831,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
                 if ackMessage is None:
                     queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                        "msgsentnoackexpected",
                         ackData,
                         tr._translate(
                             "MainWindow",
@@ -792,6 +840,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                     )))
                 else:
                     queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                        "msgsent",
                         ackData,
                         tr._translate(
                             "MainWindow",
@@ -811,6 +860,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
         if relativeByteDifficulty != 1 or relativeLengthExtension != 1:
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "doingmsgpow",
                 ackData,
                 tr._translate(
                     "MainWindow",
@@ -819,6 +869,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             )))
         else:
             queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "doingmsgpow",
                 ackData,
                 tr._translate(
                     "MainWindow",
@@ -848,6 +899,75 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             # Must be in a separate function because of the nested callback
 
             self.processMessage(*i)
+
+    def cancelMessage(self, ackData, delete, trash):
+        #multpubky
+        #neededkeys
+
+        ID = "ack", ackData
+
+        if ID in self.startedWorks:
+            del self.startedWorks[ID]
+
+            self.workProver.commandsQueue.put(("cancelTask", ID))
+
+        ID = "message", ackData
+
+        if ID in self.startedWorks:
+            del self.startedWorks[ID]
+
+            self.workProver.commandsQueue.put(("cancelTask", ID))
+
+        state.watchedAckData -= {ackData}
+
+        queryReturn = helper_sql.sqlQuery("""SELECT "toaddress" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+        if len(queryReturn) != 0:
+            destination = queryReturn[0][0]
+
+            count = helper_sql.sqlQuery("""
+                SELECT COUNT(*) FROM "sent"
+                WHERE "status" IN ('doingpubkeypow', 'awaitingpubkey') AND "toaddress" == ? AND "ackdata" != ?;
+            """, destination, ackData)[0][0]
+
+            if count == 0:
+                ID = "getpubkey", destination
+
+                if ID in self.startedWorks:
+                    del self.startedWorks[ID]
+
+                    self.workProver.commandsQueue.put(("cancelTask", ID))
+
+                status, version, stream, ripe = addresses.decodeAddress(destination)
+
+                if version == 4:
+                    secretEncryptionKey, tag = protocol.calculateAddressTag(version, stream, ripe)
+
+                    state.neededPubkeys.pop(tag, None)
+                else:
+                    state.neededPubkeys.pop(destination, None)
+
+        helper_sql.sqlExecute("""
+            UPDATE "sent" SET "status" = 'msgcanceled'
+            WHERE "ackdata" == ? AND "status" NOT IN ('ackreceived', 'msgsentnoackexpected', 'badkey');
+        """, ackData)
+
+        if delete:
+            if trash:
+                helper_sql.sqlExecute("""UPDATE "sent" SET "folder" = 'trash' WHERE "ackdata" == ?;""", ackData)
+            else:
+                helper_sql.sqlExecute("""DELETE FROM "sent" WHERE "ackdata" == ?""", ackData)
+
+            queues.UISignalQueue.put(("deleteSentItemByAckData", ackData))
+        else:
+            queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                "msgcanceled",
+                ackData,
+                tr._translate(
+                    "MainWindow",
+                    "Message canceled."
+                )
+            )))
 
     def requestPubkey(self, address):
         ID = "getpubkey", address
@@ -879,6 +999,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             """, currentExpiryTime, address)
 
             queues.UISignalQueue.put(("updateSentItemStatusByToAddress", (
+                "awaitingpubkey",
                 address,
                 tr._translate(
                     "MainWindow",
@@ -912,6 +1033,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             """, sleepTill, int(time.time()), address)
 
             queues.UISignalQueue.put(("updateSentItemStatusByToAddress", (
+                "awaitingpubkey",
                 address,
                 tr._translate(
                     "MainWindow",
@@ -925,6 +1047,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         """, address)
 
         queues.UISignalQueue.put(("updateSentItemStatusByToAddress", (
+            "doingpubkeypow",
             address,
             tr._translate(
                 "MainWindow",

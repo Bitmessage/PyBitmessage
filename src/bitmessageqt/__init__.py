@@ -369,13 +369,16 @@ class MyForm(settingsmixin.SMainWindow):
         # Popup menu for the Sent page
         self.ui.sentContextMenuToolbar = QtGui.QToolBar()
         # Actions
-        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Move to Trash"), self.on_action_SentTrash)
         self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Copy destination address to clipboard"),
             self.on_action_SentClipboard)
+        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Move to Trash"), self.on_action_SentTrash)
+        self.actionCancelSending = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Cancel sending"), self.on_action_CancelSending)
         self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Force send"), self.on_action_ForceSend)
@@ -778,13 +781,15 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
+            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
+            "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "deleteSentItemByAckData(PyQt_PyObject)"), self.deleteSentItemByAckData)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1102,6 +1107,8 @@ class MyForm(settingsmixin.SMainWindow):
         elif status == 'ackreceived':
             statusText = _translate("MainWindow", "Acknowledgement of the message received %1").arg(
                 l10n.formatTimestamp(lastactiontime))
+        elif status == "msgcanceled":
+            statusText = _translate("MainWindow", "Message canceled.")
         elif status == 'broadcastqueued':
             statusText = _translate(
                 "MainWindow", "Broadcast queued.")
@@ -1111,6 +1118,8 @@ class MyForm(settingsmixin.SMainWindow):
         elif status == 'broadcastsent':
             statusText = _translate("MainWindow", "Broadcast on %1").arg(
                 l10n.formatTimestamp(lastactiontime))
+        elif status == "broadcastcanceled":
+            statusText = _translate("MainWindow", "Broadcast canceled.")
         elif status == 'toodifficult':
             statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
                 l10n.formatTimestamp(lastactiontime))
@@ -1764,7 +1773,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.unreadCount = count
         return self.unreadCount
 
-    def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
+    def updateSentItemStatusByToAddress(self, status, toAddress, textToDisplay):
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
@@ -1775,6 +1784,16 @@ class MyForm(settingsmixin.SMainWindow):
             for i in range(sent.rowCount()):
                 rowAddress = sent.item(i, 0).data(QtCore.Qt.UserRole)
                 if toAddress == rowAddress:
+                    tableAckData = str(sent.item(i, 3).data(QtCore.Qt.UserRole).toPyObject())
+
+                    count = sqlQuery("""
+                        SELECT COUNT(*) FROM "sent"
+                        WHERE "ackdata" == ? AND "status" == ?;
+                    """, tableAckData, status)[0][0]
+
+                    if count == 0:
+                        continue
+
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
@@ -1786,7 +1805,15 @@ class MyForm(settingsmixin.SMainWindow):
                     else:
                         sent.item(i, 3).setText(textToDisplay)
 
-    def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
+    def updateSentItemStatusByAckdata(self, status, ackdata, textToDisplay):
+        count = sqlQuery("""
+            SELECT COUNT(*) FROM "sent"
+            WHERE "ackdata" == ? AND "status" == ?;
+        """, ackdata, status)[0][0]
+
+        if count == 0:
+            return
+
         if type(ackdata) is str:
             ackdata = QtCore.QByteArray(ackdata)
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
@@ -2355,6 +2382,37 @@ class MyForm(settingsmixin.SMainWindow):
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                 dialogs.EmailGatewayDialog(
                     self, BMConfigParser(), acct).exec_()
+
+    def deleteSentItemByAckData(self, ackData):
+        ackData = QtCore.QByteArray(ackData)
+
+        for tableWidget in [
+            self.ui.tableWidgetInbox,
+            self.ui.tableWidgetInboxSubscriptions,
+            self.ui.tableWidgetInboxChans
+        ]:
+            treeWidget = self.widgetConvert(tableWidget)
+
+            if self.getCurrentFolder(treeWidget) != "sent":
+                continue
+
+            i = 0
+
+            while i < tableWidget.rowCount():
+                tableAckData = tableWidget.item(i, 3).data(QtCore.Qt.UserRole).toPyObject()
+
+                if ackData == tableAckData:
+                    textEdit = self.getCurrentMessageTextedit()
+
+                    if textEdit is not False:
+                        textEdit.setPlainText("")
+
+                    tableWidget.removeRow(i)
+                    tableWidget.selectRow(max(0, i - 1))
+
+                    self.updateStatusBar(_translate("MainWindow", "Moved items to trash."))
+                else:
+                    i += 1
 
     def click_pushButtonAddAddressBook(self, dialog=None):
         if not dialog:
@@ -3286,47 +3344,95 @@ class MyForm(settingsmixin.SMainWindow):
             logger.exception('Message not saved', exc_info=True)
             self.updateStatusBar(_translate("MainWindow", "Write error."))
 
-    # Send item on the Sent tab to trash
     def on_action_SentTrash(self):
-        currentRow = 0
-        unread = False
         tableWidget = self.getCurrentMessagelist()
+
         if not tableWidget:
             return
-        folder = self.getCurrentFolder()
-        shifted = (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier) > 0
-        while tableWidget.selectedIndexes() != []:
-            currentRow = tableWidget.selectedIndexes()[0].row()
-            ackdataToTrash = str(tableWidget.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            if folder == "trash" or shifted:
-                sqlExecute('''DELETE FROM sent WHERE ackdata=?''', ackdataToTrash)
-            else:
-                sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
-            if tableWidget.item(currentRow, 0).unread:
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
-            self.getCurrentMessageTextedit().setPlainText("")
-            tableWidget.removeRow(currentRow)
-            self.updateStatusBar(_translate(
-                "MainWindow", "Moved items to trash."))
 
-        self.ui.tableWidgetInbox.selectRow(
-            currentRow if currentRow == 0 else currentRow - 1)
+        shiftPressed = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier != 0
+        folder = self.getCurrentFolder()
+        trash = not (folder == "trash" or shiftPressed)
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            currentRow = i.row()
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status = queryReturn[0][0]
+
+            if status in ["broadcastqueued", "doingbroadcastpow", "broadcastsent", "broadcastcanceled"]:
+                queues.workerQueue.put(("cancelBroadcast", ackData, True, trash))
+            else:
+                queues.workerQueue.put(("cancelMessage", ackData, True, trash))
+
+    def on_action_CancelSending(self):
+        tableWidget = self.getCurrentMessagelist()
+
+        if not tableWidget:
+            return
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            currentRow = i.row()
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status = queryReturn[0][0]
+
+            if status in ["broadcastqueued", "doingbroadcastpow"]:
+                queues.workerQueue.put(("cancelBroadcast", ackData, False, None))
+            elif status not in ["ackreceived", "msgsentnoackexpected", "badkey", "msgcanceled"]:
+                queues.workerQueue.put(("cancelMessage", ackData, False, None))
 
     def on_action_ForceSend(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetInbox.item(
-            currentRow, 0).data(QtCore.Qt.UserRole)
-        toRipe = decodeAddress(addressAtCurrentRow)[3]
-        sqlExecute(
-            '''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''',
-            toRipe)
-        queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
-        for row in queryreturn:
-            ackdata, = row
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                ackdata, 'Overriding maximum-difficulty setting. Work queued.')))
-        queues.workerQueue.put(('sendmessage', ''))
+        tableWidget = self.getCurrentMessagelist()
+
+        if not tableWidget:
+            return
+
+        resendMessages = False
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            if queryReturn[0][0] == "toodifficult":
+                sqlExecute("""
+                    UPDATE "sent" SET "status" = 'forcepow'
+                    WHERE "ackdata" == ? AND "status" == 'toodifficult' AND "folder" = 'sent';
+                """, ackData)
+
+                queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                    "forcepow",
+                    ackData,
+                    "Overriding maximum-difficulty setting. Work queued." # TODO: add translation?
+                )))
+
+                resendMessages = True
+
+        if resendMessages:
+            queues.workerQueue.put(("sendmessage", ))
 
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
@@ -3988,23 +4094,51 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
-        self.popMenuSent = QtGui.QMenu(self)
-        self.popMenuSent.addAction(self.actionSentClipboard)
-        self.popMenuSent.addAction(self.actionTrashSentMessage)
+        tableWidget = self.getCurrentMessagelist()
 
-        # Check to see if this item is toodifficult and display an additional
-        # menu option (Force Send) if it is.
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        if currentRow >= 0:
-            ackData = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
-            for row in queryreturn:
-                status, = row
-            if status == 'toodifficult':
+        if not tableWidget:
+            return
+
+        showMenu = False
+        cancelSending = False
+        forceSend = False
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status = queryReturn[0][0]
+
+            if status not in [
+                "ackreceived", "msgsentnoackexpected", "badkey", "msgcanceled",
+                "broadcastsent", "broadcastcanceled"
+            ]:
+                cancelSending = True
+
+            if status == "toodifficult":
+                forceSend = True
+
+            showMenu = True
+
+        if showMenu:
+            self.popMenuSent = QtGui.QMenu(self)
+            self.popMenuSent.addAction(self.actionSentClipboard)
+            self.popMenuSent.addAction(self.actionTrashSentMessage)
+
+            if cancelSending:
+                self.popMenuSent.addAction(self.actionCancelSending)
+
+            if forceSend:
                 self.popMenuSent.addAction(self.actionForceSend)
 
-        self.popMenuSent.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
+            self.popMenuSent.exec_(tableWidget.mapToGlobal(point))
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
