@@ -51,8 +51,10 @@
         icon: 'email'
         text: "test"
         on_release: app.root.ids.scr_mngr.current = 'test'
-        
-           
+    NavigationDrawerIconButton: 
+        text: "new identity"
+        icon:'notifications-add'
+        on_release: app.root.ids.scr_mngr.current = 'newidentity'
     
 BoxLayout:
     orientation: 'vertical'
@@ -85,6 +87,8 @@ BoxLayout:
             id:sc5
         Create:
             id:sc6
+        NewIdentity:
+            id:sc7
 
     Button:
         height:100
@@ -123,7 +127,7 @@ BoxLayout:
     GridLayout:
         rows: 5
         cols: 1
-        padding: 100,100,100,100
+        padding: 60,60,60,60
         spacing: 50
         BoxLayout:
             size_hint_y: None
@@ -131,8 +135,13 @@ BoxLayout:
             Label:
                 text: 'FROM'
                 color: 0,0,0,1
-            TextInput:
-                hint_text: 'email'
+            Spinner:
+                size_hint: 1,1
+                pos_hint: {"x":0,"top":1.}
+                pos: 10,10
+                id: spinner_id
+                text: '<select>'
+                values: root.showmeaddresses()
 
         BoxLayout:
             size_hint_y: None
@@ -141,7 +150,8 @@ BoxLayout:
                 text: 'TO'
                 color: 0,0,0,1
             TextInput:
-                hint_text: 'email'
+                id: recipent
+                hint_text: 'To'
 
         BoxLayout:
             size_hint_y: None
@@ -150,7 +160,8 @@ BoxLayout:
                 text: 'SUBJECT'
                 color: 0,0,0,1
             TextInput:
-                hint_text: 'subject'
+                id: subject
+                hint_text: 'SUBJECT'
 
         BoxLayout:
             size_hint_y: None
@@ -159,12 +170,79 @@ BoxLayout:
                 text: 'BODY'
                 color: 0,0,0,1
             TextInput:
-                id: msg
+                id: message
                 multiline:True
                 size_hint: 1,2
 
     Button:
         text: 'SEND'
+        size_hint_y: 0.1
+        size_hint_x: 0.3
+        height: '32dp'
+        pos_hint: {'x': .5, 'y': 0.1}
+        on_press: root.send()
+
+<NewIdentity>:
+    name: 'newidentity'
+    GridLayout:
+        padding: '120dp'
+        cols: 1
+        Label:
+            text:"""Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged."""
+            line_height:1.5  
+            text_size:(700,None)  
+            color: 0,0,0,1
+        BoxLayout:
+            CheckBox:
+                canvas.before:
+                    Color:
+                        rgb: 1,0,0
+                    Ellipse:
+                        pos:self.center_x-8, self.center_y-8
+                        size:[16,16]                 
+                group: "money"
+                active: root.is_active
+            Label:
+                text: "use a random number generator to make an address"
+                color: 0,0,0,1
+        BoxLayout:
+            CheckBox:
+                canvas.before:
+                    Color:
+                        rgb: 1,0,0
+                    Ellipse:
+                        pos:self.center_x-8, self.center_y-8
+                        size:[16,16] 
+                group: "money"
+                active: not root.is_active
+            Label:
+                text: "use a random number generator to make an address"
+                color: 0,0,0,1
+        Label:
+            color: 0,0,0,1
+            size_hint_x: .35
+            markup: True
+            text: "[b]{}[/b]".format("Randomly generated addresses")
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
+            Label:
+                text: "Label (not shown to anyone except you)"
+                color: 0,0,0,1
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
+            TextInput:
+                id: label
+
+    Button:
+        text: 'Cancel'
+        size_hint_y: 0.1
+        size_hint_x: 0.3
+        height: '32dp'
+        pos_hint: {'x': .1, 'y': 0.1}
+    Button:
+        text: 'Ok'
         size_hint_y: 0.1
         size_hint_x: 0.3
         height: '32dp'
