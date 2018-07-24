@@ -175,12 +175,19 @@ BoxLayout:
                 size_hint: 1,2
 
     Button:
-        text: 'SEND'
+        text: 'send'
         size_hint_y: 0.1
-        size_hint_x: 0.3
+        size_hint_x: 0.2
         height: '32dp'
         pos_hint: {'x': .5, 'y': 0.1}
         on_press: root.send()
+    Button:
+        text: 'cancel'
+        size_hint_y: 0.1
+        size_hint_x: 0.2
+        height: '32dp'
+        pos_hint: {'x': .72, 'y': 0.1}
+        on_press: root.cancel()
 
 <NewIdentity>:
     name: 'newidentity'
