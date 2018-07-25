@@ -1,20 +1,21 @@
 import os
-import time
-import shutdown
 import queues
+import shutdown
+import time
+
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.screenmanager import Screen
-from kivy.properties import ObjectProperty, StringProperty
-from kivymd.theming import ThemeManager
-from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import BooleanProperty
-from kivymd.toolbar import Toolbar
-from navigationdrawer import NavigationDrawer
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 from kivy.clock import Clock
+from kivy.uix.label import Label
+from navigationdrawer import NavigationDrawer
+from kivy.properties import ObjectProperty, StringProperty
+from kivy.uix.screenmanager import Screen
+from kivy.uix.textinput import TextInput
+from kivymd.theming import ThemeManager
+from kivymd.toolbar import Toolbar
+from kivy.uix.widget import Widget
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
 from addresses import decodeAddress, addBMIfNotPresent
