@@ -50,12 +50,6 @@ if __name__ == "__main__":
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
 
-    bitmsghash = Extension(
-        'pybitmessage.bitmsghash.bitmsghash',
-        sources=['src/bitmsghash/bitmsghash.cpp'],
-        libraries=['pthread', 'crypto'],
-    )
-
     installRequires = []
     packages = [
         'pybitmessage',
@@ -110,7 +104,7 @@ if __name__ == "__main__":
         packages=packages,
         package_data={'': [
             'bitmessageqt/*.ui', 'translations/*.ts', 'translations/*.qm',
-            'bitmsghash/*.cl', 'workprover/*.cl', 'workprover/fastsolver/*',
+            'workprover/*.cl', 'workprover/fastsolver/*',
             'sslkeys/*.pem',
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
@@ -122,7 +116,6 @@ if __name__ == "__main__":
             ('share/icons/hicolor/24x24/apps/',
                 ['desktop/icons/24x24/pybitmessage.png'])
         ],
-        ext_modules=[bitmsghash],
         zip_safe=False,
         entry_points={
             'bitmessage.gui.menu': [

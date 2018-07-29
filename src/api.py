@@ -44,9 +44,6 @@ from debug import logger
 from inventory import Inventory
 from version import softwareVersion
 
-# Helper Functions
-import proofofwork
-
 str_chan = '[chan]'
 
 queuedRawObjects = {}

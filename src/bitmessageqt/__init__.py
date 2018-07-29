@@ -36,7 +36,6 @@ from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_search
 import l10n
-import openclpow
 from utils import str_broadcast_subscribers, avatarize
 from account import (
     getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
@@ -46,7 +45,6 @@ from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import knownnodes
 import paths
-from proofofwork import getPowType
 import queues
 import shutdown
 import state
@@ -2888,7 +2886,7 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (self.POWTasksCount > 0 or pendingUpload() > 0):
+        if self.POWTasksCount > 0 or pendingUpload() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
                     _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, self.POWTasksCount) + ", " +
                     _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, pendingUpload()) + "\n\n" + 
