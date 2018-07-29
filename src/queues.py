@@ -14,3 +14,4 @@ portCheckerQueue = Queue.Queue()
 receiveDataQueue = Queue.Queue()
 apiAddressGeneratorReturnQueue = Queue.Queue(
     )  # The address generator thread uses this queue to get information back to the API thread.
+processedRawObjectsQueue = Queue.Queue()

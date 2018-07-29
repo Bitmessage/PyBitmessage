@@ -312,6 +312,10 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 self.sendMyPubkey(*arguments)
             elif command == "requestPubkey":
                 self.requestPubkey(*arguments)
+            elif command == "sendRawObject":
+                self.sendRawObject(*arguments)
+            elif command == "cancelRawObject":
+                self.cancelRawObject(*arguments)
             elif command == "resetPoW":
                 pass
             elif command == "GPUError":
@@ -1061,3 +1065,38 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
             "(For getpubkey message)".format(version),
             workDone
         )
+
+    def sendRawObject(self, randomID, TTL, headlessPayload):
+        ID = "raw", randomID
+
+        debug.logger.info("Sending raw object")
+
+        expiryTime = int(time.time() + TTL)
+
+        def workDone(head):
+            inventoryHash = protocol.checkAndShareObjectWithPeers(head + headlessPayload)
+
+            if inventoryHash is None:
+                queues.processedRawObjectsQueue.put(("failed", randomID))
+            else:
+                queues.processedRawObjectsQueue.put(("sent", randomID, inventoryHash))
+
+        queues.processedRawObjectsQueue.put(("doingwork", randomID))
+
+        self.startWork(
+            ID, headlessPayload, TTL, expiryTime,
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+            defaults.networkDefaultPayloadLengthExtraBytes,
+            "(For raw object)",
+            workDone
+        )
+
+    def cancelRawObject(self, randomID):
+        ID = "raw", randomID
+
+        if ID in self.startedWorks:
+            del self.startedWorks[ID]
+
+            workProver.commandsQueue.put(("cancelTask", ID))
+
+            queues.processedRawObjectsQueue.put(("canceled", randomID))
