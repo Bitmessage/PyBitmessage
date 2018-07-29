@@ -69,9 +69,11 @@ class TestUtils(unittest.TestCase):
 
         utils.time.time = lambda: expiryTime - 293757.5
         self.assertFalse(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension))
+        self.assertFalse(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension, expiryTime - 293757.5))
 
         utils.time.time = lambda: expiryTime - 293757
         self.assertTrue(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension))
+        self.assertTrue(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension, expiryTime - 293757))
 
         utils.time.time = originalTime
 

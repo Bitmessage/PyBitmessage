@@ -25,6 +25,7 @@ import state
 import tr
 from debug import logger
 import l10n
+import workprover.utils
 
 
 class objectProcessor(threading.Thread):
@@ -610,13 +611,13 @@ class objectProcessor(threading.Thread):
                 and not BMConfigParser().has_section(toAddress):
             # If I'm not friendly with this person:
             if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):
-                requiredNonceTrialsPerByte = BMConfigParser().getint(
-                    toAddress, 'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = BMConfigParser().getint(
-                    toAddress, 'payloadlengthextrabytes')
-                if not protocol.isProofOfWorkSufficient(
-                        data, requiredNonceTrialsPerByte,
-                        requiredPayloadLengthExtraBytes):
+                byteDifficulty = BMConfigParser().getint(toAddress, "noncetrialsperbyte")
+                lengthExtension = BMConfigParser().getint(toAddress, "payloadlengthextrabytes")
+
+                byteDifficulty = max(defaults.networkDefaultProofOfWorkNonceTrialsPerByte, byteDifficulty)
+                lengthExtension = max(defaults.networkDefaultPayloadLengthExtraBytes, lengthExtension)
+
+                if not workprover.utils.checkWorkSufficient(data, byteDifficulty, lengthExtension):
                     logger.info(
                         'Proof of work in msg is insufficient only because'
                         ' it does not meet our higher requirement.')

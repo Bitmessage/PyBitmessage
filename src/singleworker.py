@@ -316,8 +316,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 self.sendRawObject(*arguments)
             elif command == "cancelRawObject":
                 self.cancelRawObject(*arguments)
-            elif command == "resetPoW":
-                pass
             elif command == "GPUError":
                 self.handleGPUError(*arguments)
             elif command == "taskDone":

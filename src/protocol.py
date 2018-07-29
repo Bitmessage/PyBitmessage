@@ -30,6 +30,7 @@ from helper_sql import sqlExecute
 from version import softwareVersion
 import inventory
 import queues
+import workprover.utils
 
 
 # Service flags
@@ -186,35 +187,6 @@ def checkSocksIP(host):
     except socket.gaierror:
         state.socksIP = BMConfigParser().get("bitmessagesettings", "sockshostname")
     return state.socksIP == host
-
-def isProofOfWorkSufficient(data,
-                            nonceTrialsPerByte=0,
-                            payloadLengthExtraBytes=0,
-                            recvTime=0):
-    """
-    Validate an object's Proof of Work using method described in:
-        https://bitmessage.org/wiki/Proof_of_work
-    Arguments:
-        int nonceTrialsPerByte (default: from default.py)
-        int payloadLengthExtraBytes (default: from default.py)
-        float recvTime (optional) UNIX epoch time when object was
-          received from the network (default: current system time)
-    Returns:
-        True if PoW valid and sufficient, False in all other cases
-    """
-    if nonceTrialsPerByte < defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
-        nonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-    if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
-        payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
-    endOfLifeTime, = unpack('>Q', data[8:16])
-    TTL = endOfLifeTime - (int(recvTime) if recvTime else int(time.time()))
-    if TTL < 300:
-        TTL = 300
-    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
-        :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-    return POW <= 2 ** 64 / (nonceTrialsPerByte *
-                             (len(data) + payloadLengthExtraBytes +
-                              ((TTL * (len(data) + payloadLengthExtraBytes)) / (2 ** 16))))
 
 
 # Packet creation
@@ -406,7 +378,11 @@ def checkAndShareObjectWithPeers(payload):
 
         return None
 
-    if not isProofOfWorkSufficient(payload):
+    if not workprover.utils.checkWorkSufficient(
+        payload,
+        defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+        defaults.networkDefaultPayloadLengthExtraBytes
+    ):
         logger.info("Proof of work is insufficient")
 
         return None

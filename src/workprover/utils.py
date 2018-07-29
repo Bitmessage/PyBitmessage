@@ -27,9 +27,12 @@ def checkProof(nonce, initialHash, target):
 
     return trial <= target
 
-def checkWorkSufficient(payload, byteDifficulty, lengthExtension):
+def checkWorkSufficient(payload, byteDifficulty, lengthExtension, receivedTime = None):
+    if receivedTime is None:
+        receivedTime = int(time.time())
+
     expiryTime, = struct.unpack(">Q", payload[8: 16])
-    minimumTTL = max(300, expiryTime - int(time.time()))
+    minimumTTL = max(300, expiryTime - receivedTime)
 
     nonce = payload[: 8]
     initialHash = calculateInitialHash(payload[8: ])

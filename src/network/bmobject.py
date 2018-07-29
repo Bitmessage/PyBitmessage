@@ -7,6 +7,8 @@ from inventory import Inventory
 from network.dandelion import Dandelion
 import protocol
 import state
+import workprover.utils
+import defaults
 
 class BMObjectInsufficientPOWError(Exception):
     errorCodes = ("Insufficient proof of work")
@@ -52,7 +54,11 @@ class BMObject(object):
 
     def checkProofOfWorkSufficient(self):
         # Let us check to make sure that the proof of work is sufficient.
-        if not protocol.isProofOfWorkSufficient(self.data):
+        if not workprover.utils.checkWorkSufficient(
+            self.data,
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+            defaults.networkDefaultPayloadLengthExtraBytes
+        ):
             logger.info('Proof of work is insufficient.')
             raise BMObjectInsufficientPOWError()
 
