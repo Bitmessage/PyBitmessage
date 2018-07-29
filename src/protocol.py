@@ -417,10 +417,10 @@ def checkAndShareObjectWithPeers(payload):
         expiryTime, objectType = unpack(">QI", payload[readPosition: readPosition + 12])
         readPosition += 12
 
-        version, readLength = decodeVarint(payload[readPosition: readPosition + 8])
+        version, readLength = decodeVarint(payload[readPosition: readPosition + 9])
         readPosition += readLength
 
-        stream, readLength = decodeVarint(payload[readPosition: readPosition + 8])
+        stream, readLength = decodeVarint(payload[readPosition: readPosition + 9])
         readPosition += readLength
     except:
         logger.info("Error parsing object header")

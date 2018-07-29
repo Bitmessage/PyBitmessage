@@ -1040,45 +1040,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             })
         return json.dumps(data, indent=4, separators=(',', ': '))
 
-    def HandleDisseminatePreEncryptedMsg(self, params):
-        # The device issuing this command to PyBitmessage supplies a msg
-        # object that has already been encrypted but which still needs the POW
-        # to be done. PyBitmessage accepts this msg object and sends it out
-        # to the rest of the Bitmessage network as if it had generated
-        # the message itself. Please do not yet add this to the api doc.
-        if len(params) != 3:
-            raise APIError(0, 'I need 3 parameter!')
-        encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, \
-            requiredPayloadLengthExtraBytes = params
-        encryptedPayload = self._decode(encryptedPayload, "hex")
-        # Let us do the POW and attach it to the front
-        target = 2**64 / (
-            (len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8)
-            * requiredAverageProofOfWorkNonceTrialsPerByte)
-        with shared.printLock:
-            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes
-        powStartTime = time.time()
-        initialHash = hashlib.sha512(encryptedPayload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        with shared.printLock:
-            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
-            try:
-                print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
-            except:
-                pass
-        encryptedPayload = pack('>Q', nonce) + encryptedPayload
-        toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
-        inventoryHash = calculateInventoryHash(encryptedPayload)
-        objectType = 2
-        TTL = 2.5 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
-            objectType, toStreamNumber, encryptedPayload,
-            int(time.time()) + TTL, ''
-        )
-        with shared.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
-        queues.invQueue.put((toStreamNumber, inventoryHash))
-
     def HandleTrashSentMessageByAckDAta(self, params):
         # This API method should only be used when msgid is not available
         if len(params) == 0:
@@ -1086,89 +1047,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         ackdata = self._decode(params[0], "hex")
         sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=?", ackdata)
         return 'Trashed sent message (assuming message existed).'
-
-    def HandleDissimatePubKey(self, params):
-        # The device issuing this command to PyBitmessage supplies a pubkey
-        # object to be disseminated to the rest of the Bitmessage network.
-        # PyBitmessage accepts this pubkey object and sends it out to the rest
-        # of the Bitmessage network as if it had generated the pubkey object
-        # itself. Please do not yet add this to the api doc.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        payload, = params
-        payload = self._decode(payload, "hex")
-
-        # Let us do the POW
-        target = 2 ** 64 / (
-            (len(payload) + defaults.networkDefaultPayloadLengthExtraBytes
-             + 8) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message via API) Doing proof of work...'
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
-        payload = pack('>Q', nonce) + payload
-
-        pubkeyReadPosition = 8  # bypass the nonce
-        if payload[pubkeyReadPosition:pubkeyReadPosition+4] == \
-                '\x00\x00\x00\x00':  # if this pubkey uses 8 byte time
-            pubkeyReadPosition += 8
-        else:
-            pubkeyReadPosition += 4
-        addressVersion, addressVersionLength = decodeVarint(
-            payload[pubkeyReadPosition:pubkeyReadPosition+10])
-        pubkeyReadPosition += addressVersionLength
-        pubkeyStreamNumber = decodeVarint(
-            payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
-        inventoryHash = calculateInventoryHash(payload)
-        objectType = 1  # TODO: support v4 pubkeys
-        TTL = 28 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
-            objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
-        )
-        with shared.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
-        queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
-
-    def HandleGetMessageDataByDestinationHash(self, params):
-        # Method will eventually be used by a particular Android app to
-        # select relevant messages. Do not yet add this to the api
-        # doc.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        requestedHash, = params
-        if len(requestedHash) != 32:
-            raise APIError(
-                19, 'The length of hash should be 32 bytes (encoded in hex'
-                ' thus 64 characters).')
-        requestedHash = self._decode(requestedHash, "hex")
-
-        # This is not a particularly commonly used API function. Before we
-        # use it we'll need to fill out a field in our inventory database
-        # which is blank by default (first20bytesofencryptedmessage).
-        queryreturn = sqlQuery(
-            "SELECT hash, payload FROM inventory WHERE tag = ''"
-            " and objecttype = 2")
-        with SqlBulkExecute() as sql:
-            for row in queryreturn:
-                hash01, payload = row
-                readPosition = 16  # Nonce length + time length
-                # Stream Number length
-                readPosition += decodeVarint(
-                    payload[readPosition:readPosition+10])[1]
-                t = (payload[readPosition:readPosition+32], hash01)
-                sql.execute("UPDATE inventory SET tag=? WHERE hash=?", *t)
-
-        queryreturn = sqlQuery(
-            "SELECT payload FROM inventory WHERE tag = ?", requestedHash)
-        data = '{"receivedMessageDatas":['
-        for row in queryreturn:
-            payload, = row
-            if len(data) > 25:
-                data += ','
-            data += json.dumps(
-                {'data': hexlify(payload)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
 
     def HandleDisseminateRawObject(self, arguments):
         if len(arguments) != 1:
@@ -1398,12 +1276,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['addSubscription'] = HandleAddSubscription
     handlers['deleteSubscription'] = HandleDeleteSubscription
     handlers['listSubscriptions'] = ListSubscriptions
-    handlers['disseminatePreEncryptedMsg'] = HandleDisseminatePreEncryptedMsg
-    handlers['disseminatePubkey'] = HandleDissimatePubKey
-    handlers['getMessageDataByDestinationHash'] = \
-        HandleGetMessageDataByDestinationHash
-    handlers['getMessageDataByDestinationTag'] = \
-        HandleGetMessageDataByDestinationHash
     handlers["disseminateRawObject"] = HandleDisseminateRawObject
     handlers["getRawObject"] = HandleGetRawObject
     handlers["listRawObjects"] = HandleListRawObjects
