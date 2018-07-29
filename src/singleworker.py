@@ -210,17 +210,6 @@ def getDestinationAddressProperties(address):
 def randomizeTTL(TTL):
    return TTL + helper_random.randomrandrange(-300, 300)
 
-def disseminateObject(nonce, expiryTime, headlessPayload, objectType, stream, tag):
-    payload = nonce + struct.pack(">Q", expiryTime) + headlessPayload
-    inventoryHash = protocol.calculateDoubleHash(payload)[: 32]
-
-    inventory.Inventory()[inventoryHash] = objectType, stream, payload, expiryTime, buffer(tag)
-    queues.invQueue.put((stream, inventoryHash))
-
-    debug.logger.info("Broadcasting inventory object with hash: %s", binascii.hexlify(inventoryHash))
-
-    return inventoryHash, payload
-
 workProver = workprover.WorkProver(
     os.path.join(paths.codePath(), "workprover"),
     helper_random.randomBytes(32),
@@ -370,7 +359,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         debug.logger.info("Found proof of work %s", ID)
 
         if ID in self.startedWorks:
-            self.startedWorks[ID](nonce, expiryTime)
+            self.startedWorks[ID](nonce + struct.pack(">Q", expiryTime))
 
             del self.startedWorks[ID]
 
@@ -412,8 +401,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         headlessPayload += addresses.encodeVarint(addressProperties.version)
         headlessPayload += addresses.encodeVarint(addressProperties.stream)
 
-        inventoryTagPosition = len(headlessPayload)
-
         headlessPayload += tag
 
         if addressProperties.version == 4:
@@ -449,10 +436,8 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 headlessPayload += addresses.encodeVarint(len(signature))
                 headlessPayload += signature
 
-        def workDone(nonce, expiryTime):
-            inventoryTag = headlessPayload[inventoryTagPosition: inventoryTagPosition + 32]
-
-            disseminateObject(nonce, expiryTime, headlessPayload, 1, addressProperties.stream, inventoryTag)
+        def workDone(head):
+            protocol.checkAndShareObjectWithPeers(head + headlessPayload)
 
             # TODO: not atomic with the addition to the inventory, the "lastpubkeysendtime" property should be removed
             # Instead check if the pubkey is present in the inventory
@@ -528,8 +513,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
         headlessPayload += addresses.encodeVarint(addressProperties.stream)
 
-        inventoryTagPosition = len(headlessPayload)
-
         headlessPayload += tag
 
         plaintext = addresses.encodeVarint(addressProperties.version)
@@ -566,15 +549,10 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
             return
 
-        def workDone(nonce, expiryTime):
-            inventoryTag = headlessPayload[inventoryTagPosition: inventoryTagPosition + 32]
-
+        def workDone(head):
             # TODO: adding to the inventory, adding to inbox and setting the sent status should be within a single SQL transaction
 
-            inventoryHash, payload = disseminateObject(
-                nonce, expiryTime, headlessPayload,
-                3, addressProperties.stream, inventoryTag
-            )
+            inventoryHash = protocol.checkAndShareObjectWithPeers(head + headlessPayload)
 
             helper_sql.sqlExecute("""
                 UPDATE "sent" SET "msgid" = ?, "status" = 'broadcastsent', "lastactiontime" = ?
@@ -586,15 +564,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 ackData,
                 tr._translate("MainWindow", "Broadcast sent on %1").arg(l10n.formatTimestamp())
             )))
-
-            # Add to own inbox
-
-            if addressProperties.version == 4:
-                if tag in shared.MyECSubscriptionCryptorObjects:
-                    queues.objectProcessorQueue.put((3, payload))
-            else:
-                if addressProperties.ripe in shared.MyECSubscriptionCryptorObjects:
-                    queues.objectProcessorQueue.put((3, payload))
 
         helper_sql.sqlExecute("""UPDATE "sent" SET "status" = 'doingbroadcastpow' WHERE "ackdata" == ?;""", ackData)
 
@@ -679,10 +648,8 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         TTL = randomizeTTL(TTL)
         expiryTime = int(time.time() + TTL)
 
-        def workDone(nonce, expiryTime):
-            payload = nonce + struct.pack(">Q", expiryTime) + ackData
-
-            callback(protocol.CreatePacket("object", payload))
+        def workDone(head):
+            callback(protocol.CreatePacket("object", head + ackData))
 
         self.startWork(
             ID, ackData, TTL, expiryTime,
@@ -834,7 +801,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 return
 
             headlessPayload += ciphertext
-            inventoryTag = ciphertext[: 32]
 
             if len(headlessPayload) > 2 ** 18 - (8 + 8): # 256 kiB
                 debug.logger.critical(
@@ -844,16 +810,13 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
                 return
 
-            def workDone(nonce, expiryTime):
+            def workDone(head):
                 if ackMessage is not None:
                     state.watchedAckData.add(ackData)
 
                 #TODO: adding to the inventory, adding to inbox and setting the sent status should be within a single SQL transaction
 
-                inventoryHash, payload = disseminateObject(
-                    nonce, expiryTime, headlessPayload,
-                    2, destinationProperties.stream, inventoryTag
-                )
+                inventoryHash = protocol.checkAndShareObjectWithPeers(head + headlessPayload)
 
                 if ackMessage is None:
                     newStatus = "msgsentnoackexpected"
@@ -867,11 +830,6 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                         "sleeptill" = ?, "lastactiontime" = ?
                     WHERE "status" == 'doingmsgpow' AND "ackdata" == ?;
                 """, inventoryHash, newStatus, retryNumber + 1, sleepTill, int(time.time()), ackData)
-
-                # Add to own inbox
-
-                if destinationProperties.own:
-                    queues.objectProcessorQueue.put((2, payload))
 
                 if ackMessage is None:
                     queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
@@ -1061,10 +1019,10 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
         headlessPayload += tag
 
-        def workDone(nonce, expiryTime):
+        def workDone(head):
             # TODO: adding to the inventory and setting the sent status should be within a single SQL transaction
 
-            disseminateObject(nonce, expiryTime, headlessPayload, 0, stream, tag)
+            protocol.checkAndShareObjectWithPeers(head + headlessPayload)
 
             sleepTill = int(time.time() + TTL * 1.1)
 

@@ -747,7 +747,7 @@ class objectProcessor(threading.Thread):
             not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
             and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
         ):
-            shared.checkAndShareObjectWithPeers(ackData[24:])
+            protocol.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(
@@ -1075,7 +1075,7 @@ class objectProcessor(threading.Thread):
             # The largest message should be either an inv or a getdata
             # message at 1.6 MB in size.
             # That doesn't mean that the object may be that big. The
-            # shared.checkAndShareObjectWithPeers function will verify
+            # protocol.checkAndShareObjectWithPeers function will verify
             # that it is no larger than 2^18 bytes.
             return False
         # test the checksum in the message.

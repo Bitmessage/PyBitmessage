@@ -410,7 +410,6 @@ if __name__ == "__main__":
     import signal
     # The next 3 are used for the API
     from singleinstance import singleinstance
-    import errno
     import socket
     import ctypes
     from struct import pack

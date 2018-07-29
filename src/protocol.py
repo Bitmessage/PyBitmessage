@@ -27,9 +27,9 @@ from addresses import calculateInventoryHash, encodeVarint, decodeVarint, decode
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlExecute
-from inventory import Inventory
-from queues import objectProcessorQueue
 from version import softwareVersion
+import inventory
+import queues
 
 
 # Service flags
@@ -400,227 +400,89 @@ def decryptAndCheckV4Pubkey(payload, address, cryptor):
 
     return result
 
-def checkAndShareObjectWithPeers(data):
-    """
-    This function is called after either receiving an object off of the wire
-    or after receiving one as ackdata.
-    Returns the length of time that we should reserve to process this message
-    if we are receiving it off of the wire.
-    """
-    if len(data) > 2 ** 18:
-        logger.info('The payload length of this object is too large (%s bytes). Ignoring it.', len(data))
-        return 0
-    # Let us check to make sure that the proof of work is sufficient.
-    if not isProofOfWorkSufficient(data):
-        logger.info('Proof of work is insufficient.')
-        return 0
+def checkAndShareObjectWithPeers(payload):
+    if len(payload) > 2 ** 18:
+        logger.info("The payload length of this object is too large (%i bytes)", len(payload))
 
-    endOfLifeTime, = unpack('>Q', data[8:16])
-    # The TTL may not be larger than 28 days + 3 hours of wiggle room
-    if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800:
-        logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s', endOfLifeTime)
-        return 0
-    if endOfLifeTime - int(time.time()) < - 3600:  # The EOL time was more than an hour ago. That's too much.
-        logger.info(
-            'This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s',
-            endOfLifeTime)
-        return 0
-    intObjectType, = unpack('>I', data[16:20])
+        return None
+
+    if not isProofOfWorkSufficient(payload):
+        logger.info("Proof of work is insufficient")
+
+        return None
+
+    readPosition = 8
+
     try:
-        if intObjectType == 0:
-            _checkAndShareGetpubkeyWithPeers(data)
-            return 0.1
-        elif intObjectType == 1:
-            _checkAndSharePubkeyWithPeers(data)
-            return 0.1
-        elif intObjectType == 2:
-            _checkAndShareMsgWithPeers(data)
-            return 0.6
-        elif intObjectType == 3:
-            _checkAndShareBroadcastWithPeers(data)
-            return 0.6
-        _checkAndShareUndefinedObjectWithPeers(data)
-        return 0.6
-    except varintDecodeError as err:
-        logger.debug(
-            "There was a problem with a varint while checking to see whether it was appropriate to share an object"
-            " with peers. Some details: %s", err
-        )
-    except Exception:
-        logger.critical(
-            'There was a problem while checking to see whether it was appropriate to share an object with peers.'
-            ' This is definitely a bug! %s%s' % os.linesep, traceback.format_exc()
-        )
-    return 0
+        expiryTime, objectType = unpack(">QI", payload[readPosition: readPosition + 12])
+        readPosition += 12
 
+        version, readLength = decodeVarint(payload[readPosition: readPosition + 8])
+        readPosition += readLength
 
-def _checkAndShareUndefinedObjectWithPeers(data):
-    # pylint: disable=unused-variable
-    embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20  # bypass nonce, time, and object type
-    objectVersion, objectVersionLength = decodeVarint(
-        data[readPosition:readPosition + 9])
-    readPosition += objectVersionLength
-    streamNumber, streamNumberLength = decodeVarint(
-        data[readPosition:readPosition + 9])
-    if streamNumber not in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
-        return
+        stream, readLength = decodeVarint(payload[readPosition: readPosition + 8])
+        readPosition += readLength
+    except:
+        logger.info("Error parsing object header")
 
-    inventoryHash = calculateInventoryHash(data)
-    if inventoryHash in Inventory():
-        logger.debug('We have already received this undefined object. Ignoring.')
-        return
-    objectType, = unpack('>I', data[16:20])
-    Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, '')
-    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+        return None
 
+    tag = payload[readPosition: readPosition + 32]
 
-def _checkAndShareMsgWithPeers(data):
-    embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20  # bypass nonce, time, and object type
-    objectVersion, objectVersionLength = decodeVarint(  # pylint: disable=unused-variable
-        data[readPosition:readPosition + 9])
-    readPosition += objectVersionLength
-    streamNumber, streamNumberLength = decodeVarint(
-        data[readPosition:readPosition + 9])
-    if streamNumber not in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
-        return
-    readPosition += streamNumberLength
-    inventoryHash = calculateInventoryHash(data)
-    if inventoryHash in Inventory():
-        logger.debug('We have already received this msg message. Ignoring.')
-        return
-    # This msg message is valid. Let's let our peers know about it.
-    objectType = 2
-    Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, '')
-    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    TTL = expiryTime - int(time.time())
 
-    # Now let's enqueue it to be processed ourselves.
-    objectProcessorQueue.put((objectType, data))
+    # TTL may not be lesser than -1 hour or larger than 28 days + 3 hours of wiggle room
 
+    if TTL < -3600:
+        logger.info("This object\'s expiry time was more than an hour ago: %s", expiryTime)
 
-def _checkAndShareGetpubkeyWithPeers(data):
-    # pylint: disable=unused-variable
-    if len(data) < 42:
-        logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
-        return
-    if len(data) > 200:
-        logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')
-    embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20  # bypass the nonce, time, and object type
-    requestedAddressVersionNumber, addressVersionLength = decodeVarint(
-        data[readPosition:readPosition + 10])
-    readPosition += addressVersionLength
-    streamNumber, streamNumberLength = decodeVarint(
-        data[readPosition:readPosition + 10])
-    if streamNumber not in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
-        return
-    readPosition += streamNumberLength
+        return None
+    elif TTL > 28 * 24 * 60 * 60 + 10800:
+        logger.info("This object\'s expiry time is too far in the future: %s", expiryTime)
 
-    inventoryHash = calculateInventoryHash(data)
-    if inventoryHash in Inventory():
-        logger.debug('We have already received this getpubkey request. Ignoring it.')
-        return
+        return None
 
-    objectType = 0
-    Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, '')
-    # This getpubkey request is valid. Forward to peers.
-    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    if stream not in state.streamsInWhichIAmParticipating:
+        logger.info("The stream number %i isn\'t one we are interested in", stream)
 
-    # Now let's queue it to be processed ourselves.
-    objectProcessorQueue.put((objectType, data))
+        return None
 
+    if objectType == 0:
+        if len(payload) < 42:
+            logger.info("Too short \"getpubkey\" message")
 
-def _checkAndSharePubkeyWithPeers(data):
-    if len(data) < 146 or len(data) > 440:  # sanity check
-        return
-    embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20  # bypass the nonce, time, and object type
-    addressVersion, varintLength = decodeVarint(
-        data[readPosition:readPosition + 10])
-    readPosition += varintLength
-    streamNumber, varintLength = decodeVarint(
-        data[readPosition:readPosition + 10])
-    readPosition += varintLength
-    if streamNumber not in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
-        return
-    if addressVersion >= 4:
-        tag = data[readPosition:readPosition + 32]
-        logger.debug('tag in received pubkey is: %s', hexlify(tag))
+            return None
+    elif objectType == 1:
+        if len(payload) < 146 or len(payload) > 440:
+            logger.info("Invalid length \"pubkey\"")
+
+            return None
+    elif objectType == 3:
+        if len(payload) < 180:
+            logger.info("Too short \"broadcast\" message")
+
+            return None
+
+        if version == 1:
+            logger.info("Obsolete \"broadcast\" message version")
+
+            return None
+
+    inventoryHash = calculateDoubleHash(payload)[: 32]
+
+    if inventoryHash in inventory.Inventory():
+        logger.info("We already have this object")
+
+        return inventoryHash
     else:
-        tag = ''
+        inventory.Inventory()[inventoryHash] = objectType, stream, payload, expiryTime, buffer(tag)
+        queues.invQueue.put((stream, inventoryHash))
 
-    inventoryHash = calculateInventoryHash(data)
-    if inventoryHash in Inventory():
-        logger.debug('We have already received this pubkey. Ignoring it.')
-        return
-    objectType = 1
-    Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, tag)
-    # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+        logger.info("Broadcasting inventory object with hash: %s", hexlify(inventoryHash))
 
-    # Now let's queue it to be processed ourselves.
-    objectProcessorQueue.put((objectType, data))
+        queues.objectProcessorQueue.put((objectType, payload))
 
-
-def _checkAndShareBroadcastWithPeers(data):
-    if len(data) < 180:
-        logger.debug(
-            'The payload length of this broadcast packet is unreasonably low. '
-            'Someone is probably trying funny business. Ignoring message.')
-        return
-    embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20  # bypass the nonce, time, and object type
-    broadcastVersion, broadcastVersionLength = decodeVarint(
-        data[readPosition:readPosition + 10])
-    readPosition += broadcastVersionLength
-    if broadcastVersion >= 2:
-        streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition + 10])
-        readPosition += streamNumberLength
-        if streamNumber not in state.streamsInWhichIAmParticipating:
-            logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
-            return
-    if broadcastVersion >= 3:
-        tag = data[readPosition:readPosition + 32]
-    else:
-        tag = ''
-    inventoryHash = calculateInventoryHash(data)
-    if inventoryHash in Inventory():
-        logger.debug('We have already received this broadcast object. Ignoring.')
-        return
-    # It is valid. Let's let our peers know about it.
-    objectType = 3
-    Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, tag)
-    # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
-
-    # Now let's queue it to be processed ourselves.
-    objectProcessorQueue.put((objectType, data))
-
-
-def broadcastToSendDataQueues(data):
-    """
-    If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
-    function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
-    responsible for putting their queue into (and out of) the sendDataQueues list.
-    """
-    for q in state.sendDataQueues:
-        q.put(data)
-
+        return inventoryHash
 
 # sslProtocolVersion
 if sys.version_info >= (2, 7, 13):

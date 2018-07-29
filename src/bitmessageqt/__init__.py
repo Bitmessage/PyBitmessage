@@ -1884,9 +1884,9 @@ class MyForm(settingsmixin.SMainWindow):
                 _translate("MainWindow", "%1 kiH / s").arg("{:.1f}".format(status.speed / 1024))
             )
 
-            self.ui.workProverSpeed.setToolTip("Difficulty: {}, 80 % completion time: {:.1f} s".format(
+            self.ui.workProverSpeed.setToolTip("Difficulty: {}, 95 % completion time: {:.1f} s".format(
                 status.difficulty,
-                workprover.utils.estimateMaximumIterationsCount(status.difficulty, .8) / status.speed
+                workprover.utils.estimateMaximumIterationsCount(status.difficulty, .95) / status.speed
             ))
 
     def rerenderMessagelistFromLabels(self):
@@ -4597,10 +4597,13 @@ class settingsDialog(QtGui.QDialog):
         self.ui.spinBoxForkingSolverParallelism.setValue(forkingSolverParallelism)
         self.ui.spinBoxFastSolverParallelism.setValue(fastSolverParallelism)
 
-        vendors = set(singleworker.workProver.availableSolvers["gpu"].vendors)
+        vendors = set()
 
         if GPUVendor is not None:
             vendors.add(GPUVendor)
+
+        if "gpu" in singleworker.workProver.availableSolvers:
+            vendors |= set(singleworker.workProver.availableSolvers["gpu"].vendors)
 
         self.ui.comboBoxGPUVendor.clear()
         self.ui.comboBoxGPUVendor.addItems(list(vendors))

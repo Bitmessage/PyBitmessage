@@ -17,6 +17,7 @@ from binascii import hexlify, unhexlify
 from random import randint
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
+import errno
 
 import shared
 from addresses import (
@@ -32,6 +33,7 @@ import state
 import queues
 import shutdown
 import network.stats
+import protocol
 
 # Classes
 from helper_sql import sqlQuery, sqlExecute, SqlBulkExecute, sqlStoredProcedure
@@ -1165,6 +1167,73 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         data += ']}'
         return data
 
+    def HandleDisseminateRawObject(self, arguments):
+        if len(arguments) != 1:
+            raise APIError(0, "1 argument needed")
+
+        payload = self._decode(arguments[0], "hex")
+
+        inventoryHash = protocol.checkAndShareObjectWithPeers(payload)
+
+        if inventoryHash is None:
+            raise APIError(30, "Invalid object or insufficient POW")
+        else:
+            return hexlify(inventoryHash)
+
+    def HandleGetRawObject(self, arguments):
+        if len(arguments) != 1:
+            raise APIError(0, "1 argument needed")
+
+        inventoryHash, = arguments
+
+        if len(inventoryHash) != 64:
+            raise APIError(19, "The length of hash should be 32 bytes (encoded in hex thus 64 characters)")
+
+        inventoryHash = self._decode(inventoryHash, "hex")
+
+        try:
+            inventoryItem = Inventory()[inventoryHash]
+        except KeyError:
+            raise APIError(31, "Object not found")
+
+        return json.dumps({
+            "hash": hexlify(inventoryHash),
+            "expiryTime": inventoryItem.expires,
+            "objectType": inventoryItem.type,
+            "stream": inventoryItem.stream,
+            "tag": hexlify(inventoryItem.tag),
+            "payload": hexlify(inventoryItem.payload)
+        }, indent = 4, separators = (",", ": "))
+
+    def HandleListRawObjects(self, arguments):
+        if len(arguments) != 3:
+            raise APIError(0, "3 arguments needed")
+
+        objectType, stream, tag = arguments
+
+        if tag is not None:
+            tag = buffer(self._decode(tag, "hex"))
+
+        result = []
+
+        inventory = Inventory()
+
+        for i in inventory:
+            inventoryItem = inventory[str(i)]
+
+            if objectType is not None and inventoryItem.type != objectType:
+                continue
+
+            if stream is not None and inventoryItem.stream != stream:
+                continue
+
+            if tag is not None and inventoryItem.tag != tag:
+                continue
+
+            result.append(hexlify(i))
+
+        return json.dumps(result, indent = 4, separators = (",", ": "))
+
     def HandleClientStatus(self, params):
         if len(network.stats.connectedHostsList()) == 0:
             networkStatus = 'notConnected'
@@ -1272,6 +1341,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         HandleGetMessageDataByDestinationHash
     handlers['getMessageDataByDestinationTag'] = \
         HandleGetMessageDataByDestinationHash
+    handlers["disseminateRawObject"] = HandleDisseminateRawObject
+    handlers["getRawObject"] = HandleGetRawObject
+    handlers["listRawObjects"] = HandleListRawObjects
     handlers['clientStatus'] = HandleClientStatus
     handlers['decodeAddress'] = HandleDecodeAddress
     handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
