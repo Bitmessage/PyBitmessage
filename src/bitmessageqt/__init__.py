@@ -55,6 +55,7 @@ import sound
 import re
 import bitmessage_icons_rc # Loads icon resources
 import workprover.utils
+import singleworker
 
 
 try:
@@ -2616,9 +2617,34 @@ class MyForm(settingsmixin.SMainWindow):
                 BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)))
 
-            if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
-                BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
-                queues.workerQueue.put(('resetPoW', ''))
+            if self.settingsDialogInstance.ui.radioButtonDumbSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "dumb")
+            elif self.settingsDialogInstance.ui.radioButtonForkingSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "forking")
+
+                BMConfigParser().set(
+                    "bitmessagesettings",
+                    "processes",
+                    str(self.settingsDialogInstance.ui.spinBoxForkingSolverParallelism.value())
+                )
+            elif self.settingsDialogInstance.ui.radioButtonFastSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "fast")
+
+                BMConfigParser().set(
+                    "bitmessagesettings",
+                    "threads",
+                    str(self.settingsDialogInstance.ui.spinBoxFastSolverParallelism.value())
+                )
+            elif self.settingsDialogInstance.ui.radioButtonGPUSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "gpu")
+
+                BMConfigParser().set(
+                    "bitmessagesettings",
+                    "opencl",
+                    str(self.settingsDialogInstance.ui.comboBoxGPUVendor.currentText().toUtf8())
+                )
+
+            singleworker.setBestSolver()
 
             acceptableDifficultyChanged = False
             
@@ -4547,18 +4573,43 @@ class settingsDialog(QtGui.QDialog):
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(BMConfigParser().getint(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / defaults.networkDefaultPayloadLengthExtraBytes)))
 
-        # OpenCL
-        if openclpow.openclAvailable():
-            self.ui.comboBoxOpenCL.setEnabled(True)
-        else:
-            self.ui.comboBoxOpenCL.setEnabled(False)
-        self.ui.comboBoxOpenCL.clear()
-        self.ui.comboBoxOpenCL.addItem("None")
-        self.ui.comboBoxOpenCL.addItems(openclpow.vendors)
-        self.ui.comboBoxOpenCL.setCurrentIndex(0)
-        for i in range(self.ui.comboBoxOpenCL.count()):
-            if self.ui.comboBoxOpenCL.itemText(i) == BMConfigParser().safeGet('bitmessagesettings', 'opencl'):
-                self.ui.comboBoxOpenCL.setCurrentIndex(i)
+        if "forking" not in singleworker.workProver.availableSolvers:
+            self.ui.radioButtonForkingSolver.setEnabled(False)
+        if "fast" not in singleworker.workProver.availableSolvers:
+            self.ui.radioButtonFastSolver.setEnabled(False)
+        if "gpu" not in singleworker.workProver.availableSolvers:
+            self.ui.radioButtonGPUSolver.setEnabled(False)
+
+        solverName = BMConfigParser().safeGet("bitmessagesettings", "powsolver", "gpu")
+        forkingSolverParallelism = BMConfigParser().safeGetInt("bitmessagesettings", "processes")
+        fastSolverParallelism = BMConfigParser().safeGetInt("bitmessagesettings", "threads")
+        GPUVendor = BMConfigParser().safeGet("bitmessagesettings", "opencl")
+
+        if solverName == "dumb":
+            self.ui.radioButtonDumbSolver.setChecked(True)
+        elif solverName == "forking":
+            self.ui.radioButtonForkingSolver.setChecked(True)
+        elif solverName == "fast":
+            self.ui.radioButtonFastSolver.setChecked(True)
+        elif solverName == "gpu":
+            self.ui.radioButtonGPUSolver.setChecked(True)
+
+        self.ui.spinBoxForkingSolverParallelism.setValue(forkingSolverParallelism)
+        self.ui.spinBoxFastSolverParallelism.setValue(fastSolverParallelism)
+
+        vendors = set(singleworker.workProver.availableSolvers["gpu"].vendors)
+
+        if GPUVendor is not None:
+            vendors.add(GPUVendor)
+
+        self.ui.comboBoxGPUVendor.clear()
+        self.ui.comboBoxGPUVendor.addItems(list(vendors))
+        self.ui.comboBoxGPUVendor.setCurrentIndex(0)
+
+        for i in range(self.ui.comboBoxGPUVendor.count()):
+            if self.ui.comboBoxGPUVendor.itemText(i) == GPUVendor:
+                self.ui.comboBoxGPUVendor.setCurrentIndex(i)
+
                 break
 
         # Namecoin integration tab

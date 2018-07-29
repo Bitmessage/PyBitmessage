@@ -37,6 +37,8 @@ def loadFastSolver(codePath):
         except:
             raise FastSolverError()
 
+# Only one instance allowed
+
 class FastSolver(object):
     def __init__(self, codePath):
         self.libfastsolver = loadFastSolver(codePath)

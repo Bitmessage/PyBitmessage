@@ -122,7 +122,7 @@ class TestGPUSolver(TestSolver):
 
 class TestWorkProver(unittest.TestCase):
     def setUp(self):
-        self.thread = __init__.WorkProver(codePath, None, seed, None, None)
+        self.thread = __init__.WorkProver(codePath, seed, None, None)
         self.thread.start()
 
     def checkTaskLinks(self):

@@ -11,7 +11,7 @@ class GPUSolverError(Exception):
     pass
 
 class GPUSolver(object):
-    def __init__(self, codePath, vendor = None):
+    def __init__(self, codePath):
         global pyopencl
 
         try:
@@ -19,17 +19,15 @@ class GPUSolver(object):
         except ImportError:
             raise GPUSolverError()
 
-        for i in pyopencl.get_platforms():
-            if vendor is not None and i.vendor != vendor:
-                continue
+        self.vendors = {}
 
+        for i in pyopencl.get_platforms():
             devices = i.get_devices(device_type = pyopencl.device_type.GPU)
 
             if len(devices) != 0:
-                self.device = devices[0]
+                self.vendors[i.vendor] = devices[0]
 
-                break
-        else:
+        if len(self.vendors) == 0:
             raise GPUSolverError()
 
         with open(os.path.join(codePath, "gpusolver.cl")) as file:
@@ -88,14 +86,21 @@ class GPUSolver(object):
 
         import numpy
 
-        context = pyopencl.Context(devices = [self.device])
+        if configuration is None:
+            configuration = self.vendors.keys()[0]
 
-        computeUnitsCount = self.device.get_info(pyopencl.device_info.MAX_COMPUTE_UNITS)
-        workGroupSize = self.device.get_info(pyopencl.device_info.MAX_WORK_GROUP_SIZE)
+        if configuration not in self.vendors:
+            raise GPUSolverError()
+
+        device = self.vendors[configuration]
+        context = pyopencl.Context(devices = [device])
+
+        computeUnitsCount = device.get_info(pyopencl.device_info.MAX_COMPUTE_UNITS)
+        workGroupSize = device.get_info(pyopencl.device_info.MAX_WORK_GROUP_SIZE)
 
         self.batchSize = workGroupSize * computeUnitsCount * 256
 
-        self.queue = pyopencl.CommandQueue(context, self.device)
+        self.queue = pyopencl.CommandQueue(context, device)
 
         program = pyopencl.Program(context, self.source).build()
 

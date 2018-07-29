@@ -221,6 +221,66 @@ def disseminateObject(nonce, expiryTime, headlessPayload, objectType, stream, ta
 
     return inventoryHash, payload
 
+workProver = workprover.WorkProver(
+    os.path.join(paths.codePath(), "workprover"),
+    helper_random.randomBytes(32),
+    lambda status: queues.UISignalQueue.put(("updateWorkProverStatus", status)),
+    queues.workerQueue
+)
+
+debug.logger.info("Availabe solvers: %s", str(workProver.availableSolvers.keys()))
+
+if "fast" not in workProver.availableSolvers:
+    queues.UISignalQueue.put(("updateStatusBar", (
+        tr._translate(
+            "proofofwork",
+            "C PoW module unavailable. Please build it."
+        ), 1
+    )))
+
+def setBestSolver():
+    solverName = bmconfigparser.BMConfigParser().safeGet("bitmessagesettings", "powsolver", "gpu")
+    forkingSolverParallelism = bmconfigparser.BMConfigParser().safeGetInt("bitmessagesettings", "processes")
+    fastSolverParallelism = bmconfigparser.BMConfigParser().safeGetInt("bitmessagesettings", "threads")
+    GPUVendor = bmconfigparser.BMConfigParser().safeGet("bitmessagesettings", "opencl")
+
+    if forkingSolverParallelism < 1:
+        forkingSolverParallelism = workProver.defaultParallelism
+
+    if fastSolverParallelism < 1:
+        fastSolverParallelism = workProver.defaultParallelism
+
+    maxcores = bmconfigparser.BMConfigParser().safeGetInt("bitmessagesettings", "maxcores", None)
+
+    if maxcores is not None:
+        forkingSolverParallelism = min(maxcores, forkingSolverParallelism)
+        fastSolverParallelism = min(maxcores, fastSolverParallelism)
+
+    if solverName == "gpu" and GPUVendor is None:
+        solverName = "fast"
+
+    while solverName not in workProver.availableSolvers:
+        if solverName == "gpu":
+            solverName = "fast"
+        elif solverName == "fast":
+            solverName = "forking"
+        elif solverName == "forking":
+            solverName = "dumb"
+
+    bmconfigparser.BMConfigParser().set("bitmessagesettings", "powsolver", solverName)
+    bmconfigparser.BMConfigParser().set("bitmessagesettings", "processes", str(forkingSolverParallelism))
+    bmconfigparser.BMConfigParser().set("bitmessagesettings", "threads", str(fastSolverParallelism))
+    bmconfigparser.BMConfigParser().save()
+
+    if solverName in ["dumb", "gpu"]:
+        workProver.commandsQueue.put(("setSolver", solverName, None))
+    elif solverName == "forking":
+        workProver.commandsQueue.put(("setSolver", "forking", forkingSolverParallelism))
+    elif solverName == "fast":
+        workProver.commandsQueue.put(("setSolver", "fast", fastSolverParallelism))
+
+setBestSolver()
+
 class singleWorker(threading.Thread, helper_threading.StoppableThread):
     name = "singleWorker"
 
@@ -235,41 +295,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         super(self.__class__, self).stopThread()
 
     def run(self):
-        GPUVendor = bmconfigparser.BMConfigParser().safeGet("bitmessagesettings", "opencl")
-
-        self.workProver = workprover.WorkProver(
-            os.path.join(paths.codePath(), "workprover"),
-            GPUVendor,
-            helper_random.randomBytes(32),
-            lambda status: queues.UISignalQueue.put(("updateWorkProverStatus", status)),
-            queues.workerQueue
-        )
-
-        self.workProver.start()
-
-        parallelism = bmconfigparser.BMConfigParser().safeGetInt("bitmessagesettings", "maxcores")
-
-        if parallelism < 1:
-            parallelism = self.workProver.defaultParallelism
-
-        debug.logger.info("Availabe solvers: %s", str(self.workProver.availableSolvers.keys()))
-
-        if "gpu" in self.workProver.availableSolvers and GPUVendor is not None:
-            self.workProver.commandsQueue.put(("setSolver", "gpu", None))
-        elif "fast" in self.workProver.availableSolvers:
-            self.workProver.commandsQueue.put(("setSolver", "fast", parallelism))
-        elif "forking" in self.workProver.availableSolvers:
-            self.workProver.commandsQueue.put(("setSolver", "forking", parallelism))
-        else:
-            self.workProver.commandsQueue.put(("setSolver", "dumb", None))
-
-        if "fast" not in self.workProver.availableSolvers:
-            queues.UISignalQueue.put(("updateStatusBar", (
-                tr._translate(
-                    "proofofwork",
-                    "C PoW module unavailable. Please build it."
-                ), 1
-            )))
+        workProver.start()
 
         self.startedWorks = {}
 
@@ -299,15 +325,33 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 self.requestPubkey(*arguments)
             elif command == "resetPoW":
                 pass
+            elif command == "GPUError":
+                self.handleGPUError(*arguments)
             elif command == "taskDone":
                 self.workDone(*arguments)
             elif command == "stopThread":
-                self.workProver.commandsQueue.put(("shutdown", ))
-                self.workProver.join()
+                workProver.commandsQueue.put(("shutdown", ))
+                workProver.join()
 
                 break
 
         debug.logger.info("Quitting...")
+
+    def handleGPUError(self):
+        bmconfigparser.BMConfigParser().set("bitmessagesettings", "powsolver", "dumb")
+
+        workProver.commandsQueue.put(("setSolver", "dumb", None))
+
+        debug.logger.error(
+            "Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers"
+        )
+
+        queues.UISignalQueue.put(("updateStatusBar", (
+            tr._translate(
+                "MainWindow",
+                "Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers."
+            ), 1
+        )))
 
     def startWork(self, ID, headlessPayload, TTL, expiryTime, byteDifficulty, lengthExtension, logPrefix, callback):
         debug.logger.info(
@@ -317,7 +361,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
 
         self.startedWorks[ID] = callback
 
-        self.workProver.commandsQueue.put((
+        workProver.commandsQueue.put((
             "addTask", ID, headlessPayload, TTL, expiryTime,
             byteDifficulty, lengthExtension
         ))
@@ -588,7 +632,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         if ID in self.startedWorks:
             del self.startedWorks[ID]
 
-            self.workProver.commandsQueue.put(("cancelTask", ID))
+            workProver.commandsQueue.put(("cancelTask", ID))
 
         helper_sql.sqlExecute("""
             UPDATE "sent" SET "status" = 'broadcastcanceled'
@@ -906,14 +950,14 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
         if ID in self.startedWorks:
             del self.startedWorks[ID]
 
-            self.workProver.commandsQueue.put(("cancelTask", ID))
+            workProver.commandsQueue.put(("cancelTask", ID))
 
         ID = "message", ackData
 
         if ID in self.startedWorks:
             del self.startedWorks[ID]
 
-            self.workProver.commandsQueue.put(("cancelTask", ID))
+            workProver.commandsQueue.put(("cancelTask", ID))
 
         state.watchedAckData -= {ackData}
 
@@ -933,7 +977,7 @@ class singleWorker(threading.Thread, helper_threading.StoppableThread):
                 if ID in self.startedWorks:
                     del self.startedWorks[ID]
 
-                    self.workProver.commandsQueue.put(("cancelTask", ID))
+                    workProver.commandsQueue.put(("cancelTask", ID))
 
                 status, version, stream, ripe = addresses.decodeAddress(destination)
 

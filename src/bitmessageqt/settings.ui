@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>555</width>
+    <width>616</width>
     <height>592</height>
    </rect>
   </property>
@@ -14,16 +14,6 @@
    <string>Settings</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidgetSettings">
      <property name="currentIndex">
@@ -549,13 +539,13 @@
        <string>Max acceptable difficulty</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_7">
-       <item row="0" column="0" colspan="3">
-        <widget class="QLabel" name="label_15">
+       <item row="2" column="1">
+        <widget class="QLabel" name="label_14">
          <property name="text">
-          <string>Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.</string>
+          <string>Maximum acceptable small message difficulty:</string>
          </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -582,6 +572,32 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLineEdit" name="lineEditMaxAcceptableSmallMessageDifficulty">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -614,33 +630,142 @@
          </property>
         </spacer>
        </item>
-       <item row="2" column="1">
-        <widget class="QLabel" name="label_14">
-         <property name="text">
-          <string>Maximum acceptable small message difficulty:</string>
+       <item row="3" column="0" colspan="3">
+        <widget class="QGroupBox" name="groupBoxSolvers">
+         <property name="title">
+          <string>Proof of work solver</string>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelSolvers">
+            <property name="text">
+             <string>There are several worker modules to solve POW:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayoutForkingSolver">
+            <item>
+             <widget class="QRadioButton" name="radioButtonForkingSolver">
+              <property name="text">
+               <string>Forking solver using multiple processes:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBoxForkingSolverParallelism">
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>4096</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacerForkingSolver">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="4" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayoutFastSolver">
+            <item>
+             <widget class="QRadioButton" name="radioButtonFastSolver">
+              <property name="text">
+               <string>Fast solver in C with multiple threads:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBoxFastSolverParallelism">
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>4096</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacerFastSolver">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayoutDumbSolver">
+            <item>
+             <widget class="QRadioButton" name="radioButtonDumbSolver">
+              <property name="text">
+               <string>Dumb solver</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacerDumbSolver">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayoutGPUSolver">
+            <item>
+             <widget class="QRadioButton" name="radioButtonGPUSolver">
+              <property name="text">
+               <string>GPU solver:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboBoxGPUVendor"/>
+            </item>
+            <item>
+             <spacer name="horizontalSpacerGPUSolver">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
         </widget>
        </item>
-       <item row="2" column="2">
-        <widget class="QLineEdit" name="lineEditMaxAcceptableSmallMessageDifficulty">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>70</width>
-           <height>16777215</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
+       <item row="5" column="0" colspan="3">
         <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -652,16 +777,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="labelOpenCL">
-         <property name="text">
-          <string>Hardware GPU acceleration (OpenCL):</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QComboBox" name="comboBoxOpenCL"/>
        </item>
       </layout>
      </widget>
@@ -981,6 +1096,16 @@
      </widget>
     </widget>
    </item>
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
@@ -998,6 +1123,7 @@
   <tabstop>checkBoxSocksListen</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
+ <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>

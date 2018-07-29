@@ -30,10 +30,12 @@ class Task(object):
 
 Status = collections.namedtuple("Status", ["solverName", "solverStatus", "speed", "tasksCount", "difficulty"])
 
+# Only one instance allowed
+
 class WorkProver(threading.Thread):
     # Seed must be 32 bytes
 
-    def __init__(self, codePath, GPUVendor, seed, statusUpdated, resultsQueue):
+    def __init__(self, codePath, seed, statusUpdated, resultsQueue):
         super(self.__class__, self).__init__()
 
         self.availableSolvers = {
@@ -56,7 +58,7 @@ class WorkProver(threading.Thread):
             pass
 
         try:
-            self.availableSolvers["gpu"] = gpusolver.GPUSolver(codePath, GPUVendor)
+            self.availableSolvers["gpu"] = gpusolver.GPUSolver(codePath)
         except gpusolver.GPUSolverError:
             pass
 
@@ -99,23 +101,29 @@ class WorkProver(threading.Thread):
         self.statusUpdated(Status(self.solverName, status, self.speed, len(self.tasks), self.totalDifficulty))
 
     def setSolver(self, name, configuration):
-        if name is None and self.solverName is None:
-            pass
-        elif name == self.solverName:
-            self.solver.setConfiguration(configuration)
-        else:
-            if self.solver is not None:
-                self.solver.setConfiguration(None)
-                self.solverName = None
-                self.solver = None
-
-            if name is not None:
-                if name not in self.availableSolvers:
-                    name, configuration = "dumb", None
-
-                self.solverName = name
-                self.solver = self.availableSolvers[name]
+        try:
+            if name is None and self.solverName is None:
+                pass
+            elif name == self.solverName:
                 self.solver.setConfiguration(configuration)
+            else:
+                if self.solver is not None:
+                    self.solver.setConfiguration(None)
+                    self.solverName = None
+                    self.solver = None
+
+                if name is not None:
+                    if name not in self.availableSolvers:
+                        name, configuration = "dumb", None
+
+                    self.solverName = name
+                    self.solver = self.availableSolvers[name]
+                    self.solver.setConfiguration(configuration)
+        except GPUSolverError:
+            self.solverName = None
+            self.solver = None
+
+            self.resultsQueue.put(("GPUError", ))
 
         self.notifyStatus()
 
@@ -229,8 +237,9 @@ class WorkProver(threading.Thread):
         try:
             nonce, iterationsCount = self.solver.search(initialHash, task.target, appendedSeed, timeout)
         except gpusolver.GPUSolverError:
-            self.setSolver("dumb", 1)
-            self.availableSolvers.pop("gpu")
+            self.setSolver(None, None)
+
+            self.resultsQueue.put(("GPUError", ))
 
             nonce, iterationsCount = None, 0
 
