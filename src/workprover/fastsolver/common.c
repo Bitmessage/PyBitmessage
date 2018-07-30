@@ -23,14 +23,14 @@ static void encode_big_endian(char *result, unsigned long long number) {
 
 static unsigned long long decode_big_endian(const char *encoded) {
     return (
-        ((unsigned long long) encoded[0] & 0xff) << 56 |
-        ((unsigned long long) encoded[1] & 0xff) << 48 |
-        ((unsigned long long) encoded[2] & 0xff) << 40 |
-        ((unsigned long long) encoded[3] & 0xff) << 32 |
-        ((unsigned long long) encoded[4] & 0xff) << 24 |
-        ((unsigned long long) encoded[5] & 0xff) << 16 |
-        ((unsigned long long) encoded[6] & 0xff) << 8 |
-        ((unsigned long long) encoded[7] & 0xff)
+        (encoded[0] & 0xffull) << 56 |
+        (encoded[1] & 0xffull) << 48 |
+        (encoded[2] & 0xffull) << 40 |
+        (encoded[3] & 0xffull) << 32 |
+        (encoded[4] & 0xffull) << 24 |
+        (encoded[5] & 0xffull) << 16 |
+        (encoded[6] & 0xffull) << 8 |
+        (encoded[7] & 0xffull)
     );
 }
 
