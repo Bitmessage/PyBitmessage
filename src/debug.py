@@ -1,26 +1,28 @@
-# -*- coding: utf-8 -*-
 """
 Logging and debuging facility
 =============================
 
 Levels:
-    DEBUG       Detailed information, typically of interest only when
-                diagnosing problems.
-    INFO        Confirmation that things are working as expected.
-    WARNING     An indication that something unexpected happened, or indicative
-                of some problem in the near future (e.g. ‘disk space low’).
-                The software is still working as expected.
-    ERROR       Due to a more serious problem, the software has not been able
-                to perform some function.
-    CRITICAL    A serious error, indicating that the program itself may be
-                unable to continue running.
+
+   DEBUG
+      Detailed information, typically of interest only when diagnosing problems.
+   INFO
+      Confirmation that things are working as expected.
+   WARNING
+      An indication that something unexpected happened, or indicative of some problem in the
+      near future (e.g. 'disk space low'). The software is still working as expected.
+   ERROR
+      Due to a more serious problem, the software has not been able to perform some function.
+   CRITICAL
+      A serious error, indicating that the program itself may be unable to continue running.
 
 There are three loggers: `console_only`, `file_only` and `both`.
 
-Use: `from debug import logger` to import this facility into whatever module
-     you wish to log messages from. Logging is thread-safe so you don't have
-     to worry about locks, just import and log.
+Use: `from debug import logger` to import this facility into whatever module you wish to log messages from.
+    Logging is thread-safe so you don't have to worry about locks, just import and log.
+
 """
+
 import logging
 import logging.config
 import os
@@ -56,9 +58,8 @@ def configureLogging():
                 ' logging config\n%s' %
                 (os.path.join(state.appdata, 'logging.dat'), sys.exc_info()))
         else:
-            # no need to confuse the user if the logger config
-            # is missing entirely
-            print('Using default logger configuration')
+            # no need to confuse the user if the logger config is missing entirely
+            print "Using default logger configuration"
 
     sys.excepthook = log_uncaught_exceptions
 
@@ -113,13 +114,16 @@ def configureLogging():
 
 # TODO (xj9): Get from a config file.
 # logger = logging.getLogger('console_only')
-if configureLogging():
-    if '-c' in sys.argv:
-        logger = logging.getLogger('file_only')
+
+def initLogging():
+    if configureLogging():
+        if '-c' in sys.argv:
+            logger = logging.getLogger('file_only')
+        else:
+            logger = logging.getLogger('both')
     else:
-        logger = logging.getLogger('both')
-else:
-    logger = logging.getLogger('default')
+        logger = logging.getLogger('default')
+    return logger
 
 
 def restartLoggingInUpdatedAppdataLocation():
@@ -128,10 +132,8 @@ def restartLoggingInUpdatedAppdataLocation():
         logger.removeHandler(i)
         i.flush()
         i.close()
-    if configureLogging():
-        if '-c' in sys.argv:
-            logger = logging.getLogger('file_only')
-        else:
-            logger = logging.getLogger('both')
-    else:
-        logger = logging.getLogger('default')
+    logger = initLogging()
+
+
+# !
+logger = initLogging()
