@@ -65,15 +65,16 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(utils.checkProof(nonce, initialHash, 0x000002fe91eba356))
 
     def testCheckWorkSufficient(self):
+        self.assertFalse(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension, expiryTime - 293757.5))
+        self.assertTrue(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension, expiryTime - 293757))
+
         originalTime = utils.time.time
 
         utils.time.time = lambda: expiryTime - 293757.5
         self.assertFalse(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension))
-        self.assertFalse(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension, expiryTime - 293757.5))
 
         utils.time.time = lambda: expiryTime - 293757
         self.assertTrue(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension))
-        self.assertTrue(utils.checkWorkSufficient(payload, byteDifficulty, lengthExtension, expiryTime - 293757))
 
         utils.time.time = originalTime
 
