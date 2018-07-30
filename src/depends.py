@@ -29,6 +29,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
 
 OS_RELEASE = {
+    "Debian GNU/Linux".lower(): "Debian",
     "fedora": "Fedora",
     "opensuse": "openSUSE",
     "ubuntu": "Ubuntu",
