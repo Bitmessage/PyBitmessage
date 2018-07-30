@@ -1,167 +1,256 @@
-#:import FadeTransition kivy.uix.screenmanager.FadeTransition
-
-<Display>:
-    BoxLayout:
-        orientation: "vertical"
-        BoxLayout: 
-            size_hint: 1, None
+<Navigator>:
+    id: nav_drawer
+    NavigationDrawerIconButton:
+        Button:
+            id: btn
+            background_color:app.theme_cls.primary_dark
+            text: 'BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk'
+            on_release: dropdown.open(self)
+            pos_hint: {'x': 0, 'y': 0.3}
+            size_hint_y: None
             height: '48dp'
+
+        DropDown:
+
+            id: dropdown
+            on_parent: self.dismiss()
+            on_select: btn.text = '{}'.format(args[1])
             Button:
-                text: 'messages'
-                on_release: sm.current = 'screen_one'
-                background_color: (0,0,0,0)
-                color: 0,0,0,1
-            Button:
-                text: 'send'
-                on_release: sm.current = 'screen_two'
-                background_color: (0,0,0,0)
-                color: 0,0,0,1
-            Button:
-                text: 'subscription'
-                on_release: sm.current = 'screen_three'
-                background_color: (0,0,0,0)
-                color: 0,0,0,1
-            Button:
-                text: 'four'
-                on_release: sm.current = 'screen_four'
-                background_color: (0,0,0,0) 
-                color: 0,0,0,1
+                background_color:app.theme_cls.primary_dark
+                text: 'BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk'
+                size_hint_y: None
+                height: '48dp'
+                on_release: dropdown.select('BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk')
+                on_release: app.root.ids.scr_mngr.current = 'dialog'
 
             Button:
-                text: 'chans'
-                on_release: sm.current = 'screen_five'
-                background_color: (0,0,0,0) 
-                color: 0,0,0,1
-            Button:
-                text: 'blacklist'
-                on_release: sm.current = 'screen_six'
-                background_color: (0,0,0,0) 
-                color: 0,0,0,1
+                background_color:app.theme_cls.primary_dark
+                text: 'BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk'
+                size_hint_y: None
+                height: '48dp'
+                on_release: dropdown.select('BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk')
+                on_release: app.root.ids.scr_mngr.current = 'button'
 
-        ScreenManager:
-            id: sm
-            transition: FadeTransition()
-            Screen_One:
-            Screen_Two:
-            Screen_three:
-            Screen_four:
-            Screen_five:
-            Screen_six:
-            EmailScreen:
-
-<Screen_One>:
-    name: 'screen_one'      
-    BoxLayout:
-        padding: 10,10,10,300
-        orientation: "vertical"
+    NavigationDrawerIconButton:
+        icon: 'email'
+        text: "inbox"
+        on_release: app.root.ids.scr_mngr.current = 'inbox'
+    NavigationDrawerIconButton:
+        icon: 'email'
+        text: "sent"
+        on_release: app.root.ids.scr_mngr.current = 'sent'
+    NavigationDrawerIconButton:
+        icon: 'email'
+        text: "trash"
+        on_release: app.root.ids.scr_mngr.current = 'trash'
+    NavigationDrawerIconButton:
+        icon: 'email'
+        text: "dialog"
+        on_release: app.root.ids.scr_mngr.current = 'dialog'
+    NavigationDrawerIconButton:
+        icon: 'email'
+        text: "test"
+        on_release: app.root.ids.scr_mngr.current = 'test'
+    NavigationDrawerIconButton: 
+        text: "new identity"
+        icon:'notifications-add'
+        on_release: app.root.ids.scr_mngr.current = 'newidentity'
+    
+BoxLayout:
+    orientation: 'vertical'
+    Toolbar:
+        id: toolbar
+        title: 'PyBitmessage'
+        background_color: app.theme_cls.primary_dark
+        left_action_items: [['menu', lambda x: app.nav_drawer.toggle()]]
         Button:
-            text: "create"
-            size_hint_y: 0.3
-            size_hint_x: 0.1
+            text:"EXIT"
             color: 0,0,0,1
             background_color: (0,0,0,0)
-        Button:
-            text: "inbox"
-            background_color: (0,0,0,0)
-            size_hint_y: 0.3
+            size_hint_y: 0.1
             size_hint_x: 0.1
-            color: 0,0,0,1
-        Button:
-            text: "new"
-            background_color: (0,0,0,0)
-            size_hint_y: 0.3
-            size_hint_x: 0.1
-            color: 0,0,0,1
-            on_press:
-                root.manager.current = 'email'
-        Button:
-            text: "sents"
-            background_color: (0,0,0,0)
-            size_hint_y: 0.3
-            size_hint_x: 0.1
-            color: 0,0,0,1
+            pos_hint: {'x': 0.8, 'y':0.4}
+            on_press: app.say_exit()
 
-<Screen_Two>:
-    name: 'screen_two'      
+
+    ScreenManager:
+        id: scr_mngr
+        Inbox:
+            id:sc1
+        Sent:
+            id:sc2
+        Trash:
+            id:sc3
+        Dialog:
+            id:sc4
+        Test:
+            id:sc5
+        Create:
+            id:sc6
+        NewIdentity:
+            id:sc7
+
+    Button:
+        height:100
+        size_hint_y: 0.1
+        size_hint_x: 0.1
+        pos_hint: {'x': 0.85, 'y': 0.5}
+        background_color: (0,0,0,0)
+        on_press: scr_mngr.current = 'create'
+        Image:
+            source: 'images/plus.png'
+            y: self.parent.y
+            x: self.parent.x + self.parent.width - 50
+            size: 70, 70
+<Inbox>:
+    name: 'inbox'
+
+<Sent>:
+    name: 'sent'
+
+<Trash>:
+    name: 'trash'
+
+<Dialog>:
+    name: 'dialog'
     Label:
-        text: "Two"
-
-<Screen_three>:
-    name: 'screen_three'      
+        text:"I have a good dialox box"
+        color: 0,0,0,1
+<Test>:
+    name: 'test'
     Label:
-        text: "Three"
+        text:"I am in test"
+        color: 0,0,0,1
 
-<Screen_four>:
-    name: 'screen_four'      
-    Label:
-        text: "four"
-
-<Screen_five>:
-    name: 'screen_five'      
-    Label:
-        text: "Two"
-
-<Screen_six>:
-    name: 'screen_six'      
-    Label:
-        text: "Two"
-
-<EmailScreen>:
-    name: 'email'
-    BoxLayout:
-        padding: 100,10,100,100
-        id: login_layout
-        orientation: "vertical"
-        GridLayout:
-            rows: 2
-            orientation: 'vertical'
-            spacing: 10
+<Create>:
+    name: 'create'
+    GridLayout:
+        rows: 5
+        cols: 1
+        padding: 60,60,60,60
+        spacing: 50
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
             Label:
-                text: 'From: '
-                background_color: (0,0,0,0)
+                text: 'FROM'
                 color: 0,0,0,1
-                font_size: 18
-                pos_hint: {"x":.15,"y":1}
-                text_size: root.width-20, 20
+            Spinner:
+                size_hint: 1,1
+                pos_hint: {"x":0,"top":1.}
+                pos: 10,10
+                id: spinner_id
+                text: '<select>'
+                values: root.showmeaddresses()
 
-            TextInput:
-                multiline:False
-                size_hint: 1,.4
-
-        GridLayout:
-            rows: 2
-            orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
             Label:
-                text: 'To: '
-                background_color: (0,0,0,0)
+                text: 'TO'
                 color: 0,0,0,1
-                font_size: 18
-                pos_hint: {"x":.15,"y":.5}
-                text_size: root.width-20, 20
-
             TextInput:
-                multiline:False
-                size_hint: 1,.4
-                pos_hint: {"x":.2,"y":.5}
+                id: recipent
+                hint_text: 'To'
 
-        GridLayout:
-            rows: 2
-            orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
             Label:
-                text: 'Message'
-                background_color: (0,0,0,0)
+                text: 'SUBJECT'
                 color: 0,0,0,1
-                pos_hint: {"x":.15,"y":.5}
-                font_size: 18
-                text_size: root.width-20, 20
-
             TextInput:
-                id: msg
+                id: subject
+                hint_text: 'SUBJECT'
+
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
+            Label:
+                text: 'BODY'
+                color: 0,0,0,1
+            TextInput:
+                id: message
                 multiline:True
                 size_hint: 1,2
 
-        Button:
-            text: "SEND"
-            size_hint_y: 0.1
-            size_hint_x: 0.2
-            pos_hint: {"x":.15,"y":1}
+    Button:
+        text: 'send'
+        size_hint_y: 0.1
+        size_hint_x: 0.2
+        height: '32dp'
+        pos_hint: {'x': .5, 'y': 0.1}
+        on_press: root.send()
+    Button:
+        text: 'cancel'
+        size_hint_y: 0.1
+        size_hint_x: 0.2
+        height: '32dp'
+        pos_hint: {'x': .72, 'y': 0.1}
+        on_press: root.cancel()
+
+<NewIdentity>:
+    name: 'newidentity'
+    GridLayout:
+        padding: '120dp'
+        cols: 1
+        Label:
+            text:"""Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged."""
+            line_height:1.5  
+            text_size:(700,None)  
+            color: 0,0,0,1
+        BoxLayout:
+            CheckBox:
+                canvas.before:
+                    Color:
+                        rgb: 1,0,0
+                    Ellipse:
+                        pos:self.center_x-8, self.center_y-8
+                        size:[16,16]                 
+                group: "money"
+                active: root.is_active
+            Label:
+                text: "use a random number generator to make an address"
+                color: 0,0,0,1
+        BoxLayout:
+            CheckBox:
+                canvas.before:
+                    Color:
+                        rgb: 1,0,0
+                    Ellipse:
+                        pos:self.center_x-8, self.center_y-8
+                        size:[16,16] 
+                group: "money"
+                active: not root.is_active
+            Label:
+                text: "use a random number generator to make an address"
+                color: 0,0,0,1
+        Label:
+            color: 0,0,0,1
+            size_hint_x: .35
+            markup: True
+            text: "[b]{}[/b]".format("Randomly generated addresses")
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
+            Label:
+                text: "Label (not shown to anyone except you)"
+                color: 0,0,0,1
+        BoxLayout:
+            size_hint_y: None
+            height: '32dp'
+            TextInput:
+                id: label
+
+    Button:
+        text: 'Cancel'
+        size_hint_y: 0.1
+        size_hint_x: 0.3
+        height: '32dp'
+        pos_hint: {'x': .1, 'y': 0.1}
+    Button:
+        text: 'Ok'
+        size_hint_y: 0.1
+        size_hint_x: 0.3
+        height: '32dp'
+        pos_hint: {'x': .5, 'y': 0.1}

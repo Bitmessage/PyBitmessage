@@ -34,7 +34,7 @@ import os
 import socket
 import sys
 
-import logging as logger
+from debug import logger
 import defaults
 import tr  # translate
 from bmconfigparser import BMConfigParser
@@ -346,7 +346,7 @@ def ensureNamecoinOptions():
 
         nmc.close()
     except IOError:
-        logger.error("%s unreadable or missing, Namecoin support deactivated", nmcConfig)
+        logger.warning("%s unreadable or missing, Namecoin support deactivated", nmcConfig)
     except Exception:
         logger.warning("Error processing namecoin.conf", exc_info=True)
 
