@@ -90,7 +90,7 @@ def createDefaultKnownNodes():
 
 def readKnownNodes():
     try:
-        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
+        with open(state.appdata + 'knownnodes.dat', 'r') as source:
             with knownNodesLock:
                 try:
                     json_deserialize_knownnodes(source)

@@ -1,7 +1,7 @@
 import socket
 import struct
 
-from proxy import Proxy, ProxyError, GeneralProxyError
+from .proxy import Proxy, ProxyError, GeneralProxyError
 
 class Socks4aError(ProxyError):
     errorCodes = ("Request granted",
@@ -108,4 +108,4 @@ class Socks4aResolver(Socks4a):
         return True
 
     def resolved(self):
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        print("Resolved %s as %s" % (self.host, self.proxy_sock_name()))

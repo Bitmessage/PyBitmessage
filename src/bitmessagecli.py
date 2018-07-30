@@ -14,28 +14,39 @@ TODO: fix the following (currently ignored) violations:
 
 """
 
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import argparse
-import ConfigParser
+try:
+    import ConfigParser as ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+
 import imghdr
 import ntpath
-import json
-import sys
 import os
+import sys
+import codecs
+import json
 
 import base64
 import ssl
 import socket
+
+from functools import wraps
 
 # python3 maybe
 try:
     import httplib
     import xmlrpclib
     from urlparse import urlparse
-    from urllib import unquote
+    from urllib import unquote as unquote_to_bytes
+    from urllib import quote
 except ImportError:
     import http.client as httplib
     import xmlrpc.client as xmlrpclib
-    from urllib.parse import urlparse, unquote
+    from urllib.parse import urlparse, unquote_to_bytes, quote
 
 import traceback
 
@@ -43,9 +54,15 @@ import time
 import datetime
 import inspect
 import re
+from binascii import hexlify, unhexlify, Error as binascii_Error
 import subprocess
 
 from collections import OrderedDict
+
+try:
+    myinput = raw_input
+except NameError:
+    myinput = input
 
 usrPrompt = 0  # 0 = First Start, 1 = prompt, 2 = no prompt if the program is starting up
 api = ''
@@ -190,9 +207,9 @@ def cmdGuess():
 
         dcmds = duplicated(out)
         if any(dcmds):
-            print '\n     cmdGuess() Fail!'
-            print '     duplicated =', dcmds
-            print '     Change your "guessWords" list(%d).\n' % wordscounter
+            print('\n     cmdGuess() Fail!')
+            print('     duplicated = %s' % str(dcmds))
+            print('     Change your "guessWords" list[%d].\n' % wordscounter)
             return False
 
     cmdShorts['Command'] = ''
@@ -207,9 +224,9 @@ def showCmdTbl():
 
     url = 'https://github.com/BitMessage/PyBitmessage'
     print
-    print ''.join([5 * ' ', 73 * '-'])
-    print ''.join([5 * ' ', '|', url[:int(len(url)/2)].rjust(35), url[int(len(url)/2):].ljust(36), '|'])
-    print ''.join([5 * ' ', 73 * '-'])
+    print(''.join([5 * ' ', 73 * '-']))
+    print(''.join([5 * ' ', '|', url[:int(len(url)/2)].rjust(35), url[int(len(url)/2):].ljust(36), '|']))
+    print(''.join([5 * ' ', 73 * '-']))
     for cmd in cmdTbl:
         lcmd = ('' if len(cmd) > 18 else cmd + ' ') + str(cmdShorts[cmd][1:])
         if len(lcmd) > 23:
@@ -218,15 +235,15 @@ def showCmdTbl():
         if len(des) > 45:
             des = des[:42] + '...'
         if des == '-':
-            print '|'.join([5 * ' ', 24 * '-', 46 * '-', ''])
+            print('|'.join([5 * ' ', 24 * '-', 46 * '-', '']))
         else:
-            print '| '.join([5 * ' ', lcmd.ljust(23), des.ljust(45), ''])
-    print ''.join([5 * ' ', 73 * '-'])
+            print('| '.join([5 * ' ', lcmd.ljust(23), des.ljust(45), '']))
+    print(''.join([5 * ' ', 73 * '-']))
 
 
 class Config(object):
     def __init__(self, argv):
-        self.version = "0.4.0"
+        self.version = "0.5.0"
         self.argv = argv
         self.action = None
         self.config_file = "client.dat"  # for initial default value
@@ -346,7 +363,7 @@ class Config(object):
         # Find config file path from parameters
         if "--config_file" in argv:
             self.config_file = argv[argv.index("--config_file") + 1]
-        print '- Configuration loading . (%s)' % os.path.realpath(self.config_file)
+        print('- Configuration loading... "%s"' % (os.path.realpath(self.config_file).encode('utf-8')))
         if os.path.isfile(self.config_file):
             config = ConfigParser.ConfigParser(allow_no_value=True)
             config.read(self.config_file)
@@ -423,28 +440,31 @@ class Config(object):
 
 class Actions(object):
     def call(self, function_name, kwargs):
-        print '- Original by .dok (Version 0.3.1) https://github.com/Dokument/PyBitmessage-Daemon'
-        print '- Modified by .pt (Version 0.4.0) https://github.com/BitMessage/PyBitmessage'
-        print '- Version: %s, Python %s' % (config.version, sys.version)
+        print('- Original by .dok (Version 0.3.1) https://github.com/Dokument/PyBitmessage-Daemon')
+        print('- Modified by .pt (Version 0.4.0) https://github.com/BitMessage/PyBitmessage')
+        print('- Version: %s, Python %s' % (config.version, sys.version))
 
         func = getattr(self, function_name, None)
         back = func(**kwargs)
         if back:
-            print back
+            print(back)
 
     # Default action: Start CLI only
     def main(self, *argv):
+
+        global usrPrompt
         while True:
             try:
                 CLI()
             except InputException as err:
-                print retStrings.get(err.resKey, '\n     Not defined error raised: %s.\n' % err.resKey)
+                print(retStrings.get(err.resKey, '\n     Not defined error raised: {%s}.\n' % err.resKey))
+                usrPrompt = 1
 
     def api(self, api_username, api_password, api_path, api_type):
-        print 'action api: api_username:', api_username
+        print('action api: api_username =', api_username)
 
     def proxy(self, proxy_username, proxy_password, proxy_path, proxy_type, proxy_timeout):
-        print 'action proxy: proxy_username:', proxy_username
+        print('action proxy: proxy_username =', proxy_username)
 
 
 def start():
@@ -453,6 +473,30 @@ def start():
     # action_kwargs = config.getActionArguments()
     actions.call(config.action, {})
 
+
+def getBase64Len(x=''):
+
+    strip = len(x) if len(x) < 4 else 2 if x[-2:] == '==' else 1 if x[-1] == '=' else 0
+    return int(len(x) * 3 /4) - strip
+
+
+def _decode(text, decode_type):
+    try:
+        if decode_type == 'hex':  # for messageId/ackData/payload
+            return unhexlify(text)
+        elif decode_type == 'base64':  # for label/passphrase/ripe/subject/message
+            base64.b64decode(text).decode(encoding='utf-8')  # unicode pre test
+            return base64.b64decode(text)
+    except Exception as err:  # UnicodeEncodeError/
+        print('text = %s, type(text)' % (text, type(text)))
+        raise
+
+
+def _encode(text, encode_type):
+    if encode_type == 'hex':
+        return hexlify(text)
+    elif encode_type == 'base64':  # for label/passphrase/ripe/subject/message
+        return base64.b64encode(text)
 
 # proxied start
 # original https://github.com/benhengx/xmlrpclibex
@@ -520,7 +564,7 @@ class SocksProxiedHTTPSConnection(httplib.HTTPSConnection):
 
     def connect(self):
         self.ssock.connect((self.host, self.port))
-        self.sock = ssl.wrap_socket(self.ssock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)
+        self.sock = ssl.wrap_socket(self.ssock, self.key_file, self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)  # SSLv3
 
     def close(self):
         httplib.HTTPSConnection.close(self)
@@ -579,9 +623,15 @@ class ProxiedTransportWithTo(TransportWithTo):
         self.api_cred = api_cred
         self.proxy_path = proxy['proxy_path']
         if proxy['proxy_username'] and proxy['proxy_password']:
-            self.proxy_cred = base64.encodestring('%s:%s' % (unquote(proxy['proxy_username']), unquote(proxy['proxy_password']))).strip()
+            self.proxy_cred = '%s:%s' % (quote(proxy['proxy_username']), quote(proxy['proxy_password']))
         else:
             self.proxy_cred = None
+
+    def basic_str(quote_auth):
+        auth = unquote_to_bytes(quote_auth)
+        auth = _encode(auth, 'base64').decode("utf-8")
+        auth = "".join(auth.split()) # get rid of whitespace
+        return auth
 
     def request(self, host, handler, request_body, verbose=False):
         realhandler = 'HTTP://%s%s' % (host, handler)
@@ -592,9 +642,9 @@ class ProxiedTransportWithTo(TransportWithTo):
 
     def send_content(self, connection, request_body):
         if self.proxy_cred:
-            connection.putheader('Proxy-Authorization', 'Basic ' + self.proxy_cred)
+            connection.putheader('Proxy-Authorization', 'Basic ' + self.basic_str(self.proxy_cred))
         if self.api_cred:
-            connection.putheader('Authorization', 'Basic ' + self.api_cred)
+            connection.putheader('Authorization', 'Basic ' + self.basic_str(self.api_cred))
         return TransportWithTo.send_content(self, connection, request_body)
 
 
@@ -613,7 +663,6 @@ class SocksProxiedTransportWithTo(TransportWithTo):
         conn.init_socks(self.proxy)
         return conn
 
-
 class Proxiedxmlrpclib(xmlrpclib.ServerProxy):
     """New added keyword arguments
     timeout: seconds waiting for the socket
@@ -627,7 +676,7 @@ class Proxiedxmlrpclib(xmlrpclib.ServerProxy):
     """
 
     def __init__(self, uri, transport=None, encoding=None, verbose=0,
-                 allow_none=0, use_datetime=0, timeout=None, proxy=None):
+                 allow_none=0, use_datetime=0, timeout=30, proxy=None):
 
         scheme, netloc, path, x, xx, xxx = urlparse(uri)
         api_username = urlparse(uri).username
@@ -635,10 +684,10 @@ class Proxiedxmlrpclib(xmlrpclib.ServerProxy):
         api_cred = None
         self.uri = uri
         if api_username and api_password:
-            api_cred = base64.encodestring('%s:%s' % (unquote(api_username), unquote(api_password))).strip()
+            api_cred = '%s:%s' % (quote(api_username), quote(api_password))
             netloc = netloc.split('@')[1]
 
-        if transport is None and (timeout or proxy):
+        if transport is None and proxy:
             is_https = scheme == 'https'
 
             if proxy.get('proxy_type', 'none') == 'none':
@@ -662,6 +711,203 @@ class Proxiedxmlrpclib(xmlrpclib.ServerProxy):
 # proxied end
 
 
+class RPCErrorWithRet(Exception):
+
+    def __init__(self, ret, err):
+        Exception.__init__(self, err)
+        self.ret = ret
+        self.err = str(err)
+        etype = type(err)
+        if etype is TypeError:  # unsupported XML-RPC protocol/ not callable
+            self.error = -1
+            self.errormsg = '\n     XML-RPC not initialed correctly. {%s}\n' % str(self)
+            # traceback.print_exc()
+        elif etype is xmlrpclib.Fault:
+            self.error = -2
+            self.errormsg = '\n     API method error. {%s}\n' % str(self)
+        elif etype in [ProxyError, GeneralProxyError, Socks5AuthError, Socks5Error, Socks4Error, HTTPError, socket.error, xmlrpclib.ProtocolError]:  # xmlrpclib.Error/
+            self.error = -3
+            self.errormsg = '\n     Connection error. {%s}\n' % str(self)
+            # traceback.print_exc()
+        else:  # /httplib.BadStatusLine/ConnectionRefusedError111/ConnectionError
+            self.error = -99
+            self.errormsg = '\n     Unexpected error: {%s}\n' % str(self)
+            # traceback.print_exc()
+
+    def __str__(self):
+        return str(self.err)
+
+
+def parse_multicall_result(ret, method_name, item):
+
+    ret.error = 0
+    if type(item) == type({}):  # Fault Error
+        ret.error = -2
+        ret.errormsg = item['faultCode'], item['faultString']
+    elif type(item) == type([]):
+        try:
+            if method_name in [
+                    'trashInboxMessage',
+                    'getStatus',
+                    ]:
+                ret.result = item[0]
+            elif method_name in [
+                    'getInboxMessageById',
+                    ]:
+                ret.result = json.loads(item[0])['inboxMessage']
+            elif method_name in [
+                    'getAllSentMessageIds',  # alter get outbox msg length
+                    ]:
+                result = json.loads(item[0])['sentMessageIds']
+                ret.result = {'OutboxMessages': len(result)}
+            elif method_name in [
+                    'getAllInboxMessageIds',  # alter get inbox msg length
+                    ]:
+                result = json.loads(item[0])['inboxMessageIds']
+                ret.result = {'InboxMessages': len(result)}
+            elif method_name in [
+                    'listAddressBookEntries',
+                    'listAddresses',
+                    ]:
+                result = json.loads(item[0])['addresses']
+                if method_name == 'listAddressBookEntries':
+                    result[0]['label'] = _decode(result[0]['label'], 'base64').decode(encoding='utf-8')
+                ret.result = result
+            elif method_name in [
+                    'clientStatus',
+                    ]:
+                ret.result = json.loads(item[0])
+            else:
+                ret.error = 99
+                ret.errormsg = '\n     MultiCall error: unexpected multicall method. <%s>\n' % method_name
+        except (ValueError, KeyError) as err:  # json.loads error
+            ret.err = err
+            ret.error = 3
+            ret.result = json.loads(item[0]) if type(err) == KeyError else item[0]
+            ret.errormsg = '\n     Server returns unexpected data, maybe a network problem there? {%s}\n%s\n' % (str(err), ret.result)
+    else:
+        ret.error = 98
+        ret.errormsg = "\n     unexpected type in multicall result.\n"
+
+
+class _multicall:
+    """"""
+
+    def __init__(self, xmlrpc):
+        self.xmlrpc = xmlrpc
+
+    class _safe_results:
+
+        def __init__(myself, method_name, item):
+            myself.error = 0
+            myself.result = ''
+            myself.errormsg = ''
+            parse_multicall_result(myself, method_name, item)
+            
+    def __call__(self, call_list):
+        ret = []
+        try:
+            response = self.xmlrpc.system.multicall(call_list)
+            i = 0
+            for item in response:
+                method_name = call_list[i]['methodName']
+                params = call_list[i]['params']
+                i += 1
+                safeparser = self._safe_results(method_name, item)
+                ret.append(safeparser)
+                if safeparser.error != 0:
+                    break
+        except Exception as err:
+            raise RPCErrorWithRet(ret, err)
+
+        return ret
+
+
+class APICallSafeRet(object):
+    
+    def __init__(self):
+        self.error = -100
+        self.result = 'INITIAL_RESULT'
+        self.errormsg = 'INITIAL_ERRORMSG'
+
+    def __init__(self, error, result, errormsg):
+        self.error = error
+        self.result = result
+        self.errormsg = errormsg
+
+
+def _apiCall(apimethod, *args, **kwargs):
+    """"""
+
+    ret = None
+    try:
+        # print('_apiCall calling: %s(%s)' % (apimethod.__name__, (apimethod, args, kwargs)))
+        ret = apimethod(*args, **kwargs)
+    except RPCErrorWithRet as err:
+        final = APICallSafeRet(err.error, err.ret, err.errormsg)
+        if type(err.ret) is type([]):  # for multicall
+            if type(ret) is not type([]):
+                ret = []
+            ret.append(final)
+        else:
+            ret = final
+    # finally:
+        # print('_apiCall ret =', ret)
+
+    return ret
+
+
+class _MultiCallMethod:
+    # some lesser magic to store calls made to a MultiCall object
+    # for batch execution
+
+    def __init__(self, call_list, name):
+        self.__call_list = call_list
+        self.__name = name
+
+    def __getattr__(self, name):
+        return _MultiCallMethod(self.__call_list, "%s.%s" % (self.__name, name))
+
+    def __call__(self, *args):
+        if self.__name in [
+                'trashInboxMessage',
+                'getStatus',
+                'getInboxMessageById',
+                'clientStatus',
+                'listAddressBookEntries',
+                'listAddresses',
+                ]:
+            self.__call_list.append((self.__name, args))
+        elif self.__name in [
+                'getAllSentMessageIds_alt',
+                'getAllInboxMessageIds_alt',
+                ]:
+            self.__call_list.append((self.__name[:-4], args))
+        else:
+            print('\n     Skip a unexpected multicall method. <%s>'% self.__name)
+
+
+class MultiCall:
+    """"""
+    def __init__(self, server):
+        self.__server = server
+        self.__call_list = []
+
+    def __repr__(self):
+        return "<MultiCall at %x>" % id(self)
+
+    __str__ = __repr__
+
+    def __getattr__(self, name):
+        return _MultiCallMethod(self.__call_list, name)
+
+    def __call__(self):
+        marshalled_list = []
+        for name, args in self.__call_list:
+            marshalled_list.append({'methodName' : name, 'params' : args})
+        return _apiCall(_multicall(self.__server), marshalled_list)
+
+
 class BMAPIWrapper(object):
 
     def set_proxy(self, proxy=None):
@@ -678,15 +924,19 @@ class BMAPIWrapper(object):
 
         try:
             self.xmlrpc = Proxiedxmlrpclib(uri, verbose=False, allow_none=True, use_datetime=True, timeout=30, proxy=self.proxy)
-            print '\n     XML-RPC initialed on: "%s" (%s)' % (self.conn, proxied)
+            print('\n     XML-RPC initialed on: "%s" (%s)' % (self.conn, proxied))
 
         except Exception as err:  # IOError, unsupported XML-RPC protocol/
             self.xmlrpc = None
-            print '\n     XML-RPC initial failed on: "%s" - {%s}\n' % (self.conn, err)
-            # traceback.print_exc()
+            print('\n     XML-RPC initial failed on: "%s" - {%s}\n' % (self.conn, err))
+            traceback.print_exc()
+
+#    def __call__(self, *args, **kwargs):
+#        return self.xmlrpc(*args, **kwargs)
 
     def __getattr__(self, apiname):
         attr = getattr(self.xmlrpc, apiname, None)
+#        attr = self.xmlrpc._Method(self.xmlrpc, apiname) if self.xmlrpc else None
 
         def wrapper(*args, **kwargs):
             error = 0
@@ -695,7 +945,7 @@ class BMAPIWrapper(object):
             try:
                 if attr is None:
                     error = 1
-                    errormsg = '     Not prepared for calling API methods. (%s)' % apiname
+                    errormsg = '     Not prepared for calling API methods. <%s>' % apiname
                     return {'error': error, 'result': result, 'errormsg': errormsg}
 
                 response = attr(*args, **kwargs)
@@ -704,8 +954,8 @@ class BMAPIWrapper(object):
                         if "API Error" in response:
                             error = getAPIErrorCode(response)
                             if error in [20, 21]:  # programing error, Invalid method/Unexpected API Failure
-                                print '\n     Maybe no such API method:', apiname
-                                print '     Try helping:', self.xmlrpc.system.listMethods() if error == 20 else self.xmlrpc.system.methodHelp(apiname)
+                                print('\n     Maybe no such API method. <%s>' % apiname)
+                                print('     Try helping:', self.xmlrpc.system.listMethods() if error == 20 else self.xmlrpc.system.methodHelp(apiname))
                         errormsg = '\n     ' + response + '\n'
                         return {'error': error, 'result': result, 'errormsg': errormsg}
 
@@ -718,13 +968,13 @@ class BMAPIWrapper(object):
                 else:  # pre-checking for API returns
                     try:
                         if apiname in [
-                                'getAllInboxMessageIDs',
                                 'getAllInboxMessageIds',
+                                'getAllInboxMessageIDs',
                                 ]:
                             result = json.loads(response)['inboxMessageIds']
                         elif apiname in [
-                                'getInboxMessageByID',
                                 'getInboxMessageById',
+                                'getInboxMessageByID',
                                 ]:
                             result = json.loads(response)['inboxMessage']
                         elif apiname in [
@@ -734,8 +984,8 @@ class BMAPIWrapper(object):
                                 ]:
                             result = json.loads(response)['inboxMessages']
                         elif apiname in [
-                                'getAllSentMessageIDs',
                                 'getAllSentMessageIds',
+                                'getAllSentMessageIDs',
                                 ]:
                             result = json.loads(response)['sentMessageIds']
                         elif apiname in [
@@ -746,15 +996,14 @@ class BMAPIWrapper(object):
                                 ]:
                             result = json.loads(response)['sentMessages']
                         elif apiname in [
-                                'getSentMessageByID',
                                 'getSentMessageById',
+                                'getSentMessageByID',
                                 ]:
                             result = json.loads(response)['sentMessage']
                         elif apiname in [
                                 'listAddressBookEntries',
                                 'listAddressbook',
                                 'listAddresses',
-                                'listAddressbook',
                                 'createDeterministicAddresses',
                                 ]:
                             result = json.loads(response)['addresses']
@@ -798,28 +1047,48 @@ class BMAPIWrapper(object):
                         else:
                             error = 99
                             errormsg = '\n     BMAPIWrapper error: unexpected api. <%s>\n' % apiname
-                    except ValueError as err:  # json.loads error
+                    except (ValueError, KeyError) as err:  # json.loads error
                         error = 3
-                        result = response
-                        errormsg = '\n     Server returns unexpected data, maybe a network problem there? (%s)\n' % err
+                        result = json.loads(response) if type(err) == KeyError else response
+                        errormsg = '\n     Server returns unexpected data, maybe a network problem there? {%s}\n%s\n' % (str(err), result)
 
             except TypeError as err:  # unsupported XML-RPC protocol
                 error = -1
-                errormsg = '\n     XML-RPC not initialed correctly: %s.\n' % str(err)
+                errormsg = '\n     XML-RPC not initialed correctly. {%s}\n' % str(err)
                 # traceback.print_exc()
-            except (ProxyError, GeneralProxyError, Socks5AuthError, Socks5Error, Socks4Error, HTTPError, socket.error, xmlrpclib.ProtocolError, xmlrpclib.Fault) as err:  # (xmlrpclib.Error, ConnectionError, socks.GeneralProxyError)
+            except xmlrpclib.Fault as err:
                 error = -2
-                errormsg = '\n     Connection error: %s.\n' % str(err)
+                errormsg = '\n     API method error. {%s}\n' % str(err)
+            except (ProxyError, GeneralProxyError, Socks5AuthError, Socks5Error, Socks4Error, HTTPError, socket.error, xmlrpclib.ProtocolError) as err:  # (xmlrpclib.Error, ConnectionError)
+                error = -3
+                errormsg = '\n     Connection error. {%s}\n' % str(err)
                 # traceback.print_exc()
             except Exception:  # /httplib.BadStatusLine: connection close immediatly
                 error = -99
-                errormsg = '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
-                # traceback.print_exc()
+                errormsg = '\n     Unexpected error: {%s}\n' % sys.exc_info()[0]
+                traceback.print_exc()
 
-            # print json.dumps({'error': error, 'result': result, 'errormsg': errormsg})
+            # print(json.dumps({'error': error, 'result': result, 'errormsg': errormsg}))
             return {'error': error, 'result': result, 'errormsg': errormsg}
 
         return wrapper
+
+
+original = BMAPIWrapper.__getattr__
+
+@wraps(original)
+def mygetattr(bmapiw, attr):
+    attr = original(bmapiw, attr)
+#    print('attr= %s' % attr)
+    if callable(attr):
+        @wraps(attr)
+        def wrapper(*args, **kwargs):
+            return attr(*args, **kwargs)
+        return wrapper
+    else:  # handle (or rather, don't) non-callable attributes
+        return attr
+
+BMAPIWrapper.__getattr__ = mygetattr
 
 
 class InputException(Exception):
@@ -839,13 +1108,42 @@ def inputAddress(prompt='What is the address?'):
     while True:
         address = userInput(prompt + '\nTry again or')
         if not validAddress(address):
-            print src
+            print(src)
             continue
         else:
             break
 
     return address
 
+
+def indexInputBreakable(prompt='Paused', lastId=-1, maximum=-1, default=-1):
+
+    global retStrings
+
+    while True:
+        cinput = userInput('\n%s on %d/%d, next [%d] input next id to change, "-1" to break; (c) or' % (prompt, lastId, maximum, default), '').strip().lower()
+        try:
+            if cinput == "c":
+                raise InputException('usercancel')
+
+            elif cinput == '':
+                break
+
+            elif int(cinput) > maximum:
+                src = retStrings['invalidindex']
+                print(src)
+
+            else:
+                break
+
+        except (InputException, KeyboardInterrupt) as err:
+            raise
+
+        except ValueError:
+            src = retStrings['invalidinput']
+            print(src)
+
+    return cinput
 
 def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
@@ -860,9 +1158,9 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
             elif cinput in alter:
                 break
 
-            elif int(cinput) < 0 or (maximum >= 0 and int(cinput) > maximum):
+            elif int(cinput) < 0 or int(cinput) > maximum:
                 src = retStrings['invalidindex']
-                print src
+                print(src)
 
             else:
                 break
@@ -872,12 +1170,12 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
         except ValueError:
             src = retStrings['invalidinput']
-            print src
+            print(src)
 
     return cinput
 
 
-def userInput(message):
+def userInput(message, defaultStr='\nPress Enter to input default [%s]: ', altVal=''):
     """Checks input for exit or quit. Also formats for input, etc"""
 
     global cmdStr, retStrings
@@ -892,15 +1190,21 @@ def userInput(message):
         stack[3][3],
         cmdStr
         ])
-    print ('\n%s (exit) to cancel.\nPress Enter to input default [%s]: ' % (message, inputs.get(where, '')))
-    uInput = raw_input('>')
+    if defaultStr:
+        defaultStr = defaultStr % inputs.get(where, '')
+    else:
+        defaultStr = ''
+    print('\n%s (exit) to cancel.%s' % (message, defaultStr))
+    uInput = myinput('>')
 
     if uInput.lower() == 'exit':  # Returns the user to the main menu
         raise InputException('usercancel')
 
     elif uInput == '':  # Return last value.
-        return inputs.get(where, '')
-
+        if defaultStr:
+            return inputs.get(where, '')
+        else:
+            return altVal
     else:
         inputs[where] = uInput
 
@@ -917,10 +1221,10 @@ def apiTest():
 def validAddress(address):
     """Predicate to test address validity"""
 
-    print '     Validating...', address
+    print('     Validating... %s' % address)
     response = api.decodeAddress(address)
     if response['error'] != 0:
-        print response['errormsg']
+        print(response['errormsg'])
         return False
 
     return 'success' in response['result']['status'].lower()
@@ -929,21 +1233,21 @@ def validAddress(address):
 def getAddress(passphrase, vNumber, sNumber):
     """Get a deterministic address"""
 
-    passPhrase = passphrase.encode('base64')  # passphrase must be encoded
-    print '     Getting address:', passphrase
+    passPhrase = _encode(passphrase.encode(encoding='utf-8'), 'base64')  # passphrase must be encoded
+    print('     Getting address: %s' % passphrase)
     response = api.getDeterministicAddress(passPhrase, vNumber, sNumber)
     if response['error'] != 0:
         return response['errormsg']
 
-    print '     Address:', response['result']
+    print('     Address: %s' % response['result'])
 
 
 def subscribe(address, label):
     """Subscribe to an address"""
 
-    label = label.encode('base64')
-    print '     Subscribing address:', label
-    response = api.addSubscription(address, label)
+    enclabel = _encode(label.encode(encoding='utf-8'), 'base64')
+    print('     Subscribing address: %s' % label)
+    response = api.addSubscription(address, enclabel)
     if response['error'] != 0:
         return response['errormsg']
 
@@ -953,7 +1257,7 @@ def subscribe(address, label):
 def unsubscribe(address):
     """Unsusbcribe from an address"""
 
-    print '     unSubscribing address:', address
+    print('     unSubscribing address: %s' % address)
     response = api.deleteSubscription(address)
     if response['error'] != 0:
         return response['errormsg']
@@ -964,7 +1268,7 @@ def unsubscribe(address):
 def listSubscriptions():
     """List subscriptions"""
 
-    print '     Subscribed list retrieving...'
+    print('     Subscribed list retrieving...')
     response = api.listSubscriptions()
     if response['error'] != 0:
         return response['errormsg']
@@ -972,21 +1276,20 @@ def listSubscriptions():
     jsonAddresses = response['result']
     numAddresses = len(jsonAddresses)
     print
-    print '     ------------------------------------------------------------------------'
-    print '     | #  |       Label        |               Address              |Enabled|'
-    print '     |----|--------------------|------------------------------------|-------|'
+    print('     ------------------------------------------------------------------------')
+    print('     | #  |       Label        |               Address              |Enabled|')
+    print('     |----|--------------------|------------------------------------|-------|')
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
-        label = (jsonAddresses[addNum]['label'].decode('base64')).encode(
-            'utf-8')              # may still misdiplay in some consoles
+        label = _decode(jsonAddresses[addNum]['label'], 'base64').decode(encoding='utf-8')  # may still misdiplay in some consoles
         address = str(jsonAddresses[addNum]['address'])
         enabled = str(jsonAddresses[addNum]['enabled'])
 
         if len(label) > 19:
             label = label[:16] + '...'
 
-        print '| '.join(['     ', str(addNum).ljust(3), label.ljust(19), address.ljust(35), enabled.ljust(6), '', ])
+        print('| '.join([5 * ' ', str(addNum).ljust(3), label.ljust(19), address.ljust(35), enabled.ljust(6), '', ]))
 
-    print ''.join(['     ', 72 * '-', '\n', ])
+    print(''.join([5 * ' ', 72 * '-', '\n', ]))
 
     return ''
 
@@ -994,9 +1297,9 @@ def listSubscriptions():
 def createChan(password):
     """Create a channel"""
 
-    base64 = password.encode('base64')
-    print '     Channel creating...', password
-    response = api.createChan(base64)
+    encpassword = _encode(password.encode(encoding='utf-8'), 'base64')
+    print('     Channel creating... %s' % password)
+    response = api.createChan(encpassword)
     if response['error'] != 0:
         return response['errormsg']
 
@@ -1010,9 +1313,9 @@ def joinChan():
     address = inputAddress('Enter channel address')
     while uInput == '':
         uInput = userInput('Enter channel name[1~]')
-    password = uInput.encode('base64')
+    password = _encode(uInput.encode(encoding='utf-8'), 'base64')
 
-    print '     Channel joining...', uInput
+    print('     Channel joining... %s' % uInput)
     response = api.joinChan(password, address)
     if response['error'] != 0:
         return response['errormsg']
@@ -1024,7 +1327,7 @@ def leaveChan():
     """Leave a channel"""
 
     address = inputAddress("Enter channel address")
-    print '     Channel leaving...', 'address'
+    print('     Channel leaving... %s' % 'address')
     response = api.leaveChan(address)
     if response['error'] != 0:
         return response['errormsg']
@@ -1035,21 +1338,20 @@ def leaveChan():
 def listAdd():
     """List all of the addresses and their info"""
 
-    print '     Retrieving...', 'Senders'
+    print('     Retrieving... Senders')
     response = api.listAddresses()
     if response['error'] != 0:
         return response['errormsg']
 
     jsonAddresses = response['result']
     numAddresses = len(jsonAddresses)  # Number of addresses
-    # print '\nAddress Index,Label,Address,Stream,Enabled\n'
+    # print('\nAddress Index,Label,Address,Stream,Enabled\n')
     print
-    print '     ------------------------------------------------------------------------------'
-    print '     | #  |       Label        |               Address                |S# |Enabled|'
-    print '     |----|--------------------|--------------------------------------|---|-------|'
+    print('     ------------------------------------------------------------------------------')
+    print('     | #  |       Label        |               Address                |S# |Enabled|')
+    print('     |----|--------------------|--------------------------------------|---|-------|')
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
-        label = jsonAddresses[addNum]['label'].encode(
-            'utf-8')              # may still misdiplay in some consoles
+        label = jsonAddresses[addNum]['label']  # may still misdiplay in some consoles
         address = str(jsonAddresses[addNum]['address'])
         stream = str(jsonAddresses[addNum]['stream'])
         enabled = str(jsonAddresses[addNum]['enabled'])
@@ -1057,9 +1359,9 @@ def listAdd():
         if len(label) > 19:
             label = label[:16] + '...'
 
-        print '| '.join(['     ', str(addNum).ljust(3), label.ljust(19), address.ljust(37), stream.ljust(2), enabled.ljust(6), '', ])
+        print('| '.join([5 * ' ', str(addNum).ljust(3), label.ljust(19), address.ljust(37), stream.ljust(2), enabled.ljust(6), '', ]))
 
-    print ''.join(['     ', 78 * '-', '\n', ])
+    print(''.join([5 * ' ', 78 * '-', '\n', ]))
 
     return ''
 
@@ -1068,26 +1370,20 @@ def genAdd(lbl=None, deterministic=False, passphrase=None, numOfAdd=None, addVNu
     """Generate address"""
 
     if deterministic is False:  # Generates a new address with the user defined label. non-deterministic
-        addressLabel = lbl.encode('base64')
-        print '     Address requesting...', lbl
+        addressLabel = _encode(lbl.encode(encoding='utf-8'), 'base64')
+        print('     Address requesting... %s' % lbl)
         response = api.createRandomAddress(addressLabel)
         if response['error'] != 0:
             return response['errormsg']
 
     else:  # Generates a new deterministic address with the user inputs.
-        passPhrase = passphrase.encode('base64')
-        print '     Address deterministic...', passphrase
+        passPhrase = _encode(passphrase.encode(encoding='utf-8'), 'base64')  # api lack unicode test for it
+        print('     Address deterministic... %s' % passphrase)
         response = api.createDeterministicAddresses(passPhrase, numOfAdd, addVNum, streamNum, ripe)
         if response['error'] != 0:
             return response['errormsg']
 
     return '\n     Address:', response['result']
-
-
-def getBase64Len(x=''):
-
-    strip = len(x) if len(x) < 4 else 2 if x[-2:] == '==' else 1 if x[-1] == '=' else 0
-    return int(len(x) * 3 /4) - strip
 
 
 def dump2File(fileName, fileData, deCoded):
@@ -1106,7 +1402,7 @@ def dump2File(fileName, fileData, deCoded):
             os.makedirs(directory)
 
         except OSError as err:
-            return '\n     %s.\n' % str(err)
+            return '\n     {%s}\n' % str(err)
             # return '\n     Failed creating ' + directory + '\n'
         except Exception:
             return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
@@ -1119,39 +1415,39 @@ def dump2File(fileName, fileData, deCoded):
         if len(x) % 4 == 0:  # check by length before decode.
             trydecode = True
         else:
-            print '\n'.join([
+            print('\n'.join([
                 '     -----------------------------------',
                 '     Contents seems not "BASE64" encoded. (base on length check)',
                 '     Start[%s] ~ Ends[%s].' % (x[:3], x[-3:]),
                 '     About: %d(bytes).' % getBase64Len(x),
                 '     FileName: "%s"' % fileName,
-                ])
+                ]))
             uInput = userInput('Try to decode it anyway, (n)o or (Y)es?')
             if uInput not in inputShorts['no']:
                 trydecode = True
 
         if trydecode is True:
             try:
-                y = x.decode('base64', 'strict')
-                if x == y.encode('base64').replace('\n', ''):  # double check decoded string.
+                y = _decode(x, 'base64')
+                if x == _encode(y, 'base64'):  # .replace('\n', ''):  # double check decoded string.
                     fileData = y
                 else:
-                    print '\n     Failed on "BASE64" re-encode checking.\n'
+                    print('\n     Failed on "BASE64" re-encode checking.\n')
 
-            except ValueError:
+            except (binascii_Error, ValueError) as err:
                 return '\n     Failed on "BASE64" decoding.\n'
         else:
-            print '\n     Not "BASE64" contents, dump to file directly.'
+            print('\n     Not "BASE64" contents, dump to file directly.')
 
     try:
         with open(filePath, 'wb+') as path_to_file:
                 path_to_file.write(fileData)
 
     except IOError as err:
-        return '\n     %s.\n' % str(err)
+        return '\n     {%s}\n' % str(err)
         # return '\n     Failed on operating: "' + filePath + '"\n'
     except Exception:
-        return '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+        return '\n     Unexpected error. {%s}\n' % sys.exc_info()[0]
 
     return '     Successfully saved to: "%s"' % filePath
 
@@ -1175,15 +1471,15 @@ def attachment():
                 with open(filePath):
                     break
             except IOError:
-                print '\n     Failed open file on: "%s"\n' % filePath
+                print('\n     Failed open file on: "%s"\n' % filePath)
 
-        # print filesize, and encoding estimate with confirmation if file is over X size (1mb?)
+        # print(filesize, and encoding estimate with confirmation if file is over X size (1mb?))
         invSize = os.path.getsize(filePath)
         invSize = (invSize / 1024)  # Converts to kilobytes
         round(invSize, 2)  # Rounds to two decimal places
 
         if invSize > 500.0:  # If over 500KB
-            print '\n     WARNING:The file that you are trying to attach is %d(KB) and will take considerable time to send.\n' % invSize
+            print('\n     WARNING:The file that you are trying to attach is %d(KB) and will take considerable time to send.\n' % invSize)
             uInput = userInput('Are you sure you still want to attach it, (y)es or (N)o?').lower()
 
             if uInput not in inputShorts['yes']:
@@ -1198,21 +1494,21 @@ def attachment():
         filetype = imghdr.what(filePath)  # Tests if it is an image file
         if filetype is not None:
             print
-            print '     ---------------------------------------------------'
-            print '     Attachment detected as an Image.'
-            print '     <img> tags will automatically be included,'
-            print '     allowing the recipient to view the image'
-            print '     using the "View HTML code..." option in Bitmessage.'
-            print '     ---------------------------------------------------\n'
+            print('     ---------------------------------------------------')
+            print('     Attachment detected as an Image.')
+            print('     <img> tags will automatically be included,')
+            print('     allowing the recipient to view the image')
+            print('     using the "View HTML code..." option in Bitmessage.')
+            print('     ---------------------------------------------------\n')
             isImage = True
             time.sleep(2)
 
         # Alert the user that the encoding process may take some time.
-        print '     Encoding Attachment, Please Wait ...'
+        print('     Encoding Attachment, Please Wait ...')
 
         with open(filePath, 'rb') as f:  # Begin the actual encoding
             data = f.read(188743680)  # Reads files up to 180MB, the maximum size for Bitmessage.
-            data = data.encode("base64")
+            data = _encode(data, 'base64').decode(encoding='utf-8')
 
         if isImage:  # If it is an image, include image tags in the message
             theAttachment = """
@@ -1260,7 +1556,7 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
             toAddress = inputAddress("Input a valid message receiver:")
 
     if not (fromAddress and validAddress(fromAddress)):
-        print '     Sender retrieving...', fromAddress
+        print('     Sender retrieving... %s' % fromAddress)
         response = api.listAddresses()
         if response['error'] != 0:
             return response['errormsg']
@@ -1283,7 +1579,7 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
 
                 if found is False:
                     if validAddress(fromAddress) is False:
-                        print '\n     Invalid Address. Please try again.\n'
+                        print('\n     Invalid Address. Please try again.\n')
 
                     else:
                         for addNum in range(0, numAddresses):  # processes all of the addresses
@@ -1293,29 +1589,29 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
                                 break
 
                         if found is False:
-                            print '\n     The address entered is not one of yours. Please try again.\n'
+                            print('\n     The address entered is not one of yours. Please try again.\n')
 
                 if found:
                     break  # Address was found
 
         else:  # Only one address in address book
-            print '\n     Using the only address in the addressbook to send from.\n'
+            print('\n     Using the only address in the addressbook to send from.\n')
             fromAddress = jsonAddresses[0]['address']
 
     if subject is None:
         subject = userInput('Enter your Subject.')
-        subject = subject.encode('base64')
+        encsubject = _encode(subject.encode(encoding='utf-8'), 'base64')
 
     if message is None:
         message = ''
         while True:
-            print '\n'.join([
+            print('\n'.join([
                 '     Drafting:',
                 message,
                 '     -----------------------------------',
-                ])
+                ]))
             try:
-                message += '\n' + raw_input('Continue enter your message line by line, cancel with <CTL-D>.\n>')
+                message += '\n' + myinput('Continue enter your message line by line, cancel with <CTL-D>.\n>')
             except EOFError:
                 break
 
@@ -1326,8 +1622,8 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
     if attachMessage:
         message = message + '\n' + attachMessage
 
-    print message
-    message = message.encode('base64')
+    print(message)
+    message = _encode(message.encode(encoding='utf-8'), 'base64').decode(encoding='utf-8')
     src = retStrings['usercancel']
     uInput = userInput('Realy want to send upper message, (n)o or (Y)es?').lower()
     if uInput in inputShorts['no']:
@@ -1335,15 +1631,15 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
 
     while True:
         if isBrd:
-            print '     Broadcast message sending... (%s)' % subject.decode('base64')
-            ackData = api.sendBroadcast(fromAddress, subject, message)
+            print('     Broadcast message sending... %s' % subject)
+            ackData = api.sendBroadcast(fromAddress, encsubject, message)  # api lack unicode checking
         else:
-            print '     Message sending... (%s)' % subject.decode('base64')
-            ackData = api.sendMessage(toAddress, fromAddress, subject, message)
+            print('     Message sending... %s' % subject)
+            ackData = api.sendMessage(toAddress, fromAddress, encsubject, message)  # api lack unicode checking
         if ackData['error'] == 1:
             return ackData['errormsg']
         elif ackData['error'] != 0:
-            print ackData['errormsg']
+            print( ackData['errormsg'])
             uInput = userInput('Would you like to try again, (n)o or (Y)es?').lower()
             if uInput in inputShorts['no']:
                 break
@@ -1352,12 +1648,12 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
             break
 
     if ackData['error'] == 0:
-        print '     Fetching send status...'
+        print('     Fetching send status...')
         status = api.getStatus(ackData['result'])
         if status['error'] == 1:
             return status['errormsg']
         elif status['error'] != 0:
-            print status['errormsg']
+            print(status['errormsg'])
         else:
             return '     Message Status:' + status['result']
 
@@ -1367,52 +1663,63 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
 def inbox(unreadOnly=False, pageNum=20):
     """Lists the messages by: message index, To Address Label, From Address Label, Subject, Received Time)"""
 
-    print '     Inbox index fetching...'
-    response = api.getAllInboxMessageIDs()
+    print('     Inbox index fetching...')
+    response = api.getAllInboxMessageIds()
     if response['error'] != 0:
         return response['errormsg']
 
     messageIds = response['result']
     numMessages = len(messageIds)
+    messagesUnread = {}
     messagesPrinted = 0
-    messagesUnread = 0
-    for msgNum in range(numMessages - 1, -1, -1):  # processes all of the messages in the inbox
-        messageID = messageIds[msgNum]['msgid']
-        print '     -----------------------------------'
-        print '     Inbox message retrieving...', messageID
-        response = api.getInboxMessageByID(messageID)
-        if response['error'] == 1:
-            return response['errormsg']
-        elif response['error'] != 0:
-            print '\n     Retrieve failed on:', msgNum, messageID
-            print response['errormsg']
-        else:
-            message = response['result'][0]
-            # if we are displaying all messages or if this message is unread then display it
-            if not unreadOnly or not message['read']:
-                print '     -----------------------------------'
-                print '     Inbox index: %d/%d' % (msgNum, numMessages - 1)  # message index
-                print '     Message ID:', message['msgid']
-                print '     Read:', message['read']
-                print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
-                print '     From:', getLabelForAddress(message['fromAddress'])  # Get the from address
-                print '     Received:', datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
-                print '     Size: %d(bytes)' % getBase64Len(message['message'])
-                print '     Subject:', message['subject'].decode('base64')  # Get the subject
-                messagesPrinted += 1
-                if not message['read']:
-                    messagesUnread += 1
+    lastId = numMessages - 1
+    while lastId >= 0:  # processes all of the messages in the inbox
+        nextId = lastId - pageNum + 1 if lastId > pageNum else 0
+        messageID = messageIds[lastId]['msgid']
+        print('     -----------------------------------')
+        print('     Inbox message retrieving... [%d] (%s)' % (lastId, messageID))
+        multicall = MultiCall(api.xmlrpc)
+        for messageID in reversed(messageIds[nextId:lastId + 1]):
+            multicall.getInboxMessageById(messageID['msgid'])
+        for response in multicall():
+            thisId = lastId
+            lastId -= 1
+            if response.error == 1:
+                return response.errormsg
+            elif response.error != 0:
+                print('\n     Retrieve failed on: [%d] (%s)' % (thisId, messageIds[thisId]['msgid']))
+                print(response.errormsg)
+            else:
+                message = response.result[0]
+                subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+                # if we are displaying all messages or if this message is unread then display it
+                if not unreadOnly or not message['read']:
+                    print('     -----------------------------------')
+                    print('     Inbox index: %d/%d' % (thisId, numMessages - 1))  # message index
+                    print('     Message ID: %s' % message['msgid'])
+                    print('     Read: %d' % message['read'])
+                    print('     To: %s' % getLabelForAddress(message['toAddress']))  # Get the to address
+                    print('     From: %s' % getLabelForAddress(message['fromAddress']))  # Get the from address
+                    print('     Received: %s' % datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S'))
+                    print('     Size: %d(bytes)' % getBase64Len(message['message']))
+                    print('     Subject: %s' % subject)  # Get the subject
+                    messagesPrinted += 1
+                    if not message['read']:
+                        messagesUnread[thisId] = 1
 
-                if messagesPrinted % pageNum == 0 and messagesPrinted != 0:
-                    try:
-                        uInput = userInput('Paused on %d/%d, next [%d],' % (msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
+            if messagesPrinted % pageNum == 0 and messagesPrinted != 0:
+                nextPage = thisId - pageNum if thisId > pageNum else 0
+                try:
+                    uInput = indexInputBreakable('Paused', thisId, numMessages - 1, nextPage)
+                    if uInput:
+                        lastId = int(uInput)
+                        break
+                except InputException as err:
+                    raise InputException(str(err))
 
-                    except InputException as err:
-                        raise InputException(str(err))
-
-    print '     -----------------------------------'
-    print '     There are %d unread messages of %d messages in the inbox.' % (messagesUnread, numMessages)
-    print '     -----------------------------------'
+    print('     -----------------------------------')
+    print('     There are %d unread messages previewed in %d messages.' % (len(messagesUnread), numMessages))
+    print('     -----------------------------------')
 
     return ''
 
@@ -1420,33 +1727,46 @@ def inbox(unreadOnly=False, pageNum=20):
 def outbox(pageNum=20):
     """TBC"""
 
-    print '     All outbox messages downloading...'
+    print('     All outbox messages downloading...')
     response = api.getAllSentMessages()
     if response['error'] != 0:
         return response['errormsg']
 
     outboxMessages = response['result']
     numMessages = len(outboxMessages)
-    for msgNum in range(numMessages - 1, -1, -1):  # processes all of the messages in the outbox
+    messagesPrinted = 0
+    msgNum = numMessages - 1
+    while msgNum >= 0:  # processes all of the messages in the outbox
         message = outboxMessages[msgNum]
-        print '     -----------------------------------'
-        print '     Outbox index: %d/%d' % (msgNum, numMessages - 1)  # message index
-        print '     Message ID:', message['msgid']
-        print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
+        subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+        print('     -----------------------------------')
+        print('     Outbox index: %d/%d' % (msgNum, numMessages - 1))  # message index
+        print('     Message ID: %s' % message['msgid'])
+        print('     To: %s' % getLabelForAddress(message['toAddress']))  # Get the to address
         # Get the from address
-        print '     From:', getLabelForAddress(message['fromAddress'])
-        print '     Status:', message['status']  # Get the status
-        print '     Ack:', message['ackData']  # Get the ackData
-        print '     Last Action Time:', datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S')
-        print '     Size: %d(bytes)' % getBase64Len(message['message'])
-        print '     Subject:', message['subject'].decode('base64')  # Get the subject
+        print('     From: %s' % getLabelForAddress(message['fromAddress']))
+        print('     Status: %s' % message['status'])  # Get the status
+        print('     Ack: %s' % message['ackData'])  # Get the ackData
+        print('     Last Action Time: %s' % datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S'))
+        print('     Size: %d(bytes)' % getBase64Len(message['message']))
+        print('     Subject: %s' % subject)  # Get the subject
+        messagesPrinted += 1
 
-        if msgNum % pageNum == 0 and msgNum != 0:
-            uInput = userInput('Paused on %d/%d, next [%d],' % (msgNum, numMessages - 1, msgNum - pageNum if msgNum > pageNum else 0))
+        if messagesPrinted % pageNum == 0:
+            nextPage = msgNum - pageNum if msgNum > pageNum else 0
+            try:
+                uInput = indexInputBreakable('Paused', msgNum, numMessages - 1, nextPage)
+                if uInput:
+                    msgNum = int(uInput)
+                    break
+            except InputException as err:
+                raise InputException(str(err))
 
-    print '     -----------------------------------'
-    print '     There are ', numMessages, ' messages in the outbox.'
-    print '     -----------------------------------\n'
+        msgNum -= 1
+
+    print('     -----------------------------------')
+    print('     There are %d messages in the outbox.' % numMessages)
+    print('     -----------------------------------\n')
 
     return ''
 
@@ -1492,20 +1812,20 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
             if len(x) % 4 == 0:  # check by length before decode.
                 trydecode = True
             else:
-                print '\n'.join([
+                print('\n'.join([
                     '     -----------------------------------',
                     '     Embeded mesaage seems not "BASE64" encoded. (base on length check)',
                     '     Offset: %d, about: %d(bytes).' % (attPre, getBase64Len(x)),
                     '     Start[%s] ~ Ends[%s].' % (x[:3], x[-3:]),
                     '     FileName: "%s"' % fn,
-                ])
+                ]))
                 uInput = userInput('Try to decode anyway, (n)o or (Y)es?')
                 if uInput not in inputShorts['no']:
                     trydecode = True
             if trydecode is True:
                 try:
-                    y = x.decode('base64', 'strict')
-                    if x == y.encode('base64').replace('\n', ''):  # double check decoded string.
+                    y = _decode(x, 'base64')
+                    if x == _encode(y, 'base64'):  #.replace('\n', ''):  # double check decoded string.
                         if askSave is True:
                             uInput = userInput('Download the "decoded" attachment, (y)es or (No)?\nNames[%d]: %s,' % (counter, fn)).lower()
                             if uInput in inputShorts['yes']:
@@ -1515,28 +1835,28 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
                         else:
                             src = dump2File(fn, y, True)
 
-                        print src
-                        attmsg = '\n'.join([
+                        print(src)
+                        attmsg = ('\n'.join([
                             '     -----------------------------------',
                             '     Attachment[%d]: "%s"' % (counter, fn),
                             '     Size: %d(bytes)' % getBase64Len(x),
                             '     -----------------------------------',
-                            ])
+                            ]))
                         # remove base64 and '<att' prefix and suffix '/>' stuff
                         textmsg = textmsg + content[msgPos:attPre] + attmsg
                         msgPos = attEndPos
                     else:
-                        print '\n     Failed on decode this embeded "BASE64" like message on re-encode check.\n'
+                        print('\n     Failed on decode this embeded "BASE64" like message on re-encode check.\n')
 
-                except ValueError:
-                    print '\n     Failed on decode this emdeded "BASE64" encoded like message.\n'
+                except (binascii_Error, ValueError) as err:
+                    print('\n     Failed on decode this emdeded "BASE64" encoded like message.\n')
                 except InputException:
                     raise
                 except Exception:
-                    print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+                    print('\n     Unexpected error. {%s}\n' % sys.exc_info()[0])
 
             else:
-                print '\n    Skiped a embeded "BASE64" encoded like message.'
+                print('\n    Skiped a embeded "BASE64" encoded like message.')
 
             if attEndPos != msgPos:
                 textmsg = textmsg + content[msgPos:attEndPos]
@@ -1549,7 +1869,7 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
             raise
         except Exception:
             traceback.print_exc()
-            print '\n     Unexpected error: %s.\n' % sys.exc_info()[0]
+            print('\n     Unexpected error. {%s}\n' % sys.exc_info()[0])
 
     return textmsg
 
@@ -1557,7 +1877,7 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
 def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
     """Opens a sent message for reading"""
 
-    print '     All outbox messages downloading...', str(msgNum), messageID
+    print('     All outbox messages downloading... [%d] (%s)' % (msgNum, messageID))
     if not messageID:
         response = api.getAllSentMessages()
         if response['error'] != 0:
@@ -1565,37 +1885,37 @@ def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=Fals
 
         message = response['result'][msgNum]
     else:
-        response = api.getSentMessageByID(messageID)
+        response = api.getSentMessageById(messageID)
         if response['error'] != 0:
             return response['errormsg']
 
         message = response['result'][0]
 
-    subject = message['subject'].decode('base64')
-    content = message['message'].decode('base64')
+    subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+    content = _decode(message['message'], 'base64').decode(encoding='utf-8')
     full = len(content)
     textmsg = ''
     textmsg = content if withAtta else attDetect(content, textmsg, 'outbox_' + subject, cmd != 'save')
 
-    print '    ', 74 * '-'
-    print '     Message index:', str(msgNum)  # message outdex
-    print '     Message ID:', message['msgid']
-    print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
+    print(5 * ' ' + 74 * '-')
+    print('     Message index: %d' % msgNum)  # message outdex
+    print('     Message ID: %s' % message['msgid'])
+    print('     To: %s' % getLabelForAddress(message['toAddress']))  # Get the to address
     # Get the from address
-    print '     From:', getLabelForAddress(message['fromAddress'])
-    print '     Status:', message['status']  # Get the status
-    print '     Ack:', message['ackData']  # Get the ackData
+    print('     From: %s' % getLabelForAddress(message['fromAddress']))
+    print('     Status: %s' % message['status'])  # Get the status
+    print('     Ack: %s' % message['ackData'])  # Get the ackData
 
-    print '     Last Action Time:', datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S')
-    print '     Length: %d/%d' % (trunck if trunck <= full else full, full)
-    print '     Subject:', subject  # Get the subject
-    print '     Message:\n'
-    print textmsg if trunck < 0 or len(textmsg) <= trunck else textmsg[:trunck] + '\n\n     ~< MESSAGE TOO LONG TRUNCKED TO SHOW >~'
-    print '    ', 74 * '-'
+    print('     Last Action Time: %s' % datetime.datetime.fromtimestamp(float(message['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S'))
+    print('     Length: %d/%d' % (trunck if trunck <= full else full, full))
+    print('     Subject: %s' % subject)  # Get the subject
+    print('     Message:')
+    print(textmsg if trunck < 0 or len(textmsg) <= trunck else textmsg[:trunck] + '\n\n     ~< MESSAGE TOO LONG TRUNCKED TO SHOW >~')
+    print(5 * ' ' + 74 * '-')
 
     if cmd == 'save':
         ret = dump2File('outbox_' + subject, textmsg, True)
-        print ret
+        print(ret)
 
     return ''
 
@@ -1603,35 +1923,35 @@ def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=Fals
 def readMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
     """Open a message for reading"""
 
-    print '     Inbox message reading...', str(msgNum)
-    response = api.getInboxMessageByID(messageID, True)
+    print('     Inbox message reading... [%d] (%s)' % (msgNum, messageID))
+    response = api.getInboxMessageById(messageID, True)
     if response['error'] != 0:
         return response['errormsg']
 
     message = response['result'][0]
-    subject = message['subject'].decode('base64')
-    content = message['message'].decode('base64')  # Message that you are replying too.
+    subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+    content = _decode(message['message'], 'base64').decode(encoding='utf-8')
     full = len(content)
     textmsg = ''
     textmsg = content if withAtta else attDetect(content, textmsg, 'inbox_' + subject, cmd != 'save')
 
-    print '    ', 74 * '-'
-    print '     Inbox index :', msgNum  # message index
-    print '     Message ID:', message['msgid']
-    print '     Read:', message['read']
-    print '     To:', getLabelForAddress(message['toAddress'])  # Get the to address
+    print(5 * ' ' + 74 * '-')
+    print('     Inbox index: %d' % msgNum)  # message index
+    print('     Message ID: %s' % message['msgid'])
+    print('     Read: %d' % message['read'])
+    print('     To: %s' % getLabelForAddress(message['toAddress']))  # Get the to address
     # Get the from address
-    print '     From:', getLabelForAddress(message['fromAddress'])
-    print '     Received:', datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
-    print '     Length: %d/%d' % (trunck if trunck <= full else full, full)
-    print '     Subject:', subject  # Get the subject
-    print '     Message:\n'
-    print textmsg if trunck < 0 or len(textmsg) <= trunck else textmsg[:trunck] + '\n\n     ~< MESSAGE TOO LONG TRUNCKED TO SHOW >~'
-    print '    ', 74 * '-'
+    print('     From: %s' % getLabelForAddress(message['fromAddress']))
+    print('     Received: %s' % datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S'))
+    print('     Length: %d/%d' % (trunck if trunck <= full else full, full))
+    print('     Subject: %s' % subject)  # Get the subject
+    print('     Message:')
+    print(textmsg if trunck < 0 or len(textmsg) <= trunck else textmsg[:trunck] + '\n\n     ~< MESSAGE TOO LONG TRUNCKED TO SHOW >~')
+    print(5 * ' ' + 74 * '-')
 
     if cmd == 'save':
         ret = dump2File('inbox_' + subject + str(full), textmsg, True)
-        print ret
+        print(ret)
 
     return ''
 
@@ -1642,14 +1962,14 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     global inputShorts, retStrings
 
     forwardORreply = forwardORreply.lower()  # makes it lowercase
-    print '     Inbox message %s... %d' % (forwardORreply, msgNum)
-    response = api.getInboxMessageByID(messageID, True)
+    print('     Inbox message %s... [%d] (%s)' % (forwardORreply, msgNum, messageID))
+    response = api.getInboxMessageById(messageID, True)
     if response['error'] != 0:
         return response['errormsg']
 
     message = response['result'][0]
-    subject = message['subject'].decode('base64')
-    content = message['message'].decode('base64')  # Message that you are replying too.
+    subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+    content = _decode(message['message'], 'base64').decode(encoding='utf-8')
     fromAdd = message['toAddress']  # Address it was sent To, now the From address
     fwdFrom = message['fromAddress']  # Address it was sent To, will attached to fwd
     recvTime = datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
@@ -1682,15 +2002,34 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     else:
         return '\n     Invalid Selection. Reply or Forward only'
 
-    subject = subject.encode('base64')
+    subject = _encode(subject, 'base64').decode(encoding='utf-8')
     src = sendMsg(toAdd, fromAdd, subject, None, False, attachMessage)
     return src
+
+
+def delMsgs(messageIDs=[]):
+
+    numMessages = len(messageIDs)
+    print('     MultiCall: Inbox message deleting... [%d]' % numMessages)
+    multicall = MultiCall(api.xmlrpc)
+    for messageID in reversed(messageIDs):
+        multicall.trashInboxMessage(messageID)
+
+    msgNum = numMessages - 1
+    for result in multicall():
+        if result.error == 0:
+            print('     [%d/%d] %s (%s)' % (msgNum, numMessages - 1, result.result, messageIDs[msgNum]))
+        else:
+            print(result.errormsg)
+        msgNum -= 1
+
+    return ''
 
 
 def delMsg(msgNum=-1, messageID=None):
     """Deletes a specified message from the inbox"""
 
-    print '     Inbox message deleting...', messageID
+    print('     Inbox message deleting... [%d] (%s)' % (msgNum, messageID))
     response = api.trashMessage(messageID)
     if response['error'] != 0:
         return response['errormsg']
@@ -1702,7 +2041,7 @@ def delSentMsg(msgNum=-1, messageID=None):
     """Deletes a specified message from the outbox"""
 
     if not messageID:
-        print '     All outbox messages downloading...', str(msgNum)
+        print('     All outbox messages downloading... [%d]' % msgNum)
         response = api.getAllSentMessages()
         if response['error'] != 0:
             return response['errormsg']
@@ -1710,12 +2049,12 @@ def delSentMsg(msgNum=-1, messageID=None):
         outboxMessages = response['result']
         # gets the message ackData via the message index number
         ackData = outboxMessages[msgNum]['ackData']
-        print '     Outbox message deleting...', ackData
+        print('     Outbox message deleting... %s' % ackData)
         response = api.trashSentMessageByAckData(ackData)
         if response['error'] != 0:
             return response['errormsg']
     else:
-        print '     Outbox message deleting...', messageID
+        print('     Outbox message deleting... (%s)' % messageID)
         response = api.trashSentMessage(messageID)
         if response['error'] != 0:
             return response['errormsg']
@@ -1728,8 +2067,8 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
     global inputShorts, retStrings
 
     numMessages = 0
-    print '     Inbox index fetching...'
-    response = api.getAllInboxMessageIDs()
+    print('     Inbox index fetching...')
+    response = api.getAllInboxMessageIds()
     if response['error'] != 0:
         return response['errormsg']
 
@@ -1753,7 +2092,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
             else:
                 ret = readMsg(cmd, msgNum, messageID)
-            print ret
+            print(ret)
 
             uInput = userInput('Would you like to set this message to unread, (y)es or (N)o?').lower()
             if uInput in inputShorts['yes']:
@@ -1781,7 +2120,7 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                         # numMessages -= 1
                         ret = delMsg(msgNum, messageID)
 
-            print ret
+            print(ret)
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
@@ -1795,13 +2134,13 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
         if uInput in inputShorts['all']:
             ret = inbox(False)
-            print ret
+            print(ret)
             uInput = userInput('Are you sure to delete all this %d message(s), (y)es or (N)o?' % numMessages).lower()  # Prevent accidental deletion
             if uInput in inputShorts['yes']:
-                for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
-                    ret = delMsg(msgNum, messageIds[msgNum]['msgid'])
-                    print ret
-                src = ''
+                messageIDs = []
+                for messageId in messageIds:  # processes all of the messages in the outbox
+                    messageIDs.append(messageId['msgid'])
+                src = delMsgs(messageIDs)
 
         else:
             nextNum = msgNum = int(uInput)
@@ -1809,14 +2148,14 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
                 nextNum += 1
                 messageID = messageIds[msgNum]['msgid']
                 ret = readMsg(cmd, msgNum, messageID)
-                print ret
+                print(ret)
 
                 uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
                 if uInput in inputShorts['yes']:
                     # nextNum -= 1
                     # numMessages -= 1
                     ret = delMsg(msgNum, messageID)
-                    print ret
+                    print(ret)
 
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
@@ -1833,8 +2172,8 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
 
     global inputShorts, retStrings
 
-    print '     Outbox index fetching...'
-    response = api.getAllSentMessageIDs()
+    print('     Outbox index fetching...')
+    response = api.getAllSentMessageIds()
     if response['error'] != 0:
         return response['errormsg']
 
@@ -1859,7 +2198,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
             else:
                 ret = readSentMsg(cmd, msgNum, messageID)
 
-            print ret
+            print(ret)
             # Gives the user the option to delete the message
             uInput = userInput('Would you like to (s)ave, (d)ump or Delete this message directly?').lower()
 
@@ -1876,7 +2215,7 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
                     numMessages -= 1
                     ret = delSentMsg(msgNum, messageID)
 
-            print ret
+            print(ret)
             if nextNum < numMessages:
                 uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
                 msgNum = nextNum if uInput not in inputShorts['no'] else -1
@@ -1890,12 +2229,12 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
 
         if uInput in inputShorts['all']:
             ret = outbox()
-            print ret
+            print(ret)
             uInput = userInput('Are you sure to delete all this %d message(s), (y)es or (N)o?' % numMessages).lower()  # Prevent accidental deletion
             if uInput in inputShorts['yes']:
                 for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
                     ret = delSentMsg(msgNum, messageIds[msgNum]['msgid'])
-                    print ret
+                    print(ret)
                 src = ''
 
         else:
@@ -1905,14 +2244,14 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
 
                 messageID = messageIds[msgNum]['msgid']
                 ret = readSentMsg(cmd, msgNum, messageID)
-                print ret
+                print(ret)
 
                 uInput = userInput('Are you sure to delete this message, (y)es or (N)o?').lower()  # Prevent accidental deletion
                 if uInput in inputShorts['yes']:
                     nextNum -= 1
                     numMessages -= 1
                     ret = delSentMsg(msgNum, messageID)
-                    print ret
+                    print(ret)
 
                 if nextNum < numMessages:
                     uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
@@ -1939,42 +2278,27 @@ def getLabel():
     """Build known addresses"""
 
     # add from address book
-    errors = ''
-    newentry = []
-    print '     Retrieving...', 'Contacts'
-    addresses = api.listAddressBookEntries()
-    if addresses['error'] != 0:
-        print addresses['errormsg']
-    else:
-        for entry in addresses['result']:
-            isnew = True
-            for old in knownAddresses['addresses']:
-                if entry['address'] == old['address']:
-                    isnew = False
-                    break
-            if isnew is True:
-                newentry.append({'label': entry['label'].decode('base64').encode('utf-8'), 'address': entry['address']})
-        if any(newentry):
-            for new in newentry:
-                knownAddresses['addresses'].append(new)
+    print('     Retrieving... known')
+    multicall = MultiCall(api.xmlrpc)
+    multicall.listAddressBookEntries()  # Contacts
+    multicall.listAddresses()  # Senders
 
-    newentry = []
-    print '     Retrieving...', 'Senders'
-    addresses = api.listAddresses()
-    if addresses['error'] != 0:
-        print addresses['errormsg']
-    else:
-        for entry in addresses['result']:
-            isnew = True
-            for old in knownAddresses['addresses']:
-                if entry['address'] == old['address']:
-                    isnew = False
-                    break
-            if isnew is True:
-                newentry.append({'label': entry['label'].encode('utf-8'), 'address': entry['address']})
-        if any(newentry):
-            for new in newentry:
-                knownAddresses['addresses'].append(new)
+    for addresses in multicall():
+        newentry = []
+        if addresses.error != 0:
+            print(addresses.errormsg)
+        else:
+            for entry in addresses.result:
+                isnew = True
+                for old in knownAddresses['addresses']:
+                    if entry['address'] == old['address']:
+                        isnew = False
+                        break
+                if isnew is True:
+                    newentry.append({'label': entry['label'], 'address': entry['address']})
+            if any(newentry):
+                for new in newentry:
+                    knownAddresses['addresses'].append(new)
 
     return ''
 
@@ -1983,7 +2307,7 @@ def listAddressBK(printKnown=False):
     """List addressbook entries"""
 
     if not printKnown:
-        print '     Retrieving...', 'Contacts'
+        print('     Retrieving... Contacts')
         response = api.listAddressBookEntries()
         if response['error'] != 0:
             return response['errormsg']
@@ -1993,17 +2317,17 @@ def listAddressBK(printKnown=False):
 
     numAddresses = len(addressBook)
     print
-    print '     ------------------------------------------------------------------'
-    print '     | #  |       Label        |               Address                |'
-    print '     |----|--------------------|--------------------------------------|'
+    print('     ------------------------------------------------------------------')
+    print('     | #  |       Label        |               Address                |')
+    print('     |----|--------------------|--------------------------------------|')
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
         entry = addressBook[addNum]
-        label = entry['label'].decode('base64').encode('utf-8') if not printKnown else entry['label']
+        label = _decode(entry['label'], 'base64').decode(encoding='utf-8') if not printKnown else entry['label']
         address = entry['address']
         if len(label) > 19:
             label = label[:16] + '...'
-        print '| '.join(['     ', str(addNum).ljust(3), label.ljust(19), address.ljust(37), '', ])
-    print ''.join(['     ', 66 * '-', '\n', ])
+        print('| '.join([5 * ' ', str(addNum).ljust(3), label.ljust(19), address.ljust(37), '', ]))
+    print(''.join([5 * ' ', 66 * '-', '\n', ]))
 
     return ''
 
@@ -2011,8 +2335,9 @@ def listAddressBK(printKnown=False):
 def addAddressToAddressBook(address, label):
     """Add an address to an addressbook"""
 
-    print '     Adding...', label
-    response = api.addAddressBK(address, label.encode('base64'))
+    enclabel = _encode(label, 'base64')
+    print('     Adding... %s' % label)
+    response = api.addAddressBK(address, enclabel)
     if response['error'] != 0:
         return response['errormsg']
 
@@ -2022,7 +2347,7 @@ def addAddressToAddressBook(address, label):
 def deleteAddressFromAddressBook(address):
     """Delete an address from an addressbook"""
 
-    print '     Deleting...', address
+    print('     Deleting... %s' % address)
     response = api.delAddressBK(address)
     if response['error'] != 0:
         return response['errormsg']
@@ -2042,51 +2367,58 @@ def getAPIErrorCode(response):
 def markMessageReadbit(msgNum=-1, messageID=None, read=False):
     """Mark a mesasge as unread/read"""
 
-    print '     Marking...', str(msgNum),
-    response = api.getInboxMessageByID(messageID, read)
+    print('     Marking... [%d] (%s)' % (msgNum, messageID), end='')
+    response = api.getInboxMessageById(messageID, read)
     if response['error'] != 0:
-        print 'Failed.'
+        print('Failed.')
         return response['errormsg']
 
-    print 'OK.'
+    print('OK.')
     return ''
 
 
 def markAllMessagesReadbit(read=False):
     """Mark all messages as unread/read"""
 
-    print '     Inbox index fetching...', 'mark'
-    response = api.getAllInboxMessageIDs()
+    print('     Inbox index fetching... mark')
+    response = api.getAllInboxMessageIds()
     if response['error'] != 0:
         return response['errormsg']
 
-    messageIds = response['result']
-    numMessages = len(messageIds)
+    messageIDs = response['result']
+    numMessages = len(messageIDs)
     if numMessages < 1:
         return '     Zero message found.\n'
 
-    for msgNum in range(0, numMessages):  # processes all of the messages in the inbox
-        src = markMessageReadbit(msgNum, messageIds[msgNum]['msgid'], read)
-        print src
+    print('     MultiCall: Inbox message marking... [%d]' % numMessages)
+    multicall = MultiCall(api.xmlrpc)
+    for messageId in messageIDs:
+        multicall.getInboxMessageById(messageId['msgid'], read)
+
+    for result in multicall():
+        if result.error == 0:
+            print('     Read state: [%d], msgid: (%s)' % (result.result[0]['read'], result.result[0]['msgid']))
+        else:
+            print(result.errormsg)
 
     return ''
 
 
 def addInfo(address):
 
-    print '     Address decoding...', address
+    print('     Address decoding... %s' % address)
     response = api.decodeAddress(address)
     if response['error'] != 0:
         return response['errormsg']
 
     addinfo = response['result']
-    print '     ------------------------------'
+    print('     ------------------------------')
     if 'success' in addinfo['status'].lower():
-        print '     Valid Address'
-        print '     Address Version: %s' % str(addinfo['addressVersion'])
-        print '     Stream Number: %s\n' % str(addinfo['streamNumber'])
+        print('     Valid Address')
+        print('     Address Version: %d' % addinfo['addressVersion'])
+        print('     Stream Number: %d\n' % addinfo['streamNumber'])
     else:
-        print '\n     Invalid Address !\n'
+        print('\n     Invalid Address!\n')
 
     return ''
 
@@ -2094,37 +2426,27 @@ def addInfo(address):
 def clientStatus():
     """Print the client status"""
 
-    print '     Client status fetching...'
-    print '     ------------------------------'
+    print('     Client status fetching...')
+    print('     ------------------------------')
 
-    response = api.clientStatus()
-    if response['error'] == 0:
-        client_status = response['result']
-        for key in client_status.keys():
-            print '    ', key, ':', str(client_status[key])
-    else:
-        print response['errormsg']
+    multicall = MultiCall(api.xmlrpc)
+    multicall.clientStatus()
+    multicall.getAllInboxMessageIds_alt()
+    multicall.getAllSentMessageIds_alt()
 
-    response = api.getAllInboxMessageIDs()
-    if response['error'] == 0:
-        inboxMessageIds = response['result']
-        inumMessages = len(inboxMessageIds)
-        print '     InboxMessages:', str(inumMessages)
-    else:
-        print response['errormsg']
+    for response in multicall():
+        if response.error == 0:
+            client_status = response.result
+            for key in client_status.keys():
+                print('     %s: %s' % (key, str(client_status[key])))
+        else:
+            print(response.errormsg)
 
-    response = api.getAllSentMessageIDs()
-    if response['error'] == 0:
-        outboxMessageIds = response['result']
-        onumMessages = len(outboxMessageIds)
-        print '     OutboxMessages:', str(onumMessages)
-    else:
-        print response['errormsg']
-    # print '     Message.dat:', str(boxSize)
-    # print '     knownNodes.dat:', str(knownNodes)
-    # print '     debug.log:', str(debugSize)
+    # print('     Message.dat: %d' % boxSize)
+    # print('     knownNodes.dat: %d', knownNodes)
+    # print('     debug.log: %d' % debugSize)
 
-    print '     ------------------------------'
+    print('     ------------------------------')
 
     return ''
 
@@ -2132,7 +2454,7 @@ def clientStatus():
 def shutdown():
     """Shutdown the API"""
 
-    print '     Shutdown command sending...'
+    print('     Shutdown command sending...')
     response = api.shutdown()
     if response['error'] != 0:
         return response['errormsg']
@@ -2144,17 +2466,17 @@ def start_daemon(uri=''):
 
     start_dir = os.path.dirname(os.path.abspath(__file__))
     mainfile = os.path.join(start_dir, 'bitmessagemain.py')
-    print "     Try to start daemon: %s..." % uri
+    print('     Try to start daemon... "%s"' % uri)
     if os.path.isfile(mainfile):
         cmd = ' '.join([sys.executable, mainfile, '--daemon'])
-        print '\n     Exec:', cmd, uri
+        print('\n     Exec: %s "%s"' % (cmd, uri))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
         out, err = p.communicate()
-        result = out.split('\n')
+        result = out.decode(encoding='utf-8').split('\n')
         for line in result:
-            print '     ' + line
+            print(5 * ' ' + line)
     else:
-        print '     ' + retStrings['nomain']
+        print(5 * ' ' + retStrings['nomain'])
 
 
 def UI(cmdInput=None):
@@ -2179,8 +2501,8 @@ def UI(cmdInput=None):
         src = start_daemon(dmUri)
 
     elif cmdInput in cmdShorts['apiTest']:  # tests the API Connection.
-        print '     API connection test has:',
-        print 'PASSED' if apiTest() else 'FAILED\n'
+        print('     API connection test has: ', end='')
+        print('PASSED' if apiTest() else 'FAILED\n')
         src = ''
 
     elif cmdInput in cmdShorts['addInfo']:
@@ -2210,7 +2532,7 @@ def UI(cmdInput=None):
             deterministic = True
 
             lbl = ''
-            passphrase = userInput('Input the Passphrase.')  # .encode('base64')
+            passphrase = userInput('Input the Passphrase.')
             numOfAdd = int(userInput('How many addresses would you like to generate?'))
             addVNum = 3
             streamNum = 1
@@ -2259,7 +2581,7 @@ def UI(cmdInput=None):
 
     elif cmdInput in cmdShorts['getLabel']:  # Retrieve all of the addressbooks
         src = getLabel()
-        print src,
+        print(src)
         src = listAddressBK(True)
 
     elif cmdInput in cmdShorts['inbox']:
@@ -2356,7 +2678,7 @@ def UI(cmdInput=None):
     else:
         usrPrompt = 1
 
-    print src
+    print(src)
 
 
 def CLI():
@@ -2370,29 +2692,29 @@ def CLI():
             # api.set_proxy(config.proxy)
             if apiTest() is False:
                 print
-                print '     ****************************************************************'
-                print '        WARNING: You are not connected to the Bitmessage API service.'
-                print '     Either Bitmessage is not running or your settings are incorrect.'
-                print '     Use the command "apiTest" or "bmSettings" to resolve this issue.'
-                print '     ****************************************************************\n'
+                print('     ****************************************************************')
+                print('        WARNING: You are not connected to the Bitmessage API service.')
+                print('     Either Bitmessage is not running or your settings are incorrect.')
+                print('     Use the command "apiTest" or "bmSettings" to resolve this issue.')
+                print('     ****************************************************************\n')
 
-            print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [%s]: ' % cmdStr  # Startup message
+            print('\nType (H)elp for a list of commands.\nPress Enter for default cmd [%s]: ' % cmdStr)  # Startup message
             usrPrompt = 2
         else:
             print
-            print '     *****************************************************'
-            print '        WARNING: API not functionable till you finish the'
-            print '     configuration.'
-            print '     *****************************************************\n'
-            print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [%s]: ' % cmdStr  # Startup message
+            print('     *****************************************************')
+            print('        WARNING: API not functionable till you finish the')
+            print('     configuration.')
+            print('     *****************************************************\n')
+            print('\nType (H)elp for a list of commands.\nPress Enter for default cmd [%s]: ' % cmdStr)  # Startup message
             usrPrompt = 0
 
     elif usrPrompt == 1:
-        print '\nType (H)elp for a list of commands.\nPress Enter for default cmd [%s]: ' % cmdStr  # Startup message
+        print('\nType (H)elp for a list of commands.\nPress Enter for default cmd [%s]: ' % cmdStr)  # Startup message
         usrPrompt = 2
 
     try:
-        cmdInput = raw_input('>').lower().replace(" ", "")
+        cmdInput = myinput('>').lower().replace(" ", "")
         if cmdInput != '':
             cmdStr = cmdInput  # save as last cmd for replay
         UI(cmdStr)
@@ -2402,6 +2724,10 @@ def CLI():
 
 
 if __name__ == "__main__":
+#    sys.stdout = codecs.lookup('utf-8')[-1](sys.stdout)
+#encoding: utf-8
+    # for dispaly unicodes correctly
+    # export PYTHONIOENCODING=utf-8
     config = Config(sys.argv)
     config.parse()
     bms_allow = False
@@ -2409,28 +2735,28 @@ if __name__ == "__main__":
 
     if config.action == 'main':
         try:
-            print '- Try to get API connect uri from BMs setting file "keys.dat"...'
+            print('- Try to get API connect uri from BMs setting file "keys.dat"...')
             import bmsettings as conninit
             bms_allow = True
             if hasattr(conninit, 'apiData'):
                 apiData = conninit.apiData()
-                print '     BMs host uri from "keys.dat":', apiData, '\n'
+                print('     BMs host uri from "keys.dat": "%s"\n' % apiData)
                 if apiData:
                     config.conn = apiData
 
         except Exception as err:
-            print '     Depends check failed, command "bmSettings" disabled. (%s)' % err
+            print('     Depends check failed, command "bmSettings" disabled. {%s}' % str(err))
 
         try:
-            print '- Try to get socks module for proxied...'
+            print('- Try to get socks module for proxied...')
             from socks import ProxyError, GeneralProxyError, Socks5AuthError, Socks5Error, Socks4Error, HTTPError
             import socks
             if hasattr(socks, 'setdefaultproxy'):
                 socks_allow = True
             else:
-                print '     Not the correct "socks" module imported.'
+                print('     Not the correct "socks" module imported.')
         except ImportError as err:
-            print '     Depends check failed, "SOCKS" type proxy disabled. (%s)' % err
+            print('     Depends check failed, "SOCKS" type proxy disabled. {%s}' % str(err))
 
     if getattr(config, 'start_daemon'):
         start_daemon(getattr(config, 'start_daemon'))
@@ -2439,19 +2765,19 @@ if __name__ == "__main__":
     proxy = dict()
     if socks_type != 'none':
         if socks_allow is False and 'SOCKS' in socks_type:
-            print '     Socks type proxy disabled.'
+            print('     Socks type proxy disabled.')
         else:
             for key in ['proxy_type', 'proxy_path', 'proxy_username', 'proxy_password', 'proxy_remotedns', 'proxy_timeout']:
                 proxy[key] = getattr(config, key)
     config.proxy = proxy
     if getattr(config, 'api_path', None):
-        print '- API settings from command line or overide by "client.dat".'
+        print('- API settings from command line or overide by "client.dat".')
         if getattr(config, 'api_username', None) and getattr(config, 'api_password', None):
-            config.conn = '%s://%s:%s@%s/' % (config.api_type, config.api_username, config.api_password, config.api_path)
+            config.conn = '%s://%s:%s@%s/' % (config.api_type, quote(config.api_username), quote(config.api_password), config.api_path)
         else:
             config.conn = '%s://%s/' % (config.api_type, config.api_path)
     elif config.conn:  # default or from "keys.dat"
-        print '- API settings from BMs config file "keys.dat" or default.'
+        print('- API settings from BMs config file "keys.dat" or default.')
         uri = config.conn
         scheme, netloc, path, x, xx, xxx = urlparse(uri)
         api_username = urlparse(uri).username
@@ -2467,5 +2793,5 @@ if __name__ == "__main__":
 
     actions = Actions()
     start()
-    print 'bye'
+    print('bye')
     sys.exit()

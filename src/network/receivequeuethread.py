@@ -1,5 +1,9 @@
 import errno
-import Queue
+try:
+    import Queue as Queue
+except ImportError:
+    import queue as Queue
+
 import socket
 import sys
 import threading

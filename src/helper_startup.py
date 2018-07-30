@@ -1,6 +1,10 @@
 """Helper Start performs all the startup operations."""
 
-import ConfigParser
+try:
+    import ConfigParser as ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+
 from bmconfigparser import BMConfigParser
 import defaults
 import sys
@@ -44,7 +48,7 @@ def loadConfig():
         config.read(paths.lookupExeFolder() + 'keys.dat')
         try:
             config.get('bitmessagesettings', 'settingsversion')
-            print 'Loading config files from same directory as program.'
+            print('Loading config files from same directory as program.')
             needToCreateKeysFile = False
             state.appdata = paths.lookupExeFolder()
         except:
@@ -55,7 +59,7 @@ def loadConfig():
             needToCreateKeysFile = config.safeGet(
                 'bitmessagesettings', 'settingsversion') is None
             if not needToCreateKeysFile:
-                print 'Loading existing config files from', state.appdata
+                print('Loading existing config files from', state.appdata)
 
     if needToCreateKeysFile:
 
@@ -127,9 +131,9 @@ def loadConfig():
             # Just use the same directory as the program and forget about
             # the appdata folder
             state.appdata = ''
-            print 'Creating new config files in same directory as program.'
+            print('Creating new config files in same directory as program.')
         else:
-            print 'Creating new config files in', state.appdata
+            print('Creating new config files in', state.appdata)
             if not os.path.exists(state.appdata):
                 os.makedirs(state.appdata)
         if not sys.platform.startswith('win'):
@@ -143,7 +147,7 @@ def loadConfig():
 
 def updateConfig():
     config = BMConfigParser()
-    settingsversion = config.getint('bitmessagesettings', 'settingsversion')
+    settingsversion = config.safeGetInt('bitmessagesettings', 'settingsversion')
     if settingsversion == 1:
         config.set('bitmessagesettings', 'socksproxytype', 'none')
         config.set('bitmessagesettings', 'sockshostname', 'localhost')

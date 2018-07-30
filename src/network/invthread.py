@@ -1,4 +1,8 @@
-import Queue
+try:
+    import Queue as Queue
+except ImportError:
+    import queue as Queue
+
 from random import randint, shuffle
 import threading
 from time import time

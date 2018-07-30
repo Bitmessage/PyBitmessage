@@ -3,7 +3,7 @@ import threading
 import time
 
 import addresses
-from dandelion import Dandelion
+from .dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory

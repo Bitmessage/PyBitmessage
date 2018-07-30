@@ -2,7 +2,11 @@ import socket
 import threading
 import time
 
-import asyncore_pollchoose as asyncore
+try:
+    import asyncore_pollchoose as asyncore
+except ImportError:
+    import asyncore as asyncore
+
 from debug import logger
 from helper_threading import BusyError, nonBlocking
 import state

@@ -2,13 +2,19 @@
 BMConfigParser class definition and default configuration settings
 """
 
-import ConfigParser
+try:
+    import ConfigParser as ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+
 import shutil
 import os
 from datetime import datetime
 
 import state
 from singleton import Singleton
+
+UNSET = object()
 
 BMConfigDefaults = {
     "bitmessagesettings": {
@@ -47,6 +53,10 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     with additional methods specific to bitmessage config."""
 
     def set(self, section, option, value=None):
+        try:
+            basestring
+        except NameError:
+            basestring = str
         if self._optcre is self.OPTCRE or value:
             if not isinstance(value, basestring):
                 raise TypeError("option values must be strings")
@@ -54,17 +64,19 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
+    def get(self, section, option, raw=False, fallback=UNSET):
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return ConfigParser.ConfigParser.get(
-                    self, section, option, raw, variables)
+                    self, section, option, raw=raw)
             return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
+                self, section, option, raw=True)
         except ConfigParser.InterpolationError:
             return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
+                self, section, option, raw=True)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+            if fallback is not UNSET:
+                return fallback
             try:
                 return BMConfigDefaults[section][option]
             except (KeyError, ValueError, AttributeError):
@@ -72,14 +84,14 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
 
     def safeGetBoolean(self, section, field):
         try:
-            return self.getboolean(section, field)
+            return self._get(section, self._convert_to_boolean, field)  # getboolean(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
                 ValueError, AttributeError):
             return False
 
     def safeGetInt(self, section, field, default=0):
         try:
-            return self.getint(section, field)
+            return self._get(section, int, field)  # getint(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
                 ValueError, AttributeError):
             return default
@@ -131,7 +143,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             # didn't exist before.
             fileNameExisted = False
         # write the file
-        with open(fileName, 'wb') as configfile:
+        with open(fileName, 'w') as configfile:
             self.write(configfile)
         # delete the backup
         if fileNameExisted:
