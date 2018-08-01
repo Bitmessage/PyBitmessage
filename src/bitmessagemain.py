@@ -456,12 +456,17 @@ class Main:
         sys.stdout.flush()
         sys.stderr.flush()
         if not sys.platform.startswith('win'):
-            si = file(os.devnull, 'r')
-            so = file(os.devnull, 'a+')
-            se = file(os.devnull, 'a+', 0)
-            os.dup2(si.fileno(), sys.stdin.fileno())
-            os.dup2(so.fileno(), sys.stdout.fileno())
-            os.dup2(se.fileno(), sys.stderr.fileno())
+            si = open(os.devnull, 'r')
+            so = open(os.devnull, 'ab+')
+            se = open(os.devnull, 'ab+', 0)
+            try:
+                os.dup2(si.fileno(), sys.stdin.fileno())
+                os.dup2(so.fileno(), sys.stdout.fileno())
+                os.dup2(se.fileno(), sys.stderr.fileno())
+            except Exception:  # python3
+                si = os.dup2(sys.stdin.fileno())
+                so = os.dup2(sys.stdout.fileno())
+                se = os.dup2(sys.stderr.fileno())
         if parentPid:
             # signal ready
             os.kill(parentPid, signal.SIGTERM)

@@ -6,7 +6,7 @@ try:
     import ConfigParser as ConfigParser
 except ImportError:
     import configparser as ConfigParser
-
+import traceback
 import shutil
 import os
 from datetime import datetime
@@ -84,14 +84,17 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
 
     def safeGetBoolean(self, section, field):
         try:
-            return self._get(section, self._convert_to_boolean, field)  # getboolean(section, field)
+            if hasattr(self, '_convert_to_boolean'):  # for python3
+                return self._get(section, self._convert_to_boolean, field)
+            return self.getboolean(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
                 ValueError, AttributeError):
             return False
 
     def safeGetInt(self, section, field, default=0):
         try:
-            return self._get(section, int, field)  # getint(section, field)
+            print('%s = %d' % (field, int(self.get(section, field, fallback=default))))
+            return int(self.get(section, field, fallback=default))
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
                 ValueError, AttributeError):
             return default
