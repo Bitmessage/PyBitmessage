@@ -100,6 +100,8 @@ class TestAPI(TestProcessProto):
         addr = self._add_random_address('random_1')
         self.assertRegexpMatches(addr, r'^BM-')
         self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
+        # Whitepaper says "around 36 character"
+        self.assertLessEqual(len(addr[3:]), 40)
         self.assertEqual(self.api.deleteAddress(addr), 'success')
 
     def test_addressbook(self):
