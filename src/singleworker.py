@@ -271,15 +271,14 @@ def setBestSolver():
 setBestSolver()
 
 class singleWorker(threading.Thread, helper_threading.StoppableThread):
-    name = "singleWorker"
-
     def __init__(self):
-        super(self.__class__, self).__init__()
+        super(self.__class__, self).__init__(name = "singleWorker")
 
         self.initStop()
 
     def stopThread(self):
         queues.workerQueue.put(("stopThread", "data"))
+        workProver.commandsQueue.put(("shutdown", ))
 
         super(self.__class__, self).stopThread()
 

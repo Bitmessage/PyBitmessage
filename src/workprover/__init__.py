@@ -119,7 +119,7 @@ class WorkProver(threading.Thread):
                     self.solverName = name
                     self.solver = self.availableSolvers[name]
                     self.solver.setConfiguration(configuration)
-        except GPUSolverError:
+        except gpusolver.GPUSolverError:
             self.solverName = None
             self.solver = None
 
