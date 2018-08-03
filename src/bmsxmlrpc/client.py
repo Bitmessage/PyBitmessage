@@ -377,8 +377,9 @@ class RPCErrorWithRet(Exception):
             self.error = -1
             self.errormsg = '\n     XML-RPC not initialed correctly. {%s}\n' % str(self)
         elif isinstance(err, Fault):
-            self.error = -2
-            self.errormsg = '\n     API method error. {%s}\n' % str(self)
+            self.error = err.faultCode
+            self.result = err.faultString
+            self.errormsg = '\n     API method Fault error. {%s}\n' % str(self)
         elif isinstance(err, (ProxyError, GeneralProxyError, SOCKS5AuthError, SOCKS5Error, SOCKS4Error, HTTPError, SOCKETError, xmlrpclib.Error)):
             self.error = -3
             self.errormsg = '\n     Connection error. {%s}\n' % str(self)
@@ -434,7 +435,7 @@ def parse_singlecall_result(ret, method_name, response):
         if "API Error" in response:
             ret.error = getAPIErrorCode(response)
             if ret.error in [20, 21]:  # programing error, Invalid method/Unexpected API Failure
-                print('\n     Update your API serer for method. <%s>' % method_name)
+                print('\n     Update your API server for method. <%s>' % method_name)
         ret.errormsg = '     ' + response + '\n'
         return
 
@@ -539,12 +540,18 @@ def parse_singlecall_result(ret, method_name, response):
 def parse_multicall_result(ret, method_name, item):
 
     ret.error = 0
-    response = item[0]
-    if isinstance(response, list) and response.get('faultCode', None):  # Fault Error
-        ret.error = response['faultCode']  # -2
-        ret.errormsg = response['faultString']
+    if isinstance(item, dict) and item.get('faultCode', None):  # Fault Error
+        ret.error = item['faultCode']  # -2
+        ret.errormsg = item['faultString']
         return
 
+    if not isinstance(item, list):
+        ret.error = 98
+        ret.result = item
+        ret.errormsg = "\n     unexpected type in multicall result.\n"
+        return
+
+    response = item[0]
     try:
         if method_name in [
                 'trashInboxMessage',
@@ -589,9 +596,6 @@ def parse_multicall_result(ret, method_name, item):
         ret.error = 3
         ret.result = json.loads(response) if isinstance(err, KeyError) else response
         ret.errormsg = '\n     MultiCall returns unexpected data, maybe a network problem there? {%s}\n%s\n' % (str(err), ret.result)
-#    else:
-#        ret.error = 98
-#        ret.errormsg = "\n     unexpected type in multicall result.\n"
 
 
 class _multicall:
@@ -675,7 +679,7 @@ class _MultiCallMethod:
                 ]:
             self.__call_list.append((self.__name[:-4], args))
         else:
-            print('\n     Skip a unexpected multicall method. <%s>' % self.__name)
+            print('\n     Skip an unexpected multicall method. <%s>' % self.__name)
 
 
 class MultiCall:
