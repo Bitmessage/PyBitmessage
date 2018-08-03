@@ -17,7 +17,6 @@ TODO: fix the following (currently ignored) violations:
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import codecs
 import ntpath
 import os
 import sys
@@ -40,7 +39,6 @@ import subprocess
 
 from binascii import hexlify, unhexlify, Error as binascii_Error
 from collections import OrderedDict
-from functools import wraps
 
 import bmsxmlrpc.client as xmlrpclib
 import traceback
@@ -508,17 +506,13 @@ def inputAddress(prompt='What is the address?'):
 
     return address
 
-    def set_proxy(self, proxy=None):
-        self.proxy = proxy
-        self.__init__(self.conn, self.proxy)
-
 
 def indexInputBreakable(prompt='Paused', lastId=-1, maximum=-1, default=-1):
 
     global retStrings
 
     while True:
-        cinput = userInput('\n%s on %d/%d, next [%d] input next id to change, "-1" to break; (c) or' % (prompt, lastId, maximum, default), '').strip().lower()
+        cinput = userInput('\n%s on %d/%d, next [%d] input next id to change\n"-1" to break; (c) or' % (prompt, lastId, maximum, default), '').strip().lower()
         try:
             if cinput == "c":
                 raise InputException('usercancel')
@@ -839,7 +833,7 @@ def dump2File(fileName, fileData, deCoded):
 
     try:
         with open(filePath, 'wb+') as path_to_file:
-                path_to_file.write(fileData)
+            path_to_file.write(fileData)
 
     except IOError as err:
         return '\n     {%s}\n' % str(err)
@@ -998,7 +992,7 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
 
     if subject is None:
         subject = userInput('Enter your Subject.')
-        encsubject = _encode(subject.encode(encoding='utf-8'), 'base64')
+    encsubject = _encode(subject.encode(encoding='utf-8'), 'base64')
 
     if message is None:
         message = ''
@@ -1372,7 +1366,6 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     fwdFrom = message['fromAddress']  # Address it was sent To, will attached to fwd
     recvTime = datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
 
-    full = len(content)
     textmsg = ''
     textmsg = attDetect(content, textmsg, subject, True)
 
@@ -1400,7 +1393,6 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     else:
         return '\n     Invalid Selection. Reply or Forward only'
 
-    subject = _encode(subject, 'base64').decode(encoding='utf-8')
     src = sendMsg(toAdd, fromAdd, subject, None, False, attachMessage)
     return src
 
@@ -1476,26 +1468,31 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
         return '     Zero message found.\n'
 
     src = retStrings['usercancel']
-    if cmd != 'delete':
-        msgNum = int(inputIndex('Input the index of the message to %s [0-%d]: ' % (cmd, numMessages - 1), numMessages - 1))
+    msgNum = numMessages - 1
+    while msgNum >= 0:  # save, delete, read
+        if cmd == 'delete' and numMessages > 1:  # delete
+            ret = src
+            uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'])
+            if uInput in inputShorts['all']:
+                ret = inbox(False)
+                print(ret)
+                uInput = userInput('Are you sure to delete all this %d message(s), (y)es or (N)o?' % numMessages).lower()  # Prevent accidental deletion
+                if uInput in inputShorts['yes']:
+                    messageIDs = []
+                    for messageId in messageIds:  # processes all of the messages in the outbox
+                        messageIDs.append(messageId['msgid'])
+                    src = delMsgs(messageIDs)
+                break
+            msgNum = int(uInput)
 
-        nextNum = msgNum
-        ret = ''
-        while msgNum >= 0:  # save, read
-            nextNum += 1
-            messageID = messageIds[msgNum]['msgid']
-            if cmd == 'save':
-                ret = readMsg(cmd, msgNum, messageID, trunck, withAtta)
-                return ret
-
-            else:
-                ret = readMsg(cmd, msgNum, messageID)
-            print(ret)
-
+        messageID = messageIds[msgNum]['msgid']
+        ret = readMsg(cmd, msgNum, messageID, trunck, withAtta)  # save/read/delete
+        print(ret)
+        if cmd == 'read':  # read
+            ret = ''
             uInput = userInput('Would you like to set this message to unread, (y)es or (N)o?').lower()
             if uInput in inputShorts['yes']:
                 ret = markMessageReadbit(msgNum, messageID, False)
-
             else:
                 uInput = userInput('Would you like to (f)orward, (r)eply, (s)ave, (d)ump or Delete this message?').lower()
 
@@ -1510,58 +1507,27 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
                 elif uInput in inputShorts['dump']:
                     ret = readMsg('save', msgNum, messageID, withAtta=True)
-
-                else:
-                    uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
-                    if uInput in inputShorts['yes']:
-                        # nextNum -= 1
-                        # numMessages -= 1
-                        ret = delMsg(msgNum, messageID)
-
             print(ret)
-            if nextNum < numMessages:
-                uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
-                msgNum = nextNum if uInput not in inputShorts['no'] else -1
 
-            else:
-                msgNum = -1
-                src = retStrings['indexoutofbound']
+        ret = src
+        uInput = userInput('Continue to delete this message [%d], (y)es or (N)o?' % msgNum).lower()  # Prevent accidental deletion
+        if uInput in inputShorts['yes']:
+            ret = delMsg(msgNum, messageID)
 
-    else:
-        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the inbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'])
+        print(ret)
+        msgNum -= 1
+        if msgNum > 0 and numMessages != 1 and cmd != 'delete':
+            try:
+                uInput = indexInputBreakable('Inbox message [%s] paused' % cmd, msgNum + 1, numMessages - 1, msgNum)
+                if uInput:
+                    msgNum = int(uInput)
+                    if msgNum < 0:
+                        break
+            except InputException as err:
+                raise InputException(str(err))
 
-        if uInput in inputShorts['all']:
-            ret = inbox(False)
-            print(ret)
-            uInput = userInput('Are you sure to delete all this %d message(s), (y)es or (N)o?' % numMessages).lower()  # Prevent accidental deletion
-            if uInput in inputShorts['yes']:
-                messageIDs = []
-                for messageId in messageIds:  # processes all of the messages in the outbox
-                    messageIDs.append(messageId['msgid'])
-                src = delMsgs(messageIDs)
-
-        else:
-            nextNum = msgNum = int(uInput)
-            while msgNum >= 0:  # save, read
-                nextNum += 1
-                messageID = messageIds[msgNum]['msgid']
-                ret = readMsg(cmd, msgNum, messageID)
-                print(ret)
-
-                uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
-                if uInput in inputShorts['yes']:
-                    # nextNum -= 1
-                    # numMessages -= 1
-                    ret = delMsg(msgNum, messageID)
-                    print(ret)
-
-                if nextNum < numMessages:
-                    uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
-                    msgNum = nextNum if uInput not in inputShorts['no'] else -1
-
-                else:
-                    msgNum = -1
-                    src = retStrings['indexoutofbound']
+        if msgNum < 0:
+            src = retStrings['indexoutofbound']
 
     return src
 
@@ -1581,83 +1547,55 @@ def toReadOutbox(cmd='read', trunck=380, withAtta=False):
         return '     Zero message found.\n'
 
     src = retStrings['usercancel']
-    if cmd != 'delete':
-        msgNum = int(inputIndex('Input the index of the message open [0-%d]: ' % (numMessages - 1), numMessages - 1))
+    msgNum = numMessages - 1
+    while msgNum >= 0:  # save, delete, read
+        ret = src
+        if cmd == 'delete' and numMessages > 1:  # delete
+            uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'])
+            if uInput in inputShorts['all']:
+                ret = outbox()
+                print(ret)
+                uInput = userInput('Are you sure to delete all this %d message(s), (y)es or (N)o?' % numMessages).lower()  # Prevent accidental deletion
+                if uInput in inputShorts['yes']:
+                    for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
+                        ret = delSentMsg(msgNum, messageIds[msgNum]['msgid'])
+                        print(ret)
+                    src = ''
+                break
+            msgNum = int(uInput)
 
-        nextNum = msgNum
-        ret = ''
-        while msgNum >= 0:  # save, read
-            nextNum += 1
-            messageID = messageIds[msgNum]['msgid']
-            if cmd == 'save':
-                ret = readSentMsg(cmd, msgNum, messageID, trunck, withAtta)
-                return ret
-
-            else:
-                ret = readSentMsg(cmd, msgNum, messageID)
-
-            print(ret)
-            # Gives the user the option to delete the message
-            uInput = userInput('Would you like to (s)ave, (d)ump or Delete this message directly?').lower()
-
+        messageID = messageIds[msgNum]['msgid']
+        ret = readSentMsg(cmd, msgNum, messageID, trunck, withAtta)  # save/read
+        print(ret)
+        if cmd != 'save':  # read
+            ret = ''
+            uInput = userInput('Would you like to (s)ave, (d)ump or Delete this message?').lower()
             if uInput in inputShorts['save']:
                 ret = readSentMsg('save', msgNum, messageID, withAtta=False)
 
             elif uInput in inputShorts['dump']:
                 ret = readSentMsg('save', msgNum, messageID, withAtta=True)
-
-            else:
-                uInput = userInput('Are you sure to delete, (y)es or (N)o?').lower()  # Prevent accidental deletion
-                if uInput in inputShorts['yes']:
-                    nextNum -= 1
-                    numMessages -= 1
-                    ret = delSentMsg(msgNum, messageID)
-
             print(ret)
-            if nextNum < numMessages:
-                uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
-                msgNum = nextNum if uInput not in inputShorts['no'] else -1
 
-            else:
-                msgNum = -1
-                src = retStrings['indexoutofbound']
+        ret = src
+        uInput = userInput('Continue to delete this message [%d], (y)es or (N)o?' % msgNum).lower()  # Prevent accidental deletion
+        if uInput in inputShorts['yes']:
+            ret = delSentMsg(msgNum, messageID)
 
-    else:
-        uInput = inputIndex('Input the index of the message you wish to delete or (A)ll to empty the outbox [0-%d]: ' % (numMessages - 1), numMessages - 1, inputShorts['all'])
+        print(ret)
+        msgNum -= 1
+        if msgNum > 0 and numMessages != 1 and cmd != 'delete':
+            try:
+                uInput = indexInputBreakable('Outbox message [%s] paused' % cmd, msgNum + 1, numMessages - 1, msgNum)
+                if uInput:
+                    msgNum = int(uInput)
+                    if msgNum < 0:
+                        break
+            except InputException as err:
+                raise InputException(str(err))
 
-        if uInput in inputShorts['all']:
-            ret = outbox()
-            print(ret)
-            uInput = userInput('Are you sure to delete all this %d message(s), (y)es or (N)o?' % numMessages).lower()  # Prevent accidental deletion
-            if uInput in inputShorts['yes']:
-                for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
-                    ret = delSentMsg(msgNum, messageIds[msgNum]['msgid'])
-                    print(ret)
-                src = ''
-
-        else:
-            nextNum = msgNum = int(uInput)
-            while msgNum >= 0:  # save, read
-                nextNum += 1
-
-                messageID = messageIds[msgNum]['msgid']
-                ret = readSentMsg(cmd, msgNum, messageID)
-                print(ret)
-
-                uInput = userInput('Are you sure to delete this message, (y)es or (N)o?').lower()  # Prevent accidental deletion
-                if uInput in inputShorts['yes']:
-                    nextNum -= 1
-                    numMessages -= 1
-                    ret = delSentMsg(msgNum, messageID)
-                    print(ret)
-
-                if nextNum < numMessages:
-                    uInput = userInput('Next message, (n)o or (Y)es?').lower()  # Prevent
-                    msgNum = nextNum if uInput not in inputShorts['no'] else -1
-
-                else:
-                    msgNum = -1
-                    src = retStrings['indexoutofbound']
+        if msgNum < 0:
+            src = retStrings['indexoutofbound']
 
     return src
 
@@ -2112,7 +2050,6 @@ def CLI():
 
 
 if __name__ == "__main__":
-    #    sys.stdout = codecs.lookup('utf-8')[-1](sys.stdout)
     # encoding: utf-8
     # for dispaly unicodes correctly
     # export PYTHONIOENCODING=utf-8

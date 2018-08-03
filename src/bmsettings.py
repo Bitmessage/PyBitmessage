@@ -174,7 +174,6 @@ def apiData():
         BMConfigParser().get('bitmessagesettings', 'port')
         appDataFolder = ''
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as err:
-        pass
         # Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
         appDataFolder = lookupAppdataFolder()
         keysPath = appDataFolder + keysPath
@@ -197,7 +196,6 @@ def apiData():
             if (uInput == "y" or uInput == "yes"):
                 configInit()
                 keysPath = keysName
-                f = True
 
             elif (uInput == "n" or uInput == "no"):
                 print('\n     Trying Again.\n')
@@ -364,7 +362,7 @@ def bmSettings():
 
                 if uInput in ['n', 'no']:
                     with open(keysPath, 'wb') as configfile:
-                        src = BMConfigParser().write(configfile)
+                        BMConfigParser().write(configfile)
                     restartBmNotify()
                     break
 

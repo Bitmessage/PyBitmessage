@@ -93,7 +93,6 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
 
     def safeGetInt(self, section, field, default=0):
         try:
-            print('%s = %d' % (field, int(self.get(section, field, fallback=default))))
             return int(self.get(section, field, fallback=default))
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
                 ValueError, AttributeError):

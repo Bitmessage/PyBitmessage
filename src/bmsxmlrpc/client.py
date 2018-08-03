@@ -7,8 +7,8 @@ work with Pybitmessage.
 """
 
 import sys
-import logging
 import base64
+from binascii import hexlify, unhexlify, Error as binascii_Error
 
 try:
     import httplib
@@ -21,14 +21,15 @@ except ImportError:
     import xmlrpc.client as xmlrpclib
     from urllib.parse import urlparse, unquote_to_bytes, quote
 
+import ssl
 from socket import error as SOCKETError
 import json
 import traceback
 
 try:
     print('- Try to "SocksiPy" module for proxied...')
-    from socks import ProxyError, GeneralProxyError, SOCKS5AuthError, SOCKS5Error, SOCKS4Error, HTTPError
-    import socks as socks
+    from bmsxmlrpc.socks import ProxyError, GeneralProxyError, SOCKS5AuthError, SOCKS5Error, SOCKS4Error, HTTPError
+    import bmsxmlrpc.socks as socks
     if hasattr(socks, 'setdefaultproxy'):
         socks_allow = True
         print('     "SocksiPy" module imported.')
@@ -38,13 +39,40 @@ try:
 except ImportError as err:
     print('     Depends check failed, "SOCKS" type proxy disabled. {%s}' % str(err))
 
+
+    class ProxyError(Exception):
+        pass
+
+
+    class ProxyConnectionError(ProxyError):
+        pass
+
+
+    class GeneralProxyError(ProxyError):
+        pass
+
+
+    class SOCKS5AuthError(ProxyError):
+        pass
+
+
+    class SOCKS5Error(ProxyError):
+        pass
+
+
+    class SOCKS4Error(ProxyError):
+        pass
+
+
+    class HTTPError(ProxyError):
+        pass
+
+
 __ALL__ = ['ServerProxy', 'Fault', 'ProtocolError']
 
 # you don't have to import xmlrpc.client from your code
 Fault = xmlrpclib.Fault
 ProtocolError = xmlrpclib.ProtocolError
-
-log = logging.getLogger(__name__)
 PY35 = sys.version_info >= (3, 5)
 
 
@@ -66,34 +94,6 @@ class _Method:
 # proxied start
 # original https://github.com/benhengx/xmlrpclibex
 # add basic auth support for top level host while none/HTTP proxied
-
-
-class ProxyError(Exception):
-    pass
-
-
-class ProxyConnectionError(ProxyError):
-    pass
-
-
-class GeneralProxyError(ProxyError):
-    pass
-
-
-class SOCKS5AuthError(ProxyError):
-    pass
-
-
-class SOCKS5Error(ProxyError):
-    pass
-
-
-class SOCKS4Error(ProxyError):
-    pass
-
-
-class HTTPError(ProxyError):
-    pass
 
 
 def init_socks(proxy, timeout):
@@ -168,8 +168,6 @@ class TransportWithTo(xmlrpclib.Transport):
 
     def __init__(self, use_datetime=0, is_https=False, timeout=None):
         xmlrpclib.Transport.__init__(self, use_datetime)
-        self._loop = loop
-        self._session = session
 
         self.is_https = is_https
         if timeout is None:
@@ -193,53 +191,6 @@ class TransportWithTo(xmlrpclib.Transport):
             self._connection = host, self.cls_http_conn(chost, timeout=self.timeout)
         return self._connection[1]
 
-#    def request(self, host, handler, request_body, verbose=False):
-#        """
-#        Send the XML-RPC request, return the response.
-#        This method is a coroutine.
-#        """
-#        url = self._build_url(host, handler)
-#        response = None
-#        try:
-#            response = yield from self._session.request(
-#                'POST', url, headers=self.headers, data=request_body, auth=self.auth)
-#            body = yield from response.text()
-#            if response.status != 200:
-#                raise ProtocolError(url, response.status,
-#                                    body, response.headers)
-#        except CancelledError:
-#            raise
-#        except ProtocolError:
-#            raise
-#        except Exception as exc:
-#            log.error('Unexpected error', exc_info=True)
-#            if response is not None:
-#                errcode = response.status
-#                headers = response.headers
-#            else:
-#                errcode = 0
-#                headers = {}
-#
-#            raise ProtocolError(url, errcode, str(exc), headers)
-#        return self.parse_response(body)
-
-#    def parse_response(self, body):
-#        """
-#        Parse the xmlrpc response.
-#        """
-#        p, u = self.getparser()
-#        p.feed(body)
-#        p.close()
-#        return u.close()
-#
-#    def _build_url(self, host, handler):
-#        """
-#        Build a url for our request based on the host, handler and use_http
-#        property
-#        """
-#        scheme = 'https' if self.is_https else 'http'
-#        return '%s://%s%s' % (scheme, host, handler)
-
 #    def send_request(self, connection, handler, request_body):
 #        connection.putrequest('POST', '%s://%s' % (self.realhost, handler))
 
@@ -254,7 +205,7 @@ class ProxiedTransportWithTo(TransportWithTo):
     '''Transport supports timeout and http proxy'''
 
     def __init__(self, proxy, use_datetime=0, timeout=None, api_cred=None):
-        TransportWithTo.__init__(self, use_datetime, False, timeout, loop=self._loop, session=self._session)
+        TransportWithTo.__init__(self, use_datetime, False, timeout)
 
         self.api_cred = api_cred
         self.proxy_path = proxy['proxy_path']
@@ -291,7 +242,7 @@ class SocksProxiedTransportWithTo(TransportWithTo):
     cls_https_conn = SocksProxiedHTTPSConnection
 
     def __init__(self, proxy, use_datetime=0, is_https=False, timeout=None):
-        TransportWithTo.__init__(self, use_datetime, is_https, timeout, loop=self._loop, session=self._session)
+        TransportWithTo.__init__(self, use_datetime, is_https, timeout)
         self.proxy = proxy
 
     def make_connection(self, host):
@@ -327,13 +278,7 @@ class ServerProxy(xmlrpclib.ServerProxy):
     """
 
     def __init__(self, uri, transport=None, encoding='utf-8', verbose=0,
-                 allow_none=0, use_datetime=0, timeout=30, proxy=None, session=None):
-
-        if session:
-            self._session = session
-            self._close_session = False
-        else:
-            self._close_session = True
+                 allow_none=0, use_datetime=0, timeout=30, proxy=None):
 
         scheme, netloc, path, x, xx, xxx = urlparse(uri)
         api_username = urlparse(uri).username
@@ -363,16 +308,12 @@ class ServerProxy(xmlrpclib.ServerProxy):
                     transport = ProxiedTransportWithTo(proxy,
                                                        use_datetime,
                                                        timeout,
-                                                       api_cred,
-                                                       loop=self._loop,
-                                                       session=self._session)
+                                                       api_cred)
                 else:  # http connect and socksx
                     transport = SocksProxiedTransportWithTo(proxy,
                                                             use_datetime,
                                                             is_https,
-                                                            timeout,
-                                                            loop=self._loop,
-                                                            session=self._session)
+                                                            timeout)
 
         xmlrpclib.ServerProxy.__init__(self, self.uri, transport, encoding, verbose, allow_none, use_datetime)
 
@@ -402,41 +343,27 @@ class ServerProxy(xmlrpclib.ServerProxy):
 
     def __getattr__(self, name):
         return _Method(self.__request, name)
-
-    def close(self):
-        if self._close_session:
-            self._session.close()
-
-    if PY35:
-
-        def __aenter__(self):
-            return self
-
-        def __aexit__(self, exc_type, exc_val, exc_tb):
-            if self._close_session:
-                self._session.close()
-
-
 # proxied end
 
 
 def safeBMAPI(uri, proxy=None):
 
-        proxied = 'non-proxied'
-        ret = None
-        if proxy:
-            proxied = proxy['proxy_type'] + ' | ' + proxy['proxy_path']
+    proxied = 'non-proxied'
+    ret = None
+    if proxy:
+        proxied = proxy['proxy_type'] + ' | ' + proxy['proxy_path']
 
-        try:
-            xmlrpc = ServerProxy(uri, verbose=False, allow_none=True, use_datetime=True, timeout=30, proxy=proxy)
-            print('\n     XML-RPC initialed on: "%s" (%s)' % (uri, proxied))
-            ret = xmlrpc
-        except Exception as err:  # IOError, unsupported XML-RPC protocol/
-            # traceback.print_exc()
-            print('\n     XML-RPC initial failed on: "%s" - {%s}' % (uri, err))
-            ret = notForCalling()
+    try:
+        xmlrpc = ServerProxy(uri, verbose=False, allow_none=True,
+                             use_datetime=True, timeout=30, proxy=proxy)
+        print('\n     XML-RPC initialed on: "%s" (%s)' % (uri, proxied))
+        ret = xmlrpc
+    except Exception as err:  # IOError, unsupported XML-RPC protocol/
+        # traceback.print_exc()
+        print('\n     XML-RPC initial failed on: "%s" - {%s}' % (uri, err))
+        ret = notForCalling()
 
-        return ret
+    return ret
 
 
 class RPCErrorWithRet(Exception):
@@ -492,17 +419,24 @@ def _decode(text, decode_type):
         raise
 
 
+def _encode(text, encode_type):
+    if encode_type == 'hex':
+        return hexlify(text)
+    elif encode_type == 'base64':  # for label/passphrase/ripe/subject/message
+        return base64.b64encode(text)
+
+
 def parse_singlecall_result(ret, method_name, response):
 
     ret.error = 0
     if isinstance(response, str) and ("API Error" in response or 'RPC ' in response):  # API Error, Authorization Error, Proxy Error
-            ret.error = 2
-            if "API Error" in response:
-                ret.error = getAPIErrorCode(response)
-                if ret.error in [20, 21]:  # programing error, Invalid method/Unexpected API Failure
-                    print('\n     Update your API serer for method. <%s>' % method_name)
-            ret.errormsg = '     ' + response + '\n'
-            return
+        ret.error = 2
+        if "API Error" in response:
+            ret.error = getAPIErrorCode(response)
+            if ret.error in [20, 21]:  # programing error, Invalid method/Unexpected API Failure
+                print('\n     Update your API serer for method. <%s>' % method_name)
+        ret.errormsg = '     ' + response + '\n'
+        return
 
     if method_name in [
             'add',
@@ -615,6 +549,7 @@ def parse_multicall_result(ret, method_name, item):
         if method_name in [
                 'trashInboxMessage',
                 'getStatus',
+                'add',
                 ]:
             ret.result = response
         elif method_name in [
@@ -682,7 +617,6 @@ class _multicall:
         i = 0
         for item in response.result:
             method_name = call_list[i]['methodName']
-            params = call_list[i]['params']
             i += 1
             safeparser = self._safe_results(method_name, item)
             ret.append(safeparser)
@@ -702,7 +636,7 @@ def _apiCall(apimethod, *args, **kwargs):
     except RPCErrorWithRet as err:
         final = APICallSafeRet(err.error, err.ret, err.errormsg)
         if isinstance(err.ret, list):  # for multicall
-            if isinstance(ret, list):
+            if not isinstance(ret, list):
                 ret = []
             ret.append(final)
         else:
@@ -728,6 +662,7 @@ class _MultiCallMethod:
         if self.__name in [
                 'trashInboxMessage',
                 'getStatus',
+                'add',
                 'getInboxMessageById',
                 'clientStatus',
                 'listAddressBookEntries',

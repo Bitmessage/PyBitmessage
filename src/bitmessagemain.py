@@ -33,7 +33,7 @@ from time import sleep
 from random import randint
 import getopt
 
-from api import StoppableXMLRPCServer
+from bmsxmlrpc.server import StoppableXMLRPCServer
 from helper_startup import (
     isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 )

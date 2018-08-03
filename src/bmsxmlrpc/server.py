@@ -10,8 +10,11 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 from __future__ import print_function
 
 import time
-from services import APIError, Services
-from addresses import varintDecodeError
+import sys
+import errno
+import threading
+import traceback
+from debug import logger
 
 try:
     # import SocketServer
@@ -28,16 +31,12 @@ import socket
 from threading import Thread, Condition
 
 from bmconfigparser import BMConfigParser
-
-import state
-import sys
-import errno
-import threading
-import helper_threading
+from addresses import varintDecodeError
+from state import shutdown as state_shutdown
+from helper_threading import StoppableThread
+from services import APIError, Services
 
 # Classes
-from debug import logger
-import traceback
 
 DEFAULTKEYFILE = 'sslkeys/key.pem'
 DEFAULTFILE = 'sslkeys/cert.pem'
@@ -217,7 +216,7 @@ class VerifyingRequestHandler(SimpleXMLRPCRequestHandler):
 class StoppableXMLRPCServer(CustomThreadingMixIn, SimpleXMLRPCServer, VerifyingRequestHandler, Services):
 
     def serve_forever(self):
-        while state.shutdown == 0:
+        while state_shutdown == 0:
             try:
                 self.rCondition.acquire()
                 start_new_thread(self.handle_request, ())  # we do this async, because handle_request blocks!
@@ -357,7 +356,7 @@ class StoppableXMLRPCServer(CustomThreadingMixIn, SimpleXMLRPCServer, VerifyingR
             return "API Error 0021: Unexpected API Failure - %s" % e
 
 
-class singleAPI(threading.Thread, helper_threading.StoppableThread):
+class singleAPI(threading.Thread, StoppableThread):
 
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
