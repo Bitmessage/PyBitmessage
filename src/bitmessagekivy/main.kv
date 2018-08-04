@@ -1,59 +1,41 @@
+#:import la kivy.adapters.listadapter
+#:import factory kivy.factory
+#:import mpybit bitmessagekivy.mpybit
+#:import ListItemButton kivy.uix.listview.ListItemButton
+
 <Navigator>:
     id: nav_drawer
     NavigationDrawerIconButton:
-        Button:
+        Spinner:
+            pos_hint:{"x":0,"y":.3}
             id: btn
-            background_color:app.theme_cls.primary_dark
-            text: 'BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk'
-            on_release: dropdown.open(self)
-            pos_hint: {'x': 0, 'y': 0.3}
-            size_hint_y: None
-            height: '48dp'
-
-        DropDown:
-
-            id: dropdown
-            on_parent: self.dismiss()
-            on_select: btn.text = '{}'.format(args[1])
-            Button:
-                background_color:app.theme_cls.primary_dark
-                text: 'BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk'
-                size_hint_y: None
-                height: '48dp'
-                on_release: dropdown.select('BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk')
-                on_release: app.root.ids.scr_mngr.current = 'dialog'
-
-            Button:
-                background_color:app.theme_cls.primary_dark
-                text: 'BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk'
-                size_hint_y: None
-                height: '48dp'
-                on_release: dropdown.select('BM-2cSvewtJw8o8eqcFzmLeXHza4BVsRsirKk')
-                on_release: app.root.ids.scr_mngr.current = 'button'
+            background_color: app.theme_cls.primary_dark
+            text: '<address>'
+            values: app.showmeaddresses()
 
     NavigationDrawerIconButton:
-        icon: 'email'
+        icon: 'email-open'
         text: "inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
     NavigationDrawerIconButton:
-        icon: 'email'
+        icon: 'mail-send'
         text: "sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
     NavigationDrawerIconButton:
-        icon: 'email'
+        icon: 'dropbox'
         text: "trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
     NavigationDrawerIconButton:
         icon: 'email'
-        text: "dialog"
+        text: "drafts"
         on_release: app.root.ids.scr_mngr.current = 'dialog'
     NavigationDrawerIconButton:
-        icon: 'email'
+        icon: 'markunread-mailbox'
         text: "test"
         on_release: app.root.ids.scr_mngr.current = 'test'
     NavigationDrawerIconButton: 
         text: "new identity"
-        icon:'notifications-add'
+        icon:'accounts-add'
         on_release: app.root.ids.scr_mngr.current = 'newidentity'
     
 BoxLayout:
@@ -67,8 +49,8 @@ BoxLayout:
             text:"EXIT"
             color: 0,0,0,1
             background_color: (0,0,0,0)
-            size_hint_y: 0.1
-            size_hint_x: 0.1
+            size_hint_y: 0.4
+            size_hint_x: 0.5
             pos_hint: {'x': 0.8, 'y':0.4}
             on_press: app.say_exit()
 
@@ -89,10 +71,14 @@ BoxLayout:
             id:sc6
         NewIdentity:
             id:sc7
+        Page:
+            id:sc8
+        AddressSuccessful:
+            id:sc9
 
     Button:
         height:100
-        size_hint_y: 0.1
+        size_hint_y: 0.2
         size_hint_x: 0.1
         pos_hint: {'x': 0.85, 'y': 0.5}
         background_color: (0,0,0,0)
@@ -102,8 +88,30 @@ BoxLayout:
             y: self.parent.y
             x: self.parent.x + self.parent.width - 50
             size: 70, 70
+
+<ListItemButton>:
+    height: dp(25)
+    size_hint: (1,.1)
+    selected_color: 0,0,0,0
+    deselected_color: 0,0,0,0
+    color: 0, 0,0, 1
+
 <Inbox>:
     name: 'inbox'
+    ScrollView:
+        GridLayout:
+            id: box_share
+            cols: 1
+            size_hint_y: None
+            spacing: 10
+            padding: 10
+            height: self.minimum_height
+            canvas:
+                Color:
+                    rgb: 30,144,255
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
 <Sent>:
     name: 'sent'
@@ -141,7 +149,7 @@ BoxLayout:
                 pos: 10,10
                 id: spinner_id
                 text: '<select>'
-                values: root.showmeaddresses()
+                values: app.showmeaddresses()
 
         BoxLayout:
             size_hint_y: None
@@ -208,7 +216,12 @@ BoxLayout:
                         pos:self.center_x-8, self.center_y-8
                         size:[16,16]                 
                 group: "money"
-                active: root.is_active
+                id:chk
+                text:"use a random number generator to make an address"
+                on_active:
+                    root.checked = self.text
+                active:root.is_active
+
             Label:
                 text: "use a random number generator to make an address"
                 color: 0,0,0,1
@@ -221,9 +234,13 @@ BoxLayout:
                         pos:self.center_x-8, self.center_y-8
                         size:[16,16] 
                 group: "money"
-                active: not root.is_active
+                id:chk
+                text:"use a pseudo number generator to make an address"
+                on_active:
+                    root.checked = self.text
+                active:not root.is_active
             Label:
-                text: "use a random number generator to make an address"
+                text: "use a pseudo number generator to make an address"
                 color: 0,0,0,1
         Label:
             color: 0,0,0,1
@@ -254,3 +271,16 @@ BoxLayout:
         size_hint_x: 0.3
         height: '32dp'
         pos_hint: {'x': .5, 'y': 0.1}
+        on_press: root.generateaddress()
+
+<Page>:
+    name: 'page'
+    Label:
+        text: 'I am on description of my email yooooo'
+        color: 0,0,0,1
+
+<AddressSuccessful>:
+    name: 'add_sucess'
+    Label:
+        text: 'Successfully created a new bit address'
+        color: 0,0,0,1
