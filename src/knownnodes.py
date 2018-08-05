@@ -98,7 +98,7 @@ def readKnownNodes():
                 except ValueError:
                     source.seek(0)
                     pickle_deserialize_old_knownnodes(source)
-    except (IOError, OSError, KeyError):
+    except (IOError, OSError, KeyError, EOFError):
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
