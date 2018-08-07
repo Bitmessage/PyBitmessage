@@ -1,4 +1,5 @@
 import os
+import kivy_helper_search
 import queues
 import random
 import shutdown
@@ -24,7 +25,7 @@ from kivy.uix.widget import Widget
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
 from addresses import decodeAddress, addBMIfNotPresent
-from helper_sql import sqlExecute
+from helper_sql import sqlExecute, sqlQuery
 statusIconColor = 'red'
 avatarlist = os.listdir("images/ngletteravatar")
 
@@ -39,13 +40,19 @@ class NavigateApp(App, TextInput):
         self.nav_drawer = Navigator()
         return main_widget
 
+    # def setCurrentAccount(self, text):
+    #     self.ids.btn.text = text
+
     def say_exit(self):
         print("**************************EXITING FROM APPLICATION*****************************")
         App.get_running_app().stop()
         shutdown.doCleanShutdown()
 
-    def showmeaddresses(self):
-        return BMConfigParser().addresses()
+    def showmeaddresses(self, name="text"):
+        if name == "text":
+            return BMConfigParser().addresses()[0]
+        elif name == "values":
+            return BMConfigParser().addresses()
 
 
 class Navigator(NavigationDrawer):
@@ -64,33 +71,52 @@ class Inbox(Screen):
         self.create_button(self.ids.box_share)
 
     def create_button(self, box_share):
+        account = Navigator().ids.btn.text
+        folder = 'inbox'
+        self.loadMessagelist(account, folder, box_share, 'All', '')
+
+    def loadMessagelist(self, account, folder, box_share, where="", what="", unreadOnly=False):
         top_logo_share = 1.01
         top_button_share = 1.1
         top_label_share = 1.4
-        for i in range(50):
-            top_logo_share -= .4
-            top_button_share -= .4
-            top_label_share -= .4
-            logo_share = \
-                Image(source='images/ngletteravatar/{}'.format(self.list_random(avatarlist)),
-                      pos_hint={"center_x": .05, "top": top_logo_share},
-                      size_hint_y=None, height=25)
-            button_share = \
-                Button(pos_hint={"x": 0, "top": top_button_share},
-                       size_hint_y=None, height=40, text='email_{}'.format(i), background_color=NavigateApp.theme_cls.primary_dark)
-            button_share.bind(on_press=self.change_screen)
-            label_share = \
-                Label(text=str(i), pos_hint={"x": 0, "top": top_label_share},
-                      size_hint_y=None)
-            fl = FloatLayout(size_hint_y=None, height=25)
-            fl.add_widget(button_share)
-            fl.add_widget(logo_share)
-            fl.add_widget(label_share)
-            box_share.add_widget(fl)
+        xAddress = "toaddress"
 
-    def list_random(self, ran):
-        random.shuffle(ran)
-        return ran[0]
+        queryreturn = kivy_helper_search.search_sql(xAddress, account, folder, where, what, unreadOnly)
+        if queryreturn:
+            for row in queryreturn:
+                msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
+                top_logo_share -= .4
+                top_button_share -= .4
+                top_label_share -= .4
+                logo_share = \
+                    Image(source='images/ngletteravatar/{}'.format(self.list_random(avatarlist, subject)),
+                          pos_hint={"center_x": .05, "top": top_logo_share},
+                          size_hint_y=None, height=25)
+                button_share = \
+                    Button(pos_hint={"x": 0, "top": top_button_share},
+                           size_hint_y=None, height=40, text=subject, multiline=True, background_color=NavigateApp.theme_cls.primary_dark)
+                button_share.bind(on_press=self.change_screen)
+                fl = FloatLayout(size_hint_y=None, height=25)
+                fl.add_widget(button_share)
+                fl.add_widget(logo_share)
+                box_share.add_widget(fl)
+        else:
+            label_share = \
+                Label(text="yet you dont have any emails received", pos_hint={"x": 0, "top": top_label_share},
+                      size_hint_y=None)
+            box_share.add_widget(label_share)
+
+    def list_random(self, ran, subject):
+        limit = 5
+        for x in subject[:limit]:
+            if '{}.png'.format(x.lower()) in ran:
+                return '{}.png'.format(x.lower())
+            elif '{}.jpg'.format(x.lower()) in ran:
+                return '{}.jpg'.format(x.lower())
+            if x == limit:
+                random.shuffle(ran)
+                return ran[0]
+                break
 
     def change_screen(self, instance):
         self.manager.current = 'page'

@@ -10,8 +10,8 @@
             pos_hint:{"x":0,"y":.3}
             id: btn
             background_color: app.theme_cls.primary_dark
-            text: '<address>'
-            values: app.showmeaddresses()
+            text: app.showmeaddresses(name='text')
+            values: app.showmeaddresses(name='values')
 
     NavigationDrawerIconButton:
         icon: 'email-open'
@@ -148,8 +148,8 @@ BoxLayout:
                 pos_hint: {"x":0,"top":1.}
                 pos: 10,10
                 id: spinner_id
-                text: '<select>'
-                values: app.showmeaddresses()
+                text: app.showmeaddresses(name='text')
+                values: app.showmeaddresses(name='values')
 
         BoxLayout:
             size_hint_y: None
