@@ -70,7 +70,7 @@ class sqlThread(threading.Thread):
         # If the settings version is equal to 2 or 3 then the
         # sqlThread will modify the pubkeys table and change
         # the settings version to 4.
-        settingsversion = BMConfigParser().getint(
+        settingsversion = BMConfigParser().safeGetInt(
             'bitmessagesettings', 'settingsversion')
 
         # People running earlier versions of PyBitmessage do not have the

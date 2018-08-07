@@ -35,8 +35,10 @@ def json_serialize_knownnodes(output):
     Reorganize knownnodes dict and write it as JSON to output
     """
     _serialized = []
-    for stream, peers in knownNodes.iteritems():
-        for peer, info in peers.iteritems():
+    # for stream, peers in knownNodes.iteritems():
+        # for peer, info in peers.iteritems():
+    for stream in knownNodes.keys():
+        for peer, info in knownNodes[stream].items():
             _serialized.append({
                 'stream': stream, 'peer': peer._asdict(), 'info': info
             })
@@ -59,7 +61,7 @@ def pickle_deserialize_old_knownnodes(source):
     the old format was {Peer:lastseen, ...}
     the new format is {Peer:{"lastseen":i, "rating":f}}
     """
-    knownNodes = pickle.load(source)
+    knownNodes = pickle.load(bytes(source, encoding='utf-8'))
     for stream in knownNodes.keys():
         for node, params in knownNodes[stream].items():
             if isinstance(params, (float, int)):
@@ -70,7 +72,7 @@ def saveKnownNodes(dirName=None):
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
-        with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
+        with open(os.path.join(dirName, 'knownnodes.dat'), 'w') as output:
             json_serialize_knownnodes(output)
 
 
@@ -90,6 +92,8 @@ def createDefaultKnownNodes():
 
 def readKnownNodes():
     try:
+        if os.path.isfile(state.appdata + 'knownnodes.dat') is False:
+            raise IOError
         with open(state.appdata + 'knownnodes.dat', 'r') as source:
             with knownNodesLock:
                 try:

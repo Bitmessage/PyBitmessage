@@ -12,34 +12,20 @@ import hashlib
 import json
 import time
 from binascii import hexlify, unhexlify
-
 from struct import pack
 
-from bmconfigparser import BMConfigParser
-from shared import (
-    fixPotentiallyInvalidUTF8Data, reloadMyAddressHashes,
-    reloadBroadcastSendersForWhichImWatching, printLock,
-    clientHasReceivedIncomingConnections, numberOfMessagesProcessed,
-    numberOfBroadcastsProcessed, numberOfPubkeysProcessed)
-
+import shared
 from addresses import (
     decodeAddress, addBMIfNotPresent, decodeVarint,
-    calculateInventoryHash)
+    calculateInventoryHash, varintDecodeError)
+import defaults
+import helper_inbox
+import helper_sent
 
-from defaults import (
-    networkDefaultProofOfWorkNonceTrialsPerByte,
-    networkDefaultPayloadLengthExtraBytes,
-    )
-
-from queues import (
-    UISignalQueue, apiAddressGeneratorReturnQueue,
-    addressGeneratorQueue, workerQueue, invQueue)
-
-from network.stats import connectedHostsList
-from helper_inbox import trash as inbox_trash
-from helper_sent import insert as outbox_insert
-from state import appdata as state_appdata
-from shutdown import doCleanShutdown
+import state
+import queues
+import shutdown
+import network.stats
 
 # Classes
 from helper_sql import sqlQuery, sqlExecute, SqlBulkExecute, sqlStoredProcedure
@@ -48,12 +34,28 @@ from inventory import Inventory
 from version import softwareVersion
 
 # Helper Functions
-from proofofwork import run as proofofwork_run
+import proofofwork
 
-from debug import logger
-import traceback
+__all__ = [
+        'BMConfigParser', 'state',
+        'APIError', 'varintDecodeError',
+        'Services',
+        'logger',
+        ]
+
+from bmconfigparser import BMConfigParser
+import state
+
+import logging
+logger = logging.getLogger('default')
+# logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+# logger.getEffectiveLevel()
+# logger.setLevel(loggin.INFO)
 
 str_chan = '[chan]'
+# varintDecodeError = addresses.varintDecodeError
+
 
 class APIError(Exception):
     def __init__(self, error_number, error_message):
@@ -63,6 +65,7 @@ class APIError(Exception):
 
     def __str__(self):
         return "API Error %04i: %s" % (self.error_number, self.error_message)
+
 
 class Services(object):
 
@@ -155,7 +158,7 @@ class Services(object):
         data = '{"addresses":['
         for row in queryreturn:
             label, address = row
-            label = fixPotentiallyInvalidUTF8Data(label)
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
             if len(data) > 20:
                 data += ','
             data += json.dumps({
@@ -178,9 +181,9 @@ class Services(object):
                 16, 'You already have this address in your address book.')
 
         sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-        UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        UISignalQueue.put(('rerenderMessagelistToLabels', ''))
-        UISignalQueue.put(('rerenderAddressBook', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
+        queues.UISignalQueue.put(('rerenderAddressBook', ''))
         return "Added address %s to address book" % address
 
     def HandleDeleteAddressBookEntry(self, params):
@@ -190,9 +193,9 @@ class Services(object):
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
         sqlExecute('DELETE FROM addressbook WHERE address=?', address)
-        UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        UISignalQueue.put(('rerenderMessagelistToLabels', ''))
-        UISignalQueue.put(('rerenderAddressBook', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
+        queues.UISignalQueue.put(('rerenderAddressBook', ''))
         return "Deleted address book entry for %s if it existed" % address
 
     def HandleCreateRandomAddress(self, params):
@@ -214,7 +217,7 @@ class Services(object):
         elif len(params) == 3:
             label, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                networkDefaultProofOfWorkNonceTrialsPerByte
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte
                 * totalDifficulty)
             payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
@@ -222,10 +225,10 @@ class Services(object):
             label, eighteenByteRipe, totalDifficulty, \
                 smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                networkDefaultProofOfWorkNonceTrialsPerByte
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte
                 * totalDifficulty)
             payloadLengthExtraBytes = int(
-                networkDefaultPayloadLengthExtraBytes
+                defaults.networkDefaultPayloadLengthExtraBytes
                 * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
@@ -234,13 +237,13 @@ class Services(object):
             unicode(label, 'utf-8')
         except:
             raise APIError(17, 'Label is not valid UTF-8 data.')
-        apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
-        addressGeneratorQueue.put((
+        queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, streamNumberForAddress, label, 1, "",
             eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes
         ))
-        return apiAddressGeneratorReturnQueue.get()
+        return queues.apiAddressGeneratorReturnQueue.get()
 
     def HandleCreateDeterministicAddresses(self, params):
         if len(params) == 0:
@@ -291,7 +294,7 @@ class Services(object):
             passphrase, numberOfAddresses, addressVersionNumber, \
                 streamNumber, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                networkDefaultPayloadLengthExtraBytes
+                defaults.networkDefaultPayloadLengthExtraBytes
                 * totalDifficulty)
             payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
@@ -300,10 +303,10 @@ class Services(object):
                 streamNumber, eighteenByteRipe, totalDifficulty, \
                 smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                networkDefaultPayloadLengthExtraBytes
+                defaults.networkDefaultPayloadLengthExtraBytes
                 * totalDifficulty)
             payloadLengthExtraBytes = int(
-                networkDefaultPayloadLengthExtraBytes
+                defaults.networkDefaultPayloadLengthExtraBytes
                 * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
@@ -339,17 +342,17 @@ class Services(object):
                 ' this, contact the Bitmessage developers and we can modify'
                 ' the check or you can do it yourself by searching the source'
                 ' code for this message.')
-        apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug(
             'Requesting that the addressGenerator create %s addresses.',
             numberOfAddresses)
-        addressGeneratorQueue.put((
+        queues.addressGeneratorQueue.put((
             'createDeterministicAddresses', addressVersionNumber, streamNumber,
             'unused API address', numberOfAddresses, passphrase,
             eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes
         ))
         data = '{"addresses":['
-        queueReturn = apiAddressGeneratorReturnQueue.get()
+        queueReturn = queues.apiAddressGeneratorReturnQueue.get()
         for item in queueReturn:
             if len(data) > 20:
                 data += ','
@@ -373,16 +376,16 @@ class Services(object):
         if streamNumber != 1:
             raise APIError(
                 3, ' The stream number must be 1. Others aren\'t supported.')
-        apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug(
             'Requesting that the addressGenerator create %s addresses.',
             numberOfAddresses)
-        addressGeneratorQueue.put((
+        queues.addressGeneratorQueue.put((
             'getDeterministicAddress', addressVersionNumber, streamNumber,
             'unused API address', numberOfAddresses, passphrase,
             eighteenByteRipe
         ))
-        return apiAddressGeneratorReturnQueue.get()
+        return queues.apiAddressGeneratorReturnQueue.get()
 
     def HandleCreateChan(self, params):
         if len(params) == 0:
@@ -402,14 +405,14 @@ class Services(object):
 
         addressVersionNumber = 4
         streamNumber = 1
-        apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug(
             'Requesting that the addressGenerator create chan %s.', passphrase)
-        addressGeneratorQueue.put((
+        queues.addressGeneratorQueue.put((
             'createChan', addressVersionNumber, streamNumber, label,
             passphrase, True
         ))
-        queueReturn = apiAddressGeneratorReturnQueue.get()
+        queueReturn = queues.apiAddressGeneratorReturnQueue.get()
         if len(queueReturn) == 0:
             raise APIError(24, 'Chan address is already present.')
         address = queueReturn[0]
@@ -434,12 +437,12 @@ class Services(object):
         status, addressVersionNumber, streamNumber, toRipe = \
             self._verifyAddress(suppliedAddress)
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
-        apiAddressGeneratorReturnQueue.queue.clear()
-        addressGeneratorQueue.put((
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
+        queues.addressGeneratorQueue.put((
             'joinChan', suppliedAddress, label, passphrase, True
         ))
         addressGeneratorReturnValue = \
-            apiAddressGeneratorReturnQueue.get()
+            queues.apiAddressGeneratorReturnQueue.get()
 
         if addressGeneratorReturnValue[0] == \
                 'chan name does not match address':
@@ -467,7 +470,7 @@ class Services(object):
                 25, 'Specified address is not a chan address.'
                 ' Use deleteAddress API call instead.')
         BMConfigParser().remove_section(address)
-        with open(state_appdata + 'keys.dat', 'wb') as configfile:
+        with open(state.appdata + 'keys.dat', 'wb') as configfile:
             BMConfigParser().write(configfile)
         return 'success'
 
@@ -483,11 +486,11 @@ class Services(object):
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         BMConfigParser().remove_section(address)
-        with open(state_appdata + 'keys.dat', 'wb') as configfile:
+        with open(state.appdata + 'keys.dat', 'wb') as configfile:
             BMConfigParser().write(configfile)
-        UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        UISignalQueue.put(('rerenderMessagelistToLabels', ''))
-        reloadMyAddressHashes()
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
+        shared.reloadMyAddressHashes()
         return 'success'
 
     def HandleGetAllInboxMessages(self, params):
@@ -500,8 +503,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, \
                 encodingtype, read = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
             data += json.dumps({
@@ -548,7 +551,7 @@ class Services(object):
                 sqlExecute(
                     "UPDATE inbox set read = ? WHERE msgid=?",
                     readStatus, msgid)
-                UISignalQueue.put(('changedInboxUnread', None))
+                queues.UISignalQueue.put(('changedInboxUnread', None))
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received, message,"
             " encodingtype, read FROM inbox WHERE msgid=?", msgid
@@ -557,8 +560,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, \
                 encodingtype, read = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             data += json.dumps({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
@@ -581,8 +584,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, lastactiontime, message, \
                 encodingtype, status, ackdata = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
             data += json.dumps({
@@ -625,8 +628,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, \
                 encodingtype = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
             data += json.dumps({
@@ -653,8 +656,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, lastactiontime, message, \
                 encodingtype, status, ackdata = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             data += json.dumps({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
@@ -682,8 +685,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, lastactiontime, message, \
                 encodingtype, status, ackdata = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
             data += json.dumps({
@@ -712,8 +715,8 @@ class Services(object):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, lastactiontime, message, \
                 encodingtype, status, ackdata = row
-            subject = fixPotentiallyInvalidUTF8Data(subject)
-            message = fixPotentiallyInvalidUTF8Data(message)
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             data += json.dumps({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
@@ -733,7 +736,7 @@ class Services(object):
         msgid = self._decode(params[0], "hex")
 
         # Trash if in inbox table
-        inbox_trash(msgid)
+        helper_inbox.trash(msgid)
         # Trash if in sent table
         sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
         return 'Trashed message (assuming message existed).'
@@ -742,7 +745,7 @@ class Services(object):
         if len(params) == 0:
             raise APIError(0, 'I need parameters!')
         msgid = self._decode(params[0], "hex")
-        inbox_trash(msgid)
+        helper_inbox.trash(msgid)
         return 'Trashed inbox message (assuming message existed).'
 
     def HandleTrashSentMessage(self, params):
@@ -808,7 +811,7 @@ class Services(object):
             'sent',
             2,
             TTL)
-        outbox_insert(t)
+        helper_sent.insert(t)
 
         toLabel = ''
         queryreturn = sqlQuery(
@@ -817,10 +820,10 @@ class Services(object):
             for row in queryreturn:
                 toLabel, = row
         # apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
-        UISignalQueue.put(('displayNewSentMessage', (
+        queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
 
-        workerQueue.put(('sendmessage', toAddress))
+        queues.workerQueue.put(('sendmessage', toAddress))
 
         return hexlify(ackdata)
 
@@ -873,12 +876,12 @@ class Services(object):
             'sent',
             2,
             TTL)
-        outbox_insert(t)
+        helper_sent.insert(t)
 
         toLabel = '[Broadcast subscribers]'
-        UISignalQueue.put(('displayNewSentMessage', (
+        queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
-        workerQueue.put(('sendbroadcast', ''))
+        queues.workerQueue.put(('sendbroadcast', ''))
 
         return hexlify(ackdata)
 
@@ -923,9 +926,9 @@ class Services(object):
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute(
             "INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
-        reloadBroadcastSendersForWhichImWatching()
-        UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        UISignalQueue.put(('rerenderSubscriptions', ''))
+        shared.reloadBroadcastSendersForWhichImWatching()
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Added subscription.'
 
     def HandleDeleteSubscription(self, params):
@@ -934,9 +937,9 @@ class Services(object):
         address, = params
         address = addBMIfNotPresent(address)
         sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
-        reloadBroadcastSendersForWhichImWatching()
-        UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        UISignalQueue.put(('rerenderSubscriptions', ''))
+        shared.reloadBroadcastSendersForWhichImWatching()
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Deleted subscription if it existed.'
 
     def HandleListSubscriptions(self, params):  # ListSubscriptions
@@ -945,7 +948,7 @@ class Services(object):
         data = {'subscriptions': []}
         for row in queryreturn:
             label, address, enabled = row
-            label = fixPotentiallyInvalidUTF8Data(label)
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
             data['subscriptions'].append({
                 'label': base64.b64encode(label),
                 'address': address,
@@ -968,12 +971,12 @@ class Services(object):
         target = 2**64 / (
             (len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8)
             * requiredAverageProofOfWorkNonceTrialsPerByte)
-        with printLock:
-            print('(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / networkDefaultPayloadLengthExtraBytes, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / networkDefaultPayloadLengthExtraBytes)
+        with shared.printLock:
+            print('(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultPayloadLengthExtraBytes, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes)
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
-        trialValue, nonce = proofofwork_run(target, initialHash)
-        with printLock:
+        trialValue, nonce = proofofwork.run(target, initialHash)
+        with shared.printLock:
             print('(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce)
             try:
                 print('POW took %d seconds. %d nonce trials per second.' % (int(time.time() - powStartTime), nonce / (time.time() - powStartTime)))
@@ -988,9 +991,9 @@ class Services(object):
             objectType, toStreamNumber, encryptedPayload,
             int(time.time()) + TTL, ''
         )
-        with printLock:
+        with shared.printLock:
             print('Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash))
-        invQueue.put((toStreamNumber, inventoryHash))
+        queues.invQueue.put((toStreamNumber, inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
         # This API method should only be used when msgid is not available
@@ -1013,11 +1016,11 @@ class Services(object):
 
         # Let us do the POW
         target = 2 ** 64 / (
-            (len(payload) + networkDefaultPayloadLengthExtraBytes
-            + 8) * networkDefaultPayloadLengthExtraBytes)
+            (len(payload) + defaults.networkDefaultPayloadLengthExtraBytes
+            + 8) * defaults.networkDefaultPayloadLengthExtraBytes)
         print('(For pubkey message via API) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork_run(target, initialHash)
+        trialValue, nonce = proofofwork.run(target, initialHash)
         print('(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce)
         payload = pack('>Q', nonce) + payload
 
@@ -1038,9 +1041,9 @@ class Services(object):
         Inventory()[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
-        with printLock:
+        with shared.printLock:
             print('broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash))
-        invQueue.put((pubkeyStreamNumber, inventoryHash))
+        queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):
         # Method will eventually be used by a particular Android app to
@@ -1084,18 +1087,18 @@ class Services(object):
         return data
 
     def HandleClientStatus(self, params):
-        if len(connectedHostsList()) == 0:
+        if len(network.stats.connectedHostsList()) == 0:
             networkStatus = 'notConnected'
-        elif len(connectedHostsList()) > 0 \
-                and not clientHasReceivedIncomingConnections:
+        elif len(network.stats.connectedHostsList()) > 0 \
+                and not shared.clientHasReceivedIncomingConnections:
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         else:
             networkStatus = 'connectedAndReceivingIncomingConnections'
         return json.dumps({
-            'networkConnections': len(connectedHostsList()),
-            'numberOfMessagesProcessed': numberOfMessagesProcessed,
-            'numberOfBroadcastsProcessed': numberOfBroadcastsProcessed,
-            'numberOfPubkeysProcessed': numberOfPubkeysProcessed,
+            'networkConnections': len(network.stats.connectedHostsList()),
+            'shared.numberOfMessagesProcessed': shared.numberOfMessagesProcessed,
+            'shared.numberOfBroadcastsProcessed': shared.numberOfBroadcastsProcessed,
+            'shared.numberOfPubkeysProcessed': shared.numberOfPubkeysProcessed,
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
@@ -1124,7 +1127,7 @@ class Services(object):
 
     def HandleStatusBar(self, params):
         message, = params
-        UISignalQueue.put(('updateStatusBar', message))
+        queues.UISignalQueue.put(('updateStatusBar', message))
 
     def HandleDeleteAndVacuum(self, params):
         if not params:
@@ -1133,6 +1136,6 @@ class Services(object):
 
     def HandleShutdown(self, params):
         if not params:
-            doCleanShutdown()
+            shutdown.doCleanShutdown()
             return 'done'
 

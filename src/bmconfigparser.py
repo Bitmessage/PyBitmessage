@@ -105,8 +105,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, variables=None):
-        return ConfigParser.ConfigParser.items(self, section, True, variables)
+    def items(self, section, raw=False):
+        return ConfigParser.ConfigParser.items(self, section, True)
 
     def addresses(self):
         return filter(

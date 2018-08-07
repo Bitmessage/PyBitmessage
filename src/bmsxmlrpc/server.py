@@ -1,20 +1,15 @@
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2018 The Bitmessage developers
 
-"""
-This is not what you run to run the Bitmessage API. Instead, enable the API
-( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
-( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
-"""
+# This is not what you run to run the Bitmessage API. Instead, enable the API
+# ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
+# ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 
-from __future__ import print_function
 
 import time
 import sys
-import errno
+# import errno
 import threading
-import traceback
-from debug import logger
 
 try:
     # import SocketServer
@@ -28,22 +23,26 @@ except ImportError:
 
 import ssl
 import socket
-from threading import Thread, Condition
 
-from bmconfigparser import BMConfigParser
-from addresses import varintDecodeError
-from state import shutdown as state_shutdown
-from helper_threading import StoppableThread
-from services import APIError, Services
-
-# Classes
+# from services import BMConfigParser, state, APIError, varintDecodeError, Services, logger
+from services import *
 
 DEFAULTKEYFILE = 'sslkeys/key.pem'
 DEFAULTFILE = 'sslkeys/cert.pem'
 
+
+def __repr__(self):
+    return '<%s.%s object at %s>' % (
+        self.__class__.__module__,
+        self.__class__.__name__,
+        hex(id(self))
+        )
+
+
 class CustomThreadingMixIn:
     """Mix-in class to handle each resquest in new thread."""
     # Decides how threads will act upon termination of the main process
+
     daemon_threads = True
 
     def process_request_thread(self, request, client_address):
@@ -63,7 +62,7 @@ class CustomThreadingMixIn:
 
     def process_request(self, request, client_address):
         """Start a new thread to process the request."""
-        t = Thread(target=self.process_request_thread, args=(request, client_address))
+        t = threading.Thread(target=self.process_request_thread, args=(request, client_address))
         if self.daemon_threads:
             t.setDaemon(1)
         t.start()
@@ -130,7 +129,6 @@ class VerifyingRequestHandler(SimpleXMLRPCRequestHandler):
             # internal error, report as HTTP server error
             logger.exception('do_POST Exception:')
             self.send_response(500)
-            # traceback response removed
             self.end_headers()
         else:
             # got a valid XML RPC response
@@ -216,7 +214,7 @@ class VerifyingRequestHandler(SimpleXMLRPCRequestHandler):
 class StoppableXMLRPCServer(CustomThreadingMixIn, SimpleXMLRPCServer, VerifyingRequestHandler, Services):
 
     def serve_forever(self):
-        while state_shutdown == 0:
+        while state.shutdown == 0:
             try:
                 self.rCondition.acquire()
                 start_new_thread(self.handle_request, ())  # we do this async, because handle_request blocks!
@@ -229,6 +227,7 @@ class StoppableXMLRPCServer(CustomThreadingMixIn, SimpleXMLRPCServer, VerifyingR
                 logger.warning('quit signaled. i am done.')
                 break
 
+        logger.info('API service down.')
         self.server_close()
         return
 
@@ -258,7 +257,7 @@ class StoppableXMLRPCServer(CustomThreadingMixIn, SimpleXMLRPCServer, VerifyingR
         self.register_multicall_functions()
 
         self.requests = 0
-        self.rCondition = Condition()
+        self.rCondition = threading.Condition()
 
         BaseServer.__init__(self, addr, VerifyingRequestHandler)
         # SocketServer.TCPServer.__init__(self, addr, VerifyingRequestHandler, bind_and_activate)
@@ -347,16 +346,19 @@ class StoppableXMLRPCServer(CustomThreadingMixIn, SimpleXMLRPCServer, VerifyingR
             else:
                 raise APIError(20, 'Invalid method: %s' % method)
         except APIError as e:
-            return str(e)
+            pass
         except varintDecodeError as e:
             logger.error(e)
-            return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
+            e = APIError(26, "Data contains a malformed varint. Some details: %s" % e)
         except Exception as e:
             logger.exception(e)
-            return "API Error 0021: Unexpected API Failure - %s" % e
+            e = APIError(21, "Unexpected API Failure - %s" % e)
+
+        return str(e)
 
 
-class singleAPI(threading.Thread, StoppableThread):
+# This thread, of which there is only one, runs the API.
+class singleAPI(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
@@ -365,30 +367,37 @@ class singleAPI(threading.Thread, StoppableThread):
         self.serve = None
         self.initStop()
 
+    def initStop(self):
+        self.stop = threading.Event()
+        self._stopped = False
+
     def stopThread(self):
-        super(singleAPI, self).stopThread()
+        self._stopped = True
+        self.stop.set()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.connect((self.interface,self.port))
+            s.connect((self.interface, self.port))
             s.shutdown(socket.SHUT_RDWR)
             s.close()
-        except:
-            pass
+        except Exception as err:
+            logger.exception(err)
 
     def run(self):
-        try:
-            from errno import WSAEADDRINUSE
-        except (ImportError, AttributeError):
-            errno.WSAEADDRINUSE = errno.EADDRINUSE
+#        try:
+#            from errno import WSAEADDRINUSE
+#        except (ImportError, AttributeError):
+#            errno.WSAEADDRINUSE = errno.EADDRINUSE
         try:
             se = StoppableXMLRPCServer((self.interface, self.port), True, True)
             sa = se.socket.getsockname()
-            print('Serving API on %s, port %d' % (sa[0],sa[1]))
+            logger.warn('Serving API on %s, port %d' % (sa[0], sa[1]))
             self.serve = se
             se.serve_forever()
-        except socket.error as e:
-            if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
-                print('interface not useable: (%s:%d)' % (self.interface, self.port))
+        except socket.error as err:
+            #if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
+            logger.exception('interface not useable: [%s:%d]' % (self.interface, self.port))
+        except Exception as err:
+            logger.exception(err)
 
     def test(self):
         try:
@@ -417,41 +426,39 @@ class singleAPI(threading.Thread, StoppableThread):
         except TypeError as err:  # unsupported XML-RPC protocol
             print('XML-RPC not initialed correctly. {%s}\n' % str(err))
         except xmlrpclib.Fault as err:
-            print
-        except Exception:  # /httplib.BadStatusLine: connection close immediatly
+            print('API returns Fault error. {%s}\n' % str(err))
+        except Exception as err:  # /httplib.BadStatusLine: connection close immediatly
             print('Unexpected error. {%s}\n' % sys.exc_info()[0])
 
         if ret is False:
-            traceback.print_exc()
+            logger.exception(err)
 
         return ret
 
 
-def __repr__(self):
-    return '<%s.%s object at %s>' % (
-        self.__class__.__module__,
-        self.__class__.__name__,
-        hex(id(self))
-        )
+class TestAPIThread(object):
+
+    def start(self):
+        success = False
+        print('XMLRPC API daemon...')
+        singleAPIThread = singleAPI()
+        singleAPIThread.daemon = True
+        singleAPIThread.start()
+        time.sleep(3)
+        if singleAPIThread.serve:
+            print('XMLRPC Testing...')
+            success = singleAPIThread.test()
+            singleAPIThread.stopThread()
+        else:
+            print('XMLRPC API daemon failed!')
+
+        sys.exit(success is False)
 
 
 def main():
-    success = False
-    print('XMLRPC API daemon...')
-    singleAPIThread = singleAPI()
-    singleAPIThread.daemon = True
-    singleAPIThread.start()
-    time.sleep(3)
-    if singleAPIThread.serve:
-        print('XMLRPC Testing...')
-        success = singleAPIThread.test()
-        singleAPIThread.stopThread()
-    else:
-        print('XMLRPC API daemon failed!')
-
-    sys.exit(success is False)
+    mainprogram = TestAPIThread()
+    mainprogram.start()
 
 
 if __name__ == "__main__":
     main()
-

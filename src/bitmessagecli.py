@@ -37,7 +37,6 @@ import datetime
 import re
 import subprocess
 
-from binascii import hexlify, unhexlify, Error as binascii_Error
 from collections import OrderedDict
 
 import bmsxmlrpc.client as xmlrpclib
@@ -130,8 +129,6 @@ inputs = dict()
 
 def duplicated(out):
 
-    global cmdShorts
-
     seen = dict()
     dups = list()
     dcmds = dict()
@@ -151,7 +148,7 @@ def duplicated(out):
 
 def cmdGuess():
 
-    global cmdTbl, cmdShorts
+    global cmdShorts
 
     fullWords = [
         'api', 'test', 'info', 'settings', 'quit', 'exit', 'set', 'list',
@@ -204,8 +201,6 @@ def cmdGuess():
 
 
 def showCmdTbl():
-
-    global cmdTbl, cmdShorts
 
     url = 'https://github.com/BitMessage/PyBitmessage'
     print
@@ -465,23 +460,6 @@ def getBase64Len(x=''):
     return int(len(x) * 3 / 4) - strip
 
 
-def _decode(text, decode_type):
-    try:
-        if decode_type == 'hex':  # for messageId/ackData/payload
-            return unhexlify(text)
-        elif decode_type == 'base64':  # for label/passphrase/ripe/subject/message
-            return base64.b64decode(text)
-    except Exception as err:  # UnicodeEncodeError/
-        raise
-
-
-def _encode(text, encode_type):
-    if encode_type == 'hex':
-        return hexlify(text)
-    elif encode_type == 'base64':  # for label/passphrase/ripe/subject/message
-        return base64.b64encode(text)
-
-
 class InputException(Exception):
     def __init__(self, resKey):
         Exception.__init__(self, resKey)
@@ -492,8 +470,6 @@ class InputException(Exception):
 
 
 def inputAddress(prompt='What is the address?'):
-
-    global retStrings
 
     src = retStrings['invalidaddr']
     while True:
@@ -508,8 +484,6 @@ def inputAddress(prompt='What is the address?'):
 
 
 def indexInputBreakable(prompt='Paused', lastId=-1, maximum=-1, default=-1):
-
-    global retStrings
 
     while True:
         cinput = userInput('\n%s on %d/%d, next [%d] input next id to change\n"-1" to break; (c) or' % (prompt, lastId, maximum, default), '').strip().lower()
@@ -539,8 +513,6 @@ def indexInputBreakable(prompt='Paused', lastId=-1, maximum=-1, default=-1):
 
 def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
-    global retStrings
-
     while True:
         cinput = userInput(prompt + '\nTry again, (c) or').strip().lower()
         try:
@@ -569,8 +541,6 @@ def inputIndex(prompt='Input a index: ', maximum=-1, alter=[]):
 
 def userInput(message, defaultStr='\nPress Enter to input default [%s]: ', altVal=''):
     """Checks input for exit or quit. Also formats for input, etc"""
-
-    global cmdStr, retStrings
 
     stack = list(inspect.stack())
     where = ''.join([
@@ -625,7 +595,7 @@ def validAddress(address):
 def getAddress(passphrase, vNumber, sNumber):
     """Get a deterministic address"""
 
-    passPhrase = _encode(passphrase.encode(encoding='utf-8'), 'base64')  # passphrase must be encoded
+    passPhrase = xmlrpclib.BMS_encode(passphrase.encode(encoding='utf-8'), 'base64')  # passphrase must be encoded
     print('     Getting address: %s' % passphrase)
     response = api.getDeterministicAddress(passPhrase, vNumber, sNumber)
     if response.error != 0:
@@ -637,7 +607,7 @@ def getAddress(passphrase, vNumber, sNumber):
 def subscribe(address, label):
     """Subscribe to an address"""
 
-    enclabel = _encode(label.encode(encoding='utf-8'), 'base64')
+    enclabel = xmlrpclib.BMS_encode(label.encode(encoding='utf-8'), 'base64')
     print('     Subscribing address: %s' % label)
     response = api.addSubscription(address, enclabel)
     if response.error != 0:
@@ -672,7 +642,7 @@ def listSubscriptions():
     print('     | #  |       Label        |               Address              |Enabled|')
     print('     |----|--------------------|------------------------------------|-------|')
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
-        label = _decode(jsonAddresses[addNum]['label'], 'base64').decode(encoding='utf-8')  # may still misdiplay in some consoles
+        label = xmlrpclib.BMS_decode(jsonAddresses[addNum]['label'], 'base64').decode(encoding='utf-8')  # may still misdiplay in some consoles
         address = str(jsonAddresses[addNum]['address'])
         enabled = str(jsonAddresses[addNum]['enabled'])
 
@@ -689,7 +659,7 @@ def listSubscriptions():
 def createChan(password):
     """Create a channel"""
 
-    encpassword = _encode(password.encode(encoding='utf-8'), 'base64')
+    encpassword = xmlrpclib.BMS_encode(password.encode(encoding='utf-8'), 'base64')
     print('     Channel creating... %s' % password)
     response = api.createChan(encpassword)
     if response.error != 0:
@@ -705,7 +675,7 @@ def joinChan():
     address = inputAddress('Enter channel address')
     while uInput == '':
         uInput = userInput('Enter channel name[1~]')
-    password = _encode(uInput.encode(encoding='utf-8'), 'base64')
+    password = xmlrpclib.BMS_encode(uInput.encode(encoding='utf-8'), 'base64')
 
     print('     Channel joining... %s' % uInput)
     response = api.joinChan(password, address)
@@ -762,14 +732,14 @@ def genAdd(lbl=None, deterministic=False, passphrase=None, numOfAdd=None, addVNu
     """Generate address"""
 
     if deterministic is False:  # Generates a new address with the user defined label. non-deterministic
-        addressLabel = _encode(lbl.encode(encoding='utf-8'), 'base64')
+        addressLabel = xmlrpclib.BMS_encode(lbl.encode(encoding='utf-8'), 'base64')
         print('     Address requesting... %s' % lbl)
         response = api.createRandomAddress(addressLabel)
         if response.error != 0:
             return response.errormsg
 
     else:  # Generates a new deterministic address with the user inputs.
-        passPhrase = _encode(passphrase.encode(encoding='utf-8'), 'base64')  # api lack unicode test for it
+        passPhrase = xmlrpclib.BMS_encode(passphrase.encode(encoding='utf-8'), 'base64')  # api lack unicode test for it
         print('     Address deterministic... %s' % passphrase)
         response = api.createDeterministicAddresses(passPhrase, numOfAdd, addVNum, streamNum, ripe)
         if response.error != 0:
@@ -780,8 +750,6 @@ def genAdd(lbl=None, deterministic=False, passphrase=None, numOfAdd=None, addVNu
 
 def dump2File(fileName, fileData, deCoded):
     """Allows attachments and messages/broadcats to be saved"""
-
-    global inputShorts
 
     # This section finds all invalid characters and replaces them with ~
     for s in ' /\\:*?"<>|':
@@ -820,13 +788,13 @@ def dump2File(fileName, fileData, deCoded):
 
         if trydecode is True:
             try:
-                y = _decode(x, 'base64')
-                if x == _encode(y, 'base64'):  # .replace('\n', ''):  # double check decoded string.
+                y = xmlrpclib.BMS_decode(x, 'base64')
+                if x == xmlrpclib.BMS_encode(y, 'base64'):  # .replace('\n', ''):  # double check decoded string.
                     fileData = y
                 else:
                     print('\n     Failed on "BASE64" re-encode checking.\n')
 
-            except (binascii_Error, ValueError) as err:
+            except (xmlrpclib.DecodeError, ValueError) as err:
                 return '\n     Failed on "BASE64" decoding.\n'
         else:
             print('\n     Not "BASE64" contents, dump to file directly.')
@@ -849,8 +817,6 @@ def attachment():
 
     theAttachmentS = ''
 
-    global inputShorts
-
     for counter in range(1, 3):  # maximum 3 of attachments
         isImage = False
         theAttachment = ''
@@ -860,9 +826,11 @@ def attachment():
                 '\nPlease enter the path to the attachment or just the attachment name if in this folder[Max:180MB], %d/3 allowed.' % counter)
 
             try:
+                if os.path.isfile(filePath) is False:
+                    raise IOError
                 with open(filePath):
                     break
-            except IOError:
+            except (IOError, OSError):
                 print('\n     Failed open file on: "%s"\n' % filePath)
 
         # print(filesize, and encoding estimate with confirmation if file is over X size (1mb?))
@@ -900,7 +868,7 @@ def attachment():
 
         with open(filePath, 'rb') as f:  # Begin the actual encoding
             data = f.read(188743680)  # Reads files up to 180MB, the maximum size for Bitmessage.
-            data = _encode(data, 'base64').decode(encoding='utf-8')
+            data = xmlrpclib.BMS_encode(data, 'base64').decode(encoding='utf-8')
 
         if isImage:  # If it is an image, include image tags in the message
             theAttachment = """
@@ -940,8 +908,6 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
     With no arguments sent, sendMsg fills in the blanks.
     subject and message must be encoded before they are passed.
     """
-
-    global retStrings, inputShorts
 
     if not isBrd:
         if not (toAddress and validAddress(toAddress)):
@@ -992,7 +958,7 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
 
     if subject is None:
         subject = userInput('Enter your Subject.')
-    encsubject = _encode(subject.encode(encoding='utf-8'), 'base64')
+    encsubject = xmlrpclib.BMS_encode(subject.encode(encoding='utf-8'), 'base64')
 
     if message is None:
         message = ''
@@ -1015,7 +981,7 @@ def sendMsg(toAddress=None, fromAddress=None, subject=None, message=None, isBrd=
         message = message + '\n' + attachMessage
 
     print(message)
-    message = _encode(message.encode(encoding='utf-8'), 'base64').decode(encoding='utf-8')
+    message = xmlrpclib.BMS_encode(message.encode(encoding='utf-8'), 'base64').decode(encoding='utf-8')
     src = retStrings['usercancel']
     uInput = userInput('Realy want to send upper message, (n)o or (Y)es?').lower()
     if uInput in inputShorts['no']:
@@ -1083,7 +1049,7 @@ def inbox(unreadOnly=False, pageNum=20):
                 print(response.errormsg)
             else:
                 message = response.result[0]
-                subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+                subject = xmlrpclib.BMS_decode(message['subject'], 'base64').decode(encoding='utf-8')
                 # if we are displaying all messages or if this message is unread then display it
                 if not unreadOnly or not message['read']:
                     print('     -----------------------------------')
@@ -1130,7 +1096,7 @@ def outbox(pageNum=20):
     msgNum = numMessages - 1
     while msgNum >= 0:  # processes all of the messages in the outbox
         message = outboxMessages[msgNum]
-        subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
+        subject = xmlrpclib.BMS_decode(message['subject'], 'base64').decode(encoding='utf-8')
         print('     -----------------------------------')
         print('     Outbox index: %d/%d' % (msgNum, numMessages - 1))  # message index
         print('     Message ID: %s' % message['msgid'])
@@ -1164,8 +1130,6 @@ def outbox(pageNum=20):
 
 
 def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
-
-    global inputShorts
 
     attPos = msgPos = 0
     counter = 0
@@ -1216,8 +1180,8 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
                     trydecode = True
             if trydecode is True:
                 try:
-                    y = _decode(x, 'base64')
-                    if x == _encode(y, 'base64'):  # .replace('\n', ''):  # double check decoded string.
+                    y = xmlrpclib.BMS_decode(x, 'base64')
+                    if x == xmlrpclib.BMS_encode(y, 'base64'):  # .replace('\n', ''):  # double check decoded string.
                         if askSave is True:
                             uInput = userInput('Download the "decoded" attachment, (y)es or (No)?\nNames[%d]: %s,' % (counter, fn)).lower()
                             if uInput in inputShorts['yes']:
@@ -1240,7 +1204,7 @@ def attDetect(content=None, textmsg=None, attPrefix=None, askSave=True):
                     else:
                         print('\n     Failed on decode this embeded "BASE64" like message on re-encode check.\n')
 
-                except (binascii_Error, ValueError) as err:
+                except (xmlrpclib.DecodeError, ValueError) as err:
                     print('\n     Failed on decode this emdeded "BASE64" encoded like message.\n')
                 except InputException:
                     raise
@@ -1283,8 +1247,8 @@ def readSentMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=Fals
 
         message = response.result[0]
 
-    subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
-    content = _decode(message['message'], 'base64').decode(encoding='utf-8')
+    subject = xmlrpclib.BMS_decode(message['subject'], 'base64').decode(encoding='utf-8')
+    content = xmlrpclib.BMS_decode(message['message'], 'base64').decode(encoding='utf-8')
     full = len(content)
     textmsg = ''
     textmsg = content if withAtta else attDetect(content, textmsg, 'outbox_' + subject, cmd != 'save')
@@ -1321,8 +1285,8 @@ def readMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
         return response.errormsg
 
     message = response.result[0]
-    subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
-    content = _decode(message['message'], 'base64').decode(encoding='utf-8')
+    subject = xmlrpclib.BMS_decode(message['subject'], 'base64').decode(encoding='utf-8')
+    content = xmlrpclib.BMS_decode(message['message'], 'base64').decode(encoding='utf-8')
     full = len(content)
     textmsg = ''
     textmsg = content if withAtta else attDetect(content, textmsg, 'inbox_' + subject, cmd != 'save')
@@ -1351,8 +1315,6 @@ def readMsg(cmd='read', msgNum=-1, messageID=None, trunck=380, withAtta=False):
 def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
     """Allows you to reply to the message you are currently on. Saves typing in the addresses and subject."""
 
-    global inputShorts, retStrings
-
     forwardORreply = forwardORreply.lower()  # makes it lowercase
     print('     Inbox message %s... [%d] (%s)' % (forwardORreply, msgNum, messageID))
     response = api.getInboxMessageById(messageID, True)
@@ -1360,8 +1322,8 @@ def replyMsg(msgNum=-1, messageID=None, forwardORreply=None):
         return response.errormsg
 
     message = response.result[0]
-    subject = _decode(message['subject'], 'base64').decode(encoding='utf-8')
-    content = _decode(message['message'], 'base64').decode(encoding='utf-8')
+    subject = xmlrpclib.BMS_decode(message['subject'], 'base64').decode(encoding='utf-8')
+    content = xmlrpclib.BMS_decode(message['message'], 'base64').decode(encoding='utf-8')
     fromAdd = message['toAddress']  # Address it was sent To, now the From address
     fwdFrom = message['fromAddress']  # Address it was sent To, will attached to fwd
     recvTime = datetime.datetime.fromtimestamp(float(message['receivedTime'])).strftime('%Y-%m-%d %H:%M:%S')
@@ -1454,8 +1416,6 @@ def delSentMsg(msgNum=-1, messageID=None):
 
 def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
-    global inputShorts, retStrings
-
     numMessages = 0
     print('     Inbox index fetching...')
     response = api.getAllInboxMessageIds()
@@ -1533,8 +1493,6 @@ def toReadInbox(cmd='read', trunck=380, withAtta=False):
 
 
 def toReadOutbox(cmd='read', trunck=380, withAtta=False):
-
-    global inputShorts, retStrings
 
     print('     Outbox index fetching...')
     response = api.getAllSentMessageIds()
@@ -1658,7 +1616,7 @@ def listAddressBK(printKnown=False):
     print('     |----|--------------------|--------------------------------------|')
     for addNum in range(0, numAddresses):  # processes all of the addresses and lists them out
         entry = addressBook[addNum]
-        label = _decode(entry['label'], 'base64').decode(encoding='utf-8') if not printKnown else entry['label']
+        label = xmlrpclib.BMS_decode(entry['label'], 'base64').decode(encoding='utf-8') if not printKnown else entry['label']
         address = entry['address']
         if len(label) > 19:
             label = label[:16] + '...'
@@ -1671,7 +1629,7 @@ def listAddressBK(printKnown=False):
 def addAddressToAddressBook(address, label):
     """Add an address to an addressbook"""
 
-    enclabel = _encode(label, 'base64')
+    enclabel = xmlrpclib.BMS_encode(label, 'base64')
     print('     Adding... %s' % label)
     response = api.addAddressBK(address, enclabel)
     if response.error != 0:
@@ -1809,7 +1767,7 @@ def start_daemon(uri=''):
 def UI(cmdInput=None):
     """Main user menu"""
 
-    global usrPrompt, inputShorts, cmdShorts, retStrings, bms_allow
+    global usrPrompt
 
     src = 'MUST WRONG'
     uInput = ''
@@ -2059,6 +2017,12 @@ if __name__ == "__main__":
     socks_allow = False
 
     if config.action == 'main':
+        try:
+            print('- Try to get debug module...')
+            from debug import logger
+        except ImportError as err:
+            print('     Failed on getting logging handler. {%s}' % str(err))
+
         try:
             print('- Try to get API connect uri from BMs setting file "keys.dat"...')
             import bmsettings as conninit

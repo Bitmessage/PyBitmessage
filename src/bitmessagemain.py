@@ -33,7 +33,6 @@ from time import sleep
 from random import randint
 import getopt
 
-from bmsxmlrpc.server import StoppableXMLRPCServer
 from helper_startup import (
     isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 )
@@ -43,7 +42,6 @@ import shared
 import knownnodes
 import state
 import shutdown
-import threading
 
 # Classes
 from class_sqlThread import sqlThread
@@ -69,6 +67,7 @@ import helper_bootstrap
 import helper_generic
 import helper_threading
 
+from debug import logger
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
     selfInitiatedConnections[streamNumber] = {}
@@ -155,54 +154,6 @@ def _fixSocket():
         socket.IPV6_V6ONLY = 27
 
 
-# This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, helper_threading.StoppableThread):
-    def __init__(self):
-        threading.Thread.__init__(self, name="singleAPI")
-        self.initStop()
-
-    def stopThread(self):
-        super(singleAPI, self).stopThread()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.connect((
-                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
-                BMConfigParser().getint('bitmessagesettings', 'apiport')
-            ))
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-        except:
-            pass
-
-    def run(self):
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
-        try:
-            from errno import WSAEADDRINUSE
-        except (ImportError, AttributeError):
-            errno.WSAEADDRINUSE = errno.EADDRINUSE
-        for attempt in range(50):
-            try:
-                if attempt > 0:
-                    port = randint(32767, 65535)
-                se = StoppableXMLRPCServer(
-                    (BMConfigParser().get(
-                        'bitmessagesettings', 'apiinterface'),
-                     port),
-                    True, True)
-                sa = se.socket.getsockname()
-                print('Serving API on %s, port %d' % (sa[0], sa[1]))
-            except socket.error as e:
-                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
-                    continue
-            else:
-                if attempt > 0:
-                    BMConfigParser().set(
-                        "bitmessagesettings", "apiport", str(port))
-                    BMConfigParser().save()
-                break
-        se.serve_forever()
-
-
 # This is a list of current connections (the thread pointers at least)
 selfInitiatedConnections = {}
 
@@ -222,8 +173,8 @@ class Main:
 
         try:
             opts, args = getopt.getopt(
-                sys.argv[1:], "hcdt",
-                ["help", "curses", "daemon", "test"])
+                sys.argv[1:], "hcdtsa",
+                ["help", "curses", "daemon", "test", "apitest"])
 
         except getopt.GetoptError:
             self.usage()
@@ -241,6 +192,10 @@ class Main:
             elif opt in ("-t", "--test"):
                 state.testmode = daemon = True
                 state.enableGUI = False  # run without a UI
+            elif opt in ("-a", "--apitest"):
+                from bmsxmlrpc.server import TestAPIThread
+                server = TestAPIThread()
+                server.start()
 
         # is the application already running?  If yes then exit.
         if state.enableGUI and not state.curses and not depends.check_pyqt():
@@ -260,7 +215,7 @@ class Main:
 
         if daemon and not state.testmode:
             with shared.printLock:
-                print('Running as a daemon. Send TERM signal to end.')
+                logger.warn('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
 
         self.setSignalHandler()
@@ -351,6 +306,7 @@ class Main:
                         print('Trying to call', apiNotifyPath)
 
                     call([apiNotifyPath, "startingUp"])
+                from bmsxmlrpc.server import singleAPI
                 singleAPIThread = singleAPI()
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
@@ -394,7 +350,7 @@ class Main:
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
-                print('Running with curses')
+                logger.info('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
             elif state.kivy:
@@ -485,13 +441,14 @@ Options:
   -c, --curses          use curses (text mode) interface
   -d, --daemon          run in daemon (background) mode
   -t, --test            dryrun, make testing
+  -a, --apitest         dryrun, make api testing
 
 All parameters are optional.
 ''')
 
     def stop(self):
         with shared.printLock:
-            print('Stopping Bitmessage Deamon.')
+            logger.warn('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 
     # TODO: nice function but no one is using this
