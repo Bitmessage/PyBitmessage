@@ -12,6 +12,7 @@
             background_color: app.theme_cls.primary_dark
             text: app.showmeaddresses(name='text')
             values: app.showmeaddresses(name='values')
+            on_text:app.getCurrentAccountData(self.text)
 
     NavigationDrawerIconButton:
         icon: 'email-open'
@@ -99,6 +100,7 @@ BoxLayout:
 <Inbox>:
     name: 'inbox'
     ScrollView:
+        id:scrollid
         GridLayout:
             id: box_share
             cols: 1
@@ -115,6 +117,21 @@ BoxLayout:
 
 <Sent>:
     name: 'sent'
+    ScrollView:
+        id:scrollid
+        GridLayout:
+            id: box_share
+            cols: 1
+            size_hint_y: None
+            spacing: 10
+            padding: 10
+            height: self.minimum_height
+            canvas:
+                Color:
+                    rgb: 30,144,255
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
 <Trash>:
     name: 'trash'

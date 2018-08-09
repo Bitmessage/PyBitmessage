@@ -28,6 +28,8 @@ from addresses import decodeAddress, addBMIfNotPresent
 from helper_sql import sqlExecute, sqlQuery
 statusIconColor = 'red'
 avatarlist = os.listdir("images/ngletteravatar")
+global belonging
+belonging = ''
 
 
 class NavigateApp(App, TextInput):
@@ -35,13 +37,21 @@ class NavigateApp(App, TextInput):
     nav_drawer = ObjectProperty()
 
     def build(self):
+        global main_widget
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigator()
         return main_widget
 
-    # def setCurrentAccount(self, text):
-    #     self.ids.btn.text = text
+    def getCurrentAccountData(self, text):
+        global belonging
+        belonging = text
+        main_widget.ids.sc1.clear_widgets()
+        main_widget.ids.sc2.clear_widgets()
+        main_widget.ids.sc1.add_widget(Inbox())
+        main_widget.ids.sc2.add_widget(Sent())
+        Inbox()
+        Sent()
 
     def say_exit(self):
         print("**************************EXITING FROM APPLICATION*****************************")
@@ -61,21 +71,24 @@ class Navigator(NavigationDrawer):
 
 
 class Inbox(Screen):
-
     def __init__(self, *args, **kwargs):
         super(Inbox, self).__init__(*args, **kwargs)
+        global belonging
+        if belonging == '':
+            belonging = Navigator().ids.btn.text
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
+        global belonging
         self.orientation = "vertical"
-        self.create_button(self.ids.box_share)
+        self.inboxaccounts(self.ids.box_share)
 
-    def create_button(self, box_share):
-        account = Navigator().ids.btn.text
+    def inboxaccounts(self, box_share):
+        account = belonging
         folder = 'inbox'
-        self.loadMessagelist(account, folder, box_share, 'All', '')
+        self.loadinboxlist(account, folder, box_share, 'All', '')
 
-    def loadMessagelist(self, account, folder, box_share, where="", what="", unreadOnly=False):
+    def loadinboxlist(self, account, folder, box_share, where="", what="", unreadOnly=False):
         top_logo_share = 1.01
         top_button_share = 1.1
         top_label_share = 1.4
@@ -89,13 +102,13 @@ class Inbox(Screen):
                 top_button_share -= .4
                 top_label_share -= .4
                 logo_share = \
-                    Image(source='images/ngletteravatar/{}'.format(self.list_random(avatarlist, subject)),
+                    Image(source='images/ngletteravatar/{}'.format(self.getletterimage(avatarlist, subject)),
                           pos_hint={"center_x": .05, "top": top_logo_share},
                           size_hint_y=None, height=25)
                 button_share = \
                     Button(pos_hint={"x": 0, "top": top_button_share},
                            size_hint_y=None, height=40, text=subject, multiline=True, background_color=NavigateApp.theme_cls.primary_dark)
-                button_share.bind(on_press=self.change_screen)
+                button_share.bind(on_press=self.getInboxMessageDetail)
                 fl = FloatLayout(size_hint_y=None, height=25)
                 fl.add_widget(button_share)
                 fl.add_widget(logo_share)
@@ -106,7 +119,7 @@ class Inbox(Screen):
                       size_hint_y=None)
             box_share.add_widget(label_share)
 
-    def list_random(self, ran, subject):
+    def getletterimage(self, ran, subject):
         limit = 5
         for x in subject[:limit]:
             if '{}.png'.format(x.lower()) in ran:
@@ -118,8 +131,11 @@ class Inbox(Screen):
                 return ran[0]
                 break
 
-    def change_screen(self, instance):
-        self.manager.current = 'page'
+    def getInboxMessageDetail(self, instance):
+        try:
+            self.manager.current = 'page'
+        except AttributeError:
+            self.parent.manager.current = 'page'
         print('I am {}'.format(instance.text))
 
 
@@ -132,16 +148,71 @@ class AddressSuccessful(Screen):
 
 
 class Sent(Screen):
-    def __init__(self, **kwargs):
-        super(Sent, self).__init__(**kwargs)
-        val_y = .1
-        val_z = 0
-        my_box1 = BoxLayout(orientation='vertical')
-        for i in range(1, 5):
-            my_box1.add_widget(Label(text="I am in sent", size_hint=(.3, .1), pos_hint={
-                               'x': val_z, 'top': val_y}, color=(0, 0, 0, 1), background_color=(0, 0, 0, 0)))
-            val_y += .1
-        self.add_widget(my_box1)
+    def __init__(self, *args, **kwargs):
+        super(Sent, self).__init__(*args, **kwargs)
+        global belonging
+        if belonging == '':
+            belonging = Navigator().ids.btn.text
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        global belonging
+        self.orientation = "vertical"
+        self.sentaccounts(self.ids.box_share)
+
+    def sentaccounts(self, box_share):
+        account = belonging
+        folder = 'inbox'
+        self.loadSent(account, box_share, 'All', '')
+
+    def loadSent(self, account, box_share, where="", what=""):
+        top_logo_share = 1.01
+        top_button_share = 1.1
+        top_label_share = 1.4
+        xAddress = 'fromaddress'
+        queryreturn = kivy_helper_search.search_sql(xAddress, account, "sent", where, what, False)
+        if queryreturn:
+            for row in queryreturn:
+                toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
+                top_logo_share -= .4
+                top_button_share -= .4
+                top_label_share -= .4
+                logo_share = \
+                    Image(source='images/ngletteravatar/{}'.format(self.getletterimage(avatarlist, subject)),
+                          pos_hint={"center_x": .05, "top": top_logo_share},
+                          size_hint_y=None, height=25)
+                button_share = \
+                    Button(pos_hint={"x": 0, "top": top_button_share},
+                           size_hint_y=None, height=40, text=subject, multiline=True, background_color=NavigateApp.theme_cls.primary_dark)
+                button_share.bind(on_press=self.getSentMessageDetail)
+                fl = FloatLayout(size_hint_y=None, height=25)
+                fl.add_widget(button_share)
+                fl.add_widget(logo_share)
+                box_share.add_widget(fl)
+        else:
+            label_share = \
+                Label(text="yet you dont have any emails received", pos_hint={"x": 0, "top": top_label_share},
+                      size_hint_y=None)
+            box_share.add_widget(label_share)
+
+    def getletterimage(self, ran, subject):
+        limit = 5
+        for x in subject[:limit]:
+            if '{}.png'.format(x.lower()) in ran:
+                return '{}.png'.format(x.lower())
+            elif '{}.jpg'.format(x.lower()) in ran:
+                return '{}.jpg'.format(x.lower())
+            if x == limit:
+                random.shuffle(ran)
+                return ran[0]
+                break
+
+    def getSentMessageDetail(self, instance):
+        try:
+            self.manager.current = 'page'
+        except AttributeError:
+            self.parent.manager.current = 'page'
+        print('I am {}'.format(instance.text))
 
 
 class Trash(Screen):

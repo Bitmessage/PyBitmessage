@@ -1,15 +1,19 @@
 from helper_sql import *
 
 
-def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where = None, what = None, unreadOnly = False):
+def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
     if what is not None and what != "":
         what = "%" + what + "%"
     else:
         what = None
 
-    sqlStatementBase = '''SELECT folder, msgid, toaddress, fromaddress, subject, received, read
-        FROM inbox '''
-
+    if folder == "sent":
+        sqlStatementBase = '''
+            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
+            FROM sent '''
+    else:
+        sqlStatementBase = '''SELECT folder, msgid, toaddress, fromaddress, subject, received, read
+            FROM inbox '''
     sqlStatementParts = []
     sqlArguments = []
     if account is not None:
