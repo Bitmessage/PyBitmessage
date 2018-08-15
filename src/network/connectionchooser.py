@@ -1,5 +1,6 @@
 from queues import Queue
 import random
+import time
 
 from bmconfigparser import BMConfigParser
 import knownnodes
@@ -33,6 +34,8 @@ def chooseConnection(stream):
     if helper_random.randomchoice((False, True)) and not haveOnion:
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
+    while not knownnodes.knownNodes[stream]:
+        time.sleep(1)
     for _ in range(50):
         peer = helper_random.randomchoice(knownnodes.knownNodes[stream].keys())
         try:

@@ -31,7 +31,7 @@ class BMConnectionPool(object):
         self.udpSockets = {}
         self.streams = []
         self.lastSpawned = 0
-        self.spawnWait = 2 
+        self.spawnWait = 2
         self.bootstrapped = False
 
     def connectToStream(self, streamNumber):
@@ -156,6 +156,8 @@ class BMConnectionPool(object):
                     Proxy.onionproxy = None
             established = sum(1 for c in self.outboundConnections.values() if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
+            while not self.streams:
+                time.sleep(1)
             if established < BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections"):
                 for i in range(state.maximumNumberOfHalfOpenConnections - pending):
                     try:
@@ -169,7 +171,7 @@ class BMConnectionPool(object):
                     # don't connect to self
                     if chosen in state.ownAddresses:
                         continue
-    
+
                     #for c in self.outboundConnections:
                     #    if chosen == c.destination:
                     #        continue
@@ -247,7 +249,7 @@ class BMConnectionPool(object):
                 if i.fullyEstablished:
                     i.append_write_buf(protocol.CreatePacket('ping'))
                 else:
-                    i.close_reason = "Timeout (%is)" % (time.time() - i.lastTx) 
+                    i.close_reason = "Timeout (%is)" % (time.time() - i.lastTx)
                     i.set_state("close")
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
             if not (i.accepting or i.connecting or i.connected):
