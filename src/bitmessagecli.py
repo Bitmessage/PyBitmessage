@@ -23,7 +23,7 @@ import socket
 import sys
 import time
 import xmlrpclib
-import pathmagic
+import pathmagic  # pylint: disable=unused-import
 
 from bmconfigparser import BMConfigParser
 

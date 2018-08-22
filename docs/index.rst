@@ -6,6 +6,7 @@
    overview
    usage
    contribute
+   licenses
    
 Indices and tables
 ------------------

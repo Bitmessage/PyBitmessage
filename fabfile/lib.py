@@ -5,7 +5,6 @@ A library of functions and constants for tasks to make use of.
 """
 
 import os
-import re
 import sys
 from functools import wraps
 
@@ -13,6 +12,8 @@ from fabric.api import cd, env, hide, run
 from fabric.context_managers import settings, shell_env
 from fabvenv import virtualenv
 
+
+# .. todo:: Consider if it may be useful to define these in env vars per host/user of the targets
 FABRIC_ROOT = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.dirname(FABRIC_ROOT)
 VENV_ROOT = os.path.expanduser(os.path.join('~', '.virtualenvs', 'pybitmessage-devops'))
@@ -62,7 +63,7 @@ def flatten(data):
 
 def filelist_from_git(rev=None):
     """Return a list of files based on git output"""
-    cmd = 'git diff --name-only'
+    cmd = 'git -c color.diff=auto -c core.pager=cat diff --name-only '
     if rev:
         if rev in ['cached', 'staged']:
             cmd += ' --{}'.format(rev)
@@ -74,14 +75,12 @@ def filelist_from_git(rev=None):
     with cd(PROJECT_ROOT):
         with hide('running', 'stdout'):
             results = []
-            ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
-            clean = ansi_escape.sub('', run(cmd))
-            clean = re.sub('\n', '', clean)
-            for line in clean.split('\r'):
-                if line.endswith(".py"):
-                    with settings(warn_only=True):
-                        with hide('warnings'):
-                            if run('stat {}'.format(os.path.abspath(line))).succeeded:
+            output = run(cmd)
+            with settings(warn_only=True):
+                with hide('warnings'):
+                    for line in output.split('\r\n'):
+                        if line.endswith(".py"):
+                            if not run('stat {}'.format(os.path.abspath(line))).return_code:
                                 results.append(os.path.abspath(line))
                             else:
                                 print 'Deleted file {} skipped.'.format(line)

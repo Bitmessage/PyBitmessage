@@ -1,5 +1,5 @@
 #!/usr/bin/python2.7
-# pylint: disable=no-self-use,too-many-branches,too-many-statements,too-many-locals
+# pylint: disable=wrong-import-position,no-self-use,too-many-branches,too-many-statements,too-many-locals
 """
 bitmessagemain.py
 =================
@@ -11,8 +11,6 @@ file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 Right now, PyBitmessage only support connecting to stream 1. It doesn't
 yet contain logic to expand into further streams.
-
-The software version variable is now held in shared.py
 
 """
 
@@ -31,8 +29,10 @@ from struct import pack
 from subprocess import call
 from time import sleep
 
-import defaults
 import depends
+depends.check_dependencies()
+
+import defaults
 import helper_generic
 import helper_threading
 import knownnodes
@@ -57,8 +57,6 @@ from network.invthread import InvThread
 from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from singleinstance import singleinstance
-
-depends.check_dependencies()
 
 
 def connectToStream(streamNumber):

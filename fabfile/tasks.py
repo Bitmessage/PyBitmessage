@@ -215,7 +215,10 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10, 
         # Recalculate results after autopep8 to surprise the user the least
         results = get_tool_results(file_list)
 
+    if top:
+        print 'Showing only the top {} results'.format(top)
     print_results(results, top, verbose, details)
+
     sys.exit(sum([item['total_violations'] for item in results]))
 
 
@@ -238,7 +241,7 @@ def test():
 @default_hosts(['localhost'])
 def build_docs(dep_graph=False, apidoc=True):
     """
-    Build the documentation locally.
+    Build the documentation.
 
     :param dep_graph: Build the dependency graphs
     :type dep_graph: Bool, default False
