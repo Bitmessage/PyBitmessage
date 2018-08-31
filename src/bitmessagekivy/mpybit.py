@@ -130,7 +130,6 @@ class NavigateApp(App, TextInput):
 
     def getCurrentAccount(self):
         """It uses to get current account label."""
-        global belonging
         return BMConfigParser().get(belonging, 'label') + '({})'.format(belonging)
 
 
@@ -160,9 +159,8 @@ class Inbox(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        global belonging
-        self.orientation = "vertical"
         self.inboxaccounts()
+        print(dt)
 
     def inboxaccounts(self):
         account = belonging
@@ -211,13 +209,11 @@ class Sent(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        global belonging
-        self.orientation = "vertical"
         self.sentaccounts()
+        print(dt)
 
     def sentaccounts(self):
         account = belonging
-        folder = 'inbox'
         self.loadSent(account, 'All', '')
 
     def loadSent(self, account, where="", what=""):
@@ -261,9 +257,8 @@ class Trash(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        global belonging
-        self.orientation = "vertical"
         self.inboxaccounts()
+        print(dt)
 
     def inboxaccounts(self):
         account = belonging
@@ -271,6 +266,7 @@ class Trash(Screen):
         self.loadTrashlist(account, folder, 'All', '')
 
     def loadTrashlist(self, account, folder, where="", what="", unreadOnly=False):
+        """Load Trash list for trashed messages."""
         xAddress = "toaddress"
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, folder, where, what, unreadOnly)
@@ -292,10 +288,14 @@ class Trash(Screen):
 
 
 class Dialog(Screen):
+    """Dialog Screen uses screen to show widgets of screens."""
+
     pass
 
 
 class Test(Screen):
+    """Test Screen uses screen to show widgets of screens."""
+
     pass
 
 
@@ -304,10 +304,6 @@ class Create(Screen):
 
     def __init__(self, *args, **kwargs):
         super(Create, self).__init__(*args, **kwargs)
-        Clock.schedule_once(self.init_ui, 0)
-
-    def init_ui(self, dt=0):
-        pass
 
     def send(self):
         """Send message from one address to another."""
