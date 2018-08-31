@@ -43,7 +43,7 @@ BoxLayout:
     orientation: 'vertical'
     Toolbar:
         id: toolbar
-        title: 'PyBitmessage'
+        title: app.getCurrentAccount()
         background_color: app.theme_cls.primary_dark
         left_action_items: [['menu', lambda x: app.nav_drawer.toggle()]]
         Button:
@@ -51,7 +51,7 @@ BoxLayout:
             color: 0,0,0,1
             background_color: (0,0,0,0)
             size_hint_y: 0.4
-            size_hint_x: 0.5
+            size_hint_x: 0.1
             pos_hint: {'x': 0.8, 'y':0.4}
             on_press: app.say_exit()
 
