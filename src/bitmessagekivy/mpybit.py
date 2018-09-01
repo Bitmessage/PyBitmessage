@@ -64,7 +64,8 @@ class NavigateApp(App, TextInput):
         App.get_running_app().stop()
         shutdown.doCleanShutdown()
 
-    def showmeaddresses(self, name="text"):
+    @staticmethod
+    def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
         if name == "text":
             return BMConfigParser().addresses()[0]
@@ -128,7 +129,8 @@ class NavigateApp(App, TextInput):
             self.parent.manager.current = 'page'
         print('Message Clicked {}'.format(instance))
 
-    def getCurrentAccount(self):
+    @staticmethod
+    def getCurrentAccount():
         """It uses to get current account label."""
         return BMConfigParser().get(belonging, 'label') + '({})'.format(belonging)
 
@@ -159,15 +161,18 @@ class Inbox(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
+        """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
         print(dt)
 
     def inboxaccounts(self):
+        """Load inbox accounts."""
         account = belonging
         folder = 'inbox'
         self.loadMessagelist(account, folder, 'All', '')
 
     def loadMessagelist(self, account, folder, where="", what="", unreadOnly=False):
+        """Load Inbox list for inbox messages."""
         xAddress = "toaddress"
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, folder, where, what, unreadOnly)
@@ -209,14 +214,17 @@ class Sent(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
+        """Clock Schdule for method sent accounts."""
         self.sentaccounts()
         print(dt)
 
     def sentaccounts(self):
+        """Load sent accounts."""
         account = belonging
         self.loadSent(account, 'All', '')
 
     def loadSent(self, account, where="", what=""):
+        """Load Sent list for Sent messages."""
         xAddress = 'fromaddress'
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "sent", where, what, False)
@@ -236,13 +244,6 @@ class Sent(Screen):
                 'text': "yet no message for this account!!!!!!!!!!!!!"}
             ]
 
-    def getSentMessageDetail(self, instance):
-        try:
-            self.manager.current = 'page'
-        except AttributeError:
-            self.parent.manager.current = 'page'
-        print('I am {}'.format(instance.text))
-
 
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
@@ -257,10 +258,12 @@ class Trash(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
+        """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
         print(dt)
 
     def inboxaccounts(self):
+        """Load inbox accounts."""
         account = belonging
         folder = 'trash'
         self.loadTrashlist(account, folder, 'All', '')
