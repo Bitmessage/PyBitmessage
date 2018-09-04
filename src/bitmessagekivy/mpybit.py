@@ -2,6 +2,7 @@ import kivy_helper_search
 import os
 import queues
 import shutdown
+import state
 import time
 
 from kivy.app import App
@@ -20,8 +21,6 @@ from addresses import decodeAddress, addBMIfNotPresent
 from helper_sql import sqlExecute
 
 statusIconColor = 'red'
-global belonging
-belonging = ''
 
 
 class NavigateApp(App, TextInput):
@@ -44,8 +43,7 @@ class NavigateApp(App, TextInput):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
-        global belonging
-        belonging = text
+        state.association = text
         main_widget.ids.sc1.clear_widgets()
         main_widget.ids.sc2.clear_widgets()
         main_widget.ids.sc3.clear_widgets()
@@ -53,7 +51,7 @@ class NavigateApp(App, TextInput):
         main_widget.ids.sc2.add_widget(Sent())
         main_widget.ids.sc3.add_widget(Trash())
         main_widget.ids.toolbar.title = BMConfigParser().get(
-            belonging, 'label') + '({})'.format(belonging)
+            state.association, 'label') + '({})'.format(state.association)
         Inbox()
         Sent()
         Trash()
@@ -132,7 +130,7 @@ class NavigateApp(App, TextInput):
     @staticmethod
     def getCurrentAccount():
         """It uses to get current account label."""
-        return BMConfigParser().get(belonging, 'label') + '({})'.format(belonging)
+        return BMConfigParser().get(state.association, 'label') + '({})'.format(state.association)
 
 
 class Navigator(NavigationDrawer):
@@ -155,9 +153,8 @@ class Inbox(Screen):
 
     def __init__(self, *args, **kwargs):
         super(Inbox, self).__init__(*args, **kwargs)
-        global belonging
-        if belonging == '':
-            belonging = Navigator().ids.btn.text
+        if state.association == '':
+            state.association = Navigator().ids.btn.text
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
@@ -167,7 +164,7 @@ class Inbox(Screen):
 
     def inboxaccounts(self):
         """Load inbox accounts."""
-        account = belonging
+        account = state.association
         folder = 'inbox'
         self.loadMessagelist(account, folder, 'All', '')
 
@@ -208,9 +205,8 @@ class Sent(Screen):
 
     def __init__(self, *args, **kwargs):
         super(Sent, self).__init__(*args, **kwargs)
-        global belonging
-        if belonging == '':
-            belonging = Navigator().ids.btn.text
+        if state.association == '':
+            state.association = Navigator().ids.btn.text
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
@@ -220,7 +216,7 @@ class Sent(Screen):
 
     def sentaccounts(self):
         """Load sent accounts."""
-        account = belonging
+        account = state.association
         self.loadSent(account, 'All', '')
 
     def loadSent(self, account, where="", what=""):
@@ -252,9 +248,8 @@ class Trash(Screen):
 
     def __init__(self, *args, **kwargs):
         super(Trash, self).__init__(*args, **kwargs)
-        global belonging
-        if belonging == '':
-            belonging = Navigator().ids.btn.text
+        if state.association == '':
+            state.association = Navigator().ids.btn.text
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
@@ -264,7 +259,7 @@ class Trash(Screen):
 
     def inboxaccounts(self):
         """Load inbox accounts."""
-        account = belonging
+        account = state.association
         folder = 'trash'
         self.loadTrashlist(account, folder, 'All', '')
 
