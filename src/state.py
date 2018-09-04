@@ -72,5 +72,3 @@ testmode = False
 kivy = False
 
 association = ''
-
-main_widget = ''
