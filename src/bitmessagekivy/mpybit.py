@@ -35,22 +35,21 @@ class NavigateApp(App, TextInput):
         An application can be built if you return a widget on build(), or if you set
         self.root.
         """
-        global main_widget
-        main_widget = Builder.load_file(
+        state.main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigator()
-        return main_widget
+        return state.main_widget
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
         state.association = text
-        main_widget.ids.sc1.clear_widgets()
-        main_widget.ids.sc2.clear_widgets()
-        main_widget.ids.sc3.clear_widgets()
-        main_widget.ids.sc1.add_widget(Inbox())
-        main_widget.ids.sc2.add_widget(Sent())
-        main_widget.ids.sc3.add_widget(Trash())
-        main_widget.ids.toolbar.title = BMConfigParser().get(
+        state.main_widget.ids.sc1.clear_widgets()
+        state.main_widget.ids.sc2.clear_widgets()
+        state.main_widget.ids.sc3.clear_widgets()
+        state.main_widget.ids.sc1.add_widget(Inbox())
+        state.main_widget.ids.sc2.add_widget(Sent())
+        state.main_widget.ids.sc3.add_widget(Trash())
+        state.main_widget.ids.toolbar.title = BMConfigParser().get(
             state.association, 'label') + '({})'.format(state.association)
         Inbox()
         Sent()
