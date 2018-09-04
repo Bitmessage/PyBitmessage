@@ -164,14 +164,13 @@ class Inbox(Screen):
     def inboxaccounts(self):
         """Load inbox accounts."""
         account = state.association
-        folder = 'inbox'
-        self.loadMessagelist(account, folder, 'All', '')
+        self.loadMessagelist(account, 'All', '')
 
-    def loadMessagelist(self, account, folder, where="", what="", unreadOnly=False):
+    def loadMessagelist(self, account, where="", what=""):
         """Load Inbox list for inbox messages."""
         xAddress = "toaddress"
         queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, folder, where, what, unreadOnly)
+            xAddress, account, 'inbox', where, what, False)
         if queryreturn:
             self.data = [{
                 'data_index': i,
@@ -259,14 +258,13 @@ class Trash(Screen):
     def inboxaccounts(self):
         """Load inbox accounts."""
         account = state.association
-        folder = 'trash'
-        self.loadTrashlist(account, folder, 'All', '')
+        self.loadTrashlist(account, 'All', '')
 
-    def loadTrashlist(self, account, folder, where="", what="", unreadOnly=False):
+    def loadTrashlist(self, account, where="", what=""):
         """Load Trash list for trashed messages."""
         xAddress = "toaddress"
         queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, folder, where, what, unreadOnly)
+            xAddress, account, 'trash', where, what, False)
         if queryreturn:
             self.data = [{
                 'data_index': i,
