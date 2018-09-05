@@ -50,7 +50,7 @@ class NavigateApp(App, TextInput):
     def set_previous_screen(self):
         if self.root.ids.scr_mngr.current != 'inbox':
             self.root.ids.scr_mngr.transition.direction = 'left'
-            self.root.ids.scr_mngr.current = self.root.ids.scr_mngr.previous()
+            self.root.ids.scr_mngr.current = 'inbox'
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
