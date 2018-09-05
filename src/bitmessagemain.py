@@ -288,7 +288,7 @@ class Main:
 
             # API is also objproc dependent
             if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-                import api
+                import api  # pylint: disable=relative-import
                 singleAPIThread = api.singleAPI()
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True

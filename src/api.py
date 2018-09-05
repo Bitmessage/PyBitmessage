@@ -68,6 +68,7 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
 
 # This thread, of which there is only one, runs the API.
 class singleAPI(threading.Thread, helper_threading.StoppableThread):
+    """API thread"""
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
         self.initStop()
@@ -88,8 +89,8 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
     def run(self):
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         try:
-            from errno import WSAEADDRINUSE
-        except (ImportError, AttributeError):
+            getattr(errno, 'WSAEADDRINUSE')
+        except AttributeError:
             errno.WSAEADDRINUSE = errno.EADDRINUSE
         for attempt in range(50):
             try:
@@ -133,7 +134,7 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
 # Modified by Jonathan Warren (Atheros).
 # http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
 class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
-
+    """The main API handler"""
     def do_POST(self):
         # Handles the HTTP POST request.
         # Attempts to interpret all HTTP POST requests as XML-RPC calls,
