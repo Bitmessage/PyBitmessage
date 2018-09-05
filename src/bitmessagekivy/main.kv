@@ -54,16 +54,6 @@ BoxLayout:
             size_hint_x: 0.1
             pos_hint: {'x': 0.8, 'y':0.4}
             on_press: app.say_exit()
-        ActionBar:
-            size_hint_y: 0.4
-            size_hint_x: 0.1
-            pos_hint: {'x': 0.99, 'y':0.35}
-            background_color: (0,0,0,0)
-            ActionView:
-                use_separator: True
-                ActionPrevious:
-                    with_previous: True
-                    on_release: app.set_previous_screen()
 
     ScreenManager:
         id: scr_mngr
@@ -352,8 +342,26 @@ BoxLayout:
 
 <Page>:
     name: 'page'
+    ActionBar:
+        background_color:0,0,0,0
+        pos_hint: {'top':0.98}
+        size_hint_y: 0.05
+        size_hint_x: 0.07
+        ActionView:
+            ActionPrevious:
+                with_previous: False
+                app_icon:  'images/back-button.png'
+                markup:True
+                font_size:"16dp"
+                on_release: app.set_previous_screen()
     Label:
-        text: 'I am on description of my email yooooo'
+        text:"Message sent on 5 september 2018 05:44"
+        color: 0,0,0,1
+        size: self.texture_size
+        size_hint: (None, None)
+
+    Label:
+        text: 'I am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\n'
         color: 0,0,0,1
 
 <AddressSuccessful>:
