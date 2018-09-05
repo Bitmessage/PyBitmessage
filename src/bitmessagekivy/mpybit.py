@@ -20,6 +20,7 @@ from helper_ackPayload import genAckPayload
 from addresses import decodeAddress, addBMIfNotPresent
 from helper_sql import sqlExecute
 from kivy.core.window import Window
+from kivy.uix.actionbar import ActionItem
 
 statusIconColor = 'red'
 
@@ -43,11 +44,15 @@ class NavigateApp(App, TextInput):
         return main_widget
 
     def _key_handler(self, instance, key, *args):
+        """Escape key manages previous screen on back."""
         if key is 27:
+            print(args)
+            print(instance)
             self.set_previous_screen()
             return True
 
     def set_previous_screen(self):
+        """Set previous screen based on back."""
         if self.root.ids.scr_mngr.current != 'inbox':
             self.root.ids.scr_mngr.transition.direction = 'left'
             self.root.ids.scr_mngr.current = 'inbox'
@@ -399,6 +404,16 @@ class NewIdentity(Screen):
                 payloadLengthExtraBytes)
             )
             self.manager.current = 'add_sucess'
+
+
+class SearchBar(TextInput, ActionItem):
+    def __init__(self, *args, **kwargs):
+        super(SearchBar, self).__init__(*args, **kwargs)
+        self.hint_text = 'Search'
+
+    def search(self):
+        request = self.text
+        return str(request)
 
 
 if __name__ == '__main__':
