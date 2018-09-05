@@ -407,11 +407,15 @@ class NewIdentity(Screen):
 
 
 class SearchBar(TextInput, ActionItem):
+    """Create SearchBar for PyBitmessage."""
+
     def __init__(self, *args, **kwargs):
+        """Initailizes SearchBar with hint text."""
         super(SearchBar, self).__init__(*args, **kwargs)
         self.hint_text = 'Search'
 
     def search(self):
+        """Search for message request."""
         request = self.text
         return str(request)
 
