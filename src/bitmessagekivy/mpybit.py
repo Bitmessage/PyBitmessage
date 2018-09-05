@@ -19,6 +19,7 @@ from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
 from addresses import decodeAddress, addBMIfNotPresent
 from helper_sql import sqlExecute
+from kivy.core.window import Window
 
 statusIconColor = 'red'
 
@@ -38,7 +39,18 @@ class NavigateApp(App, TextInput):
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigator()
+        Window.bind(on_keyboard=self._key_handler)
         return main_widget
+
+    def _key_handler(self, instance, key, *args):
+        if key is 27:
+            self.set_previous_screen()
+            return True
+
+    def set_previous_screen(self):
+        if self.root.ids.scr_mngr.current != 'inbox':
+            self.root.ids.scr_mngr.transition.direction = 'left'
+            self.root.ids.scr_mngr.current = self.root.ids.scr_mngr.previous()
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""

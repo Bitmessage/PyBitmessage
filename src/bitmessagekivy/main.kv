@@ -54,7 +54,16 @@ BoxLayout:
             size_hint_x: 0.1
             pos_hint: {'x': 0.8, 'y':0.4}
             on_press: app.say_exit()
-
+        ActionBar:
+            size_hint_y: 0.4
+            size_hint_x: 0.1
+            pos_hint: {'x': 0.99, 'y':0.35}
+            background_color: (0,0,0,0)
+            ActionView:
+                use_separator: True
+                ActionPrevious:
+                    with_previous: True
+                    on_release: app.set_previous_screen()
 
     ScreenManager:
         id: scr_mngr
