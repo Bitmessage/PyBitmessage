@@ -46,14 +46,24 @@ BoxLayout:
         title: app.getCurrentAccount()
         background_color: app.theme_cls.primary_dark
         left_action_items: [['menu', lambda x: app.nav_drawer.toggle()]]
-        Button:
-            text:"EXIT"
-            color: 0,0,0,1
-            background_color: (0,0,0,0)
-            size_hint_y: 0.4
-            size_hint_x: 0.1
-            pos_hint: {'x': 0.8, 'y':0.4}
-            on_press: app.say_exit()
+
+        ActionView:
+            SearchBar:
+                size_hint_x: 1.7
+                size_hint_y: .5
+                pos_hint: {'x': 0, 'center_y':.5}
+                on_text_validate: searchbutt.trigger_action()
+
+            ActionPrevious:
+                with_previous: False
+                app_icon:  ''
+
+            ActionOverflow:
+                ActionButton:
+                    text: 'Filters'
+                ActionButton:
+                    text: 'Exit'
+                    on_press: app.say_exit()
 
     ScreenManager:
         id: scr_mngr
