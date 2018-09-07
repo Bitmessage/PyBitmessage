@@ -353,7 +353,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         try:
             self.object.checkObjectByType()
-            objectProcessorQueue.put((self.object.objectType, buffer(self.object.data)))
         except BMObjectInvalidError as e:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -369,6 +368,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.object.objectType, self.object.streamNumber, buffer(self.payload[objectOffset:]), self.object.expiresTime, buffer(self.object.tag))
         self.handleReceivedObject(self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((self.object.streamNumber, self.object.inventoryHash, self.destination))
+        objectProcessorQueue.put((self.object.objectType, buffer(self.object.data)))
         return True
 
     def _decode_addr(self):

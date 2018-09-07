@@ -26,14 +26,13 @@ class UISignaler(QThread):
                     "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
             elif command == 'updateStatusBar':
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-            elif command == 'updateSentItemStatusByToAddress':
-                toAddress, message = data
+            elif command == "updateSentItemStatusByToAddress":
                 self.emit(SIGNAL(
-                    "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), toAddress, message)
-            elif command == 'updateSentItemStatusByAckdata':
-                ackData, message = data
+                    "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), *data)
+            elif command == "updateSentItemStatusByAckdata":
+                status, address, message = data
                 self.emit(SIGNAL(
-                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
+                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), *data)
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
                 self.emit(SIGNAL(
@@ -44,6 +43,8 @@ class UISignaler(QThread):
                 self.emit(SIGNAL(
                     "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
                     toAddress, fromLabel, fromAddress, subject, message, ackdata)
+            elif command == "deleteSentItemByAckData":
+                self.emit(SIGNAL("deleteSentItemByAckData(PyQt_PyObject)"), data)
             elif command == 'updateNetworkStatusTab':
                 outbound, add, destination = data
                 self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), outbound, add, destination)
@@ -74,6 +75,8 @@ class UISignaler(QThread):
             elif command == 'alert':
                 title, text, exitAfterUserClicksOk = data
                 self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
+            elif command == "updateWorkProverStatus":
+                self.emit(SIGNAL("updateWorkProverStatus(PyQt_PyObject)"), data)
             else:
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)

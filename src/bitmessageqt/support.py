@@ -11,14 +11,13 @@ import defaults
 from foldertree import AccountMixin
 from helper_sql import *
 from l10n import getTranslationLanguage
-from openclpow import openclAvailable, openclEnabled
 import paths
-import proofofwork
 from pyelliptic.openssl import OpenSSL
 import queues
 import network.stats
 import state
 from version import softwareVersion
+import singleworker
 
 # this is BM support address going to Peter Surda
 OLD_SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
@@ -113,10 +112,10 @@ def createSupportMessage(myapp):
     if paths.frozen:
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
-    cpow = "True" if proofofwork.bmpow else "False"
+    cpow = "True" if "fast" in singleworker.workProver.availableSolvers else "False"
     openclpow = str(
         BMConfigParser().safeGet('bitmessagesettings', 'opencl')
-    ) if openclEnabled() else "None"
+    ) if BMConfigParser().safeGetBoolean("bitmessagesettings", "powsolver") == "gpu" else "None"
     locale = getTranslationLanguage()
     socks = BMConfigParser().safeGet(
         'bitmessagesettings', 'socksproxytype', "N/A")

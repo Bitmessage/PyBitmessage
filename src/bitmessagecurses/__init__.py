@@ -918,7 +918,7 @@ def loadSent():
         # Set status string
         if status == "awaitingpubkey":
             statstr = "Waiting for their public key. Will request it again soon"
-        elif status == "doingpowforpubkey":
+        elif status == "doingpubkeypow":
             statstr = "Encryption key request queued"
         elif status == "msgqueued":
             statstr = "Message queued"

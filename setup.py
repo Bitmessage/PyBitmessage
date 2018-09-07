@@ -12,7 +12,7 @@ from src.version import softwareVersion
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
     'notify2': ['notify2'],
-    'pyopencl': ['pyopencl'],
+    'pyopencl': ['pyopencl', 'numpy'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
@@ -50,12 +50,6 @@ if __name__ == "__main__":
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
 
-    bitmsghash = Extension(
-        'pybitmessage.bitmsghash.bitmsghash',
-        sources=['src/bitmsghash/bitmsghash.cpp'],
-        libraries=['pthread', 'crypto'],
-    )
-
     installRequires = []
     packages = [
         'pybitmessage',
@@ -66,7 +60,8 @@ if __name__ == "__main__":
         'pybitmessage.pyelliptic',
         'pybitmessage.socks',
         'pybitmessage.storage',
-        'pybitmessage.plugins'
+        'pybitmessage.plugins',
+        'pybitmessage.workprover'
     ]
 
     # this will silently accept alternative providers of msgpack
@@ -108,8 +103,9 @@ if __name__ == "__main__":
         package_dir={'pybitmessage': 'src'},
         packages=packages,
         package_data={'': [
-            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
-            'translations/*.ts', 'translations/*.qm',
+            'bitmessageqt/*.ui', 'translations/*.ts', 'translations/*.qm',
+            'workprover/*.cl', 'workprover/fastsolver/*',
+            'sslkeys/*.pem',
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
         data_files=[
@@ -120,7 +116,6 @@ if __name__ == "__main__":
             ('share/icons/hicolor/24x24/apps/',
                 ['desktop/icons/24x24/pybitmessage.png'])
         ],
-        ext_modules=[bitmsghash],
         zip_safe=False,
         entry_points={
             'bitmessage.gui.menu': [

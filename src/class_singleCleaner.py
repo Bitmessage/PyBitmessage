@@ -35,6 +35,45 @@ import knownnodes
 import queues
 import state
 
+def resendStaleMessages():
+    staleMessages = sqlQuery("""
+        SELECT "toaddress", "ackdata", "status" FROM "sent"
+        WHERE "status" IN ('awaitingpubkey', 'msgsent') AND "sleeptill" < ? AND "senttime" > ? AND "folder" == 'sent';
+    """, int(time.time()), int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages)
+
+    resendMessages = False
+
+    for destination, ackData, status in staleMessages:
+        if status == "awaitingpubkey":
+            logger.info("Retrying getpubkey request for %s", destination)
+
+            sqlExecute("""
+                UPDATE "sent" SET "status" = 'msgqueued'
+                WHERE "status" == 'awaitingpubkey' AND "ackdata" == ?;
+            """, ackData)
+        elif status == "msgsent":
+            state.watchedAckData -= {ackData}
+
+            sqlExecute("""
+                UPDATE "sent" SET "status" = 'msgqueued'
+                WHERE "status" == 'msgsent' AND "ackdata" == ?;
+            """, ackData)
+
+        queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+            "msgqueued",
+            ackData,
+            tr._translate(
+                "MainWindow",
+                "Queued."
+            )
+        )))
+
+        resendMessages = True
+
+    if resendMessages:
+        logger.info("Resending old messages with undelivered acks or unknown pubkeys")
+
+        queues.workerQueue.put(("sendmessage", ))
 
 class singleCleaner(threading.Thread, StoppableThread):
     cycleLength = 300
@@ -92,28 +131,8 @@ class singleCleaner(threading.Thread, StoppableThread):
                 # Let us resend getpubkey objects if we have not yet heard
                 # a pubkey, and also msg objects if we have not yet heard
                 # an acknowledgement
-                queryreturn = sqlQuery(
-                    "SELECT toaddress, ackdata, status FROM sent"
-                    " WHERE ((status='awaitingpubkey' OR status='msgsent')"
-                    " AND folder='sent' AND sleeptill<? AND senttime>?)",
-                    int(time.time()),
-                    int(time.time())
-                    - shared.maximumLengthOfTimeToBotherResendingMessages
-                )
-                for row in queryreturn:
-                    if len(row) < 2:
-                        logger.error(
-                            'Something went wrong in the singleCleaner thread:'
-                            ' a query did not return the requested fields. %r',
-                            row
-                        )
-                        self.stop.wait(3)
-                        break
-                    toAddress, ackData, status = row
-                    if status == 'awaitingpubkey':
-                        resendPubkeyRequest(toAddress)
-                    elif status == 'msgsent':
-                        resendMsg(ackData)
+
+                resendStaleMessages()
 
             # cleanup old nodes
             now = int(time.time())
@@ -189,41 +208,3 @@ class singleCleaner(threading.Thread, StoppableThread):
 
             if state.shutdown == 0:
                 self.stop.wait(singleCleaner.cycleLength)
-
-
-def resendPubkeyRequest(address):
-    logger.debug(
-        'It has been a long time and we haven\'t heard a response to our'
-        ' getpubkey request. Sending again.'
-    )
-    try:
-        # We need to take this entry out of the neededPubkeys structure
-        # because the queues.workerQueue checks to see whether the entry
-        # is already present and will not do the POW and send the message
-        # because it assumes that it has already done it recently.
-        del state.neededPubkeys[address]
-    except:
-        pass
-
-    queues.UISignalQueue.put((
-         'updateStatusBar',
-         'Doing work necessary to again attempt to request a public key...'))
-    sqlExecute(
-        '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
-        address)
-    queues.workerQueue.put(('sendmessage', ''))
-
-
-def resendMsg(ackdata):
-    logger.debug(
-        'It has been a long time and we haven\'t heard an acknowledgement'
-        ' to our msg. Sending again.'
-    )
-    sqlExecute(
-        '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
-        ackdata)
-    queues.workerQueue.put(('sendmessage', ''))
-    queues.UISignalQueue.put((
-        'updateStatusBar',
-        'Doing work necessary to again attempt to deliver a message...'
-    ))

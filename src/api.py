@@ -10,10 +10,15 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 import base64
 import hashlib
 import json
+import socket
+import threading
 import time
 from binascii import hexlify, unhexlify
+from random import randint
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
+import errno
+import Queue
 
 import shared
 from addresses import (
@@ -23,11 +28,14 @@ from bmconfigparser import BMConfigParser
 import defaults
 import helper_inbox
 import helper_sent
+import helper_threading
+import helper_random
 
 import state
 import queues
 import shutdown
 import network.stats
+import protocol
 
 # Classes
 from helper_sql import sqlQuery, sqlExecute, SqlBulkExecute, sqlStoredProcedure
@@ -36,11 +44,9 @@ from debug import logger
 from inventory import Inventory
 from version import softwareVersion
 
-# Helper Functions
-import proofofwork
-
 str_chan = '[chan]'
 
+queuedRawObjects = {}
 
 class APIError(Exception):
     def __init__(self, error_number, error_message):
@@ -1031,45 +1037,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             })
         return json.dumps(data, indent=4, separators=(',', ': '))
 
-    def HandleDisseminatePreEncryptedMsg(self, params):
-        # The device issuing this command to PyBitmessage supplies a msg
-        # object that has already been encrypted but which still needs the POW
-        # to be done. PyBitmessage accepts this msg object and sends it out
-        # to the rest of the Bitmessage network as if it had generated
-        # the message itself. Please do not yet add this to the api doc.
-        if len(params) != 3:
-            raise APIError(0, 'I need 3 parameter!')
-        encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, \
-            requiredPayloadLengthExtraBytes = params
-        encryptedPayload = self._decode(encryptedPayload, "hex")
-        # Let us do the POW and attach it to the front
-        target = 2**64 / (
-            (len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8)
-            * requiredAverageProofOfWorkNonceTrialsPerByte)
-        with shared.printLock:
-            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes
-        powStartTime = time.time()
-        initialHash = hashlib.sha512(encryptedPayload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        with shared.printLock:
-            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
-            try:
-                print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
-            except:
-                pass
-        encryptedPayload = pack('>Q', nonce) + encryptedPayload
-        toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
-        inventoryHash = calculateInventoryHash(encryptedPayload)
-        objectType = 2
-        TTL = 2.5 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
-            objectType, toStreamNumber, encryptedPayload,
-            int(time.time()) + TTL, ''
-        )
-        with shared.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
-        queues.invQueue.put((toStreamNumber, inventoryHash))
-
     def HandleTrashSentMessageByAckDAta(self, params):
         # This API method should only be used when msgid is not available
         if len(params) == 0:
@@ -1078,88 +1045,132 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=?", ackdata)
         return 'Trashed sent message (assuming message existed).'
 
-    def HandleDissimatePubKey(self, params):
-        # The device issuing this command to PyBitmessage supplies a pubkey
-        # object to be disseminated to the rest of the Bitmessage network.
-        # PyBitmessage accepts this pubkey object and sends it out to the rest
-        # of the Bitmessage network as if it had generated the pubkey object
-        # itself. Please do not yet add this to the api doc.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        payload, = params
-        payload = self._decode(payload, "hex")
+    def HandleDisseminateRawObject(self, arguments):
+        if len(arguments) != 1:
+            raise APIError(0, "1 argument needed")
 
-        # Let us do the POW
-        target = 2 ** 64 / (
-            (len(payload) + defaults.networkDefaultPayloadLengthExtraBytes
-             + 8) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message via API) Doing proof of work...'
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
-        payload = pack('>Q', nonce) + payload
+        payload = self._decode(arguments[0], "hex")
 
-        pubkeyReadPosition = 8  # bypass the nonce
-        if payload[pubkeyReadPosition:pubkeyReadPosition+4] == \
-                '\x00\x00\x00\x00':  # if this pubkey uses 8 byte time
-            pubkeyReadPosition += 8
+        inventoryHash = protocol.checkAndShareObjectWithPeers(payload)
+
+        if inventoryHash is None:
+            raise APIError(30, "Invalid object or insufficient POW")
         else:
-            pubkeyReadPosition += 4
-        addressVersion, addressVersionLength = decodeVarint(
-            payload[pubkeyReadPosition:pubkeyReadPosition+10])
-        pubkeyReadPosition += addressVersionLength
-        pubkeyStreamNumber = decodeVarint(
-            payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
-        inventoryHash = calculateInventoryHash(payload)
-        objectType = 1  # TODO: support v4 pubkeys
-        TTL = 28 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
-            objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
-        )
-        with shared.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
-        queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
+            return hexlify(inventoryHash)
 
-    def HandleGetMessageDataByDestinationHash(self, params):
-        # Method will eventually be used by a particular Android app to
-        # select relevant messages. Do not yet add this to the api
-        # doc.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        requestedHash, = params
-        if len(requestedHash) != 32:
-            raise APIError(
-                19, 'The length of hash should be 32 bytes (encoded in hex'
-                ' thus 64 characters).')
-        requestedHash = self._decode(requestedHash, "hex")
+    def HandleGetRawObject(self, arguments):
+        if len(arguments) != 1:
+            raise APIError(0, "1 argument needed")
 
-        # This is not a particularly commonly used API function. Before we
-        # use it we'll need to fill out a field in our inventory database
-        # which is blank by default (first20bytesofencryptedmessage).
-        queryreturn = sqlQuery(
-            "SELECT hash, payload FROM inventory WHERE tag = ''"
-            " and objecttype = 2")
-        with SqlBulkExecute() as sql:
-            for row in queryreturn:
-                hash01, payload = row
-                readPosition = 16  # Nonce length + time length
-                # Stream Number length
-                readPosition += decodeVarint(
-                    payload[readPosition:readPosition+10])[1]
-                t = (payload[readPosition:readPosition+32], hash01)
-                sql.execute("UPDATE inventory SET tag=? WHERE hash=?", *t)
+        inventoryHash, = arguments
 
-        queryreturn = sqlQuery(
-            "SELECT payload FROM inventory WHERE tag = ?", requestedHash)
-        data = '{"receivedMessageDatas":['
-        for row in queryreturn:
-            payload, = row
-            if len(data) > 25:
-                data += ','
-            data += json.dumps(
-                {'data': hexlify(payload)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+        if len(inventoryHash) != 64:
+            raise APIError(19, "The length of hash should be 32 bytes (encoded in hex thus 64 characters)")
+
+        inventoryHash = self._decode(inventoryHash, "hex")
+
+        try:
+            inventoryItem = Inventory()[inventoryHash]
+        except KeyError:
+            raise APIError(31, "Object not found")
+
+        return json.dumps({
+            "hash": hexlify(inventoryHash),
+            "expiryTime": inventoryItem.expires,
+            "objectType": inventoryItem.type,
+            "stream": inventoryItem.stream,
+            "tag": hexlify(inventoryItem.tag),
+            "payload": hexlify(inventoryItem.payload)
+        }, indent = 4, separators = (",", ": "))
+
+    def HandleListRawObjects(self, arguments):
+        if len(arguments) != 3:
+            raise APIError(0, "3 arguments needed")
+
+        objectType, stream, tag = arguments
+
+        if tag is not None:
+            tag = buffer(self._decode(tag, "hex"))
+
+        result = []
+
+        inventory = Inventory()
+
+        for i in inventory:
+            inventoryItem = inventory[str(i)]
+
+            if objectType is not None and inventoryItem.type != objectType:
+                continue
+
+            if stream is not None and inventoryItem.stream != stream:
+                continue
+
+            if tag is not None and inventoryItem.tag != tag:
+                continue
+
+            result.append(hexlify(i))
+
+        return json.dumps(result, indent = 4, separators = (",", ": "))
+
+    def HandleQueueRawObject(self, arguments):
+        if len(arguments) != 2:
+            raise APIError(0, "2 arguments needed")
+
+        TTL, headlessPayload = arguments
+        headlessPayload = self._decode(headlessPayload, "hex")
+
+        if type(TTL) is not int or TTL < 300 or TTL > 28 * 24 * 60 * 60:
+            raise APIError(33, "TTL must be an integer between 300 and 28 * 24 * 60 * 60 seconds")
+
+        ID = helper_random.randomBytes(32)
+
+        queues.workerQueue.put(("sendRawObject", ID, TTL, headlessPayload))
+        queuedRawObjects[ID] = "queued",
+
+        return hexlify(ID)
+
+    def HandleCancelQueuedRawObject(self, arguments):
+        if len(arguments) != 1:
+            raise APIError(0, "1 argument needed")
+
+        ID, = arguments
+
+        if len(ID) != 64:
+            raise APIError(19, "The length of queue item ID should be 32 bytes (encoded in hex thus 64 characters)")
+
+        ID = self._decode(ID, 'hex')
+
+        queues.workerQueue.put(("cancelRawObject", ID))
+
+    def HandleCheckQueuedRawObject(self, arguments):
+        if len(arguments) != 1:
+            raise APIError(0, "1 argument needed")
+
+        ID, = arguments
+
+        if len(ID) != 64:
+            raise APIError(19, "The length of queue item ID should be 32 bytes (encoded in hex thus 64 characters)")
+
+        ID = self._decode(ID, 'hex')
+
+        while True:
+            try:
+                queueItem = queues.processedRawObjectsQueue.get_nowait()
+                command, randomID, arguments = queueItem[0], queueItem[1], queueItem[2: ]
+
+                if command == "sent":
+                    queuedRawObjects[randomID] = command, hexlify(arguments[0])
+                else:
+                    queuedRawObjects[randomID] = (command, ) + arguments
+            except Queue.Empty:
+                break
+
+        status = queuedRawObjects.get(ID, ("notfound", ))
+
+        if status[0] in ["failed", "sent", "canceled"]:
+            del queuedRawObjects[ID]
+
+        return status
 
     def HandleClientStatus(self, params):
         if len(network.stats.connectedHostsList()) == 0:
@@ -1262,12 +1273,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['addSubscription'] = HandleAddSubscription
     handlers['deleteSubscription'] = HandleDeleteSubscription
     handlers['listSubscriptions'] = ListSubscriptions
-    handlers['disseminatePreEncryptedMsg'] = HandleDisseminatePreEncryptedMsg
-    handlers['disseminatePubkey'] = HandleDissimatePubKey
-    handlers['getMessageDataByDestinationHash'] = \
-        HandleGetMessageDataByDestinationHash
-    handlers['getMessageDataByDestinationTag'] = \
-        HandleGetMessageDataByDestinationHash
+    handlers["disseminateRawObject"] = HandleDisseminateRawObject
+    handlers["getRawObject"] = HandleGetRawObject
+    handlers["listRawObjects"] = HandleListRawObjects
+    handlers["queueRawObject"] = HandleQueueRawObject
+    handlers["cancelQueuedRawObject"] = HandleCancelQueuedRawObject
+    handlers["checkQueuedRawObject"] = HandleCheckQueuedRawObject
     handlers['clientStatus'] = HandleClientStatus
     handlers['decodeAddress'] = HandleDecodeAddress
     handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
@@ -1297,3 +1308,49 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             logger.exception(e)
 
             return "API Error 0021: Unexpected API Failure - %s" % e
+
+# This thread, of which there is only one, runs the API.
+class singleAPI(threading.Thread, helper_threading.StoppableThread):
+    def __init__(self):
+        threading.Thread.__init__(self, name="singleAPI")
+        self.initStop()
+
+    def stopThread(self):
+        super(singleAPI, self).stopThread()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((
+                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
+                BMConfigParser().getint('bitmessagesettings', 'apiport')
+            ))
+            s.shutdown(socket.SHUT_RDWR)
+            s.close()
+        except:
+            pass
+
+    def run(self):
+        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        try:
+            from errno import WSAEADDRINUSE
+        except (ImportError, AttributeError):
+            errno.WSAEADDRINUSE = errno.EADDRINUSE
+        for attempt in range(50):
+            try:
+                if attempt > 0:
+                    port = randint(32767, 65535)
+                se = StoppableXMLRPCServer(
+                    (BMConfigParser().get(
+                        'bitmessagesettings', 'apiinterface'),
+                     port),
+                    MySimpleXMLRPCRequestHandler, True, True)
+            except socket.error as e:
+                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
+                    continue
+            else:
+                if attempt > 0:
+                    BMConfigParser().set(
+                        "bitmessagesettings", "apiport", str(port))
+                    BMConfigParser().save()
+                break
+        se.register_introspection_functions()
+        se.serve_forever()

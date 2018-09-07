@@ -11,3 +11,4 @@ install:
 script:
   - python checkdeps.py
   - pybitmessage -t
+  - python setup.py test

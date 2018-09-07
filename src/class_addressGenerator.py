@@ -201,12 +201,10 @@ class addressGenerator(threading.Thread, StoppableThread):
                 queues.UISignalQueue.put(('writeNewAddressToTable', (
                     label, address, streamNumber)))
                 shared.reloadMyAddressHashes()
-                if addressVersionNumber == 3:
-                    queues.workerQueue.put((
-                        'sendOutOrStoreMyV3Pubkey', ripe.digest()))
-                elif addressVersionNumber == 4:
-                    queues.workerQueue.put((
-                        'sendOutOrStoreMyV4Pubkey', address))
+
+                # If this is a chan address, the worker thread won't send out the pubkey over the network
+
+                queues.workerQueue.put(("sendMyPubkey", address))
 
             elif command == 'createDeterministicAddresses' \
                     or command == 'getDeterministicAddress' \
@@ -366,15 +364,11 @@ class addressGenerator(threading.Thread, StoppableThread):
                                 encodeVarint(streamNumber) + ripe.digest()
                             ).digest()).digest()[32:]
                             shared.myAddressesByTag[tag] = address
-                            if addressVersionNumber == 3:
-                                # If this is a chan address,
-                                # the worker thread won't send out
-                                # the pubkey over the network.
-                                queues.workerQueue.put((
-                                    'sendOutOrStoreMyV3Pubkey', ripe.digest()))
-                            elif addressVersionNumber == 4:
-                                queues.workerQueue.put((
-                                    'sendOutOrStoreMyV4Pubkey', address))
+
+                            # If this is a chan address, the worker thread won't send out the pubkey over the network
+
+                            queues.workerQueue.put(("sendMyPubkey", address))
+
                             queues.UISignalQueue.put((
                                 'updateStatusBar',
                                 tr._translate(

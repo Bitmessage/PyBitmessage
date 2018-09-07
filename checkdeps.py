@@ -88,25 +88,7 @@ def testCompiler():
         # silent, we can't test without setuptools
         return True
 
-    bitmsghash = Extension(
-        'bitmsghash',
-        sources=['src/bitmsghash/bitmsghash.cpp'],
-        libraries=['pthread', 'crypto'],
-    )
-
-    dist = Distribution()
-    dist.ext_modules = [bitmsghash]
-    cmd = build_ext(dist)
-    cmd.initialize_options()
-    cmd.finalize_options()
-    cmd.force = True
-    try:
-        cmd.run()
-    except CompileError:
-        return False
-    else:
-        fullPath = os.path.join(cmd.build_lib, cmd.get_ext_filename("bitmsghash"))
-        return os.path.isfile(fullPath)
+    return True
 
 
 prereqs = detectPrereqs()

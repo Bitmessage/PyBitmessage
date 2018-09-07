@@ -11,3 +11,6 @@ def resource_path(resFile):
 
 def load(resFile, widget):
     uic.loadUi(resource_path(resFile), widget)
+
+def loadType(resFile):
+    return uic.loadUiType(resource_path(resFile))

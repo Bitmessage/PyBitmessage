@@ -1,0 +1,1 @@
+/Ox /MD common.c winapi.c /link /DLL /OUT:libfastsolver.dll libeay32.lib

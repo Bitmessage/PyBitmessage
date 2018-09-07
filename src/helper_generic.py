@@ -18,18 +18,6 @@ import queues
 import shutdown
 from debug import logger
 
-
-def powQueueSize():
-    curWorkerQueue = queues.workerQueue.qsize()
-    for thread in threading.enumerate():
-        try:
-            if thread.name == "singleWorker":
-                curWorkerQueue += thread.busy
-        except Exception as err:
-            logger.info('Thread error %s', err)
-    return curWorkerQueue
-
-
 def convertIntToString(n):
     a = __builtins__.hex(n)
     if a[-1:] == 'L':
@@ -68,8 +56,8 @@ def signal_handler(signal, frame):
         # on Windows this isn't triggered, but it's fine,
         # it has its own process termination thing
         raise SystemExit
-    if "PoolWorker" in process.name:
-        raise SystemExit
+    if process.name == "ForkingSolver":
+        return
     if threading.current_thread().name not in ("PyBitmessage", "MainThread"):
         return
     logger.error("Got signal %i", signal)

@@ -42,10 +42,10 @@ class smtpDeliver(threading.Thread, StoppableThread):
             elif command == 'updateStatusBar':
                 pass
             elif command == 'updateSentItemStatusByToAddress':
-                toAddress, message = data
+                status, toAddress, message = data
                 pass
             elif command == 'updateSentItemStatusByAckdata':
-                ackData, message = data
+                status, ackData, message = data
                 pass
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data

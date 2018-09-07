@@ -20,17 +20,15 @@ from debug import logger
 from tr import _translate
 from addresses import decodeAddress, addBMIfNotPresent
 import shared
-from bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
 import defaults
 import namecoin
 from messageview import MessageView
 from migrationwizard import Ui_MigrationWizard
 from foldertree import (
-    AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
+    AccountMixin, AddressBookCompleter, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress)
-from settings import Ui_settingsDialog
 import settingsmixin
 import support
 import debug
@@ -38,24 +36,24 @@ from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_search
 import l10n
-import openclpow
 from utils import str_broadcast_subscribers, avatarize
 from account import (
     getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
     GatewayAccount, MailchuckAccount, AccountColor)
 import dialogs
-from helper_generic import powQueueSize
 from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import knownnodes
 import paths
-from proofofwork import getPowType
 import queues
 import shutdown
 import state
-from statusbar import BMStatusBar
 from network.asyncore_pollchoose import set_rates
 import sound
+import re
+import bitmessage_icons_rc # Loads icon resources
+import workprover.utils
+import singleworker
 
 
 try:
@@ -371,13 +369,19 @@ class MyForm(settingsmixin.SMainWindow):
         # Popup menu for the Sent page
         self.ui.sentContextMenuToolbar = QtGui.QToolBar()
         # Actions
-        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Move to Trash"), self.on_action_SentTrash)
         self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Copy destination address to clipboard"),
             self.on_action_SentClipboard)
+        self.actionEditAndResend = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Edit and resend"), self.on_action_EditAndResend)
+        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Move to Trash"), self.on_action_SentTrash)
+        self.actionCancelSending = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Cancel sending"), self.on_action_CancelSending)
         self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Force send"), self.on_action_ForceSend)
@@ -585,8 +589,53 @@ class MyForm(settingsmixin.SMainWindow):
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_MainWindow()
+
+        self.UI = widgets.loadType("bitmessageui.ui")[0]
+
+        self.ui = self.UI()
         self.ui.setupUi(self)
+
+        self.ui.blackwhitelist.retranslateUi()
+        self.ui.networkstatus.retranslateUi()
+
+        addressBookCompleter = AddressBookCompleter()
+        addressBookCompleter.setCompletionMode(QtGui.QCompleter.PopupCompletion)
+        addressBookCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        addressBookCompleter.setModel(QtGui.QStringListModel())
+
+        self.ui.lineEditTo.setCompleter(addressBookCompleter)
+
+        self.ui.pushButtonAddAddressBook.resize(200, self.ui.pushButtonAddAddressBook.height())
+        self.ui.pushButtonAddChan.resize(200, self.ui.pushButtonAddChan.height())
+        self.ui.pushButtonAddSubscription.resize(200, self.ui.pushButtonAddSubscription.height())
+        self.ui.pushButtonFetchNamecoinID.resize(200, self.ui.pushButtonFetchNamecoinID.height())
+        self.ui.pushButtonNewAddress.resize(200, self.ui.pushButtonNewAddress.height())
+        self.ui.tableWidgetAddressBook.resize(200, self.ui.tableWidgetAddressBook.height())
+        self.ui.treeWidgetChans.resize(200, self.ui.treeWidgetChans.height())
+        self.ui.treeWidgetSubscriptions.resize(200, self.ui.treeWidgetSubscriptions.height())
+        self.ui.treeWidgetYourIdentities.resize(200, self.ui.treeWidgetYourIdentities.height())
+
+        # TODO: why we need splitters here if they are disabled?
+
+        self.ui.horizontalSplitter_2.handle(1).setEnabled(False)
+        self.ui.horizontalSplitter_6.handle(1).setEnabled(False)
+        self.ui.horizontalSplitterSearch.handle(1).setEnabled(False)
+        self.ui.verticalSplitter.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_2.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_2.handle(2).setEnabled(False)
+        self.ui.verticalSplitter_3.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_4.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_5.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_6.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_7.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_8.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_12.handle(1).setEnabled(False)
+        self.ui.verticalSplitter_17.handle(1).setEnabled(False)
+
+        self.ui.horizontalSliderTTL.setMaximumSize(QtCore.QSize(105, self.ui.pushButtonSend.height()))
+
+        self.statusbar = self.statusBar()
+        self.statusbar.insertPermanentWidget(0, self.ui.rightStatusBar)
 
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
@@ -704,18 +753,16 @@ class MyForm(settingsmixin.SMainWindow):
             self.tabWidgetCurrentChanged
         )
 
-        # Put the colored icon on the status bar
-        # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
-        self.setStatusBar(BMStatusBar())
-        self.statusbar = self.statusBar()
+        # Initialize the blacklist or whitelist
 
-        self.pushButtonStatusIcon = QtGui.QPushButton(self)
-        self.pushButtonStatusIcon.setText('')
-        self.pushButtonStatusIcon.setIcon(
-            QtGui.QIcon(':/newPrefix/images/redicon.png'))
-        self.pushButtonStatusIcon.setFlat(True)
-        self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
-        QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
+        if BMConfigParser().get("bitmessagesettings", "blackwhitelist") == "white":
+            self.ui.blackwhitelist.radioButtonWhitelist.click()
+
+        self.ui.blackwhitelist.rerenderBlackWhiteList()
+
+        # The coloured icon on the status bar
+
+        QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonStatusIcon)
 
         self.numberOfMessagesProcessed = 0
@@ -737,13 +784,15 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
+            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
+            "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "deleteSentItemByAckData(PyQt_PyObject)"), self.deleteSentItemByAckData)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -762,6 +811,8 @@ class MyForm(settingsmixin.SMainWindow):
             "newVersionAvailable(PyQt_PyObject)"), self.newVersionAvailable)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "updateWorkProverStatus(PyQt_PyObject)"), self.updateWorkProverStatus)
         self.UISignalThread.start()
 
         # Key press in tree view
@@ -811,6 +862,8 @@ class MyForm(settingsmixin.SMainWindow):
                 'There was a problem testing for a Namecoin daemon. Hiding the'
                 ' Fetch Namecoin ID button')
             self.ui.pushButtonFetchNamecoinID.hide()
+
+        self.POWTasksCount = 0
 
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
@@ -1039,7 +1092,7 @@ class MyForm(settingsmixin.SMainWindow):
         if status == 'awaitingpubkey':
             statusText = _translate(
                 "MainWindow", "Waiting for their encryption key. Will request it again soon.")
-        elif status == 'doingpowforpubkey':
+        elif status == 'doingpubkeypow':
             statusText = _translate(
                 "MainWindow", "Doing work necessary to request encryption key.")
         elif status == 'msgqueued':
@@ -1057,6 +1110,8 @@ class MyForm(settingsmixin.SMainWindow):
         elif status == 'ackreceived':
             statusText = _translate("MainWindow", "Acknowledgement of the message received %1").arg(
                 l10n.formatTimestamp(lastactiontime))
+        elif status == "msgcanceled":
+            statusText = _translate("MainWindow", "Message canceled.")
         elif status == 'broadcastqueued':
             statusText = _translate(
                 "MainWindow", "Broadcast queued.")
@@ -1066,6 +1121,8 @@ class MyForm(settingsmixin.SMainWindow):
         elif status == 'broadcastsent':
             statusText = _translate("MainWindow", "Broadcast on %1").arg(
                 l10n.formatTimestamp(lastactiontime))
+        elif status == "broadcastcanceled":
+            statusText = _translate("MainWindow", "Broadcast canceled.")
         elif status == 'toodifficult':
             statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
                 l10n.formatTimestamp(lastactiontime))
@@ -1566,6 +1623,9 @@ class MyForm(settingsmixin.SMainWindow):
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
+            self.ui.blackwhitelist.retranslateUi()
+            self.ui.networkstatus.retranslateUi()
+            self.updateHumanFriendlyTTLDescription(BMConfigParser().getint("bitmessagesettings", "ttl"))
             self.init_inbox_popup_menu(False)
             self.init_identities_popup_menu(False)
             self.init_chan_popup_menu(False)
@@ -1596,7 +1656,7 @@ class MyForm(settingsmixin.SMainWindow):
         _notifications_enabled = not BMConfigParser().getboolean(
             'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
-            self.pushButtonStatusIcon.setIcon(
+            self.ui.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
@@ -1622,7 +1682,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'yellow':
             if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusbar.clearMessage()
-            self.pushButtonStatusIcon.setIcon(
+            self.ui.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
@@ -1640,7 +1700,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'green':
             if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusbar.clearMessage()
-            self.pushButtonStatusIcon.setIcon(
+            self.ui.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
             if not self.connected and _notifications_enabled:
@@ -1716,7 +1776,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.unreadCount = count
         return self.unreadCount
 
-    def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
+    def updateSentItemStatusByToAddress(self, status, toAddress, textToDisplay):
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
@@ -1727,6 +1787,16 @@ class MyForm(settingsmixin.SMainWindow):
             for i in range(sent.rowCount()):
                 rowAddress = sent.item(i, 0).data(QtCore.Qt.UserRole)
                 if toAddress == rowAddress:
+                    tableAckData = str(sent.item(i, 3).data(QtCore.Qt.UserRole).toPyObject())
+
+                    count = sqlQuery("""
+                        SELECT COUNT(*) FROM "sent"
+                        WHERE "ackdata" == ? AND "status" == ?;
+                    """, tableAckData, status)[0][0]
+
+                    if count == 0:
+                        continue
+
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
@@ -1738,7 +1808,15 @@ class MyForm(settingsmixin.SMainWindow):
                     else:
                         sent.item(i, 3).setText(textToDisplay)
 
-    def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
+    def updateSentItemStatusByAckdata(self, status, ackdata, textToDisplay):
+        count = sqlQuery("""
+            SELECT COUNT(*) FROM "sent"
+            WHERE "ackdata" == ? AND "status" == ?;
+        """, ackdata, status)[0][0]
+
+        if count == 0:
+            return
+
         if type(ackdata) is str:
             ackdata = QtCore.QByteArray(ackdata)
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
@@ -1792,6 +1870,22 @@ class MyForm(settingsmixin.SMainWindow):
         QtGui.QMessageBox.critical(self, title, text, QtGui.QMessageBox.Ok)
         if exitAfterUserClicksOk:
             os._exit(0)
+
+    def updateWorkProverStatus(self, status):
+        self.POWTasksCount = status.tasksCount
+
+        if status.speed == 0:
+            self.ui.workProverSpeed.setText("")
+            self.ui.workProverSpeed.setToolTip("")
+        else:
+            self.ui.workProverSpeed.setText(
+                _translate("MainWindow", "%1 kiH / s").arg("{:.1f}".format(status.speed / 1024))
+            )
+
+            self.ui.workProverSpeed.setToolTip("Difficulty: {}, 95 % completion time: {:.1f} s".format(
+                status.difficulty,
+                workprover.utils.estimateMaximumIterationsCount(status.difficulty, .95) / status.speed
+            ))
 
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
@@ -2298,6 +2392,37 @@ class MyForm(settingsmixin.SMainWindow):
                 dialogs.EmailGatewayDialog(
                     self, BMConfigParser(), acct).exec_()
 
+    def deleteSentItemByAckData(self, ackData):
+        ackData = QtCore.QByteArray(ackData)
+
+        for tableWidget in [
+            self.ui.tableWidgetInbox,
+            self.ui.tableWidgetInboxSubscriptions,
+            self.ui.tableWidgetInboxChans
+        ]:
+            treeWidget = self.widgetConvert(tableWidget)
+
+            if self.getCurrentFolder(treeWidget) != "sent":
+                continue
+
+            i = 0
+
+            while i < tableWidget.rowCount():
+                tableAckData = tableWidget.item(i, 3).data(QtCore.Qt.UserRole).toPyObject()
+
+                if ackData == tableAckData:
+                    textEdit = self.getCurrentMessageTextedit()
+
+                    if textEdit is not False:
+                        textEdit.setPlainText("")
+
+                    tableWidget.removeRow(i)
+                    tableWidget.selectRow(max(0, i - 1))
+
+                    self.updateStatusBar(_translate("MainWindow", "Moved items to trash."))
+                else:
+                    i += 1
+
     def click_pushButtonAddAddressBook(self, dialog=None):
         if not dialog:
             dialog = dialogs.AddAddressDialog(self)
@@ -2490,9 +2615,34 @@ class MyForm(settingsmixin.SMainWindow):
                 BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)))
 
-            if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
-                BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
-                queues.workerQueue.put(('resetPoW', ''))
+            if self.settingsDialogInstance.ui.radioButtonDumbSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "dumb")
+            elif self.settingsDialogInstance.ui.radioButtonForkingSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "forking")
+
+                BMConfigParser().set(
+                    "bitmessagesettings",
+                    "processes",
+                    str(self.settingsDialogInstance.ui.spinBoxForkingSolverParallelism.value())
+                )
+            elif self.settingsDialogInstance.ui.radioButtonFastSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "fast")
+
+                BMConfigParser().set(
+                    "bitmessagesettings",
+                    "threads",
+                    str(self.settingsDialogInstance.ui.spinBoxFastSolverParallelism.value())
+                )
+            elif self.settingsDialogInstance.ui.radioButtonGPUSolver.isChecked():
+                BMConfigParser().set("bitmessagesettings", "powsolver", "gpu")
+
+                BMConfigParser().set(
+                    "bitmessagesettings",
+                    "opencl",
+                    str(self.settingsDialogInstance.ui.comboBoxGPUVendor.currentText().toUtf8())
+                )
+
+            singleworker.setBestSolver()
 
             acceptableDifficultyChanged = False
             
@@ -2681,6 +2831,14 @@ class MyForm(settingsmixin.SMainWindow):
     def click_NewAddressDialog(self):
         dialogs.NewAddressDialog(self)
 
+    def updateNetworkSwitchMenuLabel(self, dontconnect = None):
+        if dontconnect is None:
+            dontconnect = BMConfigParser().safeGetBoolean("bitmessagesettings", "dontconnect")
+
+        self.ui.actionNetworkSwitch.setText(
+            _translate("MainWindow", "Go online" if dontconnect else "Go offline", None)
+        )
+
     def network_switch(self):
         dontconnect_option = not BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'dontconnect')
@@ -2700,7 +2858,7 @@ class MyForm(settingsmixin.SMainWindow):
         BMConfigParser().set(
             'bitmessagesettings', 'dontconnect', str(dontconnect_option))
         BMConfigParser().save()
-        self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
+        self.updateNetworkSwitchMenuLabel(dontconnect_option)
 
         self.ui.pushButtonFetchNamecoinID.setHidden(
             dontconnect_option or self.namecoin.test()[0] == 'failed'
@@ -2728,9 +2886,9 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
+        if self.POWTasksCount > 0 or pendingUpload() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
-                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
+                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, self.POWTasksCount) + ", " +
                     _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, pendingUpload()) + "\n\n" + 
                     _translate("MainWindow", "Wait until these tasks finish?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
@@ -2786,10 +2944,10 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForPow:
             # check if PoW queue empty
             maxWorkerQueue = 0
-            curWorkerQueue = powQueueSize()
+            curWorkerQueue = self.POWTasksCount
             while curWorkerQueue > 0:
                 # worker queue size
-                curWorkerQueue = powQueueSize()
+                curWorkerQueue = self.POWTasksCount
                 if curWorkerQueue > maxWorkerQueue:
                     maxWorkerQueue = curWorkerQueue
                 if curWorkerQueue > 0:
@@ -3233,47 +3391,159 @@ class MyForm(settingsmixin.SMainWindow):
             logger.exception('Message not saved', exc_info=True)
             self.updateStatusBar(_translate("MainWindow", "Write error."))
 
-    # Send item on the Sent tab to trash
-    def on_action_SentTrash(self):
-        currentRow = 0
-        unread = False
+    def on_action_EditAndResend(self):
         tableWidget = self.getCurrentMessagelist()
+
         if not tableWidget:
             return
-        folder = self.getCurrentFolder()
-        shifted = (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier) > 0
-        while tableWidget.selectedIndexes() != []:
-            currentRow = tableWidget.selectedIndexes()[0].row()
-            ackdataToTrash = str(tableWidget.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            if folder == "trash" or shifted:
-                sqlExecute('''DELETE FROM sent WHERE ackdata=?''', ackdataToTrash)
-            else:
-                sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
-            if tableWidget.item(currentRow, 0).unread:
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
-            self.getCurrentMessageTextedit().setPlainText("")
-            tableWidget.removeRow(currentRow)
-            self.updateStatusBar(_translate(
-                "MainWindow", "Moved items to trash."))
 
-        self.ui.tableWidgetInbox.selectRow(
-            currentRow if currentRow == 0 else currentRow - 1)
+        shiftPressed = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier != 0
+        folder = self.getCurrentFolder()
+        trash = not (folder == "trash" or shiftPressed)
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""
+                SELECT "status", "toaddress", "fromaddress", "subject", "message", "TTL" FROM "sent"
+                WHERE "ackdata" == ?;
+            """, ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status, destination, address, subject, body, TTL = queryReturn[0]
+
+            if status in ["broadcastqueued", "doingbroadcastpow", "broadcastsent", "broadcastcanceled"]:
+                self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
+
+                for j in range(self.ui.comboBoxSendFromBroadcast.count()):
+                    currentAddress = str(self.ui.comboBoxSendFromBroadcast.itemData(j).toPyObject())
+
+                    if currentAddress == address:
+                        self.ui.comboBoxSendFromBroadcast.setCurrentIndex(j)
+
+                        break
+
+                self.ui.lineEditSubjectBroadcast.setText(subject)
+                self.ui.textEditMessageBroadcast.setText(body)
+
+                self.ui.tabWidgetSend.setCurrentIndex(self.ui.tabWidgetSend.indexOf(self.ui.sendBroadcast))
+            else:
+                self.ui.comboBoxSendFrom.setCurrentIndex(0)
+
+                for j in range(self.ui.comboBoxSendFrom.count()):
+                    currentAddress = str(self.ui.comboBoxSendFrom.itemData(j).toPyObject())
+
+                    if currentAddress == address:
+                        self.ui.comboBoxSendFrom.setCurrentIndex(j)
+
+                        break
+
+                self.ui.lineEditTo.setText(destination)
+                self.ui.lineEditSubject.setText(subject)
+                self.ui.textEditMessage.setText(body)
+
+                self.ui.tabWidgetSend.setCurrentIndex(self.ui.tabWidgetSend.indexOf(self.ui.sendDirect))
+
+            # TODO: 3.192 fits better
+
+            self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1 / 3.199))
+
+            self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.indexOf(self.ui.send))
+
+            break
+
+    def on_action_SentTrash(self):
+        tableWidget = self.getCurrentMessagelist()
+
+        if not tableWidget:
+            return
+
+        shiftPressed = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier != 0
+        folder = self.getCurrentFolder()
+        trash = not (folder == "trash" or shiftPressed)
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status = queryReturn[0][0]
+
+            if status in ["broadcastqueued", "doingbroadcastpow", "broadcastsent", "broadcastcanceled"]:
+                queues.workerQueue.put(("cancelBroadcast", ackData, True, trash))
+            else:
+                queues.workerQueue.put(("cancelMessage", ackData, True, trash))
+
+    def on_action_CancelSending(self):
+        tableWidget = self.getCurrentMessagelist()
+
+        if not tableWidget:
+            return
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status = queryReturn[0][0]
+
+            if status in ["broadcastqueued", "doingbroadcastpow"]:
+                queues.workerQueue.put(("cancelBroadcast", ackData, False, None))
+            elif status not in ["ackreceived", "msgsentnoackexpected", "badkey", "msgcanceled"]:
+                queues.workerQueue.put(("cancelMessage", ackData, False, None))
 
     def on_action_ForceSend(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetInbox.item(
-            currentRow, 0).data(QtCore.Qt.UserRole)
-        toRipe = decodeAddress(addressAtCurrentRow)[3]
-        sqlExecute(
-            '''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''',
-            toRipe)
-        queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
-        for row in queryreturn:
-            ackdata, = row
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                ackdata, 'Overriding maximum-difficulty setting. Work queued.')))
-        queues.workerQueue.put(('sendmessage', ''))
+        tableWidget = self.getCurrentMessagelist()
+
+        if not tableWidget:
+            return
+
+        resendMessages = False
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            if queryReturn[0][0] == "toodifficult":
+                sqlExecute("""
+                    UPDATE "sent" SET "status" = 'forcepow'
+                    WHERE "ackdata" == ? AND "status" == 'toodifficult' AND "folder" = 'sent';
+                """, ackData)
+
+                queues.UISignalQueue.put(("updateSentItemStatusByAckdata", (
+                    "forcepow",
+                    ackData,
+                    "Overriding maximum-difficulty setting. Work queued." # TODO: add translation?
+                )))
+
+                resendMessages = True
+
+        if resendMessages:
+            queues.workerQueue.put(("sendmessage", ))
 
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
@@ -3935,23 +4205,56 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
-        self.popMenuSent = QtGui.QMenu(self)
-        self.popMenuSent.addAction(self.actionSentClipboard)
-        self.popMenuSent.addAction(self.actionTrashSentMessage)
+        tableWidget = self.getCurrentMessagelist()
 
-        # Check to see if this item is toodifficult and display an additional
-        # menu option (Force Send) if it is.
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        if currentRow >= 0:
-            ackData = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
-            for row in queryreturn:
-                status, = row
-            if status == 'toodifficult':
+        if not tableWidget:
+            return
+
+        showMenu = False
+        cancelSending = False
+        forceSend = False
+
+        for i in tableWidget.selectedIndexes():
+            if i.column() != 3:
+                continue
+
+            ackData = str(i.data(QtCore.Qt.UserRole).toPyObject())
+
+            queryReturn = sqlQuery("""SELECT "status" FROM "sent" WHERE "ackdata" == ?;""", ackData)
+
+            if len(queryReturn) == 0:
+                continue
+
+            status = queryReturn[0][0]
+
+            if status not in [
+                "ackreceived", "msgsentnoackexpected", "badkey", "msgcanceled",
+                "broadcastsent", "broadcastcanceled"
+            ]:
+                cancelSending = True
+
+            if status == "toodifficult":
+                forceSend = True
+
+            showMenu = True
+
+        if showMenu:
+            self.popMenuSent = QtGui.QMenu(self)
+            self.popMenuSent.addAction(self.actionSentClipboard)
+            self.popMenuSent.addSeparator()
+            self.popMenuSent.addAction(self.actionEditAndResend)
+
+            if forceSend:
                 self.popMenuSent.addAction(self.actionForceSend)
 
-        self.popMenuSent.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
+            self.popMenuSent.addSeparator()
+
+            if cancelSending:
+                self.popMenuSent.addAction(self.actionCancelSending)
+
+            self.popMenuSent.addAction(self.actionTrashSentMessage)
+
+            self.popMenuSent.exec_(tableWidget.mapToGlobal(point))
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
@@ -4129,8 +4432,11 @@ class settingsDialog(QtGui.QDialog):
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_settingsDialog()
+        self.UI = widgets.loadType("settings.ui")[0]
+
+        self.ui = self.UI()
         self.ui.setupUi(self)
+
         self.parent = parent
         self.ui.checkBoxStartOnLogon.setChecked(
             BMConfigParser().getboolean('bitmessagesettings', 'startonlogon'))
@@ -4176,6 +4482,41 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
+
+        self.ui.languageComboBox.addItem(
+            QtGui.QApplication.translate("settingsDialog", "System Settings", "system"),
+            "system"
+        )
+
+        localeRegexp = re.compile("bitmessage_(.*).qm$")
+        localeNames = {"eo": "Esperanto", "en_pirate": "Pirate English"}
+
+        for i in sorted(os.listdir(os.path.join(paths.codePath(), "translations"))):
+            match = localeRegexp.match(i)
+
+            if match is None:
+                continue
+
+            localeCode = match.group(1)
+
+            if localeCode in localeNames:
+                localeName = localeNames[localeCode]
+            else:
+                localeName = QtCore.QLocale(QtCore.QString(localeCode)).nativeLanguageName()
+
+                if localeName == "":
+                    localeName = localeCode
+
+            self.ui.languageComboBox.addItem(localeName, localeCode)
+
+        configuredLocale = BMConfigParser().safeGet("bitmessagesettings", "userlocale", "system")
+
+        for i in range(self.ui.languageComboBox.count()):
+            if self.ui.languageComboBox.itemData(i) == configuredLocale:
+                self.ui.languageComboBox.setCurrentIndex(i)
+
+                break
+
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             BMConfigParser().get('bitmessagesettings', 'port')))
@@ -4212,6 +4553,9 @@ class settingsDialog(QtGui.QDialog):
             BMConfigParser().get('bitmessagesettings', 'maxdownloadrate')))
         self.ui.lineEditMaxUploadRate.setText(str(
             BMConfigParser().get('bitmessagesettings', 'maxuploadrate')))
+        self.ui.lineEditMaxOutboundConnections.setValidator(
+            QtGui.QIntValidator(0, 8, self.ui.lineEditMaxOutboundConnections)
+        )
         self.ui.lineEditMaxOutboundConnections.setText(str(
             BMConfigParser().get('bitmessagesettings', 'maxoutboundconnections')))
 
@@ -4227,18 +4571,46 @@ class settingsDialog(QtGui.QDialog):
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(BMConfigParser().getint(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / defaults.networkDefaultPayloadLengthExtraBytes)))
 
-        # OpenCL
-        if openclpow.openclAvailable():
-            self.ui.comboBoxOpenCL.setEnabled(True)
-        else:
-            self.ui.comboBoxOpenCL.setEnabled(False)
-        self.ui.comboBoxOpenCL.clear()
-        self.ui.comboBoxOpenCL.addItem("None")
-        self.ui.comboBoxOpenCL.addItems(openclpow.vendors)
-        self.ui.comboBoxOpenCL.setCurrentIndex(0)
-        for i in range(self.ui.comboBoxOpenCL.count()):
-            if self.ui.comboBoxOpenCL.itemText(i) == BMConfigParser().safeGet('bitmessagesettings', 'opencl'):
-                self.ui.comboBoxOpenCL.setCurrentIndex(i)
+        if "forking" not in singleworker.workProver.availableSolvers:
+            self.ui.radioButtonForkingSolver.setEnabled(False)
+        if "fast" not in singleworker.workProver.availableSolvers:
+            self.ui.radioButtonFastSolver.setEnabled(False)
+        if "gpu" not in singleworker.workProver.availableSolvers:
+            self.ui.radioButtonGPUSolver.setEnabled(False)
+
+        solverName = BMConfigParser().safeGet("bitmessagesettings", "powsolver", "gpu")
+        forkingSolverParallelism = BMConfigParser().safeGetInt("bitmessagesettings", "processes")
+        fastSolverParallelism = BMConfigParser().safeGetInt("bitmessagesettings", "threads")
+        GPUVendor = BMConfigParser().safeGet("bitmessagesettings", "opencl")
+
+        if solverName == "dumb":
+            self.ui.radioButtonDumbSolver.setChecked(True)
+        elif solverName == "forking":
+            self.ui.radioButtonForkingSolver.setChecked(True)
+        elif solverName == "fast":
+            self.ui.radioButtonFastSolver.setChecked(True)
+        elif solverName == "gpu":
+            self.ui.radioButtonGPUSolver.setChecked(True)
+
+        self.ui.spinBoxForkingSolverParallelism.setValue(forkingSolverParallelism)
+        self.ui.spinBoxFastSolverParallelism.setValue(fastSolverParallelism)
+
+        vendors = set()
+
+        if GPUVendor is not None:
+            vendors.add(GPUVendor)
+
+        if "gpu" in singleworker.workProver.availableSolvers:
+            vendors |= set(singleworker.workProver.availableSolvers["gpu"].vendors)
+
+        self.ui.comboBoxGPUVendor.clear()
+        self.ui.comboBoxGPUVendor.addItems(list(vendors))
+        self.ui.comboBoxGPUVendor.setCurrentIndex(0)
+
+        for i in range(self.ui.comboBoxGPUVendor.count()):
+            if self.ui.comboBoxGPUVendor.itemText(i) == GPUVendor:
+                self.ui.comboBoxGPUVendor.setCurrentIndex(i)
+
                 break
 
         # Namecoin integration tab
@@ -4444,7 +4816,7 @@ def run():
         'bitmessagesettings', 'dontconnect')
     if myapp._firstrun:
         myapp.showConnectDialog()  # ask the user if we may connect
-    myapp.ui.updateNetworkSwitchMenuLabel()
+    myapp.updateNetworkSwitchMenuLabel()
 
 #    try:
 #        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:
