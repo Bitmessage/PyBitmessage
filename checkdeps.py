@@ -11,6 +11,7 @@ Limitations:
 """
 
 import os
+import sys
 from distutils.errors import CompileError
 try:
     from setuptools.dist import Distribution
@@ -136,6 +137,8 @@ if prereqs:
 OPSYS = detectOS()
 CMD = PACKAGE_MANAGER[OPSYS] if OPSYS in PACKAGE_MANAGER else 'UNKNOWN_INSTALLER'
 for lhs, rhs in EXTRAS_REQUIRE.items():
+    if OPSYS is None:
+        break
     if rhs and any([
         EXTRAS_REQUIRE_DEPS[x][OPSYS]
         for x in rhs
@@ -161,5 +164,7 @@ if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
     if not compiler:
         compilerToPackages()
     prereqToPackages()
+    if mandatory:
+        sys.exit(1)
 else:
     print("All the dependencies satisfied, you can install PyBitmessage")

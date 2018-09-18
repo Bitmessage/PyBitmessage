@@ -19,16 +19,16 @@ import os
 from importlib import import_module
 
 # We can now use logging so set up a simple configuration
-formatter = logging.Formatter(
-    '%(levelname)s: %(message)s'
-)
+formatter = logging.Formatter('%(levelname)s: %(message)s')
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(formatter)
 logger = logging.getLogger('both')
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
 
+
 OS_RELEASE = {
+    "Debian GNU/Linux".lower(): "Debian",
     "fedora": "Fedora",
     "opensuse": "openSUSE",
     "ubuntu": "Ubuntu",
@@ -137,7 +137,7 @@ def detectOSRelease():
         for line in osRelease:
             if line.startswith("NAME="):
                 detectOS.result = OS_RELEASE.get(
-                    line.split("=")[-1].strip().lower())
+                    line.replace('"', '').split("=")[-1].strip().lower())
             elif line.startswith("VERSION_ID="):
                 try:
                     version = float(line.split("=")[1].replace("\"", ""))
@@ -363,7 +363,7 @@ def check_curses():
     import subprocess
 
     try:
-        subprocess.check_call('which dialog')
+        subprocess.check_call(['which', 'dialog'])
     except subprocess.CalledProcessError:
         logger.error(
             'Curses requires the `dialog` command to be installed as well as'
@@ -463,3 +463,6 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage cannot start. One or more dependencies are'
             ' unavailable.'
         )
+
+
+logger.setLevel(0)

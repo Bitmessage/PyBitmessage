@@ -702,7 +702,7 @@ Le destinataire doit l’obtenir avant ce temps. Si votre client Bitmessage ne r
         <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre carnet d’adresses. Essayez de renommer l’adresse existante.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3346"/>
+        <location filename="../bitmessageqt/__init__.py" line="3359"/>
         <source>Error: You cannot add the same address to your subscriptions twice. Perhaps rename the existing one if you want.</source>
         <translation>Erreur : vous ne pouvez pas ajouter la même adresse deux fois à vos abonnements. Peut-être que vous pouvez renommer celle qui existe si vous le souhaitez.</translation>
     </message>
@@ -772,22 +772,22 @@ Le destinataire doit l’obtenir avant ce temps. Si votre client Bitmessage ne r
         <translation>Vous devez vraiment utiliser une phrase secrète.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3025"/>
+        <location filename="../bitmessageqt/__init__.py" line="3038"/>
         <source>Address is gone</source>
         <translation>L’adresse a disparu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3025"/>
+        <location filename="../bitmessageqt/__init__.py" line="3038"/>
         <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
         <translation>Bitmessage ne peut pas trouver votre adresse %1. Peut-être l’avez-vous supprimée?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3028"/>
+        <location filename="../bitmessageqt/__init__.py" line="3041"/>
         <source>Address disabled</source>
         <translation>Adresse désactivée</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3028"/>
+        <location filename="../bitmessageqt/__init__.py" line="3041"/>
         <source>Error: The address from which you are trying to send is disabled. You&apos;ll have to enable it on the &apos;Your Identities&apos; tab before using it.</source>
         <translation>Erreur : L’adresse avec laquelle vous essayez de communiquer est désactivée. Vous devez d’abord l’activer dans l’onglet &quot;Vos identités&quot; avant de l’utiliser.</translation>
     </message>
@@ -797,42 +797,42 @@ Le destinataire doit l’obtenir avant ce temps. Si votre client Bitmessage ne r
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3103"/>
+        <location filename="../bitmessageqt/__init__.py" line="3116"/>
         <source>Entry added to the blacklist. Edit the label to your liking.</source>
         <translation>Entrée ajoutée à la liste noire. Éditez l’étiquette à votre convenance.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3108"/>
+        <location filename="../bitmessageqt/__init__.py" line="3121"/>
         <source>Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want.</source>
         <translation>Erreur : vous ne pouvez pas ajouter la même adresse deux fois à votre liste noire. Essayez de renommer celle qui existe si vous le souhaitez.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3250"/>
+        <location filename="../bitmessageqt/__init__.py" line="3263"/>
         <source>Moved items to trash.</source>
         <translation>Messages déplacés dans la corbeille.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3194"/>
+        <location filename="../bitmessageqt/__init__.py" line="3207"/>
         <source>Undeleted item.</source>
         <translation>Articles restaurés.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3218"/>
+        <location filename="../bitmessageqt/__init__.py" line="3231"/>
         <source>Save As...</source>
         <translation>Enregistrer sous…</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3227"/>
+        <location filename="../bitmessageqt/__init__.py" line="3240"/>
         <source>Write error.</source>
         <translation>Erreur d’écriture.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3330"/>
+        <location filename="../bitmessageqt/__init__.py" line="3343"/>
         <source>No addresses selected.</source>
         <translation>Aucune adresse sélectionnée.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3385"/>
+        <location filename="../bitmessageqt/__init__.py" line="3398"/>
         <source>If you delete the subscription, messages that you already received will become inaccessible. Maybe you can consider disabling the subscription instead. Disabled subscriptions will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the subscription?</source>
@@ -841,7 +841,7 @@ Are you sure you want to delete the subscription?</source>
 Êtes-vous sur de vouloir supprimer cet abonnement ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3632"/>
+        <location filename="../bitmessageqt/__init__.py" line="3645"/>
         <source>If you delete the channel, messages that you already received will become inaccessible. Maybe you can consider disabling the channel instead. Disabled channels will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the channel?</source>
@@ -850,32 +850,32 @@ Are you sure you want to delete the channel?</source>
 Êtes-vous sûr de vouloir supprimer ce canal ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3762"/>
+        <location filename="../bitmessageqt/__init__.py" line="3775"/>
         <source>Do you really want to remove this avatar?</source>
         <translation>Voulez-vous vraiment enlever cet avatar ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3770"/>
+        <location filename="../bitmessageqt/__init__.py" line="3783"/>
         <source>You have already set an avatar for this address. Do you really want to overwrite it?</source>
         <translation>Vous avez déjà mis un avatar pour cette adresse. Voulez-vous vraiment l’écraser ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4172"/>
+        <location filename="../bitmessageqt/__init__.py" line="4185"/>
         <source>Start-on-login not yet supported on your OS.</source>
         <translation>Le démarrage dès l’ouverture de session n’est pas encore supporté sur votre OS.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4165"/>
+        <location filename="../bitmessageqt/__init__.py" line="4178"/>
         <source>Minimize-to-tray not yet supported on your OS.</source>
         <translation>La minimisation en zone système n’est pas encore supportée sur votre OS.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4168"/>
+        <location filename="../bitmessageqt/__init__.py" line="4181"/>
         <source>Tray notifications not yet supported on your OS.</source>
         <translation>Les notifications en zone système ne sont pas encore supportées sur votre OS.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4339"/>
+        <location filename="../bitmessageqt/__init__.py" line="4352"/>
         <source>Testing...</source>
         <translation>Tester…</translation>
     </message>
@@ -1155,37 +1155,37 @@ Are you sure you want to delete the channel?</source>
         <translation>Une nouvelle version de PyBitmessage est disponible : %1. Veuillez la télécharger depuis https://github.com/Bitmessage/PyBitmessage/releases/latest</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2788"/>
+        <location filename="../bitmessageqt/__init__.py" line="2801"/>
         <source>Waiting for PoW to finish... %1%</source>
         <translation>En attente de la fin de la PoW… %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2798"/>
+        <location filename="../bitmessageqt/__init__.py" line="2811"/>
         <source>Shutting down Pybitmessage... %1%</source>
         <translation>Pybitmessage en cours d’arrêt… %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2817"/>
+        <location filename="../bitmessageqt/__init__.py" line="2830"/>
         <source>Waiting for objects to be sent... %1%</source>
         <translation>En attente de l’envoi des objets… %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2835"/>
+        <location filename="../bitmessageqt/__init__.py" line="2848"/>
         <source>Saving settings... %1%</source>
         <translation>Enregistrement des paramètres… %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2848"/>
+        <location filename="../bitmessageqt/__init__.py" line="2861"/>
         <source>Shutting down core... %1%</source>
         <translation>Cœur en cours d’arrêt… %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2854"/>
+        <location filename="../bitmessageqt/__init__.py" line="2867"/>
         <source>Stopping notifications... %1%</source>
         <translation>Arrêt des notifications… %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2858"/>
+        <location filename="../bitmessageqt/__init__.py" line="2871"/>
         <source>Shutdown imminent... %1%</source>
         <translation>Arrêt imminent… %1%</translation>
     </message>
@@ -1200,7 +1200,7 @@ Are you sure you want to delete the channel?</source>
         <translation><numerusform>%n jour</numerusform><numerusform>%n jours</numerusform></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2756"/>
+        <location filename="../bitmessageqt/__init__.py" line="2769"/>
         <source>Shutting down PyBitmessage... %1%</source>
         <translation>PyBitmessage en cours d’arrêt… %1%</translation>
     </message>
@@ -1359,22 +1359,22 @@ Difficulté requise du destinataire : %1 et %2</translation>
         <translation>Travail en cours afin d’envoyer la diffusion.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2724"/>
+        <location filename="../bitmessageqt/__init__.py" line="2737"/>
         <source>Proof of work pending</source>
         <translation>En attente de preuve de fonctionnement</translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/__init__.py" line="2724"/>
+        <location filename="../bitmessageqt/__init__.py" line="2737"/>
         <source>%n object(s) pending proof of work</source>
         <translation><numerusform>%n objet en attente de preuve de fonctionnement</numerusform><numerusform>%n objet(s) en attente de preuve de fonctionnement</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/__init__.py" line="2724"/>
+        <location filename="../bitmessageqt/__init__.py" line="2737"/>
         <source>%n object(s) waiting to be distributed</source>
         <translation><numerusform>%n objet en attente d&apos;être distribué</numerusform><numerusform>%n objet(s) en attente d&apos;être distribués</numerusform></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2724"/>
+        <location filename="../bitmessageqt/__init__.py" line="2737"/>
         <source>Wait until these tasks finish?</source>
         <translation>Attendre jusqu&apos;à ce que ces tâches se terminent ?</translation>
     </message>
@@ -1429,7 +1429,7 @@ Difficulté requise du destinataire : %1 et %2</translation>
         <translation>Votre GPU(s) n&apos;a pas calculé correctement, mettant OpenCL hors service. Veuillez remonter ceci aux développeurs s&apos;il vous plaît.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3810"/>
+        <location filename="../bitmessageqt/__init__.py" line="3823"/>
         <source>Set notification sound...</source>
         <translation>Mettre un son de notification ...</translation>
     </message>
@@ -1519,42 +1519,62 @@ Bienvenue dans le facile et sécurisé Bitmessage
         <translation>De %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2735"/>
+        <location filename="../bitmessageqt/__init__.py" line="2692"/>
+        <source>Disconnecting</source>
+        <translation>Déconnexion</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2692"/>
+        <source>Connecting</source>
+        <translation>Connexion</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2692"/>
+        <source>Bitmessage will now drop all connectins. Are you sure?</source>
+        <translation>Bitmessage va maintenant laisser tomber toutes les connections. Êtes-vous sûr(e) ?</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2692"/>
+        <source>Bitmessage will now start connecting to network. Are you sure?</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2748"/>
         <source>Synchronisation pending</source>
         <translation>En attente de synchronisation</translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/__init__.py" line="2735"/>
+        <location filename="../bitmessageqt/__init__.py" line="2748"/>
         <source>Bitmessage hasn&apos;t synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?</source>
         <translation><numerusform>Bitmessage ne s&apos;est pas synchronisé avec le réseau, %n objet(s) à télécharger. Si vous quittez maintenant, cela pourrait causer des retards de livraison. Attendre jusqu&apos;à ce que la synchronisation aboutisse ?</numerusform><numerusform>Bitmessage ne s&apos;est pas synchronisé avec le réseau, %n objet(s) à télécharger. Si vous quittez maintenant, cela pourrait causer des retards de livraison. Attendre jusqu&apos;à ce que la synchronisation aboutisse ?</numerusform></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2745"/>
+        <location filename="../bitmessageqt/__init__.py" line="2758"/>
         <source>Not connected</source>
         <translation>Non connecté</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2745"/>
+        <location filename="../bitmessageqt/__init__.py" line="2758"/>
         <source>Bitmessage isn&apos;t connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?</source>
         <translation>Bitmessage n&apos;est pas connecté au réseau. Si vous quittez maintenant, cela pourrait causer des retards de livraison. Attendre jusqu&apos;à ce qu&apos;il soit connecté et que la synchronisation se termine ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2760"/>
+        <location filename="../bitmessageqt/__init__.py" line="2773"/>
         <source>Waiting for network connection...</source>
         <translation>En attente de connexion réseau...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2770"/>
+        <location filename="../bitmessageqt/__init__.py" line="2783"/>
         <source>Waiting for finishing synchronisation...</source>
         <translation>En attente d&apos;achèvement de la synchronisation...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3828"/>
+        <location filename="../bitmessageqt/__init__.py" line="3841"/>
         <source>You have already set a notification sound for this address book entry. Do you really want to overwrite it?</source>
         <translation>Vous avez déjà mis un son de notification pour cette adresse. Voulez-vous vraiment l’écraser ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4049"/>
+        <location filename="../bitmessageqt/__init__.py" line="4062"/>
         <source>Error occurred: could not load message from disk.</source>
         <translation>Une erreur a eu lieu : ne peut pas charger de message depuis le disque.</translation>
     </message>

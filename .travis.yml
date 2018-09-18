@@ -8,4 +8,6 @@ addons:
       - libcap-dev
 install:
   - python setup.py install
-script: pybitmessage -t
+script:
+  - python checkdeps.py
+  - pybitmessage -t

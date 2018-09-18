@@ -8,6 +8,7 @@ import re
 from bmconfigparser import BMConfigParser
 from debug import logger
 import helper_bootstrap
+from knownnodes import knownNodes
 from network.proxy import Proxy
 from network.tcp import TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection
 from network.udp import UDPSocket
@@ -138,8 +139,9 @@ class BMConnectionPool(object):
             acceptConnections = False
 
         if spawnConnections:
-            if not self.bootstrapped:
+            if not any([knownNodes.iteritems()]):
                 helper_bootstrap.dns()
+            if not self.bootstrapped:
                 self.bootstrapped = True
                 Proxy.proxy = (BMConfigParser().safeGet("bitmessagesettings", "sockshostname"),
                         BMConfigParser().safeGetInt("bitmessagesettings", "socksport"))

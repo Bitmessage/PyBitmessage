@@ -37,6 +37,7 @@ def json_serialize_knownnodes(output):
     _serialized = []
     for stream, peers in knownNodes.iteritems():
         for peer, info in peers.iteritems():
+            info.update(rating=round(info.get('rating', 0), 2))
             _serialized.append({
                 'stream': stream, 'peer': peer._asdict(), 'info': info
             })
@@ -97,7 +98,7 @@ def readKnownNodes():
                 except ValueError:
                     source.seek(0)
                     pickle_deserialize_old_knownnodes(source)
-    except (IOError, OSError, KeyError):
+    except (IOError, OSError, KeyError, EOFError):
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()

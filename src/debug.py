@@ -23,6 +23,7 @@ Use: `from debug import logger` to import this facility into whatever module you
 
 """
 
+import ConfigParser
 import logging
 import logging.config
 import os
@@ -44,27 +45,25 @@ def log_uncaught_exceptions(ex_cls, ex, tb):
 
 
 def configureLogging():
-    have_logging = False
+    fail_msg = ''
     try:
-        logging.config.fileConfig(os.path.join(state.appdata, 'logging.dat'))
-        have_logging = True
-        print(
-            'Loaded logger configuration from %s' %
-            os.path.join(state.appdata, 'logging.dat'))
-    except:
-        if os.path.isfile(os.path.join(state.appdata, 'logging.dat')):
-            print(
-                'Failed to load logger configuration from %s, using default'
-                ' logging config\n%s' %
-                (os.path.join(state.appdata, 'logging.dat'), sys.exc_info()))
+        logging_config = os.path.join(state.appdata, 'logging.dat')
+        logging.config.fileConfig(logging_config)
+        return (
+            False,
+            'Loaded logger configuration from %s' % logging_config
+        )
+    except (OSError, ConfigParser.NoSectionError):
+        if os.path.isfile(logging_config):
+            fail_msg = \
+                'Failed to load logger configuration from %s, using default' \
+                ' logging config\n%s' % \
+                (logging_config, sys.exc_info())
         else:
             # no need to confuse the user if the logger config is missing entirely
-            print "Using default logger configuration"
+            fail_msg = 'Using default logger configuration'
 
     sys.excepthook = log_uncaught_exceptions
-
-    if have_logging:
-        return False
 
     logging.config.dictConfig({
         'version': 1,
@@ -84,7 +83,7 @@ def configureLogging():
                 'class': 'logging.handlers.RotatingFileHandler',
                 'formatter': 'default',
                 'level': log_level,
-                'filename': state.appdata + 'debug.log',
+                'filename': os.path.join(state.appdata, 'debug.log'),
                 'maxBytes': 2097152,  # 2 MiB
                 'backupCount': 1,
                 'encoding': 'UTF-8',
@@ -109,26 +108,28 @@ def configureLogging():
             'handlers': ['console'],
         },
     })
-    return True
 
+    return True, fail_msg
 
-# TODO (xj9): Get from a config file.
-# logger = logging.getLogger('console_only')
 
 def initLogging():
-    if configureLogging():
+    preconfigured, msg = configureLogging()
+    if preconfigured:
         if '-c' in sys.argv:
             logger = logging.getLogger('file_only')
         else:
             logger = logging.getLogger('both')
     else:
         logger = logging.getLogger('default')
+
+    if msg:
+        logger.log(logging.WARNING if preconfigured else logging.INFO, msg)
     return logger
 
 
-def restartLoggingInUpdatedAppdataLocation():
+def resetLogging():
     global logger
-    for i in list(logger.handlers):
+    for i in logger.handlers.iterkeys():
         logger.removeHandler(i)
         i.flush()
         i.close()
