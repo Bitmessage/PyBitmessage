@@ -264,6 +264,7 @@ def dialogreset(stdscr):
     stdscr.keypad(1)
     curses.curs_set(0)
 def handlech(c, stdscr):
+    addr=""
     if c != curses.ERR:
         global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
         if c in range(256): 
@@ -781,7 +782,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         continue
                     if len(shared.connectedHostsList) == 0:
                         set_background_title(d, "Not connected warning")
-                        scrollbox(d, unicode("Because you are not currently connected to the network, the BM will not be sent right now"))
+                        scrollbox(d, unicode("Because you are not currently connected \
+                        to the network, the BM will not be sent right now"))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(streamNumber, stealthLevel)
                     sqlExecute(
