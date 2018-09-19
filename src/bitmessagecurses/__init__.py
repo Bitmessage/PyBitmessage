@@ -706,8 +706,9 @@ def handlech(c, stdscr):
                     blackcur = len(blackcur)-1
         redraw(stdscr)
 def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=False):
-    global streamNumber 
-    streamNumber = 0     #  0 = Auto  ,  1 = stream 1 is the only supported stream currently 
+    global streamNumber
+    streamNumber = 0
+    #  0 = Auto  ,  1 = stream 1 is the only supported stream currently
     if sender == "":
         return
     d = Dialog(dialog="dialog")
