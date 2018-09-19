@@ -1,10 +1,23 @@
+# in case of trouble with pylint, disable error msg 
+# with a line like (remove the _ s):
+# _p_y_l_i_n_t_:_ dis_able=W_0_2_9_1 , W291  # trailing spaces 
+
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
-# This file adds a alternative commandline interface, feel free to critique and fork
-# 
-# This has only been tested on Arch Linux and Linux Mint
+# & The Bitmessage Developers
+# This file adds an alternative commandline interface ("CLI")
+# and the menu is easy to extend and modify
+# run as:    python2 bitmessagemain.py --curses
+
+# There is no need for Qt4 and this mode can be run easier e.g. on
+# rental webservers without GUI
+# It does not use the BM-API like bitmessagecli.py does.
+# Feel free to critique and fork on github.
+
+# This has been tested on Arch Linux, Linux Mint, Manjaro, KDE neon (only),
+# try Xterm if Konsole is not working
 # Dependencies:
-#  * from python2-pip
-#     * python2-pythondialog
+#  * python2-pip
+#  * python2-pythondialog
 #  * dialog
 
 import os
@@ -264,9 +277,10 @@ def dialogreset(stdscr):
     stdscr.keypad(1)
     curses.curs_set(0)
 def handlech(c, stdscr):
+    addr=""
     if c != curses.ERR:
         global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
-        if c in range(256): 
+        if c in range(256):
             if chr(c) in '12345678':
                 global menutab
                 menutab = int(chr(c))
@@ -608,7 +622,8 @@ def handlech(c, stdscr):
                                 label = t
                                 # Prepend entry
                                 subscriptions.reverse()
-                                subscriptions.append([label, addr, True])
+                                # subscriptions.append([label, addr               , True])
+                                subscriptions.append([label, addrbook[abookcur][1], True])
                                 subscriptions.reverse()
 
                                 sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, addr, True)
@@ -623,7 +638,7 @@ def handlech(c, stdscr):
                                         sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
                                         # Prepend entry
                                         addrbook.reverse()
-                                        addrbook.append([t, addr])
+                                        addrbook.append([t, addrbook[abookcur][1]])  # addr])
                                         addrbook.reverse()
                                 else:
                                     scrollbox(d, unicode("The selected address is already in the Address Book."))
@@ -647,7 +662,7 @@ def handlech(c, stdscr):
                         elif t == "2":
                             sqlExecute("UPDATE blacklist SET enabled=1 WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
                             blacklist[blackcur][2] = True
-                        elif t== "3":
+                        elif t == "3":
                             sqlExecute("UPDATE blacklist SET enabled=0 WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
                             blacklist[blackcur][2] = False
                 dialogreset(stdscr)
@@ -705,7 +720,12 @@ def handlech(c, stdscr):
                 if menutab == 7:
                     blackcur = len(blackcur)-1
         redraw(stdscr)
+
+
 def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=False):
+    # global streamNumber
+    # streamNumber = 0
+    # 0 = Auto  ,  1 = stream 1 is the only supported stream currently
     if sender == "":
         return
     d = Dialog(dialog="dialog")
@@ -778,26 +798,19 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         continue
                     if len(shared.connectedHostsList) == 0:
                         set_background_title(d, "Not connected warning")
-                        scrollbox(d, unicode("Because you are not currently connected to the network, "))
+                        scrollbox(d, unicode("Since you are not currently connected \
+                        to the network, the BM will not be sent right now"))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
-                    ackdata = genAckPayload(streamNumber, stealthLevel)
-                    sqlExecute(
-                        "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        "",
-                        addr,
-                        ripe,
-                        sender,
-                        subject,
-                        body,
-                        ackdata,
-                        int(time.time()), # sentTime (this will never change)
-                        int(time.time()), # lastActionTime
-                        0, # sleepTill time. This will get set when the POW gets done.
-                        "msgqueued",
-                        0, # retryNumber
-                        "sent",
-                        2, # encodingType
-                        BMConfigParser().getint('bitmessagesettings', 'ttl'))
+                    # ackdata = genAckPayload(streamNumber, stealthLevel)
+                    ackdata = genAckPayload(stealthLevel=stealthLevel)
+                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                               "", addr, ripe, sender, subject, body, ackdata,
+                               int(time.time()), # sentTime (this will never change)
+                               int(time.time()), # lastActionTime
+                               0, # sleepTill time. This will get set when the POW gets done.
+                               "msgqueued", 0, # retryNumber
+                               "sent", 2, # encodingType
+                               BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     queues.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
         if recv == "":
