@@ -648,7 +648,7 @@ def handlech(c, stdscr):
                         elif t == "2":
                             sqlExecute("UPDATE blacklist SET enabled=1 WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
                             blacklist[blackcur][2] = True
-                        elif t== "3":
+                        elif t == "3":
                             sqlExecute("UPDATE blacklist SET enabled=0 WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
                             blacklist[blackcur][2] = False
                 dialogreset(stdscr)
