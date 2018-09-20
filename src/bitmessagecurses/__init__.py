@@ -611,7 +611,8 @@ def handlech(c, stdscr):
                                 label = t
                                 # Prepend entry
                                 subscriptions.reverse()
-                                subscriptions.append([label, addr, True])
+                                # subscriptions.append([label, addr               , True])
+                                subscriptions.append([label, addrbook[abookcur][1], True])
                                 subscriptions.reverse()
 
                                 sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, addr, True)
@@ -626,7 +627,7 @@ def handlech(c, stdscr):
                                         sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
                                         # Prepend entry
                                         addrbook.reverse()
-                                        addrbook.append([t, addr])
+                                        addrbook.append([t, addrbook[abookcur][1])  # addr])
                                         addrbook.reverse()
                                 else:
                                     scrollbox(d, unicode("The selected address is already in the Address Book."))
