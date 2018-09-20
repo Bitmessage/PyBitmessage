@@ -1,4 +1,4 @@
-# pylint: disable=W291
+# pylint: disable=W0291
 # trailing spaces, if any 
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
@@ -269,7 +269,7 @@ def handlech(c, stdscr):
     addr=""
     if c != curses.ERR:
         global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
-        if c in range(256): 
+        if c in range(256):
             if chr(c) in '12345678':
                 global menutab
                 menutab = int(chr(c))
@@ -789,24 +789,24 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         scrollbox(d, unicode("Since you are not currently connected \
                         to the network, the BM will not be sent right now"))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
-                    #ackdata = genAckPayload(streamNumber, stealthLevel)   
-                    ackdata  = genAckPayload( stealthLevel=stealthLevel)
-                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        "",
-                        addr,
-                        ripe,
-                        sender,
-                        subject,
-                        body,
-                        ackdata,
-                        int(time.time()), # sentTime (this will never change)
-                        int(time.time()), # lastActionTime
-                        0, # sleepTill time. This will get set when the POW gets done.
-                        "msgqueued",
-                        0, # retryNumber
-                        "sent",
-                        2, # encodingType
-                        BMConfigParser().getint('bitmessagesettings', 'ttl'))
+                    # ackdata = genAckPayload(streamNumber, stealthLevel)
+                    ackdata = genAckPayload( stealthLevel=stealthLevel)
+                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",                               
+                            "",
+                            addr,
+                            ripe,
+                            sender,
+                            subject,
+                            body,
+                            ackdata,
+                            int(time.time()), # sentTime (this will never change)
+                            int(time.time()), # lastActionTime
+                            0, # sleepTill time. This will get set when the POW gets done.
+                            "msgqueued",
+                            0, # retryNumber
+                            "sent",
+                            2, # encodingType
+                            BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     queues.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
         if recv == "":
