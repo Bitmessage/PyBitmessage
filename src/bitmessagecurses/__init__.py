@@ -790,8 +790,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         to the network, the BM will not be sent right now"))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     # ackdata = genAckPayload(streamNumber, stealthLevel)
-                    ackdata = genAckPayload( stealthLevel=stealthLevel)
-                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",                               
+                    ackdata = genAckPayload(stealthLevel=stealthLevel)
+                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                "", addr, ripe, sender, subject, body, ackdata,
                                int(time.time()), # sentTime (this will never change)
                                int(time.time()), # lastActionTime
