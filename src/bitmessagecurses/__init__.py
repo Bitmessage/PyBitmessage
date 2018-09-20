@@ -706,9 +706,12 @@ def handlech(c, stdscr):
                 if menutab == 7:
                     blackcur = len(blackcur)-1
         redraw(stdscr)
+
+
+
 def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=False):
-    global streamNumber
-    streamNumber = 0
+    #global streamNumber
+    #streamNumber = 0
     #  0 = Auto  ,  1 = stream 1 is the only supported stream currently
     if sender == "":
         return
@@ -785,7 +788,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         scrollbox(d, unicode("Because you are not currently connected \
                         to the network, the BM will not be sent right now"))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
-                    ackdata = genAckPayload(streamNumber, stealthLevel)
+                    #ackdata = genAckPayload(streamNumber, stealthLevel)   
+                    ackdata  = genAckPayload( stealthLevel=stealthLevel)
                     sqlExecute(
                         "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         "",
