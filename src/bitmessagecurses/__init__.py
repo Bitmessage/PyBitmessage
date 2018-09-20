@@ -1,4 +1,4 @@
-# pylint: disable=W0291
+# pylint: disable=W0291 , W291
 # trailing spaces, if any 
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
@@ -791,21 +791,13 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     # ackdata = genAckPayload(streamNumber, stealthLevel)
                     ackdata = genAckPayload( stealthLevel=stealthLevel)
-                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",                               
-                            "",
-                            addr,
-                            ripe,
-                            sender,
-                            subject,
-                            body,
-                            ackdata,
+                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                            "", addr, ripe, sender, subject, body, ackdata,
                             int(time.time()), # sentTime (this will never change)
                             int(time.time()), # lastActionTime
                             0, # sleepTill time. This will get set when the POW gets done.
-                            "msgqueued",
-                            0, # retryNumber
-                            "sent",
-                            2, # encodingType
+                            "msgqueued", 0, # retryNumber
+                            "sent", 2, # encodingType
                             BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     queues.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
