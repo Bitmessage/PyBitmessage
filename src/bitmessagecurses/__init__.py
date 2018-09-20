@@ -627,7 +627,7 @@ def handlech(c, stdscr):
                                         sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
                                         # Prepend entry
                                         addrbook.reverse()
-                                        addrbook.append([t, addrbook[abookcur][1])  # addr])
+                                        addrbook.append([t, addrbook[abookcur][1]])  # addr])
                                         addrbook.reverse()
                                 else:
                                     scrollbox(d, unicode("The selected address is already in the Address Book."))
