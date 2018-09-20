@@ -791,14 +791,14 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     # ackdata = genAckPayload(streamNumber, stealthLevel)
                     ackdata = genAckPayload( stealthLevel=stealthLevel)
-                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                            "", addr, ripe, sender, subject, body, ackdata,
-                            int(time.time()), # sentTime (this will never change)
-                            int(time.time()), # lastActionTime
-                            0, # sleepTill time. This will get set when the POW gets done.
-                            "msgqueued", 0, # retryNumber
-                            "sent", 2, # encodingType
-                            BMConfigParser().getint('bitmessagesettings', 'ttl'))
+                    sqlExecute("INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",                               
+                               "", addr, ripe, sender, subject, body, ackdata,
+                               int(time.time()), # sentTime (this will never change)
+                               int(time.time()), # lastActionTime
+                               0, # sleepTill time. This will get set when the POW gets done.
+                               "msgqueued", 0, # retryNumber
+                               "sent", 2, # encodingType
+                               BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     queues.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
         if recv == "":
