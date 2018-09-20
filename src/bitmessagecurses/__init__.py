@@ -1,3 +1,4 @@
+# pylint: disable=W291
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
 # 
