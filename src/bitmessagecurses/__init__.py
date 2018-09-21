@@ -1,4 +1,4 @@
-# in case of trouble with pylint, disable error msg 
+# in case of trouble with pylint, consider disable error msg 
 # with a line like (remove the _ s):
 # _p_y_l_i_n_t_:_ dis_able=W_0_2_9_1 , W291  # trailing spaces 
 
