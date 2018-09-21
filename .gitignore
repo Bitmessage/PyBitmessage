@@ -17,3 +17,4 @@ dist
 docs/_*/*
 docs/autodoc/
 pyan/
+src/**/.log
