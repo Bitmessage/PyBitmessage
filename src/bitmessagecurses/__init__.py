@@ -2,13 +2,13 @@
 # with a line like (remove the _ s):
 # _p_y_l_i_n_t_:_ dis_able=W_0_2_9_1 , W291  # trailing spaces 
 
-# Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com> 
+# Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # & The Bitmessage Developers
-# This file adds an alternative commandline interface ("CLI") 
+# This file adds an alternative commandline interface ("CLI")
 # and the menu is easy to extend and modify
 # run as:    python2 bitmessagemain.py --curses
 
-# There is no need for Qt4 and this mode can be run easier e.g. on 
+# There is no need for Qt4 and this mode can be run easier e.g. on
 # rental webservers without GUI
 # It does not use the BM-API like bitmessagecli.py does.
 # Feel free to critique and fork on github.
