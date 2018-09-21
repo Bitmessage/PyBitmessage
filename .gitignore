@@ -8,7 +8,7 @@ src/.project
 src/.pydevproject
 src/.settings/
 src/**/.dll
-src/**/*.o
+src/**/*.o  
 src/**/*.so
 build/lib.*
 build/temp.*
@@ -17,4 +17,3 @@ dist
 docs/_*/*
 docs/autodoc/
 pyan/
-src/**/.log
