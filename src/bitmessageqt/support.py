@@ -26,7 +26,12 @@ SUPPORT_ADDRESS = 'BM-2cUdgkDDAahwPAU6oD2A7DnjqZz3hgY832'
 SUPPORT_LABEL = 'PyBitmessage support'
 SUPPORT_MY_LABEL = 'My new address'
 SUPPORT_SUBJECT = 'Support request'
-SUPPORT_MESSAGE = '''You can use this message to send a report to one of the PyBitmessage core developers regarding PyBitmessage or the mailchuck.com email service. If you are using PyBitmessage involuntarily, for example because your computer was infected with ransomware, this is not an appropriate venue for resolving such issues.
+SUPPORT_MESSAGE = '''You can use this message to send a report to one of the PyBitmessage core developers
+ regarding PyBitmessage or the mailchuck.com email service.
+ If you are using PyBitmessage involuntarily,
+ for example because your computer was infected with ransomware,
+ this is not an appropriate venue for resolving such issues
+ but rather contact a task force via  https://www.interpol.int/Crime-areas/Cybercrime
 
 Please describe what you are trying to do:
 
