@@ -1,12 +1,23 @@
-# pylint: disable=W0291 , W291
-# trailing spaces, if any 
-# Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
-# This file adds a alternative commandline interface, feel free to critique and fork
-# 
-# This has only been tested on Arch Linux and Linux Mint
+# in case of trouble with pylint, disable error msg 
+# with a line like (remove the _ s):
+# _p_y_l_i_n_t_:_ dis_able=W_0_2_9_1 , W291  # trailing spaces 
+
+# Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com> 
+# & The Bitmessage Developers
+# This file adds an alternative commandline interface ("CLI") 
+# and the menu is easy to extend and modify
+# run as:    python2 bitmessagemain.py --curses
+
+# There is no need for Qt4 and this mode can be run easier e.g. on 
+# rental webservers without GUI
+# It does not use the BM-API like bitmessagecli.py does.
+# Feel free to critique and fork on github.
+
+# This has been tested on Arch Linux, Linux Mint, Manjaro, KDE neon (only),
+# try Xterm if Konsole is not working
 # Dependencies:
-#  * from python2-pip
-#     * python2-pythondialog
+#  * python2-pip
+#  * python2-pythondialog
 #  * dialog
 
 import os
