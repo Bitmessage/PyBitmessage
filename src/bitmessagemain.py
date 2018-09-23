@@ -252,8 +252,8 @@ class Main:
                 ' If you want to run in daemon mode, see '
                 'https://bitmessage.org/wiki/Daemon\n'
                 'You can also run PyBitmessage with'
-                ' the new curses interface by providing'
-                ' \'-c\' as a commandline argument.'
+                ' the curses TUI rather than Qt4 GUI interface by providing'
+                ' \'-c\' or \'--curses\'as a commandline argument.'
             )
         shared.thisapp = singleinstance("", daemon)
 
@@ -476,11 +476,11 @@ class Main:
         print '''
 Options:
   -h, --help            show this help message and exit
-  -c, --curses          use curses (text mode) interface
-  -d, --daemon          run in daemon (background) mode
-  -t, --test            dryrun, make testing
+  -c, --curses          use "curses" text mode user-interface (TUI) without usage or need for Qt4 GUI libraries
+  -d, --daemon          run in daemon (background, "headless") mode, possibly with BM-API activated in keys.dat
+  -t, --test            dry run; test network without GUI and automatically terminate after ca. 1 minute; log to screen
 
-All parameters are optional.
+All parameters are optional. Default is using the Qt4 GUI in non-curses and non-daemon mode.
 '''
 
     def stop(self):
