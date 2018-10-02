@@ -60,9 +60,10 @@ def pickle_deserialize_old_knownnodes(source):
     the old format was {Peer:lastseen, ...}
     the new format is {Peer:{"lastseen":i, "rating":f}}
     """
+    global knownNodes  # pylint: disable=global-statement
     knownNodes = pickle.load(source)
     for stream in knownNodes.keys():
-        for node, params in knownNodes[stream].items():
+        for node, params in knownNodes[stream].iteritems():
             if isinstance(params, (float, int)):
                 addKnownNode(stream, node, params)
 
