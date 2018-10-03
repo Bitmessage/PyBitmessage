@@ -1,11 +1,12 @@
 import threading
 
-from bmconfigparser import BMConfigParser
+import network.asyncore_pollchoose as asyncore
+import state
 from debug import logger
 from helper_threading import StoppableThread
-import network.asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
-import state
+from queues import excQueue
+
 
 class BMNetworkThread(threading.Thread, StoppableThread):
     def __init__(self):
@@ -15,8 +16,12 @@ class BMNetworkThread(threading.Thread, StoppableThread):
         logger.info("init asyncore thread")
 
     def run(self):
-        while not self._stopped and state.shutdown == 0:
-            BMConnectionPool().loop()
+        try:
+            while not self._stopped and state.shutdown == 0:
+                BMConnectionPool().loop()
+        except Exception as e:
+            excQueue.put((self.name, e))
+            raise
 
     def stopThread(self):
         super(BMNetworkThread, self).stopThread()

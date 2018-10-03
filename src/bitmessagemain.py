@@ -367,10 +367,11 @@ class Main:
                         time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
-            from tests import core
-            test_core_result = core.run()
+            from tests import core as test_core
+            test_core_result = test_core.run()
             state.enableGUI = True
             self.stop()
+            test_core.cleanup()
             sys.exit(
                 'Core tests failed!'
                 if test_core_result.errors or test_core_result.failures
