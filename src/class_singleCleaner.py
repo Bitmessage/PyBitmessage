@@ -55,7 +55,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             ) + (
                 float(BMConfigParser().get(
                     'bitmessagesettings', 'stopresendingafterxmonths')) *
-                (60 * 60 * 24 * 365)/12)
+                (60 * 60 * 24 * 365) / 12)
         except:
             # Either the user hasn't set stopresendingafterxdays and
             # stopresendingafterxmonths yet or the options are missing
@@ -96,9 +96,8 @@ class singleCleaner(threading.Thread, StoppableThread):
                     "SELECT toaddress, ackdata, status FROM sent"
                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
                     " AND folder='sent' AND sleeptill<? AND senttime>?)",
-                    int(time.time()),
-                    int(time.time())
-                    - shared.maximumLengthOfTimeToBotherResendingMessages
+                    int(time.time()), int(time.time()) -
+                    shared.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for row in queryreturn:
                     if len(row) < 2:
@@ -115,54 +114,28 @@ class singleCleaner(threading.Thread, StoppableThread):
                     elif status == 'msgsent':
                         resendMsg(ackData)
 
-            # cleanup old nodes
-            now = int(time.time())
-
-            with knownnodes.knownNodesLock:
-                for stream in knownnodes.knownNodes:
-                    keys = knownnodes.knownNodes[stream].keys()
-                    for node in keys:
-                        try:
-                            # scrap old nodes
-                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200: # 28 days
-                                shared.needToWriteKnownNodesToDisk = True
-                                del knownnodes.knownNodes[stream][node]
-                                continue
-                            # scrap old nodes with low rating
-                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 10800 and knownnodes.knownNodes[stream][node]["rating"] <= knownnodes.knownNodesForgetRating:
-                                shared.needToWriteKnownNodesToDisk = True
-                                del knownnodes.knownNodes[stream][node]
-                                continue
-                        except TypeError:
-                            print "Error in %s" % node
-                    keys = []
-
-            # Let us write out the knowNodes to disk
-            # if there is anything new to write out.
-            if shared.needToWriteKnownNodesToDisk:
-                try:
-                    knownnodes.saveKnownNodes()
-                except Exception as err:
-                    if "Errno 28" in str(err):
-                        logger.fatal(
-                            '(while receiveDataThread'
-                            ' knownnodes.needToWriteKnownNodesToDisk)'
-                            ' Alert: Your disk or data storage volume'
-                            ' is full. '
-                        )
-                        queues.UISignalQueue.put((
-                            'alert',
-                            (tr._translate("MainWindow", "Disk full"),
-                             tr._translate(
-                                 "MainWindow",
-                                 'Alert: Your disk or data storage volume'
-                                 ' is full. Bitmessage will now exit.'),
-                                True)
-                            ))
-                        # FIXME redundant?
-                        if shared.daemon or not state.enableGUI:
-                            os._exit(0)
-                shared.needToWriteKnownNodesToDisk = False
+            try:
+                # Cleanup knownnodes and handle possible severe exception
+                # while writing it to disk
+                knownnodes.cleanupKnownNodes()
+            except Exception as err:
+                if "Errno 28" in str(err):
+                    logger.fatal(
+                        '(while writing knownnodes to disk)'
+                        ' Alert: Your disk or data storage volume is full.'
+                    )
+                    queues.UISignalQueue.put((
+                        'alert',
+                        (tr._translate("MainWindow", "Disk full"),
+                         tr._translate(
+                             "MainWindow",
+                             'Alert: Your disk or data storage volume'
+                             ' is full. Bitmessage will now exit.'),
+                            True)
+                    ))
+                    # FIXME redundant?
+                    if shared.daemon or not state.enableGUI:
+                        os._exit(1)
 
 #            # clear download queues
 #            for thread in threading.enumerate():
@@ -206,8 +179,9 @@ def resendPubkeyRequest(address):
         pass
 
     queues.UISignalQueue.put((
-         'updateStatusBar',
-         'Doing work necessary to again attempt to request a public key...'))
+        'updateStatusBar',
+        'Doing work necessary to again attempt to request a public key...'
+    ))
     sqlExecute(
         '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
         address)

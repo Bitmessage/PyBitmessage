@@ -8,6 +8,7 @@ import time
 import state
 from bmconfigparser import BMConfigParser
 from debug import logger
+from helper_bootstrap import dns
 
 knownNodesLock = threading.Lock()
 knownNodes = {stream: {} for stream in range(1, 4)}
@@ -157,3 +158,43 @@ def trimKnownNodes(recAddrStream=1):
         )[:knownNodesTrimAmount]
         for oldest in oldestList:
             del knownNodes[recAddrStream][oldest]
+
+
+def cleanupKnownNodes():
+    """
+    Cleanup knownnodes: remove old nodes and nodes with low rating
+    """
+    now = int(time.time())
+    needToWriteKnownNodesToDisk = False
+    dns_done = False
+
+    with knownNodesLock:
+        for stream in knownNodes:
+            keys = knownNodes[stream].keys()
+            if len(keys) <= 1 and not dns_done:  # leave at least one node
+                dns()
+                dns_done = True
+                continue
+            for node in keys:
+                try:
+                    # scrap old nodes
+                    if (now - knownNodes[stream][node]["lastseen"] >
+                            2419200):  # 28 days
+                        needToWriteKnownNodesToDisk = True
+                        del knownNodes[stream][node]
+                        continue
+                    # scrap old nodes with low rating
+                    if (now - knownNodes[stream][node]["lastseen"] > 10800 and
+                        knownNodes[stream][node]["rating"] <=
+                            knownNodesForgetRating):
+                        needToWriteKnownNodesToDisk = True
+                        del knownNodes[stream][node]
+                        continue
+                except TypeError:
+                    logger.warning('Error in %s', node)
+            keys = []
+
+    # Let us write out the knowNodes to disk
+    # if there is anything new to write out.
+    if needToWriteKnownNodesToDisk:
+        saveKnownNodes()
