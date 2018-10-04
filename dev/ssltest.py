@@ -8,14 +8,15 @@ import traceback
 HOST = "127.0.0.1"
 PORT = 8912
 
+
 def sslProtocolVersion():
     # sslProtocolVersion
-    if sys.version_info >= (2,7,13):
+    if sys.version_info >= (2, 7, 13):
         # this means TLSv1 or higher
         # in the future change to
         # ssl.PROTOCOL_TLS1.2
         return ssl.PROTOCOL_TLS
-    elif sys.version_info >= (2,7,9):
+    elif sys.version_info >= (2, 7, 9):
         # this means any SSL/TLS. SSLv2 and 3 are excluded with an option after context is created
         return ssl.PROTOCOL_SSLv23
     else:
@@ -23,15 +24,18 @@ def sslProtocolVersion():
         # "TLSv1.2" in < 2.7.9
         return ssl.PROTOCOL_TLSv1
 
+
 def sslProtocolCiphers():
     if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000:
         return "AECDH-AES256-SHA@SECLEVEL=0"
     else:
         return "AECDH-AES256-SHA"
 
+
 def connect():
     sock = socket.create_connection((HOST, PORT))
     return sock
+
 
 def listen():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,17 +44,21 @@ def listen():
     sock.listen(0)
     return sock
 
+
 def sslHandshake(sock, server=False):
-    if sys.version_info >= (2,7,9):
+    if sys.version_info >= (2, 7, 9):
         context = ssl.SSLContext(sslProtocolVersion())
         context.set_ciphers(sslProtocolCiphers())
         context.set_ecdh_curve("secp256k1")
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
         context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
-        sslSock = context.wrap_socket(sock, server_side = server, do_handshake_on_connect=False)
+        sslSock = context.wrap_socket(sock, server_side=server, do_handshake_on_connect=False)
     else:
-        sslSock = ssl.wrap_socket(sock, keyfile = os.path.join('src', 'sslkeys', 'key.pem'), certfile = os.path.join('src', 'sslkeys', 'cert.pem'), server_side = server, ssl_version=sslProtocolVersion(), do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+        sslSock = ssl.wrap_socket(sock, keyfile=os.path.join('src', 'sslkeys', 'key.pem'),
+                                  certfile=os.path.join('src', 'sslkeys', 'cert.pem'),
+                                  server_side=server, ssl_version=sslProtocolVersion(),
+                                  do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
 
     while True:
         try:
@@ -68,6 +76,7 @@ def sslHandshake(sock, server=False):
             return
     print "Success!"
     return sslSock
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
