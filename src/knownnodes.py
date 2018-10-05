@@ -1,7 +1,10 @@
+"""
+Manipulations with knownNodes dictionary.
+"""
+
 import json
 import os
 import pickle
-# import sys
 import threading
 import time
 
@@ -106,10 +109,6 @@ def readKnownNodes():
         createDefaultKnownNodes()
 
     config = BMConfigParser()
-    # if config.safeGetInt('bitmessagesettings', 'settingsversion') > 10:
-    #     sys.exit(
-    #         'Bitmessage cannot read future versions of the keys file'
-    #         ' (keys.dat). Run the newer version of Bitmessage.')
 
     # your own onion address, if setup
     onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
