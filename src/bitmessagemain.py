@@ -367,7 +367,7 @@ class Main:
                         time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
-            from tests import core as test_core
+            from tests import core as test_core  # pylint: disable=relative-import
             test_core_result = test_core.run()
             state.enableGUI = True
             self.stop()
