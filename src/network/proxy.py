@@ -1,14 +1,22 @@
+"""
+src/network/proxy.py
+====================
+
+"""
+# pylint: disable=protected-access
+
 import socket
 import time
 
-from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
+import state
+from advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import BMConfigParser
 from debug import logger
-import network.connectionpool
-import state
+
 
 class ProxyError(Exception):
+    """Base proxy exception class"""
     errorCodes = ("UnknownError")
 
     def __init__(self, code=-1):
@@ -21,19 +29,21 @@ class ProxyError(Exception):
 
 
 class GeneralProxyError(ProxyError):
+    """General proxy error class (not specfic to an implementation)"""
     errorCodes = ("Success",
-        "Invalid data",
-        "Not connected",
-        "Not available",
-        "Bad proxy type",
-        "Bad input",
-        "Timed out",
-        "Network unreachable",
-        "Connection refused",
-        "Host unreachable")
+                  "Invalid data",
+                  "Not connected",
+                  "Not available",
+                  "Bad proxy type",
+                  "Bad input",
+                  "Timed out",
+                  "Network unreachable",
+                  "Connection refused",
+                  "Host unreachable")
 
 
 class Proxy(AdvancedDispatcher):
+    """Base proxy class for AdvancedDispatcher"""
     # these are global, and if you change config during runtime, all active/new
     # instances should change too
     _proxy = ("127.0.0.1", 9050)
@@ -44,10 +54,12 @@ class Proxy(AdvancedDispatcher):
 
     @property
     def proxy(self):
+        """Return proxy IP and port"""
         return self.__class__._proxy
 
     @proxy.setter
     def proxy(self, address):
+        """Set proxy IP and port"""
         if not isinstance(address, tuple) or (len(address) < 2) or \
                 (not isinstance(address[0], str) or not isinstance(address[1], int)):
             raise ValueError
@@ -55,29 +67,35 @@ class Proxy(AdvancedDispatcher):
 
     @property
     def auth(self):
+        """Return proxy authentication settings"""
         return self.__class__._auth
 
     @auth.setter
     def auth(self, authTuple):
+        """Set proxy authentication (username and password)"""
         self.__class__._auth = authTuple
 
     @property
     def onion_proxy(self):
+        """Return separate proxy IP and port for use only with onion addresses. Untested."""
         return self.__class__._onion_proxy
 
     @onion_proxy.setter
     def onion_proxy(self, address):
-        if address is not None and (not isinstance(address, tuple) or (len(address) < 2) or \
-                (not isinstance(address[0], str) or not isinstance(address[1], int))):
+        """Set onion proxy address"""
+        if address is not None and (not isinstance(address, tuple) or (len(address) < 2) or
+                                    (not isinstance(address[0], str) or not isinstance(address[1], int))):
             raise ValueError
         self.__class__._onion_proxy = address
 
     @property
     def onion_auth(self):
+        """Set proxy authentication for onion hosts only. Untested"""
         return self.__class__._onion_auth
 
     @onion_auth.setter
     def onion_auth(self, authTuple):
+        """Set proxy authentication for onion hosts only. Untested"""
         self.__class__._onion_auth = authTuple
 
     def __init__(self, address):
@@ -90,7 +108,7 @@ class Proxy(AdvancedDispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         if BMConfigParser().safeGetBoolean("bitmessagesettings", "socksauthentication"):
             self.auth = (BMConfigParser().safeGet("bitmessagesettings", "socksusername"),
-                    BMConfigParser().safeGet("bitmessagesettings", "sockspassword"))
+                         BMConfigParser().safeGet("bitmessagesettings", "sockspassword"))
         else:
             self.auth = None
         if address.host.endswith(".onion") and self.onion_proxy is not None:
@@ -99,6 +117,7 @@ class Proxy(AdvancedDispatcher):
             self.connect(self.proxy)
 
     def handle_connect(self):
+        """Handle connection event (to the proxy)"""
         self.set_state("init")
         try:
             AdvancedDispatcher.handle_connect(self)
@@ -109,5 +128,7 @@ class Proxy(AdvancedDispatcher):
         self.state_init()
 
     def state_proxy_handshake_done(self):
+        """Handshake is complete at this point"""
+        # pylint: disable=attribute-defined-outside-init
         self.connectedAt = time.time()
         return False
