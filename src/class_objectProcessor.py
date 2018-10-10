@@ -1,30 +1,36 @@
+"""
+src/class_objectProcessor.py
+============================
+"""
+# pylint: disable=too-many-lines,too-many-return-statements,too-many-branches,too-many-statements,no-self-use
+# pylint: disable=too-many-locals
+
 import hashlib
 import random
-import shared
 import threading
 import time
 from binascii import hexlify
 from subprocess import call  # nosec
 
-import highlevelcrypto
-from addresses import (
-    calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
-    encodeVarint, varintDecodeError
-)
-from bmconfigparser import BMConfigParser
 import helper_bitcoin
 import helper_inbox
 import helper_msgcoding
 import helper_sent
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
-from helper_ackPayload import genAckPayload
-from network import bmproto
+import highlevelcrypto
+import l10n
 import protocol
 import queues
+import shared
 import state
 import tr
+from addresses import (
+    calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress, encodeVarint, varintDecodeError
+)
+from bmconfigparser import BMConfigParser
 from debug import logger
-import l10n
+from helper_ackPayload import genAckPayload
+from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
+from network import bmproto
 
 
 class objectProcessor(threading.Thread):
@@ -32,6 +38,7 @@ class objectProcessor(threading.Thread):
     The objectProcessor thread, of which there is only one, receives network
     objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
+
     def __init__(self):
         # It may be the case that the last time Bitmessage was running,
         # the user closed it before it finished processing everything in the
@@ -113,6 +120,9 @@ class objectProcessor(threading.Thread):
                 break
 
     def checkackdata(self, data):
+        """Let's check whether this is a message acknowledgement bound for us."""
+        # pylint: disable=protected-access
+
         # Let's check whether this is a message acknowledgement bound for us.
         if len(data) < 32:
             return
@@ -124,21 +134,25 @@ class objectProcessor(threading.Thread):
             logger.info('This object is an acknowledgement bound for me.')
             del shared.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute(
-                'UPDATE sent SET status=?, lastactiontime=?'
-                ' WHERE ackdata=?',
+                'UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
                 'ackreceived', int(time.time()), data[readPosition:])
-            queues.UISignalQueue.put((
-                'updateSentItemStatusByAckdata',
-                (data[readPosition:],
-                 tr._translate(
-                     "MainWindow",
-                     "Acknowledgement of the message received %1"
-                 ).arg(l10n.formatTimestamp()))
-            ))
+
+            queues.UISignalQueue.put(
+                (
+                    'updateSentItemStatusByAckdata',
+                    (
+                        data[readPosition:],
+                        tr._translate(
+                            "MainWindow",
+                            "Acknowledgement of the message received %1").arg(l10n.formatTimestamp())
+                    )
+                )
+            )
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
 
     def processgetpubkey(self, data):
+        """Check if data is a getpubkey request for one of my keys"""
         if len(data) > 200:
             logger.info(
                 'getpubkey is abnormally long. Sanity check failed.'
@@ -241,6 +255,7 @@ class objectProcessor(threading.Thread):
             queues.workerQueue.put(('sendOutOrStoreMyV4Pubkey', myAddress))
 
     def processpubkey(self, data):
+        """Save pubkey"""
         pubkeyProcessingStartTime = time.time()
         shared.numberOfPubkeysProcessed += 1
         queues.UISignalQueue.put((
@@ -415,6 +430,7 @@ class objectProcessor(threading.Thread):
             timeRequiredToProcessPubkey)
 
     def processmsg(self, data):
+        """Process message object"""
         messageProcessingStartTime = time.time()
         shared.numberOfMessagesProcessed += 1
         queues.UISignalQueue.put((
@@ -710,7 +726,7 @@ class objectProcessor(threading.Thread):
                 # We really should have a discussion about how to
                 # set the TTL for mailing list broadcasts. This is obviously
                 # hard-coded.
-                TTL = 2*7*24*60*60  # 2 weeks
+                TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
                 t = ('',
                      toAddress,
                      ripe,
@@ -734,7 +750,6 @@ class objectProcessor(threading.Thread):
                         subject, message, ackdata)
                 ))
                 queues.workerQueue.put(('sendbroadcast', ''))
-
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
         if (
@@ -746,8 +761,7 @@ class objectProcessor(threading.Thread):
             self._ack_obj.send_data(ackData[24:])
 
         # Display timing data
-        timeRequiredToAttemptToDecryptMessage = time.time(
-        ) - messageProcessingStartTime
+        timeRequiredToAttemptToDecryptMessage = time.time() - messageProcessingStartTime
         shared.successfullyDecryptMessageTimings.append(
             timeRequiredToAttemptToDecryptMessage)
         timing_sum = 0
@@ -762,6 +776,7 @@ class objectProcessor(threading.Thread):
         )
 
     def processbroadcast(self, data):
+        """Process broadcast object"""
         messageProcessingStartTime = time.time()
         shared.numberOfBroadcastsProcessed += 1
         queues.UISignalQueue.put((
@@ -909,10 +924,10 @@ class objectProcessor(threading.Thread):
                 )
                 return
         elif broadcastVersion == 5:
-            calculatedTag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(sendersAddressVersion) +
-                encodeVarint(sendersStream) + calculatedRipe
-            ).digest()).digest()[32:]
+            calculatedTag = hashlib.sha512(
+                hashlib.sha512(
+                    encodeVarint(sendersAddressVersion) + encodeVarint(sendersStream) + calculatedRipe).digest()
+            ).digest()[32:]
             if calculatedTag != embeddedTag:
                 logger.debug(
                     'The tag and encryption key used to encrypt this'
@@ -948,7 +963,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        logger.info('fromAddress: %s' % fromAddress)
+        logger.info('fromAddress: %s', fromAddress)
 
         # Let's store the public key in case we want to reply to this person.
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
@@ -965,7 +980,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        logger.debug('fromAddress: ' + fromAddress)
+        logger.debug('fromAddress: %s', fromAddress)
 
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
@@ -1025,9 +1040,10 @@ class objectProcessor(threading.Thread):
         # Let us create the tag from the address and see if we were waiting
         # for it.
         elif addressVersion >= 4:
-            tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe
-            ).digest()).digest()[32:]
+            tag = hashlib.sha512(
+                hashlib.sha512(
+                    encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe
+                ).digest()).digest()[32:]
             if tag in state.neededPubkeys:
                 del state.neededPubkeys[tag]
                 self.sendMessages(address)
@@ -1047,6 +1063,7 @@ class objectProcessor(threading.Thread):
         queues.workerQueue.put(('sendmessage', ''))
 
     def ackDataHasAValidHeader(self, ackData):
+        """Does ackdata have a valid header?"""
         if len(ackData) < protocol.Header.size:
             logger.info(
                 'The length of ackData is unreasonably short. Not sending'
@@ -1082,10 +1099,10 @@ class objectProcessor(threading.Thread):
         return True
 
     def addMailingListNameToSubject(self, subject, mailingListName):
+        """Modify subject with maling list name (like email mailing lists do)"""
         subject = subject.strip()
         if subject[:3] == 'Re:' or subject[:3] == 'RE:':
             subject = subject[3:].strip()
         if '[' + mailingListName + ']' in subject:
             return subject
-        else:
-            return '[' + mailingListName + '] ' + subject
+        return '[' + mailingListName + '] ' + subject
