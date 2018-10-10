@@ -8,7 +8,7 @@ import re
 from bmconfigparser import BMConfigParser
 from debug import logger
 import helper_bootstrap
-from knownnodes import knownNodes
+import knownnodes
 from network.proxy import Proxy
 from network.tcp import TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection
 from network.udp import UDPSocket
@@ -18,6 +18,7 @@ import protocol
 from singleton import Singleton
 import state
 import helper_random
+
 
 @Singleton
 class BMConnectionPool(object):
@@ -139,7 +140,7 @@ class BMConnectionPool(object):
             acceptConnections = False
 
         if spawnConnections:
-            if not any([knownNodes.iteritems()]):
+            if not knownnodes.knownNodesActual:
                 helper_bootstrap.dns()
             if not self.bootstrapped:
                 self.bootstrapped = True
