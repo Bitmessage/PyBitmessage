@@ -1,14 +1,24 @@
-from os import environ, path
-import sys
+"""
+src/paths.py
+============
+"""
+
 import re
+import sys
 from datetime import datetime
+from os import environ, path
 
 # When using py2exe or py2app, the variable frozen is added to the sys
-# namespace.  This can be used to setup a different code path for 
+# namespace.  This can be used to setup a different code path for
 # binary distributions vs source distributions.
-frozen = getattr(sys,'frozen', None)
+frozen = getattr(sys, 'frozen', None)
+
 
 def lookupExeFolder():
+    """
+    Folder with PyBitmessage binary (.exe, .app, ...). If it is run from source, it returns the source root
+    directory
+    """
     if frozen:
         if frozen == "macosx_app":
             # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
@@ -21,7 +31,11 @@ def lookupExeFolder():
         exeFolder = ''
     return exeFolder
 
+
 def lookupAppdataFolder():
+    """Folder with runtime data (like configuration, database, ...)"""
+    # pylint: disable=too-many-branches
+
     APPNAME = "PyBitmessage"
     if "BITMESSAGE_HOME" in environ:
         dataFolder = environ["BITMESSAGE_HOME"]
@@ -31,9 +45,11 @@ def lookupAppdataFolder():
         if "HOME" in environ:
             dataFolder = path.join(environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
-            stringToLog = 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
+            stringToLog = (
+                'Could not find home folder, please report this message'
+                ' and your OS X version to the BitMessage Github.')
             if 'logger' in globals():
-                logger.critical(stringToLog)
+                logger.critical(stringToLog)  # pylint: disable=undefined-variable
             else:
                 print stringToLog
             sys.exit()
@@ -52,7 +68,7 @@ def lookupAppdataFolder():
             move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
             stringToLog = "Moving data folder to %s" % (dataFolder)
             if 'logger' in globals():
-                logger.info(stringToLog)
+                logger.info(stringToLog)  # pylint: disable=undefined-variable
             else:
                 print stringToLog
         except IOError:
@@ -60,17 +76,21 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
-    
+
+
 def codePath():
+    """Return the code path of the running instance"""
     if frozen == "macosx_app":
-        codePath = environ.get("RESOURCEPATH")
-    elif frozen: # windows
-        codePath = sys._MEIPASS
-    else:    
-        codePath = path.dirname(__file__)
-    return codePath
+        code_path = environ.get("RESOURCEPATH")
+    elif frozen:  # windows
+        code_path = sys._MEIPASS  # pylint: disable=no-member,protected-access
+    else:
+        code_path = path.dirname(__file__)
+    return code_path
+
 
 def tail(f, lines=20):
+    """Read last lines of a file. Like tail(1)"""
     total_lines_wanted = lines
 
     BLOCK_SIZE = 1024
@@ -78,16 +98,16 @@ def tail(f, lines=20):
     block_end_byte = f.tell()
     lines_to_go = total_lines_wanted
     block_number = -1
-    blocks = [] # blocks of size BLOCK_SIZE, in reverse order starting
-                # from the end of the file
+    blocks = []  # blocks of size BLOCK_SIZE, in reverse order starting
+    # from the end of the file
     while lines_to_go > 0 and block_end_byte > 0:
-        if (block_end_byte - BLOCK_SIZE > 0):
+        if block_end_byte - BLOCK_SIZE > 0:
             # read the last block we haven't yet read
-            f.seek(block_number*BLOCK_SIZE, 2)
+            f.seek(block_number * BLOCK_SIZE, 2)
             blocks.append(f.read(BLOCK_SIZE))
         else:
             # file too small, start from begining
-            f.seek(0,0)
+            f.seek(0, 0)
             # only read what was not read
             blocks.append(f.read(block_end_byte))
         lines_found = blocks[-1].count('\n')
@@ -99,6 +119,7 @@ def tail(f, lines=20):
 
 
 def lastCommit():
+    """Git commitish of the currently checked out repository"""
     githeadfile = path.join(codePath(), '..', '.git', 'logs', 'HEAD')
     result = {}
     if path.isfile(githeadfile):

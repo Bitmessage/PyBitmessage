@@ -1,3 +1,7 @@
+"""
+src/l10n.py
+===========
+"""
 
 import logging
 import os
@@ -5,8 +9,6 @@ import time
 
 from bmconfigparser import BMConfigParser
 
-
-#logger = logging.getLogger(__name__)
 logger = logging.getLogger('file_only')
 
 
@@ -50,7 +52,7 @@ except:
 
 if BMConfigParser().has_option('bitmessagesettings', 'timeformat'):
     time_format = BMConfigParser().get('bitmessagesettings', 'timeformat')
-    #Test the format string
+    # Test the format string
     try:
         time.strftime(time_format)
     except:
@@ -59,48 +61,53 @@ if BMConfigParser().has_option('bitmessagesettings', 'timeformat'):
 else:
     time_format = DEFAULT_TIME_FORMAT
 
-#It seems some systems lie about the encoding they use so we perform
-#comprehensive decoding tests
+# It seems some systems lie about the encoding they use so we perform
+# comprehensive decoding tests
 if time_format != DEFAULT_TIME_FORMAT:
     try:
-        #Check day names
+        # Check day names
         for i in xrange(7):
             unicode(time.strftime(time_format, (0, 0, 0, 0, 0, 0, i, 0, 0)), encoding)
-        #Check month names
+        # Check month names
         for i in xrange(1, 13):
             unicode(time.strftime(time_format, (0, i, 0, 0, 0, 0, 0, 0, 0)), encoding)
-        #Check AM/PM
+        # Check AM/PM
         unicode(time.strftime(time_format, (0, 0, 0, 11, 0, 0, 0, 0, 0)), encoding)
         unicode(time.strftime(time_format, (0, 0, 0, 13, 0, 0, 0, 0, 0)), encoding)
-        #Check DST
+        # Check DST
         unicode(time.strftime(time_format, (0, 0, 0, 0, 0, 0, 0, 0, 1)), encoding)
     except:
         logger.exception('Could not decode locale formatted timestamp')
         time_format = DEFAULT_TIME_FORMAT
         encoding = DEFAULT_ENCODING
 
+
 def setlocale(category, newlocale):
+    """Set the locale"""
     locale.setlocale(category, newlocale)
     # it looks like some stuff isn't initialised yet when this is called the
     # first time and its init gets the locale settings from the environment
     os.environ["LC_ALL"] = newlocale
 
-def formatTimestamp(timestamp = None, as_unicode = True):
-    #For some reason some timestamps are strings so we need to sanitize.
+
+def formatTimestamp(timestamp=None, as_unicode=True):
+    """Return a formatted timestmp"""
+
+    # For some reason some timestamps are strings so we need to sanitize.
     if timestamp is not None and not isinstance(timestamp, int):
         try:
             timestamp = int(timestamp)
         except:
             timestamp = None
 
-    #timestamp can't be less than 0.
+    # timestamp can't be less than 0.
     if timestamp is not None and timestamp < 0:
         timestamp = None
 
     if timestamp is None:
         timestring = time.strftime(time_format)
     else:
-        #In case timestamp is too far in the future
+        # In case timestamp is too far in the future
         try:
             timestring = time.strftime(time_format, time.localtime(timestamp))
         except ValueError:
@@ -110,7 +117,9 @@ def formatTimestamp(timestamp = None, as_unicode = True):
         return unicode(timestring, encoding)
     return timestring
 
+
 def getTranslationLanguage():
+    """Return the user's language choice"""
     userlocale = None
     if BMConfigParser().has_option('bitmessagesettings', 'userlocale'):
         userlocale = BMConfigParser().get('bitmessagesettings', 'userlocale')
@@ -119,8 +128,15 @@ def getTranslationLanguage():
         return language
 
     return userlocale
-    
+
+
 def getWindowsLocale(posixLocale):
+    """
+    Get the Windows locale
+
+    Technically this converts the locale string from UNIX to Windows format, because they use different ones in their
+    libraries. E.g. "en_EN.UTF-8" to "english".
+    """
     if posixLocale in windowsLanguageMap:
         return windowsLanguageMap[posixLocale]
     if "." in posixLocale:

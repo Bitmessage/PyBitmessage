@@ -1,5 +1,12 @@
-from glob import glob
+"""
+src/build_osx.py
+================
+
+"""
+
 import os
+from glob import glob
+
 from PyQt4 import QtCore
 from setuptools import setup
 
@@ -17,15 +24,15 @@ DATA_FILES = [
 ]
 
 setup(
-    name = name,
-    version = version,
-    app = mainscript,
-    data_files = DATA_FILES,
-    setup_requires = ["py2app"],
-    options = dict(
-        py2app = dict(
-            includes = ['sip', 'PyQt4._qt'],
-            iconfile = "images/bitmessage.icns"
+    name=name,
+    version=version,
+    app=mainscript,
+    data_files=DATA_FILES,
+    setup_requires=["py2app"],
+    options=dict(
+        py2app=dict(
+            includes=['sip', 'PyQt4._qt'],
+            iconfile="images/bitmessage.icns"
         )
     )
 )
