@@ -1,23 +1,32 @@
-import time
-import socket
+"""
+src/network/udp.py
+==================
 
-import state
+"""
+
+import socket
+import time
+
 import protocol
-from bmproto import BMProto
+import state
 from debug import logger
-from objectracker import ObjectTracker
+from network.bmproto import BMProto
+from network.objectracker import ObjectTracker
 from queues import receiveDataQueue
 
 
 class UDPSocket(BMProto):
+    """Bitmessage protocol over UDP (class)"""
+    # pylint: disable=too-many-instance-attributes
+
     port = 8444
     announceInterval = 60
 
     def __init__(self, host=None, sock=None, announcing=False):
-        super(BMProto, self).__init__(sock=sock)
+        super(UDPSocket, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
-        # TODO sort out streams
+        # .. todo:: sort out streams
         self.streams = [1]
         self.fullyEstablished = True
         self.connectedAt = 0
@@ -44,6 +53,7 @@ class UDPSocket(BMProto):
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def set_socket_reuse(self):
+        """Set socket reuse option"""
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
@@ -55,21 +65,24 @@ class UDPSocket(BMProto):
     # only addr (peer discovery), error and object are implemented
 
     def bm_command_getdata(self):
+        """"""
         # return BMProto.bm_command_getdata(self)
         return True
 
     def bm_command_inv(self):
+        """"""
         # return BMProto.bm_command_inv(self)
         return True
 
     def bm_command_addr(self):
+        """"""
         addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid
         # attacks from random IPs on the internet
         if not self.local:
             return True
         remoteport = False
-        for seenTime, stream, services, ip, port in addresses:
+        for seenTime, stream, services, ip, port in addresses:  # pylint: disable=unused-variable
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
@@ -84,7 +97,9 @@ class UDPSocket(BMProto):
             return True
         logger.debug(
             "received peer discovery from %s:%i (port %i):",
-            self.destination.host, self.destination.port, remoteport)
+            self.destination.host,
+            self.destination.port,
+            remoteport)
         if self.local:
             state.discoveredPeers[
                 state.Peer(self.destination.host, remoteport)
@@ -92,49 +107,55 @@ class UDPSocket(BMProto):
         return True
 
     def bm_command_portcheck(self):
+        """"""
         return True
 
     def bm_command_ping(self):
+        """"""
         return True
 
     def bm_command_pong(self):
+        """"""
         return True
 
     def bm_command_verack(self):
+        """"""
         return True
 
     def bm_command_version(self):
+        """"""
         return True
 
     def handle_connect(self):
+        """"""
         return
 
     def writable(self):
+        """"""
         return self.write_buf
 
     def readable(self):
-        return len(self.read_buf) < self._buf_len
+        """"""
+        return len(self.read_buf) < self._buf_len  # pylint: disable=protected-access
 
     def handle_read(self):
+        """"""
         try:
-            (recdata, addr) = self.socket.recvfrom(self._buf_len)
+            (recdata, addr) = self.socket.recvfrom(self._buf_len)  # pylint: disable=protected-access
         except socket.error as e:
             logger.error("socket error: %s", e)
             return
 
         self.destination = state.Peer(*addr)
         encodedAddr = protocol.encodeHost(addr[0])
-        if protocol.checkIPAddress(encodedAddr, True):
-            self.local = True
-        else:
-            self.local = False
-        # overwrite the old buffer to avoid mixing data and so that
-        # self.local works correctly
+        self.local = bool(protocol.checkIPAddress(encodedAddr, True))
+        # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf[0:] = recdata
         self.bm_proto_reset()
         receiveDataQueue.put(self.listening)
 
     def handle_write(self):
+        """"""
         try:
             retval = self.socket.sendto(
                 self.write_buf, ('<broadcast>', self.port))
