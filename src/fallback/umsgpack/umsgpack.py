@@ -31,6 +31,9 @@
 # THE SOFTWARE.
 #
 """
+src/fallback/umsgpack/umsgpack.py
+=================================
+
 u-msgpack-python v2.4.1 - v at sergeev.io
 https://github.com/vsergeev/u-msgpack-python
 
@@ -43,10 +46,13 @@ types.
 
 License: MIT
 """
-import struct
+# pylint: disable=too-many-lines,too-many-branches,too-many-statements,global-statement,too-many-return-statements
+# pylint: disable=unused-argument
+
 import collections
-import sys
 import io
+import struct
+import sys
 
 __version__ = "2.4.1"
 "Module version string"
@@ -60,7 +66,7 @@ version = (2, 4, 1)
 ##############################################################################
 
 # Extension type for application-defined types and data
-class Ext:
+class Ext:  # pylint: disable=old-style-class
     """
     The Ext class facilitates creating a serializable extension object to store
     an application-defined type and data byte array.
@@ -87,6 +93,8 @@ class Ext:
         Ext Object (Type: 0x05, Data: 01 02 03)
         >>>
         """
+        # pylint:disable=redefined-builtin
+
         # Application ext type should be 0 <= type <= 127
         if not isinstance(type, int) or not (type >= 0 and type <= 127):
             raise TypeError("ext type out of range")
@@ -412,7 +420,7 @@ def _pack2(obj, fp, **options):
         _pack_ext(ext_handlers[obj.__class__](obj), fp, options)
     elif isinstance(obj, bool):
         _pack_boolean(obj, fp, options)
-    elif isinstance(obj, int) or isinstance(obj, long):
+    elif isinstance(obj, (int, long)):
         _pack_integer(obj, fp, options)
     elif isinstance(obj, float):
         _pack_float(obj, fp, options)
@@ -424,7 +432,7 @@ def _pack2(obj, fp, **options):
         _pack_string(obj, fp, options)
     elif isinstance(obj, str):
         _pack_binary(obj, fp, options)
-    elif isinstance(obj, list) or isinstance(obj, tuple):
+    elif isinstance(obj, (list, tuple)):
         _pack_array(obj, fp, options)
     elif isinstance(obj, dict):
         _pack_map(obj, fp, options)
@@ -494,7 +502,7 @@ def _pack3(obj, fp, **options):
         _pack_string(obj, fp, options)
     elif isinstance(obj, bytes):
         _pack_binary(obj, fp, options)
-    elif isinstance(obj, list) or isinstance(obj, tuple):
+    elif isinstance(obj, (list, tuple)):
         _pack_array(obj, fp, options)
     elif isinstance(obj, dict):
         _pack_map(obj, fp, options)
@@ -723,7 +731,7 @@ def _unpack_array(code, fp, options):
     else:
         raise Exception("logic error, not array: 0x%02x" % ord(code))
 
-    return [_unpack(fp, options) for i in xrange(length)]
+    return [_unpack(fp, options) for _ in xrange(length)]
 
 
 def _deep_list_to_tuple(obj):
@@ -957,6 +965,8 @@ def _unpackb3(s, **options):
 
 
 def __init():
+    # pylint: disable=global-variable-undefined
+
     global pack
     global packb
     global unpack
@@ -989,7 +999,7 @@ def __init():
         unpackb = _unpackb3
         load = _unpack3
         loads = _unpackb3
-        xrange = range
+        xrange = range  # pylint: disable=redefined-builtin
     else:
         pack = _pack2
         packb = _packb2

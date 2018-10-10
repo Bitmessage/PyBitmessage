@@ -1,20 +1,28 @@
+"""
+src/addresses.py
+================
+
+"""
+# pylint: disable=redefined-outer-name,inconsistent-return-statements
+
+from __future__ import print_function
 import hashlib
-from struct import pack, unpack
-from pyelliptic import arithmetic
 from binascii import hexlify, unhexlify
+from struct import pack, unpack
 
 from debug import logger
+from pyelliptic import arithmetic
 
 
-# There is another copy of this function in Bitmessagemain.py
 def convertIntToString(n):
+    """.. todo:: There is another copy of this function in Bitmessagemain.py"""
     a = __builtins__.hex(n)
     if a[-1:] == 'L':
         a = a[:-1]
-    if (len(a) % 2) == 0:
+    if len(a) % 2 == 0:
         return unhexlify(a[2:])
-    else:
-        return unhexlify('0'+a[2:])
+    return unhexlify('0' + a[2:])
+
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -25,7 +33,7 @@ def encodeBase58(num, alphabet=ALPHABET):
     `num`: The number to encode
     `alphabet`: The alphabet to use for encoding
     """
-    if (num == 0):
+    if num == 0:
         return alphabet[0]
     arr = []
     base = len(alphabet)
@@ -59,6 +67,7 @@ def decodeBase58(string, alphabet=ALPHABET):
 
 
 def encodeVarint(integer):
+    """Convert integer into varint bytes"""
     if integer < 0:
         logger.error('varint cannot be < 0')
         raise SystemExit
@@ -76,6 +85,7 @@ def encodeVarint(integer):
 
 
 class varintDecodeError(Exception):
+    """Exception class for decoding varint data"""
     pass
 
 
@@ -87,7 +97,7 @@ def decodeVarint(data):
     Returns a tuple: (theEncodedValue, theSizeOfTheVarintInBytes)
     """
 
-    if len(data) == 0:
+    if not data:
         return (0, 0)
     firstByte, = unpack('>B', data[0:1])
     if firstByte < 253:
@@ -135,6 +145,7 @@ def decodeVarint(data):
 
 
 def calculateInventoryHash(data):
+    """Calculate inventory hash from object data"""
     sha = hashlib.new('sha512')
     sha2 = hashlib.new('sha512')
     sha.update(data)
@@ -143,6 +154,7 @@ def calculateInventoryHash(data):
 
 
 def encodeAddress(version, stream, ripe):
+    """Convert ripe to address"""
     if version >= 2 and version < 4:
         if len(ripe) != 20:
             raise Exception(
@@ -175,8 +187,11 @@ def encodeAddress(version, stream, ripe):
 
 
 def decodeAddress(address):
-    # returns (status, address version number, stream number,
-    # data (almost certainly a ripe hash))
+    """
+    returns (status, address version number, stream number,
+    data (almost certainly a ripe hash))
+    """
+    # pylint: disable=too-many-return-statements,too-many-statements,too-many-return-statements,too-many-branches
 
     address = str(address).strip()
 
@@ -194,24 +209,18 @@ def decodeAddress(address):
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
 
-    # print 'hexdata', hexdata
-
     data = unhexlify(hexdata)
     checksum = data[-4:]
 
     sha = hashlib.new('sha512')
     sha.update(data[:-4])
     currentHash = sha.digest()
-    # print 'sha after first hashing: ', sha.hexdigest()
     sha = hashlib.new('sha512')
     sha.update(currentHash)
-    # print 'sha after second hashing: ', sha.hexdigest()
 
     if checksum != sha.digest()[0:4]:
         status = 'checksumfailed'
         return status, 0, 0, ''
-    # else:
-    #    print 'checksum PASSED'
 
     try:
         addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
@@ -219,8 +228,6 @@ def decodeAddress(address):
         logger.error(str(e))
         status = 'varintmalformed'
         return status, 0, 0, ''
-    # print 'addressVersionNumber', addressVersionNumber
-    # print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
     if addressVersionNumber > 4:
         logger.error('cannot decode address version numbers this high')
@@ -233,36 +240,35 @@ def decodeAddress(address):
 
     try:
         streamNumber, bytesUsedByStreamNumber = \
-          decodeVarint(data[bytesUsedByVersionNumber:])
+            decodeVarint(data[bytesUsedByVersionNumber:])
     except varintDecodeError as e:
         logger.error(str(e))
         status = 'varintmalformed'
         return status, 0, 0, ''
-    # print streamNumber
+
     status = 'success'
     if addressVersionNumber == 1:
         return status, addressVersionNumber, streamNumber, data[-24:-4]
     elif addressVersionNumber == 2 or addressVersionNumber == 3:
         embeddedRipeData = \
-          data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
+            data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
         if len(embeddedRipeData) == 19:
             return status, addressVersionNumber, streamNumber, \
-              '\x00'+embeddedRipeData
+                '\x00' + embeddedRipeData
         elif len(embeddedRipeData) == 20:
             return status, addressVersionNumber, streamNumber, \
-              embeddedRipeData
+                embeddedRipeData
         elif len(embeddedRipeData) == 18:
             return status, addressVersionNumber, streamNumber, \
-              '\x00\x00' + embeddedRipeData
+                '\x00\x00' + embeddedRipeData
         elif len(embeddedRipeData) < 18:
             return 'ripetooshort', 0, 0, ''
         elif len(embeddedRipeData) > 20:
             return 'ripetoolong', 0, 0, ''
-        else:
-            return 'otherproblem', 0, 0, ''
+        return 'otherproblem', 0, 0, ''
     elif addressVersionNumber == 4:
         embeddedRipeData = \
-          data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
+            data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
         if embeddedRipeData[0:1] == '\x00':
             # In order to enforce address non-malleability, encoded
             # RIPE data must have NULL bytes removed from the front
@@ -271,13 +277,13 @@ def decodeAddress(address):
             return 'ripetoolong', 0, 0, ''
         elif len(embeddedRipeData) < 4:
             return 'ripetooshort', 0, 0, ''
-        else:
-            x00string = '\x00' * (20 - len(embeddedRipeData))
-            return status, addressVersionNumber, streamNumber, \
-                x00string + embeddedRipeData
+        x00string = '\x00' * (20 - len(embeddedRipeData))
+        return status, addressVersionNumber, streamNumber, \
+            x00string + embeddedRipeData
 
 
 def addBMIfNotPresent(address):
+    """Prepend BM- to an address if it doesn't already have it"""
     address = str(address).strip()
     return address if address[:3] == 'BM-' else 'BM-' + address
 

@@ -1,12 +1,29 @@
+"""
+src/randomtrackingdict.py
+=========================
+"""
+
 import random
 from threading import RLock
 from time import time
+
 import helper_random
 
+
 class RandomTrackingDict(object):
+    """
+    Dict with randomised order and tracking.
+
+    Keeps a track of how many items have been requested from the dict, and timeouts. Resets after all objects have been
+    retrieved and timed out. The main purpose of this isn't as much putting related code together as performance
+    optimisation and anonymisation of downloading of objects from other peers. If done using a standard dict or array,
+    it takes too much CPU (and looks convoluted). Randomisation helps with anonymity.
+    """
+    # pylint: disable=too-many-instance-attributes
     maxPending = 10
     pendingTimeout = 60
-    def __init__(self): # O(1)
+
+    def __init__(self):
         self.dictionary = {}
         self.indexDict = []
         self.len = 0
@@ -46,7 +63,7 @@ class RandomTrackingDict(object):
                 self.len += 1
 
     def __delitem__(self, key):
-        if not key in self.dictionary:
+        if key not in self.dictionary:
             raise KeyError
         with self.lock:
             index = self.dictionary[key][0]
@@ -67,9 +84,14 @@ class RandomTrackingDict(object):
             self.len -= 1
 
     def setMaxPending(self, maxPending):
+        """
+        Sets maximum number of objects that can be retrieved from the class simultaneously as long as there is no
+        timeout
+        """
         self.maxPending = maxPending
 
     def setPendingTimeout(self, pendingTimeout):
+        """Sets how long to wait for a timeout if max pending is reached (or all objects have been retrieved)"""
         self.pendingTimeout = pendingTimeout
 
     def setLastObject(self):
@@ -77,10 +99,13 @@ class RandomTrackingDict(object):
         self.lastObject = time()
 
     def randomKeys(self, count=1):
+        """Retrieve count random keys from the dict that haven't already been retrieved"""
         if self.len == 0 or ((self.pendingLen >= self.maxPending or
-            self.pendingLen == self.len) and self.lastPoll +
-            self.pendingTimeout > time()):
+                              self.pendingLen == self.len) and self.lastPoll +
+                             self.pendingTimeout > time()):
             raise KeyError
+
+        # pylint: disable=redefined-outer-name
         with self.lock:
             # reset if we've requested all
             # or if last object received too long time ago
@@ -99,43 +124,40 @@ class RandomTrackingDict(object):
             self.lastPoll = time()
             return retval
 
+
 if __name__ == '__main__':
+
+    # pylint: disable=redefined-outer-name
     def randString():
+        """helper function for tests, generates a random string"""
         retval = b''
         for _ in range(32):
-            retval += chr(random.randint(0,255))
+            retval += chr(random.randint(0, 255))
         return retval
 
     a = []
     k = RandomTrackingDict()
     d = {}
-    
-#    print "populating normal dict"
-#    a.append(time())
-#    for i in range(50000):
-#        d[randString()] = True
-#    a.append(time())
+
     print "populating random tracking dict"
     a.append(time())
     for i in range(50000):
         k[randString()] = True
     a.append(time())
     print "done"
-    while len(k) > 0:
+
+    while k:
         retval = k.randomKeys(1000)
         if not retval:
             print "error getting random keys"
-        #a.append(time())
         try:
             k.randomKeys(100)
             print "bad"
         except KeyError:
             pass
-        #a.append(time())
         for i in retval:
             del k[i]
-        #a.append(time())
     a.append(time())
 
     for x in range(len(a) - 1):
-        print "%i: %.3f" % (x, a[x+1] - a[x])
+        print "%i: %.3f" % (x, a[x + 1] - a[x])
