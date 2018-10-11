@@ -99,7 +99,8 @@ class TestCore(unittest.TestCase):
         for nodes in knownnodes.knownNodes.itervalues():
             for node in nodes.itervalues():
                 node['lastseen'] -= 2419205  # older than 28 days
-        time.sleep(303)  # singleCleaner wakes up every 5 min
+        # time.sleep(303)  # singleCleaner wakes up every 5 min
+        knownnodes.cleanupKnownNodes()
         while True:
             try:
                 thread, exc = excQueue.get(block=False)
