@@ -381,14 +381,18 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
+            if (
+                decodedIP and time.time() - seenTime > 0 and
+                seenTime > time.time() - BMProto.addressAlive and
+                port > 0
+            ):
                 peer = state.Peer(decodedIP, port)
                 try:
                     if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
                         continue
                 except KeyError:
                     pass
-                if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
+                if len(knownnodes.knownNodes[stream]) < BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
                     with knownnodes.knownNodesLock:
                         try:
                             knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
