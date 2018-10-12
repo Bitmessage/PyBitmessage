@@ -19,6 +19,7 @@ import helper_msgcoding
 import helper_sent
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from helper_ackPayload import genAckPayload
+from network import bmproto
 import protocol
 import queues
 import state
@@ -50,6 +51,7 @@ class objectProcessor(threading.Thread):
         logger.debug(
             'Loaded %s objects from disk into the objectProcessorQueue.',
             len(queryreturn))
+        self._ack_obj = bmproto.BMStringParser()
 
     def run(self):
         while True:
@@ -743,12 +745,13 @@ class objectProcessor(threading.Thread):
 
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
-        # if (self.ackDataHasAValidHeader(ackData) and not blockMessage
-        #     and messageEncodingType != 0 and
-        #     not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
-        #     and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
-        # ):
-        #     shared.checkAndShareObjectWithPeers(ackData[24:])
+        if (
+            self.ackDataHasAValidHeader(ackData) and not blockMessage and
+            messageEncodingType != 0 and
+            not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and
+            not BMConfigParser().safeGetBoolean(toAddress, 'chan')
+        ):
+            self._ack_obj.send_data(ackData[24:])
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(
