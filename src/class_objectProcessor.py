@@ -743,12 +743,12 @@ class objectProcessor(threading.Thread):
 
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
-        if (self.ackDataHasAValidHeader(ackData) and not blockMessage
-            and messageEncodingType != 0 and
-            not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
-            and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
-        ):
-            shared.checkAndShareObjectWithPeers(ackData[24:])
+        # if (self.ackDataHasAValidHeader(ackData) and not blockMessage
+        #     and messageEncodingType != 0 and
+        #     not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
+        #     and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
+        # ):
+        #     shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(
