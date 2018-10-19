@@ -1,7 +1,6 @@
 import hashlib
 import random
 import shared
-import string
 import threading
 import time
 from binascii import hexlify
@@ -34,13 +33,11 @@ class objectProcessor(threading.Thread):
     objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
     def __init__(self):
-        """
-        It may be the case that the last time Bitmessage was running,
-        the user closed it before it finished processing everything in the
-        objectProcessorQueue. Assuming that Bitmessage wasn't closed
-        forcefully, it should have saved the data in the queue into the
-        objectprocessorqueue table. Let's pull it out.
-        """
+        # It may be the case that the last time Bitmessage was running,
+        # the user closed it before it finished processing everything in the
+        # objectProcessorQueue. Assuming that Bitmessage wasn't closed
+        # forcefully, it should have saved the data in the queue into the
+        # objectprocessorqueue table. Let's pull it out.
         threading.Thread.__init__(self, name="objectProcessor")
         queryreturn = sqlQuery(
             '''SELECT objecttype, data FROM objectprocessorqueue''')
@@ -60,13 +57,13 @@ class objectProcessor(threading.Thread):
             self.checkackdata(data)
 
             try:
-                if objectType == 0:  # getpubkey
+                if objectType == protocol.OBJECT_GETPUBKEY:
                     self.processgetpubkey(data)
-                elif objectType == 1:  # pubkey
+                elif objectType == protocol.OBJECT_PUBKEY:
                     self.processpubkey(data)
-                elif objectType == 2:  # msg
+                elif objectType == protocol.OBJECT_MSG:
                     self.processmsg(data)
-                elif objectType == 3:  # broadcast
+                elif objectType == protocol.OBJECT_BROADCAST:
                     self.processbroadcast(data)
                 # is more of a command, not an object type. Is used to get
                 # this thread past the queue.get() so that it will check
@@ -222,11 +219,8 @@ class objectProcessor(threading.Thread):
                 ' chan addresses. The other party should already have'
                 ' the pubkey.')
             return
-        try:
-            lastPubkeySendTime = int(BMConfigParser().get(
-                myAddress, 'lastpubkeysendtime'))
-        except:
-            lastPubkeySendTime = 0
+        lastPubkeySendTime = BMConfigParser().safeGetInt(
+            myAddress, 'lastpubkeysendtime')
         # If the last time we sent our pubkey was more recent than
         # 28 days ago...
         if lastPubkeySendTime > time.time() - 2419200:
@@ -472,8 +466,8 @@ class objectProcessor(threading.Thread):
             return
 
         # This is a message bound for me.
-        toAddress = shared.myAddressesByHash[
-            toRipe]  # Look up my address based on the RIPE hash.
+        # Look up my address based on the RIPE hash.
+        toAddress = shared.myAddressesByHash[toRipe]
         readPosition = 0
         sendersAddressVersionNumber, sendersAddressVersionNumberLength = \
             decodeVarint(decryptedData[readPosition:readPosition + 10])
@@ -500,11 +494,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[
-            readPosition:readPosition + 64]
+        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[
-            readPosition:readPosition + 64]
+        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -829,7 +821,7 @@ class objectProcessor(threading.Thread):
                     time.time() - messageProcessingStartTime)
                 return
         elif broadcastVersion == 5:
-            embeddedTag = data[readPosition:readPosition+32]
+            embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
             if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
@@ -917,10 +909,10 @@ class objectProcessor(threading.Thread):
                 )
                 return
         elif broadcastVersion == 5:
-            calculatedTag = hashlib.sha512(hashlib.sha512(encodeVarint(
-                sendersAddressVersion) + encodeVarint(sendersStream)
-                + calculatedRipe).digest()
-            ).digest()[32:]
+            calculatedTag = hashlib.sha512(hashlib.sha512(
+                encodeVarint(sendersAddressVersion) +
+                encodeVarint(sendersStream) + calculatedRipe
+            ).digest()).digest()[32:]
             if calculatedTag != embeddedTag:
                 logger.debug(
                     'The tag and encryption key used to encrypt this'
@@ -1034,9 +1026,8 @@ class objectProcessor(threading.Thread):
         # for it.
         elif addressVersion >= 4:
             tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) + encodeVarint(streamNumber)
-                + ripe).digest()
-            ).digest()[32:]
+                encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe
+            ).digest()).digest()[32:]
             if tag in state.neededPubkeys:
                 del state.neededPubkeys[tag]
                 self.sendMessages(address)
@@ -1098,19 +1089,3 @@ class objectProcessor(threading.Thread):
             return subject
         else:
             return '[' + mailingListName + '] ' + subject
-
-    def decodeType2Message(self, message):
-        bodyPositionIndex = string.find(message, '\nBody:')
-        if bodyPositionIndex > 1:
-            subject = message[8:bodyPositionIndex]
-            # Only save and show the first 500 characters of the subject.
-            # Any more is probably an attack.
-            subject = subject[:500]
-            body = message[bodyPositionIndex + 6:]
-        else:
-            subject = ''
-            body = message
-        # Throw away any extra lines (headers) after the subject.
-        if subject:
-            subject = subject.splitlines()[0]
-        return subject, body
