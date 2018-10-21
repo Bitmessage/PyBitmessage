@@ -1,8 +1,15 @@
-"""Convenience functions for random operations. Not suitable for security / cryptography operations."""
+"""
+src/helper_random.py
+====================
+
+Convenience functions for random operations. Not suitable for security / cryptography operations.
+"""
 
 import os
 import random
-from pyelliptic.openssl import OpenSSL
+
+from pyelliptic.openssl import OpenSSL  # pylint: disable=relative-import
+
 NoneType = type(None)
 
 
@@ -51,8 +58,7 @@ def randomrandrange(x, y=None):
     """
     if isinstance(y, NoneType):
         return random.randrange(x)  # nosec
-    else:
-        return random.randrange(x, y)  # nosec
+    return random.randrange(x, y)  # nosec
 
 
 def randomchoice(population):

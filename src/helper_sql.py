@@ -1,7 +1,13 @@
-"""Helper Sql performs sql operations."""
+"""
+src/helper_sql.py
+=================
 
-import threading
+Helper Sql performs sql operations.
+
+"""
+
 import Queue
+import threading
 
 sqlSubmitQueue = Queue.Queue()
 # SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks.
@@ -28,6 +34,7 @@ def sqlQuery(sqlStatement, *args):
 
 
 def sqlExecuteChunked(sqlStatement, idCount, *args):
+    """Marshall large number of args into strings of SQL, run it through the SQL queues and return the result"""
     # SQLITE_MAX_VARIABLE_NUMBER,
     # unfortunately getting/setting isn't exposed to python
     sqlExecuteChunked.chunkSize = 999
@@ -38,8 +45,8 @@ def sqlExecuteChunked(sqlStatement, idCount, *args):
     totalRowCount = 0
     with sqlLock:
         for i in range(
-            len(args) - idCount, len(args),
-            sqlExecuteChunked.chunkSize - (len(args) - idCount)
+                len(args) - idCount, len(args),
+                sqlExecuteChunked.chunkSize - (len(args) - idCount)
         ):
             chunk_slice = args[
                 i:i + sqlExecuteChunked.chunkSize - (len(args) - idCount)
@@ -58,6 +65,7 @@ def sqlExecuteChunked(sqlStatement, idCount, *args):
 
 
 def sqlExecute(sqlStatement, *args):
+    """Marshall args into strings of SQL, run it through the SQL queues and return the result"""
     sqlLock.acquire()
     sqlSubmitQueue.put(sqlStatement)
 
@@ -70,13 +78,15 @@ def sqlExecute(sqlStatement, *args):
     sqlLock.release()
     return rowcount
 
+
 def sqlStoredProcedure(procName):
+    """Schedule procName to be run"""
     sqlLock.acquire()
     sqlSubmitQueue.put(procName)
     sqlLock.release()
 
 
-class SqlBulkExecute:
+class SqlBulkExecute(object):
     """This is used when you have to execute the same statement in a cycle."""
 
     def __enter__(self):

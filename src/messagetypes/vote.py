@@ -1,23 +1,31 @@
+"""
+src/messagetypes/vote.py
+========================
+"""
+
 from debug import logger
 from messagetypes import MsgBase
 
+
 class Vote(MsgBase):
-    def __init__(self):
-        return
+    """Unused at this time"""
+    # pylint: disable=attribute-defined-outside-init
 
     def decode(self, data):
+        """Decode a vote"""
         self.msgid = data["msgid"]
         self.vote = data["vote"]
 
     def encode(self, data):
-        super(Vote, self).encode()
+        """Encode a vote"""
         try:
             self.data["msgid"] = data["msgid"]
             self.data["vote"] = data["vote"]
-        except KeyError as e:
-            logger.error("Missing key %s", e.name)
+        except KeyError as error:
+            logger.error("Missing key %s", error)
         return self.data
 
     def process(self):
+        """Process a vote"""
         logger.debug("msgid: %s", self.msgid)
         logger.debug("vote: %s", self.vote)

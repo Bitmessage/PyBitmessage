@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+src/bitmessageqt/sound.py
+=========================
+"""
 
 # sound type constants
 SOUND_NONE = 0
@@ -9,13 +13,13 @@ SOUND_DISCONNECTED = 4
 SOUND_CONNECTION_GREEN = 5
 
 
-# returns true if the given sound category is a connection sound
-# rather than a received message sound
 def is_connection_sound(category):
+    """Returns True if the given sound category is a connection sound rather than a received message sound"""
     return category in (
         SOUND_CONNECTED,
         SOUND_DISCONNECTED,
         SOUND_CONNECTION_GREEN
     )
+
 
 extensions = ('wav', 'mp3', 'oga')

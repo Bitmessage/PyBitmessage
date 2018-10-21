@@ -1,14 +1,23 @@
-from queues import Queue
+"""
+src/network/connectionchooser.py
+================================
+"""
+
 import random
 
-from bmconfigparser import BMConfigParser
+import helper_random
 import knownnodes
 import protocol
-from queues import portCheckerQueue
 import state
-import helper_random
+from bmconfigparser import BMConfigParser
+from queues import Queue, portCheckerQueue
+
 
 def getDiscoveredPeer():
+    """
+    .. todo:: exceptions should be handled where they arise, this whole functrion should be documented, cleaned up or
+    otherwise refactored. Simple > complex > this.
+    """
     try:
         peer = helper_random.randomchoice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
@@ -19,7 +28,9 @@ def getDiscoveredPeer():
         pass
     return peer
 
+
 def chooseConnection(stream):
+    """Return an appropriate connection"""
     haveOnion = BMConfigParser().safeGet("bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
     if state.trustedPeer:
         return state.trustedPeer
@@ -52,7 +63,7 @@ def chooseConnection(stream):
         if rating > 1:
             rating = 1
         try:
-            if 0.05/(1.0-rating) > random.random():
+            if 0.05 / (1.0 - rating) > random.random():
                 return peer
         except ZeroDivisionError:
             return peer

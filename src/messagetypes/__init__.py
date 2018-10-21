@@ -7,7 +7,7 @@ import messagetypes
 import paths
 
 class MsgBase(object):
-    def encode(self):
+    def encode(self, data=None):
         self.data = {"": lower(type(self).__name__)}
 
 

@@ -1,8 +1,16 @@
-from PyQt4 import QtCore, QtGui
-from Queue import Queue
+"""
+src/bitmessageqt/statusbar.py
+=============================
+"""
+
 from time import time
 
+from PyQt4 import QtGui
+
+
 class BMStatusBar(QtGui.QStatusBar):
+    """Encapsulate statusbar behaviour"""
+
     duration = 10000
     deleteAfter = 60
 
@@ -12,8 +20,9 @@ class BMStatusBar(QtGui.QStatusBar):
         self.timer = self.startTimer(BMStatusBar.duration)
         self.iterator = 0
 
-    def timerEvent(self, event):
-        while len(self.important) > 0:
+    def timerEvent(self):
+        """Timer supporting display of important messages"""
+        while self.important:
             self.iterator += 1
             try:
                 if time() > self.important[self.iterator][1] + BMStatusBar.deleteAfter:
@@ -27,12 +36,7 @@ class BMStatusBar(QtGui.QStatusBar):
             break
 
     def addImportant(self, message):
+        """Handle an important message"""
         self.important.append([message, time()])
         self.iterator = len(self.important) - 2
-        self.timerEvent(None)
-
-    def showMessage(self, message, timeout=0):
-        super(BMStatusBar, self).showMessage(message, timeout)
-
-    def clearMessage(self):
-        super(BMStatusBar, self).clearMessage()
+        self.timerEvent()

@@ -1,18 +1,25 @@
-import random
+"""
+src/network/downloadthread.py
+=============================
+
+"""
+
 import threading
 import time
 
 import addresses
+import helper_random
+import protocol
 from dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-import protocol
 from state import missingObjects
-import helper_random
+
 
 class DownloadThread(threading.Thread, StoppableThread):
+    """Thread-based class for downloading from connections"""
     minPending = 200
     maxRequestChunk = 1000
     requestTimeout = 60
@@ -27,6 +34,7 @@ class DownloadThread(threading.Thread, StoppableThread):
         self.lastCleaned = time.time()
 
     def cleanPending(self):
+        """Expire pending downloads eventually"""
         deadline = time.time() - DownloadThread.requestExpires
         try:
             toDelete = [k for k, v in missingObjects.iteritems() if v < deadline]
@@ -41,10 +49,13 @@ class DownloadThread(threading.Thread, StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = [x for x in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
+            connections = [
+                x
+                for x in BMConnectionPool().inboundConnections.values() +
+                BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
             helper_random.randomshuffle(connections)
             try:
-                requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
+                requestChunk = max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
             except ZeroDivisionError:
                 requestChunk = 1
             for i in connections:

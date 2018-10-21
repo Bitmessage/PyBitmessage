@@ -1,32 +1,41 @@
+"""
+src/network/invthread.py
+========================
+"""
+
 import Queue
-from random import randint, shuffle
 import threading
+from random import randint, shuffle
 from time import time
 
 import addresses
-from bmconfigparser import BMConfigParser
+import protocol
+import state
 from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from queues import invQueue
-import protocol
-import state
+
 
 class InvThread(threading.Thread, StoppableThread):
+    """A thread to manage inventory"""
     def __init__(self):
         threading.Thread.__init__(self, name="InvBroadcaster")
         self.initStop()
         self.name = "InvBroadcaster"
 
     def handleLocallyGenerated(self, stream, hashId):
+        """Locally generated inventory items require special handling"""
+        # pylint:disable=no-self-use
         Dandelion().addHash(hashId, stream=stream)
         for connection in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
-                if state.dandelion and connection != Dandelion().objectChildStem(hashId):
-                    continue
-                connection.objectsNewToThem[hashId] = time()
+                BMConnectionPool().outboundConnections.values():
+            if state.dandelion and connection != Dandelion().objectChildStem(hashId):
+                continue
+            connection.objectsNewToThem[hashId] = time()
 
     def run(self):
+        # pylint: disable=too-many-nested-blocks,too-many-branches
         while not state.shutdown:
             chunk = []
             while True:
@@ -70,15 +79,19 @@ class InvThread(threading.Thread, StoppableThread):
 
                     if fluffs:
                         shuffle(fluffs)
-                        connection.append_write_buf(protocol.CreatePacket('inv', \
-                                addresses.encodeVarint(len(fluffs)) + "".join(fluffs)))
+                        connection.append_write_buf(
+                            protocol.CreatePacket(
+                                'inv', addresses.encodeVarint(
+                                    len(fluffs)) + "".join(fluffs)))
                     if stems:
                         shuffle(stems)
-                        connection.append_write_buf(protocol.CreatePacket('dinv', \
-                                addresses.encodeVarint(len(stems)) + "".join(stems)))
+                        connection.append_write_buf(
+                            protocol.CreatePacket(
+                                'dinv', addresses.encodeVarint(
+                                    len(stems)) + "".join(stems)))
 
             invQueue.iterate()
-            for i in range(len(chunk)):
+            for _ in range(len(chunk)):
                 invQueue.task_done()
 
             if Dandelion().refresh < time():
