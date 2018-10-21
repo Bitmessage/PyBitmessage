@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 """
+src/plugins/menu_qrcode.py
+==========================
+
 A menu plugin showing QR-Code for bitmessage address in modal dialog.
 """
-
-from PyQt4 import QtGui, QtCore
-import qrcode
+# pylint: disable=import-error
 
 from pybitmessage.tr import _translate
+from PyQt4 import QtCore, QtGui
+
+import qrcode
 
 
 # http://stackoverflow.com/questions/20452486
 class Image(qrcode.image.base.BaseImage):
     """Image output class for qrcode using QPainter"""
+    # pylint: disable=abstract-method
+
     def __init__(self, border, width, box_size):
+        super(Image, self).__init__()
         self.border = border
         self.width = width
         self.box_size = box_size
@@ -37,6 +44,7 @@ class Image(qrcode.image.base.BaseImage):
 
 class QRCodeDialog(QtGui.QDialog):
     """The dialog"""
+
     def __init__(self, parent):
         super(QRCodeDialog, self).__init__(parent)
         self.image = QtGui.QLabel(self)

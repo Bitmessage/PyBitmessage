@@ -1,34 +1,32 @@
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements,too-many-locals,too-many-statements
 """
-protocol.py
-===========
+src/protocol.py
+===============
 
 Low-level protocol-related functions.
 """
 
-from __future__ import absolute_import
-
 import base64
-from binascii import hexlify
 import hashlib
 import os
 import random
 import socket
 import ssl
-from struct import pack, unpack, Struct
 import sys
 import time
 import traceback
+from binascii import hexlify
+from struct import Struct, pack, unpack
+
+from version import softwareVersion
 
 import defaults
 import highlevelcrypto
 import state
-from addresses import encodeVarint, decodeVarint, decodeAddress, varintDecodeError
+from addresses import decodeAddress, decodeVarint, encodeVarint, varintDecodeError
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlExecute
-from version import softwareVersion
-
 
 # Service flags
 NODE_NETWORK = 1

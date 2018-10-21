@@ -13,8 +13,8 @@ Return a PIL Image class instance which have generated identicon image.
 """
 
 from PyQt4 import QtGui
-from PyQt4.QtCore import QSize, QPointF, Qt
-from PyQt4.QtGui import QPixmap, QPainter, QPolygonF
+from PyQt4.QtCore import QPointF, QSize, Qt
+from PyQt4.QtGui import QPainter, QPixmap, QPolygonF
 
 __all__ = ['render_identicon', 'IdenticonRendererBase']
 

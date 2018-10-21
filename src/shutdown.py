@@ -1,22 +1,25 @@
+"""
+src/shutdown.py
+===============
+"""
+
 import os
 import Queue
 import threading
 import time
 
+import shared
+import state
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from helper_threading import StoppableThread
-from knownnodes import saveKnownNodes
 from inventory import Inventory
-from queues import (
-    addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)
-import shared
-import state
+from knownnodes import saveKnownNodes
+from queues import UISignalQueue, addressGeneratorQueue, objectProcessorQueue, workerQueue
 
 
 def doCleanShutdown():
-    # Used to tell proof of work worker threads
-    # and the objectProcessorThread to exit.
+    """Used to tell proof of work worker threads and the objectProcessorThread to exit."""
     state.shutdown = 1
 
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
@@ -53,7 +56,7 @@ def doCleanShutdown():
 
     for thread in threading.enumerate():
         if (thread is not threading.currentThread() and
-            isinstance(thread, StoppableThread) and
+                isinstance(thread, StoppableThread) and
                 thread.name != 'SQL'):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
@@ -76,10 +79,10 @@ def doCleanShutdown():
             except Queue.Empty:
                 break
 
-    if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?
+    if shared.thisapp.daemon or not state.enableGUI:  # .. todo:: FIXME redundant?
         logger.info('Clean shutdown complete.')
         shared.thisapp.cleanup()
-        os._exit(0)
+        os._exit(0)  # pylint: disable=protected-access
     else:
         logger.info('Core shutdown complete.')
     for thread in threading.enumerate():

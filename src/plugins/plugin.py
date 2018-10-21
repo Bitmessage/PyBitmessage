@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+src/plugins/plugin.py
+=====================
+"""
+# pylint: disable=import-error
 
 import pkg_resources
 

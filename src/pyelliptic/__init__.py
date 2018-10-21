@@ -1,3 +1,8 @@
+"""
+src/pyelliptic/__init__.py
+==========================
+"""
+
 # Copyright (C) 2010
 # Author: Yann GUIBET
 # Contact: <yannguibet@gmail.com>

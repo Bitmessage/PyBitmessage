@@ -1,3 +1,8 @@
+"""
+src/queues.py
+=============
+"""
+
 import Queue
 
 from class_objectProcessorQueue import ObjectProcessorQueue

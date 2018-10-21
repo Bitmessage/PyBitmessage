@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+rc/pyelliptic/hash.py
+=====================
+"""
 
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
@@ -27,16 +31,14 @@ def _equals_str(a, b):
 
 
 def equals(a, b):
+    """String comparison under any python version?"""
     if isinstance(a, str):
         return _equals_str(a, b)
-    else:
-        return _equals_bytes(a, b)
+    return _equals_bytes(a, b)
 
 
 def hmac_sha256(k, m):
-    """
-    Compute the key and the message with HMAC SHA5256
-    """
+    """Compute the key and the message with HMAC SHA5256"""
     key = OpenSSL.malloc(k, len(k))
     d = OpenSSL.malloc(m, len(m))
     md = OpenSSL.malloc(0, 32)
@@ -46,9 +48,7 @@ def hmac_sha256(k, m):
 
 
 def hmac_sha512(k, m):
-    """
-    Compute the key and the message with HMAC SHA512
-    """
+    """Compute the key and the message with HMAC SHA512"""
     key = OpenSSL.malloc(k, len(k))
     d = OpenSSL.malloc(m, len(m))
     md = OpenSSL.malloc(0, 64)
@@ -58,6 +58,7 @@ def hmac_sha512(k, m):
 
 
 def pbkdf2(password, salt=None, i=10000, keylen=64):
+    """Compute the salt, key and the message with pbkdf2"""
     if salt is None:
         salt = OpenSSL.rand(8)
     p_password = OpenSSL.malloc(password, len(password))
