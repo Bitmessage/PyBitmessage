@@ -1,19 +1,29 @@
+"""
+src/bitmessageqt/languagebox.py
+===============================
+"""
+
 import glob
 import os
+
 from PyQt4 import QtCore, QtGui
 
-from bmconfigparser import BMConfigParser
 import paths
+from bmconfigparser import BMConfigParser
+
 
 class LanguageBox(QtGui.QComboBox):
+    """Settings dialog dropdown to choose language"""
     languageName = {"system": "System Settings", "eo": "Esperanto", "en_pirate": "Pirate English"}
-    def __init__(self, parent = None):
-        super(QtGui.QComboBox, self).__init__(parent)
+
+    def __init__(self, parent=None):
+        super(LanguageBox, self).__init__(parent)
         self.populate()
 
     def populate(self):
+        """Populate the language choice combo box"""
         self.clear()
-        localesPath = os.path.join (paths.codePath(), 'translations')
+        localesPath = os.path.join(paths.codePath(), 'translations')
         self.addItem(QtGui.QApplication.translate("settingsDialog", "System Settings", "system"), "system")
         self.setCurrentIndex(0)
         self.setInsertPolicy(QtGui.QComboBox.InsertAlphabetically)

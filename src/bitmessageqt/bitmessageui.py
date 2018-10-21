@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=too-many-locals,c-extension-no-member
+"""
+bitmessageui.py
+===============
 
-# Form implementation generated from reading ui file 'bitmessageui.ui'
-#
-# Created: Mon Mar 23 22:18:07 2015
-#      by: PyQt4 UI code generator 4.10.4
-#
-# WARNING! All changes made in this file will be lost!
+Originally generated from reading ui file 'bitmessageui.ui'. Since then maintained manually.
+"""
+
+import sys
 
 from PyQt4 import QtCore, QtGui
+
+from bitmessageqt import settingsmixin
+from bitmessageqt.blacklist import Blacklist
+from bitmessageqt.foldertree import AddressBookCompleter
+from bitmessageqt.messagecompose import MessageCompose
+from bitmessageqt.messageview import MessageView
+from bitmessageqt.networkstatus import NetworkStatus
 from bmconfigparser import BMConfigParser
-from foldertree import AddressBookCompleter
-from messageview import MessageView
-from messagecompose import MessageCompose
-import settingsmixin
-from networkstatus import NetworkStatus
-from blacklist import Blacklist
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -24,24 +27,38 @@ except AttributeError:
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+
+    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
+        # pylint: disable=unused-argument
         if n is None:
             return QtGui.QApplication.translate(context, text, disambig, _encoding)
-        else:
-            return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
+        return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
+
 except AttributeError:
-    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+
+    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
+        # pylint: disable=unused-argument
         if n is None:
             return QtGui.QApplication.translate(context, text, disambig)
-        else:
-            return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+        return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+
 
 class Ui_MainWindow(object):
+    """Encapsulate the main UI"""
+    # pylint: disable=too-many-instance-attributes,too-many-statements
+
     def setupUi(self, MainWindow):
+        """Set up the UI"""
+        # pylint: disable=attribute-defined-outside-init
+
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.resize(885, 580)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/can-icon-24px.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         MainWindow.setTabShape(QtGui.QTabWidget.Rounded)
         self.centralwidget = QtGui.QWidget(MainWindow)
@@ -75,7 +92,11 @@ class Ui_MainWindow(object):
         self.treeWidgetYourIdentities.setObjectName(_fromUtf8("treeWidgetYourIdentities"))
         self.treeWidgetYourIdentities.resize(200, self.treeWidgetYourIdentities.height())
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/identities.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon1.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/identities.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off)
         self.treeWidgetYourIdentities.headerItem().setIcon(0, icon1)
         self.verticalSplitter_12.addWidget(self.treeWidgetYourIdentities)
         self.pushButtonNewAddress = QtGui.QPushButton(self.inbox)
@@ -175,7 +196,11 @@ class Ui_MainWindow(object):
         self.tableWidgetAddressBook.resize(200, self.tableWidgetAddressBook.height())
         item = QtGui.QTableWidgetItem()
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/addressbook.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon3.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/addressbook.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off)
         item.setIcon(icon3)
         self.tableWidgetAddressBook.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
@@ -376,7 +401,11 @@ class Ui_MainWindow(object):
         self.treeWidgetSubscriptions.setObjectName(_fromUtf8("treeWidgetSubscriptions"))
         self.treeWidgetSubscriptions.resize(200, self.treeWidgetSubscriptions.height())
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/subscriptions.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon5.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/subscriptions.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off)
         self.treeWidgetSubscriptions.headerItem().setIcon(0, icon5)
         self.verticalSplitter_3.addWidget(self.treeWidgetSubscriptions)
         self.pushButtonAddSubscription = QtGui.QPushButton(self.subscriptions)
@@ -455,7 +484,11 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_4.setCollapsible(1, False)
         self.gridLayout_3.addWidget(self.horizontalSplitter_4, 0, 0, 1, 1)
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/subscriptions.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon6.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/subscriptions.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off)
         self.tabWidget.addTab(self.subscriptions, icon6, _fromUtf8(""))
         self.chans = QtGui.QWidget()
         self.chans.setObjectName(_fromUtf8("chans"))
@@ -475,7 +508,11 @@ class Ui_MainWindow(object):
         self.treeWidgetChans.setObjectName(_fromUtf8("treeWidgetChans"))
         self.treeWidgetChans.resize(200, self.treeWidgetChans.height())
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon7.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/can-icon-16px.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off)
         self.treeWidgetChans.headerItem().setIcon(0, icon7)
         self.verticalSplitter_17.addWidget(self.treeWidgetChans)
         self.pushButtonAddChan = QtGui.QPushButton(self.chans)
@@ -554,7 +591,11 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_7.setCollapsible(1, False)
         self.gridLayout_4.addWidget(self.horizontalSplitter_7, 0, 0, 1, 1)
         icon8 = QtGui.QIcon()
-        icon8.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon8.addPixmap(
+            QtGui.QPixmap(
+                _fromUtf8(":/newPrefix/images/can-icon-16px.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off)
         self.tabWidget.addTab(self.chans, icon8, _fromUtf8(""))
         self.blackwhitelist = Blacklist()
         self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
@@ -652,6 +693,8 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonAddSubscription)
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
+        """Restore last online/offline setting"""
+
         if dontconnect is None:
             dontconnect = BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect')
@@ -662,6 +705,8 @@ class Ui_MainWindow(object):
         )
 
     def retranslateUi(self, MainWindow):
+        """Re-translate the UI"""
+
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
         self.treeWidgetYourIdentities.headerItem().setText(0, _translate("MainWindow", "Identities", None))
         self.pushButtonNewAddress.setText(_translate("MainWindow", "New Identity", None))
@@ -691,19 +736,33 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label.setText(_translate("MainWindow", "To:", None))
-        #self.textEditMessage.setHtml("")
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None))
+        # self.textEditMessage.setHtml("")
+        self.tabWidgetSend.setTabText(
+            self.tabWidgetSend.indexOf(
+                self.sendDirect),
+            _translate(
+                "MainWindow", "Send ordinary Message", None))
         self.label_8.setText(_translate("MainWindow", "From:", None))
         self.label_7.setText(_translate("MainWindow", "Subject:", None))
-        #self.textEditMessageBroadcast.setHtml("")
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers", None))
+        # self.textEditMessageBroadcast.setHtml("")
+        self.tabWidgetSend.setTabText(
+            self.tabWidgetSend.indexOf(
+                self.sendBroadcast),
+            _translate(
+                "MainWindow", "Send Message to your Subscribers", None))
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
         try:
-            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl')/60/60)
-        except:
+            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl') / 60 / 60)
+        except BaseException:
             pass
-        self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))
+        self.labelHumanFriendlyTTLDescription.setText(
+            _translate(
+                "MainWindow",
+                "%n hour(s)",
+                None,
+                QtCore.QCoreApplication.CodecForTr,
+                hours))
         self.pushButtonClear.setText(_translate("MainWindow", "Clear", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
@@ -724,7 +783,11 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInboxSubscriptions.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), _translate("MainWindow", "Subscriptions", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(
+                self.subscriptions),
+            _translate(
+                "MainWindow", "Subscriptions", None))
         self.treeWidgetChans.headerItem().setText(0, _translate("MainWindow", "Chans", None))
         self.pushButtonAddChan.setText(_translate("MainWindow", "Add Chan", None))
         self.inboxSearchLineEditChans.setPlaceholderText(_translate("MainWindow", "Search", None))
@@ -744,9 +807,17 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Received", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans", None))
         self.blackwhitelist.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), _translate("blacklist", "Blacklist", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(
+                self.blackwhitelist),
+            _translate(
+                "blacklist", "Blacklist", None))
         self.networkstatus.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("networkstatus", "Network Status", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(
+                self.networkstatus),
+            _translate(
+                "networkstatus", "Network Status", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
@@ -759,19 +830,17 @@ class Ui_MainWindow(object):
         self.actionSupport.setText(_translate("MainWindow", "Contact support", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
         self.actionSettings.setText(_translate("MainWindow", "Settings", None))
-        self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
+        self.actionRegenerateDeterministicAddresses.setText(
+            _translate("MainWindow", "Regenerate deterministic addresses", None))
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
-import bitmessage_icons_rc
 
 if __name__ == "__main__":
-    import sys
-    
-    app = QtGui.QApplication(sys.argv)
-    MainWindow = settingsmixin.SMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
 
+    app = QtGui.QApplication(sys.argv)
+    ThisMainWindow = settingsmixin.SMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(ThisMainWindow)
+    ThisMainWindow.show()
+    sys.exit(app.exec_())

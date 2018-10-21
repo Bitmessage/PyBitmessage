@@ -1,19 +1,33 @@
 #!/usr/bin/env python2.7
+"""
+packages/collectd/pybitmessagestatus.py
+=======================================
 
-import collectd
+A collectd plugin for checking pybitmessage status.
+"""
+# pylint: disable=global-statement,import-error,no-member,undefined-variable
+
 import json
 import xmlrpclib
+
+import collectd
 
 pybmurl = ""
 api = ""
 
+
 def init_callback():
+    """Collectd init callback"""
     global api
+
     api = xmlrpclib.ServerProxy(pybmurl)
     collectd.info('pybitmessagestatus.py init done')
 
+
 def config_callback(ObjConfiguration):
+    """Collectd config callback"""
     global pybmurl
+
     apiUsername = ""
     apiPassword = ""
     apiInterface = "127.0.0.1"
@@ -28,17 +42,24 @@ def config_callback(ObjConfiguration):
             apiInterface = node.values[0]
         elif key.lower() == "apiport" and node.values:
             apiPort = node.values[0]
-    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface+ ":" + str(int(apiPort)) + "/"
+    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface + ":" + str(int(apiPort)) + "/"
     collectd.info('pybitmessagestatus.py config done')
 
+
 def read_callback():
+    """Collectd read callback"""
     try:
         clientStatus = json.loads(api.clientStatus())
     except:
         collectd.info("Exception loading or parsing JSON")
         return
 
-    for i in ["networkConnections", "numberOfPubkeysProcessed", "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]:
+    for i in [
+            "networkConnections",
+            "numberOfPubkeysProcessed",
+            "numberOfMessagesProcessed",
+            "numberOfBroadcastsProcessed",
+    ]:
         metric = collectd.Values()
         metric.plugin = "pybitmessagestatus"
         if i[0:6] == "number":
@@ -51,6 +72,7 @@ def read_callback():
         except:
             collectd.info("Value for %s missing" % (i))
         metric.dispatch()
+
 
 if __name__ == "__main__":
     main()

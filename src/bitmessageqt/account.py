@@ -7,8 +7,6 @@ Account related functions.
 
 """
 
-from __future__ import absolute_import
-
 import inspect
 import re
 import sys
@@ -20,7 +18,8 @@ import queues
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
-from helper_sql import sqlQuery, sqlExecute
+from helper_sql import sqlExecute, sqlQuery
+
 from .foldertree import AccountMixin
 from .utils import str_broadcast_subscribers
 

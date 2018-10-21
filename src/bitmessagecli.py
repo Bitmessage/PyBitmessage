@@ -4,6 +4,9 @@
 # pylint: disable=too-many-nested-blocks,too-many-locals,protected-access,too-many-arguments,too-many-function-args
 # pylint: disable=no-member
 """
+src/bitmessagecli.py
+====================
+
 Created by Adam Melton (.dok) referenceing https://bitmessage.org/wiki/API_Reference for API documentation
 Distributed under the MIT/X11 software license. See http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,18 +16,19 @@ TODO: fix the following (currently ignored) violations:
 
 """
 
-import xmlrpclib
+from __future__ import absolute_import
+
 import datetime
 import imghdr
-import ntpath
 import json
-import socket
-import time
-import sys
+import ntpath
 import os
+import socket
+import sys
+import time
+import xmlrpclib
 
 from bmconfigparser import BMConfigParser
-
 
 api = ''
 keysName = 'keys.dat'

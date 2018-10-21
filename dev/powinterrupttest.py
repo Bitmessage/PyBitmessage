@@ -1,16 +1,24 @@
+"""
+dev/powinterrupttest.py
+=======================
+"""
+
 import ctypes
 import hashlib
-from multiprocessing import current_process
 import os
 import signal
-from struct import unpack, pack
+from multiprocessing import current_process
+from struct import pack, unpack
 from threading import current_thread
 
 shutdown = 0
 
 
 def signal_handler(signal, frame):
+    """Experimenting with signal handlers for stopping threads?"""
+    # pylint: disable=global-statement,redefined-outer-name,unused-argument
     global shutdown
+
     print "Got signal %i in %s/%s" % (signal, current_process().name, current_thread().name)
     if current_process().name != "MainProcess":
         raise StopIteration("Interrupted")
@@ -20,7 +28,7 @@ def signal_handler(signal, frame):
 
 
 def _doCPoW(target, initialHash):
-#    global shutdown
+
     h = initialHash
     m = target
     out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
