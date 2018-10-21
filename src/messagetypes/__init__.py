@@ -1,3 +1,9 @@
+"""
+src/messagetypes/__init__.py
+============================
+
+"""
+
 from importlib import import_module
 from os import path, listdir
 from string import lower
@@ -6,12 +12,16 @@ from debug import logger
 import messagetypes
 import paths
 
+
 class MsgBase(object):
-    def encode(self):
+    """Base class for message types"""
+    # pylint: disable=too-few-public-methods
+    def __init__(self):
         self.data = {"": lower(type(self).__name__)}
 
 
 def constructObject(data):
+    """Construct an object"""
     whitelist = ["message"]
     if data[""] not in whitelist:
         return None
@@ -26,11 +36,12 @@ def constructObject(data):
     except KeyError as e:
         logger.error("Missing mandatory key %s", e)
         return None
-    except:
+    except BaseException:
         logger.error("classBase fail", exc_info=True)
         return None
     else:
         return returnObj
+
 
 if paths.frozen is not None:
     import messagetypes.message

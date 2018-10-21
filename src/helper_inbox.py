@@ -1,10 +1,15 @@
-"""Helper Inbox performs inbox messagese related operations."""
+"""
+src/helper_inbox.py
+===================
+Helper Inbox performs inbox messagese related operations
+"""
 
-from helper_sql import sqlExecute, sqlQuery
 import queues
+from helper_sql import sqlExecute, sqlQuery
 
 
 def insert(t):
+    """Perform an insert into the `inbox` table"""
     sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
     # shouldn't emit changedInboxUnread and displayNewInboxMessage
     # at the same time
@@ -12,11 +17,13 @@ def insert(t):
 
 
 def trash(msgid):
+    """Mark a message in the `inbox` as `trash`"""
     sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', msgid)
     queues.UISignalQueue.put(('removeInboxRowByMsgid', msgid))
 
 
 def isMessageAlreadyInInbox(sigHash):
+    """Check for previous instances of this message"""
     queryReturn = sqlQuery(
         '''SELECT COUNT(*) FROM inbox WHERE sighash=?''', sigHash)
     return queryReturn[0][0] != 0

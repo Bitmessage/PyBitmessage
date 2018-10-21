@@ -1,24 +1,29 @@
-
-import time
-import threading
+"""
+src/class_addressGenerator.py
+=============================
+"""
+# pylint: disable=protected-access
 import hashlib
+import threading
+import time
 from binascii import hexlify
+
+import defaults
+import highlevelcrypto
+import queues
+import shared
+import state
+import tr
+from addresses import decodeAddress, encodeAddress, encodeVarint
+from bmconfigparser import BMConfigParser
+from debug import logger
+from helper_threading import StoppableThread
 from pyelliptic import arithmetic
 from pyelliptic.openssl import OpenSSL
 
-import tr
-import queues
-import state
-import shared
-import defaults
-import highlevelcrypto
-from bmconfigparser import BMConfigParser
-from debug import logger
-from addresses import decodeAddress, encodeAddress, encodeVarint
-from helper_threading import StoppableThread
-
 
 class addressGenerator(threading.Thread, StoppableThread):
+    """A thread for creating addresses"""
 
     def __init__(self):
         # QThread.__init__(self, parent)
@@ -26,6 +31,7 @@ class addressGenerator(threading.Thread, StoppableThread):
         self.initStop()
 
     def stopThread(self):
+        """Stop cleanly"""
         try:
             queues.addressGeneratorQueue.put(("stopThread", "data"))
         except:
@@ -33,6 +39,7 @@ class addressGenerator(threading.Thread, StoppableThread):
         super(addressGenerator, self).stopThread()
 
     def run(self):
+        # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
@@ -138,7 +145,9 @@ class addressGenerator(threading.Thread, StoppableThread):
                     sha.update(
                         potentialPubSigningKey + potentialPubEncryptionKey)
                     ripe.update(sha.digest())
-                    if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
+
+                    if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * \
+                       numberOfNullBytesDemandedOnFrontOfRipeHash:
                         break
                 logger.info(
                     'Generated address with ripe digest: %s',
@@ -149,8 +158,8 @@ class addressGenerator(threading.Thread, StoppableThread):
                         ' addresses per second before finding one with'
                         ' the correct ripe-prefix.',
                         numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix,
-                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix
-                        / (time.time() - startTime))
+                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix /
+                        (time.time() - startTime))
                 except ZeroDivisionError:
                     # The user must have a pretty fast computer.
                     # time.time() - startTime equaled zero.
@@ -211,7 +220,7 @@ class addressGenerator(threading.Thread, StoppableThread):
             elif command == 'createDeterministicAddresses' \
                     or command == 'getDeterministicAddress' \
                     or command == 'createChan' or command == 'joinChan':
-                if len(deterministicPassphrase) == 0:
+                if not deterministicPassphrase:
                     logger.warning(
                         'You are creating deterministic'
                         ' address(es) using a blank passphrase.'
@@ -260,7 +269,8 @@ class addressGenerator(threading.Thread, StoppableThread):
                         sha.update(
                             potentialPubSigningKey + potentialPubEncryptionKey)
                         ripe.update(sha.digest())
-                        if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
+                        if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * \
+                           numberOfNullBytesDemandedOnFrontOfRipeHash:
                             break
 
                     logger.info(
@@ -359,7 +369,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                                 address)
                             shared.myECCryptorObjects[ripe.digest()] = \
                                 highlevelcrypto.makeCryptor(
-                                hexlify(potentialPrivEncryptionKey))
+                                    hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe.digest()] = address
                             tag = hashlib.sha512(hashlib.sha512(
                                 encodeVarint(addressVersionNumber) +

@@ -1,17 +1,24 @@
 #! /usr/bin/env python
+"""
+src/singleinstance.py
+=====================
+"""
+
+from __future__ import print_function
 
 import atexit
 import os
 import sys
+
 import state
 
 try:
-    import fcntl  # @UnresolvedImport
+    import fcntl
 except ImportError:
     pass
 
 
-class singleinstance:
+class singleinstance(object):
     """
     Implements a single instance application by creating a lock file
     at appdata.
@@ -20,6 +27,7 @@ class singleinstance:
     https://github.com/pycontribs/tendo
     which is under the Python Software Foundation License version 2
     """
+
     def __init__(self, flavor_id="", daemon=False):
         self.initialized = False
         self.counter = 0
@@ -39,6 +47,7 @@ class singleinstance:
         atexit.register(self.cleanup)
 
     def lock(self):
+        """Obtain single instance lock"""
         if self.lockPid is None:
             self.lockPid = os.getpid()
         if sys.platform == 'win32':
@@ -52,7 +61,7 @@ class singleinstance:
                     os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC
                 )
             except OSError:
-                type, e, tb = sys.exc_info()
+                exc_type, e, tb = sys.exc_info()  # pylint: disable=unused-variable
                 if e.errno == 13:
                     print(
                         'Another instance of this application'
@@ -74,7 +83,7 @@ class singleinstance:
                     fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 self.lockPid = os.getpid()
             except IOError:
-                print 'Another instance of this application is already running'
+                print('Another instance of this application is already running')
                 sys.exit(-1)
             else:
                 pidLine = "%i\n" % self.lockPid
@@ -83,6 +92,7 @@ class singleinstance:
                 self.fp.flush()
 
     def cleanup(self):
+        """Release single instance lock"""
         if not self.initialized:
             return
         if self.daemon and self.lockPid == os.getpid():
@@ -93,11 +103,11 @@ class singleinstance:
                         os.close(self.fd)
                 else:
                     fcntl.lockf(self.fp, fcntl.LOCK_UN)
-            except Exception, e:
+            except Exception:
                 pass
 
             return
-        print "Cleaning up lockfile"
+        print("Cleaning up lockfile")
         try:
             if sys.platform == 'win32':
                 if hasattr(self, 'fd'):

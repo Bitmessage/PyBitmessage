@@ -1,7 +1,14 @@
-"""Helper threading perform all the threading operations."""
+"""
+src/helper_threading.py
+=======================
 
-from contextlib import contextmanager
+Helper threading perform all the threading operations.
+
+"""
+# pylint: disable=protected-access,attribute-defined-outside-init
+
 import threading
+from contextlib import contextmanager
 
 try:
     import prctl
@@ -23,20 +30,26 @@ else:
 
 
 class StoppableThread(object):
+    """A base class for threads giving them a custom stopping mechanism"""
     def initStop(self):
+        """Start the process of stopping the thread"""
         self.stop = threading.Event()
         self._stopped = False
 
     def stopThread(self):
+        """Complete the process of stopping a thread"""
         self._stopped = True
         self.stop.set()
 
 
 class BusyError(threading.ThreadError):
+    """Custom exception for our custom stopping mechanism"""
     pass
+
 
 @contextmanager
 def nonBlocking(lock):
+    """A context manager for obtaining and releasing non-blocking locks"""
     locked = lock.acquire(False)
     if not locked:
         raise BusyError
