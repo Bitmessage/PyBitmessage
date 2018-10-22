@@ -1,12 +1,15 @@
+# Copyright (c) 2012-2016 Jonathan Warren
+# Copyright (c) 2012-2020 The Bitmessage developers
+# pylint: disable=too-many-lines,no-self-use,unused-variable,unused-argument
+
 """
 This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
-# Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2020 The Bitmessage developers
-# pylint: disable=too-many-lines,no-self-use,unused-variable,unused-argument
+
 import base64
+import ConfigParser
 import errno
 import hashlib
 import json
@@ -27,7 +30,6 @@ import queues
 import shared
 import shutdown
 import state
-import threads
 from addresses import (
     addBMIfNotPresent,
     calculateInventoryHash,
@@ -44,6 +46,7 @@ from network.threads import StoppableThread
 from version import softwareVersion
 
 str_chan = '[chan]'
+str_broadcast_subscribers = '[Broadcast subscribers]'
 
 
 class APIError(Exception):
@@ -134,15 +137,47 @@ class singleAPI(StoppableThread):
         se.serve_forever()
 
 
-class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+class CommandHandler(type):
     """
-    This is one of several classes that constitute the API
+    The metaclass for `BMRPCDispatcher` which fills _handlers dict by
+    methods decorated with @command
+    """
+    def __new__(mcs, name, bases, namespace):
+        # pylint: disable=protected-access
+        result = super(CommandHandler, mcs).__new__(
+            mcs, name, bases, namespace)
+        result._handlers = {}
+        for func in namespace.values():
+            try:
+                for alias in getattr(func, '_cmd'):
+                    result._handlers[alias] = func
+            except AttributeError:
+                pass
+        return result
 
-    This class was written by Vaibhav Bhatia.
-    Modified by Jonathan Warren (Atheros).
-    http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
-    """
-    # pylint: disable=too-many-public-methods
+
+class command(object):
+    """Decorator for API command method"""
+    def __init__(self, *aliases):
+        self.aliases = aliases
+
+    def __call__(self, func):
+        def wrapper(*args):
+            # return json.dumps(func(*args), indent=4)
+            return func(*args)
+        # pylint: disable=protected-access
+        wrapper._cmd = self.aliases
+        return wrapper
+
+
+# This is one of several classes that constitute the API
+# This class was written by Vaibhav Bhatia.
+# Modified by Jonathan Warren (Atheros).
+# Further modified by the Bitmessage developers
+# http://code.activestate.com/recipes/501148
+class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
+    """The main API handler"""
+    __metaclass__ = CommandHandler
 
     def do_POST(self):
         """
@@ -215,7 +250,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         if 'Authorization' in self.headers:
             # handle Basic authentication
-            _, encstr = self.headers.get('Authorization').split()
+            encstr = self.headers.get('Authorization').split()[1]
             emailid, password = encstr.decode('base64').split(':')
             return (
                 emailid == BMConfigParser().get(
@@ -281,66 +316,46 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     # Request Handlers
 
-    def HandleListAddresses(self, method):
-        """Handle a request to list addresses"""
-        data = '{"addresses":['
-        for addressInKeysFile in BMConfigParser().addresses():
-            status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
-                addressInKeysFile)
-            if len(data) > 20:
-                data += ','
-            if BMConfigParser().has_option(addressInKeysFile, 'chan'):
-                chan = BMConfigParser().getboolean(addressInKeysFile, 'chan')
-            else:
-                chan = False
-            label = BMConfigParser().get(addressInKeysFile, 'label')
-            if method == 'listAddresses2':
+    @command('listAddresses', 'listAddresses2')
+    def HandleListAddresses(self):
+        data = []
+        for address in BMConfigParser().addresses():
+            streamNumber = decodeAddress(address)[2]
+            label = BMConfigParser().get(address, 'label')
+            if self._method == 'listAddresses2':
                 label = base64.b64encode(label)
-            data += json.dumps({
+            data.append({
                 'label': label,
-                'address': addressInKeysFile,
+                'address': address,
                 'stream': streamNumber,
-                'enabled':
-                BMConfigParser().getboolean(addressInKeysFile, 'enabled'),
-                'chan': chan
-            }, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+                'enabled': BMConfigParser().safeGetBoolean(address, 'enabled'),
+                'chan': BMConfigParser().safeGetBoolean(address, 'chan')
+            })
+        return {'addresses': data}
 
-    def HandleListAddressBookEntries(self, params):
-        """Handle a request to list address book entries"""
-
-        if len(params) == 1:
-            label, = params
-            label = self._decode(label, "base64")
-            queryreturn = sqlQuery(
-                "SELECT label, address from addressbook WHERE label = ?",
-                label)
-        elif len(params) > 1:
-            raise APIError(0, "Too many paremeters, max 1")
-        else:
-            queryreturn = sqlQuery("SELECT label, address from addressbook")
-        data = '{"addresses":['
-        for row in queryreturn:
-            label, address = row
+    # the listAddressbook alias should be removed eventually.
+    @command('listAddressBookEntries', 'listAddressbook')
+    def HandleListAddressBookEntries(self, label=None):
+        queryreturn = sqlQuery(
+            "SELECT label, address from addressbook WHERE label = ?",
+            label
+        ) if label else sqlQuery("SELECT label, address from addressbook")
+        data = []
+        for label, address in queryreturn:
             label = shared.fixPotentiallyInvalidUTF8Data(label)
-            if len(data) > 20:
-                data += ','
-            data += json.dumps({
+            data.append({
                 'label': base64.b64encode(label),
-                'address': address}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+                'address': address
+            })
+        return {'addresses': data}
 
-    def HandleAddAddressBookEntry(self, params):
-        """Handle a request to add an address book entry"""
-
-        if len(params) != 2:
-            raise APIError(0, "I need label and address")
-        address, label = params
+    # the addAddressbook alias should be deleted eventually.
+    @command('addAddressBookEntry', 'addAddressbook')
+    def HandleAddAddressBookEntry(self, address, label):
         label = self._decode(label, "base64")
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
+        # TODO: add unique together constraint in the table
         queryreturn = sqlQuery(
             "SELECT address FROM addressbook WHERE address=?", address)
         if queryreturn != []:
@@ -353,12 +368,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
         return "Added address %s to address book" % address
 
-    def HandleDeleteAddressBookEntry(self, params):
-        """Handle a request to delete an address book entry"""
-
-        if len(params) != 1:
-            raise APIError(0, "I need an address")
-        address, = params
+    # the deleteAddressbook alias should be deleted eventually.
+    @command('deleteAddressBookEntry', 'deleteAddressbook')
+    def HandleDeleteAddressBookEntry(self, address):
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
         sqlExecute('DELETE FROM addressbook WHERE address=?', address)
@@ -367,49 +379,35 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
         return "Deleted address book entry for %s if it existed" % address
 
-    def HandleCreateRandomAddress(self, params):
+    @command('createRandomAddress')
+    def HandleCreateRandomAddress(
+        self, label, eighteenByteRipe=False, totalDifficulty=0,
+        smallMessageDifficulty=0
+    ):
         """Handle a request to create a random address"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
+        nonceTrialsPerByte = BMConfigParser().get(
+            'bitmessagesettings', 'defaultnoncetrialsperbyte'
+        ) if not totalDifficulty else int(
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
+            totalDifficulty)
+        payloadLengthExtraBytes = BMConfigParser().get(
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes'
+        ) if not smallMessageDifficulty else int(
+            defaults.networkDefaultPayloadLengthExtraBytes *
+            smallMessageDifficulty)
 
-        elif len(params) == 1:
-            label, = params
-            eighteenByteRipe = False
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-        elif len(params) == 2:
-            label, eighteenByteRipe = params
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-        elif len(params) == 3:
-            label, eighteenByteRipe, totalDifficulty = params
-            nonceTrialsPerByte = int(
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
-                totalDifficulty)
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-        elif len(params) == 4:
-            label, eighteenByteRipe, totalDifficulty, \
-                smallMessageDifficulty = params
-            nonceTrialsPerByte = int(
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
-                totalDifficulty)
-            payloadLengthExtraBytes = int(
-                defaults.networkDefaultPayloadLengthExtraBytes *
-                smallMessageDifficulty)
-        else:
-            raise APIError(0, 'Too many parameters!')
+        if not isinstance(eighteenByteRipe, bool):
+            raise APIError(
+                23, 'Bool expected in eighteenByteRipe, saw %s instead' %
+                type(eighteenByteRipe))
         label = self._decode(label, "base64")
         try:
             unicode(label, 'utf-8')
-        except BaseException:
+        except UnicodeDecodeError:
             raise APIError(17, 'Label is not valid UTF-8 data.')
         queues.apiAddressGeneratorReturnQueue.queue.clear()
+        # FIXME hard coded stream no
         streamNumberForAddress = 1
         queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, streamNumberForAddress, label, 1, "",
@@ -417,81 +415,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         ))
         return queues.apiAddressGeneratorReturnQueue.get()
 
-    def HandleCreateDeterministicAddresses(self, params):
+    @command('createDeterministicAddresses')
+    def HandleCreateDeterministicAddresses(
+        self, passphrase, numberOfAddresses=1, addressVersionNumber=0,
+        streamNumber=0, eighteenByteRipe=False, totalDifficulty=0,
+        smallMessageDifficulty=0
+    ):
         """Handle a request to create a deterministic address"""
         # pylint: disable=too-many-branches, too-many-statements
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
+        nonceTrialsPerByte = BMConfigParser().get(
+            'bitmessagesettings', 'defaultnoncetrialsperbyte'
+        ) if not totalDifficulty else int(
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
+            totalDifficulty)
+        payloadLengthExtraBytes = BMConfigParser().get(
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes'
+        ) if not smallMessageDifficulty else int(
+            defaults.networkDefaultPayloadLengthExtraBytes *
+            smallMessageDifficulty)
 
-        elif len(params) == 1:
-            passphrase, = params
-            numberOfAddresses = 1
-            addressVersionNumber = 0
-            streamNumber = 0
-            eighteenByteRipe = False
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-
-        elif len(params) == 2:
-            passphrase, numberOfAddresses = params
-            addressVersionNumber = 0
-            streamNumber = 0
-            eighteenByteRipe = False
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-
-        elif len(params) == 3:
-            passphrase, numberOfAddresses, addressVersionNumber = params
-            streamNumber = 0
-            eighteenByteRipe = False
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-
-        elif len(params) == 4:
-            passphrase, numberOfAddresses, addressVersionNumber, \
-                streamNumber = params
-            eighteenByteRipe = False
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-
-        elif len(params) == 5:
-            passphrase, numberOfAddresses, addressVersionNumber, \
-                streamNumber, eighteenByteRipe = params
-            nonceTrialsPerByte = BMConfigParser().get(
-                'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-
-        elif len(params) == 6:
-            passphrase, numberOfAddresses, addressVersionNumber, \
-                streamNumber, eighteenByteRipe, totalDifficulty = params
-            nonceTrialsPerByte = int(
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
-                totalDifficulty)
-            payloadLengthExtraBytes = BMConfigParser().get(
-                'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-
-        elif len(params) == 7:
-            passphrase, numberOfAddresses, addressVersionNumber, \
-                streamNumber, eighteenByteRipe, totalDifficulty, \
-                smallMessageDifficulty = params
-            nonceTrialsPerByte = int(
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
-                totalDifficulty)
-            payloadLengthExtraBytes = int(
-                defaults.networkDefaultPayloadLengthExtraBytes *
-                smallMessageDifficulty)
-        else:
-            raise APIError(0, 'Too many parameters!')
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
         if not isinstance(eighteenByteRipe, bool):
@@ -502,13 +445,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # 0 means "just use the proper addressVersionNumber"
         if addressVersionNumber == 0:
             addressVersionNumber = 4
-        if addressVersionNumber != 3 and addressVersionNumber != 4:
+        if addressVersionNumber not in (3, 4):
             raise APIError(
                 2, 'The address version number currently must be 3, 4, or 0'
                 ' (which means auto-select). %i isn\'t supported.' %
                 addressVersionNumber)
         if streamNumber == 0:  # 0 means "just use the most available stream"
-            streamNumber = 1
+            streamNumber = 1  # FIXME hard coded stream no
         if streamNumber != 1:
             raise APIError(
                 3, 'The stream number must be 1 (or 0 which means'
@@ -533,27 +476,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             'unused API address', numberOfAddresses, passphrase,
             eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes
         ))
-        data = '{"addresses":['
-        queueReturn = queues.apiAddressGeneratorReturnQueue.get()
-        for item in queueReturn:
-            if len(data) > 20:
-                data += ','
-            data += "\"" + item + "\""
-        data += ']}'
-        return data
 
-    def HandleGetDeterministicAddress(self, params):
+        return {'addresses': queues.apiAddressGeneratorReturnQueue.get()}
+
+    @command('getDeterministicAddress')
+    def HandleGetDeterministicAddress(
+            self, passphrase, addressVersionNumber, streamNumber):
         """Handle a request to get a deterministic address"""
 
-        if len(params) != 3:
-            raise APIError(0, 'I need exactly 3 parameters.')
-        passphrase, addressVersionNumber, streamNumber = params
         numberOfAddresses = 1
         eighteenByteRipe = False
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
         passphrase = self._decode(passphrase, "base64")
-        if addressVersionNumber != 3 and addressVersionNumber != 4:
+        if addressVersionNumber not in (3, 4):
             raise APIError(
                 2, 'The address version number currently must be 3 or 4. %i'
                 ' isn\'t supported.' % addressVersionNumber)
@@ -571,16 +507,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         ))
         return queues.apiAddressGeneratorReturnQueue.get()
 
-    def HandleCreateChan(self, params):
+    @command('createChan')
+    def HandleCreateChan(self, passphrase):
         """Handle a request to create a chan"""
 
-        if not params:
-            raise APIError(0, 'I need parameters.')
-
-        elif len(params) == 1:
-            passphrase, = params
         passphrase = self._decode(passphrase, "base64")
-
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
         # It would be nice to make the label the passphrase but it is
@@ -588,7 +519,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         try:
             unicode(passphrase, 'utf-8')
             label = str_chan + ' ' + passphrase
-        except BaseException:
+        except UnicodeDecodeError:
             label = str_chan + ' ' + repr(passphrase)
 
         addressVersionNumber = 4
@@ -601,18 +532,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             passphrase, True
         ))
         queueReturn = queues.apiAddressGeneratorReturnQueue.get()
-        if not queueReturn:
+        try:
+            return queueReturn[0]
+        except IndexError:
             raise APIError(24, 'Chan address is already present.')
-        address = queueReturn[0]
-        return address
 
-    def HandleJoinChan(self, params):
+    @command('joinChan')
+    def HandleJoinChan(self, passphrase, suppliedAddress):
         """Handle a request to join a chan"""
 
-        if len(params) < 2:
-            raise APIError(0, 'I need two parameters.')
-        elif len(params) == 2:
-            passphrase, suppliedAddress = params
         passphrase = self._decode(passphrase, "base64")
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
@@ -621,84 +549,73 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         try:
             unicode(passphrase, 'utf-8')
             label = str_chan + ' ' + passphrase
-        except BaseException:
+        except UnicodeDecodeError:
             label = str_chan + ' ' + repr(passphrase)
-        status, addressVersionNumber, streamNumber, toRipe = (
-            self._verifyAddress(suppliedAddress))
+
+        self._verifyAddress(suppliedAddress)
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         queues.addressGeneratorQueue.put((
             'joinChan', suppliedAddress, label, passphrase, True
         ))
-        addressGeneratorReturnValue = \
-            queues.apiAddressGeneratorReturnQueue.get()
-
-        if addressGeneratorReturnValue[0] == \
-                'chan name does not match address':
-            raise APIError(18, 'Chan name does not match address.')
-        if not addressGeneratorReturnValue:
+        queueReturn = queues.apiAddressGeneratorReturnQueue.get()
+        try:
+            if queueReturn[0] == 'chan name does not match address':
+                raise APIError(18, 'Chan name does not match address.')
+        except IndexError:
             raise APIError(24, 'Chan address is already present.')
+
         return "success"
 
-    def HandleLeaveChan(self, params):
+    @command('leaveChan')
+    def HandleLeaveChan(self, address):
         """Handle a request to leave a chan"""
-
-        if not params:
-            raise APIError(0, 'I need parameters.')
-        elif len(params) == 1:
-            address, = params
-            status, addressVersionNumber, streamNumber, toRipe = (
-                self._verifyAddress(address))
+        self._verifyAddress(address)
         address = addBMIfNotPresent(address)
-        if not BMConfigParser().has_section(address):
-            raise APIError(
-                13, 'Could not find this address in your keys.dat file.')
         if not BMConfigParser().safeGetBoolean(address, 'chan'):
             raise APIError(
                 25, 'Specified address is not a chan address.'
                 ' Use deleteAddress API call instead.')
-        BMConfigParser().remove_section(address)
-        with open(state.appdata + 'keys.dat', 'wb') as configfile:
-            BMConfigParser().write(configfile)
-        return 'success'
-
-    def HandleDeleteAddress(self, params):
-        """Handle a request to delete an address"""
-
-        if not params:
-            raise APIError(0, 'I need parameters.')
-        elif len(params) == 1:
-            address, = params
-        status, addressVersionNumber, streamNumber, toRipe = (
-            self._verifyAddress(address))
-        address = addBMIfNotPresent(address)
-        if not BMConfigParser().has_section(address):
+        try:
+            BMConfigParser().remove_section(address)
+        except ConfigParser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
-        BMConfigParser().remove_section(address)
-        with open(state.appdata + 'keys.dat', 'wb') as configfile:
-            BMConfigParser().write(configfile)
+        BMConfigParser().save()
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
+        return "success"
+
+    @command('deleteAddress')
+    def HandleDeleteAddress(self, address):
+        """Handle a request to delete an address"""
+        self._verifyAddress(address)
+        address = addBMIfNotPresent(address)
+        try:
+            BMConfigParser().remove_section(address)
+        except ConfigParser.NoSectionError:
+            raise APIError(
+                13, 'Could not find this address in your keys.dat file.')
+        BMConfigParser().save()
         queues.UISignalQueue.put(('writeNewAddressToTable', ('', '', '')))
         shared.reloadMyAddressHashes()
-        return 'success'
+        return "success"
 
-    def HandleGetAllInboxMessages(self, params):
+    @command('getAllInboxMessages')
+    def HandleGetAllInboxMessages(self):
         """Handle a request to get all inbox messages"""
 
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received, message,"
-            " encodingtype, read FROM inbox where folder='inbox'"
+            " encodingtype, read FROM inbox WHERE folder='inbox'"
             " ORDER BY received"
         )
-        data = '{"inboxMessages":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, \
-                encodingtype, read = row
+        data = []
+        for (msgid, toAddress, fromAddress, subject, received, message,
+             encodingtype, read) in queryreturn:
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            if len(data) > 25:
-                data += ','
-            data += json.dumps({
+            data.append({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
                 'fromAddress': fromAddress,
@@ -706,35 +623,27 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 'message': base64.b64encode(message),
                 'encodingType': encodingtype,
                 'receivedTime': received,
-                'read': read}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+                'read': read
+            })
+        return {"inboxMessages": data}
 
-    def HandleGetAllInboxMessageIds(self, params):
+    @command('getAllInboxMessageIds', 'getAllInboxMessageIDs')
+    def HandleGetAllInboxMessageIds(self):
         """Handle a request to get all inbox message IDs"""
 
         queryreturn = sqlQuery(
             "SELECT msgid FROM inbox where folder='inbox' ORDER BY received")
-        data = '{"inboxMessageIds":['
-        for row in queryreturn:
-            msgid = row[0]
-            if len(data) > 25:
-                data += ','
-            data += json.dumps(
-                {'msgid': hexlify(msgid)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
 
-    def HandleGetInboxMessageById(self, params):
+        return {"inboxMessageIds": [
+            {'msgid': hexlify(msgid)} for msgid, in queryreturn
+        ]}
+
+    @command('getInboxMessageById', 'getInboxMessageByID')
+    def HandleGetInboxMessageById(self, hid, readStatus=None):
         """Handle a request to get an inbox messsage by ID"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        elif len(params) == 1:
-            msgid = self._decode(params[0], "hex")
-        elif len(params) >= 2:
-            msgid = self._decode(params[0], "hex")
-            readStatus = params[1]
+        msgid = self._decode(hid, "hex")
+        if readStatus is not None:
             if not isinstance(readStatus, bool):
                 raise APIError(
                     23, 'Bool expected in readStatus, saw %s instead.' %
@@ -742,34 +651,39 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             queryreturn = sqlQuery(
                 "SELECT read FROM inbox WHERE msgid=?", msgid)
             # UPDATE is slow, only update if status is different
-            if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
-                sqlExecute(
-                    "UPDATE inbox set read = ? WHERE msgid=?",
-                    readStatus, msgid)
-                queues.UISignalQueue.put(('changedInboxUnread', None))
+            try:
+                if (queryreturn[0][0] == 1) != readStatus:
+                    sqlExecute(
+                        "UPDATE inbox set read = ? WHERE msgid=?",
+                        readStatus, msgid)
+                    queues.UISignalQueue.put(('changedInboxUnread', None))
+            except IndexError:
+                pass
         queryreturn = sqlQuery(
-            "SELECT msgid, toaddress, fromaddress, subject, received, message,"
+            "SELECT toaddress, fromaddress, subject, received, message,"
             " encodingtype, read FROM inbox WHERE msgid=?", msgid
         )
-        data = '{"inboxMessage":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, \
-                encodingtype, read = row
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'receivedTime': received,
-                'read': read}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+        data = []
+        try:
+            (toAddress, fromAddress, subject, received, message, encodingtype,
+             read) = queryreturn[0]
+        except IndexError:
+            return  # FIXME inconsistent
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        return {"inboxMessage": [{
+            'msgid': hid,
+            'toAddress': toAddress,
+            'fromAddress': fromAddress,
+            'subject': base64.b64encode(subject),
+            'message': base64.b64encode(message),
+            'encodingType': encodingtype,
+            'receivedTime': received,
+            'read': read
+        }]}
 
-    def HandleGetAllSentMessages(self, params):
+    @command('getAllSentMessages')
+    def HandleGetAllSentMessages(self):
         """Handle a request to get all sent messages"""
 
         queryreturn = sqlQuery(
@@ -777,15 +691,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             " message, encodingtype, status, ackdata FROM sent"
             " WHERE folder='sent' ORDER BY lastactiontime"
         )
-        data = '{"sentMessages":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, lastactiontime, message, \
-                encodingtype, status, ackdata = row
+        data = []
+        for (msgid, toAddress, fromAddress, subject, lastactiontime, message,
+             encodingtype, status, ackdata) in queryreturn:
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            if len(data) > 25:
-                data += ','
-            data += json.dumps({
+            data.append({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
                 'fromAddress': fromAddress,
@@ -794,107 +705,92 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 'encodingType': encodingtype,
                 'lastActionTime': lastactiontime,
                 'status': status,
-                'ackData': hexlify(ackdata)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+                'ackData': hexlify(ackdata)
+            })
+        return {"sentMessages": data}
 
-    def HandleGetAllSentMessageIds(self, params):
+    @command('getAllSentMessageIds', 'getAllSentMessageIDs')
+    def HandleGetAllSentMessageIds(self):
         """Handle a request to get all sent message IDs"""
 
         queryreturn = sqlQuery(
-            "SELECT msgid FROM sent where folder='sent'"
+            "SELECT msgid FROM sent WHERE folder='sent'"
             " ORDER BY lastactiontime"
         )
-        data = '{"sentMessageIds":['
-        for row in queryreturn:
-            msgid = row[0]
-            if len(data) > 25:
-                data += ','
-            data += json.dumps(
-                {'msgid': hexlify(msgid)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+        return {"sentMessageIds": [
+            {'msgid': hexlify(msgid)} for msgid, in queryreturn
+        ]}
 
-    def HandleInboxMessagesByReceiver(self, params):
+    # after some time getInboxMessagesByAddress should be removed
+    @command('getInboxMessagesByReceiver', 'getInboxMessagesByAddress')
+    def HandleInboxMessagesByReceiver(self, toAddress):
         """Handle a request to get inbox messages by receiver"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        toAddress = params[0]
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received, message,"
             " encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?",
             toAddress)
-        data = '{"inboxMessages":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, \
-                encodingtype = row
+        data = []
+        for (msgid, toAddress, fromAddress, subject, received, message,
+             encodingtype) in queryreturn:
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            if len(data) > 25:
-                data += ','
-            data += json.dumps({
+            data.append({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
                 'fromAddress': fromAddress,
                 'subject': base64.b64encode(subject),
                 'message': base64.b64encode(message),
                 'encodingType': encodingtype,
-                'receivedTime': received}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+                'receivedTime': received
+            })
+        return {"inboxMessages": data}
 
-    def HandleGetSentMessageById(self, params):
+    @command('getSentMessageById', 'getSentMessageByID')
+    def HandleGetSentMessageById(self, hid):
         """Handle a request to get a sent message by ID"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        msgid = self._decode(params[0], "hex")
+        msgid = self._decode(hid, "hex")
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent WHERE msgid=?",
             msgid
         )
-        data = '{"sentMessage":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, lastactiontime, message, \
-                encodingtype, status, ackdata = row
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'lastActionTime': lastactiontime,
-                'status': status,
-                'ackData': hexlify(ackdata)}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+        try:
+            (toAddress, fromAddress, subject, lastactiontime, message,
+             encodingtype, status, ackdata) = queryreturn[0]
+        except IndexError:
+            return  # FIXME inconsistent
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        return {"sentMessage": [{
+            'msgid': hid,
+            'toAddress': toAddress,
+            'fromAddress': fromAddress,
+            'subject': base64.b64encode(subject),
+            'message': base64.b64encode(message),
+            'encodingType': encodingtype,
+            'lastActionTime': lastactiontime,
+            'status': status,
+            'ackData': hexlify(ackdata)
+        }]}
 
-    def HandleGetSentMessagesByAddress(self, params):
+    @command('getSentMessagesByAddress', 'getSentMessagesBySender')
+    def HandleGetSentMessagesByAddress(self, fromAddress):
         """Handle a request to get sent messages by address"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        fromAddress = params[0]
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent"
             " WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime",
             fromAddress
         )
-        data = '{"sentMessages":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, lastactiontime, message, \
-                encodingtype, status, ackdata = row
+        data = []
+        for (msgid, toAddress, fromAddress, subject, lastactiontime, message,
+             encodingtype, status, ackdata) in queryreturn:
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            if len(data) > 25:
-                data += ','
-            data += json.dumps({
+            data.append({
                 'msgid': hexlify(msgid),
                 'toAddress': toAddress,
                 'fromAddress': fromAddress,
@@ -903,91 +799,72 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 'encodingType': encodingtype,
                 'lastActionTime': lastactiontime,
                 'status': status,
-                'ackData': hexlify(ackdata)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+                'ackData': hexlify(ackdata)
+            })
+        return {"sentMessages": data}
 
-    def HandleGetSentMessagesByAckData(self, params):
+    @command('getSentMessageByAckData')
+    def HandleGetSentMessagesByAckData(self, ackData):
         """Handle a request to get sent messages by ack data"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        ackData = self._decode(params[0], "hex")
+        ackData = self._decode(ackData, "hex")
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent"
             " WHERE ackdata=?", ackData
         )
-        data = '{"sentMessage":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, lastactiontime, message, \
-                encodingtype, status, ackdata = row
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'lastActionTime': lastactiontime,
-                'status': status,
-                'ackData': hexlify(ackdata)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
 
-    def HandleTrashMessage(self, params):
+        try:
+            (msgid, toAddress, fromAddress, subject, lastactiontime,
+             message, encodingtype, status, ackdata) = queryreturn[0]
+        except IndexError:
+            return  # FIXME inconsistent
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        return {"sentMessage": [{
+            'msgid': hexlify(msgid),
+            'toAddress': toAddress,
+            'fromAddress': fromAddress,
+            'subject': base64.b64encode(subject),
+            'message': base64.b64encode(message),
+            'encodingType': encodingtype,
+            'lastActionTime': lastactiontime,
+            'status': status,
+            'ackData': hexlify(ackdata)
+        }]}
+
+    @command('trashMessage')
+    def HandleTrashMessage(self, msgid):
         """Handle a request to trash a message by ID"""
-
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        msgid = self._decode(params[0], "hex")
-
+        msgid = self._decode(msgid, "hex")
         # Trash if in inbox table
         helper_inbox.trash(msgid)
         # Trash if in sent table
-        sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
+        sqlExecute("UPDATE sent SET folder='trash' WHERE msgid=?", msgid)
         return 'Trashed message (assuming message existed).'
 
-    def HandleTrashInboxMessage(self, params):
+    @command('trashInboxMessage')
+    def HandleTrashInboxMessage(self, msgid):
         """Handle a request to trash an inbox message by ID"""
-
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        msgid = self._decode(params[0], "hex")
+        msgid = self._decode(msgid, "hex")
         helper_inbox.trash(msgid)
         return 'Trashed inbox message (assuming message existed).'
 
-    def HandleTrashSentMessage(self, params):
+    @command('trashSentMessage')
+    def HandleTrashSentMessage(self, msgid):
         """Handle a request to trash a sent message by ID"""
-
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        msgid = self._decode(params[0], "hex")
+        msgid = self._decode(msgid, "hex")
         sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
         return 'Trashed sent message (assuming message existed).'
 
-    def HandleSendMessage(self, params):  # pylint: disable=too-many-locals
+    @command('sendMessage')
+    def HandleSendMessage(
+        self, toAddress, fromAddress, subject, message,
+        encodingType=2, TTL=4 * 24 * 60 * 60
+    ):
         """Handle a request to send a message"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-
-        elif len(params) == 4:
-            toAddress, fromAddress, subject, message = params
-            encodingType = 2
-            TTL = 4 * 24 * 60 * 60
-
-        elif len(params) == 5:
-            toAddress, fromAddress, subject, message, encodingType = params
-            TTL = 4 * 24 * 60 * 60
-
-        elif len(params) == 6:
-            toAddress, fromAddress, subject, message, encodingType, TTL = \
-                params
-
-        if encodingType not in [2, 3]:
+        if encodingType not in (2, 3):
             raise APIError(6, 'The encoding type must be 2 or 3.')
         subject = self._decode(subject, "base64")
         message = self._decode(message, "base64")
@@ -999,8 +876,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             TTL = 28 * 24 * 60 * 60
         toAddress = addBMIfNotPresent(toAddress)
         fromAddress = addBMIfNotPresent(fromAddress)
-        status, addressVersionNumber, streamNumber, toRipe = \
-            self._verifyAddress(toAddress)
+        streamNumber, toRipe = self._verifyAddress(toAddress)[2:]
         self._verifyAddress(fromAddress)
         try:
             fromAddressEnabled = BMConfigParser().getboolean(
@@ -1035,34 +911,24 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         toLabel = ''
         queryreturn = sqlQuery(
             "SELECT label FROM addressbook WHERE address=?", toAddress)
-        if queryreturn != []:
-            for row in queryreturn:
-                toLabel, = row
+        try:
+            toLabel, = queryreturn[0][0]
+        except IndexError:
+            pass
+
         queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
-
         queues.workerQueue.put(('sendmessage', toAddress))
 
         return hexlify(ackdata)
 
-    def HandleSendBroadcast(self, params):
+    @command('sendBroadcast')
+    def HandleSendBroadcast(
+        self, fromAddress, subject, message, encodingType=2,
+            TTL=4 * 24 * 60 * 60):
         """Handle a request to send a broadcast message"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-
-        if len(params) == 3:
-            fromAddress, subject, message = params
-            encodingType = 2
-            TTL = 4 * 24 * 60 * 60
-
-        elif len(params) == 4:
-            fromAddress, subject, message, encodingType = params
-            TTL = 4 * 24 * 60 * 60
-        elif len(params) == 5:
-            fromAddress, subject, message, encodingType, TTL = params
-
-        if encodingType not in [2, 3]:
+        if encodingType not in (2, 3):
             raise APIError(6, 'The encoding type must be 2 or 3.')
 
         subject = self._decode(subject, "base64")
@@ -1082,7 +948,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 13, 'could not find your fromAddress in the keys.dat file.')
         streamNumber = decodeAddress(fromAddress)[2]
         ackdata = genAckPayload(streamNumber, 0)
-        toAddress = '[Broadcast subscribers]'
+        toAddress = str_broadcast_subscribers
         ripe = ''
 
         t = ('',
@@ -1102,55 +968,45 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              TTL)
         helper_sent.insert(t)
 
-        toLabel = '[Broadcast subscribers]'
+        toLabel = str_broadcast_subscribers
         queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
         queues.workerQueue.put(('sendbroadcast', ''))
 
         return hexlify(ackdata)
 
-    def HandleGetStatus(self, params):
+    @command('getStatus')
+    def HandleGetStatus(self, ackdata):
         """Handle a request to get the status of a sent message"""
 
-        if len(params) != 1:
-            raise APIError(0, 'I need one parameter!')
-        ackdata, = params
         if len(ackdata) < 76:
             # The length of ackData should be at least 38 bytes (76 hex digits)
             raise APIError(15, 'Invalid ackData object size.')
         ackdata = self._decode(ackdata, "hex")
         queryreturn = sqlQuery(
             "SELECT status FROM sent where ackdata=?", ackdata)
-        if queryreturn == []:
+        try:
+            return queryreturn[0][0]
+        except IndexError:
             return 'notfound'
-        for row in queryreturn:
-            status, = row
-            return status
 
-    def HandleAddSubscription(self, params):
+    @command('addSubscription')
+    def HandleAddSubscription(self, address, label=''):
         """Handle a request to add a subscription"""
 
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        if len(params) == 1:
-            address, = params
-            label = ''
-        if len(params) == 2:
-            address, label = params
+        if label:
             label = self._decode(label, "base64")
             try:
                 unicode(label, 'utf-8')
-            except BaseException:
+            except UnicodeDecodeError:
                 raise APIError(17, 'Label is not valid UTF-8 data.')
-        if len(params) > 2:
-            raise APIError(0, 'I need either 1 or 2 parameters!')
-        address = addBMIfNotPresent(address)
         self._verifyAddress(address)
+        address = addBMIfNotPresent(address)
         # First we must check to see if the address is already in the
         # subscriptions list.
         queryreturn = sqlQuery(
             "SELECT * FROM subscriptions WHERE address=?", address)
-        if queryreturn != []:
+        if queryreturn:
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute(
             "INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
@@ -1159,36 +1015,37 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Added subscription.'
 
-    def HandleDeleteSubscription(self, params):
+    @command('deleteSubscription')
+    def HandleDeleteSubscription(self, address):
         """Handle a request to delete a subscription"""
 
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        address, = params
         address = addBMIfNotPresent(address)
-        sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
+        sqlExecute("DELETE FROM subscriptions WHERE address=?", address)
         shared.reloadBroadcastSendersForWhichImWatching()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Deleted subscription if it existed.'
 
-    def ListSubscriptions(self, params):
+    @command('listSubscriptions')
+    def ListSubscriptions(self):
         """Handle a request to list susbcriptions"""
 
         queryreturn = sqlQuery(
             "SELECT label, address, enabled FROM subscriptions")
-        data = {'subscriptions': []}
-        for row in queryreturn:
-            label, address, enabled = row
+        data = []
+        for label, address, enabled in queryreturn:
             label = shared.fixPotentiallyInvalidUTF8Data(label)
-            data['subscriptions'].append({
+            data.append({
                 'label': base64.b64encode(label),
                 'address': address,
                 'enabled': enabled == 1
             })
-        return json.dumps(data, indent=4, separators=(',', ': '))
+        return {'subscriptions': data}
 
-    def HandleDisseminatePreEncryptedMsg(self, params):
+    @command('disseminatePreEncryptedMsg')
+    def HandleDisseminatePreEncryptedMsg(
+        self, encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte,
+            requiredPayloadLengthExtraBytes):
         """Handle a request to disseminate an encrypted message"""
 
         # The device issuing this command to PyBitmessage supplies a msg
@@ -1196,42 +1053,28 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # to be done. PyBitmessage accepts this msg object and sends it out
         # to the rest of the Bitmessage network as if it had generated
         # the message itself. Please do not yet add this to the api doc.
-        if len(params) != 3:
-            raise APIError(0, 'I need 3 parameter!')
-        encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, \
-            requiredPayloadLengthExtraBytes = params
         encryptedPayload = self._decode(encryptedPayload, "hex")
         # Let us do the POW and attach it to the front
-        target = 2**64 / (
-            (
-                len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8
-            ) * requiredAverageProofOfWorkNonceTrialsPerByte
+        target = 2**64 / ((
+            len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8) *
+            requiredAverageProofOfWorkNonceTrialsPerByte)
+        logger.info(
+            '(For msg message via API) Doing proof of work. Total  required'
+            ' difficulty: %s\nRequired small message difficulty: %s',
+            float(requiredAverageProofOfWorkNonceTrialsPerByte) /
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+            float(requiredPayloadLengthExtraBytes) /
+            defaults.networkDefaultPayloadLengthExtraBytes,
         )
-        with threads.printLock:
-            print(
-                '(For msg message via API) Doing proof of work.'
-                'Total required difficulty:',
-                float(
-                    requiredAverageProofOfWorkNonceTrialsPerByte
-                ) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-                'Required small message difficulty:',
-                float(
-                    requiredPayloadLengthExtraBytes
-                ) / defaults.networkDefaultPayloadLengthExtraBytes,
-            )
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        with threads.printLock:
-            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
-            try:
-                print(
-                    'POW took', int(time.time() - powStartTime),
-                    'seconds.', nonce / (time.time() - powStartTime),
-                    'nonce trials per second.',
-                )
-            except BaseException:
-                pass
+        logger.info(
+            '(For msg message via API) Found proof of work %s\nNonce: %s\n'
+            'POW took %s seconds. %s nonce trials per second.',
+            trialValue, nonce, int(time.time() - powStartTime),
+            nonce / (time.time() - powStartTime)
+        )
         encryptedPayload = pack('>Q', nonce) + encryptedPayload
         toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
         inventoryHash = calculateInventoryHash(encryptedPayload)
@@ -1241,21 +1084,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, toStreamNumber, encryptedPayload,
             int(time.time()) + TTL, ''
         )
-        with threads.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
+        logger.info(
+            'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
+            ' command): %s', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
 
-    def HandleTrashSentMessageByAckDAta(self, params):
+    @command('trashSentMessageByAckData')
+    def HandleTrashSentMessageByAckDAta(self, ackdata):
         """Handle a request to trash a sent message by ackdata"""
-
         # This API method should only be used when msgid is not available
-        if not params:
-            raise APIError(0, 'I need parameters!')
-        ackdata = self._decode(params[0], "hex")
+        ackdata = self._decode(ackdata, "hex")
         sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=?", ackdata)
         return 'Trashed sent message (assuming message existed).'
 
-    def HandleDissimatePubKey(self, params):
+    @command('disseminatePubkey')
+    def HandleDissimatePubKey(self, payload):
         """Handle a request to disseminate a public key"""
 
         # The device issuing this command to PyBitmessage supplies a pubkey
@@ -1263,19 +1106,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # PyBitmessage accepts this pubkey object and sends it out to the rest
         # of the Bitmessage network as if it had generated the pubkey object
         # itself. Please do not yet add this to the api doc.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        payload, = params
         payload = self._decode(payload, "hex")
 
         # Let us do the POW
         target = 2 ** 64 / ((
             len(payload) + defaults.networkDefaultPayloadLengthExtraBytes + 8
         ) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message via API) Doing proof of work...'
+        logger.info('(For pubkey message via API) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
+        logger.info(
+            '(For pubkey message via API) Found proof of work %s Nonce: %s',
+            trialValue, nonce
+        )
         payload = pack('>Q', nonce) + payload
 
         pubkeyReadPosition = 8  # bypass the nonce
@@ -1284,8 +1127,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             pubkeyReadPosition += 8
         else:
             pubkeyReadPosition += 4
-        addressVersion, addressVersionLength = decodeVarint(
-            payload[pubkeyReadPosition:pubkeyReadPosition + 10])
+        addressVersionLength = decodeVarint(
+            payload[pubkeyReadPosition:pubkeyReadPosition + 10])[1]
         pubkeyReadPosition += addressVersionLength
         pubkeyStreamNumber = decodeVarint(
             payload[pubkeyReadPosition:pubkeyReadPosition + 10])[0]
@@ -1295,19 +1138,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         Inventory()[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
-        with threads.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
+        logger.info(
+            'broadcasting inv within API command disseminatePubkey with'
+            ' hash: %s', hexlify(inventoryHash))
         queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
 
-    def HandleGetMessageDataByDestinationHash(self, params):
+    @command(
+        'getMessageDataByDestinationHash', 'getMessageDataByDestinationTag')
+    def HandleGetMessageDataByDestinationHash(self, requestedHash):
         """Handle a request to get message data by destination hash"""
 
         # Method will eventually be used by a particular Android app to
         # select relevant messages. Do not yet add this to the api
         # doc.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        requestedHash, = params
         if len(requestedHash) != 32:
             raise APIError(
                 19, 'The length of hash should be 32 bytes (encoded in hex'
@@ -1321,8 +1164,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             "SELECT hash, payload FROM inventory WHERE tag = ''"
             " and objecttype = 2")
         with SqlBulkExecute() as sql:
-            for row in queryreturn:
-                hash01, payload = row
+            for hash01, payload in queryreturn:
                 readPosition = 16  # Nonce length + time length
                 # Stream Number length
                 readPosition += decodeVarint(
@@ -1332,17 +1174,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         queryreturn = sqlQuery(
             "SELECT payload FROM inventory WHERE tag = ?", requestedHash)
-        data = '{"receivedMessageDatas":['
-        for row in queryreturn:
-            payload, = row
-            if len(data) > 25:
-                data += ','
-            data += json.dumps(
-                {'data': hexlify(payload)}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
+        return {"receivedMessageDatas": [
+            {'data': hexlify(payload)} for payload, in queryreturn
+        ]}
 
-    def HandleClientStatus(self, params):
+    @command('clientStatus')
+    def HandleClientStatus(self):
         """Handle a request to get the status of the client"""
 
         connections_num = len(network.stats.connectedHostsList())
@@ -1352,7 +1189,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             networkStatus = 'connectedAndReceivingIncomingConnections'
         else:
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
-        return json.dumps({
+        return {
             'networkConnections': connections_num,
             'numberOfMessagesProcessed': state.numberOfMessagesProcessed,
             'numberOfBroadcastsProcessed': state.numberOfBroadcastsProcessed,
@@ -1360,123 +1197,57 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
-        }, indent=4, separators=(',', ': '))
+        }
 
-    def HandleDecodeAddress(self, params):
+    @command('decodeAddress')
+    def HandleDecodeAddress(self, address):
         """Handle a request to decode an address"""
-
         # Return a meaningful decoding of an address.
-        if len(params) != 1:
-            raise APIError(0, 'I need 1 parameter!')
-        address, = params
         status, addressVersion, streamNumber, ripe = decodeAddress(address)
-        return json.dumps({
+        return {
             'status': status,
             'addressVersion': addressVersion,
             'streamNumber': streamNumber,
             'ripe': base64.b64encode(ripe)
-        }, indent=4, separators=(',', ': '))
+        }
 
-    def HandleHelloWorld(self, params):
+    @command('helloWorld')
+    def HandleHelloWorld(self, a, b):
         """Test two string params"""
-
-        a, b = params
         return a + '-' + b
 
-    def HandleAdd(self, params):
+    @command('add')
+    def HandleAdd(self, a, b):
         """Test two numeric params"""
-
-        a, b = params
         return a + b
 
-    def HandleStatusBar(self, params):
+    @command('statusBar')
+    def HandleStatusBar(self, message):
         """Handle a request to update the status bar"""
-
-        message, = params
         queues.UISignalQueue.put(('updateStatusBar', message))
 
-    def HandleDeleteAndVacuum(self, params):
+    @command('deleteAndVacuum')
+    def HandleDeleteAndVacuum(self):
         """Handle a request to run the deleteandvacuum stored procedure"""
+        sqlStoredProcedure('deleteandvacuume')
+        return 'done'
 
-        if not params:
-            sqlStoredProcedure('deleteandvacuume')
-            return 'done'
-        return None
-
-    def HandleShutdown(self, params):
+    @command('shutdown')
+    def HandleShutdown(self):
         """Handle a request to shutdown the node"""
-
-        if not params:
-            # backward compatible trick because False == 0 is True
-            state.shutdown = False
-            return 'done'
-        return None
-
-    handlers = {}
-    handlers['helloWorld'] = HandleHelloWorld
-    handlers['add'] = HandleAdd
-    handlers['statusBar'] = HandleStatusBar
-    handlers['listAddresses'] = HandleListAddresses
-    handlers['listAddressBookEntries'] = HandleListAddressBookEntries
-    # the listAddressbook alias should be removed eventually.
-    handlers['listAddressbook'] = HandleListAddressBookEntries
-    handlers['addAddressBookEntry'] = HandleAddAddressBookEntry
-    # the addAddressbook alias should be deleted eventually.
-    handlers['addAddressbook'] = HandleAddAddressBookEntry
-    handlers['deleteAddressBookEntry'] = HandleDeleteAddressBookEntry
-    # The deleteAddressbook alias should be deleted eventually.
-    handlers['deleteAddressbook'] = HandleDeleteAddressBookEntry
-    handlers['createRandomAddress'] = HandleCreateRandomAddress
-    handlers['createDeterministicAddresses'] = \
-        HandleCreateDeterministicAddresses
-    handlers['getDeterministicAddress'] = HandleGetDeterministicAddress
-    handlers['createChan'] = HandleCreateChan
-    handlers['joinChan'] = HandleJoinChan
-    handlers['leaveChan'] = HandleLeaveChan
-    handlers['deleteAddress'] = HandleDeleteAddress
-    handlers['getAllInboxMessages'] = HandleGetAllInboxMessages
-    handlers['getAllInboxMessageIds'] = HandleGetAllInboxMessageIds
-    handlers['getAllInboxMessageIDs'] = HandleGetAllInboxMessageIds
-    handlers['getInboxMessageById'] = HandleGetInboxMessageById
-    handlers['getInboxMessageByID'] = HandleGetInboxMessageById
-    handlers['getAllSentMessages'] = HandleGetAllSentMessages
-    handlers['getAllSentMessageIds'] = HandleGetAllSentMessageIds
-    handlers['getAllSentMessageIDs'] = HandleGetAllSentMessageIds
-    handlers['getInboxMessagesByReceiver'] = HandleInboxMessagesByReceiver
-    # after some time getInboxMessagesByAddress should be removed
-    handlers['getInboxMessagesByAddress'] = HandleInboxMessagesByReceiver
-    handlers['getSentMessageById'] = HandleGetSentMessageById
-    handlers['getSentMessageByID'] = HandleGetSentMessageById
-    handlers['getSentMessagesByAddress'] = HandleGetSentMessagesByAddress
-    handlers['getSentMessagesBySender'] = HandleGetSentMessagesByAddress
-    handlers['getSentMessageByAckData'] = HandleGetSentMessagesByAckData
-    handlers['trashMessage'] = HandleTrashMessage
-    handlers['trashInboxMessage'] = HandleTrashInboxMessage
-    handlers['trashSentMessage'] = HandleTrashSentMessage
-    handlers['trashSentMessageByAckData'] = HandleTrashSentMessageByAckDAta
-    handlers['sendMessage'] = HandleSendMessage
-    handlers['sendBroadcast'] = HandleSendBroadcast
-    handlers['getStatus'] = HandleGetStatus
-    handlers['addSubscription'] = HandleAddSubscription
-    handlers['deleteSubscription'] = HandleDeleteSubscription
-    handlers['listSubscriptions'] = ListSubscriptions
-    handlers['disseminatePreEncryptedMsg'] = HandleDisseminatePreEncryptedMsg
-    handlers['disseminatePubkey'] = HandleDissimatePubKey
-    handlers['getMessageDataByDestinationHash'] = \
-        HandleGetMessageDataByDestinationHash
-    handlers['getMessageDataByDestinationTag'] = \
-        HandleGetMessageDataByDestinationHash
-    handlers['clientStatus'] = HandleClientStatus
-    handlers['decodeAddress'] = HandleDecodeAddress
-    handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
-    handlers['shutdown'] = HandleShutdown
+        # backward compatible trick because False == 0 is True
+        state.shutdown = False
+        return 'done'
 
     def _handle_request(self, method, params):
-        if method not in self.handlers:
+        try:
+            # pylint: disable=attribute-defined-outside-init
+            self._method = method
+            return self._handlers[method](self, *params)
+        except KeyError:
             raise APIError(20, 'Invalid method: %s' % method)
-        result = self.handlers[method](self, params)
-        state.last_api_response = time.time()
-        return result
+        finally:
+            state.last_api_response = time.time()
 
     def _dispatch(self, method, params):
         # pylint: disable=attribute-defined-outside-init
