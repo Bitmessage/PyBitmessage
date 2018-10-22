@@ -1,7 +1,26 @@
+"""
+src/network/objectracker.py
+===========================
+
+addr sending -> per node upload queue, and flush every minute or so
+inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue and flush every
+minute or so
+data sending -> a simple queue
+
+no bloom
+- if inv arrives
+  - if we don't have it, add tracking and download queue
+  - if we do have it, remove from tracking
+tracking downloads
+- per node hash of items the node has but we don't
+tracking inv
+- per node hash of items that neither the remote node nor we have
+
+"""
+
 import time
 from threading import RLock
 
-from inventory import Inventory
 import network.connectionpool
 from network.dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
@@ -24,7 +43,9 @@ except ImportError:
 # it isn't actually implemented yet so no point in turning it on
 haveBloom = False
 
+
 class ObjectTracker(object):
+    """"""
     invCleanPeriod = 300
     invInitialCapacity = 50000
     invErrorRate = 0.03
@@ -40,21 +61,24 @@ class ObjectTracker(object):
         self.lastCleaned = time.time()
 
     def initInvBloom(self):
+        """"""
         if haveBloom:
             # lock?
             self.invBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
                                         error_rate=ObjectTracker.invErrorRate)
 
     def initAddrBloom(self):
+        """"""
         if haveBloom:
             # lock?
             self.addrBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
                                          error_rate=ObjectTracker.invErrorRate)
 
     def clean(self):
+        """"""
         if self.lastCleaned < time.time() - ObjectTracker.invCleanPeriod:
             if haveBloom:
-                if len(missingObjects) == 0:
+                if not missingObjects:
                     self.initInvBloom()
                 self.initAddrBloom()
             else:
@@ -65,12 +89,13 @@ class ObjectTracker(object):
             self.lastCleaned = time.time()
 
     def hasObj(self, hashid):
+        """"""
         if haveBloom:
             return hashid in self.invBloom
-        else:
-            return hashid in self.objectsNewToMe
+        return hashid in self.objectsNewToMe
 
     def handleReceivedInventory(self, hashId):
+        """"""
         if haveBloom:
             self.invBloom.add(hashId)
         try:
@@ -83,15 +108,17 @@ class ObjectTracker(object):
         self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
-        for i in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
+        """"""
+        for i in network.connectionpool.BMConnectionPool().inboundConnections.values(
+        ) + network.connectionpool.BMConnectionPool().outboundConnections.values():
             if not i.fullyEstablished:
                 continue
             try:
                 del i.objectsNewToMe[hashid]
             except KeyError:
                 if streamNumber in i.streams and \
-                    (not Dandelion().hasHash(hashid) or \
-                    Dandelion().objectChildStem(hashid) == i):
+                    (not Dandelion().hasHash(hashid) or
+                     Dandelion().objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
                         i.objectsNewToThem[hashid] = time.time()
                     # update stream number, which we didn't have when we just received the dinv
@@ -107,23 +134,12 @@ class ObjectTracker(object):
         self.objectsNewToMe.setLastObject()
 
     def hasAddr(self, addr):
+        """"""
         if haveBloom:
             return addr in self.invBloom
+        return None
 
     def addAddr(self, hashid):
+        """"""
         if haveBloom:
             self.addrBloom.add(hashid)
-
-# addr sending -> per node upload queue, and flush every minute or so
-# inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue and flush every minute or so
-# data sending -> a simple queue
-
-# no bloom
-# - if inv arrives
-#   - if we don't have it, add tracking and download queue
-#   - if we do have it, remove from tracking
-# tracking downloads
-# - per node hash of items the node has but we don't
-# tracking inv
-# - per node hash of items that neither the remote node nor we have
-#

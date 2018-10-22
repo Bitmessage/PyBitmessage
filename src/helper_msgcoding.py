@@ -1,5 +1,9 @@
 """
+src/helper_msgcoding.py
+=======================
+
 Message encoding end decoding functions
+
 """
 
 import string
@@ -25,19 +29,24 @@ BITMESSAGE_ENCODING_EXTENDED = 3
 
 
 class MsgEncodeException(Exception):
+    """"""
     pass
 
 
 class MsgDecodeException(Exception):
+    """"""
     pass
 
 
 class DecompressionSizeException(MsgDecodeException):
+    """"""
     def __init__(self, size):
+        super(DecompressionSizeException, self).__init__()
         self.size = size
 
 
 class MsgEncode(object):
+    """"""
     def __init__(self, message, encoding=BITMESSAGE_ENCODING_SIMPLE):
         self.data = None
         self.encoding = encoding
@@ -52,6 +61,7 @@ class MsgEncode(object):
             raise MsgEncodeException("Unknown encoding %i" % (encoding))
 
     def encodeExtended(self, message):
+        """"""
         try:
             msgObj = messagetypes.message.Message()
             self.data = zlib.compress(msgpack.dumps(msgObj.encode(message)), 9)
@@ -64,15 +74,18 @@ class MsgEncode(object):
         self.length = len(self.data)
 
     def encodeSimple(self, message):
+        """"""
         self.data = 'Subject:%(subject)s\nBody:%(body)s' % message
         self.length = len(self.data)
 
     def encodeTrivial(self, message):
+        """"""
         self.data = message['body']
         self.length = len(self.data)
 
 
 class MsgDecode(object):
+    """"""
     def __init__(self, encoding, data):
         self.encoding = encoding
         if self.encoding == BITMESSAGE_ENCODING_EXTENDED:
@@ -88,6 +101,7 @@ class MsgDecode(object):
             self.subject = _translate("MsgDecode", "Unknown encoding")
 
     def decodeExtended(self, data):
+        """"""
         dc = zlib.decompressobj()
         tmp = ""
         while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
@@ -131,6 +145,7 @@ class MsgDecode(object):
             self.body = msgObj.body
 
     def decodeSimple(self, data):
+        """"""
         bodyPositionIndex = string.find(data, '\nBody:')
         if bodyPositionIndex > 1:
             subject = data[8:bodyPositionIndex]

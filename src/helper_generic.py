@@ -1,25 +1,30 @@
 """
+src/helper_generic.py
+=====================
+
 Helper Generic perform generic operations for threading.
 
 Also perform some conversion operations.
 """
 
+from __future__ import print_function
 
+import multiprocessing
 import socket
 import sys
 import threading
 import traceback
-import multiprocessing
 from binascii import hexlify, unhexlify
 
-import shared
-import state
 import queues
+import shared
 import shutdown
+import state
 from debug import logger
 
 
 def powQueueSize():
+    """"""
     curWorkerQueue = queues.workerQueue.qsize()
     for thread in threading.enumerate():
         try:
@@ -31,23 +36,25 @@ def powQueueSize():
 
 
 def convertIntToString(n):
+    """"""
     a = __builtins__.hex(n)
     if a[-1:] == 'L':
         a = a[:-1]
     if (len(a) % 2) == 0:
         return unhexlify(a[2:])
-    else:
-        return unhexlify('0' + a[2:])
+    return unhexlify('0' + a[2:])
 
 
 def convertStringToInt(s):
+    """"""
     return int(hexlify(s), 16)
 
 
-def allThreadTraceback(frame):
+def allThreadTraceback():
+    """"""
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
-    for threadId, stack in sys._current_frames().items():
+    for threadId, stack in sys._current_frames().items():  # pylint: disable=protected-access
         code.append(
             '\n# Thread: %s(%d)' % (id2name.get(threadId, ''), threadId))
         for filename, lineno, name, line in traceback.extract_stack(stack):
@@ -59,6 +66,8 @@ def allThreadTraceback(frame):
 
 
 def signal_handler(signal, frame):
+    """"""
+    # pylint: disable=unused-argument
     process = multiprocessing.current_process()
     logger.error(
         'Got signal %i in %s/%s',
@@ -73,17 +82,21 @@ def signal_handler(signal, frame):
     if threading.current_thread().name not in ("PyBitmessage", "MainThread"):
         return
     logger.error("Got signal %i", signal)
-    if shared.thisapp.daemon or not state.enableGUI:  # FIXME redundant?
+    if shared.thisapp.daemon or not state.enableGUI:  # .. todo:: FIXME redundant?
         shutdown.doCleanShutdown()
     else:
-        allThreadTraceback(frame)
+        allThreadTraceback()
         print('Unfortunately you cannot use Ctrl+C when running the UI'
               ' because the UI captures the signal.')
 
 
 def isHostInPrivateIPRange(host):
+    """"""
+    # pylint: disable=too-many-return-statements
+
     if ":" in host:  # IPv6
         hostAddr = socket.inet_pton(socket.AF_INET6, host)
+
         if hostAddr == ('\x00' * 15) + '\x01':
             return False
         if hostAddr[0] == '\xFE' and (ord(hostAddr[1]) & 0xc0) == 0x80:
@@ -106,4 +119,5 @@ def isHostInPrivateIPRange(host):
 
 
 def addDataPadding(data, desiredMsgLength=12, paddingChar='\x00'):
+    """"""
     return data + paddingChar * (desiredMsgLength - len(data))

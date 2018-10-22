@@ -1,14 +1,17 @@
-import importlib
-from os import listdir, path
-from pprint import pprint
-import sys
-import traceback
+"""
+dev/msgtest.py
+==============
+"""
 
-data = {"": "message", "subject": "subject", "body": "body"}
-#data = {"": "vote", "msgid": "msgid"}
-#data = {"fsck": 1}
+import sys
+from pprint import pprint
 
 import messagetypes
+
+data = {"": "message", "subject": "subject", "body": "body"}
+# data = {"": "vote", "msgid": "msgid"}
+# data = {"fsck": 1}
+
 
 if __name__ == '__main__':
     try:
