@@ -314,6 +314,41 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
 
         return (status, addressVersionNumber, streamNumber, ripe)
 
+    @staticmethod
+    def _dump_inbox_message(
+            msgid, toAddress, fromAddress, subject, received,
+            message, encodingtype, read):
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        return {
+            'msgid': hexlify(msgid),
+            'toAddress': toAddress,
+            'fromAddress': fromAddress,
+            'subject': base64.b64encode(subject),
+            'message': base64.b64encode(message),
+            'encodingType': encodingtype,
+            'receivedTime': received,
+            'read': read
+        }
+
+    @staticmethod
+    def _dump_sent_message(
+            msgid, toAddress, fromAddress, subject, lastactiontime,
+            message, encodingtype, status, ackdata):
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        return {
+            'msgid': hexlify(msgid),
+            'toAddress': toAddress,
+            'fromAddress': fromAddress,
+            'subject': base64.b64encode(subject),
+            'message': base64.b64encode(message),
+            'encodingType': encodingtype,
+            'lastActionTime': lastactiontime,
+            'status': status,
+            'ackData': hexlify(ackdata)
+        }
+
     # Request Handlers
 
     @command('listAddresses', 'listAddresses2')
@@ -610,22 +645,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             " encodingtype, read FROM inbox WHERE folder='inbox'"
             " ORDER BY received"
         )
-        data = []
-        for (msgid, toAddress, fromAddress, subject, received, message,
-             encodingtype, read) in queryreturn:
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data.append({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'receivedTime': received,
-                'read': read
-            })
-        return {"inboxMessages": data}
+        return {"inboxMessages": [
+            self._dump_inbox_message(*data) for data in queryreturn
+        ]}
 
     @command('getAllInboxMessageIds', 'getAllInboxMessageIDs')
     def HandleGetAllInboxMessageIds(self):
@@ -663,24 +685,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             "SELECT toaddress, fromaddress, subject, received, message,"
             " encodingtype, read FROM inbox WHERE msgid=?", msgid
         )
-        data = []
         try:
-            (toAddress, fromAddress, subject, received, message, encodingtype,
-             read) = queryreturn[0]
+            return {"inboxMessage": [
+                self._dump_inbox_message(*queryreturn[0])]}
         except IndexError:
-            return  # FIXME inconsistent
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        message = shared.fixPotentiallyInvalidUTF8Data(message)
-        return {"inboxMessage": [{
-            'msgid': hid,
-            'toAddress': toAddress,
-            'fromAddress': fromAddress,
-            'subject': base64.b64encode(subject),
-            'message': base64.b64encode(message),
-            'encodingType': encodingtype,
-            'receivedTime': received,
-            'read': read
-        }]}
+            pass  # FIXME inconsistent
 
     @command('getAllSentMessages')
     def HandleGetAllSentMessages(self):
@@ -691,23 +700,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             " message, encodingtype, status, ackdata FROM sent"
             " WHERE folder='sent' ORDER BY lastactiontime"
         )
-        data = []
-        for (msgid, toAddress, fromAddress, subject, lastactiontime, message,
-             encodingtype, status, ackdata) in queryreturn:
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data.append({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'lastActionTime': lastactiontime,
-                'status': status,
-                'ackData': hexlify(ackdata)
-            })
-        return {"sentMessages": data}
+        return {"sentMessages": [
+            self._dump_sent_message(*data) for data in queryreturn
+        ]}
 
     @command('getAllSentMessageIds', 'getAllSentMessageIDs')
     def HandleGetAllSentMessageIds(self):
@@ -727,24 +722,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         """Handle a request to get inbox messages by receiver"""
 
         queryreturn = sqlQuery(
-            "SELECT msgid, toaddress, fromaddress, subject, received, message,"
-            " encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?",
-            toAddress)
-        data = []
-        for (msgid, toAddress, fromAddress, subject, received, message,
-             encodingtype) in queryreturn:
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data.append({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'receivedTime': received
-            })
-        return {"inboxMessages": data}
+            "SELECT msgid, toaddress, fromaddress, subject, received,"
+            " message, encodingtype, read FROM inbox WHERE folder='inbox'"
+            " AND toAddress=?", toAddress)
+        return {"inboxMessages": [
+            self._dump_inbox_message(*data) for data in queryreturn
+        ]}
 
     @command('getSentMessageById', 'getSentMessageByID')
     def HandleGetSentMessageById(self, hid):
@@ -757,23 +740,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             msgid
         )
         try:
-            (toAddress, fromAddress, subject, lastactiontime, message,
-             encodingtype, status, ackdata) = queryreturn[0]
+            return {"sentMessage": [
+                self._dump_sent_message(*queryreturn[0])
+            ]}
         except IndexError:
-            return  # FIXME inconsistent
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        message = shared.fixPotentiallyInvalidUTF8Data(message)
-        return {"sentMessage": [{
-            'msgid': hid,
-            'toAddress': toAddress,
-            'fromAddress': fromAddress,
-            'subject': base64.b64encode(subject),
-            'message': base64.b64encode(message),
-            'encodingType': encodingtype,
-            'lastActionTime': lastactiontime,
-            'status': status,
-            'ackData': hexlify(ackdata)
-        }]}
+            pass  # FIXME inconsistent
 
     @command('getSentMessagesByAddress', 'getSentMessagesBySender')
     def HandleGetSentMessagesByAddress(self, fromAddress):
@@ -785,23 +756,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             " WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime",
             fromAddress
         )
-        data = []
-        for (msgid, toAddress, fromAddress, subject, lastactiontime, message,
-             encodingtype, status, ackdata) in queryreturn:
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data.append({
-                'msgid': hexlify(msgid),
-                'toAddress': toAddress,
-                'fromAddress': fromAddress,
-                'subject': base64.b64encode(subject),
-                'message': base64.b64encode(message),
-                'encodingType': encodingtype,
-                'lastActionTime': lastactiontime,
-                'status': status,
-                'ackData': hexlify(ackdata)
-            })
-        return {"sentMessages": data}
+        return {"sentMessages": [
+            self._dump_sent_message(*data) for data in queryreturn
+        ]}
 
     @command('getSentMessageByAckData')
     def HandleGetSentMessagesByAckData(self, ackData):
@@ -815,23 +772,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         )
 
         try:
-            (msgid, toAddress, fromAddress, subject, lastactiontime,
-             message, encodingtype, status, ackdata) = queryreturn[0]
+            return {"sentMessage": [
+                self._dump_sent_message(*queryreturn[0])
+            ]}
         except IndexError:
-            return  # FIXME inconsistent
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        message = shared.fixPotentiallyInvalidUTF8Data(message)
-        return {"sentMessage": [{
-            'msgid': hexlify(msgid),
-            'toAddress': toAddress,
-            'fromAddress': fromAddress,
-            'subject': base64.b64encode(subject),
-            'message': base64.b64encode(message),
-            'encodingType': encodingtype,
-            'lastActionTime': lastactiontime,
-            'status': status,
-            'ackData': hexlify(ackdata)
-        }]}
+            pass  # FIXME inconsistent
 
     @command('trashMessage')
     def HandleTrashMessage(self, msgid):
