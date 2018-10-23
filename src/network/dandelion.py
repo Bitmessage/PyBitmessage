@@ -1,14 +1,19 @@
+"""
+src/network/dandelion.py
+========================
+
+"""
+
 from collections import namedtuple
-from random import choice, sample, expovariate
+from random import choice, expovariate, sample
 from threading import RLock
 from time import time
 
-from bmconfigparser import BMConfigParser
 import network.connectionpool
+import state
 from debug import logging
 from queues import invQueue
 from singleton import Singleton
-import state
 
 # randomise routes after 600 seconds
 REASSIGN_INTERVAL = 600
@@ -21,8 +26,12 @@ MAX_STEMS = 2
 
 Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
 
+
 @Singleton
-class Dandelion():
+class Dandelion:
+    """"""
+    # pylint: disable=old-style-class
+
     def __init__(self):
         # currently assignable child stems
         self.stem = []
@@ -35,31 +44,36 @@ class Dandelion():
         self.lock = RLock()
 
     def poissonTimeout(self, start=None, average=0):
+        """"""
+        # pylint: disable=no-self-use
         if start is None:
             start = time()
         if average == 0:
             average = FLUFF_TRIGGER_MEAN_DELAY
-        return start + expovariate(1.0/average) + FLUFF_TRIGGER_FIXED_DELAY
+        return start + expovariate(1.0 / average) + FLUFF_TRIGGER_FIXED_DELAY
 
     def addHash(self, hashId, source=None, stream=1):
+        """"""
         if not state.dandelion:
             return
         with self.lock:
             self.hashMap[hashId] = Stem(
-                    self.getNodeStem(source),
-                    stream,
-                    self.poissonTimeout())
+                self.getNodeStem(source),
+                stream,
+                self.poissonTimeout())
 
     def setHashStream(self, hashId, stream=1):
+        """"""
         with self.lock:
             if hashId in self.hashMap:
                 self.hashMap[hashId] = Stem(
-                        self.hashMap[hashId].child,
-                        stream,
-                        self.poissonTimeout())
+                    self.hashMap[hashId].child,
+                    stream,
+                    self.poissonTimeout())
 
     def removeHash(self, hashId, reason="no reason specified"):
-        logging.debug("%s entering fluff mode due to %s.", ''.join('%02x'%ord(i) for i in hashId), reason)
+        """"""
+        logging.debug("%s entering fluff mode due to %s.", ''.join('%02x' % ord(i) for i in hashId), reason)
         with self.lock:
             try:
                 del self.hashMap[hashId]
@@ -67,12 +81,15 @@ class Dandelion():
                 pass
 
     def hasHash(self, hashId):
+        """"""
         return hashId in self.hashMap
 
     def objectChildStem(self, hashId):
+        """"""
         return self.hashMap[hashId].child
 
     def maybeAddStem(self, connection):
+        """"""
         # fewer than MAX_STEMS outbound connections at last reshuffle?
         with self.lock:
             if len(self.stem) < MAX_STEMS:
@@ -83,8 +100,8 @@ class Dandelion():
                     self.hashMap[k] = Stem(connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
 
-
     def maybeRemoveStem(self, connection):
+        """"""
         # is the stem active?
         with self.lock:
             if connection in self.stem:
@@ -96,6 +113,7 @@ class Dandelion():
                     self.hashMap[k] = Stem(None, v.stream, self.poissonTimeout())
 
     def pickStem(self, parent=None):
+        """"""
         try:
             # pick a random from available stems
             stem = choice(range(len(self.stem)))
@@ -112,6 +130,7 @@ class Dandelion():
             return None
 
     def getNodeStem(self, node=None):
+        """"""
         with self.lock:
             try:
                 return self.nodeMap[node]
@@ -120,15 +139,18 @@ class Dandelion():
                 return self.nodeMap[node]
 
     def expire(self):
+        """"""
         with self.lock:
             deadline = time()
             # only expire those that have a child node, i.e. those without a child not will stick around
-            toDelete = [[v.stream, k, v.child] for k, v in self.hashMap.iteritems() if v.timeout < deadline and v.child]
+            toDelete = [[v.stream, k, v.child]
+                        for k, v in self.hashMap.iteritems() if v.timeout < deadline and v.child]
             for row in toDelete:
                 self.removeHash(row[1], 'expiration')
                 invQueue.put((row[0], row[1], row[2]))
 
     def reRandomiseStems(self):
+        """"""
         with self.lock:
             try:
                 # random two connections

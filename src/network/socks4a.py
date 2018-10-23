@@ -1,27 +1,38 @@
+"""
+src/network/socks4a.py
+======================
+"""
+# pylint: disable=attribute-defined-outside-init
+
 import socket
 import struct
 
-from proxy import Proxy, ProxyError, GeneralProxyError
+from proxy import GeneralProxyError, Proxy, ProxyError
+
 
 class Socks4aError(ProxyError):
+    """"""
     errorCodes = ("Request granted",
-        "Request rejected or failed",
-        "Request rejected because SOCKS server cannot connect to identd on the client",
-        "Request rejected because the client program and identd report different user-ids",
-        "Unknown error")
+                  "Request rejected or failed",
+                  "Request rejected because SOCKS server cannot connect to identd on the client",
+                  "Request rejected because the client program and identd report different user-ids",
+                  "Unknown error")
 
 
 class Socks4a(Proxy):
+    """"""
     def __init__(self, address=None):
         Proxy.__init__(self, address)
         self.ipaddr = None
         self.destport = address[1]
 
     def state_init(self):
+        """"""
         self.set_state("auth_done", 0)
         return True
 
     def state_pre_connect(self):
+        """"""
         # Get the response
         if self.read_buf[0:1] != chr(0x00).encode():
             # bad data
@@ -47,14 +58,17 @@ class Socks4a(Proxy):
         return True
 
     def proxy_sock_name(self):
-       return socket.inet_ntoa(self.__proxysockname[0])
+        """"""
+        return socket.inet_ntoa(self.__proxysockname[0])
 
 
 class Socks4aConnection(Socks4a):
+    """"""
     def __init__(self, address):
         Socks4a.__init__(self, address=address)
 
     def state_auth_done(self):
+        """"""
         # Now we can request the actual connection
         rmtrslv = False
         self.append_write_buf(struct.pack('>BBH', 0x04, 0x01, self.destination[1]))
@@ -65,7 +79,7 @@ class Socks4aConnection(Socks4a):
             self.append_write_buf(self.ipaddr)
         except socket.error:
             # Well it's not an IP number,  so it's probably a DNS name.
-            if Proxy._remote_dns:
+            if Proxy._remote_dns:  # pylint: disable=protected-access
                 # Resolve remotely
                 rmtrslv = True
                 self.ipaddr = None
@@ -83,6 +97,7 @@ class Socks4aConnection(Socks4a):
         return True
 
     def state_pre_connect(self):
+        """"""
         try:
             return Socks4a.state_pre_connect(self)
         except Socks4aError as e:
@@ -91,12 +106,14 @@ class Socks4aConnection(Socks4a):
 
 
 class Socks4aResolver(Socks4a):
+    """"""
     def __init__(self, host):
         self.host = host
         self.port = 8444
         Socks4a.__init__(self, address=(self.host, self.port))
 
     def state_auth_done(self):
+        """"""
         # Now we can request the actual connection
         self.append_write_buf(struct.pack('>BBH', 0x04, 0xF0, self.destination[1]))
         self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
@@ -108,4 +125,5 @@ class Socks4aResolver(Socks4a):
         return True
 
     def resolved(self):
+        """"""
         print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
