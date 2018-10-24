@@ -1188,9 +1188,27 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         try:
             # pylint: disable=attribute-defined-outside-init
             self._method = method
-            return self._handlers[method](self, *params)
+            func = self._handlers[method]
+            return func(self, *params)
         except KeyError:
             raise APIError(20, 'Invalid method: %s' % method)
+        except TypeError as e:
+            msg = "Unexpected internal error: %s" % e
+            if 'argument' not in str(e):
+                raise APIError(0, msg)
+            argcount = len(params)
+            maxcount = func.func_code.co_argcount
+            if argcount > maxcount:
+                msg = (
+                    "Command %s takes at most %s parameters (%s given)" %
+                    (method, maxcount, argcount))
+            else:
+                mincount = maxcount - len(func.func_defaults or [])
+                if argcount < mincount:
+                    msg = (
+                        "Command %s takes at least %s parameters (%s given)" %
+                        (method, mincount, argcount))
+            raise APIError(0, msg)
         finally:
             state.last_api_response = time.time()
 
