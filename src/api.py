@@ -68,9 +68,8 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
     """A SimpleXMLRPCServer that honours state.shutdown"""
     allow_reuse_address = True
 
-    def serve_forever(self):
+    def serve_forever(self, poll_interval=None):
         """Start the SimpleXMLRPCServer"""
-        # pylint: disable=arguments-differ
         while state.shutdown == 0:
             self.handle_request()
 
@@ -121,6 +120,7 @@ class singleAPI(StoppableThread):
                         'bitmessagesettings', 'apiport', str(port))
                     BMConfigParser().save()
                 break
+        se.register_instance(BMXMLRPCDispatcher())
         se.register_introspection_functions()
 
         apiNotifyPath = BMConfigParser().safeGet(
@@ -185,9 +185,8 @@ class command(object):
 # Modified by Jonathan Warren (Atheros).
 # Further modified by the Bitmessage developers
 # http://code.activestate.com/recipes/501148
-class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
+class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     """The main API handler"""
-    __metaclass__ = CommandHandler
 
     def do_POST(self):
         """
@@ -219,16 +218,28 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
                 size_remaining -= len(L[-1])
             data = ''.join(L)
 
-            # In previous versions of SimpleXMLRPCServer, _dispatch
-            # could be overridden in this class, instead of in
-            # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
-            # check to see if a subclass implements _dispatch and dispatch
-            # using that method if present.
-            # pylint: disable=protected-access
-            response = self.server._marshaled_dispatch(
-                data, getattr(self, '_dispatch', None)
-            )
-        except BaseException:  # This should only happen if the module is buggy
+            # pylint: disable=attribute-defined-outside-init
+            self.cookies = []
+
+            validuser = self.APIAuthenticateClient()
+            if not validuser:
+                time.sleep(2)
+                # ProtocolError?
+                response = (
+                    "RPC Username or password incorrect or HTTP header"
+                    " lacks authentication at all."
+                )
+            else:
+                # In previous versions of SimpleXMLRPCServer, _dispatch
+                # could be overridden in this class, instead of in
+                # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
+                # check to see if a subclass implements _dispatch and dispatch
+                # using that method if present.
+                # pylint: disable=protected-access
+                response = self.server._marshaled_dispatch(
+                    data, getattr(self, '_dispatch', None)
+                )
+        except Exception:  # This should only happen if the module is buggy
             # internal error, report as HTTP server error
             self.send_response(500)
             self.end_headers()
@@ -275,6 +286,11 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             time.sleep(2)
 
         return False
+
+
+class BMXMLRPCDispatcher(object):
+    """This class is used to dispatch API commands"""
+    __metaclass__ = CommandHandler
 
     def _decode(self, text, decode_type):
         try:
@@ -1216,15 +1232,6 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             state.last_api_response = time.time()
 
     def _dispatch(self, method, params):
-        # pylint: disable=attribute-defined-outside-init
-        self.cookies = []
-
-        validuser = self.APIAuthenticateClient()
-        if not validuser:
-            time.sleep(2)
-            # ProtocolError?
-            return "RPC Username or password incorrect or HTTP header lacks authentication at all."
-
         _fault = None
 
         try:
@@ -1246,3 +1253,10 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
                 return str(_fault)
             else:
                 raise _fault  # pylint: disable=raising-bad-type
+
+    def _listMethods(self):
+        """List all API commands"""
+        return self._handlers.keys()
+
+    def _methodHelp(self, method):
+        return self._handlers[method].__doc__
