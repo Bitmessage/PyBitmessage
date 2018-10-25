@@ -54,6 +54,7 @@ except ImportError:
 else:
     monkey_patch()
 
+
 str_chan = '[chan]'
 str_broadcast_subscribers = '[Broadcast subscribers]'
 
@@ -62,16 +63,6 @@ class APIError(xmlrpclib.Fault):
     """APIError exception class"""
     def __str__(self):
         return "API Error %04i: %s" % (self.faultCode, self.faultString)
-
-
-class StoppableXMLRPCServer(SimpleXMLRPCServer):
-    """A SimpleXMLRPCServer that honours state.shutdown"""
-    allow_reuse_address = True
-
-    def serve_forever(self, poll_interval=None):
-        """Start the SimpleXMLRPCServer"""
-        while state.shutdown == 0:
-            self.handle_request()
 
 
 # This thread, of which there is only one, runs the API.
@@ -99,17 +90,38 @@ class singleAPI(StoppableThread):
             getattr(errno, 'WSAEADDRINUSE')
         except AttributeError:
             errno.WSAEADDRINUSE = errno.EADDRINUSE
+
+        RPCServerBase = SimpleXMLRPCServer
+        if BMConfigParser().safeGet(
+                'bitmessagesettings', 'apivariant') == 'json':
+            try:
+                from jsonrpclib.SimpleJSONRPCServer import (
+                    SimpleJSONRPCServer as RPCServerBase)
+            except ImportError:
+                logger.warning(
+                    'jsonrpclib not available, failing back to XML-RPC')
+
+        # Nested class. FIXME not found a better solution.
+        class StoppableRPCServer(RPCServerBase):
+            """A SimpleXMLRPCServer that honours state.shutdown"""
+            allow_reuse_address = True
+
+            def serve_forever(self, poll_interval=None):
+                """Start the RPCServer"""
+                while state.shutdown == 0:
+                    self.handle_request()
+
         for attempt in range(50):
             try:
                 if attempt > 0:
                     logger.warning(
                         'Failed to start API listener on port %s', port)
                     port = random.randint(32767, 65535)
-                se = StoppableXMLRPCServer(
+                se = StoppableRPCServer(
                     (BMConfigParser().get(
                         'bitmessagesettings', 'apiinterface'),
                      port),
-                    BMXMLRPCRequestHandler, True, True)
+                    BMXMLRPCRequestHandler, True, encoding='UTF-8')
             except socket.error as e:
                 if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
                     continue
@@ -120,7 +132,8 @@ class singleAPI(StoppableThread):
                         'bitmessagesettings', 'apiport', str(port))
                     BMConfigParser().save()
                 break
-        se.register_instance(BMXMLRPCDispatcher())
+
+        se.register_instance(BMRPCDispatcher())
         se.register_introspection_functions()
 
         apiNotifyPath = BMConfigParser().safeGet(
@@ -288,7 +301,7 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return False
 
 
-class BMXMLRPCDispatcher(object):
+class BMRPCDispatcher(object):
     """This class is used to dispatch API commands"""
     __metaclass__ = CommandHandler
 

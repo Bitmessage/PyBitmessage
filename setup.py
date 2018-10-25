@@ -11,6 +11,7 @@ from src.version import softwareVersion
 
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
+    'json': ['jsonrpclib'],
     'notify2': ['notify2'],
     'opencl': ['pyopencl', 'numpy'],
     'prctl': ['python_prctl'],  # Named threads
