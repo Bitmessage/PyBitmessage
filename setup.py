@@ -17,6 +17,7 @@ EXTRAS_REQUIRE = {
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
     'tor': ['stem'],
+    'xml': ['defusedxml'],
     'docs': ['sphinx', 'sphinxcontrib-apidoc', 'm2r']
 }
 

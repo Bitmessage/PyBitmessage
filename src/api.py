@@ -17,10 +17,10 @@ import random  # nosec
 import socket
 import subprocess
 import time
+import xmlrpclib
 from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
-import xmlrpclib
 
 import defaults
 import helper_inbox
@@ -45,6 +45,14 @@ from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from network.threads import StoppableThread
 from version import softwareVersion
+
+try:  # TODO: write tests for XML vulnerabilities
+    from defusedxml.xmlrpc import monkey_patch
+except ImportError:
+    logger.warning(
+        'defusedxml not available, only use API on a secure, closed network.')
+else:
+    monkey_patch()
 
 str_chan = '[chan]'
 str_broadcast_subscribers = '[Broadcast subscribers]'
