@@ -189,6 +189,8 @@ class Main(object):
                 config.set(
                     'bitmessagesettings', 'apipassword', 'password')
                 config.set(
+                    'bitmessagesettings', 'apivariant', 'legacy')
+                config.set(
                     'bitmessagesettings', 'apinotifypath',
                     os.path.join(app_dir, 'tests', 'apinotify_handler.py')
                 )

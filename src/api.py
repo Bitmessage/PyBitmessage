@@ -20,6 +20,7 @@ import time
 from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
+import xmlrpclib
 
 import defaults
 import helper_inbox
@@ -49,16 +50,10 @@ str_chan = '[chan]'
 str_broadcast_subscribers = '[Broadcast subscribers]'
 
 
-class APIError(Exception):
+class APIError(xmlrpclib.Fault):
     """APIError exception class"""
-
-    def __init__(self, error_number, error_message):
-        super(APIError, self).__init__()
-        self.error_number = error_number
-        self.error_message = error_message
-
     def __str__(self):
-        return "API Error %04i: %s" % (self.error_number, self.error_message)
+        return "API Error %04i: %s" % (self.faultCode, self.faultString)
 
 
 class StoppableXMLRPCServer(SimpleXMLRPCServer):
@@ -107,7 +102,7 @@ class singleAPI(StoppableThread):
                     (BMConfigParser().get(
                         'bitmessagesettings', 'apiinterface'),
                      port),
-                    MySimpleXMLRPCRequestHandler, True, True)
+                    BMXMLRPCRequestHandler, True, True)
             except socket.error as e:
                 if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
                     continue
@@ -146,6 +141,7 @@ class CommandHandler(type):
         # pylint: disable=protected-access
         result = super(CommandHandler, mcs).__new__(
             mcs, name, bases, namespace)
+        result.config = BMConfigParser()
         result._handlers = {}
         for func in namespace.values():
             try:
@@ -162,9 +158,15 @@ class command(object):
         self.aliases = aliases
 
     def __call__(self, func):
-        def wrapper(*args):
-            # return json.dumps(func(*args), indent=4)
-            return func(*args)
+        if BMConfigParser().safeGet(
+                'bitmessagesettings', 'apivariant') == 'legacy':
+            def wrapper(*args):
+                result = func(*args)
+                return result if isinstance(result, (int, str)) \
+                    else json.dumps(result, indent=4)
+            wrapper.__doc__ = func.__doc__
+        else:
+            wrapper = func
         # pylint: disable=protected-access
         wrapper._cmd = self.aliases
         return wrapper
@@ -175,7 +177,7 @@ class command(object):
 # Modified by Jonathan Warren (Atheros).
 # Further modified by the Bitmessage developers
 # http://code.activestate.com/recipes/501148
-class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
+class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
     """The main API handler"""
     __metaclass__ = CommandHandler
 
@@ -253,9 +255,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             encstr = self.headers.get('Authorization').split()[1]
             emailid, password = encstr.decode('base64').split(':')
             return (
-                emailid == BMConfigParser().get(
-                    'bitmessagesettings', 'apiusername') and
-                password == BMConfigParser().get(
+                emailid == self.config.get(
+                    'bitmessagesettings', 'apiusername')
+                and password == self.config.get(
                     'bitmessagesettings', 'apipassword')
             )
         else:
@@ -274,7 +276,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
                 return base64.b64decode(text)
         except Exception as e:
             raise APIError(
-                22, "Decode error - %s. Had trouble while decoding string: %r"
+                22, 'Decode error - %s. Had trouble while decoding string: %r'
                 % (e, text)
             )
         return None
@@ -359,17 +361,17 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
     @command('listAddresses', 'listAddresses2')
     def HandleListAddresses(self):
         data = []
-        for address in BMConfigParser().addresses():
+        for address in self.config.addresses():
             streamNumber = decodeAddress(address)[2]
-            label = BMConfigParser().get(address, 'label')
+            label = self.config.get(address, 'label')
             if self._method == 'listAddresses2':
                 label = base64.b64encode(label)
             data.append({
                 'label': label,
                 'address': address,
                 'stream': streamNumber,
-                'enabled': BMConfigParser().safeGetBoolean(address, 'enabled'),
-                'chan': BMConfigParser().safeGetBoolean(address, 'chan')
+                'enabled': self.config.safeGetBoolean(address, 'enabled'),
+                'chan': self.config.safeGetBoolean(address, 'chan')
             })
         return {'addresses': data}
 
@@ -426,12 +428,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
     ):
         """Handle a request to create a random address"""
 
-        nonceTrialsPerByte = BMConfigParser().get(
+        nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
             totalDifficulty)
-        payloadLengthExtraBytes = BMConfigParser().get(
+        payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
             defaults.networkDefaultPayloadLengthExtraBytes *
@@ -464,12 +466,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         """Handle a request to create a deterministic address"""
         # pylint: disable=too-many-branches, too-many-statements
 
-        nonceTrialsPerByte = BMConfigParser().get(
+        nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
             totalDifficulty)
-        payloadLengthExtraBytes = BMConfigParser().get(
+        payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
             defaults.networkDefaultPayloadLengthExtraBytes *
@@ -612,16 +614,16 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         """Handle a request to leave a chan"""
         self._verifyAddress(address)
         address = addBMIfNotPresent(address)
-        if not BMConfigParser().safeGetBoolean(address, 'chan'):
+        if not self.config.safeGetBoolean(address, 'chan'):
             raise APIError(
                 25, 'Specified address is not a chan address.'
                 ' Use deleteAddress API call instead.')
         try:
-            BMConfigParser().remove_section(address)
+            self.config.remove_section(address)
         except ConfigParser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
-        BMConfigParser().save()
+        self.config.save()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
         return "success"
@@ -632,11 +634,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         self._verifyAddress(address)
         address = addBMIfNotPresent(address)
         try:
-            BMConfigParser().remove_section(address)
+            self.config.remove_section(address)
         except ConfigParser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
-        BMConfigParser().save()
+        self.config.save()
         queues.UISignalQueue.put(('writeNewAddressToTable', ('', '', '')))
         shared.reloadMyAddressHashes()
         return "success"
@@ -829,7 +831,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         streamNumber, toRipe = self._verifyAddress(toAddress)[2:]
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = BMConfigParser().getboolean(
+            fromAddressEnabled = self.config.getboolean(
                 fromAddress, 'enabled')
         except BaseException:
             raise APIError(
@@ -837,7 +839,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         if not fromAddressEnabled:
             raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
 
-        stealthLevel = BMConfigParser().safeGetInt(
+        stealthLevel = self.config.safeGetInt(
             'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
 
@@ -892,10 +894,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            BMConfigParser().getboolean(fromAddress, 'enabled')
+            self.config.getboolean(fromAddress, 'enabled')
         except BaseException:
             raise APIError(
-                13, 'could not find your fromAddress in the keys.dat file.')
+                13, 'Could not find your fromAddress in the keys.dat file.')
         streamNumber = decodeAddress(fromAddress)[2]
         ackdata = genAckPayload(streamNumber, 0)
         toAddress = str_broadcast_subscribers
@@ -1186,20 +1188,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         except KeyError:
             raise APIError(20, 'Invalid method: %s' % method)
         except TypeError as e:
-            msg = "Unexpected internal error: %s" % e
+            msg = 'Unexpected API Failure - %s' % e
             if 'argument' not in str(e):
                 raise APIError(0, msg)
             argcount = len(params)
             maxcount = func.func_code.co_argcount
             if argcount > maxcount:
                 msg = (
-                    "Command %s takes at most %s parameters (%s given)" %
+                    'Command %s takes at most %s parameters (%s given)' %
                     (method, maxcount, argcount))
             else:
                 mincount = maxcount - len(func.func_defaults or [])
                 if argcount < mincount:
                     msg = (
-                        "Command %s takes at least %s parameters (%s given)" %
+                        'Command %s takes at least %s parameters (%s given)' %
                         (method, mincount, argcount))
             raise APIError(0, msg)
         finally:
@@ -1212,16 +1214,27 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         validuser = self.APIAuthenticateClient()
         if not validuser:
             time.sleep(2)
+            # ProtocolError?
             return "RPC Username or password incorrect or HTTP header lacks authentication at all."
+
+        _fault = None
 
         try:
             return self._handle_request(method, params)
         except APIError as e:
-            return str(e)
+            _fault = e
         except varintDecodeError as e:
             logger.error(e)
-            return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
+            _fault = APIError(
+                26, 'Data contains a malformed varint. Some details: %s' %
+                e)
         except Exception as e:
             logger.exception(e)
+            _fault = APIError(21, 'Unexpected API Failure - %s' % e)
 
-            return "API Error 0021: Unexpected API Failure - %s" % e
+        if _fault:
+            if self.config.safeGet(
+                    'bitmessagesettings', 'apivariant') == 'legacy':
+                return str(_fault)
+            else:
+                raise _fault  # pylint: disable=raising-bad-type
