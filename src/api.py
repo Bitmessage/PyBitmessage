@@ -12,6 +12,7 @@ import base64
 import ConfigParser
 import errno
 import hashlib
+import httplib
 import json
 import random  # nosec
 import socket
@@ -92,6 +93,7 @@ class singleAPI(StoppableThread):
             errno.WSAEADDRINUSE = errno.EADDRINUSE
 
         RPCServerBase = SimpleXMLRPCServer
+        ct = 'text/xml'
         if BMConfigParser().safeGet(
                 'bitmessagesettings', 'apivariant') == 'json':
             try:
@@ -100,11 +102,14 @@ class singleAPI(StoppableThread):
             except ImportError:
                 logger.warning(
                     'jsonrpclib not available, failing back to XML-RPC')
+            else:
+                ct = 'application/json-rpc'
 
         # Nested class. FIXME not found a better solution.
         class StoppableRPCServer(RPCServerBase):
             """A SimpleXMLRPCServer that honours state.shutdown"""
             allow_reuse_address = True
+            content_type = ct
 
             def serve_forever(self, poll_interval=None):
                 """Start the RPCServer"""
@@ -237,11 +242,11 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             validuser = self.APIAuthenticateClient()
             if not validuser:
                 time.sleep(2)
-                # ProtocolError?
-                response = (
-                    "RPC Username or password incorrect or HTTP header"
-                    " lacks authentication at all."
-                )
+                self.send_response(httplib.UNAUTHORIZED)
+                self.end_headers()
+                return
+                # "RPC Username or password incorrect or HTTP header"
+                # " lacks authentication at all."
             else:
                 # In previous versions of SimpleXMLRPCServer, _dispatch
                 # could be overridden in this class, instead of in
@@ -259,7 +264,7 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         else:
             # got a valid XML RPC response
             self.send_response(200)
-            self.send_header("Content-type", "text/xml")
+            self.send_header("Content-type", self.server.content_type)
             self.send_header("Content-length", str(len(response)))
 
             # HACK :start -> sends cookies here
