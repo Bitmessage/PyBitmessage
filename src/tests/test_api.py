@@ -53,11 +53,8 @@ class TestAPI(TestAPIProto):
     def test_user_password(self):
         """Trying to connect with wrong username/password"""
         api_wrong = xmlrpclib.ServerProxy("http://test:wrong@127.0.0.1:8442/")
-        self.assertEqual(
-            api_wrong.clientStatus(),
-            'RPC Username or password incorrect or HTTP header lacks'
-            ' authentication at all.'
-        )
+        with self.assertRaises(xmlrpclib.ProtocolError):
+            api_wrong.clientStatus()
 
     def test_connection(self):
         """API command 'helloWorld'"""
