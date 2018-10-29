@@ -283,11 +283,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         status, addressVersionNumber, streamNumber, ripe = \
             decodeAddress(address)
         if status != 'success':
-            logger.warning(
-                'API Error 0007: Could not decode address %s. Status: %s.',
-                address, status
-            )
-
             if status == 'checksumfailed':
                 raise APIError(8, 'Checksum failed for address: ' + address)
             if status == 'invalidcharacters':
@@ -312,7 +307,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
                 ' Check the address.'
             )
 
-        return (status, addressVersionNumber, streamNumber, ripe)
+        return {
+            'status': status,
+            'addressVersion': addressVersionNumber,
+            'streamNumber': streamNumber,
+            'ripe': base64.b64encode(ripe)
+        } if self._method == 'decodeAddress' else (
+            status, addressVersionNumber, streamNumber, ripe)
 
     @staticmethod
     def _dump_inbox_message(
@@ -350,6 +351,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
         }
 
     # Request Handlers
+
+    @command('decodeAddress')
+    def HandleDecodeAddress(self, address):
+        return self._verifyAddress(address)
 
     @command('listAddresses', 'listAddresses2')
     def HandleListAddresses(self):
@@ -1142,18 +1147,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler, object):
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
-        }
-
-    @command('decodeAddress')
-    def HandleDecodeAddress(self, address):
-        """Handle a request to decode an address"""
-        # Return a meaningful decoding of an address.
-        status, addressVersion, streamNumber, ripe = decodeAddress(address)
-        return {
-            'status': status,
-            'addressVersion': addressVersion,
-            'streamNumber': streamNumber,
-            'ripe': base64.b64encode(ripe)
         }
 
     @command('helloWorld')
