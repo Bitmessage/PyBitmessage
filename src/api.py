@@ -169,9 +169,16 @@ class CommandHandler(type):
             mcs, name, bases, namespace)
         result.config = BMConfigParser()
         result._handlers = {}
+        apivariant = result.config.safeGet('bitmessagesettings', 'apivariant')
         for func in namespace.values():
             try:
                 for alias in getattr(func, '_cmd'):
+                    try:
+                        prefix, alias = alias.split(':')
+                        if apivariant != prefix:
+                            continue
+                    except ValueError:
+                        pass
                     result._handlers[alias] = func
             except AttributeError:
                 pass
@@ -418,7 +425,7 @@ class BMRPCDispatcher(object):
         return {'addresses': data}
 
     # the listAddressbook alias should be removed eventually.
-    @command('listAddressBookEntries', 'listAddressbook')
+    @command('listAddressBookEntries', 'legacy:listAddressbook')
     def HandleListAddressBookEntries(self, label=None):
         queryreturn = sqlQuery(
             "SELECT label, address from addressbook WHERE label = ?",
@@ -434,7 +441,7 @@ class BMRPCDispatcher(object):
         return {'addresses': data}
 
     # the addAddressbook alias should be deleted eventually.
-    @command('addAddressBookEntry', 'addAddressbook')
+    @command('addAddressBookEntry', 'legacy:addAddressbook')
     def HandleAddAddressBookEntry(self, address, label):
         label = self._decode(label, "base64")
         address = addBMIfNotPresent(address)
@@ -453,7 +460,7 @@ class BMRPCDispatcher(object):
         return "Added address %s to address book" % address
 
     # the deleteAddressbook alias should be deleted eventually.
-    @command('deleteAddressBookEntry', 'deleteAddressbook')
+    @command('deleteAddressBookEntry', 'legacy:deleteAddressbook')
     def HandleDeleteAddressBookEntry(self, address):
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
@@ -766,7 +773,7 @@ class BMRPCDispatcher(object):
         ]}
 
     # after some time getInboxMessagesByAddress should be removed
-    @command('getInboxMessagesByReceiver', 'getInboxMessagesByAddress')
+    @command('getInboxMessagesByReceiver', 'legacy:getInboxMessagesByAddress')
     def HandleInboxMessagesByReceiver(self, toAddress):
         """Handle a request to get inbox messages by receiver"""
 
