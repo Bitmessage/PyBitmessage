@@ -130,36 +130,30 @@ class TCPConnection(BMProto, TLSDispatcher):  # pylint: disable=too-many-instanc
         # We are going to share a maximum number of 1000 addrs (per overlapping
         # stream) with our peer. 500 from overlapping streams, 250 from the
         # left child stream, and 250 from the right child stream.
-        maxAddrCount = BMConfigParser().safeGetInt("bitmessagesettings", "maxaddrperstreamsend", 500)
+        maxAddrCount = BMConfigParser().safeGetInt(
+            "bitmessagesettings", "maxaddrperstreamsend", 500)
 
-        # init
         templist = []
         addrs = {}
         for stream in self.streams:
             with knownnodes.knownNodesLock:
-                if knownnodes.knownNodes[stream]:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
-                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
-                    elemCount = len(filtered)
-                    if elemCount > maxAddrCount:
-                        elemCount = maxAddrCount
+                for n, s in enumerate((stream, stream * 2, stream * 2 + 1)):
+                    nodes = knownnodes.knownNodes.get(s)
+                    if not nodes:
+                        continue
                     # only if more recent than 3 hours
-                    addrs[stream] = helper_random.randomsample(filtered.items(), elemCount)
-                # sent 250 only if the remote isn't interested in it
-                if knownnodes.knownNodes[stream * 2] and stream not in self.streams:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream * 2].items()
-                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
-                    elemCount = len(filtered)
-                    if elemCount > maxAddrCount / 2:
-                        elemCount = int(maxAddrCount / 2)
-                    addrs[stream * 2] = helper_random.randomsample(filtered.items(), elemCount)
-                if knownnodes.knownNodes[(stream * 2) + 1] and stream not in self.streams:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream * 2 + 1].items()
-                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
-                    elemCount = len(filtered)
-                    if elemCount > maxAddrCount / 2:
-                        elemCount = int(maxAddrCount / 2)
-                    addrs[stream * 2 + 1] = helper_random.randomsample(filtered.items(), elemCount)
+                    # and having positive or neutral rating
+                    filtered = [
+                        (k, v) for k, v in nodes.iteritems()
+                        if v["lastseen"] > int(time.time()) -
+                        shared.maximumAgeOfNodesThatIAdvertiseToOthers and
+                        v["rating"] >= 0
+                    ]
+                    # sent 250 only if the remote isn't interested in it
+                    elemCount = min(
+                        len(filtered),
+                        maxAddrCount / 2 if n else maxAddrCount)
+                    addrs[s] = helper_random.randomsample(filtered, elemCount)
         for substream in addrs:
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
