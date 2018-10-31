@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+src/pyelliptic/ecc.py
+=====================
+"""
+# pylint: disable=protected-access
 
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
 from hashlib import sha512
-from pyelliptic.openssl import OpenSSL
-from pyelliptic.cipher import Cipher
-from pyelliptic.hash import hmac_sha256, equals
 from struct import pack, unpack
 
+from pyelliptic.cipher import Cipher
+from pyelliptic.hash import equals, hmac_sha256
+from pyelliptic.openssl import OpenSSL
 
-class ECC:
+
+class ECC(object):
     """
     Asymmetric encryption with Elliptic Curve Cryptography (ECC)
     ECDH, ECDSA and ECIES
@@ -40,13 +46,21 @@ class ECC:
         >>> print bob.get_ecdh_key(alice.get_pubkey()).encode('hex')
 
     """
-    def __init__(self, pubkey=None, privkey=None, pubkey_x=None,
-                 pubkey_y=None, raw_privkey=None, curve='sect283r1'):
+
+    def __init__(
+            self,
+            pubkey=None,
+            privkey=None,
+            pubkey_x=None,
+            pubkey_y=None,
+            raw_privkey=None,
+            curve='sect283r1',
+    ):  # pylint: disable=too-many-arguments
         """
         For a normal and High level use, specifie pubkey,
         privkey (if you need) and the curve
         """
-        if type(curve) == str:
+        if isinstance(curve, str):
             self.curve = OpenSSL.get_curve(curve)
         else:
             self.curve = curve
@@ -54,9 +68,9 @@ class ECC:
         if pubkey_x is not None and pubkey_y is not None:
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
         elif pubkey is not None:
-            curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+            curve, pubkey_x, pubkey_y, _ = ECC._decode_pubkey(pubkey)
             if privkey is not None:
-                curve2, raw_privkey, i = ECC._decode_privkey(privkey)
+                curve2, raw_privkey, _ = ECC._decode_privkey(privkey)
                 if curve != curve2:
                     raise Exception("Bad ECC keys ...")
             self.curve = curve
@@ -83,9 +97,11 @@ class ECC:
         return OpenSSL.curves.keys()
 
     def get_curve(self):
+        """Encryption object from curve name"""
         return OpenSSL.get_curve_by_id(self.curve)
 
     def get_curve_id(self):
+        """Currently used curve"""
         return self.curve
 
     def get_pubkey(self):
@@ -93,22 +109,24 @@ class ECC:
         High level function which returns :
         curve(2) + len_of_pubkeyX(2) + pubkeyX + len_of_pubkeyY + pubkeyY
         """
-        return b''.join((pack('!H', self.curve),
-                         pack('!H', len(self.pubkey_x)),
-                         self.pubkey_x,
-                         pack('!H', len(self.pubkey_y)),
-                         self.pubkey_y
-                         ))
+        return b''.join((
+            pack('!H', self.curve),
+            pack('!H', len(self.pubkey_x)),
+            self.pubkey_x,
+            pack('!H', len(self.pubkey_y)),
+            self.pubkey_y,
+        ))
 
     def get_privkey(self):
         """
         High level function which returns
         curve(2) + len_of_privkey(2) + privkey
         """
-        return b''.join((pack('!H', self.curve),
-                         pack('!H', len(self.privkey)),
-                         self.privkey
-                         ))
+        return b''.join((
+            pack('!H', self.curve),
+            pack('!H', len(self.privkey)),
+            self.privkey,
+        ))
 
     @staticmethod
     def _decode_pubkey(pubkey):
@@ -153,12 +171,9 @@ class ECC:
             group = OpenSSL.EC_KEY_get0_group(key)
             pub_key = OpenSSL.EC_KEY_get0_public_key(key)
 
-            if (OpenSSL.EC_POINT_get_affine_coordinates_GFp(group, pub_key,
-                                                            pub_key_x,
-                                                            pub_key_y, 0
-                                                            )) == 0:
-                raise Exception(
-                    "[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ...")
+            if OpenSSL.EC_POINT_get_affine_coordinates_GFp(
+                    group, pub_key, pub_key_x, pub_key_y, 0) == 0:
+                raise Exception("[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ...")
 
             privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(priv_key))
             pubkeyx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_x))
@@ -183,12 +198,13 @@ class ECC:
         High level function. Compute public key with the local private key
         and returns a 512bits shared key
         """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+        curve, pubkey_x, pubkey_y, _ = ECC._decode_pubkey(pubkey)
         if curve != self.curve:
             raise Exception("ECC keys must be from the same curve !")
         return sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
 
     def raw_get_ecdh_key(self, pubkey_x, pubkey_y):
+        """ECDH key as binary data"""
         try:
             ecdh_keybuffer = OpenSSL.malloc(0, 32)
 
@@ -248,20 +264,22 @@ class ECC:
         Check the public key and the private key.
         The private key is optional (replace by None)
         """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+        curve, pubkey_x, pubkey_y, _ = ECC._decode_pubkey(pubkey)
         if privkey is None:
             raw_privkey = None
             curve2 = curve
         else:
-            curve2, raw_privkey, i = ECC._decode_privkey(privkey)
+            curve2, raw_privkey, _ = ECC._decode_privkey(privkey)
         if curve != curve2:
             raise Exception("Bad public and private key")
         return self.raw_check_key(raw_privkey, pubkey_x, pubkey_y, curve)
 
     def raw_check_key(self, privkey, pubkey_x, pubkey_y, curve=None):
+        """Check key validity, key is supplied as binary data"""
+        # pylint: disable=too-many-branches
         if curve is None:
             curve = self.curve
-        elif type(curve) == str:
+        elif isinstance(curve, str):
             curve = OpenSSL.get_curve(curve)
         else:
             curve = curve
@@ -306,6 +324,7 @@ class ECC:
         """
         Sign the input with ECDSA method and returns the signature
         """
+        # pylint: disable=too-many-branches,too-many-locals
         try:
             size = len(inputb)
             buff = OpenSSL.malloc(inputb, size)
@@ -369,13 +388,13 @@ class ECC:
                 OpenSSL.EVP_MD_CTX_free(md_ctx)
             else:
                 OpenSSL.EVP_MD_CTX_destroy(md_ctx)
-            pass
 
     def verify(self, sig, inputb, digest_alg=OpenSSL.digest_ecdsa_sha1):
         """
         Verify the signature with the input and the local public key.
         Returns a boolean
         """
+        # pylint: disable=too-many-branches
         try:
             bsig = OpenSSL.malloc(sig, len(sig))
             binputb = OpenSSL.malloc(inputb, len(inputb))
@@ -419,12 +438,9 @@ class ECC:
 
             if ret == -1:
                 return False  # Fail to Check
-            else:
-                if ret == 0:
-                    return False  # Bad signature !
-                else:
-                    return True  # Good
-            return False
+            if ret == 0:
+                return False  # Bad signature !
+            return True  # Good
 
         finally:
             OpenSSL.EC_KEY_free(key)
@@ -441,13 +457,21 @@ class ECC:
         """
         Encrypt data with ECIES method using the public key of the recipient.
         """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+        curve, pubkey_x, pubkey_y, _ = ECC._decode_pubkey(pubkey)
         return ECC.raw_encrypt(data, pubkey_x, pubkey_y, curve=curve,
                                ephemcurve=ephemcurve, ciphername=ciphername)
 
     @staticmethod
-    def raw_encrypt(data, pubkey_x, pubkey_y, curve='sect283r1',
-                    ephemcurve=None, ciphername='aes-256-cbc'):
+    def raw_encrypt(
+            data,
+            pubkey_x,
+            pubkey_y,
+            curve='sect283r1',
+            ephemcurve=None,
+            ciphername='aes-256-cbc',
+    ):  # pylint: disable=too-many-arguments
+        """ECHD encryption, keys supplied in binary data format"""
+
         if ephemcurve is None:
             ephemcurve = curve
         ephem = ECC(curve=ephemcurve)
@@ -464,12 +488,13 @@ class ECC:
         """
         Decrypt data with ECIES method using the local private key
         """
+        # pylint: disable=too-many-locals
         blocksize = OpenSSL.get_cipher(ciphername).get_blocksize()
         iv = data[:blocksize]
         i = blocksize
-        curve, pubkey_x, pubkey_y, i2 = ECC._decode_pubkey(data[i:])
+        _, pubkey_x, pubkey_y, i2 = ECC._decode_pubkey(data[i:])
         i += i2
-        ciphertext = data[i:len(data)-32]
+        ciphertext = data[i:len(data) - 32]
         i += len(ciphertext)
         mac = data[i:]
         key = sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
