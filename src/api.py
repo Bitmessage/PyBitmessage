@@ -1328,15 +1328,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def HandleClientStatus(self, params):  # pylint: disable=unused-argument
         """Handle a request to get the status of the client"""
 
-        if network.stats.connectedHostsList():
+        connections_num = len(network.stats.connectedHostsList())
+        if connections_num == 0:
             networkStatus = 'notConnected'
-        elif not network.stats.connectedHostsList() \
-                and not shared.clientHasReceivedIncomingConnections:
-            networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
-        else:
+        elif shared.clientHasReceivedIncomingConnections:
             networkStatus = 'connectedAndReceivingIncomingConnections'
+        else:
+            networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         return json.dumps({
-            'networkConnections': len(network.stats.connectedHostsList()),
+            'networkConnections': connections_num,
             'numberOfMessagesProcessed': shared.numberOfMessagesProcessed,
             'numberOfBroadcastsProcessed': shared.numberOfBroadcastsProcessed,
             'numberOfPubkeysProcessed': shared.numberOfPubkeysProcessed,
