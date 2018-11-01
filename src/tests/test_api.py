@@ -60,6 +60,14 @@ class TestAPI(TestProcessProto):
             'API Error 0020: Invalid method: test'
         )
 
+    def test_clientstatus_consistency(self):
+        """If networkStatus is notConnected networkConnections should be 0"""
+        status = json.loads(self.api.clientStatus())
+        if status["networkStatus"] == "notConnected":
+            self.assertEqual(status["networkConnections"], 0)
+        else:
+            self.assertGreater(status["networkConnections"], 0)
+
     def test_list_addresses(self):
         """Checking the return of API command 'listAddresses'"""
         self.assertEqual(
