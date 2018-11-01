@@ -31,6 +31,8 @@ from pyelliptic.openssl import OpenSSL
 import queues
 import shared
 import shutdown
+import network.stats
+
 
 quit = False
 menutab = 1
@@ -209,12 +211,16 @@ def drawtab(stdscr):
                     stdscr.addstr(6+i, 120, str(item[2]), a)
         elif menutab == 8: # Network status
             # Connection data
-            stdscr.addstr(4, 5, "Total Connections: "+str(len(shared.connectedHostsList)).ljust(2))
+            connected_hosts = network.stats.connectedHostsList()
+            stdscr.addstr(
+                4, 5, "Total Connections: " +
+                str(len(connected_hosts)).ljust(2)
+            )
             stdscr.addstr(6, 6, "Stream #", curses.A_BOLD)
             stdscr.addstr(6, 18, "Connections", curses.A_BOLD)
             stdscr.hline(7, 6, '-', 23)
             streamcount = []
-            for host, stream in shared.connectedHostsList.items():
+            for host, stream in connected_hosts:
                 if stream >= len(streamcount):
                     streamcount.append(1)
                 else:
@@ -776,7 +782,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         set_background_title(d, "Recipient address error")
                         scrollbox(d, unicode("Bitmessage currently only supports stream numbers of 1, unlike as requested for address " + addr + "."))
                         continue
-                    if len(shared.connectedHostsList) == 0:
+                    if not network.stats.connectedHostsList():
                         set_background_title(d, "Not connected warning")
                         scrollbox(d, unicode("Because you are not currently connected to the network, "))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')

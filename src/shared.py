@@ -50,10 +50,7 @@ myAddressesByTag = {}
 broadcastSendersForWhichImWatching = {}
 printLock = threading.Lock()
 statusIconColor = 'red'
-# List of hosts to which we are connected. Used to guarantee
-# that the outgoingSynSender threads won't connect to the same
-# remote node twice.
-connectedHostsList = {}
+
 thisapp = None  # singleton lock instance
 alreadyAttemptedConnectionsList = {
 }  # This is a list of nodes to which we have already attempted a connection

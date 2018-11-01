@@ -431,7 +431,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.peerValidityChecks():
             # TODO ABORT
             return True
-        #shared.connectedHostsList[self.destination] = self.streams[0]
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
