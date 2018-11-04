@@ -181,7 +181,6 @@ class Main:
                 sys.exit()
             elif opt in ("-d", "--daemon"):
                 daemon = True
-                state.enableGUI = False  # run without a UI
             elif opt in ("-c", "--curses"):
                 state.curses = True
             elif opt in ("-t", "--test"):
@@ -205,7 +204,9 @@ class Main:
                     os.path.join(app_dir, 'tests', 'apinotify_handler.py')
                 )
 
-        # is the application already running?  If yes then exit.
+        if daemon:
+            state.enableGUI = False  # run without a UI
+
         if state.enableGUI and not state.curses and not depends.check_pyqt():
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
@@ -219,6 +220,7 @@ class Main:
                 ' the new curses interface by providing'
                 ' \'-c\' as a commandline argument.'
             )
+        # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
 
         if daemon:
