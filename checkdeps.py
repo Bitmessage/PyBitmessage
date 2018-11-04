@@ -22,7 +22,7 @@ try:
     from setup import EXTRAS_REQUIRE
 except ImportError:
     HAVE_SETUPTOOLS = False
-    EXTRAS_REQUIRE = []
+    EXTRAS_REQUIRE = {}
 
 from importlib import import_module
 
