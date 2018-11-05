@@ -3,9 +3,58 @@
 # pylint: disable=too-many-lines,no-self-use,unused-variable,unused-argument
 
 """
-This is not what you run to run the Bitmessage API. Instead, enable the API
-( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
-( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
+This is not what you run to start the Bitmessage API.
+Instead, `enable the API <https://bitmessage.org/wiki/API>`_
+and optionally `enable daemon mode <https://bitmessage.org/wiki/Daemon>`_
+then run the PyBitmessage.
+
+The PyBitmessage API is provided either as
+`XML-RPC <http://xmlrpc.scripting.com/spec.html>`_ or
+`JSON-RPC <https://www.jsonrpc.org/specification>`_ like in bitcoin.
+It's selected according to 'apivariant' setting in config file.
+
+Special value ``apivariant=legacy`` is to mimic the old pre 0.6.3
+behaviour when any results are returned as strings of json.
+
+.. list-table:: All config settings related to API:
+  :header-rows: 0
+
+  * - apienabled = true
+    - if 'false' the `singleAPI` wont start
+  * - apiinterface = 127.0.0.1
+    - this is the recommended default
+  * - apiport = 8442
+    - the API listens apiinterface:apiport if apiport is not used,
+      random in range (32767, 65535) otherwice
+  * - apivariant = xml
+    - current default for backward compatibility, 'json' is recommended
+  * - apiusername = username
+    - set the username
+  * - apipassword = password
+    - and the password
+  * - apinotifypath =
+    - not really the API setting, this sets a path for the executable to be ran
+      when certain internal event happens
+
+To use the API concider such simple example:
+
+.. code-block:: python
+
+    import jsonrpclib
+
+    from pybitmessage import bmconfigparser, helper_startup
+
+    helper_startup.loadConfig()  # find and load local config file
+    conf = bmconfigparser.BMConfigParser()
+    api_uri = "http://%s:%s@127.0.0.1:8442/" % (
+        conf.safeGet('bitmessagesettings', 'apiusername'),
+        conf.safeGet('bitmessagesettings', 'apipassword')
+    )
+    api = jsonrpclib.ServerProxy(api_uri)
+    print(api.clientStatus())
+
+
+For further examples please reference `.tests.test_api`.
 """
 
 import base64
@@ -86,6 +135,11 @@ class singleAPI(StoppableThread):
             pass
 
     def run(self):
+        """
+        The instance of `SimpleXMLRPCServer.SimpleXMLRPCServer` or
+        :class:`jsonrpclib.SimpleJSONRPCServer` is created and started here
+        with `BMRPCDispatcher` dispatcher.
+        """
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         try:
             getattr(errno, 'WSAEADDRINUSE')
@@ -185,7 +239,7 @@ class CommandHandler(type):
         return result
 
 
-class command(object):
+class command(object):  # pylint: disable=too-few-public-methods
     """Decorator for API command method"""
     def __init__(self, *aliases):
         self.aliases = aliases
@@ -194,6 +248,10 @@ class command(object):
         if BMConfigParser().safeGet(
                 'bitmessagesettings', 'apivariant') == 'legacy':
             def wrapper(*args):
+                """
+                A wrapper for legacy apivariant which dumps the result
+                into string of json
+                """
                 result = func(*args)
                 return result if isinstance(result, (int, str)) \
                     else json.dumps(result, indent=4)
@@ -202,6 +260,9 @@ class command(object):
             wrapper = func
         # pylint: disable=protected-access
         wrapper._cmd = self.aliases
+        wrapper.__doc__ = """Commands: *%s*
+
+        """ % ', '.join(self.aliases) + wrapper.__doc__.lstrip()
         return wrapper
 
 
@@ -213,6 +274,7 @@ class command(object):
 class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     """The main API handler"""
 
+    # pylint: disable=protected-access
     def do_POST(self):
         """
         Handles the HTTP POST request.
@@ -220,8 +282,9 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         Attempts to interpret all HTTP POST requests as XML-RPC calls,
         which are forwarded to the server's _dispatch method for handling.
 
-        Note: this method is the same as in SimpleXMLRPCRequestHandler,
-        just hacked to handle cookies
+        .. note:: this method is the same as in
+          `SimpleXMLRPCServer.SimpleXMLRPCRequestHandler`,
+          just hacked to handle cookies
         """
 
         # Check that the path is legal
@@ -260,7 +323,7 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
                 # check to see if a subclass implements _dispatch and dispatch
                 # using that method if present.
-                # pylint: disable=protected-access
+
                 response = self.server._marshaled_dispatch(
                     data, getattr(self, '_dispatch', None)
                 )
@@ -292,18 +355,19 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 shutdown.doCleanShutdown()
 
     def APIAuthenticateClient(self):
-        """Predicate to check for valid API credentials in the request header"""
+        """
+        Predicate to check for valid API credentials in the request header
+        """
 
         if 'Authorization' in self.headers:
             # handle Basic authentication
             encstr = self.headers.get('Authorization').split()[1]
             emailid, password = encstr.decode('base64').split(':')
             return (
-                emailid == self.config.get(
-                    'bitmessagesettings', 'apiusername')
-                and password == self.config.get(
-                    'bitmessagesettings', 'apipassword')
-            )
+                emailid == BMConfigParser().get(
+                    'bitmessagesettings', 'apiusername'
+                ) and password == BMConfigParser().get(
+                    'bitmessagesettings', 'apipassword'))
         else:
             logger.warning(
                 'Authentication failed because header lacks'
@@ -313,11 +377,13 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return False
 
 
+# pylint: disable=no-self-use,no-member,too-many-public-methods
 class BMRPCDispatcher(object):
     """This class is used to dispatch API commands"""
     __metaclass__ = CommandHandler
 
-    def _decode(self, text, decode_type):
+    @staticmethod
+    def _decode(text, decode_type):
         try:
             if decode_type == 'hex':
                 return unhexlify(text)
@@ -328,7 +394,6 @@ class BMRPCDispatcher(object):
                 22, 'Decode error - %s. Had trouble while decoding string: %r'
                 % (e, text)
             )
-        return None
 
     def _verifyAddress(self, address):
         status, addressVersionNumber, streamNumber, ripe = \
@@ -340,9 +405,8 @@ class BMRPCDispatcher(object):
                 raise APIError(9, 'Invalid characters in address: ' + address)
             if status == 'versiontoohigh':
                 raise APIError(
-                    10,
-                    'Address version number too high (or zero) in address: ' +
-                    address)
+                    10, 'Address version number too high (or zero) in address: '
+                    + address)
             if status == 'varintmalformed':
                 raise APIError(26, 'Malformed varint in address: ' + address)
             raise APIError(
@@ -367,7 +431,7 @@ class BMRPCDispatcher(object):
             status, addressVersionNumber, streamNumber, ripe)
 
     @staticmethod
-    def _dump_inbox_message(
+    def _dump_inbox_message(  # pylint: disable=too-many-arguments
             msgid, toAddress, fromAddress, subject, received,
             message, encodingtype, read):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -384,7 +448,7 @@ class BMRPCDispatcher(object):
         }
 
     @staticmethod
-    def _dump_sent_message(
+    def _dump_sent_message(  # pylint: disable=too-many-arguments
             msgid, toAddress, fromAddress, subject, lastactiontime,
             message, encodingtype, status, ackdata):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -405,10 +469,18 @@ class BMRPCDispatcher(object):
 
     @command('decodeAddress')
     def HandleDecodeAddress(self, address):
+        """
+        Decode given address and return dict with
+        status, addressVersion, streamNumber and ripe keys
+        """
         return self._verifyAddress(address)
 
     @command('listAddresses', 'listAddresses2')
     def HandleListAddresses(self):
+        """
+        Returns dict with a list of all used addresses with their properties
+        in the *addresses* key.
+        """
         data = []
         for address in self.config.addresses():
             streamNumber = decodeAddress(address)[2]
@@ -427,6 +499,10 @@ class BMRPCDispatcher(object):
     # the listAddressbook alias should be removed eventually.
     @command('listAddressBookEntries', 'legacy:listAddressbook')
     def HandleListAddressBookEntries(self, label=None):
+        """
+        Returns dict with a list of all address book entries (address and label)
+        in the *addresses* key.
+        """
         queryreturn = sqlQuery(
             "SELECT label, address from addressbook WHERE label = ?",
             label
@@ -443,6 +519,7 @@ class BMRPCDispatcher(object):
     # the addAddressbook alias should be deleted eventually.
     @command('addAddressBookEntry', 'legacy:addAddressbook')
     def HandleAddAddressBookEntry(self, address, label):
+        """Add an entry to address book. label must be base64 encoded."""
         label = self._decode(label, "base64")
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
@@ -462,6 +539,7 @@ class BMRPCDispatcher(object):
     # the deleteAddressbook alias should be deleted eventually.
     @command('deleteAddressBookEntry', 'legacy:deleteAddressbook')
     def HandleDeleteAddressBookEntry(self, address):
+        """Delete an entry from address book."""
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
         sqlExecute('DELETE FROM addressbook WHERE address=?', address)
@@ -475,23 +553,30 @@ class BMRPCDispatcher(object):
         self, label, eighteenByteRipe=False, totalDifficulty=0,
         smallMessageDifficulty=0
     ):
-        """Handle a request to create a random address"""
+        """
+        Create one address using the random number generator.
+
+        :param str label: base64 encoded label for the address
+        :param bool eighteenByteRipe: is telling Bitmessage whether to
+          generate an address with an 18 byte RIPE hash
+          (as opposed to a 19 byte hash).
+        """
 
         nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
-            totalDifficulty)
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+            * totalDifficulty)
         payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
-            defaults.networkDefaultPayloadLengthExtraBytes *
-            smallMessageDifficulty)
+            defaults.networkDefaultPayloadLengthExtraBytes
+            * smallMessageDifficulty)
 
         if not isinstance(eighteenByteRipe, bool):
             raise APIError(
-                23, 'Bool expected in eighteenByteRipe, saw %s instead' %
-                type(eighteenByteRipe))
+                23, 'Bool expected in eighteenByteRipe, saw %s instead'
+                % type(eighteenByteRipe))
         label = self._decode(label, "base64")
         try:
             unicode(label, 'utf-8')
@@ -506,32 +591,42 @@ class BMRPCDispatcher(object):
         ))
         return queues.apiAddressGeneratorReturnQueue.get()
 
+    # pylint: disable=too-many-arguments
     @command('createDeterministicAddresses')
     def HandleCreateDeterministicAddresses(
         self, passphrase, numberOfAddresses=1, addressVersionNumber=0,
         streamNumber=0, eighteenByteRipe=False, totalDifficulty=0,
         smallMessageDifficulty=0
     ):
-        """Handle a request to create a deterministic address"""
-        # pylint: disable=too-many-branches, too-many-statements
+        """
+        Create many addresses deterministically using the passphrase.
+
+        :param str passphrase: base64 encoded passphrase
+        :param int numberOfAddresses: number of addresses to create,
+          up to 999
+
+        *addressVersionNumber* and *streamNumber* may be set to 0
+        which will tell Bitmessage to use the most up-to-date
+        address version and the most available stream.
+        """
 
         nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte *
-            totalDifficulty)
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+            * totalDifficulty)
         payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
-            defaults.networkDefaultPayloadLengthExtraBytes *
-            smallMessageDifficulty)
+            defaults.networkDefaultPayloadLengthExtraBytes
+            * smallMessageDifficulty)
 
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
         if not isinstance(eighteenByteRipe, bool):
             raise APIError(
-                23, 'Bool expected in eighteenByteRipe, saw %s instead' %
-                type(eighteenByteRipe))
+                23, 'Bool expected in eighteenByteRipe, saw %s instead'
+                % type(eighteenByteRipe))
         passphrase = self._decode(passphrase, "base64")
         # 0 means "just use the proper addressVersionNumber"
         if addressVersionNumber == 0:
@@ -539,8 +634,8 @@ class BMRPCDispatcher(object):
         if addressVersionNumber not in (3, 4):
             raise APIError(
                 2, 'The address version number currently must be 3, 4, or 0'
-                ' (which means auto-select). %i isn\'t supported.' %
-                addressVersionNumber)
+                ' (which means auto-select). %i isn\'t supported.'
+                % addressVersionNumber)
         if streamNumber == 0:  # 0 means "just use the most available stream"
             streamNumber = 1  # FIXME hard coded stream no
         if streamNumber != 1:
@@ -573,7 +668,11 @@ class BMRPCDispatcher(object):
     @command('getDeterministicAddress')
     def HandleGetDeterministicAddress(
             self, passphrase, addressVersionNumber, streamNumber):
-        """Handle a request to get a deterministic address"""
+        """
+        Similar to *createDeterministicAddresses* except that the one
+        address that is returned will not be added to the Bitmessage
+        user interface or the keys.dat file.
+        """
 
         numberOfAddresses = 1
         eighteenByteRipe = False
@@ -600,7 +699,10 @@ class BMRPCDispatcher(object):
 
     @command('createChan')
     def HandleCreateChan(self, passphrase):
-        """Handle a request to create a chan"""
+        """
+        Creates a new chan. passphrase must be base64 encoded.
+        Returns the corresponding Bitmessage address.
+        """
 
         passphrase = self._decode(passphrase, "base64")
         if not passphrase:
@@ -630,7 +732,9 @@ class BMRPCDispatcher(object):
 
     @command('joinChan')
     def HandleJoinChan(self, passphrase, suppliedAddress):
-        """Handle a request to join a chan"""
+        """
+        Join a chan. passphrase must be base64 encoded. Returns 'success'.
+        """
 
         passphrase = self._decode(passphrase, "base64")
         if not passphrase:
@@ -660,7 +764,12 @@ class BMRPCDispatcher(object):
 
     @command('leaveChan')
     def HandleLeaveChan(self, address):
-        """Handle a request to leave a chan"""
+        """
+        Leave a chan. Returns 'success'.
+
+        .. note:: at this time, the address is still shown in the UI
+          until a restart.
+        """
         self._verifyAddress(address)
         address = addBMIfNotPresent(address)
         if not self.config.safeGetBoolean(address, 'chan'):
@@ -679,7 +788,9 @@ class BMRPCDispatcher(object):
 
     @command('deleteAddress')
     def HandleDeleteAddress(self, address):
-        """Handle a request to delete an address"""
+        """
+        Permanently delete the address from keys.dat file. Returns 'success'.
+        """
         self._verifyAddress(address)
         address = addBMIfNotPresent(address)
         try:
@@ -694,7 +805,14 @@ class BMRPCDispatcher(object):
 
     @command('getAllInboxMessages')
     def HandleGetAllInboxMessages(self):
-        """Handle a request to get all inbox messages"""
+        """
+        Returns a dict with all inbox messages in the *inboxMessages* key.
+        The message is a dict with such keys:
+        *msgid*, *toAddress*, *fromAddress*, *subject*, *message*,
+        *encodingType*, *receivedTime*, *read*.
+        *msgid* is hex encoded string.
+        *subject* and *message* are base64 encoded.
+        """
 
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received, message,"
@@ -707,7 +825,10 @@ class BMRPCDispatcher(object):
 
     @command('getAllInboxMessageIds', 'getAllInboxMessageIDs')
     def HandleGetAllInboxMessageIds(self):
-        """Handle a request to get all inbox message IDs"""
+        """
+        The same as *getAllInboxMessages* but returns only *msgid*s,
+        result key - *inboxMessageIds*.
+        """
 
         queryreturn = sqlQuery(
             "SELECT msgid FROM inbox where folder='inbox' ORDER BY received")
@@ -718,14 +839,20 @@ class BMRPCDispatcher(object):
 
     @command('getInboxMessageById', 'getInboxMessageByID')
     def HandleGetInboxMessageById(self, hid, readStatus=None):
-        """Handle a request to get an inbox messsage by ID"""
+        """
+        Returns a dict with list containing single message in the result
+        key *inboxMessage*. May also return None if message was not found.
+
+        :param str hid: hex encoded msgid
+        :param bool readStatus: sets the message's read status if present
+        """
 
         msgid = self._decode(hid, "hex")
         if readStatus is not None:
             if not isinstance(readStatus, bool):
                 raise APIError(
-                    23, 'Bool expected in readStatus, saw %s instead.' %
-                    type(readStatus))
+                    23, 'Bool expected in readStatus, saw %s instead.'
+                    % type(readStatus))
             queryreturn = sqlQuery(
                 "SELECT read FROM inbox WHERE msgid=?", msgid)
             # UPDATE is slow, only update if status is different
@@ -749,7 +876,13 @@ class BMRPCDispatcher(object):
 
     @command('getAllSentMessages')
     def HandleGetAllSentMessages(self):
-        """Handle a request to get all sent messages"""
+        """
+        The same as *getAllInboxMessages* but for sent,
+        result key - *sentMessages*. Message dict keys are:
+        *msgid*, *toAddress*, *fromAddress*, *subject*, *message*,
+        *encodingType*, *lastActionTime*, *status*, *ackData*.
+        *ackData* is also a hex encoded string.
+        """
 
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
@@ -762,7 +895,10 @@ class BMRPCDispatcher(object):
 
     @command('getAllSentMessageIds', 'getAllSentMessageIDs')
     def HandleGetAllSentMessageIds(self):
-        """Handle a request to get all sent message IDs"""
+        """
+        The same as *getAllInboxMessageIds* but for sent,
+        result key - *sentMessageIds*.
+        """
 
         queryreturn = sqlQuery(
             "SELECT msgid FROM sent WHERE folder='sent'"
@@ -775,7 +911,10 @@ class BMRPCDispatcher(object):
     # after some time getInboxMessagesByAddress should be removed
     @command('getInboxMessagesByReceiver', 'legacy:getInboxMessagesByAddress')
     def HandleInboxMessagesByReceiver(self, toAddress):
-        """Handle a request to get inbox messages by receiver"""
+        """
+        The same as *getAllInboxMessages* but returns only messages
+        for toAddress.
+        """
 
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received,"
@@ -787,7 +926,11 @@ class BMRPCDispatcher(object):
 
     @command('getSentMessageById', 'getSentMessageByID')
     def HandleGetSentMessageById(self, hid):
-        """Handle a request to get a sent message by ID"""
+        """
+        Similiar to *getInboxMessageById* but doesn't change message's
+        read status (sent messages have no such field).
+        Result key is *sentMessage*
+        """
 
         msgid = self._decode(hid, "hex")
         queryreturn = sqlQuery(
@@ -804,7 +947,10 @@ class BMRPCDispatcher(object):
 
     @command('getSentMessagesByAddress', 'getSentMessagesBySender')
     def HandleGetSentMessagesByAddress(self, fromAddress):
-        """Handle a request to get sent messages by address"""
+        """
+        The same as *getAllSentMessages* but returns only messages
+        from fromAddress.
+        """
 
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
@@ -818,7 +964,10 @@ class BMRPCDispatcher(object):
 
     @command('getSentMessageByAckData')
     def HandleGetSentMessagesByAckData(self, ackData):
-        """Handle a request to get sent messages by ack data"""
+        """
+        Similiar to *getSentMessageById* but searches by ackdata
+        (also hex encoded).
+        """
 
         ackData = self._decode(ackData, "hex")
         queryreturn = sqlQuery(
@@ -836,7 +985,11 @@ class BMRPCDispatcher(object):
 
     @command('trashMessage')
     def HandleTrashMessage(self, msgid):
-        """Handle a request to trash a message by ID"""
+        """
+        Trash message by msgid (encoded in hex). Returns a simple message
+        saying that the message was trashed assuming it ever even existed.
+        Prior existence is not checked.
+        """
         msgid = self._decode(msgid, "hex")
         # Trash if in inbox table
         helper_inbox.trash(msgid)
@@ -846,14 +999,14 @@ class BMRPCDispatcher(object):
 
     @command('trashInboxMessage')
     def HandleTrashInboxMessage(self, msgid):
-        """Handle a request to trash an inbox message by ID"""
+        """Trash inbox message by msgid (encoded in hex)."""
         msgid = self._decode(msgid, "hex")
         helper_inbox.trash(msgid)
         return 'Trashed inbox message (assuming message existed).'
 
     @command('trashSentMessage')
     def HandleTrashSentMessage(self, msgid):
-        """Handle a request to trash a sent message by ID"""
+        """Trash sent message by msgid (encoded in hex)."""
         msgid = self._decode(msgid, "hex")
         sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
         return 'Trashed sent message (assuming message existed).'
@@ -863,8 +1016,14 @@ class BMRPCDispatcher(object):
         self, toAddress, fromAddress, subject, message,
         encodingType=2, TTL=4 * 24 * 60 * 60
     ):
-        """Handle a request to send a message"""
-
+        """
+        Send the message and return ackdata (hex encoded string).
+        subject and message must be encoded in base64 which may optionally
+        include line breaks. TTL is specified in seconds; values outside
+        the bounds of 3600 to 2419200 will be moved to be within those
+        bounds. TTL defaults to 4 days.
+        """
+        # pylint: disable=too-many-locals
         if encodingType not in (2, 3):
             raise APIError(6, 'The encoding type must be 2 or 3.')
         subject = self._decode(subject, "base64")
@@ -927,7 +1086,7 @@ class BMRPCDispatcher(object):
     def HandleSendBroadcast(
         self, fromAddress, subject, message, encodingType=2,
             TTL=4 * 24 * 60 * 60):
-        """Handle a request to send a broadcast message"""
+        """Send the broadcast message. Similiar to *sendMessage*."""
 
         if encodingType not in (2, 3):
             raise APIError(6, 'The encoding type must be 2 or 3.')
@@ -978,7 +1137,12 @@ class BMRPCDispatcher(object):
 
     @command('getStatus')
     def HandleGetStatus(self, ackdata):
-        """Handle a request to get the status of a sent message"""
+        """
+        Get the status of sent message by its ackdata (hex encoded).
+        Returns one of these strings: notfound, msgqueued,
+        broadcastqueued, broadcastsent, doingpubkeypow, awaitingpubkey,
+        doingmsgpow, forcepow, msgsent, msgsentnoackexpected or ackreceived.
+        """
 
         if len(ackdata) < 76:
             # The length of ackData should be at least 38 bytes (76 hex digits)
@@ -993,7 +1157,7 @@ class BMRPCDispatcher(object):
 
     @command('addSubscription')
     def HandleAddSubscription(self, address, label=''):
-        """Handle a request to add a subscription"""
+        """Subscribe to the address. label must be base64 encoded."""
 
         if label:
             label = self._decode(label, "base64")
@@ -1018,7 +1182,10 @@ class BMRPCDispatcher(object):
 
     @command('deleteSubscription')
     def HandleDeleteSubscription(self, address):
-        """Handle a request to delete a subscription"""
+        """
+        Unsubscribe from the address. The program does not check whether
+        you were subscribed in the first place.
+        """
 
         address = addBMIfNotPresent(address)
         sqlExecute("DELETE FROM subscriptions WHERE address=?", address)
@@ -1029,7 +1196,10 @@ class BMRPCDispatcher(object):
 
     @command('listSubscriptions')
     def ListSubscriptions(self):
-        """Handle a request to list susbcriptions"""
+        """
+        Returns dict with a list of all subscriptions
+        in the *subscriptions* key.
+        """
 
         queryreturn = sqlQuery(
             "SELECT label, address, enabled FROM subscriptions")
@@ -1092,7 +1262,7 @@ class BMRPCDispatcher(object):
 
     @command('trashSentMessageByAckData')
     def HandleTrashSentMessageByAckDAta(self, ackdata):
-        """Handle a request to trash a sent message by ackdata"""
+        """Trash a sent message by ackdata (hex encoded)"""
         # This API method should only be used when msgid is not available
         ackdata = self._decode(ackdata, "hex")
         sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=?", ackdata)
@@ -1181,7 +1351,15 @@ class BMRPCDispatcher(object):
 
     @command('clientStatus')
     def HandleClientStatus(self):
-        """Handle a request to get the status of the client"""
+        """
+        Returns the bitmessage status as dict with keys *networkConnections*,
+        *numberOfMessagesProcessed*, *numberOfBroadcastsProcessed*,
+        *numberOfPubkeysProcessed*, *networkStatus*,
+        *softwareName*, *softwareVersion*. *networkStatus* will be one
+        of these strings: "notConnected",
+        "connectedButHaveNotReceivedIncomingConnections",
+        or "connectedAndReceivingIncomingConnections".
+        """
 
         connections_num = len(network.stats.connectedHostsList())
         if connections_num == 0:
@@ -1212,18 +1390,18 @@ class BMRPCDispatcher(object):
 
     @command('statusBar')
     def HandleStatusBar(self, message):
-        """Handle a request to update the status bar"""
+        """Update GUI statusbar message"""
         queues.UISignalQueue.put(('updateStatusBar', message))
 
     @command('deleteAndVacuum')
     def HandleDeleteAndVacuum(self):
-        """Handle a request to run the deleteandvacuum stored procedure"""
+        """Cleanup trashes and vacuum messages database"""
         sqlStoredProcedure('deleteandvacuume')
         return 'done'
 
     @command('shutdown')
     def HandleShutdown(self):
-        """Handle a request to shutdown the node"""
+        """Shutdown the bitmessage. Returns 'done'."""
         # backward compatible trick because False == 0 is True
         state.shutdown = False
         return 'done'
@@ -1244,14 +1422,14 @@ class BMRPCDispatcher(object):
             maxcount = func.func_code.co_argcount
             if argcount > maxcount:
                 msg = (
-                    'Command %s takes at most %s parameters (%s given)' %
-                    (method, maxcount, argcount))
+                    'Command %s takes at most %s parameters (%s given)'
+                    % (method, maxcount, argcount))
             else:
                 mincount = maxcount - len(func.func_defaults or [])
                 if argcount < mincount:
                     msg = (
-                        'Command %s takes at least %s parameters (%s given)' %
-                        (method, mincount, argcount))
+                        'Command %s takes at least %s parameters (%s given)'
+                        % (method, mincount, argcount))
             raise APIError(0, msg)
         finally:
             state.last_api_response = time.time()
@@ -1266,8 +1444,7 @@ class BMRPCDispatcher(object):
         except varintDecodeError as e:
             logger.error(e)
             _fault = APIError(
-                26, 'Data contains a malformed varint. Some details: %s' %
-                e)
+                26, 'Data contains a malformed varint. Some details: %s' % e)
         except Exception as e:
             logger.exception(e)
             _fault = APIError(21, 'Unexpected API Failure - %s' % e)
