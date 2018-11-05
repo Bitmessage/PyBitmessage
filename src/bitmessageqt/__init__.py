@@ -3258,7 +3258,7 @@ class MyForm(settingsmixin.SMainWindow):
         if not tableWidget:
             return
         folder = self.getCurrentFolder()
-        shifted = (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier) > 0
+        shifted = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier
         while tableWidget.selectedIndexes() != []:
             currentRow = tableWidget.selectedIndexes()[0].row()
             ackdataToTrash = str(tableWidget.item(
