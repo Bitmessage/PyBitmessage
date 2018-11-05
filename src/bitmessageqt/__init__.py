@@ -2240,7 +2240,7 @@ class MyForm(settingsmixin.SMainWindow):
             ))
 
     def click_pushButtonFetchNamecoinID(self):
-        identities = str(self.ui.lineEditTo.text().toUtf8()).split(";")
+        identities = str(self.lineEditTo.text().toUtf8()).split(";")
         err, addr = self.namecoin.query(identities[-1].strip())
         if err is not None:
             self.updateStatusBar(
@@ -4096,9 +4096,9 @@ class MyForm(settingsmixin.SMainWindow):
             logger.warning(
                 'There was a problem testing for a Namecoin daemon.'
                 ' Hiding the Fetch Namecoin ID button')
-            self.ui.pushButtonFetchNamecoinID.hide()
+            self.pushButtonFetchNamecoinID.hide()
         else:
-            self.ui.pushButtonFetchNamecoinID.show()
+            self.pushButtonFetchNamecoinID.show()
 
     def initSettings(self):
         self.loadSettings()
