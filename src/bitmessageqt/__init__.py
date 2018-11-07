@@ -798,26 +798,14 @@ class MyForm(settingsmixin.SMainWindow):
             "valueChanged(int)"), self.updateTTL)
 
         self.initSettings()
-
-        namecoin.ensureNamecoinOptions()
-        self.namecoin = namecoin.namecoinConnection()
-
-        # Check to see whether we can connect to namecoin.
-        # Hide the 'Fetch Namecoin ID' button if we can't.
-        if BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'dontconnect'
-                ) or self.namecoin.test()[0] == 'failed':
-            logger.warning(
-                'There was a problem testing for a Namecoin daemon. Hiding the'
-                ' Fetch Namecoin ID button')
-            self.ui.pushButtonFetchNamecoinID.hide()
+        self.resetNamecoinConnection()
 
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
         self.updateHumanFriendlyTTLDescription(TTL)
         BMConfigParser().set('bitmessagesettings', 'ttl', str(TTL))
         BMConfigParser().save()
-        
+
     def updateHumanFriendlyTTLDescription(self, TTL):
         numberOfHours = int(round(TTL / (60*60)))
         font = QtGui.QFont()
@@ -2160,9 +2148,8 @@ class MyForm(settingsmixin.SMainWindow):
             ))
 
     def click_pushButtonFetchNamecoinID(self):
-        nc = namecoinConnection()
         identities = str(self.ui.lineEditTo.text().toUtf8()).split(";")
-        err, addr = nc.query(identities[-1].strip())
+        err, addr = self.namecoin.query(identities[-1].strip())
         if err is not None:
             self.updateStatusBar(
                 _translate("MainWindow", "Error: %1").arg(err))
@@ -2481,7 +2468,8 @@ class MyForm(settingsmixin.SMainWindow):
                 self.settingsDialogInstance.ui.lineEditNamecoinUser.text()))
             BMConfigParser().set('bitmessagesettings', 'namecoinrpcpassword', str(
                 self.settingsDialogInstance.ui.lineEditNamecoinPassword.text()))
-            
+            self.resetNamecoinConnection()
+
             # Demanded difficulty tab
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
@@ -4129,6 +4117,22 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             self.statusbar.showMessage(message, 10000)
 
+    def resetNamecoinConnection(self):
+        namecoin.ensureNamecoinOptions()
+        self.namecoin = namecoin.namecoinConnection()
+
+        # Check to see whether we can connect to namecoin.
+        # Hide the 'Fetch Namecoin ID' button if we can't.
+        if BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'dontconnect'
+        ) or self.namecoin.test()[0] == 'failed':
+            logger.warning(
+                'There was a problem testing for a Namecoin daemon. Hiding the'
+                ' Fetch Namecoin ID button')
+            self.ui.pushButtonFetchNamecoinID.hide()
+        else:
+            self.ui.pushButtonFetchNamecoinID.show()
+
     def initSettings(self):
         QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
@@ -4344,7 +4348,7 @@ class settingsDialog(QtGui.QDialog):
     def namecoinTypeChanged(self, checked):
         nmctype = self.getNamecoinType()
         assert nmctype == "namecoind" or nmctype == "nmcontrol"
-            
+
         isNamecoind = (nmctype == "namecoind")
         self.ui.lineEditNamecoinUser.setEnabled(isNamecoind)
         self.ui.labelNamecoinUser.setEnabled(isNamecoind)
@@ -4356,23 +4360,21 @@ class settingsDialog(QtGui.QDialog):
         else:
             self.ui.lineEditNamecoinPort.setText("9000")
 
-    # Test the namecoin settings specified in the settings dialog.
     def click_pushButtonNamecoinTest(self):
+        """Test the namecoin settings specified in the settings dialog."""
         self.ui.labelNamecoinTestResult.setText(_translate(
-                "MainWindow", "Testing..."))
+            "MainWindow", "Testing..."))
         options = {}
         options["type"] = self.getNamecoinType()
         options["host"] = str(self.ui.lineEditNamecoinHost.text().toUtf8())
         options["port"] = str(self.ui.lineEditNamecoinPort.text().toUtf8())
         options["user"] = str(self.ui.lineEditNamecoinUser.text().toUtf8())
         options["password"] = str(self.ui.lineEditNamecoinPassword.text().toUtf8())
-        nc = namecoinConnection(options)
-        response = nc.test()
-        responseStatus = response[0]
-        responseText = response[1]
-        self.ui.labelNamecoinTestResult.setText(responseText)
-        if responseStatus== 'success':
-            self.parent.ui.pushButtonFetchNamecoinID.show()
+        nc = namecoin.namecoinConnection(options)
+        status, text = nc.test()
+        self.ui.labelNamecoinTestResult.setText(text)
+        if status == 'success':
+            self.parent.namecoin = nc
 
 
 # In order for the time columns on the Inbox and Sent tabs to be sorted
