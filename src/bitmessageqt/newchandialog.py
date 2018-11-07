@@ -64,15 +64,27 @@ class NewChanDialog(QtGui.QDialog):
                  self.chanPassPhrase.text().toUtf8(),
                  True))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
-        if addressGeneratorReturnValue and addressGeneratorReturnValue[0] != 'chan name does not match address':
-            UISignalQueue.put(('updateStatusBar', _translate(
-                "newchandialog", "Successfully created / joined chan %1").arg(unicode(self.chanPassPhrase.text()))))
-            self.parent.ui.tabWidget.setCurrentIndex(
-                self.parent.ui.tabWidget.indexOf(self.parent.ui.chans)
+        if (
+            addressGeneratorReturnValue and
+            addressGeneratorReturnValue[0] !=
+            'chan name does not match address'
+        ):
+            UISignalQueue.put((
+                'updateStatusBar',
+                _translate(
+                    "newchandialog",
+                    "Successfully created / joined chan %1"
+                ).arg(unicode(self.chanPassPhrase.text()))
+            ))
+            self.parent.tabWidget.setCurrentIndex(
+                self.parent.tabWidget.indexOf(self.parent.chans)
             )
             self.done(QtGui.QDialog.Accepted)
         else:
-            UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Chan creation / joining failed")))
+            UISignalQueue.put((
+                'updateStatusBar',
+                _translate("newchandialog", "Chan creation / joining failed")
+            ))
             self.done(QtGui.QDialog.Rejected)
 
     def reject(self):
