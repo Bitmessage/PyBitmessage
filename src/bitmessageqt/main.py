@@ -15,13 +15,29 @@ class Window(settingsmixin.SMainWindow, RetranslateMixin):
         super(Window, self).__init__(parent)
         widgets.load('bitmessageui.ui', self)
 
-        self.addressBookCompleter = AddressBookCompleter()
-        self.addressBookCompleter.setCompletionMode(
+        self.blackwhitelist.rerenderBlackWhiteList()
+
+        addressBookCompleter = AddressBookCompleter()
+        addressBookCompleter.setCompletionMode(
             QtGui.QCompleter.PopupCompletion)
-        self.addressBookCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self.addressBookCompleterModel = QtGui.QStringListModel()
-        self.addressBookCompleter.setModel(self.addressBookCompleterModel)
-        self.lineEditTo.setCompleter(self.addressBookCompleter)
+        addressBookCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        addressBookCompleterModel = QtGui.QStringListModel()
+        addressBookCompleter.setModel(addressBookCompleterModel)
+        self.lineEditTo.setCompleter(addressBookCompleter)
+
+        self.lineEditTo.cursorPositionChanged.connect(
+            addressBookCompleter.onCursorPositionChanged)
+
+        # Hide all menu action containers
+        for toolbar in (
+            self.inboxContextMenuToolbar,
+            self.addressContextMenuToolbarYourIdentities,
+            self.addressContextMenuToolbar,
+            self.addressBookContextMenuToolbar,
+            self.subscriptionsContextMenuToolbar,
+            self.sentContextMenuToolbar
+        ):
+            toolbar.setVisible(False)
 
         # splitters
         for splitter in (

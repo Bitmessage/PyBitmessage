@@ -3,7 +3,6 @@ PyQt based UI for bitmessage, the main module
 """
 
 import hashlib
-import locale
 import os
 import random
 import string
@@ -46,11 +45,9 @@ from account import (
 import dialogs
 from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
-import paths
 from proofofwork import getPowType
 import queues
 import shutdown
-from statusbar import BMStatusBar
 import sound
 # This is needed for tray icon
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
@@ -93,192 +90,8 @@ class MainWindow(Window):
     REPLY_TYPE_CHAN = 1
     REPLY_TYPE_UPD = 2
 
-    def change_translation(self, newlocale=None):
-        """Change translation language for the application"""
-        if newlocale is None:
-            newlocale = l10n.getTranslationLanguage()
-        try:
-            if not self.qmytranslator.isEmpty():
-                QtGui.QApplication.removeTranslator(self.qmytranslator)
-        except:
-            pass
-        try:
-            if not self.qsystranslator.isEmpty():
-                QtGui.QApplication.removeTranslator(self.qsystranslator)
-        except:
-            pass
-
-        self.qmytranslator = QtCore.QTranslator()
-        translationpath = os.path.join(
-            paths.codePath(), 'translations', 'bitmessage_' + newlocale)
-        self.qmytranslator.load(translationpath)
-        QtGui.QApplication.installTranslator(self.qmytranslator)
-
-        self.qsystranslator = QtCore.QTranslator()
-        if paths.frozen:
-            translationpath = os.path.join(
-                paths.codePath(), 'translations', 'qt_' + newlocale)
-        else:
-            translationpath = os.path.join(
-                str(QtCore.QLibraryInfo.location(
-                    QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
-        self.qsystranslator.load(translationpath)
-        QtGui.QApplication.installTranslator(self.qsystranslator)
-
-        lang = locale.normalize(l10n.getTranslationLanguage())
-        langs = [
-            lang.split(".")[0] + "." + l10n.encoding,
-            lang.split(".")[0] + "." + 'UTF-8',
-            lang
-        ]
-        if 'win32' in sys.platform or 'win64' in sys.platform:
-            langs = [l10n.getWindowsLocale(lang)]
-        for lang in langs:
-            try:
-                l10n.setlocale(locale.LC_ALL, lang)
-                if 'win32' not in sys.platform and 'win64' not in sys.platform:
-                    l10n.encoding = locale.nl_langinfo(locale.CODESET)
-                else:
-                    l10n.encoding = locale.getlocale()[1]
-                logger.info("Successfully set locale to %s", lang)
-                break
-            except:
-                logger.error("Failed to set locale to %s", lang, exc_info=True)
-
-    def init_file_menu(self):
-        QtCore.QObject.connect(self.actionExit, QtCore.SIGNAL(
-            "triggered()"), self.quit)
-        QtCore.QObject.connect(self.actionNetworkSwitch, QtCore.SIGNAL(
-            "triggered()"), self.network_switch)
-        QtCore.QObject.connect(self.actionManageKeys, QtCore.SIGNAL(
-            "triggered()"), self.click_actionManageKeys)
-        QtCore.QObject.connect(self.actionDeleteAllTrashedMessages,
-                               QtCore.SIGNAL(
-                                   "triggered()"),
-                               self.click_actionDeleteAllTrashedMessages)
-        QtCore.QObject.connect(self.actionRegenerateDeterministicAddresses,
-                               QtCore.SIGNAL(
-                                   "triggered()"),
-                               self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(self.pushButtonAddChan, QtCore.SIGNAL(
-            "clicked()"),
-                               self.click_actionJoinChan) # also used for creating chans.
-        QtCore.QObject.connect(self.pushButtonNewAddress, QtCore.SIGNAL(
-            "clicked()"), self.click_NewAddressDialog)
-        QtCore.QObject.connect(self.pushButtonAddAddressBook, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddAddressBook)
-        QtCore.QObject.connect(self.pushButtonAddSubscription, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddSubscription)
-        QtCore.QObject.connect(self.pushButtonTTL, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonTTL)
-        QtCore.QObject.connect(self.pushButtonClear, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonClear)
-        QtCore.QObject.connect(self.pushButtonSend, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonSend)
-        QtCore.QObject.connect(self.pushButtonFetchNamecoinID, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonFetchNamecoinID)
-        QtCore.QObject.connect(self.actionSettings, QtCore.SIGNAL(
-            "triggered()"), self.click_actionSettings)
-        QtCore.QObject.connect(self.actionAbout, QtCore.SIGNAL(
-            "triggered()"), self.click_actionAbout)
-        QtCore.QObject.connect(self.actionSupport, QtCore.SIGNAL(
-            "triggered()"), self.click_actionSupport)
-        QtCore.QObject.connect(self.actionHelp, QtCore.SIGNAL(
-            "triggered()"), self.click_actionHelp)
-
-    def init_inbox_popup_menu(self, connectSignal=True):
-        # Popup menu for the Inbox tab
-        self.inboxContextMenuToolbar = QtGui.QToolBar()
-        # Actions
-        self.actionReply = self.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Reply to sender"), self.on_action_InboxReply)
-        self.actionReplyChan = self.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Reply to channel"), self.on_action_InboxReplyChan)
-        self.actionAddSenderToAddressBook = self.inboxContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Add sender to your Address Book"),
-            self.on_action_InboxAddSenderToAddressBook)
-        self.actionAddSenderToBlackList = self.inboxContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Add sender to your Blacklist"),
-            self.on_action_InboxAddSenderToBlackList)
-        self.actionTrashInboxMessage = self.inboxContextMenuToolbar.addAction(
-            _translate("MainWindow", "Move to Trash"),
-            self.on_action_InboxTrash)
-        self.actionUndeleteTrashedMessage = self.inboxContextMenuToolbar.addAction(
-            _translate("MainWindow", "Undelete"),
-            self.on_action_TrashUndelete)
-        self.actionForceHtml = self.inboxContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "View HTML code as formatted text"),
-            self.on_action_InboxMessageForceHtml)
-        self.actionSaveMessageAs = self.inboxContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Save message as..."),
-            self.on_action_InboxSaveMessageAs)
-        self.actionMarkUnread = self.inboxContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
-
-        # contextmenu messagelists
-        self.tableWidgetInbox.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.tableWidgetInbox, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
-        self.tableWidgetInboxSubscriptions.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.tableWidgetInboxSubscriptions, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
-        self.tableWidgetInboxChans.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.tableWidgetInboxChans, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
-
-    def init_identities_popup_menu(self, connectSignal=True):
+    def init_identities_popup_menu(self):
         # Popup menu for the Your Identities tab
-        self.addressContextMenuToolbarYourIdentities = QtGui.QToolBar()
-        # Actions
-        self.actionNewYourIdentities = self.addressContextMenuToolbarYourIdentities.addAction(_translate(
-            "MainWindow", "New"), self.on_action_YourIdentitiesNew)
-        self.actionEnableYourIdentities = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Enable"), self.on_action_Enable)
-        self.actionDisableYourIdentities = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Disable"), self.on_action_Disable)
-        self.actionSetAvatarYourIdentities = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Set avatar..."),
-            self.on_action_TreeWidgetSetAvatar)
-        self.actionClipboardYourIdentities = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Copy address to clipboard"),
-            self.on_action_Clipboard)
-        self.actionSpecialAddressBehaviorYourIdentities = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Special address behavior..."),
-            self.on_action_SpecialAddressBehaviorDialog)
-        self.actionEmailGateway = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Email gateway"),
-            self.on_action_EmailGatewayDialog)
-        self.actionMarkAllRead = self.addressContextMenuToolbarYourIdentities.addAction(
-            _translate(
-                "MainWindow", "Mark all messages as read"),
-            self.on_action_MarkAllRead)
-
-        self.treeWidgetYourIdentities.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.treeWidgetYourIdentities, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuYourIdentities)
 
         # load all gui.menu plugins with prefix 'address'
         self.menu_plugins = {'address': []}
@@ -293,127 +106,6 @@ class MainWindow(Window):
                 self.addressContextMenuToolbarYourIdentities.addAction(
                     title, handler
                 ))
-
-    def init_chan_popup_menu(self, connectSignal=True):
-        # Actions
-        self.actionNew = self.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "New"), self.on_action_YourIdentitiesNew)
-        self.actionDelete = self.addressContextMenuToolbar.addAction(
-            _translate("MainWindow", "Delete"),
-            self.on_action_YourIdentitiesDelete)
-        self.actionEnable = self.addressContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Enable"), self.on_action_Enable)
-        self.actionDisable = self.addressContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Disable"), self.on_action_Disable)
-        self.actionSetAvatar = self.addressContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Set avatar..."),
-            self.on_action_TreeWidgetSetAvatar)
-        self.actionClipboard = self.addressContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Copy address to clipboard"),
-            self.on_action_Clipboard)
-        self.actionSend = self.addressContextMenuToolbar.addAction(
-            _translate("MainWindow", "Send message to this chan"),
-            self.on_action_Send)
-        self.actionSpecialAddressBehavior = self.addressContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Special address behavior..."),
-            self.on_action_SpecialAddressBehaviorDialog)
-
-        self.treeWidgetChans.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.treeWidgetChans, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuChan)
-
-    def init_addressbook_popup_menu(self, connectSignal=True):
-        # Popup menu for the Address Book page
-        self.addressBookContextMenuToolbar = QtGui.QToolBar()
-        # Actions
-        self.actionAddressBookSend = self.addressBookContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Send message to this address"),
-            self.on_action_AddressBookSend)
-        self.actionAddressBookClipboard = self.addressBookContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Copy address to clipboard"),
-            self.on_action_AddressBookClipboard)
-        self.actionAddressBookSubscribe = self.addressBookContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Subscribe to this address"),
-            self.on_action_AddressBookSubscribe)
-        self.actionAddressBookSetAvatar = self.addressBookContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Set avatar..."),
-            self.on_action_AddressBookSetAvatar)
-        self.actionAddressBookSetSound = \
-            self.addressBookContextMenuToolbar.addAction(
-                _translate("MainWindow", "Set notification sound..."),
-                self.on_action_AddressBookSetSound)
-        self.actionAddressBookNew = self.addressBookContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
-        self.actionAddressBookDelete = self.addressBookContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Delete"), self.on_action_AddressBookDelete)
-        self.tableWidgetAddressBook.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.tableWidgetAddressBook, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuAddressBook)
-
-    def init_subscriptions_popup_menu(self, connectSignal=True):
-        # Actions
-        self.actionsubscriptionsNew = self.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "New"), self.on_action_SubscriptionsNew)
-        self.actionsubscriptionsDelete = self.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Delete"),
-            self.on_action_SubscriptionsDelete)
-        self.actionsubscriptionsClipboard = self.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Copy address to clipboard"),
-            self.on_action_SubscriptionsClipboard)
-        self.actionsubscriptionsEnable = self.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Enable"),
-            self.on_action_SubscriptionsEnable)
-        self.actionsubscriptionsDisable = self.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Disable"),
-            self.on_action_SubscriptionsDisable)
-        self.actionsubscriptionsSetAvatar = self.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Set avatar..."),
-            self.on_action_TreeWidgetSetAvatar)
-        self.actionsubscriptionsSend = self.addressContextMenuToolbar.addAction(
-            _translate("MainWindow", "Send message to this address"),
-            self.on_action_Send)
-        self.treeWidgetSubscriptions.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.treeWidgetSubscriptions, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuSubscriptions)
-
-    def init_sent_popup_menu(self, connectSignal=True):
-        # Actions
-        self.actionTrashSentMessage = self.sentContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Move to Trash"), self.on_action_SentTrash)
-        self.actionSentClipboard = self.sentContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Copy destination address to clipboard"),
-            self.on_action_SentClipboard)
-        self.actionForceSend = self.sentContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Force send"), self.on_action_ForceSend)
-        self.actionSentReply = self.sentContextMenuToolbar.addAction(
-            _translate("MainWindow", "Send update"),
-            self.on_action_SentReply)
-        # self.popMenuSent = QtGui.QMenu( self )
-        # self.popMenuSent.addAction( self.actionSentClipboard )
-        # self.popMenuSent.addAction( self.actionTrashSentMessage )
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.treeWidgetSubscriptions
@@ -649,13 +341,7 @@ class MainWindow(Window):
         # so that quit won't loop
         self.wait = self.quitAccepted = False
 
-        self.init_file_menu()
-        self.init_inbox_popup_menu()
         self.init_identities_popup_menu()
-        self.init_addressbook_popup_menu()
-        self.init_subscriptions_popup_menu()
-        self.init_chan_popup_menu()
-        self.init_sent_popup_menu()
 
         # Initialize the user's list of addresses on the 'Chan' tab.
         self.rerenderTabTreeChans()
@@ -677,77 +363,11 @@ class MainWindow(Window):
         # Initialize the Subscriptions
         self.rerenderSubscriptions()
 
-        # Initialize the inbox search
-        QtCore.QObject.connect(self.inboxSearchLineEdit, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
-        QtCore.QObject.connect(self.inboxSearchLineEditSubscriptions, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
-        QtCore.QObject.connect(self.inboxSearchLineEditChans, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
-        QtCore.QObject.connect(self.inboxSearchLineEdit, QtCore.SIGNAL(
-            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
-        QtCore.QObject.connect(self.inboxSearchLineEditSubscriptions, QtCore.SIGNAL(
-            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
-        QtCore.QObject.connect(self.inboxSearchLineEditChans, QtCore.SIGNAL(
-            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
-
-        # Initialize addressbook
-        QtCore.QObject.connect(self.tableWidgetAddressBook, QtCore.SIGNAL(
-            "itemChanged(QTableWidgetItem *)"), self.tableWidgetAddressBookItemChanged)
-        # This is necessary for the completer to work if multiple recipients
-        QtCore.QObject.connect(self.lineEditTo, QtCore.SIGNAL(
-            "cursorPositionChanged(int, int)"), self.lineEditTo.completer().onCursorPositionChanged)
-
-        # show messages from message list
-        QtCore.QObject.connect(self.tableWidgetInbox, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
-        QtCore.QObject.connect(self.tableWidgetInboxSubscriptions, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
-        QtCore.QObject.connect(self.tableWidgetInboxChans, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
-
-        # tree address lists
-        QtCore.QObject.connect(self.treeWidgetYourIdentities, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.treeWidgetItemClicked)
-        QtCore.QObject.connect(self.treeWidgetYourIdentities, QtCore.SIGNAL(
-            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
-        QtCore.QObject.connect(self.treeWidgetSubscriptions, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.treeWidgetItemClicked)
-        QtCore.QObject.connect(self.treeWidgetSubscriptions, QtCore.SIGNAL(
-            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
-        QtCore.QObject.connect(self.treeWidgetChans, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.treeWidgetItemClicked)
-        QtCore.QObject.connect(self.treeWidgetChans, QtCore.SIGNAL(
-            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
-        QtCore.QObject.connect(
-            self.tabWidget, QtCore.SIGNAL("currentChanged(int)"),
-            self.tabWidgetCurrentChanged
-        )
-
         # Put the colored icon on the status bar
-        # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
-        self.setStatusBar(BMStatusBar())
-        self.statusbar = self.statusBar()
-
-        self.pushButtonStatusIcon = QtGui.QPushButton(self)
-        self.pushButtonStatusIcon.setText('')
-        self.pushButtonStatusIcon.setIcon(
-            QtGui.QIcon(':/newPrefix/images/redicon.png'))
-        self.pushButtonStatusIcon.setFlat(True)
         self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
-        QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonStatusIcon)
 
         self.unreadCount = 0
 
-        # Set the icon sizes for the identicons
-        identicon_size = 3*7
-        self.tableWidgetInbox.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        self.treeWidgetChans.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        self.treeWidgetYourIdentities.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        self.treeWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        self.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        
         self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
@@ -813,9 +433,6 @@ class MainWindow(Window):
             TTL = 28*24*60*60
         self.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
         self.updateHumanFriendlyTTLDescription(TTL)
-        
-        QtCore.QObject.connect(self.horizontalSliderTTL, QtCore.SIGNAL(
-            "valueChanged(int)"), self.updateTTL)
 
         self.initSettings()
         self.resetNamecoinConnection()
