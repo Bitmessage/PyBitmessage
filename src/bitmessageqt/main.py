@@ -36,18 +36,6 @@ class Window(settingsmixin.SMainWindow, RetranslateMixin):
             splitter.setCollapsible(1, False)
 
         for splitter in (
-            self.inboxIdentitiesSplitter,
-            self.sendIdentitiesSplitter,
-            self.subscriptionsIdentitiesSplitter,
-            self.chansIdentitiesSplitter
-        ):
-            splitter.setStretchFactor(0, 1)
-            splitter.setStretchFactor(1, 0)
-            splitter.setCollapsible(0, False)
-            splitter.setCollapsible(1, False)
-            splitter.handle(1).setEnabled(False)
-
-        for splitter in (
             self.inboxMessagecontrolSplitter,
             self.subscriptionsMessagecontrolSplitter,
             self.chansMessagecontrolSplitter

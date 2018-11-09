@@ -70,17 +70,10 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-          <widget class="SSplitter" name="inboxIdentitiesSplitter">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
+          <widget class="QWidget" name="inboxIdentitiesWidget">
+            <layout class="QVBoxLayout">
+	      <item>
            <widget class="STreeWidget" name="treeWidgetYourIdentities">
-            <property name="maximumSize">
-             <size>
-              <width>200</width>
-              <height>16777215</height>
-             </size>
-            </property>
             <column>
              <property name="text">
               <string>Identities</string>
@@ -92,6 +85,8 @@
              </property>
             </column>
            </widget>
+	   </item>
+	   <item>
            <widget class="QPushButton" name="pushButtonNewAddress">
             <property name="maximumSize">
              <size>
@@ -103,6 +98,8 @@
              <string>New Indentitiy</string>
             </property>
            </widget>
+	   </item>
+	    </layout>
           </widget>
           <widget class="SSplitter" name="inboxMessagecontrolSplitter">
            <property name="orientation">
@@ -242,17 +239,10 @@
            <property name="orientation">
              <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="SSplitter" name="sendIdentitiesSplitter">
-             <property name="orientation">
-               <enum>Qt::Vertical</enum>
-             </property>
+           <widget class="QWidget" name="sendIdentitiesWidget">
+             <layout class="QVBoxLayout">
+               <item>
              <widget class="STableWidget" name="tableWidgetAddressBook">
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
@@ -296,6 +286,8 @@
                </property>
               </column>
              </widget>
+	       </item>
+	       <item>
              <widget class="QPushButton" name="pushButtonAddAddressBook">
               <property name="maximumSize">
                <size>
@@ -307,6 +299,8 @@
                <string>Add Contact</string>
               </property>
              </widget>
+	       </item>
+	       <item>
              <widget class="QPushButton" name="pushButtonFetchNamecoinID">
               <property name="maximumSize">
                <size>
@@ -323,6 +317,8 @@
                <string>Fetch Namecoin ID</string>
               </property>
              </widget>
+	       </item>
+	     </layout>
            </widget>
            <widget class="SSplitter" name="sendMessagecontrolSplitter">
              <property name="orientation">
@@ -615,17 +611,10 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-           <widget class="SSplitter" name="subscriptionsIdentitiesSplitter">
-            <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
+           <widget class="QWidget" name="subscriptionsIdentitiesWidget">
+            <layout class="QVBoxLayout">
+              <item>
              <widget class="STreeWidget" name="treeWidgetSubscriptions">
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
@@ -646,6 +635,8 @@ p, li { white-space: pre-wrap; }
                </property>
               </column>
              </widget>
+	      </item>
+	      <item>
              <widget class="QPushButton" name="pushButtonAddSubscription">
               <property name="maximumSize">
                <size>
@@ -657,6 +648,8 @@ p, li { white-space: pre-wrap; }
                <string>Add new Subscription</string>
               </property>
              </widget>
+	      </item>
+	    </layout>
            </widget>
            <widget class="SSplitter" name="subscriptionsMessagecontrolSplitter">
 	     <property name="orientation">
@@ -796,17 +789,10 @@ p, li { white-space: pre-wrap; }
 	    <property name="orientation">
               <enum>Qt::Horizontal</enum>
             </property>
-           <widget class="SSplitter" name="chansIdentitiesSplitter">
-             <property name="orientation">
-               <enum>Qt::Vertical</enum>
-             </property>
+           <widget class="QWidget" name="chansIdentitiesWidget">
+             <layout class="QVBoxLayout">
+               <item>
              <widget class="QTreeWidget" name="treeWidgetChans">
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
-              </property>
               <property name="frameShadow">
                <enum>QFrame::Sunken</enum>
               </property>
@@ -833,6 +819,8 @@ p, li { white-space: pre-wrap; }
                </property>
               </column>
              </widget>
+	       </item>
+	       <item>
              <widget class="QPushButton" name="pushButtonAddChan">
               <property name="maximumSize">
                <size>
@@ -844,6 +832,8 @@ p, li { white-space: pre-wrap; }
                <string>Add Chan</string>
               </property>
              </widget>
+	       </item>
+	     </layout>
            </widget>
            <widget class="SSplitter" name="chansMessagecontrolSplitter">
             <property name="orientation">
