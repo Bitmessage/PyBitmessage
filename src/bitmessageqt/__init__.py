@@ -2887,6 +2887,9 @@ class MyForm(settingsmixin.SMainWindow):
 
     # window close event
     def closeEvent(self, event):
+        if not event.spontaneous():
+            return
+
         self.appIndicatorHide()
 
         trayonclose = BMConfigParser().safeGetBoolean(
