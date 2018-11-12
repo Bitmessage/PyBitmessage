@@ -13,7 +13,7 @@ class Window(settingsmixin.SMainWindow, RetranslateMixin):
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
-        widgets.load('bitmessageui.ui', self)
+        widgets.load('main.ui', self)
 
         self.blackwhitelist.rerenderBlackWhiteList()
 
@@ -27,6 +27,9 @@ class Window(settingsmixin.SMainWindow, RetranslateMixin):
 
         self.lineEditTo.cursorPositionChanged.connect(
             addressBookCompleter.onCursorPositionChanged)
+
+        # Put the colored icon on the status bar
+        self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
 
         # Hide all menu action containers
         for toolbar in (

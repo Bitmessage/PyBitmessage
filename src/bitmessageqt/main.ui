@@ -22,6 +22,18 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout">
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>8</number>
+    </property>
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -65,6 +77,18 @@
         <string>Messages</string>
        </attribute>
        <layout class="QVBoxLayout" name="inboxLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
         <item>
          <widget class="SSplitter" name="inboxHorizontalSplitter">
           <property name="orientation">
@@ -125,6 +149,9 @@
              </item>
              <item>
               <widget class="QComboBox" name="inboxSearchOption">
+	       <property name="currentIndex">
+                <number>3</number>
+               </property>
                <item>
                 <property name="text">
                  <string>All</string>
@@ -231,6 +258,14 @@
             <property name="readOnly">
              <bool>true</bool>
             </property>
+            <property name="plainText">
+             <string>
+        Welcome to easy and secure Bitmessage
+            * send messages to other people
+            * send broadcast messages like twitter or
+            * discuss in chan(nel)s with other people
+	      </string>
+            </property>
            </widget>
           </widget>
          </widget>
@@ -246,6 +281,18 @@
         <string>Send</string>
        </attribute>
        <layout class="QVBoxLayout" name="sendLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
         <item>
          <widget class="SSplitter" name="sendHorizontalSplitter">
           <property name="orientation">
@@ -348,6 +395,18 @@
               <string>Send ordinary Message</string>
              </attribute>
              <layout class="QGridLayout" name="gridLayout_8">
+              <property name="leftMargin">
+               <number>4</number>
+              </property>
+              <property name="topMargin">
+               <number>4</number>
+              </property>
+              <property name="rightMargin">
+               <number>4</number>
+              </property>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
               <item row="0" column="0">
                <layout class="QVBoxLayout" name="verticalLayout_5">
                 <item>
@@ -415,6 +474,18 @@ p, li { white-space: pre-wrap; }
               <string>Send Message to your Subscribers</string>
              </attribute>
              <layout class="QGridLayout" name="gridLayout_9">
+              <property name="leftMargin">
+               <number>4</number>
+              </property>
+              <property name="topMargin">
+               <number>4</number>
+              </property>
+              <property name="rightMargin">
+               <number>4</number>
+              </property>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
               <item row="0" column="0">
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <item>
@@ -562,7 +633,7 @@ p, li { white-space: pre-wrap; }
              <item>
               <widget class="QLabel" name="labelHumanFriendlyTTLDescription">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -575,12 +646,12 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>45</width>
+                 <width>16777215</width>
                  <height>16777215</height>
                 </size>
                </property>
                <property name="text">
-                <string>X days</string>
+                <string notr="true">X days</string>
                </property>
               </widget>
              </item>
@@ -620,6 +691,18 @@ p, li { white-space: pre-wrap; }
         <string>Subscriptions</string>
        </attribute>
        <layout class="QVBoxLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
         <item>
          <widget class="SSplitter" name="subscriptionsHorizontalSplitter">
           <property name="orientation">
@@ -683,14 +766,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QComboBox" name="inboxSearchOptionSubscriptions">
+		<property name="currentIndex">
+                <number>2</number>
+               </property>
                <item>
                 <property name="text">
                  <string>All</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>To</string>
                 </property>
                </item>
                <item>
@@ -804,6 +885,18 @@ p, li { white-space: pre-wrap; }
         <string>Chans</string>
        </attribute>
        <layout class="QVBoxLayout" name="chansLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
         <item>
          <widget class="SSplitter" name="chansHorizontalSplitter">
           <property name="orientation">
@@ -873,6 +966,9 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QComboBox" name="inboxSearchOptionChans">
+		<property name="currentIndex">
+                <number>3</number>
+               </property>
                <item>
                 <property name="text">
                  <string>All</string>
@@ -2891,6 +2987,16 @@ p, li { white-space: pre-wrap; }
    <signal>valueChanged(int)</signal>
    <receiver>MainWindow</receiver>
    <slot>updateTTL</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
  </connections>
 </ui>
