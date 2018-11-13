@@ -1272,11 +1272,7 @@ class MainWindow(Window):
             self.retranslateUi(self)
             self.init_inbox_popup_menu(False)
             self.init_identities_popup_menu(False)
-            self.init_chan_popup_menu(False)
-            self.init_addressbook_popup_menu(False)
-            self.init_subscriptions_popup_menu(False)
-            self.init_sent_popup_menu(False)
-            self.blackwhitelist.init_blacklist_popup_menu(False)
+            self.blackwhitelist.init_blacklist_popup_menu()
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 if BMConfigParser().getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
