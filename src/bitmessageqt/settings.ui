@@ -37,6 +37,18 @@
        <string>User Interface</string>
       </attribute>
       <layout class="QFormLayout" name="formLayout">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
        <item row="0" column="0">
         <widget class="QCheckBox" name="checkBoxStartOnLogon">
          <property name="text">
@@ -44,20 +56,43 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QCheckBox" name="checkBoxStartInTray">
-         <property name="text">
-          <string>Start Bitmessage in the tray (don't show main window)</string>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="groupBoxTray">
+         <property name="title">
+          <string>Tray</string>
          </property>
+         <layout class="QVBoxLayout" name="formLayoutTray">
+          <item>
+           <widget class="QCheckBox" name="checkBoxStartInTray">
+            <property name="text">
+             <string>Start Bitmessage in the tray (don't show main window)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxMinimizeToTray">
+            <property name="text">
+             <string>Minimize to tray</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxTrayOnClose">
+            <property name="text">
+             <string>Close to tray</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QCheckBox" name="checkBoxMinimizeToTray">
+        <widget class="QCheckBox" name="checkBoxHideTrayConnectionNotifications">
          <property name="text">
-          <string>Minimize to tray</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
+          <string>Hide connection notifications</string>
          </property>
         </widget>
        </item>
@@ -117,90 +152,15 @@
          <property name="title">
           <string>Interface Language</string>
          </property>
-         <layout class="QFormLayout" name="formLayout_2">
-          <item row="0" column="0">
-           <widget class="QComboBox" name="languageComboBox">
+         <layout class="QVBoxLayout">
+          <item>
+           <widget class="LanguageBox" name="languageComboBox">
             <property name="minimumSize">
              <size>
               <width>100</width>
               <height>0</height>
              </size>
             </property>
-            <item>
-             <property name="text">
-              <string comment="system">System Settings</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="en">English</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="eo">Esperanto</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="fr">Français</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="de">Deutsch</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="es">Español</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="ru">русский</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="no">Norsk</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="ar">العربية</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="zh_cn">简体中文</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="ja">日本語</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="nl">Nederlands</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true" comment="cs">Česky</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="en_pirate">Pirate English</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="other">Other (set in keys.dat)</string>
-             </property>
-            </item>
            </widget>
           </item>
          </layout>
@@ -213,6 +173,18 @@
        <string>Network Settings</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
        <item row="0" column="0">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
@@ -220,26 +192,13 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="0">
-           <spacer name="horizontalSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>125</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="1">
            <widget class="QLabel" name="label">
             <property name="text">
              <string>Listen for connections on port:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
+          <item row="0" column="1">
            <widget class="QLineEdit" name="lineEditTCPPort">
             <property name="maximumSize">
              <size>
@@ -248,6 +207,26 @@
              </size>
             </property>
            </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QCheckBox" name="checkBoxUPnP">
+            <property name="text">
+             <string>UPnP</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>
@@ -466,6 +445,18 @@
        <string>Demanded difficulty</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
        <item row="1" column="1">
         <widget class="QLabel" name="label_9">
          <property name="text">
@@ -594,6 +585,18 @@
        <string>Max acceptable difficulty</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_7">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
        <item row="0" column="0" colspan="3">
         <widget class="QLabel" name="label_15">
          <property name="text">
@@ -698,6 +701,33 @@
          </property>
         </spacer>
        </item>
+       <item row="4" column="0" colspan="3">
+        <layout class="QHBoxLayout">
+         <item>
+          <widget class="QLabel" name="labelOpenCL">
+           <property name="text">
+            <string>Hardware GPU acceleration (OpenCL):</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBoxOpenCL"/>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_12">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tabNamecoin">
@@ -705,6 +735,18 @@
        <string>Namecoin integration</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_8">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
        <item row="2" column="0">
         <spacer name="horizontalSpacer_6">
          <property name="orientation">
@@ -888,6 +930,18 @@
        <string>Resends Expire</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
        <item row="0" column="0" colspan="3">
         <widget class="QLabel" name="label_7">
          <property name="text">
@@ -912,91 +966,69 @@
         </spacer>
        </item>
        <item row="1" column="2">
-        <widget class="QWidget" name="widget" native="true">
+        <widget class="QGroupBox">
          <property name="minimumSize">
           <size>
            <width>231</width>
            <height>75</height>
           </size>
          </property>
+	 <layout class="QGridLayout">
+	   <item row="0" column="0">
          <widget class="QLabel" name="label_19">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>101</width>
-            <height>20</height>
-           </rect>
-          </property>
           <property name="text">
            <string>Give up after</string>
           </property>
-          <property name="alignment">
+	  <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
+         </property>
          </widget>
+	   </item>
+	   <item row="1" column="0">
          <widget class="QLabel" name="label_20">
-          <property name="geometry">
-           <rect>
-            <x>30</x>
-            <y>40</y>
-            <width>80</width>
-            <height>16</height>
-           </rect>
-          </property>
           <property name="text">
            <string>and</string>
           </property>
-          <property name="alignment">
+	  <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
-         <widget class="QLineEdit" name="lineEditDays">
-          <property name="geometry">
-           <rect>
-            <x>113</x>
-            <y>20</y>
-            <width>51</width>
-            <height>20</height>
-           </rect>
-          </property>
+	   </item>
+	   <item row="0" column="1">
+             <widget class="QLineEdit" name="lineEditDays">
+	       <property name="maximumSize">
+             <size>
+               <width>55</width>
+	       <height>100</height>
+	     </size>
+	     </property>
          </widget>
-         <widget class="QLineEdit" name="lineEditMonths">
-          <property name="geometry">
-           <rect>
-            <x>113</x>
-            <y>40</y>
-            <width>51</width>
-            <height>20</height>
-           </rect>
-          </property>
+	   </item>
+	   <item row="1" column="1">
+             <widget class="QLineEdit" name="lineEditMonths">
+	       <property name="maximumSize">
+             <size>
+               <width>55</width>
+	       <height>100</height>
+	     </size>
+	     </property>
          </widget>
-         <widget class="QLabel" name="label_22">
-          <property name="geometry">
-           <rect>
-            <x>169</x>
-            <y>23</y>
-            <width>61</width>
-            <height>16</height>
-           </rect>
-          </property>
+	   </item>
+	   <item row="0" column="2">
+         <widget class="QLabel">
           <property name="text">
            <string>days</string>
           </property>
          </widget>
-         <widget class="QLabel" name="label_23">
-          <property name="geometry">
-           <rect>
-            <x>170</x>
-            <y>41</y>
-            <width>71</width>
-            <height>16</height>
-           </rect>
-          </property>
+	   </item>
+	   <item row="1" column="2">
+         <widget class="QLabel">
           <property name="text">
            <string>months.</string>
           </property>
          </widget>
+	   </item>
+	 </layout>
         </widget>
        </item>
        <item row="2" column="1">
@@ -1017,7 +1049,14 @@
     </widget>
    </item>
   </layout>
- </widget>
+</widget>
+ <customwidgets>
+  <customwidget>
+   <class>LanguageBox</class>
+   <extends>QComboBox</extends>
+   <header>bitmessageqt.languagebox</header>
+  </customwidget>
+  </customwidgets>
  <tabstops>
   <tabstop>tabWidgetSettings</tabstop>
   <tabstop>checkBoxStartOnLogon</tabstop>
@@ -1098,6 +1137,54 @@
     <hint type="destinationlabel">
      <x>370</x>
      <y>192</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxProxyType</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>settingsDialog</receiver>
+   <slot>comboBoxProxyTypeChanged</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonNamecoinNamecoind</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>settingsDialog</receiver>
+   <slot>namecoinTypeChanged</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonNamecoinTest</sender>
+   <signal>clicked()</signal>
+   <receiver>settingsDialog</receiver>
+   <slot>click_pushButtonNamecoinTest</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
     </hint>
    </hints>
   </connection>
