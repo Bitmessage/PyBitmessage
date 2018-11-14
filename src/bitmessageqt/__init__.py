@@ -2804,6 +2804,7 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.QEventLoop.AllEvents, 1000
         )
         shutdown.doCleanShutdown()
+
         self.updateStatusBar(_translate(
             "MainWindow", "Stopping notifications... %1%").arg(90))
         self.tray.hide()
@@ -2812,20 +2813,21 @@ class MyForm(settingsmixin.SMainWindow):
             "MainWindow", "Shutdown imminent... %1%").arg(100))
 
         logger.info("Shutdown complete")
-        super(MyForm, myapp).close()
-        # return
-        sys.exit()
+        self.close()
+        # FIXME: rewrite loops with timer instead
+        if self.wait:
+            self.destroy()
+        app.quit()
 
-    # window close event
     def closeEvent(self, event):
-        self.appIndicatorHide()
-
+        """window close event"""
+        event.ignore()
         trayonclose = BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'trayonclose')
-
-        event.ignore()
-        if not trayonclose:
-            # quit the application
+        if trayonclose:
+            self.appIndicatorHide()
+        else:
+            # custom quit method
             self.quit()
 
     def on_action_InboxMessageForceHtml(self):
@@ -4219,4 +4221,4 @@ def run():
     if not BMConfigParser().getboolean('bitmessagesettings', 'startintray'):
         myapp.show()
 
-    sys.exit(app.exec_())
+    app.exec_()
