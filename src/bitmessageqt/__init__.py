@@ -1580,7 +1580,13 @@ class MyForm(settingsmixin.SMainWindow):
 
     # menu button 'delete all treshed messages'
     def click_actionDeleteAllTrashedMessages(self):
-        if QtWidgets.QMessageBox.question(self, _translate("MainWindow", "Delete trash?"), _translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.No:
+        if QtWidgets.QMessageBox.question(
+            self, _translate("MainWindow", "Delete trash?"),
+            _translate(
+                "MainWindow",
+                "Are you sure you want to delete all trashed messages?"
+            ), QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
+        ) == QtWidgets.QMessageBox.No:
             return
         sqlStoredProcedure('deleteandvacuume')
         self.rerenderTabTreeMessages()
@@ -2073,22 +2079,22 @@ class MyForm(settingsmixin.SMainWindow):
                             toAddress = acct.toAddress
                         else:
                             if QtWidgets.QMessageBox.question(
-                                    self, "Sending an email?",
-                                    _translate(
-                                        "MainWindow",
-                                        "You are trying to send an email"
-                                        " instead of a bitmessage. This"
-                                        " requires registering with a"
-                                        " gateway. Attempt to register?"
-                                    ), QtWidgets.QMessageBox.Yes
-                                    | QtWidgets.QMessageBox.No
+                                self, "Sending an email?",
+                                _translate(
+                                    "MainWindow",
+                                    "You are trying to send an email"
+                                    " instead of a bitmessage. This"
+                                    " requires registering with a"
+                                    " gateway. Attempt to register?"
+                                ), QtWidgets.QMessageBox.Yes
+                                | QtWidgets.QMessageBox.No
                             ) != QtWidgets.QMessageBox.Yes:
                                 continue
                             email = acct.getLabel()
                             # attempt register
                             if email[-14:] != "@mailchuck.com":
                                 # 12 character random email address
-                                email = ''.join(
+                                email = u''.join(
                                     random.SystemRandom().choice(
                                         string.ascii_lowercase
                                     ) for _ in range(12)
@@ -2110,33 +2116,33 @@ class MyForm(settingsmixin.SMainWindow):
                       decodeAddress(toAddress)[:3]
                     if status != 'success':
                         try:
-                            toAddress = unicode(toAddress, 'utf-8', 'ignore')
+                            toAddress_value = unicode(
+                                toAddress, 'utf-8', 'ignore')
                         except:
                             logger.warning(
-                                "Failed unicode(toAddress ):",
-                                exc_info=True)
+                                "Failed unicode(toAddress ):", exc_info=True)
                         logger.error(
                             'Error: Could not decode recipient address %s: %s',
-                            toAddress, status)
+                            toAddress_value, status)
 
                         if status == 'missingbm':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Bitmessage addresses start with"
                                 " BM-   Please check the recipient address {0}"
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         elif status == 'checksumfailed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address {0} is not"
                                 " typed or copied correctly. Please check it."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         elif status == 'invalidcharacters':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address {0} contains"
                                 " invalid characters. Please check it."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         elif status == 'versiontoohigh':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2144,7 +2150,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " {0} is too high. Either you need to upgrade"
                                 " your Bitmessage software or your"
                                 " acquaintance is being clever."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         elif status == 'ripetooshort':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2152,7 +2158,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address {0} is too short. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         elif status == 'ripetoolong':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2160,7 +2166,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address {0} is too long. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         elif status == 'varintmalformed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2168,13 +2174,13 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address {0} is malformed. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                         else:
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Something is wrong with the"
                                 " recipient address {0}."
-                            ).format(toAddress))
+                            ).format(toAddress_value))
                     elif fromAddress == '':
                         self.updateStatusBar(_translate(
                             "MainWindow",
@@ -2480,7 +2486,7 @@ class MyForm(settingsmixin.SMainWindow):
         dialog.exec_()
         try:
             address, label = dialog.data
-        except AttributeError:
+        except (AttributeError, TypeError):
             return
 
         # First we must check to see if the address is already in the
@@ -2525,7 +2531,7 @@ class MyForm(settingsmixin.SMainWindow):
         dialog.exec_()
         try:
             address, label = dialog.data
-        except AttributeError:
+        except (AttributeError, TypeError):
             return
 
         # We must check to see if the address is already in the
@@ -2584,9 +2590,8 @@ class MyForm(settingsmixin.SMainWindow):
         dialog = dialogs.EmailGatewayDialog(self, config=BMConfigParser())
         # For Modal dialogs
         dialog.exec_()
-        try:
-            acct = dialog.data
-        except AttributeError:
+        acct = dialog.data
+        if not acct:
             return
 
         # Only settings remain here
@@ -3241,10 +3246,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         defaultFilename = "".join(
             x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
-        filename, filetype = QtWidgets.QFileDialog.getSaveFileName(
+        filename = QtWidgets.QFileDialog.getSaveFileName(
             self, _translate("MainWindow", "Save As..."), defaultFilename,
-            "Text files (*.txt);;All files (*.*)"
-        )
+            "Text files (*.txt);;All files (*.*)")[0]
         if not filename:
             return
         try:
@@ -3704,8 +3708,8 @@ class MyForm(settingsmixin.SMainWindow):
         account = accountClass(myAddress)
         if isinstance(account, GatewayAccount) \
             and otherAddress == account.relayAddress and (
-                (currentColumn in (0, 2) and currentFolder == "sent")
-                or (currentColumn in (1, 2) and currentFolder != "sent")):
+                (currentColumn in (0, 2) and currentFolder == "sent") or
+                (currentColumn in (1, 2) and currentFolder != "sent")):
             text = tableWidget.item(currentRow, currentColumn).label
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
@@ -3766,10 +3770,9 @@ class MyForm(settingsmixin.SMainWindow):
                 current_files += [upper]
         filters[0:0] = ['Image files (' + ' '.join(all_images_filter) + ')']
         filters[1:1] = ['All files (*.*)']
-        sourcefile, filetype = QtWidgets.QFileDialog.getOpenFileName(
+        sourcefile = QtWidgets.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set avatar..."),
-            filter=';;'.join(filters)
-        )
+            filter=';;'.join(filters))[0]
         # determine the correct filename (note that avatars don't use the suffix)
         destination = state.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
         exists = QtCore.QFile.exists(destination)
@@ -3830,10 +3833,10 @@ class MyForm(settingsmixin.SMainWindow):
             "MainWindow", "Sound files (%s)" %
             ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
         ))]
-        sourcefile, filetype = QtWidgets.QFileDialog.getOpenFileName(
+        sourcefile = QtWidgets.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set notification sound..."),
             filter=';;'.join(filters)
-        )
+        )[0]
 
         if not sourcefile:
             return
@@ -4097,6 +4100,8 @@ class MyForm(settingsmixin.SMainWindow):
         except NameError:
             message = u""
         except IndexError:
+            # _translate() often returns unicode, no redefinition here!
+            # pylint: disable=redefined-variable-type
             message = _translate(
                 "MainWindow",
                 "Error occurred: could not load message from disk."

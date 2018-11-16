@@ -155,17 +155,17 @@ detectOS.result = None
 def detectOSRelease():
     """Detecting the release of OS"""
     with open("/etc/os-release", 'r') as osRelease:
-        version = None
+        ver = None
         for line in osRelease:
             if line.startswith("NAME="):
                 detectOS.result = OS_RELEASE.get(
                     line.replace('"', '').split("=")[-1].strip().lower())
             elif line.startswith("VERSION_ID="):
                 try:
-                    version = float(line.split("=")[1].replace("\"", ""))
+                    ver = float(line.split("=")[1].replace("\"", ""))
                 except ValueError:
                     pass
-        if detectOS.result == "Ubuntu" and version < 14:
+        if detectOS.result == "Ubuntu" and ver < 14:
             detectOS.result = "Ubuntu 12"
         elif detectOS.result == "Ubuntu" and version >= 20:
             detectOS.result = "Ubuntu 20"
@@ -382,8 +382,10 @@ def check_pyqt():
     Here we are checking for PyQt4 with its version, as for it require
     PyQt 4.8 or later.
     """
+    # pylint: disable=no-member
     qtpy = try_import(
-        'qtpy', 'PyBitmessage requires qtpy, PyQt 4.8 or later and Qt 4.7 or later.')
+        'qtpy',
+        'PyBitmessage requires qtpy, PyQt 4.8 or later and Qt 4.7 or later.')
 
     if not qtpy:
         return False

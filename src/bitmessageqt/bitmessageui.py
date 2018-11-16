@@ -1,3 +1,6 @@
+# pylint: skip-file
+# flake8: noqa
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from tr import _translate
 from bmconfigparser import BMConfigParser
