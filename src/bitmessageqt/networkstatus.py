@@ -1,7 +1,5 @@
 """
-src/bitmessageqt/networkstatus.py
-=================================
-
+Network status tab widget definition.
 """
 
 import time
@@ -34,8 +32,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
 
         self.UISignalThread = UISignaler.get()
         # pylint: disable=no-member
@@ -240,6 +236,15 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.updateNumberOfObjectsToBeSynced()
 
     def retranslateUi(self):
+        """Conventional Qt Designer method for dynamic l10n"""
         super(NetworkStatus, self).retranslateUi()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
+        self.labelTotalConnections.setText(
+            _translate(
+                "networkstatus", "Total Connections: %1").arg(
+                    str(self.tableWidgetConnectionCount.rowCount())))
+        self.labelStartupTime.setText(_translate(
+            "networkstatus", "Since startup on %1"
+        ).arg(l10n.formatTimestamp(self.startup)))
+        self.updateNumberOfMessagesProcessed()
+        self.updateNumberOfBroadcastsProcessed()
+        self.updateNumberOfPubkeysProcessed()

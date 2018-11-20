@@ -771,6 +771,8 @@ class Ui_MainWindow(object):
         self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
+        self.updateNetworkSwitchMenuLabel()
+
 
 import bitmessage_icons_rc
 
