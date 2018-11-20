@@ -1,7 +1,7 @@
 import os
 import sys
 
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 
 import debug
 import defaults
@@ -29,6 +29,8 @@ class SettingsDialog(QtGui.QDialog):
         self.parent = parent
         self.firstrun = firstrun
         self.config = BMConfigParser()
+        self.net_restart_needed = False
+        self.timer = QtCore.QTimer()
 
         self.lineEditMaxOutboundConnections.setValidator(
             QtGui.QIntValidator(0, 8, self.lineEditMaxOutboundConnections))
@@ -98,7 +100,8 @@ class SettingsDialog(QtGui.QDialog):
         self.checkBoxSocksListen.setChecked(
             config.getboolean('bitmessagesettings', 'sockslisten'))
 
-        proxy_type = config.get('bitmessagesettings', 'socksproxytype')
+        proxy_type = config.safeGet(
+            'bitmessagesettings', 'socksproxytype', 'none')
         if proxy_type == 'none':
             self.comboBoxProxyType.setCurrentIndex(0)
             self.lineEditSocksHostname.setEnabled(False)
@@ -283,16 +286,11 @@ class SettingsDialog(QtGui.QDialog):
 
         if int(self.config.get('bitmessagesettings', 'port')) != int(
                 self.lineEditTCPPort.text()):
-            if not self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
-                QtGui.QMessageBox.about(
-                    self, _translate("MainWindow", "Restart"),
-                    _translate(
-                        "MainWindow",
-                        "You must restart Bitmessage for the port number"
-                        " change to take effect.")
-                )
             self.config.set(
                 'bitmessagesettings', 'port', str(self.lineEditTCPPort.text()))
+            if not self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+                self.net_restart_needed = True
+
         if self.checkBoxUPnP.isChecked() != self.config.safeGetBoolean(
                 'bitmessagesettings', 'upnp'):
             self.config.set(
@@ -303,32 +301,28 @@ class SettingsDialog(QtGui.QDialog):
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
 
+        proxy_type = self.config.safeGet(
+            'bitmessagesettings', 'socksproxytype', 'none')
         if (
-            self.config.get('bitmessagesettings', 'socksproxytype') ==
-            'none' and
-            self.comboBoxProxyType.currentText()[0:5] == 'SOCKS'
+            proxy_type == 'none' and
+            self.comboBoxProxyType.currentText()[0:5] == 'SOCKS' and
+            shared.statusIconColor != 'red'
         ):
-            if shared.statusIconColor != 'red':
-                QtGui.QMessageBox.about(
-                    self, _translate("MainWindow", "Restart"),
-                    _translate(
-                        "MainWindow",
-                        "Bitmessage will use your proxy from now on but"
-                        " you may want to manually restart Bitmessage now"
-                        " to close existing connections (if any).")
-                )
+            self.net_restart_needed = True
         if (
-            self.config.get('bitmessagesettings', 'socksproxytype')[0:5] ==
-            'SOCKS' and self.comboBoxProxyType.currentText()[0:5] != 'SOCKS'
+            proxy_type[0:5] == 'SOCKS' and
+            self.comboBoxProxyType.currentText()[0:5] != 'SOCKS'
         ):
+            self.net_restart_needed = True
             self.parent.statusbar.clearMessage()
         # just in case we changed something in the network connectivity
         state.resetNetworkProtocolAvailability()
-        if self.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
-            self.config.set('bitmessagesettings', 'socksproxytype', str(
-                self.comboBoxProxyType.currentText()))
-        else:
-            self.config.set('bitmessagesettings', 'socksproxytype', 'none')
+        self.config.set(
+            'bitmessagesettings', 'socksproxytype',
+            str(self.comboBoxProxyType.currentText())
+            if self.comboBoxProxyType.currentText()[0:5] == 'SOCKS'
+            else 'none'
+        )
         self.config.set('bitmessagesettings', 'socksauthentication', str(
             self.checkBoxAuthentication.isChecked()))
         self.config.set('bitmessagesettings', 'sockshostname', str(
@@ -494,6 +488,15 @@ class SettingsDialog(QtGui.QDialog):
                     str(months))
 
         self.config.save()
+
+        if self.net_restart_needed:
+            self.net_restart_needed = False
+            self.config.set('bitmessagesettings', 'dontconnect', 'true')
+            self.timer.singleShot(
+                5000, lambda:
+                self.config.remove_option(
+                    'bitmessagesettings', 'dontconnect')
+            )
 
         self.parent.updateStartOnLogon()
 
