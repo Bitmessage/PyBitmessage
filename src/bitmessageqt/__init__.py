@@ -308,7 +308,6 @@ class MainWindow(Window):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
 
-        self.qmytranslator = self.qsystranslator = None
         self.indicatorUpdate = None
         self.actionStatus = None
 
@@ -1269,8 +1268,8 @@ class MainWindow(Window):
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
-            self.retranslateUi(self)
-            self.init_inbox_popup_menu(False)
+            # FIXME: it's called very often
+            self.retranslateUi()
             self.init_identities_popup_menu(False)
             self.blackwhitelist.init_blacklist_popup_menu()
         if event.type() == QtCore.QEvent.WindowStateChange:
