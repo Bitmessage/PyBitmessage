@@ -2677,7 +2677,7 @@ class MyForm(settingsmixin.SMainWindow):
             if dontconnect_option else _translate("MainWindow", "Connecting"),
             _translate(
                 "MainWindow",
-                "Bitmessage will now drop all connectins. Are you sure?"
+                "Bitmessage will now drop all connections. Are you sure?"
             ) if dontconnect_option else _translate(
                 "MainWindow",
                 "Bitmessage will now start connecting to network. Are you sure?"
