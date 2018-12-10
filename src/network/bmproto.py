@@ -1,6 +1,5 @@
 import base64
 import hashlib
-import random
 import socket
 import struct
 import time
@@ -17,7 +16,8 @@ from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInv
 import network.connectionpool
 from network.node import Node
 from network.objectracker import ObjectTracker
-from network.proxy import Proxy, ProxyError, GeneralProxyError
+from network.proxy import ProxyError
+from objectracker import missingObjects
 
 import addresses
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
@@ -359,7 +359,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
             try:
-                del state.missingObjects[self.object.inventoryHash]
+                del missingObjects[self.object.inventoryHash]
             except KeyError:
                 pass
 
@@ -559,7 +559,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 except KeyError:
                     pass
         try:
-            del state.missingObjects[hashId]
+            del missingObjects[hashId]
         except KeyError:
             pass
 

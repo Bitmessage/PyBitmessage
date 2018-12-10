@@ -1,16 +1,16 @@
-import random
 import threading
 import time
 
 import addresses
+import helper_random
+import protocol
 from dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-import protocol
-from state import missingObjects
-import helper_random
+from objectracker import missingObjects
+
 
 class DownloadThread(threading.Thread, StoppableThread):
     minPending = 200

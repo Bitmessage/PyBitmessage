@@ -1,8 +1,8 @@
 import time
 
-from network.connectionpool import BMConnectionPool
 import asyncore_pollchoose as asyncore
-from state import missingObjects
+from network.connectionpool import BMConnectionPool
+from objectracker import missingObjects
 
 lastReceivedTimestamp = time.time()
 lastReceivedBytes = 0

@@ -1,11 +1,9 @@
 import time
 from threading import RLock
 
-from inventory import Inventory
 import network.connectionpool
 from network.dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
-from state import missingObjects
 
 haveBloom = False
 
@@ -23,6 +21,10 @@ except ImportError:
 
 # it isn't actually implemented yet so no point in turning it on
 haveBloom = False
+
+# tracking pending downloads globally, for stats
+missingObjects = {}
+
 
 class ObjectTracker(object):
     invCleanPeriod = 300
