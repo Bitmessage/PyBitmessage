@@ -1566,13 +1566,13 @@ Receiver&apos;s required difficulty: %1 and %2</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2680"/>
-        <source>Bitmessage will now drop all connectins. Are you sure?</source>
-        <translation type="unfinished"/>
+        <source>Bitmessage will now drop all connections. Are you sure?</source>
+        <translation>比特信将要丢弃所有连接，您确定吗？</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2680"/>
         <source>Bitmessage will now start connecting to network. Are you sure?</source>
-        <translation type="unfinished"/>
+        <translation>比特信将会开始连接至网络中，您确定吗？</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2742"/>
@@ -1998,7 +1998,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation>您有和其他节点的连接且您的防火墙已经正确配置。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/dialogs.py" line="58"/>
+        <location filename="../bitmessageqt/dialogs.py" line="64"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation>您正在使用TCP端口 %1 。（可以在设置中修改）。</translation>
     </message>
@@ -2237,17 +2237,17 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
 <context>
     <name>newchandialog</name>
     <message>
-        <location filename="../bitmessageqt/newchandialog.py" line="38"/>
+        <location filename="../bitmessageqt/newchandialog.py" line="68"/>
         <source>Successfully created / joined chan %1</source>
         <translation>成功创建或加入频道%1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/newchandialog.py" line="44"/>
+        <location filename="../bitmessageqt/newchandialog.py" line="75"/>
         <source>Chan creation / joining failed</source>
         <translation>频道创建或加入失败</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/newchandialog.py" line="50"/>
+        <location filename="../bitmessageqt/newchandialog.py" line="82"/>
         <source>Chan creation / joining cancelled</source>
         <translation>频道创建或加入已取消</translation>
     </message>
