@@ -93,7 +93,7 @@ class BMConnectionPool(object):
                     del self.inboundConnections[connection.destination.host]
                 except KeyError:
                     pass
-        connection.close()
+        connection.handle_close()
 
     def getListeningIP(self):
         if BMConfigParser().safeGet("bitmessagesettings", "onionhostname").endswith(".onion"):
@@ -202,7 +202,6 @@ class BMConnectionPool(object):
                     self.inboundConnections.values() +
                     self.outboundConnections.values()
             ):
-                i.set_state("close")
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
 
