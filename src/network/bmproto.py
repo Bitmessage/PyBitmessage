@@ -18,6 +18,8 @@ from network.node import Node
 from network.objectracker import ObjectTracker
 from network.proxy import ProxyError
 from objectracker import missingObjects
+from randomtrackingdict import RandomTrackingDict
+
 
 import addresses
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
@@ -57,6 +59,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.isOutbound = False
         # packet/connection from a local IP
         self.local = False
+        self.pendingUpload = RandomTrackingDict()
 
     def bm_proto_reset(self):
         self.magic = None
@@ -279,23 +282,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # skip?
         if time.time() < self.skipUntil:
             return True
-        #TODO make this more asynchronous
         helper_random.randomshuffle(items)
         for i in map(str, items):
-            if Dandelion().hasHash(i) and \
-                    self != Dandelion().objectChildStem(i):
-                self.antiIntersectionDelay()
-                logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
-                break
-            else:
-                try:
-                    self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
-                except KeyError:
-                    self.antiIntersectionDelay()
-                    logger.info('%s asked for an object we don\'t have.', self.destination)
-                    break
-        # I think that aborting after the first missing/stem object is more secure
-        # when using random reordering, as the recipient won't know exactly which objects we refuse to deliver
+            self.pendingUpload[i] = time.time()
         return True
 
     def _command_inv(self, dandelion=False):

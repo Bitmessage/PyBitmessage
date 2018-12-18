@@ -58,6 +58,7 @@ from network.announcethread import AnnounceThread
 from network.invthread import InvThread
 from network.addrthread import AddrThread
 from network.downloadthread import DownloadThread
+from network.uploadthread import UploadThread
 
 # Helper Functions
 import helper_generic
@@ -333,6 +334,9 @@ class Main:
             state.downloadThread = DownloadThread()
             state.downloadThread.daemon = True
             state.downloadThread.start()
+            state.uploadThread = UploadThread()
+            state.uploadThread.daemon = True
+            state.uploadThread.start()
 
             connectToStream(1)
 

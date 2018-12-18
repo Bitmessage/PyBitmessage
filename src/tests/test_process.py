@@ -23,7 +23,7 @@ class TestProcessProto(unittest.TestCase):
     it starts pybitmessage in setUpClass() and stops it in tearDownClass()
     """
     _process_cmd = ['pybitmessage', '-d']
-    _threads_count = 14
+    _threads_count = 15
     _files = (
         'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
         '.api_started', 'unittest.lock'
