@@ -26,7 +26,6 @@ from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 import shared
 import state
 import protocol
-import helper_random
 
 class BMProtoError(ProxyError):
     errorCodes = ("Protocol error")
@@ -280,11 +279,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def bm_command_getdata(self):
         items = self.decode_payload_content("l32s")
         # skip?
-        if time.time() < self.skipUntil:
+        now = time.time()
+        if now < self.skipUntil:
             return True
-        helper_random.randomshuffle(items)
         for i in map(str, items):
-            self.pendingUpload[i] = time.time()
+            self.pendingUpload[i] = now
         return True
 
     def _command_inv(self, dandelion=False):
