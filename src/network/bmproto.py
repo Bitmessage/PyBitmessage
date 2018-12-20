@@ -282,8 +282,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         now = time.time()
         if now < self.skipUntil:
             return True
-        for i in map(str, items):
-            self.pendingUpload[i] = now
+        for i in items:
+            self.pendingUpload[str(i)] = now
         return True
 
     def _command_inv(self, dandelion=False):
