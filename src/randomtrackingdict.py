@@ -111,6 +111,7 @@ class RandomTrackingDict(object):
             # or if last object received too long time ago
             if self.pendingLen == self.len or self.lastObject + self.pendingTimeout > time():
                 self.pendingLen = 0
+                self.setLastObject()
             available = self.len - self.pendingLen
             if count > available:
                 count = available
