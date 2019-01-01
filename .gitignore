@@ -10,6 +10,7 @@ src/.settings/
 src/**/.dll
 src/**/*.o
 src/**/*.so
+src/**/a.out
 build/lib.*
 build/temp.*
 dist
