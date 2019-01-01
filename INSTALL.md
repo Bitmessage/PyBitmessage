@@ -65,7 +65,7 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 
 Now, install the required dependencies
 ```
-brew install git python pyqt@4 openssl
+brew install git python openssl cartr/qt4/pyqt@4 
 ```
 
 Download and run PyBitmessage:
