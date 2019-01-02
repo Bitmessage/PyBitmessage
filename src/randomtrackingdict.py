@@ -108,8 +108,8 @@ class RandomTrackingDict(object):
         # pylint: disable=redefined-outer-name
         with self.lock:
             # reset if we've requested all
-            # or if last object received too long time ago
-            if self.pendingLen == self.len or self.lastObject + self.pendingTimeout > time():
+            # and if last object received too long time ago
+            if self.pendingLen == self.len and self.lastObject + self.pendingTimeout > time():
                 self.pendingLen = 0
                 self.setLastObject()
             available = self.len - self.pendingLen
