@@ -109,7 +109,7 @@ class RandomTrackingDict(object):
         with self.lock:
             # reset if we've requested all
             # and if last object received too long time ago
-            if self.pendingLen == self.len and self.lastObject + self.pendingTimeout > time():
+            if self.pendingLen == self.len and self.lastObject + self.pendingTimeout < time():
                 self.pendingLen = 0
                 self.setLastObject()
             available = self.len - self.pendingLen
