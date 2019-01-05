@@ -19,7 +19,7 @@ pseudo-mailing list:
 BM-2D9QKN4teYRvoq2fyzpiftPh9WP9qggtzh
 
 Feel welcome to join chan "bitmessage", BM-2cWy7cvHoq3f1rYMerRJp8PT653jjSuEdY 
-which is on preview here: https://beamstat.com/chan/bitmessage
+which is on preview [here](https://beamstat.com/chan/bitmessage).
 
 References
 ----------
