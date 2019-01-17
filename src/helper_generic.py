@@ -4,12 +4,14 @@ Helper Generic perform generic operations for threading.
 Also perform some conversion operations.
 """
 
-
 import socket
 import sys
 import threading
 import traceback
-import multiprocessing
+try:
+    import multiprocessing
+except Exception as e:
+    pass
 from binascii import hexlify, unhexlify
 
 import shared
@@ -59,7 +61,10 @@ def allThreadTraceback(frame):
 
 
 def signal_handler(signal, frame):
-    process = multiprocessing.current_process()
+    try:
+        process = multiprocessing.current_process()
+    except Exception as e:
+        process = threading.current_thread()
     logger.error(
         'Got signal %i in %s/%s',
         signal, process.name, threading.current_thread().name

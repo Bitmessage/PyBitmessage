@@ -18,7 +18,9 @@ class BMNetworkThread(threading.Thread, StoppableThread):
     def run(self):
         try:
             while not self._stopped and state.shutdown == 0:
+                print("I am running in run method which calls a loop for BMConnectionPool line19..................................")
                 BMConnectionPool().loop()
+                print("I am running in run method which calls a loop for BMConnectionPool line 21..................................")
         except Exception as e:
             excQueue.put((self.name, e))
             raise

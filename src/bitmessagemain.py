@@ -18,6 +18,7 @@ sys.path.insert(0, app_dir)
 
 
 import depends
+
 depends.check_dependencies()
 
 import ctypes
@@ -208,7 +209,8 @@ class Main:
         if daemon:
             state.enableGUI = False  # run without a UI
 
-        if state.enableGUI and not state.curses and not depends.check_pyqt():
+        # is the application already running?  If yes then exit.
+        if state.enableGUI and not state.curses and not state.kivy and not depends.check_pyqt():
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
                 ' to run it as a daemon and interact with it'
@@ -239,9 +241,7 @@ class Main:
         if state.dandelion and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
             state.dandelion = 0
-
         knownnodes.readKnownNodes()
-
         # Not needed if objproc is disabled
         if state.enableObjProc:
 
@@ -250,30 +250,35 @@ class Main:
             # close the main program even if there are threads left
             addressGeneratorThread.daemon = True
             addressGeneratorThread.start()
+            print("Thread 284 begins.....................................................................")
 
             # Start the thread that calculates POWs
             singleWorkerThread = singleWorker()
+            print("Thread 288 begins.....................................................................")
             # close the main program even if there are threads left
             singleWorkerThread.daemon = True
             singleWorkerThread.start()
+            print("Thread 292 begins.....................................................................")
 
         # Start the SQL thread
         sqlLookup = sqlThread()
+        print("Thread 296 begins.....................................................................")
         # DON'T close the main program even if there are threads left.
         # The closeEvent should command this thread to exit gracefully.
         sqlLookup.daemon = False
         sqlLookup.start()
-
+        print("Thread 301 begins.....................................................................")
         Inventory()  # init
         # init, needs to be early because other thread may access it early
         Dandelion()
-
+        print("Thread 305 begins.....................................................................")
         # Enable object processor and SMTP only if objproc enabled
         if state.enableObjProc:
-
+            print("Thread 308 begins.....................................................................")
             # SMTP delivery thread
             if daemon and BMConfigParser().safeGet(
                     "bitmessagesettings", "smtpdeliver", '') != '':
+                print("Thread 311 begins.....................................................................")
                 from class_smtpDeliver import smtpDeliver
                 smtpDeliveryThread = smtpDeliver()
                 smtpDeliveryThread.start()
@@ -281,29 +286,32 @@ class Main:
             # SMTP daemon thread
             if daemon and BMConfigParser().safeGetBoolean(
                     "bitmessagesettings", "smtpd"):
+                print("Thread 320 begins.....................................................................")
                 from class_smtpServer import smtpServer
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
 
             # Start the thread that calculates POWs
             objectProcessorThread = objectProcessor()
+            print("Thread 327 begins.....................................................................")
             # DON'T close the main program even the thread remains.
             # This thread checks the shutdown variable after processing
             # each object.
             objectProcessorThread.daemon = False
             objectProcessorThread.start()
-
+            print("Thread 333 begins.....................................................................")
         # Start the cleanerThread
         singleCleanerThread = singleCleaner()
         # close the main program even if there are threads left
         singleCleanerThread.daemon = True
         singleCleanerThread.start()
-
+        print("Thread 339 begins.....................................................................")
         # Not needed if objproc disabled
         if state.enableObjProc:
+            print("Thread 344 begins.....................................................................")
             shared.reloadMyAddressHashes()
+            print("Thread 345 begins.....................................................................")
             shared.reloadBroadcastSendersForWhichImWatching()
-
             # API is also objproc dependent
             if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
@@ -311,17 +319,22 @@ class Main:
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
                 singleAPIThread.start()
-
+                print("Thread 362 begins.....................................................................")
         # start network components if networking is enabled
         if state.enableNetwork:
+            print("Thread 365 begins.....................................................................")
             BMConnectionPool()
             asyncoreThread = BMNetworkThread()
+            print("Thread 366 begins.....................................................................")
             asyncoreThread.daemon = True
             asyncoreThread.start()
+            print("Thread 367 begins.....................................................................")
             for i in range(BMConfigParser().getint("threads", "receive")):
+                print("Thread 368 begins.....................................................................")
                 receiveQueueThread = ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()
+            print("Thread 369 begins.....................................................................")
             announceThread = AnnounceThread()
             announceThread.daemon = True
             announceThread.start()
@@ -337,30 +350,40 @@ class Main:
             state.uploadThread = UploadThread()
             state.uploadThread.daemon = True
             state.uploadThread.start()
+            print("Thread 387 begins.....................................................................")
 
             connectToStream(1)
-
+            print("Thread 390 begins.....................................................................")
             if BMConfigParser().safeGetBoolean(
                     'bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()
+                print("Thread 395 begins.....................................................................")
                 upnpThread.start()
+            print("Thread 396 begins.....................................................................")
         else:
+            print("Thread 398 begins.....................................................................")
             # Populate with hardcoded value (same as connectToStream above)
             state.streamsInWhichIAmParticipating.append(1)
-
+        print("Thread 402 begins.....................................................................")
         if not daemon and state.enableGUI:
+            print("Thread 404 begins.....................................................................")
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
                 print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
+
             elif state.kivy:
+                print("Thread 406 begins.....................................................................")
                 BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+                print("Thread 408 begins.....................................................................")
                 from bitmessagekivy.mpybit import NavigateApp
+                print("Thread 410 begins.....................................................................")
                 NavigateApp().run()
             else:
+                print("Thread 417 begins.....................................................................")
                 import bitmessageqt
                 bitmessageqt.run()
         else:
