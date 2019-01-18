@@ -11,7 +11,7 @@ import sys
 import time
 from struct import pack, unpack
 from subprocess import call
-
+from kivy.utils import platform
 import openclpow
 import paths
 import queues
@@ -328,7 +328,6 @@ def init():
         except Exception as e:
             bso = None
             print(e)
-
     else:
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
@@ -346,8 +345,11 @@ def init():
             logger.info("Loaded C PoW DLL %s", bitmsglib)
     if bso:
         try:
+            print("hey I am on line 303 sucess.....................................................")
             bmpow = bso.BitmessagePOW
+            print("hey I am on line 305 sucess.....................................................")
             bmpow.restype = ctypes.c_ulonglong
+            print("hey I am on line 307 sucess.....................................................")
         except:
             bmpow = None
     else:

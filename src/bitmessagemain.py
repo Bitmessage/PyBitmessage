@@ -209,15 +209,16 @@ class Main:
         if daemon:
             state.enableGUI = False  # run without a UI
 
-        # is the application already running?  If yes then exit.
+
         if state.enableGUI and not state.curses and not state.kivy and not depends.check_pyqt():
+        # is the application already running?  If yes then exit.
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
                 ' to run it as a daemon and interact with it'
                 ' using the API. You can download PyQt from '
                 'http://www.riverbankcomputing.com/software/pyqt/download'
                 ' or by searching Google for \'PyQt Download\'.'
-                ' If you want to run in daemon mode, see '
+                ' If you want to riverbankcomputingun in daemon mode, see '
                 'https://bitmessage.org/wiki/Daemon\n'
                 'You can also run PyBitmessage with'
                 ' the new curses interface by providing'
@@ -380,7 +381,7 @@ class Main:
                 BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
                 print("Thread 408 begins.....................................................................")
                 from bitmessagekivy.mpybit import NavigateApp
-                print("Thread 410 begins.....................................................................")
+                print("Thread 4100 begins.....................................................................")
                 NavigateApp().run()
             else:
                 print("Thread 417 begins.....................................................................")

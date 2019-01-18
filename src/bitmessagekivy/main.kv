@@ -107,6 +107,10 @@ NavigationLayout:
             icon:'account-plus'
             on_release: app.root.ids.scr_mngr.current = 'login'
         NavigationDrawerIconButton: 
+            text: "Network Status"
+            icon:'server-network'
+            on_release: app.root.ids.scr_mngr.current = 'networkstat'
+        NavigationDrawerIconButton: 
             text: "My Addresses"
             icon:'account-multiple'
             on_release: app.root.ids.scr_mngr.current = 'myaddress'
@@ -159,6 +163,8 @@ NavigationLayout:
                 id:sc11
             Payment:
                 id:sc12
+            NetworkStat:
+                id:sc13
 
 <SwipeButton@Carousel>:
     text: ''
@@ -576,3 +582,56 @@ NavigationLayout:
             size_hint: 1, None
             height: dp(40)
             text: 'Scan QR code'
+
+<NetworkStat>:
+    name: 'networkstat'
+    MDTabbedPanel:
+        id: tab_panel
+        tab_display_mode:'text'
+
+        MDTab:
+            name: 'connections'
+            text: "Total connections" # Why are these not set!!!
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: root.text_variable_1
+                halign: 'center'
+        MDTab:
+            name: 'processes'
+            text: 'Processes'
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(500)
+                    OneLineListItem:
+                        text: "person-to-person"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_2
+                    OneLineListItem:
+                        text: "Brodcast"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_3
+                    OneLineListItem:
+                        text: "objects"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_4
+
+                    OneLineListItem:
+                        text: "publickeys"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_5

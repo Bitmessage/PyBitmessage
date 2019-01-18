@@ -38,6 +38,7 @@ from kivy.uix.label import Label
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
+import time
 
 class Navigatorss(MDNavigationDrawer):
     image_source = StringProperty('images/qidenticon_two.png')
@@ -74,6 +75,11 @@ class Inbox(Screen):
                 self.ids.ml.add_widget(meny)
         else:
             self.manager.current = 'login'
+
+    def get_address_via_split(self, splitaddress):
+        for address in BMConfigParser().addresses():
+            if address.startswith(splitaddress[:-2]):
+                return address
 
     def get_address_via_split(self, splitaddress):
         for address in BMConfigParser().addresses():
@@ -250,7 +256,7 @@ class MyTextInput(TextInput):
         # display the data in the recycleview
         display_data = []
         for i in matches:
-            display_data.append({'text':i})
+            display_data.append({'text': i})
         self.parent.parent.parent.parent.ids.rv.data = display_data
         # ensure the size is okay
         if len(matches) <= 10:
@@ -267,6 +273,26 @@ class MyTextInput(TextInput):
 
 class Payment(Screen):
     pass
+
+class Login(Screen):
+    pass
+
+
+class NetworkStat(Screen):
+    text_variable_1 = StringProperty('{0}::{1}'.format('Total Connections', '0'))
+    text_variable_2 = StringProperty('Processed {0} per-to-per messages'.format('0'))
+    text_variable_3 = StringProperty('Processed {0} brodcast messages'.format('0'))
+    text_variable_4 = StringProperty('Processed {0} public keys'.format('0'))
+    text_variable_5 = StringProperty('Processed {0} object to be synced'.format('0'))
+
+    def __init__(self, *args, **kwargs):
+        super(NetworkStat, self).__init__(*args, **kwargs)
+        Clock.schedule_interval(self.init_ui, 1)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for method inbox accounts."""
+        import network.stats
+        self.text_variable_1 = '{0} :: {1}'.format('Total Connections', str(len(network.stats.connectedHostsList())))
 
 
 class Login(Screen):
@@ -523,4 +549,5 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
+
     pass

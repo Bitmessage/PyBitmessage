@@ -1,7 +1,6 @@
 import os
 
 import state
-
 # This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
 class translateClass:
     def __init__(self, context, text):
