@@ -758,7 +758,7 @@ class singleWorker(threading.Thread, StoppableThread):
                             for value in Inventory().by_type_and_tag(1, toTag):
                                 # if valid, this function also puts it
                                 # in the pubkeys table.
-                                if shared.decryptAndCheckPubkeyPayload(
+                                if protocol.decryptAndCheckPubkeyPayload(
                                         value.payload, toaddress
                                 ) == 'successful':
                                     needToRequestPubkey = False
@@ -860,7 +860,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 # if receiver is a mobile device who expects that their
                 # address RIPE is included unencrypted on the front of
                 # the message..
-                if shared.isBitSetWithinBitfield(behaviorBitfield, 30):
+                if protocol.isBitSetWithinBitfield(behaviorBitfield, 30):
                     # if we are Not willing to include the receiver's
                     # RIPE hash on the message..
                     if not shared.BMConfigParser().safeGetBoolean(

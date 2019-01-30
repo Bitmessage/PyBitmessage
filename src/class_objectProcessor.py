@@ -400,7 +400,7 @@ class objectProcessor(threading.Thread):
 
             # Let us try to decrypt the pubkey
             toAddress, _ = state.neededPubkeys[tag]
-            if shared.decryptAndCheckPubkeyPayload(data, toAddress) == \
+            if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
                 # pubkey. This function will command the workerThread

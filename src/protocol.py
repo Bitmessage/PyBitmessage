@@ -9,21 +9,21 @@ Low-level protocol-related functions.
 from __future__ import absolute_import
 
 import base64
-from binascii import hexlify
 import hashlib
-import os
 import random
 import socket
 import ssl
-from struct import pack, unpack, Struct
 import sys
 import time
 import traceback
+from binascii import hexlify
+from struct import pack, unpack, Struct
 
 import defaults
 import highlevelcrypto
 import state
-from addresses import encodeVarint, decodeVarint, decodeAddress, varintDecodeError
+from addresses import (
+    encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlExecute
@@ -321,33 +321,41 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
 
 def decryptAndCheckPubkeyPayload(data, address):
     """
-    Version 4 pubkeys are encrypted. This function is run when we already have the
-    address to which we want to try to send a message. The 'data' may come either
-    off of the wire or we might have had it already in our inventory when we tried
-    to send a msg to this particular address.
+    Version 4 pubkeys are encrypted. This function is run when we
+    already have the address to which we want to try to send a message.
+    The 'data' may come either off of the wire or we might have had it
+    already in our inventory when we tried to send a msg to this
+    particular address.
     """
-    # pylint: disable=unused-variable
     try:
-        status, addressVersion, streamNumber, ripe = decodeAddress(address)
+        addressVersion, streamNumber, ripe = decodeAddress(address)[1:]
 
         readPosition = 20  # bypass the nonce, time, and object type
-        embeddedAddressVersion, varintLength = decodeVarint(data[readPosition:readPosition + 10])
+        embeddedAddressVersion, varintLength = decodeVarint(
+            data[readPosition:readPosition + 10])
         readPosition += varintLength
-        embeddedStreamNumber, varintLength = decodeVarint(data[readPosition:readPosition + 10])
+        embeddedStreamNumber, varintLength = decodeVarint(
+            data[readPosition:readPosition + 10])
         readPosition += varintLength
-        # We'll store the address version and stream number (and some more) in the pubkeys table.
+        # We'll store the address version and stream number
+        # (and some more) in the pubkeys table.
         storedData = data[20:readPosition]
 
         if addressVersion != embeddedAddressVersion:
-            logger.info('Pubkey decryption was UNsuccessful due to address version mismatch.')
+            logger.info(
+                'Pubkey decryption was UNsuccessful'
+                ' due to address version mismatch.')
             return 'failed'
         if streamNumber != embeddedStreamNumber:
-            logger.info('Pubkey decryption was UNsuccessful due to stream number mismatch.')
+            logger.info(
+                'Pubkey decryption was UNsuccessful'
+                ' due to stream number mismatch.')
             return 'failed'
 
         tag = data[readPosition:readPosition + 32]
         readPosition += 32
-        # the time through the tag. More data is appended onto signedData below after the decryption.
+        # the time through the tag. More data is appended onto
+        # signedData below after the decryption.
         signedData = data[8:readPosition]
         encryptedData = data[readPosition:]
 
@@ -355,13 +363,15 @@ def decryptAndCheckPubkeyPayload(data, address):
         toAddress, cryptorObject = state.neededPubkeys[tag]
         if toAddress != address:
             logger.critical(
-                'decryptAndCheckPubkeyPayload failed due to toAddress mismatch.'
-                ' This is very peculiar. toAddress: %s, address %s',
-                toAddress,
-                address)
-            # the only way I can think that this could happen is if someone encodes their address data two different
-            # ways. That sort of address-malleability should have been caught by the UI or API and an error given to
-            # the user.
+                'decryptAndCheckPubkeyPayload failed due to toAddress'
+                ' mismatch. This is very peculiar.'
+                ' toAddress: %s, address %s',
+                toAddress, address
+            )
+            # the only way I can think that this could happen
+            # is if someone encodes their address data two different ways.
+            # That sort of address-malleability should have been caught
+            # by the UI or API and an error given to the user.
             return 'failed'
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
@@ -372,17 +382,17 @@ def decryptAndCheckPubkeyPayload(data, address):
             return 'failed'
 
         readPosition = 0
-        bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
+        # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
         publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
-            decryptedData[readPosition:readPosition + 10])
+        specifiedNonceTrialsPerByteLength = decodeVarint(
+            decryptedData[readPosition:readPosition + 10])[1]
         readPosition += specifiedNonceTrialsPerByteLength
-        specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
-            decryptedData[readPosition:readPosition + 10])
+        specifiedPayloadLengthExtraBytesLength = decodeVarint(
+            decryptedData[readPosition:readPosition + 10])[1]
         readPosition += specifiedPayloadLengthExtraBytesLength
         storedData += decryptedData[:readPosition]
         signedData += decryptedData[:readPosition]
@@ -391,11 +401,14 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
 
-        if highlevelcrypto.verify(signedData, signature, hexlify(publicSigningKey)):
-            logger.info('ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
-        else:
-            logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
+        if not highlevelcrypto.verify(
+                signedData, signature, hexlify(publicSigningKey)):
+            logger.info(
+                'ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
             return 'failed'
+
+        logger.info(
+            'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
 
         sha = hashlib.new('sha512')
         sha.update(publicSigningKey + publicEncryptionKey)
@@ -404,34 +417,37 @@ def decryptAndCheckPubkeyPayload(data, address):
         embeddedRipe = ripeHasher.digest()
 
         if embeddedRipe != ripe:
-            # Although this pubkey object had the tag were were looking for and was
-            # encrypted with the correct encryption key, it doesn't contain the
-            # correct pubkeys. Someone is either being malicious or using buggy software.
-            logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch.')
+            # Although this pubkey object had the tag were were looking for
+            # and was encrypted with the correct encryption key,
+            # it doesn't contain the correct pubkeys. Someone is
+            # either being malicious or using buggy software.
+            logger.info(
+                'Pubkey decryption was UNsuccessful due to RIPE mismatch.')
             return 'failed'
 
         # Everything checked out. Insert it into the pubkeys table.
 
         logger.info(
-            os.linesep.join([
-                'within decryptAndCheckPubkeyPayload,'
-                ' addressVersion: %s, streamNumber: %s' % addressVersion, streamNumber,
-                'ripe %s' % hexlify(ripe),
-                'publicSigningKey in hex: %s' % hexlify(publicSigningKey),
-                'publicEncryptionKey in hex: %s' % hexlify(publicEncryptionKey),
-            ])
+            'within decryptAndCheckPubkeyPayload, '
+            'addressVersion: %s, streamNumber: %s\nripe %s\n'
+            'publicSigningKey in hex: %s\npublicEncryptionKey in hex: %s',
+            addressVersion, streamNumber, hexlify(ripe),
+            hexlify(publicSigningKey), hexlify(publicEncryptionKey)
         )
 
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
         return 'successful'
     except varintDecodeError:
-        logger.info('Pubkey decryption was UNsuccessful due to a malformed varint.')
+        logger.info(
+            'Pubkey decryption was UNsuccessful due to a malformed varint.')
         return 'failed'
     except Exception:
         logger.critical(
-            'Pubkey decryption was UNsuccessful because of an unhandled exception! This is definitely a bug! \n%s',
-            traceback.format_exc())
+            'Pubkey decryption was UNsuccessful because of'
+            ' an unhandled exception! This is definitely a bug! \n%s',
+            traceback.format_exc()
+        )
         return 'failed'
 
 
