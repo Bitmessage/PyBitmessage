@@ -25,6 +25,7 @@ from addresses import (
     encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
 from bmconfigparser import BMConfigParser
 from debug import logger
+from fallback import RIPEMD160Hash
 from helper_sql import sqlExecute
 from version import softwareVersion
 
@@ -411,9 +412,7 @@ def decryptAndCheckPubkeyPayload(data, address):
 
         sha = hashlib.new('sha512')
         sha.update(publicSigningKey + publicEncryptionKey)
-        ripeHasher = hashlib.new('ripemd160')
-        ripeHasher.update(sha.digest())
-        embeddedRipe = ripeHasher.digest()
+        embeddedRipe = RIPEMD160Hash(sha.digest()).digest()
 
         if embeddedRipe != ripe:
             # Although this pubkey object had the tag were were looking for

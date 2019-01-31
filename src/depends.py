@@ -162,37 +162,13 @@ def try_import(module, log_extra=False):
         return False
 
 
-# We need to check hashlib for RIPEMD-160, as it won't be available
-# if OpenSSL is not linked against or the linked OpenSSL has RIPEMD
-# disabled.
-def check_hashlib():
-    """Do hashlib check.
-
-    The hashlib module check with version as if it included or not
-    in The Python Standard library, it's a module containing an
-    interface to the most popular hashing algorithms. hashlib
-    implements some of the algorithms, however if  OpenSSL
-    installed, hashlib is able to use this algorithms as well.
-    """
-    if sys.hexversion < 0x020500F0:
-        logger.error(
-            'The hashlib module is not included in this version of Python.')
-        return False
-    import hashlib
-    if '_hashlib' not in hashlib.__dict__:
-        logger.error(
-            'The RIPEMD-160 hash algorithm is not available.'
-            ' The hashlib module is not linked against OpenSSL.')
-        return False
+def check_ripemd160():
+    """Check availability of the RIPEMD160 hash function"""
     try:
-        hashlib.new('ripemd160')
-    except ValueError:
-        logger.error(
-            'The RIPEMD-160 hash algorithm is not available.'
-            ' The hashlib module utilizes an OpenSSL library with'
-            ' RIPEMD disabled.')
+        from fallback import RIPEMD160Hash
+    except ImportError:
         return False
-    return True
+    return RIPEMD160Hash is not None
 
 
 def check_sqlite():
@@ -446,7 +422,7 @@ def check_dependencies(verbose=False, optional=False):
             ' or greater is required.')
         has_all_dependencies = False
 
-    check_functions = [check_hashlib, check_sqlite, check_openssl]
+    check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:
         check_functions.extend([check_msgpack, check_pyqt, check_curses])
 

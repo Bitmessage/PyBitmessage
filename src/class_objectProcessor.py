@@ -24,6 +24,7 @@ import queues
 import state
 import tr
 from debug import logger
+from fallback import RIPEMD160Hash
 import l10n
 
 
@@ -288,9 +289,7 @@ class objectProcessor(threading.Thread):
             sha = hashlib.new('sha512')
             sha.update(
                 '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
-            ripeHasher = hashlib.new('ripemd160')
-            ripeHasher.update(sha.digest())
-            ripe = ripeHasher.digest()
+            ripe = RIPEMD160Hash(sha.digest()).digest()
 
             logger.debug(
                 'within recpubkey, addressVersion: %s, streamNumber: %s'
@@ -354,9 +353,7 @@ class objectProcessor(threading.Thread):
 
             sha = hashlib.new('sha512')
             sha.update(publicSigningKey + publicEncryptionKey)
-            ripeHasher = hashlib.new('ripemd160')
-            ripeHasher.update(sha.digest())
-            ripe = ripeHasher.digest()
+            ripe = RIPEMD160Hash(sha.digest()).digest()
 
             logger.debug(
                 'within recpubkey, addressVersion: %s, streamNumber: %s'
@@ -575,10 +572,9 @@ class objectProcessor(threading.Thread):
         # calculate the fromRipe.
         sha = hashlib.new('sha512')
         sha.update(pubSigningKey + pubEncryptionKey)
-        ripe = hashlib.new('ripemd160')
-        ripe.update(sha.digest())
+        ripe = RIPEMD160Hash(sha.digest()).digest()
         fromAddress = encodeAddress(
-            sendersAddressVersionNumber, sendersStreamNumber, ripe.digest())
+            sendersAddressVersionNumber, sendersStreamNumber, ripe)
 
         # Let's store the public key in case we want to reply to this
         # person.
@@ -897,9 +893,7 @@ class objectProcessor(threading.Thread):
 
         sha = hashlib.new('sha512')
         sha.update(sendersPubSigningKey + sendersPubEncryptionKey)
-        ripeHasher = hashlib.new('ripemd160')
-        ripeHasher.update(sha.digest())
-        calculatedRipe = ripeHasher.digest()
+        calculatedRipe = RIPEMD160Hash(sha.digest()).digest()
 
         if broadcastVersion == 4:
             if toRipe != calculatedRipe:
