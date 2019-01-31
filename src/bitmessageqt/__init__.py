@@ -2656,15 +2656,13 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.item(i, 3).setFont(font)
 
         markread = sqlExecuteChunked(
-            "UPDATE %s SET read = 1 WHERE %s IN({0}) AND read=0" % (
-                ('sent', 'ackdata') if self.getCurrentFolder() == 'sent'
-                else ('inbox', 'msgid')
-            ), idCount, *msgids
+            "UPDATE inbox SET read = 1 WHERE msgid IN({0}) AND read=0",
+            idCount, *msgids
         )
 
         if markread > 0:
             self.propagateUnreadCount()
-                # addressAtCurrentRow, self.getCurrentFolder(), None, 0)
+            # addressAtCurrentRow, self.getCurrentFolder(), None, 0)
 
     def click_NewAddressDialog(self):
         dialogs.NewAddressDialog(self)
@@ -3459,11 +3457,14 @@ class MyForm(settingsmixin.SMainWindow):
             for plugin in self.menu_plugins['address']:
                 self.popMenuSubscriptions.addAction(plugin)
             self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
+        if self.getCurrentFolder() != 'sent':
+            self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
+        if self.popMenuSubscriptions.isEmpty():
+            return
         self.popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
 
-    def widgetConvert (self, widget):
+    def widgetConvert(self, widget):
         if widget == self.ui.tableWidgetInbox:
             return self.ui.treeWidgetYourIdentities
         elif widget == self.ui.tableWidgetInboxSubscriptions:
@@ -3874,8 +3875,10 @@ class MyForm(settingsmixin.SMainWindow):
                 for plugin in self.menu_plugins['address']:
                     self.popMenuYourIdentities.addAction(plugin)
             self.popMenuYourIdentities.addSeparator()
-        self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
-
+        if self.getCurrentFolder() != 'sent':
+            self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
+        if self.popMenuYourIdentities.isEmpty():
+            return
         self.popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
 
@@ -3899,7 +3902,10 @@ class MyForm(settingsmixin.SMainWindow):
             for plugin in self.menu_plugins['address']:
                 self.popMenu.addAction(plugin)
             self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionMarkAllRead)
+        if self.getCurrentFolder() != 'sent':
+            self.popMenu.addAction(self.actionMarkAllRead)
+        if self.popMenu.isEmpty():
+            return
         self.popMenu.exec_(
             self.ui.treeWidgetChans.mapToGlobal(point))
 
