@@ -4,7 +4,6 @@
 import os
 import sys
 import stat
-import time
 import threading
 import hashlib
 import subprocess
@@ -48,14 +47,7 @@ printLock = threading.Lock()
 statusIconColor = 'red'
 
 thisapp = None  # singleton lock instance
-alreadyAttemptedConnectionsList = {
-}  # This is a list of nodes to which we have already attempted a connection
-alreadyAttemptedConnectionsListLock = threading.Lock()
-# used to clear out the alreadyAttemptedConnectionsList periodically
-# so that we will retry connecting to hosts to which we have already
-# tried to connect.
-alreadyAttemptedConnectionsListResetTime = int(time.time())
-# A list of the amounts of time it took to successfully decrypt msg messages
+
 successfullyDecryptMessageTimings = []
 ackdataForWhichImWatching = {}
 # used by API command clientStatus
@@ -63,9 +55,6 @@ clientHasReceivedIncomingConnections = False
 numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
-
-# If True, the singleCleaner will write it to disk eventually.
-needToWriteKnownNodesToDisk = False
 
 maximumLengthOfTimeToBotherResendingMessages = 0
 timeOffsetWrongCount = 0
