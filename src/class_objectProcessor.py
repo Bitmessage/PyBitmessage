@@ -49,6 +49,7 @@ class objectProcessor(threading.Thread):
             'Loaded %s objects from disk into the objectProcessorQueue.',
             len(queryreturn))
         self._ack_obj = bmproto.BMStringParser()
+        self.successfullyDecryptMessageTimings = []
 
     def run(self):
         while True:
@@ -748,17 +749,17 @@ class objectProcessor(threading.Thread):
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(
         ) - messageProcessingStartTime
-        shared.successfullyDecryptMessageTimings.append(
+        self.successfullyDecryptMessageTimings.append(
             timeRequiredToAttemptToDecryptMessage)
         timing_sum = 0
-        for item in shared.successfullyDecryptMessageTimings:
+        for item in self.successfullyDecryptMessageTimings:
             timing_sum += item
         logger.debug(
             'Time to decrypt this message successfully: %s'
             '\nAverage time for all message decryption successes since'
             ' startup: %s.',
             timeRequiredToAttemptToDecryptMessage,
-            timing_sum / len(shared.successfullyDecryptMessageTimings)
+            timing_sum / len(self.successfullyDecryptMessageTimings)
         )
 
     def processbroadcast(self, data):

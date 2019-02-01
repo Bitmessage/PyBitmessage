@@ -48,7 +48,6 @@ statusIconColor = 'red'
 
 thisapp = None  # singleton lock instance
 
-successfullyDecryptMessageTimings = []
 ackdataForWhichImWatching = {}
 # used by API command clientStatus
 clientHasReceivedIncomingConnections = False
