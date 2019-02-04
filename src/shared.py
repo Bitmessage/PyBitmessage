@@ -56,7 +56,6 @@ numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
 
 maximumLengthOfTimeToBotherResendingMessages = 0
-timeOffsetWrongCount = 0
 
 
 def isAddressInMyAddressBook(address):

@@ -23,9 +23,9 @@ from randomtrackingdict import RandomTrackingDict
 
 import addresses
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
-import shared
 import state
 import protocol
+
 
 class BMProtoError(ProxyError):
     errorCodes = ("Protocol error")
@@ -52,6 +52,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     addressAlive = 10800
     # maximum time offset
     maxTimeOffset = 3600
+    timeOffsetWrongCount = 0
 
     def __init__(self, address=None, sock=None):
         AdvancedDispatcher.__init__(self, sock)
@@ -460,17 +461,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 errorText="Your time is too far in the future compared to mine. Closing connection."))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it.",
                 self.destination, self.timeOffset)
-            shared.timeOffsetWrongCount += 1
+            BMProto.timeOffsetWrongCount += 1
             return False
         elif self.timeOffset < -BMProto.maxTimeOffset:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your time is too far in the past compared to mine. Closing connection."))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it.",
                 self.destination, self.timeOffset)
-            shared.timeOffsetWrongCount += 1
+            BMProto.timeOffsetWrongCount += 1
             return False
         else:
-            shared.timeOffsetWrongCount = 0
+            BMProto.timeOffsetWrongCount = 0
         if not self.streams:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="We don't have shared stream interests. Closing connection."))
