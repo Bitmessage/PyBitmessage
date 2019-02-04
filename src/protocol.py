@@ -12,7 +12,6 @@ import base64
 import hashlib
 import random
 import socket
-import ssl
 import sys
 import time
 import traceback
@@ -449,25 +448,3 @@ def decryptAndCheckPubkeyPayload(data, address):
             traceback.format_exc()
         )
         return 'failed'
-
-
-# sslProtocolVersion
-if sys.version_info >= (2, 7, 13):
-    # this means TLSv1 or higher
-    # in the future change to
-    # ssl.PROTOCOL_TLS1.2
-    sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
-elif sys.version_info >= (2, 7, 9):
-    # this means any SSL/TLS. SSLv2 and 3 are excluded with an option after context is created
-    sslProtocolVersion = ssl.PROTOCOL_SSLv23
-else:
-    # this means TLSv1, there is no way to set "TLSv1 or higher" or
-    # "TLSv1.2" in < 2.7.9
-    sslProtocolVersion = ssl.PROTOCOL_TLSv1
-
-
-# ciphers
-if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000 and not ssl.OPENSSL_VERSION.startswith("LibreSSL"):
-    sslProtocolCiphers = "AECDH-AES256-SHA@SECLEVEL=0"
-else:
-    sslProtocolCiphers = "AECDH-AES256-SHA"

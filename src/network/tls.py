@@ -12,13 +12,37 @@ from network.advanceddispatcher import AdvancedDispatcher
 import network.asyncore_pollchoose as asyncore
 from queues import receiveDataQueue
 import paths
-import protocol
+
 
 _DISCONNECTED_SSL = frozenset((ssl.SSL_ERROR_EOF,))
 
+# sslProtocolVersion
+if sys.version_info >= (2, 7, 13):
+    # this means TLSv1 or higher
+    # in the future change to
+    # ssl.PROTOCOL_TLS1.2
+    sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
+elif sys.version_info >= (2, 7, 9):
+    # this means any SSL/TLS. SSLv2 and 3 are excluded with an option after context is created
+    sslProtocolVersion = ssl.PROTOCOL_SSLv23
+else:
+    # this means TLSv1, there is no way to set "TLSv1 or higher" or
+    # "TLSv1.2" in < 2.7.9
+    sslProtocolVersion = ssl.PROTOCOL_TLSv1
+
+
+# ciphers
+if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000 and not ssl.OPENSSL_VERSION.startswith("LibreSSL"):
+    sslProtocolCiphers = "AECDH-AES256-SHA@SECLEVEL=0"
+else:
+    sslProtocolCiphers = "AECDH-AES256-SHA"
+
+
 class TLSDispatcher(AdvancedDispatcher):
-    def __init__(self, address=None, sock=None,
-                 certfile=None, keyfile=None, server_side=False, ciphers=protocol.sslProtocolCiphers):
+    def __init__(
+        self, address=None, sock=None, certfile=None, keyfile=None,
+        server_side=False, ciphers=sslProtocolCiphers
+    ):
         self.want_read = self.want_write = True
         if certfile is None:
             self.certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem')
@@ -50,13 +74,11 @@ class TLSDispatcher(AdvancedDispatcher):
             context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
             self.sslSocket = context.wrap_socket(self.socket, server_side = self.server_side, do_handshake_on_connect=False)
         else:
-            self.sslSocket = ssl.wrap_socket(self.socket,
-                                         server_side=self.server_side,
-                                         ssl_version=protocol.sslProtocolVersion,
-                                         certfile=self.certfile,
-                                         keyfile=self.keyfile,
-                                         ciphers=self.ciphers,
-                                         do_handshake_on_connect=False)
+            self.sslSocket = ssl.wrap_socket(
+                self.socket, server_side=self.server_side,
+                ssl_version=sslProtocolVersion,
+                certfile=self.certfile, keyfile=self.keyfile,
+                ciphers=self.ciphers, do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
         self.set_state("tls_handshake")
