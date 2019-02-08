@@ -1,8 +1,8 @@
 """
-src/bitmessageqt/foldertree.py
-==============================
+Folder tree and messagelist widgets definitions.
 """
-# pylint: disable=too-many-arguments,bad-super-call,attribute-defined-outside-init
+# pylint: disable=too-many-arguments,bad-super-call
+# pylint: disable=attribute-defined-outside-init
 
 from cgi import escape
 
@@ -19,6 +19,8 @@ _translate("MainWindow", "inbox")
 _translate("MainWindow", "new")
 _translate("MainWindow", "sent")
 _translate("MainWindow", "trash")
+
+TimestampRole = QtCore.Qt.UserRole + 1
 
 
 class AccountMixin(object):
@@ -334,13 +336,14 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
 class BMTableWidgetItem(QtGui.QTableWidgetItem, SettingsMixin):
     """A common abstract class for Table widget item"""
 
-    def __init__(self, parent=None, label=None, unread=False):
+    def __init__(self, label=None, unread=False):
         super(QtGui.QTableWidgetItem, self).__init__()
         self.setLabel(label)
         self.setUnread(unread)
         self._setup()
-        if parent is not None:
-            parent.append(self)
+
+    def _setup(self):
+        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     def setLabel(self, label):
         """Set object label"""
@@ -353,7 +356,7 @@ class BMTableWidgetItem(QtGui.QTableWidgetItem, SettingsMixin):
     def data(self, role):
         """Return object data (QT UI)"""
         if role in (
-                QtCore.Qt.DisplayRole, QtCore.Qt.EditRole, QtCore.Qt.ToolTipRole
+            QtCore.Qt.DisplayRole, QtCore.Qt.EditRole, QtCore.Qt.ToolTipRole
         ):
             return self.label
         elif role == QtCore.Qt.FontRole:
@@ -367,7 +370,9 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
     """A common class for Table widget item with account"""
 
     def _setup(self):
+        super(BMAddressWidget, self)._setup()
         self.setEnabled(True)
+        self.setType()
 
     def _getLabel(self):
         return self.label
@@ -387,14 +392,9 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
 
 class MessageList_AddressWidget(BMAddressWidget):
     """Address item in a messagelist"""
-    def __init__(self, parent, address=None, label=None, unread=False):
+    def __init__(self, address=None, label=None, unread=False):
         self.setAddress(address)
-        super(MessageList_AddressWidget, self).__init__(parent, label, unread)
-
-    def _setup(self):
-        self.isEnabled = True
-        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        self.setType()
+        super(MessageList_AddressWidget, self).__init__(label, unread)
 
     def setLabel(self, label=None):
         """Set label"""
@@ -443,12 +443,9 @@ class MessageList_AddressWidget(BMAddressWidget):
 
 class MessageList_SubjectWidget(BMTableWidgetItem):
     """Message list subject item"""
-    def __init__(self, parent, subject=None, label=None, unread=False):
+    def __init__(self, subject=None, label=None, unread=False):
         self.setSubject(subject)
-        super(MessageList_SubjectWidget, self).__init__(parent, label, unread)
-
-    def _setup(self):
-        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        super(MessageList_SubjectWidget, self).__init__(label, unread)
 
     def setSubject(self, subject):
         """Set subject"""
@@ -467,6 +464,37 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         if isinstance(other, MessageList_SubjectWidget):
             return self.label.lower() < other.label.lower()
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
+
+
+# In order for the time columns on the Inbox and Sent tabs to be sorted
+# correctly (rather than alphabetically), we need to overload the <
+# operator and use this class instead of QTableWidgetItem.
+class MessageList_TimeWidget(BMTableWidgetItem):
+    """
+    A subclass of QTableWidgetItem for received (lastactiontime) field.
+    '<' operator is overloaded to sort by TimestampRole == 33
+    msgid is available by QtCore.Qt.UserRole
+    """
+
+    def __init__(self, label=None, unread=False, timestamp=None, msgid=''):
+        super(MessageList_TimeWidget, self).__init__(label, unread)
+        self.setData(QtCore.Qt.UserRole, QtCore.QByteArray(msgid))
+        self.setData(TimestampRole, int(timestamp))
+
+    def __lt__(self, other):
+        return self.data(TimestampRole) < other.data(TimestampRole)
+
+    def data(self, role=QtCore.Qt.UserRole):
+        """
+        Returns expected python types for QtCore.Qt.UserRole and TimestampRole
+        custom roles and super for any Qt role
+        """
+        data = super(MessageList_TimeWidget, self).data(role)
+        if role == TimestampRole:
+            return int(data.toPyObject())
+        if role == QtCore.Qt.UserRole:
+            return str(data.toPyObject())
+        return data
 
 
 class Ui_AddressBookWidgetItem(BMAddressWidget):
@@ -518,8 +546,8 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
 class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
     """Addressbook label item"""
     def __init__(self, address, label, acc_type):
-        super(Ui_AddressBookWidgetItemLabel, self).__init__(label, acc_type)
         self.address = address
+        super(Ui_AddressBookWidgetItemLabel, self).__init__(label, acc_type)
 
     def data(self, role):
         """Return object data"""
@@ -530,9 +558,8 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
     """Addressbook address item"""
     def __init__(self, address, label, acc_type):
-        super(Ui_AddressBookWidgetItemAddress, self).__init__(address, acc_type)
         self.address = address
-        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        super(Ui_AddressBookWidgetItemAddress, self).__init__(address, acc_type)
 
     def data(self, role):
         """Return object data"""

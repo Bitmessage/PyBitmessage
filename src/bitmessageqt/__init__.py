@@ -31,7 +31,8 @@ from migrationwizard import Ui_MigrationWizard
 from foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
-    Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress)
+    Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress,
+    MessageList_TimeWidget)
 import settingsmixin
 import support
 from helper_ackPayload import genAckPayload
@@ -970,40 +971,30 @@ class MyForm(settingsmixin.SMainWindow):
         Switch unread for item of msgid and related items in
         other STableWidgets "All Accounts" and "Chans"
         """
-        related = [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans]
+        status = widget.item(row, 0).unread
+        if status != unread:
+            return
+
+        widgets = [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans]
+        rrow = None
         try:
-            related.remove(widget)
-            related = related.pop()
+            widgets.remove(widget)
+            related = widgets.pop()
         except ValueError:
-            rrow = None
-            related = []
+            pass
         else:
             # maybe use instead:
             # rrow = related.row(msgid), msgid should be QTableWidgetItem
             # related = related.findItems(msgid, QtCore.Qt.MatchExactly),
             # returns an empty list
-            for rrow in xrange(related.rowCount()):
-                if msgid == str(related.item(rrow, 3).data(
-                        QtCore.Qt.UserRole).toPyObject()):
+            for rrow in range(related.rowCount()):
+                if related.item(rrow, 3).data() == msgid:
                     break
-            else:
-                rrow = None
 
-        status = widget.item(row, 0).unread
-        if status == unread:
-            font = QtGui.QFont()
-            font.setBold(not status)
-            widget.item(row, 3).setFont(font)
-            for col in (0, 1, 2):
-                widget.item(row, col).setUnread(not status)
-
-            try:
-                related.item(rrow, 3).setFont(font)
-            except (TypeError, AttributeError):
-                pass
-            else:
-                for col in (0, 1, 2):
-                    related.item(rrow, col).setUnread(not status)
+        for col in range(widget.columnCount()):
+            widget.item(row, col).setUnread(not status)
+            if rrow:
+                related.item(rrow, col).setUnread(not status)
 
     # Here we need to update unread count for:
     # - all widgets if there is no args
@@ -1100,11 +1091,6 @@ class MyForm(settingsmixin.SMainWindow):
         acct = accountClass(fromAddress) or BMAccount(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
-        items = []
-        MessageList_AddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
-        MessageList_AddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
-
         if status == 'awaitingpubkey':
             statusText = _translate(
                 "MainWindow",
@@ -1162,22 +1148,24 @@ class MyForm(settingsmixin.SMainWindow):
             statusText = _translate(
                 "MainWindow", "Unknown status: %1 %2").arg(status).arg(
                 l10n.formatTimestamp(lastactiontime))
-        newItem = myTableWidgetItem(statusText)
-        newItem.setToolTip(statusText)
-        newItem.setData(QtCore.Qt.UserRole, QtCore.QByteArray(ackdata))
-        newItem.setData(33, int(lastactiontime))
-        newItem.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        items.append(newItem)
+
+        items = [
+            MessageList_AddressWidget(
+                toAddress, unicode(acct.toLabel, 'utf-8')),
+            MessageList_AddressWidget(
+                fromAddress, unicode(acct.fromLabel, 'utf-8')),
+            MessageList_SubjectWidget(
+                str(subject), unicode(acct.subject, 'utf-8', 'replace')),
+            MessageList_TimeWidget(
+                statusText, False, lastactiontime, ackdata)]
         self.addMessageListItem(tableWidget, items)
+
         return acct
 
     def addMessageListItemInbox(
         self, tableWidget, toAddress, fromAddress, subject,
         msgid, received, read
     ):
-        font = QtGui.QFont()
-        font.setBold(True)
         if toAddress == str_broadcast_subscribers:
             acct = accountClass(fromAddress)
         else:
@@ -1185,25 +1173,20 @@ class MyForm(settingsmixin.SMainWindow):
         if acct is None:
             acct = BMAccount(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, "")
-            
-        items = []
-        #to
-        MessageList_AddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
-        # from
-        MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
-        # subject
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
-        # time received
-        time_item = myTableWidgetItem(l10n.formatTimestamp(received))
-        time_item.setToolTip(l10n.formatTimestamp(received))
-        time_item.setData(QtCore.Qt.UserRole, QtCore.QByteArray(msgid))
-        time_item.setData(33, int(received))
-        time_item.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        if not read:
-            time_item.setFont(font)
-        items.append(time_item)
+
+        items = [
+            MessageList_AddressWidget(
+                toAddress, unicode(acct.toLabel, 'utf-8'), not read),
+            MessageList_AddressWidget(
+                fromAddress, unicode(acct.fromLabel, 'utf-8'), not read),
+            MessageList_SubjectWidget(
+                str(subject), unicode(acct.subject, 'utf-8', 'replace'),
+                not read),
+            MessageList_TimeWidget(
+                l10n.formatTimestamp(received), not read, received, msgid)
+        ]
         self.addMessageListItem(tableWidget, items)
+
         return acct
 
     # Load Sent items from database
@@ -1855,10 +1838,8 @@ class MyForm(settingsmixin.SMainWindow):
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
             for i in range(sent.rowCount()):
-                toAddress = sent.item(
-                    i, 0).data(QtCore.Qt.UserRole)
-                tableAckdata = sent.item(
-                    i, 3).data(QtCore.Qt.UserRole).toPyObject()
+                toAddress = sent.item(i, 0).data(QtCore.Qt.UserRole)
+                tableAckdata = sent.item(i, 3).data()
                 status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                     toAddress)
                 if ackdata == tableAckdata:
@@ -1882,8 +1863,7 @@ class MyForm(settingsmixin.SMainWindow):
         ):
             i = None
             for i in range(inbox.rowCount()):
-                if msgid == \
-                        inbox.item(i, 3).data(QtCore.Qt.UserRole).toPyObject():
+                if msgid == inbox.item(i, 3).data():
                     break
             else:
                 continue
@@ -2609,17 +2589,11 @@ class MyForm(settingsmixin.SMainWindow):
         if idCount == 0:
             return
 
-        font = QtGui.QFont()
-        font.setBold(False)
-
         msgids = []
         for i in range(0, idCount):
-            msgids.append(str(tableWidget.item(
-                i, 3).data(QtCore.Qt.UserRole).toPyObject()))
-            tableWidget.item(i, 0).setUnread(False)
-            tableWidget.item(i, 1).setUnread(False)
-            tableWidget.item(i, 2).setUnread(False)
-            tableWidget.item(i, 3).setFont(font)
+            msgids.append(tableWidget.item(i, 3).data())
+            for col in xrange(tableWidget.columnCount()):
+                tableWidget.item(i, col).setUnread(False)
 
         markread = sqlExecuteChunked(
             "UPDATE inbox SET read = 1 WHERE msgid IN({0}) AND read=0",
@@ -2890,8 +2864,7 @@ class MyForm(settingsmixin.SMainWindow):
         # modified = 0
         for row in tableWidget.selectedIndexes():
             currentRow = row.row()
-            msgid = str(tableWidget.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+            msgid = tableWidget.item(currentRow, 3).data()
             msgids.add(msgid)
             # if not tableWidget.item(currentRow, 0).unread:
             #     modified += 1
@@ -2981,8 +2954,7 @@ class MyForm(settingsmixin.SMainWindow):
         acct = accountClass(toAddressAtCurrentInboxRow)
         fromAddressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, column_from).address
-        msgid = str(tableWidget.item(
-            currentInboxRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+        msgid = tableWidget.item(currentInboxRow, 3).data()
         queryreturn = sqlQuery(
             "SELECT message FROM inbox WHERE msgid=?", msgid
         ) or sqlQuery("SELECT message FROM sent WHERE ackdata=?", msgid)
@@ -3081,7 +3053,6 @@ class MyForm(settingsmixin.SMainWindow):
         if not tableWidget:
             return
         currentInboxRow = tableWidget.currentRow()
-        # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(QtCore.Qt.UserRole)
         self.ui.tabWidget.setCurrentIndex(
@@ -3095,7 +3066,6 @@ class MyForm(settingsmixin.SMainWindow):
         if not tableWidget:
             return
         currentInboxRow = tableWidget.currentRow()
-        # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(QtCore.Qt.UserRole)
         recipientAddress = tableWidget.item(
@@ -3132,16 +3102,15 @@ class MyForm(settingsmixin.SMainWindow):
             messageLists = (messageLists,)
         for messageList in messageLists:
             if row is not None:
-                inventoryHash = str(messageList.item(row, 3).data(
-                    QtCore.Qt.UserRole).toPyObject())
+                inventoryHash = messageList.item(row, 3).data()
                 messageList.removeRow(row)
             elif inventoryHash is not None:
                 for i in range(messageList.rowCount() - 1, -1, -1):
-                    if messageList.item(i, 3).data(QtCore.Qt.UserRole).toPyObject() == inventoryHash:
+                    if messageList.item(i, 3).data() == inventoryHash:
                         messageList.removeRow(i)
             elif ackData is not None:
                 for i in range(messageList.rowCount() - 1, -1, -1):
-                    if messageList.item(i, 3).data(QtCore.Qt.UserRole).toPyObject() == ackData:
+                    if messageList.item(i, 3).data() == ackData:
                         messageList.removeRow(i)
 
     # Send item on the Inbox tab to trash
@@ -3160,12 +3129,12 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.selectedRanges(), key=lambda r: r.topRow()
         )[::-1]:
             for i in range(r.bottomRow() - r.topRow() + 1):
-                inventoryHashToTrash = str(tableWidget.item(
-                    r.topRow() + i, 3).data(QtCore.Qt.UserRole).toPyObject())
-                inventoryHashesToTrash.add(inventoryHashToTrash)
+                inventoryHashesToTrash.add(
+                    tableWidget.item(r.topRow() + i, 3).data())
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
-            tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
+            tableWidget.model().removeRows(
+                r.topRow(), r.bottomRow() - r.topRow() + 1)
         idCount = len(inventoryHashesToTrash)
         sqlExecuteChunked(
             ("DELETE FROM inbox" if folder == "trash" or shifted else
@@ -3188,9 +3157,8 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.selectedRanges(), key=lambda r: r.topRow()
         )[::-1]:
             for i in range(r.bottomRow() - r.topRow() + 1):
-                inventoryHashToTrash = str(tableWidget.item(
-                    r.topRow() + i, 3).data(QtCore.Qt.UserRole).toPyObject())
-                inventoryHashesToTrash.add(inventoryHashToTrash)
+                inventoryHashesToTrash.add(
+                    tableWidget.item(r.topRow() + i, 3).data())
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(
@@ -3217,8 +3185,7 @@ class MyForm(settingsmixin.SMainWindow):
             subjectAtCurrentInboxRow = ''
 
         # Retrieve the message data out of the SQL database
-        msgid = str(tableWidget.item(
-            currentInboxRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+        msgid = tableWidget.item(currentInboxRow, 3).data()
         queryreturn = sqlQuery(
             '''select message from inbox where msgid=?''', msgid)
         if queryreturn != []:
@@ -3246,8 +3213,7 @@ class MyForm(settingsmixin.SMainWindow):
         shifted = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier
         while tableWidget.selectedIndexes() != []:
             currentRow = tableWidget.selectedIndexes()[0].row()
-            ackdataToTrash = str(tableWidget.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+            ackdataToTrash = tableWidget.item(currentRow, 3).data()
             sqlExecute(
                 "DELETE FROM sent" if folder == "trash" or shifted else
                 "UPDATE sent SET folder='trash'"
@@ -3520,11 +3486,7 @@ class MyForm(settingsmixin.SMainWindow):
         if messagelist:
             currentRow = messagelist.currentRow()
             if currentRow >= 0:
-                msgid = str(messagelist.item(
-                    currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-                # data is saved at the 4. column of the table...
-                return msgid
-        return False
+                return messagelist.item(currentRow, 3).data()
 
     def getCurrentMessageTextedit(self):
         currentIndex = self.ui.tabWidget.currentIndex()
@@ -3967,8 +3929,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
         if currentRow >= 0:
-            ackData = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+            ackData = self.ui.tableWidgetInbox.item(currentRow, 3).data()
             queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
             for row in queryreturn:
                 status, = row
@@ -4168,15 +4129,6 @@ class MyForm(settingsmixin.SMainWindow):
                 loadMethod = getattr(obj, "loadSettings", None)
                 if callable(loadMethod):
                     obj.loadSettings()
-
-
-# In order for the time columns on the Inbox and Sent tabs to be sorted
-# correctly (rather than alphabetically), we need to overload the <
-# operator and use this class instead of QTableWidgetItem.
-class myTableWidgetItem(QtGui.QTableWidgetItem):
-
-    def __lt__(self, other):
-        return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
 
 app = None
