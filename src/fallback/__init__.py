@@ -30,3 +30,36 @@ else:
         if data:
             hasher.update(data)
         return hasher
+
+try:
+    import qtpy
+except ImportError:
+    try:
+        from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork, uic
+    except ImportError:
+        qtpy = None
+    else:
+        import sys
+        import types
+
+        QtCore.Signal = QtCore.pyqtSignal
+        context = {
+            'API': 'pyqt5',  # for tr
+            'PYQT_VERSION': QtCore.PYQT_VERSION_STR,
+            'QT_VERSION': QtCore.QT_VERSION_STR,
+            'QtCore': QtCore,
+            'QtGui': QtGui,
+            'QtWidgets': QtWidgets,
+            'QtNetwork': QtNetwork,
+            'uic': uic
+        }
+        try:
+            from PyQt5 import QtTest
+        except ImportError:
+            pass
+        else:
+            context['QtTest'] = QtTest
+        qtpy = types.ModuleType(
+            'qtpy', 'PyQt5 based dynamic fallback for qtpy')
+        qtpy.__dict__.update(context)
+        sys.modules['qtpy'] = qtpy

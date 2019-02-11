@@ -145,7 +145,7 @@ def createSupportMessage(myapp):
     opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (
         ssl.OPENSSL_VERSION, OpenSSL._version)
 
-    qtapi = os.environ['QT_API']
+    qtapi = os.environ.get('QT_API', 'fallback')
 
     frozen = "N/A"
     if paths.frozen:
