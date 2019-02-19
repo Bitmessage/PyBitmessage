@@ -117,6 +117,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     REPLY_TYPE_SENDER = 0
     REPLY_TYPE_CHAN = 1
+    REPLY_TYPE_UPD = 2
 
     def init_file_menu(self):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
@@ -381,6 +382,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Force send"), self.on_action_ForceSend)
+        self.actionSentReply = self.ui.sentContextMenuToolbar.addAction(
+            _translate("MainWindow", "Send update"),
+            self.on_action_SentReply)
         # self.popMenuSent = QtGui.QMenu( self )
         # self.popMenuSent.addAction( self.actionSentClipboard )
         # self.popMenuSent.addAction( self.actionTrashSentMessage )
@@ -2996,48 +3000,71 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_InboxReplyChan(self):
         self.on_action_InboxReply(self.REPLY_TYPE_CHAN)
-    
-    def on_action_InboxReply(self, replyType = None):
+
+    def on_action_SentReply(self):
+        self.on_action_InboxReply(self.REPLY_TYPE_UPD)
+
+    def on_action_InboxReply(self, reply_type=None):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
-        
-        if replyType is None:
-            replyType = self.REPLY_TYPE_SENDER
-        
+
+        if reply_type is None:
+            reply_type = self.REPLY_TYPE_SENDER
+
         # save this to return back after reply is done
         self.replyFromTab = self.ui.tabWidget.currentIndex()
-        
+
+        column_to = 1 if reply_type == self.REPLY_TYPE_UPD else 0
+        column_from = 0 if reply_type == self.REPLY_TYPE_UPD else 1
+
         currentInboxRow = tableWidget.currentRow()
         toAddressAtCurrentInboxRow = tableWidget.item(
-            currentInboxRow, 0).address
+            currentInboxRow, column_to).address
         acct = accountClass(toAddressAtCurrentInboxRow)
         fromAddressAtCurrentInboxRow = tableWidget.item(
-            currentInboxRow, 1).address
+            currentInboxRow, column_from).address
         msgid = str(tableWidget.item(
             currentInboxRow, 3).data(QtCore.Qt.UserRole).toPyObject())
         queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
+            "SELECT message FROM inbox WHERE msgid=?", msgid
+        ) or sqlQuery("SELECT message FROM sent WHERE ackdata=?", msgid)
         if queryreturn != []:
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
-        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, tableWidget.item(currentInboxRow, 2).subject, messageAtCurrentInboxRow)
+        acct.parseMessage(
+            toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow,
+            tableWidget.item(currentInboxRow, 2).subject,
+            messageAtCurrentInboxRow)
         widget = {
             'subject': self.ui.lineEditSubject,
             'from': self.ui.comboBoxSendFrom,
             'message': self.ui.textEditMessage
         }
+
         if toAddressAtCurrentInboxRow == str_broadcast_subscribers:
             self.ui.tabWidgetSend.setCurrentIndex(
                 self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
             )
 #            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         elif not BMConfigParser().has_section(toAddressAtCurrentInboxRow):
-            QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
-                "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(toAddressAtCurrentInboxRow), QtGui.QMessageBox.Ok)
-        elif not BMConfigParser().getboolean(toAddressAtCurrentInboxRow, 'enabled'):
-            QtGui.QMessageBox.information(self, _translate("MainWindow", "Address disabled"), _translate(
-                "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QtGui.QMessageBox.Ok)
+            QtGui.QMessageBox.information(
+                self, _translate("MainWindow", "Address is gone"),
+                _translate(
+                    "MainWindow",
+                    "Bitmessage cannot find your address %1. Perhaps you"
+                    " removed it?"
+                ).arg(toAddressAtCurrentInboxRow), QtGui.QMessageBox.Ok)
+        elif not BMConfigParser().getboolean(
+                toAddressAtCurrentInboxRow, 'enabled'):
+            QtGui.QMessageBox.information(
+                self, _translate("MainWindow", "Address disabled"),
+                _translate(
+                    "MainWindow",
+                    "Error: The address from which you are trying to send"
+                    " is disabled. You\'ll have to enable it on the"
+                    " \'Your Identities\' tab before using it."
+                ), QtGui.QMessageBox.Ok)
         else:
             self.setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(toAddressAtCurrentInboxRow)
             broadcast_tab_index = self.ui.tabWidgetSend.indexOf(
@@ -3051,28 +3078,44 @@ class MyForm(settingsmixin.SMainWindow):
                 }
                 self.ui.tabWidgetSend.setCurrentIndex(broadcast_tab_index)
                 toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
-        if fromAddressAtCurrentInboxRow == tableWidget.item(currentInboxRow, 1).label or (
-            isinstance(acct, GatewayAccount) and fromAddressAtCurrentInboxRow == acct.relayAddress):
+        if fromAddressAtCurrentInboxRow == \
+            tableWidget.item(currentInboxRow, column_from).label or (
+                isinstance(acct, GatewayAccount) and
+                fromAddressAtCurrentInboxRow == acct.relayAddress):
             self.ui.lineEditTo.setText(str(acct.fromAddress))
         else:
-            self.ui.lineEditTo.setText(tableWidget.item(currentInboxRow, 1).label + " <" + str(acct.fromAddress) + ">")
-        
-        # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
-        if acct.type == AccountMixin.CHAN and replyType == self.REPLY_TYPE_CHAN:
-            logger.debug('original sent to a chan. Setting the to address in the reply to the chan address.')
-            if toAddressAtCurrentInboxRow == tableWidget.item(currentInboxRow, 0).label:
+            self.ui.lineEditTo.setText(
+                tableWidget.item(currentInboxRow, column_from).label +
+                " <" + str(acct.fromAddress) + ">"
+            )
+
+        # If the previous message was to a chan then we should send our
+        # reply to the chan rather than to the particular person who sent
+        # the message.
+        if acct.type == AccountMixin.CHAN and reply_type == self.REPLY_TYPE_CHAN:
+            logger.debug(
+                'Original sent to a chan. Setting the to address in the'
+                ' reply to the chan address.')
+            if toAddressAtCurrentInboxRow == \
+                    tableWidget.item(currentInboxRow, column_to).label:
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
             else:
-                self.ui.lineEditTo.setText(tableWidget.item(currentInboxRow, 0).label + " <" + str(acct.toAddress) + ">")
-        
+                self.ui.lineEditTo.setText(
+                    tableWidget.item(currentInboxRow, column_to).label +
+                    " <" + str(acct.toAddress) + ">"
+                )
+
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
-        
-        quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
+
+        quotedText = self.quoted_text(
+            unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ['Re:', 'RE:']:
-            widget['subject'].setText(tableWidget.item(currentInboxRow, 2).label)
+            widget['subject'].setText(
+                tableWidget.item(currentInboxRow, 2).label)
         else:
-            widget['subject'].setText('Re: ' + tableWidget.item(currentInboxRow, 2).label)
+            widget['subject'].setText(
+                'Re: ' + tableWidget.item(currentInboxRow, 2).label)
         self.ui.tabWidget.setCurrentIndex(
             self.ui.tabWidget.indexOf(self.ui.send)
         )
@@ -3949,6 +3992,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)
         self.popMenuSent.addAction(self.actionTrashSentMessage)
+        self.popMenuSent.addAction(self.actionSentReply)
 
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
