@@ -967,35 +967,44 @@ class MyForm(settingsmixin.SMainWindow):
                 for col in (0, 1, 2):
                     related.item(rrow, col).setUnread(not status)
 
-    def propagateUnreadCount(
-            self, address=None, folder='inbox', widget=None, type=1):
-        widgets = (
-            self.ui.treeWidgetYourIdentities,
-            self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans)
+    # Here we need to update unread count for:
+    # - all widgets if there is no args
+    # - All accounts
+    # - corresponding account if current is "All accounts"
+    # - current account otherwise
+    def propagateUnreadCount(self, folder=None, widget=None):
         queryReturn = sqlQuery(
             'SELECT toaddress, folder, COUNT(msgid) AS cnt'
             ' FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
         totalUnread = {}
         normalUnread = {}
-        for addr, folder, count in queryReturn:
-            try:
-                normalUnread[addr][folder] = count
-            except KeyError:
-                normalUnread[addr] = {folder: count}
-            try:
-                totalUnread[folder] += count
-            except KeyError:
-                totalUnread[folder] = count
-        queryReturn = sqlQuery(
-            'SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox'
-            ' WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder',
-            str_broadcast_subscribers)
         broadcastsUnread = {}
-        for addr, folder, count in queryReturn:
+        for addr, fld, count in queryReturn:
             try:
-                broadcastsUnread[addr][folder] = count
+                normalUnread[addr][fld] = count
             except KeyError:
-                broadcastsUnread[addr] = {folder: count}
+                normalUnread[addr] = {fld: count}
+            try:
+                totalUnread[fld] += count
+            except KeyError:
+                totalUnread[fld] = count
+        if widget in (
+                self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans):
+            widgets = (self.ui.treeWidgetYourIdentities,)
+        else:
+            widgets = (
+                self.ui.treeWidgetYourIdentities,
+                self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans
+            )
+            queryReturn = sqlQuery(
+                'SELECT fromaddress, folder, COUNT(msgid) AS cnt'
+                ' FROM inbox WHERE read = 0 AND toaddress = ?'
+                ' GROUP BY fromaddress, folder', str_broadcast_subscribers)
+            for addr, fld, count in queryReturn:
+                try:
+                    broadcastsUnread[addr][fld] = count
+                except KeyError:
+                    broadcastsUnread[addr] = {fld: count}
 
         for treeWidget in widgets:
             root = treeWidget.invisibleRootItem()
@@ -1020,6 +1029,8 @@ class MyForm(settingsmixin.SMainWindow):
                     folderName = folderItem.folderName
                     if folderName == "new":
                         folderName = "inbox"
+                    if folder and folderName != folder:
+                        continue
                     if addressItem.type == AccountMixin.ALL:
                         newCount = totalUnread.get(folderName, 0)
                     else:
@@ -1783,19 +1794,26 @@ class MyForm(settingsmixin.SMainWindow):
                     else:
                         sent.item(i, 3).setText(textToDisplay)
 
-    def removeInboxRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
-        for inbox in ([
+    def removeInboxRowByMsgid(self, msgid):
+        # msgid and inventoryHash are the same thing
+        for inbox in (
             self.ui.tableWidgetInbox,
             self.ui.tableWidgetInboxSubscriptions,
-            self.ui.tableWidgetInboxChans]):
+            self.ui.tableWidgetInboxChans
+        ):
             for i in range(inbox.rowCount()):
-                if msgid == str(inbox.item(i, 3).data(QtCore.Qt.UserRole).toPyObject()):
-                    self.updateStatusBar(
-                        _translate("MainWindow", "Message trashed"))
-                    treeWidget = self.widgetConvert(inbox)
-                    self.propagateUnreadCount(inbox.item(i, 1 if inbox.item(i, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder(treeWidget), treeWidget, 0)
-                    inbox.removeRow(i)
+                if msgid == \
+                        inbox.item(i, 3).data(QtCore.Qt.UserRole).toPyObject():
                     break
+            else:
+                continue
+            self.updateStatusBar(_translate("MainWindow", "Message trashed"))
+            treeWidget = self.widgetConvert(inbox)
+            self.propagateUnreadCount(
+                # wrong assumption about current folder here:
+                self.getCurrentFolder(treeWidget), treeWidget
+            )
+            inbox.removeRow(i)
 
     def newVersionAvailable(self, version):
         self.notifiedNewVersion = ".".join(str(n) for n in version)
@@ -2293,7 +2311,7 @@ class MyForm(settingsmixin.SMainWindow):
             acct.parseMessage(toAddress, fromAddress, subject, "")
         else:
             acct = ret
-        self.propagateUnreadCount(acct.address)
+        self.propagateUnreadCount(widget=treeWidget if ret else None)
         if BMConfigParser().getboolean(
                 'bitmessagesettings', 'showtraynotifications'):
             self.notifierShow(
@@ -2676,7 +2694,6 @@ class MyForm(settingsmixin.SMainWindow):
                 ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
         ) != QtGui.QMessageBox.Yes:
             return
-        # addressAtCurrentRow = self.getCurrentAccount()
         tableWidget = self.getCurrentMessagelist()
 
         idCount = tableWidget.rowCount()
@@ -2702,7 +2719,6 @@ class MyForm(settingsmixin.SMainWindow):
 
         if markread > 0:
             self.propagateUnreadCount()
-            # addressAtCurrentRow, self.getCurrentFolder(), None, 0)
 
     def click_NewAddressDialog(self):
         dialogs.NewAddressDialog(self)
@@ -2987,15 +3003,13 @@ class MyForm(settingsmixin.SMainWindow):
         )
 
         self.propagateUnreadCount()
-        # if rowcount == 1:
-        #     # performance optimisation
-        #     self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder())
-        # else:
-        #     self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
-        # tableWidget.selectRow(currentRow + 1) 
-        # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
-        # We could also select upwards, but then our problem would be with the topmost message.
-        # tableWidget.clearSelection() manages to mark the message as read again.
+        # tableWidget.selectRow(currentRow + 1)
+        # This doesn't de-select the last message if you try to mark it
+        # unread, but that doesn't interfere. Might not be necessary.
+        # We could also select upwards, but then our problem would be
+        # with the topmost message.
+        # tableWidget.clearSelection() manages to mark the message
+        # as read again.
 
     # Format predefined text on message reply.
     def quoted_text(self, message):
@@ -3241,17 +3255,14 @@ class MyForm(settingsmixin.SMainWindow):
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         idCount = len(inventoryHashesToTrash)
-        if folder == "trash" or shifted:
-            sqlExecuteChunked('''DELETE FROM inbox WHERE msgid IN ({0})''',
-                    idCount, *inventoryHashesToTrash)
-        else:
-            sqlExecuteChunked('''UPDATE inbox SET folder='trash' WHERE msgid IN ({0})''',
-                    idCount, *inventoryHashesToTrash)
+        sqlExecuteChunked(
+            "DELETE FROM inbox" if folder == "trash" or shifted else
+            "UPDATE inbox SET folder='trash'"
+            " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
-        self.propagateUnreadCount(self.getCurrentAccount, folder)
-        self.updateStatusBar(_translate(
-            "MainWindow", "Moved items to trash."))
+        self.propagateUnreadCount(folder)
+        self.updateStatusBar(_translate("MainWindow", "Moved items to trash."))
 
     def on_action_TrashUndelete(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3271,16 +3282,13 @@ class MyForm(settingsmixin.SMainWindow):
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
-        if currentRow == 0:
-            tableWidget.selectRow(currentRow)
-        else:
-            tableWidget.selectRow(currentRow - 1)
+        tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         idCount = len(inventoryHashesToTrash)
         sqlExecuteChunked('''UPDATE inbox SET folder='inbox' WHERE msgid IN({0})''',
                 idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
-        self.propagateUnreadCount(self.getCurrentAccount)
+        self.propagateUnreadCount()
         self.updateStatusBar(_translate("MainWindow", "Undeleted item."))
 
     def on_action_InboxSaveMessageAs(self):
@@ -3317,8 +3325,6 @@ class MyForm(settingsmixin.SMainWindow):
 
     # Send item on the Sent tab to trash
     def on_action_SentTrash(self):
-        currentRow = 0
-        unread = False
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
@@ -3328,12 +3334,11 @@ class MyForm(settingsmixin.SMainWindow):
             currentRow = tableWidget.selectedIndexes()[0].row()
             ackdataToTrash = str(tableWidget.item(
                 currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            if folder == "trash" or shifted:
-                sqlExecute('''DELETE FROM sent WHERE ackdata=?''', ackdataToTrash)
-            else:
-                sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
-            if tableWidget.item(currentRow, 0).unread:
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
+            sqlExecute(
+                "DELETE FROM sent" if folder == "trash" or shifted else
+                "UPDATE sent SET folder='trash'"
+                " WHERE ackdata = ?", ackdataToTrash
+            )
             self.getCurrentMessageTextedit().setPlainText("")
             tableWidget.removeRow(currentRow)
             self.updateStatusBar(_translate(
@@ -3669,30 +3674,21 @@ class MyForm(settingsmixin.SMainWindow):
     def getCurrentAccount(self, treeWidget=None):
         currentItem = self.getCurrentItem(treeWidget)
         if currentItem:
-            account = currentItem.address
-            return account
-        else:
-            # TODO need debug msg?
-            return False
+            return currentItem.address
 
     def getCurrentFolder(self, treeWidget=None):
-        if treeWidget is None:
-            treeWidget = self.getCurrentTreeWidget()
-        #treeWidget = self.ui.treeWidgetYourIdentities
-        if treeWidget:
-            currentItem = treeWidget.currentItem()
-            if currentItem and hasattr(currentItem, 'folderName'):
-                return currentItem.folderName
-            else:
-                return None
+        currentItem = self.getCurrentItem(treeWidget)
+        try:
+            return currentItem.folderName
+        except AttributeError:
+            pass
 
     def setCurrentItemColor(self, color):
-        treeWidget = self.getCurrentTreeWidget()
-        if treeWidget:
+        currentItem = self.getCurrentItem()
+        if currentItem:
             brush = QtGui.QBrush()
             brush.setStyle(QtCore.Qt.NoBrush)
             brush.setColor(color)
-            currentItem = treeWidget.currentItem()
             currentItem.setForeground(0, brush)
 
     def getAddressbookSelectedItems(self):
@@ -4059,19 +4055,19 @@ class MyForm(settingsmixin.SMainWindow):
             messagelist.setFocus()
 
     def treeWidgetItemClicked(self):
-        searchLine = self.getCurrentSearchLine()
-        searchOption = self.getCurrentSearchOption()
+        messagelist = self.getCurrentMessagelist()
+        if not messagelist:
+            return
         messageTextedit = self.getCurrentMessageTextedit()
         if messageTextedit:
-            messageTextedit.setPlainText(QtCore.QString(""))
-        messagelist = self.getCurrentMessagelist()
-        if messagelist:
-            account = self.getCurrentAccount()
-            folder = self.getCurrentFolder()
-            treeWidget = self.getCurrentTreeWidget()
-            # refresh count indicator
-            self.propagateUnreadCount(account.address if hasattr(account, 'address') else None, folder, treeWidget, 0)
-            self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
+            messageTextedit.setPlainText("")
+        account = self.getCurrentAccount()
+        folder = self.getCurrentFolder()
+        # refresh count indicator
+        self.propagateUnreadCount(folder)
+        self.loadMessagelist(
+            messagelist, account, folder,
+            self.getCurrentSearchOption(), self.getCurrentSearchLine())
 
     def treeWidgetItemChanged(self, item, column):
         # only for manual edits. automatic edits (setText) are ignored
