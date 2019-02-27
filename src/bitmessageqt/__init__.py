@@ -967,56 +967,70 @@ class MyForm(settingsmixin.SMainWindow):
                 for col in (0, 1, 2):
                     related.item(rrow, col).setUnread(not status)
 
-    def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
-        widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
-        queryReturn = sqlQuery("SELECT toaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder")
+    def propagateUnreadCount(
+            self, address=None, folder='inbox', widget=None, type=1):
+        widgets = (
+            self.ui.treeWidgetYourIdentities,
+            self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans)
+        queryReturn = sqlQuery(
+            'SELECT toaddress, folder, COUNT(msgid) AS cnt'
+            ' FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
         totalUnread = {}
         normalUnread = {}
-        for row in queryReturn:
-            normalUnread[row[0]] = {}
-            if row[1] in ["trash"]:
-                continue
-            normalUnread[row[0]][row[1]] = row[2]
-            if row[1] in totalUnread:
-                totalUnread[row[1]] += row[2]
-            else:
-                totalUnread[row[1]] = row[2]
-        queryReturn = sqlQuery("SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder", str_broadcast_subscribers)
+        for addr, folder, count in queryReturn:
+            try:
+                normalUnread[addr][folder] = count
+            except KeyError:
+                normalUnread[addr] = {folder: count}
+            try:
+                totalUnread[folder] += count
+            except KeyError:
+                totalUnread[folder] = count
+        queryReturn = sqlQuery(
+            'SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox'
+            ' WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder',
+            str_broadcast_subscribers)
         broadcastsUnread = {}
-        for row in queryReturn:
-            broadcastsUnread[row[0]] = {}
-            broadcastsUnread[row[0]][row[1]] = row[2]
-        
+        for addr, folder, count in queryReturn:
+            try:
+                broadcastsUnread[addr][folder] = count
+            except KeyError:
+                broadcastsUnread[addr] = {folder: count}
+
         for treeWidget in widgets:
             root = treeWidget.invisibleRootItem()
             for i in range(root.childCount()):
                 addressItem = root.child(i)
-                newCount = 0
                 if addressItem.type == AccountMixin.ALL:
                     newCount = sum(totalUnread.itervalues())
                     self.drawTrayIcon(self.currentTrayIconFileName, newCount)
-                elif addressItem.type == AccountMixin.SUBSCRIPTION:
-                    if addressItem.address in broadcastsUnread:
-                        newCount = sum(broadcastsUnread[addressItem.address].itervalues())
-                elif addressItem.address in normalUnread:
-                    newCount = sum(normalUnread[addressItem.address].itervalues())
+                else:
+                    try:
+                        newCount = sum((
+                            broadcastsUnread
+                            if addressItem.type == AccountMixin.SUBSCRIPTION
+                            else normalUnread
+                        )[addressItem.address].itervalues())
+                    except KeyError:
+                        newCount = 0
                 if newCount != addressItem.unreadCount:
                     addressItem.setUnreadCount(newCount)
-                if addressItem.childCount == 0:
-                    continue
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
-                    newCount = 0
                     folderName = folderItem.folderName
                     if folderName == "new":
                         folderName = "inbox"
-                    if addressItem.type == AccountMixin.ALL and folderName in totalUnread:
-                        newCount = totalUnread[folderName]
-                    elif addressItem.type == AccountMixin.SUBSCRIPTION:
-                        if addressItem.address in broadcastsUnread and folderName in broadcastsUnread[addressItem.address]:
-                            newCount = broadcastsUnread[addressItem.address][folderName]
-                    elif addressItem.address in normalUnread and folderName in normalUnread[addressItem.address]:
-                        newCount = normalUnread[addressItem.address][folderName]
+                    if addressItem.type == AccountMixin.ALL:
+                        newCount = totalUnread.get(folderName, 0)
+                    else:
+                        try:
+                            newCount = (
+                                broadcastsUnread
+                                if addressItem.type == AccountMixin.SUBSCRIPTION
+                                else normalUnread
+                            )[addressItem.address][folderName]
+                        except KeyError:
+                            newCount = 0
                     if newCount != folderItem.unreadCount:
                         folderItem.setUnreadCount(newCount)
 
