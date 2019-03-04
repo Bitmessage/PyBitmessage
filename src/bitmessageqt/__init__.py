@@ -369,8 +369,6 @@ class MyForm(settingsmixin.SMainWindow):
                         self.on_context_menuSubscriptions)
 
     def init_sent_popup_menu(self, connectSignal=True):
-        # Popup menu for the Sent page
-        self.ui.sentContextMenuToolbar = QtGui.QToolBar()
         # Actions
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
             _translate(
@@ -3005,6 +3003,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.on_action_InboxReply(self.REPLY_TYPE_UPD)
 
     def on_action_InboxReply(self, reply_type=None):
+        """Handle any reply action depending on reply_type"""
+        # pylint: disable=too-many-locals
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
