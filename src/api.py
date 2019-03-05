@@ -661,8 +661,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         BMConfigParser().remove_section(address)
         with open(state.appdata + 'keys.dat', 'wb') as configfile:
             BMConfigParser().write(configfile)
-        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
+        queues.UISignalQueue.put(('writeNewAddressToTable', ('', '', '')))
         shared.reloadMyAddressHashes()
         return 'success'
 
