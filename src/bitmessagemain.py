@@ -153,25 +153,13 @@ def _fixSocket():
         socket.IPV6_V6ONLY = 27
 
 
-def allThreadTraceback(frame):
-    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
-    code = []
-    for threadId, stack in sys._current_frames().items():
-        code.append(
-            '\n# Thread: %s(%d)' % (id2name.get(threadId, ''), threadId))
-        for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append(
-                'File: "%s", line %d, in %s' % (filename, lineno, name))
-            if line:
-                code.append('  %s' % (line.strip()))
-    print('\n'.join(code))
-
-
-def signal_handler(signal, frame):
+def signal_handler(signum, frame):
+    """Single handler for any signal sent to pybitmessage"""
     process = multiprocessing.current_process()
+    thread = threading.current_thread()
     logger.error(
         'Got signal %i in %s/%s',
-        signal, process.name, threading.current_thread().name
+        signum, process.name, thread.name
     )
     if process.name == "RegExParser":
         # on Windows this isn't triggered, but it's fine,
@@ -179,13 +167,19 @@ def signal_handler(signal, frame):
         raise SystemExit
     if "PoolWorker" in process.name:
         raise SystemExit
-    if threading.current_thread().name not in ("PyBitmessage", "MainThread"):
+    if thread.name not in ("PyBitmessage", "MainThread"):
         return
-    logger.error("Got signal %i", signal)
-    if shared.thisapp.daemon or not state.enableGUI:  # FIXME redundant?
+    logger.error("Got signal %i", signum)
+    # there are possible non-UI variants to run bitmessage which should shutdown
+    # especially test-mode
+    if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
-        allThreadTraceback(frame)
+        print('# Thread: %s(%d)' % (thread.name, thread.ident))
+        for filename, lineno, name, line in traceback.extract_stack(frame):
+            print('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                print('  %s' % line.strip())
         print('Unfortunately you cannot use Ctrl+C when running the UI'
               ' because the UI captures the signal.')
 

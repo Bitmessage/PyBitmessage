@@ -109,14 +109,15 @@ def change_translation(newlocale):
 
 # TODO: rewrite
 def powQueueSize():
-    curWorkerQueue = queues.workerQueue.qsize()
+    """Returns the size of queues.workerQueue including current unfinished work"""
+    queue_len = queues.workerQueue.qsize()
     for thread in threading.enumerate():
         try:
             if thread.name == "singleWorker":
-                curWorkerQueue += thread.busy
+                queue_len += thread.busy
         except Exception as err:
             logger.info('Thread error %s', err)
-    return curWorkerQueue
+    return queue_len
 
 
 class MyForm(settingsmixin.SMainWindow):
