@@ -5,23 +5,11 @@ src/addresses.py
 """
 # pylint: disable=redefined-outer-name,inconsistent-return-statements
 
-from __future__ import print_function
 import hashlib
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
 
 from debug import logger
-from pyelliptic import arithmetic
-
-
-def convertIntToString(n):
-    """.. todo:: There is another copy of this function in Bitmessagemain.py"""
-    a = __builtins__.hex(n)
-    if a[-1:] == 'L':
-        a = a[:-1]
-    if len(a) % 2 == 0:
-        return unhexlify(a[2:])
-    return unhexlify('0' + a[2:])
 
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -288,7 +276,10 @@ def addBMIfNotPresent(address):
     return address if address[:3] == 'BM-' else 'BM-' + address
 
 
+# TODO: make test case
 if __name__ == "__main__":
+    from pyelliptic import arithmetic
+
     print(
         '\nLet us make an address from scratch. Suppose we generate two'
         ' random 32 byte values and call the first one the signing key'
