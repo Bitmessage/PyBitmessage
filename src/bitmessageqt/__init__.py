@@ -9,6 +9,7 @@ import random
 import string
 import sys
 import textwrap
+import threading
 import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
@@ -44,7 +45,6 @@ from account import (
     getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
     GatewayAccount, MailchuckAccount, AccountColor)
 import dialogs
-from helper_generic import powQueueSize
 from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import knownnodes
@@ -105,6 +105,18 @@ def change_translation(newlocale):
             break
         except:
             logger.error("Failed to set locale to %s", lang, exc_info=True)
+
+
+# TODO: rewrite
+def powQueueSize():
+    curWorkerQueue = queues.workerQueue.qsize()
+    for thread in threading.enumerate():
+        try:
+            if thread.name == "singleWorker":
+                curWorkerQueue += thread.busy
+        except Exception as err:
+            logger.info('Thread error %s', err)
+    return curWorkerQueue
 
 
 class MyForm(settingsmixin.SMainWindow):
