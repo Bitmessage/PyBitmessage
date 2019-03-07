@@ -69,7 +69,6 @@ import helper_threading
 
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
-    selfInitiatedConnections[streamNumber] = {}
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
         # Some XP and Vista systems can only have 10 outgoing connections
@@ -184,16 +183,6 @@ def signal_handler(signum, frame):
               ' because the UI captures the signal.')
 
 
-# This is a list of current connections (the thread pointers at least)
-selfInitiatedConnections = {}
-
-if shared.useVeryEasyProofOfWorkForTesting:
-    defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
-    defaults.networkDefaultPayloadLengthExtraBytes = int(
-        defaults.networkDefaultPayloadLengthExtraBytes / 100)
-
-
 class Main:
     def start(self):
         _fixSocket()
@@ -273,6 +262,13 @@ class Main:
         if state.dandelion and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
             state.dandelion = 0
+
+        if state.testmode or BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'extralowdifficulty'):
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
+            defaults.networkDefaultPayloadLengthExtraBytes = int(
+                defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
         knownnodes.readKnownNodes()
 

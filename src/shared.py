@@ -30,9 +30,6 @@ maximumAgeOfAnObjectThatIAmWillingToAccept = 216000
 # from obtaining a needed pubkey for a period of time.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-# If you set this to True while on the normal network,
-# you won't be able to send or sometimes receive messages.
-useVeryEasyProofOfWorkForTesting = False
 
 
 myECCryptorObjects = {}
