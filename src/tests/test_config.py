@@ -2,9 +2,11 @@
 Various tests for config
 """
 
+import os
 import unittest
 
 from pybitmessage.bmconfigparser import BMConfigParser
+from test_process import TestProcessProto
 
 
 class TestConfig(unittest.TestCase):
@@ -34,3 +36,30 @@ class TestConfig(unittest.TestCase):
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent'), 0)
         self.assertEqual(
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
+
+
+class TestProcessConfig(TestProcessProto):
+    """A test case for keys.dat"""
+
+    def test_config_defaults(self):
+        """Test settings in the generated config"""
+        self._stop_process()
+        config = BMConfigParser()
+        config.read(os.path.join(self.home, 'keys.dat'))
+
+        self.assertEquals(config.safeGetInt(
+            'bitmessagesettings', 'settingsversion'), 10)
+        self.assertEquals(config.safeGetInt(
+            'bitmessagesettings', 'port'), 8444)
+        # don't connect
+        self.assertTrue(config.safeGetBoolean(
+            'bitmessagesettings', 'dontconnect'))
+        # API disabled
+        self.assertFalse(config.safeGetBoolean(
+            'bitmessagesettings', 'apienabled'))
+
+        # extralowdifficulty is false
+        self.assertEquals(config.safeGetInt(
+            'bitmessagesettings', 'defaultnoncetrialsperbyte'), 1000)
+        self.assertEquals(config.safeGetInt(
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes'), 1000)

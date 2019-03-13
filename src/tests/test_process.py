@@ -48,6 +48,15 @@ class TestProcessProto(unittest.TestCase):
             pass
 
     @classmethod
+    def _stop_process(cls, timeout=5):
+        cls.process.send_signal(signal.SIGTERM)
+        try:
+            cls.process.wait(timeout)
+        except psutil.TimeoutExpired:
+            return False
+        return True
+
+    @classmethod
     def _cleanup_files(cls):
         for pfile in cls._files:
             try:
@@ -58,12 +67,12 @@ class TestProcessProto(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
-        cls.process.send_signal(signal.SIGTERM)
         try:
-            cls.process.wait(5)
-        except psutil.TimeoutExpired:
-            print(open(os.path.join(cls.home, 'debug.log'), 'rb').read())
-            cls.process.kill()
+            if not cls._stop_process():
+                print(open(os.path.join(cls.home, 'debug.log'), 'rb').read())
+                cls.process.kill()
+        except psutil.NoSuchProcess:
+            pass
         finally:
             cls._cleanup_files()
 
@@ -93,13 +102,10 @@ class TestProcessShutdown(TestProcessProto):
     """Separate test case for SIGTERM"""
     def test_shutdown(self):
         """Send to pybitmessage SIGTERM and ensure it stopped"""
-        self.process.send_signal(signal.SIGTERM)
-        try:
-            # longer wait time because it's not a benchmark
-            self.process.wait(10)
-        except psutil.TimeoutExpired:
-            self.fail(
-                '%s has not stopped in 10 sec' % ' '.join(self._process_cmd))
+        # longer wait time because it's not a benchmark
+        self.assertTrue(
+            self._stop_process(20),
+            '%s has not stopped in 20 sec' % ' '.join(self._process_cmd))
 
     @classmethod
     def tearDownClass(cls):
