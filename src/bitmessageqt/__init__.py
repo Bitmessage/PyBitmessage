@@ -304,6 +304,9 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Copy address to clipboard"),
             self.on_action_Clipboard)
+        self.actionSend = self.ui.addressContextMenuToolbar.addAction(
+            _translate("MainWindow", "Send message to this chan"),
+            self.on_action_Send)
         self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Special address behavior..."),
@@ -1872,7 +1875,7 @@ class MyForm(settingsmixin.SMainWindow):
     def click_pushButtonClear(self):
         self.ui.lineEditSubject.setText("")
         self.ui.lineEditTo.setText("")
-        self.ui.textEditMessage.setText("")
+        self.ui.textEditMessage.reset()
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
 
     def click_pushButtonSend(self):
@@ -2085,10 +2088,7 @@ class MyForm(settingsmixin.SMainWindow):
                             toAddress, toLabel, fromAddress, subject, message, ackdata)
                         queues.workerQueue.put(('sendmessage', toAddress))
 
-                        self.ui.comboBoxSendFrom.setCurrentIndex(0)
-                        self.ui.lineEditTo.setText('')
-                        self.ui.lineEditSubject.setText('')
-                        self.ui.textEditMessage.reset()
+                        self.click_pushButtonClear()
                         if self.replyFromTab is not None:
                             self.ui.tabWidget.setCurrentIndex(self.replyFromTab)
                             self.replyFromTab = None
@@ -2608,6 +2608,13 @@ class MyForm(settingsmixin.SMainWindow):
                     os.remove(paths.lookupExeFolder() + 'debug.log.1')
                 except:
                     pass
+
+    def on_action_Send(self):
+        self.click_pushButtonClear()
+        self.ui.lineEditTo.setText(self.getCurrentAccount())
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.send)
+        )
 
     def on_action_SpecialAddressBehaviorDialog(self):
         dialogs.SpecialAddressBehaviorDialog(self, BMConfigParser())
@@ -3953,6 +3960,7 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 self.popMenu.addAction(self.actionEnable)
             self.popMenu.addAction(self.actionSetAvatar)
+            self.popMenu.addAction(self.actionSend)
             self.popMenu.addSeparator()
             # preloaded gui.menu plugins with prefix 'address'
             for plugin in self.menu_plugins['address']:
