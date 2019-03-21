@@ -654,6 +654,8 @@ class Ui_MainWindow(object):
         # Popup menu actions container for the Sent page
         # pylint: disable=attribute-defined-outside-init
         self.sentContextMenuToolbar = QtGui.QToolBar()
+        # Popup menu actions container for chans tree
+        self.addressContextMenuToolbar = QtGui.QToolBar()
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
         if dontconnect is None:

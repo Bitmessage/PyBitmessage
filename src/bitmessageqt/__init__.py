@@ -282,8 +282,6 @@ class MyForm(settingsmixin.SMainWindow):
                 ))
 
     def init_chan_popup_menu(self, connectSignal=True):
-        # Popup menu for the Channels tab
-        self.ui.addressContextMenuToolbar = QtGui.QToolBar()
         # Actions
         self.actionNew = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "New"), self.on_action_YourIdentitiesNew)
@@ -2610,6 +2608,7 @@ class MyForm(settingsmixin.SMainWindow):
                     pass
 
     def on_action_Send(self):
+        """Send message to current selected address"""
         self.click_pushButtonClear()
         self.ui.lineEditTo.setText(self.getCurrentAccount())
         self.ui.tabWidget.setCurrentIndex(
@@ -2617,6 +2616,7 @@ class MyForm(settingsmixin.SMainWindow):
         )
 
     def on_action_SpecialAddressBehaviorDialog(self):
+        """Show SpecialAddressBehaviorDialog"""
         dialogs.SpecialAddressBehaviorDialog(self, BMConfigParser())
 
     def on_action_EmailGatewayDialog(self):
