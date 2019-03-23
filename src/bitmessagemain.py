@@ -22,10 +22,13 @@ depends.check_dependencies()
 
 import ctypes
 import getopt
+import multiprocessing
 # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 import signal
 import socket
+import threading
 import time
+import traceback
 from struct import pack
 
 from helper_startup import (
@@ -38,7 +41,7 @@ import shared
 import knownnodes
 import state
 import shutdown
-import threading
+from debug import logger
 
 # Classes
 from class_sqlThread import sqlThread
@@ -61,8 +64,8 @@ from network.downloadthread import DownloadThread
 from network.uploadthread import UploadThread
 
 # Helper Functions
-import helper_generic
 import helper_threading
+
 
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
@@ -148,6 +151,37 @@ def _fixSocket():
         socket.IPPROTO_IPV6 = 41
     if not hasattr(socket, 'IPV6_V6ONLY'):
         socket.IPV6_V6ONLY = 27
+
+
+def signal_handler(signum, frame):
+    """Single handler for any signal sent to pybitmessage"""
+    process = multiprocessing.current_process()
+    thread = threading.current_thread()
+    logger.error(
+        'Got signal %i in %s/%s',
+        signum, process.name, thread.name
+    )
+    if process.name == "RegExParser":
+        # on Windows this isn't triggered, but it's fine,
+        # it has its own process termination thing
+        raise SystemExit
+    if "PoolWorker" in process.name:
+        raise SystemExit
+    if thread.name not in ("PyBitmessage", "MainThread"):
+        return
+    logger.error("Got signal %i", signum)
+    # there are possible non-UI variants to run bitmessage which should shutdown
+    # especially test-mode
+    if shared.thisapp.daemon or not state.enableGUI:
+        shutdown.doCleanShutdown()
+    else:
+        print('# Thread: %s(%d)' % (thread.name, thread.ident))
+        for filename, lineno, name, line in traceback.extract_stack(frame):
+            print('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                print('  %s' % line.strip())
+        print('Unfortunately you cannot use Ctrl+C when running the UI'
+              ' because the UI captures the signal.')
 
 
 # This is a list of current connections (the thread pointers at least)
@@ -437,8 +471,8 @@ class Main:
             os.kill(grandfatherPid, signal.SIGTERM)
 
     def setSignalHandler(self):
-        signal.signal(signal.SIGINT, helper_generic.signal_handler)
-        signal.signal(signal.SIGTERM, helper_generic.signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def usage(self):

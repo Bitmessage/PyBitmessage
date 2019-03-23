@@ -89,6 +89,24 @@ class TestProcessProto(unittest.TestCase):
             len(self.process.threads()), self._threads_count)
 
 
+class TestProcessShutdown(TestProcessProto):
+    """Separate test case for SIGTERM"""
+    def test_shutdown(self):
+        """Send to pybitmessage SIGTERM and ensure it stopped"""
+        self.process.send_signal(signal.SIGTERM)
+        try:
+            # longer wait time because it's not a benchmark
+            self.process.wait(10)
+        except psutil.TimeoutExpired:
+            self.fail(
+                '%s has not stopped in 10 sec' % ' '.join(self._process_cmd))
+
+    @classmethod
+    def tearDownClass(cls):
+        """Special teardown because pybitmessage is already stopped"""
+        cls._cleanup_files()
+
+
 class TestProcess(TestProcessProto):
     """A test case for pybitmessage process"""
     def test_process_name(self):
