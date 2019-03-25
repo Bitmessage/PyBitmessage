@@ -2610,7 +2610,10 @@ class MyForm(settingsmixin.SMainWindow):
     def on_action_Send(self):
         """Send message to current selected address"""
         self.click_pushButtonClear()
-        self.ui.lineEditTo.setText(self.getCurrentAccount())
+        account_item = self.getCurrentItem()
+        if not account_item:
+            return
+        self.ui.lineEditTo.setText(account_item.accountString())
         self.ui.tabWidget.setCurrentIndex(
             self.ui.tabWidget.indexOf(self.ui.send)
         )
@@ -3662,11 +3665,8 @@ class MyForm(settingsmixin.SMainWindow):
         if treeWidget is None:
             treeWidget = self.getCurrentTreeWidget()
         if treeWidget:
-            currentItem = treeWidget.currentItem()
-            if currentItem:
-                return currentItem
-        return False
-    
+            return treeWidget.currentItem()
+
     def getCurrentAccount(self, treeWidget=None):
         currentItem = self.getCurrentItem(treeWidget)
         if currentItem:

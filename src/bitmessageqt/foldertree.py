@@ -56,6 +56,14 @@ class AccountMixin(object):
         brush.setStyle(QtCore.Qt.NoBrush)
         return brush
 
+    def accountString(self):
+        """Account string suitable for use in To: field: label <address>"""
+        label = self._getLabel()
+        return (
+            self.address if label == self.address
+            else '%s <%s>' % (label, self.address)
+        )
+
     def setAddress(self, address):
         """Set bitmessage address of the object"""
         if address is None:
@@ -358,6 +366,9 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
 
     def _setup(self):
         self.setEnabled(True)
+
+    def _getLabel(self):
+        return self.label
 
     def data(self, role):
         """Return object data (QT UI)"""
