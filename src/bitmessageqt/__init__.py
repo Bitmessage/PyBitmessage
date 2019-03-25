@@ -3108,8 +3108,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.lineEditTo.setText(str(acct.fromAddress))
         else:
             self.ui.lineEditTo.setText(
-                tableWidget.item(currentInboxRow, column_from).label +
-                " <" + str(acct.fromAddress) + ">"
+                tableWidget.item(currentInboxRow, column_from).accountString()
             )
 
         # If the previous message was to a chan then we should send our
@@ -3124,8 +3123,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
             else:
                 self.ui.lineEditTo.setText(
-                    tableWidget.item(currentInboxRow, column_to).label +
-                    " <" + str(acct.toAddress) + ">"
+                    tableWidget.item(currentInboxRow, column_to).accountString()
                 )
 
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
@@ -3359,73 +3357,58 @@ class MyForm(settingsmixin.SMainWindow):
         while self.ui.tableWidgetAddressBook.selectedIndexes() != []:
             currentRow = self.ui.tableWidgetAddressBook.selectedIndexes()[
                 0].row()
-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 0).text().toUtf8()
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text()
-            sqlExecute('''DELETE FROM addressbook WHERE label=? AND address=?''',
-                       str(labelAtCurrentRow), str(addressAtCurrentRow))
+            item = self.ui.tableWidgetAddressBook.item(currentRow, 0)
+            sqlExecute(
+                'DELETE FROM addressbook WHERE label=? AND address=?',
+                item.label, item.address)
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
-            self.rerenderMessagelistFromLabels()
-            self.rerenderMessagelistToLabels()
+        self.rerenderMessagelistFromLabels()
+        self.rerenderMessagelistToLabels()
 
     def on_action_AddressBookClipboard(self):
-        fullStringOfAddresses = ''
-        listOfSelectedRows = {}
-        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
-            listOfSelectedRows[
-                self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
-        for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text()
-            if fullStringOfAddresses == '':
-                fullStringOfAddresses = addressAtCurrentRow
+        addresses_string = ''
+        for item in self.getAddressbookSelectedItems():
+            if addresses_string == '':
+                addresses_string = item.address
             else:
-                fullStringOfAddresses += ', ' + str(addressAtCurrentRow)
+                addresses_string += ', ' + item.address
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(fullStringOfAddresses)
+        clipboard.setText(addresses_string)
 
     def on_action_AddressBookSend(self):
-        listOfSelectedRows = {}
-        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
-            listOfSelectedRows[
-                self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
-        for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 0).address
-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 0).label
-            stringToAdd = labelAtCurrentRow + " <" + addressAtCurrentRow + ">"
-            if self.ui.lineEditTo.text() == '':
-                self.ui.lineEditTo.setText(stringToAdd)
-            else:
-                self.ui.lineEditTo.setText(unicode(
-                    self.ui.lineEditTo.text().toUtf8(), encoding="UTF-8") + '; ' + stringToAdd)
-        if listOfSelectedRows == {}:
-            self.updateStatusBar(_translate(
+        selected_items = self.getAddressbookSelectedItems()
+
+        if not selected_items:  # FIXME: impossible
+            return self.updateStatusBar(_translate(
                 "MainWindow", "No addresses selected."))
-        else:
-            self.statusbar.clearMessage()
-            self.ui.tabWidget.setCurrentIndex(
-                self.ui.tabWidget.indexOf(self.ui.send)
-            )
+
+        addresses_string = unicode(
+            self.ui.lineEditTo.text().toUtf8(), 'utf-8')
+        for item in selected_items:
+            address_string = item.accountString()
+            if not addresses_string:
+                addresses_string = address_string
+            else:
+                addresses_string += '; ' + address_string
+
+        self.ui.lineEditTo.setText(addresses_string)
+        self.statusbar.clearMessage()
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.send)
+        )
 
     def on_action_AddressBookSubscribe(self):
-        listOfSelectedRows = {}
-        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
-            listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
-        for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,1).text())
-            # Then subscribe to it... provided it's not already in the address book
-            if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
+        for item in self.getAddressbookSelectedItems():
+            # Then subscribe to it...
+            # provided it's not already in the address book
+            if shared.isAddressInMySubscriptionsList(item.address):
                 self.updateStatusBar(_translate(
                     "MainWindow",
                     "Error: You cannot add the same address to your"
                     " subscriptions twice. Perhaps rename the existing"
                     " one if you want."))
                 continue
-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
-            self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
+            self.addSubscription(item.address, item.label)
             self.ui.tabWidget.setCurrentIndex(
                 self.ui.tabWidget.indexOf(self.ui.subscriptions)
             )
@@ -3695,6 +3678,13 @@ class MyForm(settingsmixin.SMainWindow):
             brush.setColor(color)
             currentItem = treeWidget.currentItem()
             currentItem.setForeground(0, brush)
+
+    def getAddressbookSelectedItems(self):
+        return [
+            self.ui.tableWidgetAddressBook.item(i.row(), 0)
+            for i in self.ui.tableWidgetAddressBook.selectedIndexes()
+            if i.column() == 0
+        ]
 
     def on_action_YourIdentitiesNew(self):
         self.click_NewAddressDialog()
