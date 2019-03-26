@@ -355,8 +355,6 @@ class MyForm(settingsmixin.SMainWindow):
                         self.on_context_menuAddressBook)
 
     def init_subscriptions_popup_menu(self, connectSignal=True):
-        # Popup menu for the Subscriptions page
-        self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
         # Actions
         self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction(
             _translate("MainWindow", "New"), self.on_action_SubscriptionsNew)
@@ -375,6 +373,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.actionsubscriptionsSetAvatar = self.ui.subscriptionsContextMenuToolbar.addAction(
             _translate("MainWindow", "Set avatar..."),
             self.on_action_TreeWidgetSetAvatar)
+        self.actionsubscriptionsSend = self.ui.addressContextMenuToolbar.addAction(
+            _translate("MainWindow", "Send message to this address"),
+            self.on_action_Send)
         self.ui.treeWidgetSubscriptions.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
@@ -3501,6 +3502,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
             self.popMenuSubscriptions.addSeparator()
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
             self.popMenuSubscriptions.addSeparator()
             # preloaded gui.menu plugins with prefix 'address'
             for plugin in self.menu_plugins['address']:
@@ -3943,13 +3945,13 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenu.addAction(self.actionNew)
             self.popMenu.addAction(self.actionDelete)
             self.popMenu.addSeparator()
-            self.popMenu.addAction(self.actionClipboard)
-            self.popMenu.addSeparator()
             if currentItem.isEnabled:
                 self.popMenu.addAction(self.actionDisable)
             else:
                 self.popMenu.addAction(self.actionEnable)
             self.popMenu.addAction(self.actionSetAvatar)
+            self.popMenu.addSeparator()
+            self.popMenu.addAction(self.actionClipboard)
             self.popMenu.addAction(self.actionSend)
             self.popMenu.addSeparator()
             # preloaded gui.menu plugins with prefix 'address'

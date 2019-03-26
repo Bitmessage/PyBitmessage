@@ -656,6 +656,8 @@ class Ui_MainWindow(object):
         self.sentContextMenuToolbar = QtGui.QToolBar()
         # Popup menu actions container for chans tree
         self.addressContextMenuToolbar = QtGui.QToolBar()
+        # Popup menu actions container for subscriptions tree
+        self.subscriptionsContextMenuToolbar = QtGui.QToolBar()
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
         if dontconnect is None:
