@@ -164,6 +164,7 @@ class Ui_MainWindow(object):
         self.tableWidgetAddressBook.horizontalHeader().setHighlightSections(False)
         self.tableWidgetAddressBook.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetAddressBook.verticalHeader().setVisible(False)
+        self.tableWidgetAddressBook.setWordWrap(False)
         self.verticalSplitter_2.addWidget(self.tableWidgetAddressBook)
         self.addressBookCompleter = AddressBookCompleter()
         self.addressBookCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
