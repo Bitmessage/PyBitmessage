@@ -77,7 +77,8 @@ if __name__ == "__main__":
 
     try:
         import msgpack
-        installRequires.append("msgpack-python")
+        installRequires.append(
+            "msgpack-python" if msgpack.version[:2] == (0, 4) else "msgpack")
     except ImportError:
         try:
             import umsgpack
