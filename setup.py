@@ -64,12 +64,13 @@ if __name__ == "__main__":
         'pybitmessage',
         'pybitmessage.bitmessageqt',
         'pybitmessage.bitmessagecurses',
+        'pybitmessage.fallback',
         'pybitmessage.messagetypes',
         'pybitmessage.network',
+        'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
         'pybitmessage.socks',
-        'pybitmessage.storage',
-        'pybitmessage.plugins'
+        'pybitmessage.storage'
     ]
 
     # this will silently accept alternative providers of msgpack
@@ -84,8 +85,7 @@ if __name__ == "__main__":
             import umsgpack
             installRequires.append("umsgpack")
         except ImportError:
-            packages += [
-                'pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
+            packages += ['pybitmessage.fallback.umsgpack']
 
     dist = setup(
         name='pybitmessage',
