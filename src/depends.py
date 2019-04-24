@@ -190,7 +190,7 @@ def try_import(module, log_extra=False):
 def check_ripemd160():
     """Check availability of the RIPEMD160 hash function"""
     try:
-        from fallback import RIPEMD160Hash  # pylint: disable=relative-import
+        from fallback import RIPEMD160Hash
     except ImportError:
         return False
     return RIPEMD160Hash is not None
