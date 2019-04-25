@@ -1801,6 +1801,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.tableWidgetInboxSubscriptions,
             self.ui.tableWidgetInboxChans
         ):
+            i = None
             for i in range(inbox.rowCount()):
                 if msgid == \
                         inbox.item(i, 3).data(QtCore.Qt.UserRole).toPyObject():
@@ -1813,7 +1814,8 @@ class MyForm(settingsmixin.SMainWindow):
                 # wrong assumption about current folder here:
                 self.getCurrentFolder(treeWidget), treeWidget
             )
-            inbox.removeRow(i)
+            if i:
+                inbox.removeRow(i)
 
     def newVersionAvailable(self, version):
         self.notifiedNewVersion = ".".join(str(n) for n in version)
@@ -2311,6 +2313,7 @@ class MyForm(settingsmixin.SMainWindow):
             acct.parseMessage(toAddress, fromAddress, subject, "")
         else:
             acct = ret
+        # pylint:disable=undefined-loop-variable
         self.propagateUnreadCount(widget=treeWidget if ret else None)
         if BMConfigParser().getboolean(
                 'bitmessagesettings', 'showtraynotifications'):
