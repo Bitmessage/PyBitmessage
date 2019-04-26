@@ -4,6 +4,8 @@ src/bitmessageqt/foldertree.py
 """
 # pylint: disable=too-many-arguments,bad-super-call,attribute-defined-outside-init
 
+from cgi import escape
+
 from PyQt4 import QtCore, QtGui
 
 from bmconfigparser import BMConfigParser
@@ -456,6 +458,8 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         """Return object data (QT UI)"""
         if role == QtCore.Qt.UserRole:
             return self.subject
+        if role == QtCore.Qt.ToolTipRole:
+            return escape(self.subject)
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
