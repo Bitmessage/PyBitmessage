@@ -6,6 +6,7 @@ import time
 from binascii import hexlify
 from subprocess import call  # nosec
 
+import knownnodes
 import highlevelcrypto
 from addresses import (
     calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
@@ -67,6 +68,8 @@ class objectProcessor(threading.Thread):
                     self.processmsg(data)
                 elif objectType == protocol.OBJECT_BROADCAST:
                     self.processbroadcast(data)
+                elif objectType == protocol.OBJECT_ONIONPEER:
+                    self.processonion(data)
                 # is more of a command, not an object type. Is used to get
                 # this thread past the queue.get() so that it will check
                 # the shutdown variable.
@@ -139,6 +142,23 @@ class objectProcessor(threading.Thread):
             ))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
+
+    def processonion(self, data):
+        readPosition = 20  # bypass the nonce, time, and object type
+        length = decodeVarint(data[readPosition:readPosition + 10])[1]
+        readPosition += length
+        stream, length = decodeVarint(data[readPosition:readPosition + 10])
+        readPosition += length
+        # it seems that stream is checked in network.bmproto
+        port, length = decodeVarint(data[readPosition:readPosition + 10])
+        host = protocol.checkIPAddress(data[readPosition + length:])
+
+        if not host:
+            return
+        peer = state.Peer(host, port)
+        with knownnodes.knownNodesLock:
+            knownnodes.addKnownNode(
+                stream, peer, is_self=state.ownAddresses.get(peer))
 
     def processgetpubkey(self, data):
         if len(data) > 200:

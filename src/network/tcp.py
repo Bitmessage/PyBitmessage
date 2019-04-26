@@ -147,7 +147,7 @@ class TCPConnection(BMProto, TLSDispatcher):  # pylint: disable=too-many-instanc
                         (k, v) for k, v in nodes.iteritems()
                         if v["lastseen"] > int(time.time()) -
                         shared.maximumAgeOfNodesThatIAdvertiseToOthers and
-                        v["rating"] >= 0
+                        v["rating"] >= 0 and len(k.host) <= 22
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(

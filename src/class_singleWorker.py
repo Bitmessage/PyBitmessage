@@ -119,13 +119,21 @@ class singleWorker(threading.Thread, StoppableThread):
         # before we start on existing POW tasks.
         self.stop.wait(10)
 
-        if state.shutdown == 0:
-            # just in case there are any pending tasks for msg
-            # messages that have yet to be sent.
-            queues.workerQueue.put(('sendmessage', ''))
-            # just in case there are any tasks for Broadcasts
-            # that have yet to be sent.
-            queues.workerQueue.put(('sendbroadcast', ''))
+        if state.shutdown > 0:
+            return
+
+        # just in case there are any pending tasks for msg
+        # messages that have yet to be sent.
+        queues.workerQueue.put(('sendmessage', ''))
+        # just in case there are any tasks for Broadcasts
+        # that have yet to be sent.
+        queues.workerQueue.put(('sendbroadcast', ''))
+
+        # send onionpeer object
+        for peer in state.ownAddresses.keys():
+            if peer.host.endswith('.onion'):
+                queues.workerQueue.put(('sendOnionPeerObj', peer))
+                break
 
         while state.shutdown == 0:
             self.busy = 0
@@ -154,6 +162,11 @@ class singleWorker(threading.Thread, StoppableThread):
             elif command == 'sendOutOrStoreMyV4Pubkey':
                 try:
                     self.sendOutOrStoreMyV4Pubkey(data)
+                except:
+                    pass
+            elif command == 'sendOnionPeerObj':
+                try:
+                    self.sendOnionPeerObj(data)
                 except:
                     pass
             elif command == 'resetPoW':
@@ -455,6 +468,37 @@ class singleWorker(threading.Thread, StoppableThread):
                 'Error: Couldn\'t add the lastpubkeysendtime'
                 ' to the keys.dat file. Error message: %s', err
             )
+
+    def sendOnionPeerObj(self, peer):
+        TTL = int(7 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
+        embeddedTime = int(time.time() + TTL)
+        streamNumber = 1  # Don't know yet what should be here
+        objectType = protocol.OBJECT_ONIONPEER
+        # FIXME: ideally the objectPayload should be signed
+        objectPayload = encodeVarint(peer.port) + protocol.encodeHost(peer.host)
+        tag = calculateInventoryHash(objectPayload)
+
+        if Inventory().by_type_and_tag(objectType, tag):
+            return  # not expired
+
+        payload = pack('>Q', (embeddedTime))
+        payload += str(bytearray([0, 0, 0, objectType]))
+        payload += encodeVarint(2 if len(peer.host) == 22 else 3)
+        payload += encodeVarint(streamNumber)
+        payload += objectPayload
+
+        payload = self._doPOWDefaults(
+            payload, TTL, log_prefix='(For onionpeer object)')
+
+        inventoryHash = calculateInventoryHash(payload)
+        Inventory()[inventoryHash] = (
+            objectType, streamNumber, buffer(payload),
+            embeddedTime, buffer(tag)
+        )
+        logger.info(
+            'sending inv (within sendOnionPeerObj function) for object: %s',
+            hexlify(inventoryHash))
+        queues.invQueue.put((streamNumber, inventoryHash))
 
     def sendBroadcast(self):
         """Send a broadcast-type object (assemble the object, perform PoW and put it to the inv announcement queue)"""
