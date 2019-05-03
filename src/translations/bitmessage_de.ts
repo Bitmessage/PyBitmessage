@@ -1572,7 +1572,7 @@ Willkommen zu einfachem und sicherem Bitmessage
     <message numerus="yes">
         <location filename="../bitmessageqt/address_dialogs.py" line="194"/>
         <source>Display the %n recent broadcast(s) from this address.</source>
-        <translation><numerusform>Den letzten %1 Rundruf von dieser Addresse anzeigen.</numerusform><numerusform>Die letzten %1 Rundrufe von dieser Addresse anzeigen.</numerusform></translation>
+        <translation><numerusform>Den letzten %n Rundruf von dieser Addresse anzeigen.</numerusform><numerusform>Die letzten %n Rundrufe von dieser Addresse anzeigen.</numerusform></translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="658"/>

@@ -1570,7 +1570,7 @@ Vitajte v jednoduchom a bezpečnom Bitmessage
     <message numerus="yes">
         <location filename="../bitmessageqt/address_dialogs.py" line="194"/>
         <source>Display the %n recent broadcast(s) from this address.</source>
-        <translation><numerusform>Zobraziť poslednú %1 hromadnú správu z tejto adresy.</numerusform><numerusform>Zobraziť posledné %1 hromadné správy z tejto adresy.</numerusform><numerusform>Zobraziť posledných %1 hromadných správ z tejto adresy.</numerusform></translation>
+        <translation><numerusform>Zobraziť poslednú %n hromadnú správu z tejto adresy.</numerusform><numerusform>Zobraziť posledné %n hromadné správy z tejto adresy.</numerusform><numerusform>Zobraziť posledných %n hromadných správ z tejto adresy.</numerusform></translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="658"/>
