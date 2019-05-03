@@ -266,11 +266,11 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 )
         except Exception:  # This should only happen if the module is buggy
             # internal error, report as HTTP server error
-            self.send_response(500)
+            self.send_response(httplib.INTERNAL_SERVER_ERROR)
             self.end_headers()
         else:
             # got a valid XML RPC response
-            self.send_response(200)
+            self.send_response(httplib.OK)
             self.send_header("Content-type", self.server.content_type)
             self.send_header("Content-length", str(len(response)))
 
