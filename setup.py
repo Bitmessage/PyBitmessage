@@ -12,6 +12,7 @@ from src.version import softwareVersion
 
 
 EXTRAS_REQUIRE = {
+    'docs': ['sphinx', 'sphinxcontrib-apidoc', 'm2r'],
     'gir': ['pygobject'],
     'json': ['jsonrpclib'],
     'notify2': ['notify2'],
@@ -20,8 +21,8 @@ EXTRAS_REQUIRE = {
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
     'tor': ['stem'],
-    'xml': ['defusedxml'],
-    'docs': ['sphinx', 'sphinxcontrib-apidoc', 'm2r']
+    'xdg': ['pyxdg'],
+    'xml': ['defusedxml']
 }
 
 
@@ -152,6 +153,9 @@ if __name__ == "__main__":
             'bitmessage.indicator': [
                 'libmessaging ='
                 'pybitmessage.plugins.indicator_libmessaging [gir]'
+            ],
+            'bitmessage.desktop': [
+                'freedesktop = pybitmessage.plugins.desktop_xdg [xdg]'
             ],
             'bitmessage.proxyconfig': [
                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'

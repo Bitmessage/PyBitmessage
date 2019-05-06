@@ -119,9 +119,6 @@ class SettingsDialog(QtGui.QDialog):
                 self.checkBoxPortableMode.setDisabled(True)
 
         if 'darwin' in sys.platform:
-            self.checkBoxStartOnLogon.setDisabled(True)
-            self.checkBoxStartOnLogon.setText(_translate(
-                "MainWindow", "Start-on-login not yet supported on your OS."))
             self.checkBoxMinimizeToTray.setDisabled(True)
             self.checkBoxMinimizeToTray.setText(_translate(
                 "MainWindow",
@@ -130,10 +127,12 @@ class SettingsDialog(QtGui.QDialog):
             self.checkBoxShowTrayNotifications.setText(_translate(
                 "MainWindow",
                 "Tray notifications not yet supported on your OS."))
-        elif 'linux' in sys.platform:
+
+        if 'win' not in sys.platform and not self.parent.desktop:
             self.checkBoxStartOnLogon.setDisabled(True)
             self.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
+
         # On the Network settings tab:
         self.lineEditTCPPort.setText(str(
             config.get('bitmessagesettings', 'port')))
