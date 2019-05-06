@@ -130,7 +130,7 @@ class singleWorker(threading.Thread, StoppableThread):
         queues.workerQueue.put(('sendbroadcast', ''))
 
         # send onionpeer object
-        for peer in state.ownAddresses.keys():
+        for peer in state.ownAddresses:
             if peer.host.endswith('.onion'):
                 queues.workerQueue.put(('sendOnionPeerObj', peer))
                 break
@@ -470,6 +470,7 @@ class singleWorker(threading.Thread, StoppableThread):
             )
 
     def sendOnionPeerObj(self, peer):
+        """Send onionpeer object representing peer"""
         TTL = int(7 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
         embeddedTime = int(time.time() + TTL)
         streamNumber = 1  # Don't know yet what should be here

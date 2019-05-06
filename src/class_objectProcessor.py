@@ -143,7 +143,9 @@ class objectProcessor(threading.Thread):
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
 
-    def processonion(self, data):
+    @staticmethod
+    def processonion(data):
+        """Process onionpeer object"""
         readPosition = 20  # bypass the nonce, time, and object type
         length = decodeVarint(data[readPosition:readPosition + 10])[1]
         readPosition += length
@@ -160,7 +162,9 @@ class objectProcessor(threading.Thread):
             knownnodes.addKnownNode(
                 stream, peer, is_self=state.ownAddresses.get(peer))
 
-    def processgetpubkey(self, data):
+    @staticmethod
+    def processgetpubkey(data):
+        """Process getpubkey object"""
         if len(data) > 200:
             logger.info(
                 'getpubkey is abnormally long. Sanity check failed.'
