@@ -6,4 +6,4 @@ Comment=Send encrypted messages
 Exec=pybitmessage %F
 Icon=pybitmessage
 Terminal=false
-Categories=Office;Email;
+Categories=Office;Email;Network;
