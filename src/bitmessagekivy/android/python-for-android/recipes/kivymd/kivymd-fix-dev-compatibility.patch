@@ -1,0 +1,36 @@
+diff -Naurp KivyMD.orig/kivymd/button.py KivyMD/kivymd/button.py
+--- KivyMD.orig/kivymd/button.py	2017-08-25 13:12:34.000000000 +0200
++++ KivyMD/kivymd/button.py	2018-07-10 10:37:55.719440354 +0200
+@@ -175,7 +175,8 @@ class BaseButton(ThemableBehavior, Butto
+             self._current_button_color = self.md_bg_color_disabled
+         else:
+             self._current_button_color = self.md_bg_color
+-        super(BaseButton, self).on_disabled(instance, value)
++        # To add compatibility to last kivy (disabled is now an Alias property)
++        # super(BaseButton, self).on_disabled(instance, value)
+ 
+ 
+ class BasePressedButton(BaseButton):
+diff -Naurp KivyMD.orig/kivymd/selectioncontrols.py KivyMD/kivymd/selectioncontrols.py
+--- KivyMD.orig/kivymd/selectioncontrols.py	2017-08-25 13:12:34.000000000 +0200
++++ KivyMD/kivymd/selectioncontrols.py	2018-07-10 10:40:06.971439102 +0200
+@@ -45,6 +45,7 @@ Builder.load_string('''
+             pos:        self.pos
+ 
+ <MDSwitch>:
++    _thumb_pos: (self.right - dp(12), self.center_y - dp(12)) if self.active else (self.x - dp(12), self.center_y - dp(12))
+     canvas.before:
+         Color:
+             rgba: self._track_color_disabled if self.disabled else \
+diff -Naurp KivyMD.orig/kivymd/tabs.py KivyMD/kivymd/tabs.py
+--- KivyMD.orig/kivymd/tabs.py	2017-08-25 13:12:34.000000000 +0200
++++ KivyMD/kivymd/tabs.py	2018-07-10 10:39:20.603439544 +0200
+@@ -185,7 +185,7 @@ class MDBottomNavigationBar(ThemableBeha
+ 
+ class MDTabHeader(MDFlatButton):
+     """ Internal widget for headers based on MDFlatButton"""
+-    
++
+     width = BoundedNumericProperty(dp(0), min=dp(72), max=dp(264), errorhandler=lambda x: dp(72))
+     tab = ObjectProperty(None)
+     panel = ObjectProperty(None)

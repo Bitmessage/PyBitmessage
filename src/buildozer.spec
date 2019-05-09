@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = PyBitmessage
+title = bluewhale
 
 # (str) Package name
-package.name = PyBitmessage
+package.name = bluewhale
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.test
@@ -36,21 +36,20 @@ version = 0.1
 
 # (list) Application requirements
 # comma seperated e.g. requirements = sqlite3,kivy
-requirements = python2, sqlite3, kivy, openssl
+requirements = python2, sqlite3, kivy, openssl, bitmsghash, libexpat, kivymd
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
 # requirements.source.kivy = ../../kivy
-#requirements.source.sqlite3 =
 
 # (list) Garden requirements
 #garden_requirements =
 
 # (str) Presplash of the application
-#presplash.filename = %(source.dir)s/data/presplash.png
+presplash.filename = "images/presplas.gif"
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/data/icon.png
+icon.filename ='images/if_android_1220385.png'
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait
@@ -66,8 +65,7 @@ orientation = portrait
 # author = © Copyright Info
 
 # change the major version of python used by the app
-#osx.python_version = 2
-
+osx.python_version = 3
 
 # Kivy version to use
 osx.kivy_version = 1.9.1
@@ -87,31 +85,31 @@ fullscreen = 0
 #android.presplash_color = #FFFFFF
 
 # (list) Permissions
-android.permissions = INTERNET
+android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 
 # (int) Android API to use
-#android.api = 19
+android.api = 19
 
 # (int) Minimum API required
 #android.minapi = 9
 
 # (int) Android SDK version to use
-#android.sdk = 20
+android.sdk = 20
 
 # (str) Android NDK version to use
-#android.ndk = 9c
+android.ndk = 10e
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 #android.private_storage = True
 
 # (str) Android NDK directory (if empty, it will be automatically downloaded.)
-#android.ndk_path =
+android.ndk_path =/home/cis/Downloads/android-ndk-r10e
 
 # (str) Android SDK directory (if empty, it will be automatically downloaded.)
-#android.sdk_path =
+android.sdk_path =/home/cis/Android/Sdk
 
 # (str) ANT directory (if empty, it will be automatically downloaded.)
-#android.ant_path =
+android.ant_path =/home/cis/apache-ant-1.10.5
 
 # (bool) If True, then skip trying to update the Android sdk
 # This can be useful to avoid excess Internet downloads or save time
@@ -123,9 +121,6 @@ android.permissions = INTERNET
 
 # (list) Pattern to whitelist for the whole project
 #android.whitelist =
-
-android.whitelist = /usr/lib/komodo-edit/python/lib/python2.7/lib-dynload/_sqlite3.so
-
 
 # (str) Path to a custom whitelist file
 #android.whitelist_src =
@@ -150,9 +145,9 @@ android.whitelist = /usr/lib/komodo-edit/python/lib/python2.7/lib-dynload/_sqlit
 # (list) Gradle dependencies to add (currently works only with sdl2_gradle
 # bootstrap)
 #android.gradle_dependencies =
-, /home/cis/Downloads/libssl1.0.2_1.0.2l-2+deb9u2_amd64
-# (str) python-for-android branch to use, defaults to stable
-#p4a.branch = stable
+
+# (str) python-for-android branch to use, defaults to master
+p4a.branch = master
 
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
@@ -198,7 +193,7 @@ android.arch = armeabi-v7a
 #p4a.source_dir =
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-#p4a.local_recipes =
+p4a.local_recipes =/home/cis/Desktop/Mobileandroid/peter_android/PyBitmessage/src/bitmessagekivy/android/python-for-android/recipes/
 
 # (str) Filename to the hook for p4a
 #p4a.hook =

@@ -1,10 +1,11 @@
 from os import environ, path
 import sys
 import re
+import os
 from datetime import datetime
-
+from kivy.utils import platform
 # When using py2exe or py2app, the variable frozen is added to the sys
-# namespace.  This can be used to setup a different code path for 
+# namespace.  This can be used to setup a different code path for
 # binary distributions vs source distributions.
 frozen = getattr(sys,'frozen', None)
 
@@ -22,6 +23,10 @@ def lookupExeFolder():
     return exeFolder
 
 def lookupAppdataFolder():
+
+    print("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII", platform)
+    import traceback
+    print(traceback.print_tb)
     APPNAME = "PyBitmessage"
     if "BITMESSAGE_HOME" in environ:
         dataFolder = environ["BITMESSAGE_HOME"]
@@ -37,6 +42,10 @@ def lookupAppdataFolder():
             else:
                 print stringToLog
             sys.exit()
+    elif platform == 'android':
+        # dataFolder = path.join(os.path.dirname(os.path.abspath("__file__")), "PyBitmessage") + '/'
+        dataFolder = path.join('/sdcard/', 'DCIM/', APPNAME) + '/'
+        print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO", dataFolder)
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         dataFolder = path.join(environ['APPDATA'].decode(sys.getfilesystemencoding(), 'ignore'), APPNAME) + path.sep
@@ -60,13 +69,13 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
-    
+
 def codePath():
     if frozen == "macosx_app":
         codePath = environ.get("RESOURCEPATH")
     elif frozen: # windows
         codePath = sys._MEIPASS
-    else:    
+    else:
         codePath = path.dirname(__file__)
     return codePath
 
@@ -87,7 +96,7 @@ def tail(f, lines=20):
             blocks.append(f.read(BLOCK_SIZE))
         else:
             # file too small, start from begining
-            f.seek(0,0)
+            f.seek(0, 0)
             # only read what was not read
             blocks.append(f.read(block_end_byte))
         lines_found = blocks[-1].count('\n')

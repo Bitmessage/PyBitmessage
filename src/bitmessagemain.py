@@ -18,6 +18,7 @@ sys.path.insert(0, app_dir)
 
 
 import depends
+
 depends.check_dependencies()
 
 import ctypes
@@ -251,7 +252,8 @@ class Main:
         if daemon:
             state.enableGUI = False  # run without a UI
 
-        if state.enableGUI and not state.curses and not depends.check_pyqt():
+        # is the application already running?  If yes then exit.
+        if state.enableGUI and not state.curses and not state.kivy and not depends.check_pyqt():
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
                 ' to run it as a daemon and interact with it'
@@ -289,9 +291,7 @@ class Main:
                 defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
             defaults.networkDefaultPayloadLengthExtraBytes = int(
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
-
         knownnodes.readKnownNodes()
-
         # Not needed if objproc is disabled
         if state.enableObjProc:
 
@@ -313,14 +313,11 @@ class Main:
         # The closeEvent should command this thread to exit gracefully.
         sqlLookup.daemon = False
         sqlLookup.start()
-
         Inventory()  # init
         # init, needs to be early because other thread may access it early
         Dandelion()
-
         # Enable object processor and SMTP only if objproc enabled
         if state.enableObjProc:
-
             # SMTP delivery thread
             if daemon and config.safeGet(
                     'bitmessagesettings', 'smtpdeliver', '') != '':
@@ -342,18 +339,15 @@ class Main:
             # each object.
             objectProcessorThread.daemon = False
             objectProcessorThread.start()
-
         # Start the cleanerThread
         singleCleanerThread = singleCleaner()
         # close the main program even if there are threads left
         singleCleanerThread.daemon = True
         singleCleanerThread.start()
-
         # Not needed if objproc disabled
         if state.enableObjProc:
             shared.reloadMyAddressHashes()
             shared.reloadBroadcastSendersForWhichImWatching()
-
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
@@ -361,7 +355,6 @@ class Main:
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
                 singleAPIThread.start()
-
         # start network components if networking is enabled
         if state.enableNetwork:
             self.start_proxyconfig(config)
@@ -398,7 +391,6 @@ class Main:
         else:
             # Populate with hardcoded value (same as connectToStream above)
             state.streamsInWhichIAmParticipating.append(1)
-
         if not daemon and state.enableGUI:
             if state.curses:
                 if not depends.check_curses():
@@ -406,10 +398,12 @@ class Main:
                 print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
+
             elif state.kivy:
                 config.remove_option('bitmessagesettings', 'dontconnect')
                 from bitmessagekivy.mpybit import NavigateApp
-                NavigateApp().run()
+                state.kivyapp = NavigateApp()
+                state.kivyapp.run()
             else:
                 import bitmessageqt
                 bitmessageqt.run()
