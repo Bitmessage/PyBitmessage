@@ -17,7 +17,7 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
 import logging
 import os
 from importlib import import_module
-
+import state
 # We can now use logging so set up a simple configuration
 formatter = logging.Formatter('%(levelname)s: %(message)s')
 handler = logging.StreamHandler(sys.stdout)
@@ -231,6 +231,7 @@ def check_sqlite():
 
 
 def check_openssl():
+    print(state.kivy, "state.kivystate.kivystate.kivystate.kivystate.kivystate.kivystate.kivystate.kivy")
     """Do openssl dependency check.
 
     Here we are checking for openssl with its all dependent libraries
@@ -248,8 +249,12 @@ def check_openssl():
         if getattr(sys, 'frozen', False):
             import os.path
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
+    elif state.kivy:
+        print("kivykivykivykivykivykivykivy...........................")
+        return True
     else:
         paths = ['libcrypto.so', 'libcrypto.so.1.0.0']
+
     if sys.platform == 'darwin':
         paths.extend([
             'libcrypto.dylib',
@@ -278,6 +283,7 @@ def check_openssl():
         logger.info('Checking OpenSSL at %s', path)
         try:
             library = ctypes.CDLL(path)
+            print("I am loading here in depends file................................................................")
         except OSError:
             continue
         logger.info('OpenSSL Name: %s', library._name)
@@ -425,7 +431,6 @@ def check_dependencies(verbose=False, optional=False):
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:
         check_functions.extend([check_msgpack, check_pyqt, check_curses])
-
     # Unexpected exceptions are handled here
     for check in check_functions:
         try:

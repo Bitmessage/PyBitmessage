@@ -1,203 +1,243 @@
-#:import la kivy.adapters.listadapter
-#:import factory kivy.factory
-#:import mpybit bitmessagekivy.mpybit
-#:import C kivy.utils.get_color_from_hex
 
-<Navigator>:
-    id: nav_drawer
+#:import Toolbar kivymd.toolbar.Toolbar
+#:import ThemeManager kivymd.theming.ThemeManager
+#:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
+#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
+#:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
+#:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
+#:import NavigationDrawerSubheader kivymd.navigationdrawer.NavigationDrawerSubheader
+#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
+#:import MDSwitch kivymd.selectioncontrols.MDSwitch
+#:import MDList kivymd.list.MDList
+#:import OneLineListItem kivymd.list.OneLineListItem
+#:import TwoLineListItem kivymd.list.TwoLineListItem
+#:import ThreeLineListItem kivymd.list.ThreeLineListItem
+#:import OneLineAvatarListItem kivymd.list.OneLineAvatarListItem
+#:import OneLineIconListItem kivymd.list.OneLineIconListItem
+#:import OneLineAvatarIconListItem kivymd.list.OneLineAvatarIconListItem
+#:import MDTextField kivymd.textfields.MDTextField
+#:import MDSpinner kivymd.spinner.MDSpinner
+#:import MDCard kivymd.card.MDCard
+#:import MDSeparator kivymd.card.MDSeparator
+#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import colors kivymd.color_definitions.colors
+#:import SmartTile kivymd.grid.SmartTile
+#:import MDSlider kivymd.slider.MDSlider
+#:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
+#:import MDTab kivymd.tabs.MDTab
+#:import MDProgressBar kivymd.progressbar.MDProgressBar
+#:import MDAccordion kivymd.accordion.MDAccordion
+#:import MDAccordionItem kivymd.accordion.MDAccordionItem
+#:import MDAccordionSubItem kivymd.accordion.MDAccordionSubItem
+#:import MDThemePicker kivymd.theme_picker.MDThemePicker
+#:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
+#:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
+#:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
+
+<MyNavigationDrawerIconButton@NavigationDrawerIconButton>:
+    icon: 'checkbox-blank-circle'
+
+<ContentNavigationDrawer@Navigatorss>:
+    drawer_logo: './images/drawer_logo1.png'
+    NavigationDrawerDivider:
+     
+    NavigationDrawerTwoLineListItem:
+        text: "Accounts"
     NavigationDrawerIconButton:
         Spinner:
-            pos_hint:{"x":0,"y":.3}
+            pos_hint:{"x":0,"y":.25}
             id: btn
-            background_color: app.theme_cls.primary_dark
-            text: app.showmeaddresses(name='text')
-            values: app.showmeaddresses(name='values')
+            text: app.getDefaultAccData()
+            values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
-
     NavigationDrawerIconButton:
         icon: 'email-open'
-        text: "inbox"
+        text: "Inbox"
+        on_release: app.root.ids.scr_mngr.current = 'inbox'
+        badge_text: "99+"
+    NavigationDrawerIconButton:
+        icon: 'send'
+        text: "Sent"
+        on_release: app.root.ids.scr_mngr.current = 'sent'
+        badge_text: "2"
+    NavigationDrawerIconButton:
+        icon: 'message-draw'
+        text: "Draft"
+        on_release: app.root.ids.scr_mngr.current = 'inbox'
+        badge_text: "99+"
+    NavigationDrawerIconButton: 
+        text: "Starred"
+        icon:'star'
         on_release: app.root.ids.scr_mngr.current = 'inbox'
     NavigationDrawerIconButton:
-        icon: 'mail-send'
-        text: "sent"
-        on_release: app.root.ids.scr_mngr.current = 'sent'
-    NavigationDrawerIconButton:
-        icon: 'dropbox'
-        text: "trash"
+        icon: 'archive'
+        text: "Archieve"
         on_release: app.root.ids.scr_mngr.current = 'trash'
+        badge_text: "9+"
     NavigationDrawerIconButton:
-        icon: 'email'
-        text: "drafts"
-        on_release: app.root.ids.scr_mngr.current = 'dialog'
+        icon: 'email-open-outline'
+        text: "Spam"
+        on_release: app.root.ids.scr_mngr.current = 'inbox'
+        badge_text: "8+"
     NavigationDrawerIconButton:
-        icon: 'markunread-mailbox'
-        text: "test"
-        on_release: app.root.ids.scr_mngr.current = 'test'
+        icon: 'delete'
+        text: "Trash"
+        on_release: app.root.ids.scr_mngr.current = 'trash'
+        badge_text: "9+"
     NavigationDrawerIconButton: 
-        text: "new identity"
-        icon:'accounts-add'
-        on_release: app.root.ids.scr_mngr.current = 'newidentity'
-    
-BoxLayout:
-    orientation: 'vertical'
-    Toolbar:
-        id: toolbar
-        title: app.getCurrentAccount()
-        background_color: app.theme_cls.primary_dark
-        left_action_items: [['menu', lambda x: app.nav_drawer.toggle()]]
+        text: "All Mails"
+        icon:'contact-mail'
+        on_release: app.root.ids.scr_mngr.current = 'inbox'
+        badge_text: "999+"
+    NavigationDrawerDivider:
+    NavigationDrawerSubheader:
+        text: "All labels"
+    NavigationDrawerIconButton: 
+        text: "Address Book"
+        icon:'book-multiple'
+        on_release: app.root.ids.scr_mngr.current = 'addressbook' 
+    NavigationDrawerIconButton: 
+        text: "Settings"
+        icon:'settings'
+        on_release: app.root.ids.scr_mngr.current = 'set'                                   
+    NavigationDrawerIconButton: 
+        text: "Subscriptions/Payment"
+        icon:'wallet'
+        on_release: app.root.ids.scr_mngr.current = 'payment'
+    NavigationDrawerIconButton: 
+        text: "new address"
+        icon:'account-plus'
+        on_release: app.root.ids.scr_mngr.current = 'login'
+    NavigationDrawerIconButton: 
+        text: "Network Status"
+        icon:'server-network'
+        on_release: app.root.ids.scr_mngr.current = 'networkstat'
+    NavigationDrawerIconButton: 
+        text: "My Addresses"
+        icon:'account-multiple'
+        on_release: app.root.ids.scr_mngr.current = 'myaddress'
 
-        ActionView:
-            SearchBar:
-                size_hint_x: 1.7
-                size_hint_y: .5
-                pos_hint: {'x': 0, 'center_y':.5}
-                on_text_validate: searchbutt.trigger_action()
+NavigationLayout:
+    id: nav_layout
 
-            ActionPrevious:
-                with_previous: False
-                app_icon:  ''
+    ContentNavigationDrawer:
+        id: nav_drawer
 
-            ActionOverflow:
-                ActionButton:
-                    text: 'Filters'
-                ActionButton:
-                    text: 'Exit'
-                    on_press: app.say_exit()
-
-    ScreenManager:
-        id: scr_mngr
-        Inbox:
-            id:sc1
-        Sent:
-            id:sc2
-        Trash:
-            id:sc3
-        Dialog:
-            id:sc4
-        Test:
-            id:sc5
-        Create:
-            id:sc6
-        NewIdentity:
-            id:sc7
-        Page:
-            id:sc8
-        AddressSuccessful:
-            id:sc9
-
-    Button:
-        id:create
-        height:100
-        size_hint_y: 0.13
-        size_hint_x: 0.1
-        pos_hint: {'x': 0.85, 'y': 0.5}
-        background_color: (0,0,0,0)
-        on_press: scr_mngr.current = 'create'
-        Image:
-            source: 'images/plus.png'
-            y: self.parent.y - 7.5
-            x: self.parent.x + self.parent.width - 50
-            size: 70, 70
-
-<SwipeButton@Carousel>:
-    text: ''
-    size_hint_y: None
-    height: 48
-    ignore_perpendicular_swipes: True
-    data_index: 0
-    min_move: 20 / self.width
-
-    on__offset: app.update_index(root.data_index, self.index)
-
-    canvas.before:
-        Color:
-            rgba: C('FFFFFF33')
-
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-        Line:
-            rectangle: self.pos + self.size
-
-    Button:
-        text: 'delete ({}:{})'.format(root.text, root.data_index)
-        on_press: app.delete(root.data_index)
-
-    Button:
-        text: root.text
-        on_press: app.getInboxMessageDetail(self.text)
-
-    Button:
-        text: 'archive'
-        on_press: app.archive(root.data_index)
+    BoxLayout:
+        orientation: 'vertical'
+        Toolbar:
+            id: toolbar..
+            md_bg_color: app.theme_cls.primary_color
+            background_palette: 'Primary'
+            background_hue: '500'
+            left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
+            Button:
+                id: myButton
+                size_hint_y: 0.35
+                size_hint_x: 0.2
+                pos_hint: {'x': .1, 'y': 0.3}
+                color: 0,0,0,1
+                background_color: (0,0,0,0)
+                on_press:app.addingtoaddressbook()
+                Image:
+                    source: './images/addressbookadd.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+        ScreenManager:
+            id: scr_mngr
+            Inbox:
+                id:sc1
+            Page:
+                id:sc2
+            Create:
+                id:sc3
+            Sent:
+                id:sc4
+            Trash:
+                id:sc5
+            Login:
+                id:sc6
+            Random:
+                id:sc7
+            AddressSuccessful:
+                id:sc8
+            Setting:
+                id:sc9
+            MyAddress:
+                id:sc10
+            AddressBook:
+                id:sc11
+            Payment:
+                id:sc12
+            NetworkStat:
+                id:sc13
 
 <Inbox>:
     name: 'inbox'
-    RecycleView:
-        data: root.data
-        viewclass: 'SwipeButton'
+    ScrollView:
         do_scroll_x: False
-        scroll_timeout: 100
+        MDList:
+            id: ml
+    BoxLayout:
+        size_hint_y: None
+        height: dp(56)
+        spacing: '10dp'
+        pos_hint: {'center_x':0.45, 'center_y': .1}
 
-        RecycleBoxLayout:
-            id:rc
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height
-            default_size_hint: 1, None
-            canvas.before:
-                Color:
-                    rgba: 0,0,0, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+        Widget:
+
+        MDFloatingActionButton:
+            icon: 'plus'
+            opposite_colors: True
+            elevation_normal: 8
+            md_bg_color: [0.941, 0, 0,1]
+            on_press: app.root.ids.scr_mngr.current = 'create'
 
 <Sent>:
     name: 'sent'
-    RecycleView:
-        data: root.data
-        viewclass: 'SwipeButton'
+    ScrollView:
         do_scroll_x: False
-        scroll_timeout: 100
+        MDList:
+            id: ml
+    BoxLayout:
+        size_hint_y: None
+        height: dp(56)
+        spacing: '10dp'
+        pos_hint: {'center_x':0.45, 'center_y': .1}
 
-        RecycleBoxLayout:
-            id:rc
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height
-            default_size_hint: 1, None
-            canvas.before:
-                Color:
-                    rgba: 0,0,0, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+        Widget:
+
+        MDFloatingActionButton:
+            icon: 'plus'
+            opposite_colors: True
+            elevation_normal: 8
+            md_bg_color: [0.941, 0, 0,1]
+            on_press: app.root.ids.scr_mngr.current = 'create'
 
 <Trash>:
     name: 'trash'
-    RecycleView:
-        data: root.data
-        viewclass: 'SwipeButton'
+    ScrollView:
         do_scroll_x: False
-        scroll_timeout: 100
+        MDList:
+            id: ml
+    BoxLayout:
+        size_hint_y: None
+        height: dp(56)
+        spacing: '10dp'
+        pos_hint: {'center_x':0.45, 'center_y': .1}
 
-        RecycleBoxLayout:
-            id:rc
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height
-            default_size_hint: 1, None
-            canvas.before:
-                Color:
-                    rgba: 0,0,0, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+        Widget:
 
-<Dialog>:
-    name: 'dialog'
+        MDFloatingActionButton:
+            icon: 'plus'
+            opposite_colors: True
+            elevation_normal: 8
+            md_bg_color: [0.941, 0, 0,1]
+            on_press: app.root.ids.scr_mngr.current = 'create'
+
+<Draft>:
+    name: 'draft'
     Label:
         text:"I have a good dialox box"
         color: 0,0,0,1
@@ -207,175 +247,391 @@ BoxLayout:
         text:"I am in test"
         color: 0,0,0,1
 
-<Create>:
-    name: 'create'
-    GridLayout:
-        rows: 5
-        cols: 1
-        padding: 60,60,60,60
-        spacing: 50
-        BoxLayout:
-            size_hint_y: None
-            height: '32dp'
-            Label:
-                text: 'FROM'
-                color: 0,0,0,1
-            Spinner:
-                size_hint: 1,1
-                pos_hint: {"x":0,"top":1.}
-                pos: 10,10
-                id: spinner_id
-                text: app.showmeaddresses(name='text')
-                values: app.showmeaddresses(name='values')
-
-        BoxLayout:
-            size_hint_y: None
-            height: '32dp'
-            Label:
-                text: 'TO'
-                color: 0,0,0,1
-            TextInput:
-                id: recipent
-                hint_text: 'To'
-
-        BoxLayout:
-            size_hint_y: None
-            height: '32dp'
-            Label:
-                text: 'SUBJECT'
-                color: 0,0,0,1
-            TextInput:
-                id: subject
-                hint_text: 'SUBJECT'
-
-        BoxLayout:
-            size_hint_y: None
-            height: '32dp'
-            Label:
-                text: 'BODY'
-                color: 0,0,0,1
-            TextInput:
-                id: message
-                multiline:True
-                size_hint: 1,2
-
-    Button:
-        text: 'send'
-        size_hint_y: 0.1
-        size_hint_x: 0.2
-        height: '32dp'
-        pos_hint: {'x': .5, 'y': 0.1}
-        on_press: root.send()
-    Button:
-        text: 'cancel'
-        size_hint_y: 0.1
-        size_hint_x: 0.2
-        height: '32dp'
-        pos_hint: {'x': .72, 'y': 0.1}
-        on_press: root.cancel()
-
-<NewIdentity>:
-    name: 'newidentity'
-    GridLayout:
-        padding: '120dp'
-        cols: 1
-        Label:
-            text:"""Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged."""
-            line_height:1.5  
-            text_size:(700,None)  
-            color: 0,0,0,1
-        BoxLayout:
-            CheckBox:
-                canvas.before:
-                    Color:
-                        rgb: 1,0,0
-                    Ellipse:
-                        pos:self.center_x-8, self.center_y-8
-                        size:[16,16]                 
-                group: "money"
-                id:chk
-                text:"use a random number generator to make an address"
-                on_active:
-                    root.checked = self.text
-                active:root.is_active
-
-            Label:
-                text: "use a random number generator to make an address"
-                color: 0,0,0,1
-        BoxLayout:
-            CheckBox:
-                canvas.before:
-                    Color:
-                        rgb: 1,0,0
-                    Ellipse:
-                        pos:self.center_x-8, self.center_y-8
-                        size:[16,16] 
-                group: "money"
-                id:chk
-                text:"use a pseudo number generator to make an address"
-                on_active:
-                    root.checked = self.text
-                active:not root.is_active
-            Label:
-                text: "use a pseudo number generator to make an address"
-                color: 0,0,0,1
-        Label:
-            color: 0,0,0,1
-            size_hint_x: .35
-            markup: True
-            text: "[b]{}[/b]".format("Randomly generated addresses")
-        BoxLayout:
-            size_hint_y: None
-            height: '32dp'
-            Label:
-                text: "Label (not shown to anyone except you)"
-                color: 0,0,0,1
-        BoxLayout:
-            size_hint_y: None
-            height: '32dp'
-            TextInput:
-                id: label
-
-    Button:
-        text: 'Cancel'
-        size_hint_y: 0.1
-        size_hint_x: 0.3
-        height: '32dp'
-        pos_hint: {'x': .1, 'y': 0.1}
-    Button:
-        text: 'Ok'
-        size_hint_y: 0.1
-        size_hint_x: 0.3
-        height: '32dp'
-        pos_hint: {'x': .5, 'y': 0.1}
-        on_press: root.generateaddress()
-
 <Page>:
     name: 'page'
-    ActionBar:
-        background_color:0,0,0,0
-        pos_hint: {'top':0.98}
-        size_hint_y: 0.05
-        size_hint_x: 0.07
-        ActionView:
-            ActionPrevious:
-                with_previous: False
-                app_icon:  'images/back-button.png'
-                markup:True
-                font_size:"16dp"
-                on_release: app.set_previous_screen()
     Label:
-        text:"Message sent on 5 september 2018 05:44"
+        text:"I am on page"
         color: 0,0,0,1
-        size: self.texture_size
-        size_hint: (None, None)
 
-    Label:
-        text: 'I am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description \nI am on description of my email yooooo am on description of my email yooooo description description \nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\nI am on description of my email yooooo I am on description of my email yooooo description description\n'
-        color: 0,0,0,1
+<Create>:
+    name: 'create'
+
+<DropDownWidget>:
+    ScrollView:
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(app.scr_size)
+            padding: dp(32)
+            spacing: 15
+            BoxLayout:
+                orientation: 'vertical'
+                TextInput:
+                    id: ti
+                    hint_text: 'type or select sender address'
+                    size_hint_y: None
+                    height: 100
+                    multiline: False
+
+                BoxLayout:
+                    size_hint_y: None
+                    height: 100
+                    Spinner:
+                        background_color: app.theme_cls.primary_dark
+                        id: btn
+                        text: 'select'
+                        values: app.variable_1
+                        on_text: ti.text = self.text
+                    
+            BoxLayout:
+                orientation: 'vertical'
+                txt_input: txt_input
+                rv: rv
+                size : (890, 60)
+                size_hint: 1,2
+                MyTextInput:
+                    id: txt_input
+                    size_hint_y: None
+                    height: 100
+                    hint_text: 'type or search recipients address starting with BM-'
+                RV:
+                    id: rv
+            TextInput:
+                id: subject
+                hint_text: 'subject'
+                size_hint_y: None
+                height: 100
+                multiline: False
+            TextInput:
+                id: body
+                hint_text: 'body'
+                size_hint_y: None
+                height: 100
+                multiline:True
+                size_hint: 1,2
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .8, .6
+                        text: 'send'
+                        on_press: root.send()
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .8, .6
+                        text: 'reset'
+                        on_press: app.root.ids.scr_mngr.current = 'random'             
+
+<MyTextInput>:
+    readonly: False
+    multiline: False
+
+<SelectableLabel>:
+    # Draw a background to indicate selection
+    color: 0,0,0,1
+    canvas.before:
+        Color:
+            rgba: app.theme_cls.primary_dark if self.selected else (1, 1, 1, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<RV>:
+    canvas:
+        Color:
+            rgba: 0,0,0,.2
+
+        Line:
+            rectangle: self.x +1 , self.y, self.width - 2, self.height -2        
+    bar_width: 10
+    scroll_type:['bars']
+    viewclass: 'SelectableLabel'
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(20)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+
+
+<Login>:
+    name: 'login'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(800)
+            BoxLayout:
+                MDLabel:
+                    font_style: 'Body1'
+                    theme_text_color: 'Primary'
+                    text: "You may generate addresses by using either random numbers or by using a passphrase If you use a passphrase, the address is called a deterministic; address The Random Number option is selected by default but deterministic addresses have several \n pros and cons:\n"
+                    halign: 'center'
+                    bold: True
+                    color:app.theme_cls.primary_dark
+            BoxLayout:
+                MDLabel:
+                    font_style: 'Caption'
+                    theme_text_color: 'Primary'
+                    text: "If talk about pros You can recreate your addresses on any computer from memory, You need-not worry about backing up your keys.dat file as long as you can remember your passphrase and aside talk about cons You must remember (or write down) your  You must remember the address version number and the stream number along with your passphrase If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you"
+                    halign: 'center'
+                    bold: True
+                    color:app.theme_cls.primary_dark
+            MDCheckbox:
+                id:            grp_chkbox_1
+                group:        'test'
+                active: True
+            MDLabel:
+                font_style: 'Caption'
+                theme_text_color: 'Primary'
+                text: "use a random number generator to make an address"
+                halign: 'center'
+                size_hint_y: None
+                bold: True
+                height: self.texture_size[1] + dp(4)
+                color: [0.941, 0, 0,1]
+            MDCheckbox:
+                id:            grp_chkbox_1
+                group:        'test'
+            MDLabel:
+                font_style: 'Caption'
+                theme_text_color: 'Primary'
+                text: "use a pseudo number generator to make an address"
+                halign: 'center'
+                size_hint_y: None
+                bold: True
+                color: [0.941, 0, 0,1]
+                height: self.texture_size[1] + dp(4)
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .8, .5
+                        text: 'proceed'
+                        on_press: app.root.ids.scr_mngr.current = 'random'
+
+<Random>:
+    name: 'random'
+    ScrollView:
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+            padding: dp(48)
+            spacing: 200
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: "Random Addresses"
+                halign: 'center'
+                bold: True
+                color:app.theme_cls.primary_dark
+
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: "Here you may generate as many addresses as you like, Indeed creating and abandoning addresses is encouraged"
+                halign: 'center'
+                bold: True
+                color:app.theme_cls.primary_dark
+
+            MDTextField:
+                id: label
+                multiline: True
+                hint_text: "Label"
+                helper_text: "Label (not shown to anyone except you)"
+                helper_text_mode: "persistent"
+    MDRaisedButton:
+        text: 'next'
+        size_hint_y: 0.13
+        size_hint_x: 0.8
+        pos_hint: {'x': .1, 'y': 0.3}
+        opposite_colors: True
+        on_release: root.generateaddress()
 
 <AddressSuccessful>:
     name: 'add_sucess'
     Label:
         text: 'Successfully created a new bit address'
         color: 0,0,0,1
+
+<Setting>:
+    name: 'set'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+            size_hint_y: None
+            height: dp(500)
+            OneLineListItem:
+                text: "SERVER SETTINGS"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .8, .6
+                        text: 'Server  '
+                        on_press: app.root.ids.scr_mngr.current = 'random'
+            OneLineListItem:
+                text: "DATA SETTINGS"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .8, .6
+                        text: 'Import or export data'
+                        on_press: app.root.ids.scr_mngr.current = 'random'
+            OneLineListItem:
+                text: "OTHER SETTINGS"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .8, .6
+                        text: 'Restart background service'
+                        on_press: app.root.ids.scr_mngr.current = 'random'
+            BoxLayout:
+                AnchorLayout:
+                    MDLabel:
+                        font_style: 'Body1'
+                        theme_text_color: 'Primary'
+                        text: "bitmessage is 11 seconds behind the network"
+                        halign: 'center'
+                        bold: True
+                        color: [0.941, 0, 0,1]
+
+            BoxLayout:
+                MDCheckbox:
+                    id:            chkbox
+                    size_hint:    None, None
+                    size:        dp(48), dp(48)
+                    active: True
+                MDLabel:
+                    font_style: 'Body1'
+                    theme_text_color: 'Primary'
+                    text: "show settings (for advanced users only)"
+                    halign: 'left'
+                    bold: True
+                    color: app.theme_cls.primary_dark
+
+<MyAddress>:
+    name: 'myaddress'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+
+<AddressBook>:
+    name: 'addressbook'
+    BoxLayout:
+        orientation:'vertical'
+        ScrollView:
+            do_scroll_x: False
+            MDList:
+                id: ml
+
+<Payment>:
+    name: 'payment'
+
+
+<GrashofPopup>:
+    id: popup
+    title: 'add contact\'s'
+    background: './images/popup.jpeg'
+    title_size: sp(30)
+    title_color: 0.4, 0.3765, 0.3451, 1
+    size_hint: 1, 1
+    auto_dismiss: False
+    separator_color: 0.3529, 0.3922, 0.102, 0.7
+    BoxLayout:
+        size_hint_y: None
+        orientation: 'vertical'
+        spacing:50
+        id: popup_box
+        orientation: 'vertical'
+        MDTextField:
+            id: label
+            multiline: True
+            hint_text: "Label"
+            required: True
+            helper_text_mode: "on_error"
+        MDTextField:
+            id: address
+            hint_text: "Address"
+            required: True
+            helper_text_mode: "on_error"
+        MDRaisedButton:
+            size_hint: 1, None
+            height: dp(40)
+            text: 'Save'
+            on_release:                 
+                root.savecontact()
+                app.root.ids.scr_mngr.current = 'addressbook'
+        MDRaisedButton:
+            size_hint: 1, None
+            height: dp(40)
+            text: 'Cancel'
+            on_press: root.dismiss()
+        MDRaisedButton:
+            size_hint: 1, None
+            height: dp(40)
+            text: 'Scan QR code'
+
+<NetworkStat>:
+    name: 'networkstat'
+    MDTabbedPanel:
+        id: tab_panel
+        tab_display_mode:'text'
+
+        MDTab:
+            name: 'connections'
+            text: "Total connections"
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(200)
+                    OneLineListItem:
+                        text: "Total Connections"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .5
+                                text: root.text_variable_1
+        MDTab:
+            name: 'processes'
+            text: 'Processes'
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(500)
+                    OneLineListItem:
+                        text: "person-to-person"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_2
+                    OneLineListItem:
+                        text: "Brodcast"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_3
+                    OneLineListItem:
+                        text: "publickeys"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_4
+
+                    OneLineListItem:
+                        text: "objects"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .8, .6
+                                text: root.text_variable_5

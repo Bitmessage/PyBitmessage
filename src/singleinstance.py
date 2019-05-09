@@ -11,6 +11,7 @@ except ImportError:
     pass
 
 
+
 class singleinstance:
     """
     Implements a single instance application by creating a lock file
@@ -28,7 +29,7 @@ class singleinstance:
         self.lockfile = os.path.normpath(
             os.path.join(state.appdata, 'singleton%s.lock' % flavor_id))
 
-        if state.enableGUI and not self.daemon and not state.curses:
+        if state.enableGUI and not state.kivy and not self.daemon and not state.curses:
             # Tells the already running (if any) application to get focus.
             import bitmessageqt
             bitmessageqt.init()

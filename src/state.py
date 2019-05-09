@@ -69,3 +69,7 @@ testmode = False
 kivy = False
 
 association = ''
+
+kivyapp = None
+
+navinstance = None

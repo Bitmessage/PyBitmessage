@@ -32,6 +32,8 @@ from helper_sql import sqlExecute, sqlQuery
 from helper_threading import StoppableThread
 from inventory import Inventory
 
+# This thread, of which there is only one, does the heavy lifting:
+# calculating POWs.
 
 def sizeof_fmt(num, suffix='h/s'):
     """Format hashes per seconds nicely (SI prefix)"""
@@ -50,6 +52,7 @@ class singleWorker(threading.Thread, StoppableThread):
         threading.Thread.__init__(self, name="singleWorker")
         self.initStop()
         proofofwork.init()
+        print("I am in single worker 52.....................................................")
 
     def stopThread(self):
         """Signal through the queue that the thread should be stopped"""

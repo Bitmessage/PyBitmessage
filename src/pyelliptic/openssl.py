@@ -10,7 +10,7 @@ import sys
 import ctypes
 
 OpenSSL = None
-
+from kivy.utils import platform
 
 class CipherName:
     def __init__(self, name, pointer, blocksize):
@@ -70,7 +70,9 @@ class _OpenSSL:
         """
         Build the wrapper
         """
+        print("I am on openssl ctypes loading...............................................")
         self._lib = ctypes.CDLL(library)
+        print(library, "library12library12library12library12library12library12library12")
         self._version, self._hexversion, self._cflags = get_version(self._lib)
         self._libreSSL = self._version.startswith("LibreSSL")
 
@@ -531,6 +533,10 @@ def loadOpenSSL():
         libdir.extend(['libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append('libeay32.dll')
+    elif platform == "android":
+        libdir.append('libcrypto1.0.2p.so')
+        libdir.append('libssl1.0.2p.so')
+
     else:
         libdir.append('libcrypto.so')
         libdir.append('libssl.so')
@@ -542,6 +548,7 @@ def loadOpenSSL():
         libdir.append(find_library('libeay32'))
     for library in libdir:
         try:
+            print(library, "librarylibrarylibrarylibrarylibrarylibrarylibrarylibrarylibrarylibrarylibrary")
             OpenSSL = _OpenSSL(library)
             return
         except:
