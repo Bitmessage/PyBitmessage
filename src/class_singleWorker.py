@@ -119,7 +119,7 @@ class singleWorker(threading.Thread, StoppableThread):
         # before we start on existing POW tasks.
         self.stop.wait(10)
 
-        if state.shutdown > 0:
+        if state.shutdown:
             return
 
         # just in case there are any pending tasks for msg

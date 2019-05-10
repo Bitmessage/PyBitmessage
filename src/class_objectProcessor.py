@@ -6,8 +6,8 @@ import time
 from binascii import hexlify
 from subprocess import call  # nosec
 
-import knownnodes
 import highlevelcrypto
+import knownnodes
 from addresses import (
     calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
     encodeVarint, varintDecodeError
