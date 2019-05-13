@@ -266,12 +266,14 @@ NavigationLayout:
             spacing: 15
             BoxLayout:
                 orientation: 'vertical'
-                TextInput:
+                MDTextField:
                     id: ti
                     hint_text: 'type or select sender address'
                     size_hint_y: None
                     height: 100
                     multiline: False
+                    required: True
+                    helper_text_mode: "on_error"
 
                 BoxLayout:
                     size_hint_y: None
@@ -288,7 +290,7 @@ NavigationLayout:
                 txt_input: txt_input
                 rv: rv
                 size : (890, 60)
-                size_hint: 1,2
+                size_hint: 1,1
                 MyTextInput:
                     id: txt_input
                     size_hint_y: None
@@ -296,29 +298,32 @@ NavigationLayout:
                     hint_text: 'type or search recipients address starting with BM-'
                 RV:
                     id: rv
-            TextInput:
+            MDTextField:
                 id: subject
                 hint_text: 'subject'
-                size_hint_y: None
+                required: True
                 height: 100
+                size_hint_y: None
                 multiline: False
-            TextInput:
+                helper_text_mode: "on_error"
+
+            MDTextField:
                 id: body
+                multiline: True
                 hint_text: 'body'
                 size_hint_y: None
-                height: 100
-                multiline:True
-                size_hint: 1,2
+                required: True
+                helper_text_mode: "on_error"
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .6
+                        size_hint: .8, .3
                         text: 'send'
                         on_press: root.send()
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .6
+                        size_hint: .8, .3
                         text: 'reset'
                         on_press: app.root.ids.scr_mngr.current = 'random'             
 
@@ -441,7 +446,8 @@ NavigationLayout:
                 multiline: True
                 hint_text: "Label"
                 helper_text: "Label (not shown to anyone except you)"
-                helper_text_mode: "persistent"
+                required: True
+                helper_text_mode: "on_error"
     MDRaisedButton:
         text: 'next'
         size_hint_y: 0.13
