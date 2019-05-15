@@ -807,7 +807,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.rerenderComboBoxSendFrom()
         self.rerenderComboBoxSendFromBroadcast()
-        
+
         # Put the TTL slider in the correct spot
         TTL = BMConfigParser().getint('bitmessagesettings', 'ttl')
         if TTL < 3600: # an hour
@@ -822,6 +822,14 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.initSettings()
         self.resetNamecoinConnection()
+        self.sqlInit()
+        self.indicatorInit()
+        self.notifierInit()
+
+        self.ui.updateNetworkSwitchMenuLabel()
+
+        self._firstrun = BMConfigParser().safeGetBoolean(
+            'bitmessagesettings', 'dontconnect')
 
         self._contact_selected = None
 
@@ -4121,9 +4129,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.pushButtonFetchNamecoinID.show()
 
     def initSettings(self):
-        QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
-        QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
-        QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
         self.loadSettings()
         for attr, obj in self.ui.__dict__.iteritems():
             if hasattr(obj, "__class__") and \
@@ -4137,7 +4142,7 @@ app = None
 myapp = None
 
 
-class MySingleApplication(QtGui.QApplication):
+class BitmessageQtApplication(QtGui.QApplication):
     """
     Listener to allow our Qt form to get focus when another instance of the
     application is open.
@@ -4150,8 +4155,12 @@ class MySingleApplication(QtGui.QApplication):
     uuid = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
 
     def __init__(self, *argv):
-        super(MySingleApplication, self).__init__(*argv)
-        id = MySingleApplication.uuid
+        super(BitmessageQtApplication, self).__init__(*argv)
+        id = BitmessageQtApplication.uuid
+
+        QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
+        QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
+        QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
 
         self.server = None
         self.is_running = False
@@ -4179,6 +4188,8 @@ class MySingleApplication(QtGui.QApplication):
             self.server.listen(id)
             self.server.newConnection.connect(self.on_new_connection)
 
+        self.setStyleSheet("QStatusBar::item { border: 0px solid black }")
+
     def __del__(self):
         if self.server:
             self.server.close()
@@ -4191,25 +4202,19 @@ class MySingleApplication(QtGui.QApplication):
 def init():
     global app
     if not app:
-        app = MySingleApplication(sys.argv)
+        app = BitmessageQtApplication(sys.argv)
     return app
 
 
 def run():
     global myapp
     app = init()
-    app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
-    myapp.sqlInit()
     myapp.appIndicatorInit(app)
-    myapp.indicatorInit()
-    myapp.notifierInit()
-    myapp._firstrun = BMConfigParser().safeGetBoolean(
-        'bitmessagesettings', 'dontconnect')
+
     if myapp._firstrun:
         myapp.showConnectDialog()  # ask the user if we may connect
-    myapp.ui.updateNetworkSwitchMenuLabel()
 
 #    try:
 #        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:
