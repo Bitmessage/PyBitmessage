@@ -1213,8 +1213,7 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = helper_search.search_sql(xAddress, account, "sent", where, what, False)
 
         for row in queryreturn:
-            toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
-            self.addMessageListItemSent(tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime)
+            self.addMessageListItemSent(tableWidget, *row)
 
         tableWidget.horizontalHeader().setSortIndicator(
             3, QtCore.Qt.DescendingOrder)
@@ -1246,7 +1245,7 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = helper_search.search_sql(xAddress, account, folder, where, what, unreadOnly)
         
         for row in queryreturn:
-            msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
+            toAddress, fromAddress, subject, msgfolder, msgid, received, read = row
             self.addMessageListItemInbox(tableWidget, msgfolder, msgid, toAddress, fromAddress, subject, received, read)
 
         tableWidget.horizontalHeader().setSortIndicator(
