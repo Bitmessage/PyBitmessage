@@ -3497,9 +3497,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.inboxSearchOptionChans,
         ]
         if currentIndex >= 0 and currentIndex < len(messagelistList):
-            return messagelistList[currentIndex].currentText().toUtf8().data()
-        else:
-            return None
+            return messagelistList[currentIndex].currentText()
 
     # Group of functions for the Your Identities dialog box
     def getCurrentItem(self, treeWidget=None):
