@@ -3884,14 +3884,16 @@ class MyForm(settingsmixin.SMainWindow):
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
-        if len(str(text)) < 3:
+        text = str(text)
+        if 0 < len(text) < 3:
             return
         messagelist = self.getCurrentMessagelist()
         searchOption = self.getCurrentSearchOption()
         if messagelist:
             account = self.getCurrentAccount()
             folder = self.getCurrentFolder()
-            self.loadMessagelist(messagelist, account, folder, searchOption, str(text))
+            self.loadMessagelist(
+                messagelist, account, folder, searchOption, text)
 
     def inboxSearchLineEditReturnPressed(self):
         logger.debug("Search return pressed")
