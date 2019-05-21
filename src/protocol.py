@@ -262,7 +262,9 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
         payload += encodeHost('127.0.0.1')
         payload += pack('>H', 8444)
     else:
-        payload += encodeHost(remoteHost)
+        # use first 16 bytes if host data is longer
+        # for example in case of onion v3 service
+        payload += encodeHost(remoteHost)[:16]
         payload += pack('>H', remotePort)  # remote IPv6 and port
 
     # bitflags of the services I offer.
