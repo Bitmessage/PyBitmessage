@@ -3986,9 +3986,9 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.addAction(self.actionReply)
                 self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
                 self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
-                    _translate("MainWindow",
-                        "Copy subject to clipboard" if tableWidget.currentColumn() == 2 else "Copy address to clipboard"
-                    ),
+                    _translate("MainWindow", "Copy subject to clipboard")
+                    if tableWidget.currentColumn() == 2 else
+                    _translate("MainWindow", "Copy address to clipboard"),
                     self.on_action_ClipboardMessagelist)
                 self.popMenuInbox.addAction(self.actionClipboardMessagelist)
                 self.popMenuInbox.addSeparator()
