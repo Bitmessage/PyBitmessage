@@ -459,7 +459,7 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         if role == QtCore.Qt.UserRole:
             return self.subject
         if role == QtCore.Qt.ToolTipRole:
-            return escape(self.subject)
+            return escape(unicode(self.subject, 'utf-8'))
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
