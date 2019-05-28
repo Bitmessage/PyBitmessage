@@ -51,6 +51,7 @@
             text: app.getDefaultAccData()
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
+            on_press: app.limit_spinner()
     NavigationDrawerIconButton:
         icon: 'email-open'
         text: "Inbox"
@@ -60,7 +61,7 @@
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
-        badge_text: "2"
+        badge_text: "0"
     NavigationDrawerIconButton:
         icon: 'message-draw'
         text: "Draft"
@@ -127,7 +128,9 @@ NavigationLayout:
     BoxLayout:
         orientation: 'vertical'
         Toolbar:
-            id: toolbar..
+            id: toolbar
+            opacity: 1 if app.addressexist() else 0
+            disabled: False if app.addressexist() else True
             md_bg_color: app.theme_cls.primary_color
             background_palette: 'Primary'
             background_hue: '500'
@@ -172,6 +175,8 @@ NavigationLayout:
                 id:sc12
             NetworkStat:
                 id:sc13
+            SentDetail:
+                id:sc14
 
 <Inbox>:
     name: 'inbox'
@@ -388,6 +393,7 @@ NavigationLayout:
                 id:            grp_chkbox_1
                 group:        'test'
                 active: True
+                allow_no_selection: False
             MDLabel:
                 font_style: 'Caption'
                 theme_text_color: 'Primary'
@@ -400,6 +406,7 @@ NavigationLayout:
             MDCheckbox:
                 id:            grp_chkbox_1
                 group:        'test'
+                allow_no_selection: False
             MDLabel:
                 font_style: 'Caption'
                 theme_text_color: 'Primary'
@@ -445,7 +452,6 @@ NavigationLayout:
                 id: label
                 multiline: True
                 hint_text: "Label"
-                helper_text: "Label (not shown to anyone except you)"
                 required: True
                 helper_text_mode: "on_error"
     MDRaisedButton:
@@ -641,3 +647,34 @@ NavigationLayout:
                             MDRaisedButton:
                                 size_hint: .8, .6
                                 text: root.text_variable_5
+
+<SentDetail>:
+    name: 'sentdetail'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(400)
+            padding: dp(32)
+            MDLabel:
+                font_style: 'Headline'
+                theme_text_color: 'Primary'
+                text: root.subject
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: "To: " + root.to_addr
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: "From: " + root.from_addr
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: root.message
+                halign: 'left'
+                bold: True

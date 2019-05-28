@@ -45,9 +45,7 @@ from semaphores import kivyuisignaler
 from kivy.uix.button import Button
 import kivy_helper_search
 from kivy.core.window import Window
-
-
-userAddress = ''
+from functools import partial
 
 
 class Navigatorss(MDNavigationDrawer):
@@ -108,9 +106,9 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
-        if BMConfigParser().addresses():
+        if BMConfigParser().addresses() or state.kivyapp.variable_1:
             data = []
-            for address in BMConfigParser().addresses():
+            for address in state.kivyapp.variable_1:
                 data.append({'text': BMConfigParser().get(address, 'label'), 'secondary_text': address})
             for item in data:
                 meny = TwoLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
@@ -125,6 +123,10 @@ class MyAddress(Screen):
                               size_hint_y=None,
                               valign='top')
             self.ids.ml.add_widget(content)
+            try:
+                self.manager.current = 'login'
+            except Exception as e:
+                pass
 
 
 class AddressBook(Screen):
@@ -259,10 +261,11 @@ class DropDownWidget(BoxLayout):
                     return None
                 else:
                     msg = 'Enter a valid recipients address'
-                    self.address_error_message(msg)
             elif not toAddress:
-                msg = 'Enter a recipients address'
-                self.address_error_message(msg)
+                msg = 'Please fill the form'
+            else:
+                msg = 'Please fill the form'
+            self.address_error_message(msg)
 
     def address_error_message(self, msg):
         self.box = FloatLayout()
@@ -369,6 +372,10 @@ class Random(Screen):
             )
             self.manager.current = 'add_sucess'
             self.ids.label.text = ''
+            self.parent.parent.parent.parent.ids.toolbar.opacity = 1
+            self.parent.parent.parent.parent.ids.toolbar.disabled = False
+            self.parent.parent.parent.parent.ids.sc10.clear_widgets()
+            self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
 
 
 class AddressSuccessful(Screen):
@@ -409,10 +416,11 @@ class Sent(Screen):
         if queryreturn:
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
-                data.append({'text': mail[0].strip(), 'secondary_text': mail[2][:10] + '...........' if len(mail[2]) > 10 else mail[2] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text })
+                data.append({'text': mail[0].strip(), 'secondary_text': mail[2][:10] + '...........' if len(mail[2]) > 10 else mail[2] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'lastactiontime':  mail[6]})
             for item in data:
                 meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom', text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(source='./images/avatar.png'))
+                meny.bind(on_press = partial(self.sent_detail, item['lastactiontime']))
                 self.ids.ml.add_widget(meny)
         else:
             content = MDLabel(font_style='Body1',
@@ -423,6 +431,16 @@ class Sent(Screen):
                               size_hint_y=None,
                               valign='top')
             self.ids.ml.add_widget(content)
+
+    def sent_detail(self, lastsenttime, *args):
+        state.sentMailTime = lastsenttime
+        if self.manager:
+            src_mng_obj = self.manager
+        else:
+            src_mng_obj = self.parent.parent
+        src_mng_obj.screens[13].clear_widgets()
+        src_mng_obj.screens[13].add_widget(SentDetail())
+        src_mng_obj.current = 'sentdetail'
 
 
 class Trash(Screen):
@@ -475,9 +493,10 @@ class NavigateApp(App):
     theme_cls = ThemeManager()
     previous_date = ObjectProperty()
     obj_1 = ObjectProperty()
+    # obj_2 = ObjectProperty()
     variable_1 = ListProperty(BMConfigParser().addresses())
     nav_drawer = ObjectProperty()
-    sentmail = NumericProperty(0)
+    total_sentmail = str(state.totalSentMail)
     scr_size = Window.size[0]
     title = "PyBitmessage"
     count = 0
@@ -504,6 +523,7 @@ class NavigateApp(App):
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
         self.obj_1 = AddressBook()
+        # self.obj_2 = MyAddress()
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
         kivysignalthread.start()
@@ -535,7 +555,6 @@ class NavigateApp(App):
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
         if name == "text":
-            # return BMConfigParser().get(BMConfigParser().addresses()[0], 'label')[:12] + '..'
             if bmconfigparserigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
             else:
@@ -580,6 +599,19 @@ class NavigateApp(App):
         if BMConfigParser().addresses():
             return BMConfigParser().addresses()[0]
         return 'Select Address'
+
+    def addressexist(self):
+        if BMConfigParser().addresses():
+            return True
+        return False
+
+    def prnttttttttttttt(self):
+        pass
+
+    def limit_spinner(self):
+        max = 2.8
+        spinner_obj =ContentNavigationDrawer().ids.btn
+        spinner_obj.dropdown_cls.max_height = spinner_obj.height* max + max * 4
 
 
 class GrashofPopup(Popup):
@@ -651,3 +683,24 @@ class NavigationDrawerTwoLineListItem(
 
     def _set_active(self, active, list):
         pass
+
+
+class SentDetail(Screen):
+    """SentDetail Screen uses to show the detail of mails."""
+    to_addr = StringProperty()
+    from_addr = StringProperty()
+    subject = StringProperty()
+    message = StringProperty()
+
+    def __init__(self, *args, **kwargs):
+        super(SentDetail, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for method SentDetail mails."""
+        data = sqlQuery("select toaddress, fromaddress, subject, message from sent where lastactiontime = {};".format(state.sentMailTime))
+        if data:
+            self.to_addr = data[0][0]
+            self.from_addr = data[0][1]
+            self.subject = data[0][2].upper()
+            self.message = data[0][3]

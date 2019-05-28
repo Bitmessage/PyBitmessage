@@ -73,3 +73,11 @@ association = ''
 kivyapp = None
 
 navinstance = None
+
+totalSentMail = 0
+
+sentMailTime = 0
+
+dynamicAddressList = []
+
+myAddressObj = None
