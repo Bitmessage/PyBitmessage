@@ -2,7 +2,6 @@ import errno
 import re
 import socket
 import time
-from ConfigParser import NoOptionError, NoSectionError
 
 import asyncore_pollchoose as asyncore
 import helper_bootstrap
@@ -114,7 +113,7 @@ class BMConnectionPool(object):
             host = '127.0.0.1'
         if (BMConfigParser().safeGetBoolean(
                 "bitmessagesettings", "sockslisten") or
-            BMConfigParser().get(
+            BMConfigParser().safeGet(
                 "bitmessagesettings", "socksproxytype") == "none"):
             # python doesn't like bind + INADDR_ANY?
             # host = socket.INADDR_ANY
@@ -150,12 +149,15 @@ class BMConnectionPool(object):
         elif BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
             spawnConnections = True
-        if (BMConfigParser().get(
-                'bitmessagesettings', 'socksproxytype')[:5] == 'SOCKS' and
-            not BMConfigParser().getboolean(
+        socksproxytype = BMConfigParser().safeGet(
+            'bitmessagesettings', 'socksproxytype', '')
+        onionsocksproxytype = BMConfigParser().safeGet(
+            'bitmessagesettings', 'onionsocksproxytype', '')
+        if (socksproxytype[:5] == 'SOCKS' and
+            not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'sockslisten') and
-            ".onion" not in BMConfigParser().get(
-                'bitmessagesettings', 'onionhostname')):
+            '.onion' not in BMConfigParser().safeGet(
+                'bitmessagesettings', 'onionhostname', '')):
             acceptConnections = False
 
         if spawnConnections:
@@ -165,31 +167,29 @@ class BMConnectionPool(object):
                 self.bootstrapped = True
                 Proxy.proxy = (
                     BMConfigParser().safeGet(
-                        "bitmessagesettings", "sockshostname"),
+                        'bitmessagesettings', 'sockshostname'),
                     BMConfigParser().safeGetInt(
-                        "bitmessagesettings", "socksport")
+                        'bitmessagesettings', 'socksport')
                 )
                 # TODO AUTH
                 # TODO reset based on GUI settings changes
                 try:
-                    if not BMConfigParser().get(
-                        "network", "onionsocksproxytype"
-                    ).startswith("SOCKS"):
-                        raise NoOptionError
-                    Proxy.onionproxy = (
-                        BMConfigParser().get(
-                            "network", "onionsockshostname"),
-                        BMConfigParser().getint(
-                            "network", "onionsocksport")
+                    if not onionsocksproxytype.startswith("SOCKS"):
+                        raise ValueError
+                    Proxy.onion_proxy = (
+                        BMConfigParser().safeGet(
+                            'network', 'onionsockshostname', None),
+                        BMConfigParser().safeGet(
+                            'network', 'onionsocksport', None)
                     )
-                except (NoOptionError, NoSectionError):
-                    Proxy.onionproxy = None
+                except ValueError:
+                    Proxy.onion_proxy = None
             established = sum(
                 1 for c in self.outboundConnections.values()
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt(
-                    "bitmessagesettings", "maxoutboundconnections"):
+                    'bitmessagesettings', 'maxoutboundconnections'):
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
@@ -207,31 +207,20 @@ class BMConnectionPool(object):
 
                     try:
                         if (chosen.host.endswith(".onion") and
-                                Proxy.onionproxy is not None):
-                            if BMConfigParser().get(
-                                "network", "onionsocksproxytype"
-                            ) == "SOCKS5":
+                                Proxy.onion_proxy is not None):
+                            if onionsocksproxytype == "SOCKS5":
                                 self.addConnection(Socks5BMConnection(chosen))
-                            elif BMConfigParser().get(
-                                "network", "onionsocksproxytype"
-                            ) == "SOCKS4a":
+                            elif onionsocksproxytype == "SOCKS4a":
                                 self.addConnection(Socks4aBMConnection(chosen))
-                        elif BMConfigParser().safeGet(
-                            "bitmessagesettings", "socksproxytype"
-                        ) == "SOCKS5":
+                        elif socksproxytype == "SOCKS5":
                             self.addConnection(Socks5BMConnection(chosen))
-                        elif BMConfigParser().safeGet(
-                            "bitmessagesettings", "socksproxytype"
-                        ) == "SOCKS4a":
+                        elif socksproxytype == "SOCKS4a":
                             self.addConnection(Socks4aBMConnection(chosen))
                         else:
                             self.addConnection(TCPConnection(chosen))
                     except socket.error as e:
                         if e.errno == errno.ENETUNREACH:
                             continue
-                    except (NoSectionError, NoOptionError):
-                        # shouldn't happen
-                        pass
 
                     self.lastSpawned = time.time()
         else:
@@ -244,22 +233,22 @@ class BMConnectionPool(object):
 
         if acceptConnections:
             if not self.listeningSockets:
-                if BMConfigParser().safeGet("network", "bind") == '':
+                if BMConfigParser().safeGet('network', 'bind') == '':
                     self.startListening()
                 else:
                     for bind in re.sub(
                         "[^\w.]+", " ",
-                        BMConfigParser().safeGet("network", "bind")
+                        BMConfigParser().safeGet('network', 'bind')
                     ).split():
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
             if not self.udpSockets:
-                if BMConfigParser().safeGet("network", "bind") == '':
+                if BMConfigParser().safeGet('network', 'bind') == '':
                     self.startUDPSocket()
                 else:
                     for bind in re.sub(
                         "[^\w.]+", " ",
-                        BMConfigParser().safeGet("network", "bind")
+                        BMConfigParser().safeGet('network', 'bind')
                     ).split():
                         self.startUDPSocket(bind)
                     self.startUDPSocket(False)
