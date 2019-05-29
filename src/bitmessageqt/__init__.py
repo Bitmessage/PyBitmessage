@@ -817,6 +817,17 @@ class MyForm(settingsmixin.SMainWindow):
         self.initSettings()
         self.resetNamecoinConnection()
 
+        self._contact_selected = None
+
+    def getContactSelected(self):
+        """Returns last selected contact once"""
+        try:
+            return self._contact_selected
+        except AttributeError:
+            pass
+        finally:
+            self._contact_selected = None
+
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
         self.updateHumanFriendlyTTLDescription(TTL)
@@ -3446,15 +3457,19 @@ class MyForm(settingsmixin.SMainWindow):
         self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
         normal = True
-        for row in self.ui.tableWidgetAddressBook.selectedIndexes():
-            currentRow = row.row()
-            type = self.ui.tableWidgetAddressBook.item(
-                currentRow, 0).type
-            if type != AccountMixin.NORMAL:
+        selected_items = self.getAddressbookSelectedItems()
+        for item in selected_items:
+            if item.type != AccountMixin.NORMAL:
                 normal = False
+                break
         if normal:
             # only if all selected addressbook items are normal, allow delete
             self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
+        if len(selected_items) == 1:
+            self._contact_selected = selected_items.pop()
+            self.popMenuAddressBook.addSeparator()
+            for plugin in self.menu_plugins['address']:
+                self.popMenuAddressBook.addAction(plugin)
         self.popMenuAddressBook.exec_(
             self.ui.tableWidgetAddressBook.mapToGlobal(point))
 
@@ -3526,6 +3541,8 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
             self.popMenuSubscriptions.addSeparator()
+
+            self._contact_selected = currentItem
             # preloaded gui.menu plugins with prefix 'address'
             for plugin in self.menu_plugins['address']:
                 self.popMenuSubscriptions.addAction(plugin)
@@ -3939,6 +3956,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuYourIdentities.addAction(self.actionEmailGateway)
             self.popMenuYourIdentities.addSeparator()
             if currentItem.type != AccountMixin.ALL:
+                self._contact_selected = currentItem
                 # preloaded gui.menu plugins with prefix 'address'
                 for plugin in self.menu_plugins['address']:
                     self.popMenuYourIdentities.addAction(plugin)
@@ -3967,6 +3985,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenu.addAction(self.actionClipboard)
             self.popMenu.addAction(self.actionSend)
             self.popMenu.addSeparator()
+            self._contact_selected = currentItem
             # preloaded gui.menu plugins with prefix 'address'
             for plugin in self.menu_plugins['address']:
                 self.popMenu.addAction(plugin)
@@ -3980,49 +3999,61 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_context_menuInbox(self, point):
         tableWidget = self.getCurrentMessagelist()
-        if tableWidget:
-            currentFolder = self.getCurrentFolder()
-            if currentFolder is None:
-                pass
-            if currentFolder == 'sent':
-                self.on_context_menuSent(point)
-            else:
-                self.popMenuInbox = QtGui.QMenu(self)
-                self.popMenuInbox.addAction(self.actionForceHtml)
-                self.popMenuInbox.addAction(self.actionMarkUnread)
-                self.popMenuInbox.addSeparator()
-                address = tableWidget.item(
-                    tableWidget.currentRow(), 0).data(QtCore.Qt.UserRole)
-                account = accountClass(address)
-                if account.type == AccountMixin.CHAN:
-                    self.popMenuInbox.addAction(self.actionReplyChan)
-                self.popMenuInbox.addAction(self.actionReply)
-                self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
-                self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
-                    _translate("MainWindow", "Copy subject to clipboard")
-                    if tableWidget.currentColumn() == 2 else
-                    _translate("MainWindow", "Copy address to clipboard"),
-                    self.on_action_ClipboardMessagelist)
-                self.popMenuInbox.addAction(self.actionClipboardMessagelist)
-                self.popMenuInbox.addSeparator()
-                self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
-                self.popMenuInbox.addSeparator()
-                self.popMenuInbox.addAction(self.actionSaveMessageAs)
-                if currentFolder == "trash":
-                    self.popMenuInbox.addAction(self.actionUndeleteTrashedMessage)
-                else:
-                    self.popMenuInbox.addAction(self.actionTrashInboxMessage)
-                self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
+        if not tableWidget:
+            return
+
+        currentFolder = self.getCurrentFolder()
+        if currentFolder == 'sent':
+            self.on_context_menuSent(point)
+            return
+
+        self.popMenuInbox = QtGui.QMenu(self)
+        self.popMenuInbox.addAction(self.actionForceHtml)
+        self.popMenuInbox.addAction(self.actionMarkUnread)
+        self.popMenuInbox.addSeparator()
+        currentRow = tableWidget.currentRow()
+        account = accountClass(
+            tableWidget.item(currentRow, 0).data(QtCore.Qt.UserRole))
+
+        if account.type == AccountMixin.CHAN:
+            self.popMenuInbox.addAction(self.actionReplyChan)
+        self.popMenuInbox.addAction(self.actionReply)
+        self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+        self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
+            _translate("MainWindow", "Copy subject to clipboard")
+            if tableWidget.currentColumn() == 2 else
+            _translate("MainWindow", "Copy address to clipboard"),
+            self.on_action_ClipboardMessagelist)
+        self.popMenuInbox.addAction(self.actionClipboardMessagelist)
+        # pylint: disable=no-member
+        self._contact_selected = tableWidget.item(currentRow, 1)
+        # preloaded gui.menu plugins with prefix 'address'
+        for plugin in self.menu_plugins['address']:
+            self.popMenuInbox.addAction(plugin)
+        self.popMenuInbox.addSeparator()
+        self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
+        self.popMenuInbox.addSeparator()
+        self.popMenuInbox.addAction(self.actionSaveMessageAs)
+        if currentFolder == "trash":
+            self.popMenuInbox.addAction(self.actionUndeleteTrashedMessage)
+        else:
+            self.popMenuInbox.addAction(self.actionTrashInboxMessage)
+        self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
+        currentRow = self.ui.tableWidgetInbox.currentRow()
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)
+        self._contact_selected = self.ui.tableWidgetInbox.item(currentRow, 0)
+        # preloaded gui.menu plugins with prefix 'address'
+        for plugin in self.menu_plugins['address']:
+            self.popMenuSent.addAction(plugin)
+        self.popMenuSent.addSeparator()
         self.popMenuSent.addAction(self.actionTrashSentMessage)
         self.popMenuSent.addAction(self.actionSentReply)
 
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
-        currentRow = self.ui.tableWidgetInbox.currentRow()
         if currentRow >= 0:
             ackData = str(self.ui.tableWidgetInbox.item(
                 currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())

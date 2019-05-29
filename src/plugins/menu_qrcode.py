@@ -81,8 +81,14 @@ def connect_plugin(form):
             dialog = form.qrcode_dialog
         except AttributeError:
             form.qrcode_dialog = dialog = QRCodeDialog(form)
-        account = form.getCurrentItem()
-        label = account._getLabel()
+        account = form.getContactSelected()
+        try:
+            label = account._getLabel()  # pylint: disable=protected-access
+        except AttributeError:
+            try:
+                label = account.getLabel()
+            except AttributeError:
+                return
         dialog.render(
             'bitmessage:%s' % account.address + (
                 '?' + urllib.urlencode({'label': label.encode('utf-8')})
