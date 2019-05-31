@@ -32,7 +32,6 @@ import helper_startup
 import state
 
 helper_startup.loadConfig()
-print("333333333333333333333333333333333333333333333333333333333333333333333333333333333")
 # Now can be overriden from a config file, which uses standard python
 # logging.config.fileConfig interface
 # examples are here:

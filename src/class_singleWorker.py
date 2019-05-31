@@ -52,7 +52,6 @@ class singleWorker(threading.Thread, StoppableThread):
         threading.Thread.__init__(self, name="singleWorker")
         self.initStop()
         proofofwork.init()
-        print("I am in single worker 52.....................................................")
 
     def stopThread(self):
         """Signal through the queue that the thread should be stopped"""

@@ -44,7 +44,6 @@ def _loadTrustedPeer():
 def loadConfig():
     """Load the config"""
     config = BMConfigParser()
-    print("I am coming in loadConfig now................................................................")
 
     if state.appdata:
         config.read(state.appdata + 'keys.dat')

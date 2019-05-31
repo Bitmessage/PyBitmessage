@@ -231,7 +231,6 @@ def check_sqlite():
 
 
 def check_openssl():
-    print(state.kivy, "state.kivystate.kivystate.kivystate.kivystate.kivystate.kivystate.kivystate.kivy")
     """Do openssl dependency check.
 
     Here we are checking for openssl with its all dependent libraries
@@ -250,7 +249,6 @@ def check_openssl():
             import os.path
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
     elif state.kivy:
-        print("kivykivykivykivykivykivykivy...........................")
         return True
     else:
         paths = ['libcrypto.so', 'libcrypto.so.1.0.0']
@@ -283,7 +281,6 @@ def check_openssl():
         logger.info('Checking OpenSSL at %s', path)
         try:
             library = ctypes.CDLL(path)
-            print("I am loading here in depends file................................................................")
         except OSError:
             continue
         logger.info('OpenSSL Name: %s', library._name)

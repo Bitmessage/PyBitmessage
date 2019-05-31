@@ -24,7 +24,6 @@ def lookupExeFolder():
 
 def lookupAppdataFolder():
 
-    print("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII", platform)
     import traceback
     print(traceback.print_tb)
     APPNAME = "PyBitmessage"
@@ -45,7 +44,6 @@ def lookupAppdataFolder():
     elif platform == 'android':
         # dataFolder = path.join(os.path.dirname(os.path.abspath("__file__")), "PyBitmessage") + '/'
         dataFolder = path.join('/sdcard/', 'DCIM/', APPNAME) + '/'
-        print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO", dataFolder)
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         dataFolder = path.join(environ['APPDATA'].decode(sys.getfilesystemencoding(), 'ignore'), APPNAME) + path.sep
