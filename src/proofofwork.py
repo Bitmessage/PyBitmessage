@@ -230,7 +230,6 @@ def buildCPoW():
             call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"), '-f', 'Makefile.bsd'])
         else:
             # GNU make
-            print("I am in buildCPoW hurray.......................................", os.path.join(paths.codePath(), "bitmsghash"))
             call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
         if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
             init()
@@ -322,12 +321,10 @@ def init():
                 logger.error("C PoW test fail.", exc_info=True)
                 bso = None
     elif platform == "android":
-        print(sys.platform)
         try:
             bso = ctypes.CDLL('libbitmsghash.so')
         except Exception as e:
             bso = None
-            print(e)
 
     else:
         try:

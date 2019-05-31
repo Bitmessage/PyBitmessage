@@ -50,7 +50,6 @@ class singleWorker(StoppableThread):
     def __init__(self):
         super(singleWorker, self).__init__(name="singleWorker")
         proofofwork.init()
-        print("I am in single worker 52.....................................................")
 
     def stopThread(self):
         """Signal through the queue that the thread should be stopped"""

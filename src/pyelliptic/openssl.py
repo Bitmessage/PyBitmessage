@@ -72,9 +72,7 @@ class _OpenSSL:
         """
         Build the wrapper
         """
-        print("I am on openssl ctypes loading...............................................")
         self._lib = ctypes.CDLL(library)
-        print(library, "library12library12library12library12library12library12library12")
         self._version, self._hexversion, self._cflags = get_version(self._lib)
         self._libreSSL = self._version.startswith("LibreSSL")
 
@@ -687,7 +685,6 @@ def loadOpenSSL():
         libdir.append(find_library('libeay32'))
     for library in libdir:
         try:
-            print(library, "librarylibrarylibrarylibrarylibrarylibrarylibrarylibrarylibrarylibrarylibrary")
             OpenSSL = _OpenSSL(library)
             return
         except:

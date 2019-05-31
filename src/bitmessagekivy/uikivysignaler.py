@@ -5,6 +5,7 @@ import queues
 from semaphores import kivyuisignaler
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 
+
 class UIkivySignaler(Thread):
 
     def run(self):
@@ -12,7 +13,6 @@ class UIkivySignaler(Thread):
         while state.shutdown == 0:
             try:
                 command, data = queues.UISignalQueue.get()
-                print("ssssssseeeeeeeeeeeeeeeeeeeeeeeeeewuhatsacomment.................", command)
                 if command == 'writeNewAddressToTable':
                     label, address, streamNumber = data
                     state.kivyapp.variable_1.append(address)

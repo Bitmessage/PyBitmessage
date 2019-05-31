@@ -116,30 +116,22 @@ def decodeWalletImportFormat(WIFstring):
 
 def reloadMyAddressHashes():
     logger.debug('reloading keys from keys.dat file')
-    print("SHARED 146 begins.....................................................................")
 
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     myAddressesByTag.clear()
     # myPrivateKeys.clear()
-    print("SHARED 152 begins.....................................................................")
 
     keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
     hasEnabledKeys = False
-    print("SHARED 156 begins.....................................................................")
-    print(BMConfigParser().addresses())
     for addressInKeysFile in BMConfigParser().addresses():
-        print("SHARED 158 begins.....................................................................")
         isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
-        print("SHARED 160 begins.....................................................................")
         if isEnabled:
-            print("SHARED 161 begins.....................................................................")
             hasEnabledKeys = True
             # status
             _, addressVersionNumber, streamNumber, hash = \
                 decodeAddress(addressInKeysFile)
             if addressVersionNumber in (2, 3, 4):
-                print("SHARED 166 begins.....................................................................")
                 # Returns a simple 32 bytes of information encoded
                 # in 64 Hex characters, or null if there was an error.
                 privEncryptionKey = hexlify(decodeWalletImportFormat(
@@ -158,17 +150,14 @@ def reloadMyAddressHashes():
                     myAddressesByTag[tag] = addressInKeysFile
 
             else:
-                print("SHARED 185 begins.....................................................................")
                 logger.error(
                     'Error in reloadMyAddressHashes: Can\'t handle'
                     ' address versions other than 2, 3, or 4.\n'
                 )
-    print("SHARED 187 begins.....................................................................")
 
     if not platform == "android":
         if not keyfileSecure:
             fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)
-    print("SHARED 196 begins.....................................................................")
 
 
 def reloadBroadcastSendersForWhichImWatching():
