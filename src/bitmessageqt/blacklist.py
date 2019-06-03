@@ -6,6 +6,7 @@ from addresses import addBMIfNotPresent
 from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
+from queues import UISignalQueue
 from retranslateui import RetranslateMixin
 from utils import avatarize
 from uisignaler import UISignaler
@@ -88,11 +89,21 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                         sql = '''INSERT INTO whitelist VALUES (?,?,?)'''
                     sqlExecute(sql, *t)
                 else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want."))
+                    UISignalQueue.put((
+                        'updateStatusBar',
+                        _translate(
+                            "MainWindow",
+                            "Error: You cannot add the same address to your"
+                            " list twice. Perhaps rename the existing one"
+                            " if you want.")
+                    ))
             else:
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "The address you entered was invalid. Ignoring it."))
+                UISignalQueue.put((
+                    'updateStatusBar',
+                    _translate(
+                        "MainWindow",
+                        "The address you entered was invalid. Ignoring it.")
+                ))
 
     def tableWidgetBlacklistItemChanged(self, item):
         if item.column() == 0:
