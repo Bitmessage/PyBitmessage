@@ -18,6 +18,8 @@ class UIkivySignaler(Thread):
                     state.kivyapp.variable_1.append(address)
                 elif command == 'rerenderAddressBook':
                     state.kivyapp.obj_1.refreshs()
+                elif command == 'updateSentItemStatusByAckdata':
+                    state.kivyapp.status_dispatching(data)
 
             except Exception as e:
                 print(e)

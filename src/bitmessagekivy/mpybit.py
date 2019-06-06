@@ -46,6 +46,7 @@ from kivy.uix.button import Button
 import kivy_helper_search
 from kivy.core.window import Window
 from functools import partial
+from kivy.uix.carousel import Carousel
 
 
 class Navigatorss(MDNavigationDrawer):
@@ -56,6 +57,8 @@ class Navigatorss(MDNavigationDrawer):
 
 class Inbox(Screen):
     """Inbox Screen uses screen to show widgets of screens."""
+    data = ListProperty()
+
     def __init__(self, *args, **kwargs):
         super(Inbox, self).__init__(*args, **kwargs)
         if state.association == '':
@@ -64,7 +67,7 @@ class Inbox(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method sent accounts."""
+        """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
         print(dt)
 
@@ -74,7 +77,7 @@ class Inbox(Screen):
         self.loadMessagelist(account, 'All', '')
 
     def loadMessagelist(self, account, where="", what=""):
-        """Load Sent list for Sent messages."""
+        """Load Inbox list for Inbox messages."""
         xAddress = 'toaddress'
         data = []
         queryreturn = kivy_helper_search.search_sql(
@@ -82,11 +85,29 @@ class Inbox(Screen):
         if queryreturn:
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
-                data.append({'text': mail[2].strip(), 'secondary_text': mail[5][:10] + '...........' if len(mail[2]) > 10 else mail[2] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text })
+                # ('inbox', 'j\xe5(M\xcfPbe\rl\x0f\xa3\r\xef>\xf0\x0b&\t\'}"RYg\x03\x80\x14\x82\xeb&,', 'BM-2cXpNNd7dhTjsv7LHNfmphfUabZk958sA3', 'hello', 'BM-2cWyUfBdY2FbgyuCb7abFZ49JYxSzUhNFe', 'test from peter', '1559121770', 0)
+                data.append({'text': mail[4].strip(), 'secondary_text': mail[5][:10] + '...........' if len(mail[3]) > 10 else mail[3] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'receivedTime':  mail[6] })
             for item in data:
                 meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom', text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(source='./images/avatar.png'))
-                self.ids.ml.add_widget(meny)
+                meny.bind(on_press = partial(self.inbox_detail, item['receivedTime']))
+                carousel = Carousel(direction='right')
+                carousel.height = 150
+                carousel.size_hint_y = None
+                carousel.ignore_perpendicular_swipes = True
+                carousel.data_index = 0
+                carousel.min_move = 0.2
+                del_btn = Button(text='Delete')
+                del_btn.background_color = (1, 0, 0, .5)
+                del_btn.bind(on_press=partial(self.delete, item['receivedTime']))
+                carousel.add_widget(del_btn)
+                carousel.add_widget(meny)
+                ach_btn = Button(text='Achieve')
+                ach_btn.background_color = (0,1,0,1)
+                ach_btn.bind(on_press=partial(self.archive, item['receivedTime']))
+                carousel.add_widget(ach_btn)
+                carousel.index=1
+                self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(font_style='Body1',
                               theme_text_color='Primary',
@@ -97,6 +118,40 @@ class Inbox(Screen):
                               valign='top')
             self.ids.ml.add_widget(content)
 
+    def inbox_detail(self, receivedTime, *args):
+        """Load inbox page details"""
+        state.detailPageType = 'inbox'
+        state.sentMailTime = receivedTime
+        if self.manager:
+            src_mng_obj = self.manager
+        else:
+            src_mng_obj = self.parent.parent
+        src_mng_obj.screens[13].clear_widgets()
+        src_mng_obj.screens[13].add_widget(MailDetail())
+        src_mng_obj.current = 'mailDetail'
+
+    def delete(self, data_index, instance, *args):
+        """Delete inbox mail from inbox listing"""
+        sqlExecute("UPDATE inbox SET folder = 'trash' WHERE received = {};".format(data_index))
+        self.ids.ml.remove_widget(instance.parent.parent)
+        self.update_trash()
+
+    def archive(self, data_index, instance, *args):
+        """Archive inbox mail from inbox listing"""
+        sqlExecute("UPDATE inbox SET folder = 'trash' WHERE received = {};".format(data_index))
+        self.ids.ml.remove_widget(instance.parent.parent)
+        self.update_trash()
+
+    def update_trash(self):
+        """Update trash screen mails which is deleted from inbox"""
+        try:
+            self.parent.screens[4].clear_widgets()
+            self.parent.screens[4].add_widget(Trash())
+        except Exception as e:
+            self.parent.parent.screens[4].clear_widgets()
+            self.parent.parent.screens[4].add_widget(Trash())
+
+
 
 class MyAddress(Screen):
     """MyAddress Screen uses screen to show widgets of screens."""
@@ -106,13 +161,14 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
-        if BMConfigParser().addresses() or state.kivyapp.variable_1:
+        if BMConfigParser().addresses() or ContentNavigationDrawer().ids.btn.values:
             data = []
-            for address in state.kivyapp.variable_1:
+            for address in ContentNavigationDrawer().ids.btn.values:
                 data.append({'text': BMConfigParser().get(address, 'label'), 'secondary_text': address})
             for item in data:
                 meny = TwoLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(source='./images/avatar.png'))
+                meny.bind(on_press = partial(self.myadd_detail, item['secondary_text']))
                 self.ids.ml.add_widget(meny)
         else:
             content = MDLabel(font_style='Body1',
@@ -127,6 +183,11 @@ class MyAddress(Screen):
                 self.manager.current = 'login'
             except Exception as e:
                 pass
+
+    def myadd_detail(self, fromaddress, *args):
+        p = MyaddDetailPopup()
+        p.open()
+        p.get_address(fromaddress)
 
 
 class AddressBook(Screen):
@@ -278,6 +339,7 @@ class DropDownWidget(BoxLayout):
         self.main_pop = Popup(title="Error", content=self.box,
                               size_hint=(None, None), size=(550, 400), auto_dismiss=False, title_size=30)
         self.but.bind(on_press=self.main_pop.dismiss)
+        # self.main_pop.background = './images/popup.jpeg'
         self.main_pop.open()
 
 
@@ -370,13 +432,16 @@ class Random(Screen):
                 nonceTrialsPerByte,
                 payloadLengthExtraBytes)
             )
-            self.manager.current = 'add_sucess'
+            # self.manager.current = 'add_sucess'
+            self.manager.current = 'myaddress'
             self.ids.label.text = ''
             self.parent.parent.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
-            self.parent.parent.parent.parent.ids.sc10.clear_widgets()
-            self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
 
+            state.myAddressObj = self.parent.parent.parent.parent.ids.sc10
+            # self.parent.parent.parent.parent.ids.sc10.clear_widgets()
+            # self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
+            
 
 class AddressSuccessful(Screen):
     pass
@@ -410,18 +475,35 @@ class Sent(Screen):
     def loadSent(self, account, where="", what=""):
         """Load Sent list for Sent messages."""
         xAddress = 'fromaddress'
-        data = []
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "sent", where, what, False)
+        state.totalSentMail = len(queryreturn)
         if queryreturn:
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
-                data.append({'text': mail[0].strip(), 'secondary_text': mail[2][:10] + '...........' if len(mail[2]) > 10 else mail[2] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'lastactiontime':  mail[6]})
-            for item in data:
+                self.data.append({'text': mail[1].strip(), 'secondary_text': mail[2][:10] + '...........' if len(mail[2]) > 10 else mail[2] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'lastactiontime':  mail[6]})
+            for item in self.data:
                 meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom', text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(source='./images/avatar.png'))
                 meny.bind(on_press = partial(self.sent_detail, item['lastactiontime']))
-                self.ids.ml.add_widget(meny)
+                carousel = Carousel(direction='right')
+                carousel.height = 150
+                carousel.size_hint_y = None
+                carousel.ignore_perpendicular_swipes = True
+                carousel.data_index = 0
+                carousel.min_move = 0.2
+                del_btn = Button(text='Delete')
+                del_btn.background_color = (1, 0, 0, .5)
+                del_btn.bind(on_press=partial(self.delete, item['lastactiontime']))
+                carousel.add_widget(del_btn)
+                carousel.add_widget(meny)
+                ach_btn = Button(text='Achieve')
+                ach_btn.background_color = (0,1,0,1)
+                ach_btn.bind(on_press=partial(self.archive, item['lastactiontime']))
+                carousel.add_widget(ach_btn)
+                carousel.index=1
+                self.ids.ml.add_widget(carousel)
+                # self.ids.ml.add_widget(meny)
         else:
             content = MDLabel(font_style='Body1',
                               theme_text_color='Primary',
@@ -433,14 +515,37 @@ class Sent(Screen):
             self.ids.ml.add_widget(content)
 
     def sent_detail(self, lastsenttime, *args):
+        """Load sent mail details"""
+        state.detailPageType = 'sent'
         state.sentMailTime = lastsenttime
         if self.manager:
             src_mng_obj = self.manager
         else:
             src_mng_obj = self.parent.parent
         src_mng_obj.screens[13].clear_widgets()
-        src_mng_obj.screens[13].add_widget(SentDetail())
-        src_mng_obj.current = 'sentdetail'
+        src_mng_obj.screens[13].add_widget(MailDetail())
+        src_mng_obj.current = 'mailDetail'
+
+    def delete(self, data_index, instance, *args):
+        """delete sent mail from sent mail listing"""
+        sqlExecute("UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(data_index))
+        self.ids.ml.remove_widget(instance.parent.parent)
+        self.update_trash()
+
+    def archive(self, data_index, instance, *args):
+        """archive sent mail from sent mail listing"""
+        sqlExecute("UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(data_index))
+        self.ids.ml.remove_widget(instance.parent.parent)
+        self.update_trash()
+
+    def update_trash(self):
+        """Update trash screen mails which is deleted from inbox"""
+        try:
+            self.parent.screens[4].clear_widgets()
+            self.parent.screens[4].add_widget(Trash())
+        except Exception as e:
+            self.parent.parent.screens[4].clear_widgets()
+            self.parent.parent.screens[4].add_widget(Trash())
 
 
 class Trash(Screen):
@@ -451,21 +556,13 @@ class Trash(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
-        data = [{'text': "neha cis", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "onkar", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "amazon", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "paytm", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "pol", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "akshayaura", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "codementor", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "yatra", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "mdtezm", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"},
-                {'text': "crewqt", 'secondary_text': "party invitation..........." + '\n' + " " + "lets gather for party on 1st JANUARY...!"}]
-        for item in data:
-            meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
+        inbox = sqlQuery("SELECT toaddress, fromaddress, subject, message from inbox WHERE folder = 'trash';")
+        sent = sqlQuery("SELECT toaddress, fromaddress, subject, message from sent WHERE folder = 'trash';")
+        trash_data = inbox + sent
+        for item in trash_data:
+            meny = ThreeLineAvatarIconListItem(text=item[1], secondary_text=item[2], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(source='./images/avatar.png'))
             self.ids.ml.add_widget(meny)
-
 
 class Page(Screen):
     pass
@@ -493,7 +590,7 @@ class NavigateApp(App):
     theme_cls = ThemeManager()
     previous_date = ObjectProperty()
     obj_1 = ObjectProperty()
-    # obj_2 = ObjectProperty()
+    obj_2 = ObjectProperty()
     variable_1 = ListProperty(BMConfigParser().addresses())
     nav_drawer = ObjectProperty()
     total_sentmail = str(state.totalSentMail)
@@ -523,10 +620,11 @@ class NavigateApp(App):
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
         self.obj_1 = AddressBook()
-        # self.obj_2 = MyAddress()
+        self.obj_2 = MyAddress()
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
         kivysignalthread.start()
+        Window.bind(on_keyboard=self.on_key)
         return main_widget
 
     def run(self):
@@ -541,7 +639,6 @@ class NavigateApp(App):
         shutdown.doCleanShutdown()
 
     def show_address_success(self):
-        print("9062 I am pressed...............................................................")
         content = MDLabel(font_style='Body1',
                           theme_text_color='Secondary',
                           text="Successfully Saved your contact address. "
@@ -555,6 +652,7 @@ class NavigateApp(App):
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
         if name == "text":
+            # return BMConfigParser().get(BMConfigParser().addresses()[0], 'label')[:12] + '..'
             if bmconfigparserigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
             else:
@@ -574,6 +672,7 @@ class NavigateApp(App):
         self.root.ids.sc1.add_widget(Inbox())
         self.root.ids.sc4.add_widget(Sent())
         self.root.ids.sc5.add_widget(Trash())
+        self.root.ids.scr_mngr.current = 'inbox'
 
     def getInboxMessageDetail(self, instance):
         """It will get message detail after make selected message description."""
@@ -605,13 +704,28 @@ class NavigateApp(App):
             return True
         return False
 
-    def prnttttttttttttt(self):
-        pass
-
     def limit_spinner(self):
         max = 2.8
-        spinner_obj =ContentNavigationDrawer().ids.btn
+        spinner_obj = ContentNavigationDrawer().ids.btn
         spinner_obj.dropdown_cls.max_height = spinner_obj.height* max + max * 4
+
+    def on_key(self, window, key, *args):
+        if key == 27:  # the esc key
+            if self.root.ids.scr_mngr.current_screen.name == "mailDetail":
+                self.root.ids.scr_mngr.current = 'sent'
+                # this is for direction of the screen comesup
+                # self.root.ids.scr_mngr.transition.direction = 'right'
+                return True
+            elif self.root.ids.scr_mngr.current_screen.name == "create":
+                self.root.ids.scr_mngr.current = 'inbox'
+                return True
+            else:
+                return True
+
+    def status_dispatching(self, data):
+        ackData, message = data
+        if state.ackdata == ackData:
+            state.status.status = message
 
 
 class GrashofPopup(Popup):
@@ -685,22 +799,58 @@ class NavigationDrawerTwoLineListItem(
         pass
 
 
-class SentDetail(Screen):
-    """SentDetail Screen uses to show the detail of mails."""
+class MailDetail(Screen):
+    """MailDetail Screen uses to show the detail of mails."""
     to_addr = StringProperty()
     from_addr = StringProperty()
     subject = StringProperty()
     message = StringProperty()
+    status = StringProperty()
 
     def __init__(self, *args, **kwargs):
-        super(SentDetail, self).__init__(*args, **kwargs)
+        super(MailDetail, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method SentDetail mails."""
-        data = sqlQuery("select toaddress, fromaddress, subject, message from sent where lastactiontime = {};".format(state.sentMailTime))
-        if data:
-            self.to_addr = data[0][0]
-            self.from_addr = data[0][1]
-            self.subject = data[0][2].upper()
-            self.message = data[0][3]
+        """Clock Schdule for method MailDetail mails."""
+        if state.detailPageType == 'sent':
+            data = sqlQuery("select toaddress, fromaddress, subject, message , status, ackdata from sent where lastactiontime = {};".format(state.sentMailTime))
+            state.status = self
+            state.ackdata = data[0][5]
+            self.assign_mail_details(data)
+        elif state.detailPageType == 'inbox':
+            data = sqlQuery("select toaddress, fromaddress, subject, message from inbox where received = {};".format(state.sentMailTime))
+            self.assign_mail_details(data)
+
+    def assign_mail_details(self, data): 
+        self.to_addr = data[0][0]
+        self.from_addr = data[0][1]
+        self.subject = data[0][2].upper()
+        self.message = data[0][3]
+        if len(data[0]) == 6:
+            self.status = data[0][4]
+
+    def delete_mail(self):
+        if state.detailPageType == 'sent':
+            sqlExecute("UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(state.sentMailTime))
+            self.parent.parent.screens[3].clear_widgets()
+            self.parent.parent.screens[3].add_widget(Sent())
+            self.parent.parent.current = 'sent'
+        self.parent.parent.screens[4].clear_widgets()
+        self.parent.parent.screens[4].add_widget(Trash())
+
+
+class MyaddDetailPopup(Popup):
+    """MyaddDetailPopup pop is used for showing my address detail"""
+    address_label = StringProperty()
+    address = StringProperty()
+
+    def __init__(self, **kwargs):
+        super(MyaddDetailPopup, self).__init__(**kwargs)
+        self.size_hint_y = 0.4
+        self.size_hint_x = 0.9
+
+    def get_address(self, address):
+        """Getting address for displaying details on popup"""
+        self.address_label = BMConfigParser().get(address, 'label') if BMConfigParser().get(address, 'label') else ''
+        self.address = address
