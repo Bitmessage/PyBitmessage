@@ -482,8 +482,8 @@ class singleWorker(threading.Thread, StoppableThread):
         if Inventory().by_type_and_tag(objectType, tag):
             return  # not expired
 
-        payload = pack('>Q', (embeddedTime))
-        payload += str(bytearray([0, 0, 0, objectType]))
+        payload = pack('>Q', embeddedTime)
+        payload += pack('>I', objectType)
         payload += encodeVarint(2 if len(peer.host) == 22 else 3)
         payload += encodeVarint(streamNumber)
         payload += objectPayload
