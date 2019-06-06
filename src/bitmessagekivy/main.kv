@@ -1,4 +1,3 @@
-
 #:import Toolbar kivymd.toolbar.Toolbar
 #:import ThemeManager kivymd.theming.ThemeManager
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
@@ -34,9 +33,13 @@
 #:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
 #:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
 #:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
+#:import Factory kivy.factory.Factory
 
 <MyNavigationDrawerIconButton@NavigationDrawerIconButton>:
     icon: 'checkbox-blank-circle'
+
+<MySpinnerOption@SpinnerOption>:
+    font_size: '12.5sp'
 
 <ContentNavigationDrawer@Navigatorss>:
     drawer_logo: './images/drawer_logo1.png'
@@ -48,6 +51,8 @@
         Spinner:
             pos_hint:{"x":0,"y":.25}
             id: btn
+            option_cls: Factory.get("MySpinnerOption")
+            font_size: '12.5sp'
             text: app.getDefaultAccData()
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
@@ -175,7 +180,7 @@ NavigationLayout:
                 id:sc12
             NetworkStat:
                 id:sc13
-            SentDetail:
+            MailDetail:
                 id:sc14
 
 <Inbox>:
@@ -184,20 +189,8 @@ NavigationLayout:
         do_scroll_x: False
         MDList:
             id: ml
-    BoxLayout:
-        size_hint_y: None
-        height: dp(56)
-        spacing: '10dp'
-        pos_hint: {'center_x':0.45, 'center_y': .1}
 
-        Widget:
-
-        MDFloatingActionButton:
-            icon: 'plus'
-            opposite_colors: True
-            elevation_normal: 8
-            md_bg_color: [0.941, 0, 0,1]
-            on_press: app.root.ids.scr_mngr.current = 'create'
+    ComposerButton:
 
 <Sent>:
     name: 'sent'
@@ -205,20 +198,7 @@ NavigationLayout:
         do_scroll_x: False
         MDList:
             id: ml
-    BoxLayout:
-        size_hint_y: None
-        height: dp(56)
-        spacing: '10dp'
-        pos_hint: {'center_x':0.45, 'center_y': .1}
-
-        Widget:
-
-        MDFloatingActionButton:
-            icon: 'plus'
-            opposite_colors: True
-            elevation_normal: 8
-            md_bg_color: [0.941, 0, 0,1]
-            on_press: app.root.ids.scr_mngr.current = 'create'
+    ComposerButton:
 
 <Trash>:
     name: 'trash'
@@ -226,21 +206,8 @@ NavigationLayout:
         do_scroll_x: False
         MDList:
             id: ml
-    BoxLayout:
-        size_hint_y: None
-        height: dp(56)
-        spacing: '10dp'
-        pos_hint: {'center_x':0.45, 'center_y': .1}
-
-        Widget:
-
-        MDFloatingActionButton:
-            icon: 'plus'
-            opposite_colors: True
-            elevation_normal: 8
-            md_bg_color: [0.941, 0, 0,1]
-            on_press: app.root.ids.scr_mngr.current = 'create'
-
+    ComposerButton:
+    
 <Draft>:
     name: 'draft'
     Label:
@@ -289,6 +256,8 @@ NavigationLayout:
                         text: 'select'
                         values: app.variable_1
                         on_text: ti.text = self.text
+                        option_cls: Factory.get("MySpinnerOption")
+                        font_size: '12.5sp'
                     
             BoxLayout:
                 orientation: 'vertical'
@@ -530,6 +499,7 @@ NavigationLayout:
         do_scroll_x: False
         MDList:
             id: ml
+    ComposerButton:
 
 <AddressBook>:
     name: 'addressbook'
@@ -539,6 +509,7 @@ NavigationLayout:
             do_scroll_x: False
             MDList:
                 id: ml
+    ComposerButton:
 
 <Payment>:
     name: 'payment'
@@ -648,8 +619,8 @@ NavigationLayout:
                                 size_hint: .8, .6
                                 text: root.text_variable_5
 
-<SentDetail>:
-    name: 'sentdetail'
+<MailDetail>:
+    name: 'mailDetail'
     ScrollView:
         do_scroll_x: False
         BoxLayout:
@@ -665,12 +636,17 @@ NavigationLayout:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
+                text: "From: " + root.from_addr
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
                 text: "To: " + root.to_addr
                 halign: 'left'
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
-                text: "From: " + root.from_addr
+                text: root.status
                 halign: 'left'
             MDLabel:
                 font_style: 'Subhead'
@@ -678,3 +654,73 @@ NavigationLayout:
                 text: root.message
                 halign: 'left'
                 bold: True
+            BoxLayout:
+                spacing:50
+                MDRaisedButton:
+                    size_hint: 1, None
+                    height: dp(40)
+                    text: 'Copy'
+                MDRaisedButton:
+                    size_hint: 1, None
+                    height: dp(40)
+                    text: 'Delete'
+                    on_press: root.delete_mail()
+
+<ComposerButton@BoxLayout>:
+    size_hint_y: None
+    height: dp(56)
+    spacing: '10dp'
+    pos_hint: {'center_x':0.45, 'center_y': .1}
+
+    Widget:
+
+    MDFloatingActionButton:
+        icon: 'plus'
+        opposite_colors: True
+        elevation_normal: 8
+        md_bg_color: [0.941, 0, 0,1]
+        on_press: app.root.ids.scr_mngr.current = 'create'
+
+<MyaddDetailPopup>:
+    id: myadd_popup
+    background: './images/popup.jpeg'
+    separator_height: 0 
+    auto_dismiss: False
+    BoxLayout:
+        size_hint_y: None
+        spacing:50
+        id: popup_box
+        orientation: 'vertical'
+        MDLabel:
+            font_style: 'Title'
+            theme_text_color: 'Primary'
+            text: "Label"
+            halign: 'left'
+        MDLabel:
+            font_style: 'Subhead'
+            theme_text_color: 'Primary'
+            text: root.address_label
+            halign: 'left'
+        MDLabel:
+            font_style: 'Title'
+            theme_text_color: 'Primary'
+            text: "Address"
+            halign: 'left'
+        MDLabel:
+            font_style: 'Subhead'
+            theme_text_color: 'Primary'
+            text: root.address
+            halign: 'left'
+        MDRaisedButton:
+            size_hint: 1, None
+            height: dp(40)
+            text: 'Save'
+        MDRaisedButton:
+            size_hint: 1, None
+            height: dp(40)
+            text: 'Cancel'
+            on_press: root.dismiss()
+        MDRaisedButton:
+            size_hint: 1, None
+            height: dp(40)
+            text: 'Scan QR code'

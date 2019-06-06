@@ -13,8 +13,11 @@ class translateClass:
         else:
             return self.text
 
+# def _translate(context, text, disambiguation = None, encoding = None, n = None):
+#     return translateText(context, text, n)
+
 def _translate(context, text, disambiguation = None, encoding = None, n = None):
-    return translateText(context, text, n)
+    return text
 
 def translateText(context, text, n = None):
     try:
