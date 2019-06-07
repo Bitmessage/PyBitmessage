@@ -31,8 +31,13 @@ def _loadTrustedPeer():
         # This probably means the trusted peer wasn't specified so we
         # can just leave it as None
         return
-
-    host, port = trustedPeer.split(':')
+    try:
+        host, port = trustedPeer.split(':')
+    except ValueError:
+        sys.exit(
+            'Bad trustedpeer config setting! It should be set as'
+            ' trustedpeer=<hostname>:<portnumber>'
+        )
     state.trustedPeer = state.Peer(host, int(port))
 
 
