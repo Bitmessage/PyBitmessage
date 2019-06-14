@@ -84,6 +84,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                     int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
                 Inventory().clean()
+                queues.workerQueue.put(('sendOnionPeerObj', ''))
                 # pubkeys
                 sqlExecute(
                     "DELETE FROM pubkeys WHERE time<? AND usedpersonally='no'",
