@@ -2,7 +2,6 @@ import collections
 
 neededPubkeys = {}
 streamsInWhichIAmParticipating = []
-sendDataQueues = []  # each sendData thread puts its queue in this list.
 
 # For UPnP
 extPort = None
@@ -35,6 +34,7 @@ maximumNumberOfHalfOpenConnections = 0
 invThread = None
 addrThread = None
 downloadThread = None
+uploadThread = None
 
 ownAddresses = {}
 
@@ -51,9 +51,6 @@ ownAddresses = {}
 trustedPeer = None
 
 discoveredPeers = {}
-
-# tracking pending downloads globally, for stats
-missingObjects = {}
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 

@@ -1,9 +1,9 @@
 import base64
 import hashlib
-import random
 import socket
 import struct
 import time
+from binascii import hexlify
 
 from bmconfigparser import BMConfigParser
 from debug import logger
@@ -16,14 +16,16 @@ from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInv
 import network.connectionpool
 from network.node import Node
 from network.objectracker import ObjectTracker
-from network.proxy import Proxy, ProxyError, GeneralProxyError
+from network.proxy import ProxyError
+from objectracker import missingObjects
+from randomtrackingdict import RandomTrackingDict
+
 
 import addresses
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
-import shared
 import state
 import protocol
-import helper_random
+
 
 class BMProtoError(ProxyError):
     errorCodes = ("Protocol error")
@@ -50,12 +52,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     addressAlive = 10800
     # maximum time offset
     maxTimeOffset = 3600
+    timeOffsetWrongCount = 0
 
     def __init__(self, address=None, sock=None):
         AdvancedDispatcher.__init__(self, sock)
         self.isOutbound = False
         # packet/connection from a local IP
         self.local = False
+        self.pendingUpload = RandomTrackingDict()
 
     def bm_proto_reset(self):
         self.magic = None
@@ -276,25 +280,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def bm_command_getdata(self):
         items = self.decode_payload_content("l32s")
         # skip?
-        if time.time() < self.skipUntil:
+        now = time.time()
+        if now < self.skipUntil:
             return True
-        #TODO make this more asynchronous
-        helper_random.randomshuffle(items)
-        for i in map(str, items):
-            if Dandelion().hasHash(i) and \
-                    self != Dandelion().objectChildStem(i):
-                self.antiIntersectionDelay()
-                logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
-                break
-            else:
-                try:
-                    self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
-                except KeyError:
-                    self.antiIntersectionDelay()
-                    logger.info('%s asked for an object we don\'t have.', self.destination)
-                    break
-        # I think that aborting after the first missing/stem object is more secure
-        # when using random reordering, as the recipient won't know exactly which objects we refuse to deliver
+        for i in items:
+            self.pendingUpload[str(i)] = now
         return True
 
     def _command_inv(self, dandelion=False):
@@ -358,7 +348,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
             try:
-                del state.missingObjects[self.object.inventoryHash]
+                del missingObjects[self.object.inventoryHash]
             except KeyError:
                 pass
 
@@ -381,14 +371,18 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
+            if (
+                decodedIP and time.time() - seenTime > 0 and
+                seenTime > time.time() - BMProto.addressAlive and
+                port > 0
+            ):
                 peer = state.Peer(decodedIP, port)
                 try:
                     if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
                         continue
                 except KeyError:
                     pass
-                if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
+                if len(knownnodes.knownNodes[stream]) < BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
                     with knownnodes.knownNodesLock:
                         try:
                             knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
@@ -438,7 +432,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.peerValidityChecks():
             # TODO ABORT
             return True
-        #shared.connectedHostsList[self.destination] = self.streams[0]
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
@@ -468,17 +461,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 errorText="Your time is too far in the future compared to mine. Closing connection."))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it.",
                 self.destination, self.timeOffset)
-            shared.timeOffsetWrongCount += 1
+            BMProto.timeOffsetWrongCount += 1
             return False
         elif self.timeOffset < -BMProto.maxTimeOffset:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your time is too far in the past compared to mine. Closing connection."))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it.",
                 self.destination, self.timeOffset)
-            shared.timeOffsetWrongCount += 1
+            BMProto.timeOffsetWrongCount += 1
             return False
         else:
-            shared.timeOffsetWrongCount = 0
+            BMProto.timeOffsetWrongCount = 0
         if not self.streams:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="We don't have shared stream interests. Closing connection."))
@@ -554,7 +547,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 except KeyError:
                     pass
         try:
-            del state.missingObjects[hashId]
+            del missingObjects[hashId]
         except KeyError:
             pass
 
@@ -571,3 +564,32 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except AttributeError:
                 logger.debug("Disconnected socket closing")
         AdvancedDispatcher.handle_close(self)
+
+
+class BMStringParser(BMProto):
+    """
+    A special case of BMProto used by objectProcessor to send ACK
+    """
+    def __init__(self):
+        super(BMStringParser, self).__init__()
+        self.destination = state.Peer('127.0.0.1', 8444)
+        self.payload = None
+        ObjectTracker.__init__(self)
+
+    def send_data(self, data):
+        """Send object given by the data string"""
+        # This class is introduced specially for ACK sending, please
+        # change log strings if you are going to use it for something else
+        self.bm_proto_reset()
+        self.payload = data
+        try:
+            self.bm_command_object()
+        except BMObjectAlreadyHaveError:
+            pass  # maybe the same msg received on different nodes
+        except BMObjectExpiredError:
+            logger.debug(
+                'Sending ACK failure (expired): %s', hexlify(data))
+        except Exception as e:
+            logger.debug(
+                'Exception of type %s while sending ACK',
+                type(e), exc_info=True)

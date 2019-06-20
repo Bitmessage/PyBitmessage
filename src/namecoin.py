@@ -34,6 +34,7 @@ import os
 import socket
 import sys
 
+from addresses import decodeAddress
 from debug import logger
 import defaults
 import tr  # translate
@@ -102,7 +103,10 @@ class namecoinConnection(object):
         """
         slashPos = string.find("/")
         if slashPos < 0:
+            display_name = string
             string = "id/" + string
+        else:
+            display_name = string.split("/")[1]
 
         try:
             if self.nmctype == "namecoind":
@@ -112,7 +116,9 @@ class namecoinConnection(object):
                 res = self.callRPC("data", ["getValue", string])
                 res = res["reply"]
                 if not res:
-                    return (tr._translate("MainWindow", 'The name %1 was not found.').arg(unicode(string)), None)
+                    return (tr._translate(
+                        "MainWindow", 'The name %1 was not found.'
+                    ).arg(unicode(string)), None)
             else:
                 assert False
         except RPCError as exc:
@@ -121,29 +127,37 @@ class namecoinConnection(object):
                 errmsg = exc.error["message"]
             else:
                 errmsg = exc.error
-            return (tr._translate("MainWindow", 'The namecoin query failed (%1)').arg(unicode(errmsg)), None)
+            return (tr._translate(
+                "MainWindow", 'The namecoin query failed (%1)'
+            ).arg(unicode(errmsg)), None)
+        except AssertionError:
+            return (tr._translate(
+                "MainWindow", 'Unknown namecoin interface type: %1'
+            ).arg(unicode(self.nmctype)), None)
         except Exception:
             logger.exception("Namecoin query exception")
-            return (tr._translate("MainWindow", 'The namecoin query failed.'), None)
+            return (tr._translate(
+                "MainWindow", 'The namecoin query failed.'), None)
 
         try:
-            val = json.loads(res)
-        except:
-            logger.exception("Namecoin query json exception")
-            return (tr._translate("MainWindow", 'The name %1 has no valid JSON data.').arg(unicode(string)), None)
+            res = json.loads(res)
+        except ValueError:
+            pass
+        else:
+            try:
+                display_name = res["name"]
+            except KeyError:
+                pass
+            res = res.get("bitmessage")
 
-        if "bitmessage" in val:
-            if "name" in val:
-                ret = "%s <%s>" % (val["name"], val["bitmessage"])
-            else:
-                ret = val["bitmessage"]
-            return (None, ret)
+        valid = decodeAddress(res)[0] == 'success'
         return (
+            None, "%s <%s>" % (display_name, res)
+        ) if valid else (
             tr._translate(
                 "MainWindow",
-                'The name %1 has no associated Bitmessage address.').arg(
-                    unicode(string)),
-            None)
+                'The name %1 has no associated Bitmessage address.'
+            ).arg(unicode(string)), None)
 
     def test(self):
         """

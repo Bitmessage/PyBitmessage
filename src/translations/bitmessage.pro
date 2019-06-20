@@ -5,20 +5,15 @@ SOURCES	= 	../addresses.py\
 			../class_singleCleaner.py\
 			../class_singleWorker.py\
 			../class_sqlThread.py\
-			../helper_bitcoin.py\
-			../helper_bootstrap.py\
-			../helper_generic.py\
-			../helper_inbox.py\
 			../helper_msgcoding.py\
-			../helper_sent.py\
-			../helper_startup.py\
+			../helper_search.py\
                         ../namecoin.py\
 			../proofofwork.py\
-			../shared.py\
 			../upnp.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/account.py\
-			../bitmessageqt/address_dialogs.py\
+                        ../bitmessageqt/address_dialogs.py\
+                        ../bitmessageqt/addressvalidator.py\
 			../bitmessageqt/bitmessageui.py\
 			../bitmessageqt/blacklist.py\
 			../bitmessageqt/dialogs.py\
@@ -28,9 +23,10 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/messageview.py\
 			../bitmessageqt/networkstatus.py\
 			../bitmessageqt/newchandialog.py\
-			../bitmessageqt/safehtmlparser.py\
-			../bitmessageqt/settings.py\
-                        ../plugins/qrcodeui.py
+                        ../bitmessageqt/settings.py\
+                        ../bitmessageqt/support.py\
+                        ../plugins/indicator_libmessaging.py\
+                        ../plugins/menu_qrcode.py
 
 FORMS = \
     ../bitmessageqt/about.ui\

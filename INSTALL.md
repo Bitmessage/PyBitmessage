@@ -6,8 +6,8 @@ For an up-to-date version of these instructions, please visit the
 PyBitmessage can be run in either one of two ways:
 
 - straight from source
- 
- or 
+
+ or
 - from an installed
 package.
 
@@ -19,13 +19,13 @@ Here's a list of dependencies needed for PyBitmessage
 - python2.7
 - python2-qt4 (python-qt4 on Debian/Ubuntu)
 - openssl
-- (Fedora & Redhat only) openssl-compat-bitcoin-libs 
+- (Fedora & Redhat only) openssl-compat-bitcoin-libs
 
 ## Running PyBitmessage
-PyBitmessage can be run in two ways: 
+PyBitmessage can be run in two ways:
 - straight from source
 
- or 
+ or
 - via a package which is installed on your system. Since PyBitmessage is Beta, it is best to run
 PyBitmessage from source, so that you may update as needed.
 
@@ -65,7 +65,7 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 
 Now, install the required dependencies
 ```
-brew install git python pyqt
+brew install git python openssl cartr/qt4/pyqt@4 
 ```
 
 Download and run PyBitmessage:

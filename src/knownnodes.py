@@ -1,13 +1,17 @@
+"""
+Manipulations with knownNodes dictionary.
+"""
+
 import json
 import os
 import pickle
-# import sys
 import threading
 import time
 
 import state
 from bmconfigparser import BMConfigParser
 from debug import logger
+from helper_bootstrap import dns
 
 knownNodesLock = threading.Lock()
 knownNodes = {stream: {} for stream in range(1, 4)}
@@ -16,6 +20,8 @@ knownNodesTrimAmount = 2000
 
 # forget a node after rating is this low
 knownNodesForgetRating = -0.5
+
+knownNodesActual = False
 
 DEFAULT_NODES = (
     state.Peer('5.45.99.75', 8444),
@@ -27,6 +33,10 @@ DEFAULT_NODES = (
     state.Peer('24.188.198.204', 8111),
     state.Peer('109.147.204.113', 1195),
     state.Peer('178.11.46.221', 8444)
+)
+
+DEFAULT_NODES_ONION = (
+    state.Peer('quzwelsuziwqgpt2.onion', 8444),
 )
 
 
@@ -48,10 +58,19 @@ def json_deserialize_knownnodes(source):
     """
     Read JSON from source and make knownnodes dict
     """
+    global knownNodesActual  # pylint: disable=global-statement
     for node in json.load(source):
         peer = node['peer']
-        peer['host'] = str(peer['host'])
-        knownNodes[node['stream']][state.Peer(**peer)] = node['info']
+        info = node['info']
+        peer = state.Peer(str(peer['host']), peer.get('port', 8444))
+        knownNodes[node['stream']][peer] = info
+
+        if (
+            not (knownNodesActual or info.get('is_self')) and
+            peer not in DEFAULT_NODES and
+            peer not in DEFAULT_NODES_ONION
+        ):
+            knownNodesActual = True
 
 
 def pickle_deserialize_old_knownnodes(source):
@@ -60,9 +79,10 @@ def pickle_deserialize_old_knownnodes(source):
     the old format was {Peer:lastseen, ...}
     the new format is {Peer:{"lastseen":i, "rating":f}}
     """
+    global knownNodes  # pylint: disable=global-statement
     knownNodes = pickle.load(source)
     for stream in knownNodes.keys():
-        for node, params in knownNodes[stream].items():
+        for node, params in knownNodes[stream].iteritems():
             if isinstance(params, (float, int)):
                 addKnownNode(stream, node, params)
 
@@ -83,9 +103,10 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     }
 
 
-def createDefaultKnownNodes():
-    for peer in DEFAULT_NODES:
-        addKnownNode(1, peer)
+def createDefaultKnownNodes(onion=False):
+    past = time.time() - 2418600  # 28 days - 10 min
+    for peer in DEFAULT_NODES_ONION if onion else DEFAULT_NODES:
+        addKnownNode(1, peer, past)
     saveKnownNodes()
 
 
@@ -104,17 +125,15 @@ def readKnownNodes():
         createDefaultKnownNodes()
 
     config = BMConfigParser()
-    # if config.safeGetInt('bitmessagesettings', 'settingsversion') > 10:
-    #     sys.exit(
-    #         'Bitmessage cannot read future versions of the keys file'
-    #         ' (keys.dat). Run the newer version of Bitmessage.')
 
     # your own onion address, if setup
     onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
     if onionhostname and ".onion" in onionhostname:
         onionport = config.safeGetInt('bitmessagesettings', 'onionport')
         if onionport:
-            addKnownNode(1, state.Peer(onionhostname, onionport), is_self=True)
+            self_peer = state.Peer(onionhostname, onionport)
+            addKnownNode(1, self_peer, is_self=True)
+            state.ownAddresses[self_peer] = True
 
 
 def increaseRating(peer):
@@ -156,3 +175,50 @@ def trimKnownNodes(recAddrStream=1):
         )[:knownNodesTrimAmount]
         for oldest in oldestList:
             del knownNodes[recAddrStream][oldest]
+
+
+def cleanupKnownNodes():
+    """
+    Cleanup knownnodes: remove old nodes and nodes with low rating
+    """
+    now = int(time.time())
+    needToWriteKnownNodesToDisk = False
+    dns_done = False
+    spawnConnections = not BMConfigParser().safeGetBoolean(
+        'bitmessagesettings', 'dontconnect'
+    ) and BMConfigParser().safeGetBoolean(
+        'bitmessagesettings', 'sendoutgoingconnections')
+
+    with knownNodesLock:
+        for stream in knownNodes:
+            if stream not in state.streamsInWhichIAmParticipating:
+                continue
+            keys = knownNodes[stream].keys()
+            if len(keys) <= 1:  # leave at least one node
+                if not dns_done and spawnConnections:
+                    dns()
+                    dns_done = True
+                continue
+            for node in keys:
+                try:
+                    # scrap old nodes
+                    if (now - knownNodes[stream][node]["lastseen"] >
+                            2419200):  # 28 days
+                        needToWriteKnownNodesToDisk = True
+                        del knownNodes[stream][node]
+                        continue
+                    # scrap old nodes with low rating
+                    if (now - knownNodes[stream][node]["lastseen"] > 10800 and
+                        knownNodes[stream][node]["rating"] <=
+                            knownNodesForgetRating):
+                        needToWriteKnownNodesToDisk = True
+                        del knownNodes[stream][node]
+                        continue
+                except TypeError:
+                    logger.warning('Error in %s', node)
+            keys = []
+
+    # Let us write out the knowNodes to disk
+    # if there is anything new to write out.
+    if needToWriteKnownNodesToDisk:
+        saveKnownNodes()

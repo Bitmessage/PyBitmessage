@@ -1,16 +1,23 @@
-"""Helper Start performs all the startup operations."""
+"""
+src/helper_startup.py
+=====================
+
+Helper Start performs all the startup operations.
+"""
+# pylint: disable=too-many-branches,too-many-statements
+from __future__ import print_function
 
 import ConfigParser
-from bmconfigparser import BMConfigParser
-import defaults
-import sys
 import os
 import platform
+import sys
 from distutils.version import StrictVersion
 
+import defaults
+import helper_random
 import paths
 import state
-import helper_random
+from bmconfigparser import BMConfigParser
 
 # The user may de-select Portable Mode in the settings if they want
 # the config files to stay in the application data folder.
@@ -24,12 +31,18 @@ def _loadTrustedPeer():
         # This probably means the trusted peer wasn't specified so we
         # can just leave it as None
         return
-
-    host, port = trustedPeer.split(':')
+    try:
+        host, port = trustedPeer.split(':')
+    except ValueError:
+        sys.exit(
+            'Bad trustedpeer config setting! It should be set as'
+            ' trustedpeer=<hostname>:<portnumber>'
+        )
     state.trustedPeer = state.Peer(host, int(port))
 
 
 def loadConfig():
+    """Load the config"""
     config = BMConfigParser()
     if state.appdata:
         config.read(state.appdata + 'keys.dat')
@@ -44,7 +57,7 @@ def loadConfig():
         config.read(paths.lookupExeFolder() + 'keys.dat')
         try:
             config.get('bitmessagesettings', 'settingsversion')
-            print 'Loading config files from same directory as program.'
+            print('Loading config files from same directory as program.')
             needToCreateKeysFile = False
             state.appdata = paths.lookupExeFolder()
         except:
@@ -55,7 +68,7 @@ def loadConfig():
             needToCreateKeysFile = config.safeGet(
                 'bitmessagesettings', 'settingsversion') is None
             if not needToCreateKeysFile:
-                print 'Loading existing config files from', state.appdata
+                print('Loading existing config files from', state.appdata)
 
     if needToCreateKeysFile:
 
@@ -80,7 +93,6 @@ def loadConfig():
         config.set('bitmessagesettings', 'sockshostname', 'localhost')
         config.set('bitmessagesettings', 'socksport', '9050')
         config.set('bitmessagesettings', 'socksauthentication', 'false')
-        # config.set('bitmessagesettings', 'sockslisten', 'false')
         config.set('bitmessagesettings', 'socksusername', '')
         config.set('bitmessagesettings', 'sockspassword', '')
         config.set('bitmessagesettings', 'keysencrypted', 'false')
@@ -92,30 +104,14 @@ def loadConfig():
             'bitmessagesettings', 'defaultpayloadlengthextrabytes',
             str(defaults.networkDefaultPayloadLengthExtraBytes))
         config.set('bitmessagesettings', 'minimizeonclose', 'false')
-        # config.set(
-        #     'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-        # config.set(
-        #     'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
-        #     '0')
         config.set('bitmessagesettings', 'dontconnect', 'true')
-        # config.set('bitmessagesettings', 'userlocale', 'system')
-        # config.set('bitmessagesettings', 'useidenticons', 'True')
-        # config.set(
-        #     'bitmessagesettings', 'identiconsuffix',
-        #     ''.join(helper_random.randomchoice(
-        #         "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-        #         ) for x in range(12)
-        #     ))  # a twelve character pseudo-password to salt the identicons
         config.set('bitmessagesettings', 'replybelow', 'False')
         config.set('bitmessagesettings', 'maxdownloadrate', '0')
         config.set('bitmessagesettings', 'maxuploadrate', '0')
-        # config.set('bitmessagesettings', 'maxoutboundconnections', '8')
-        # config.set('bitmessagesettings', 'ttl', '367200')
 
         # UI setting to stop trying to send messages after X days/months
         config.set('bitmessagesettings', 'stopresendingafterxdays', '')
         config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
-        # config.set('bitmessagesettings', 'timeperiod', '-1')
 
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
@@ -127,9 +123,9 @@ def loadConfig():
             # Just use the same directory as the program and forget about
             # the appdata folder
             state.appdata = ''
-            print 'Creating new config files in same directory as program.'
+            print('Creating new config files in same directory as program.')
         else:
-            print 'Creating new config files in', state.appdata
+            print('Creating new config files in', state.appdata)
             if not os.path.exists(state.appdata):
                 os.makedirs(state.appdata)
         if not sys.platform.startswith('win'):
@@ -142,6 +138,7 @@ def loadConfig():
 
 
 def updateConfig():
+    """Save the config"""
     config = BMConfigParser()
     settingsversion = config.getint('bitmessagesettings', 'settingsversion')
     if settingsversion == 1:
@@ -172,20 +169,6 @@ def updateConfig():
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
         settingsversion = 7
 
-    # Raise the default required difficulty from 1 to 2
-    # With the change to protocol v3, this is obsolete.
-    # if settingsversion == 6:
-    #     if int(shared.config.get(
-    #             'bitmessagesettings', 'defaultnoncetrialsperbyte'
-    #     )) == defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
-    #         shared.config.set(
-    #             'bitmessagesettings', 'defaultnoncetrialsperbyte',
-    #             str(
-    #                 defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-    #                 * 2)
-    #         )
-    #     settingsversion = 7
-
     if not config.has_option('bitmessagesettings', 'sockslisten'):
         config.set('bitmessagesettings', 'sockslisten', 'false')
 
@@ -200,11 +183,11 @@ def updateConfig():
     if not config.has_option('bitmessagesettings', 'identiconsuffix'):
         # acts as a salt
         config.set(
-            'bitmessagesettings', 'identiconsuffix',
-            ''.join(helper_random.randomchoice(
-                "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-            ) for x in range(12)
-            ))  # a twelve character pseudo-password to salt the identicons
+            'bitmessagesettings', 'identiconsuffix', ''.join(
+                helper_random.randomchoice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+                for x in range(12)
+            )
+        )  # a twelve character pseudo-password to salt the identicons
 
     # Add settings to support no longer resending messages after
     # a certain period of time even if we never get an ack
@@ -273,9 +256,7 @@ def updateConfig():
             str(defaults.ridiculousDifficulty *
                 defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
         )
-    if config.safeGetInt(
-        'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
-    ) == 0:
+    if config.safeGetInt('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
         config.set(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
             str(defaults.ridiculousDifficulty *
@@ -308,6 +289,7 @@ def updateConfig():
 
 
 def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
+    """Check for (mainly XP and Vista) limitations"""
     try:
         if sys.platform[0:3] == "win":
             VER_THIS = StrictVersion(platform.version())

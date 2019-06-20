@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-instance-attributes,too-many-locals,too-many-statements,attribute-defined-outside-init
 """
+src/bitmessageqt/settings.py
+============================
+
 Form implementation generated from reading ui file 'settings.ui'
 
 Created: Thu Dec 25 23:21:20 2014
@@ -9,15 +12,12 @@ Created: Thu Dec 25 23:21:20 2014
 WARNING! All changes made in this file will be lost!
 """
 
-from __future__ import absolute_import
-
 from sys import platform
 
 from PyQt4 import QtCore, QtGui
 
 from . import bitmessage_icons_rc  # pylint: disable=unused-import
 from .languagebox import LanguageBox
-
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8

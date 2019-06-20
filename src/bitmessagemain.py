@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2018 The Bitmessage developers
+# Copyright (c) 2012-2019 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,30 +20,28 @@ sys.path.insert(0, app_dir)
 import depends
 depends.check_dependencies()
 
+import ctypes
+import getopt
+import multiprocessing
 # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 import signal
-# The next 3 are used for the API
-from singleinstance import singleinstance
-import errno
 import socket
-import ctypes
+import threading
+import time
+import traceback
 from struct import pack
-from subprocess import call
-from time import sleep
-from random import randint
-import getopt
 
-from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import (
     isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 )
+from singleinstance import singleinstance
 
 import defaults
 import shared
 import knownnodes
 import state
 import shutdown
-import threading
+from debug import logger
 
 # Classes
 from class_sqlThread import sqlThread
@@ -63,15 +61,14 @@ from network.announcethread import AnnounceThread
 from network.invthread import InvThread
 from network.addrthread import AddrThread
 from network.downloadthread import DownloadThread
+from network.uploadthread import UploadThread
 
 # Helper Functions
-import helper_bootstrap
-import helper_generic
 import helper_threading
+
 
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
-    selfInitiatedConnections[streamNumber] = {}
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
         # Some XP and Vista systems can only have 10 outgoing connections
@@ -155,61 +152,35 @@ def _fixSocket():
         socket.IPV6_V6ONLY = 27
 
 
-# This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, helper_threading.StoppableThread):
-    def __init__(self):
-        threading.Thread.__init__(self, name="singleAPI")
-        self.initStop()
-
-    def stopThread(self):
-        super(singleAPI, self).stopThread()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.connect((
-                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
-                BMConfigParser().getint('bitmessagesettings', 'apiport')
-            ))
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-        except:
-            pass
-
-    def run(self):
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
-        try:
-            from errno import WSAEADDRINUSE
-        except (ImportError, AttributeError):
-            errno.WSAEADDRINUSE = errno.EADDRINUSE
-        for attempt in range(50):
-            try:
-                if attempt > 0:
-                    port = randint(32767, 65535)
-                se = StoppableXMLRPCServer(
-                    (BMConfigParser().get(
-                        'bitmessagesettings', 'apiinterface'),
-                     port),
-                    MySimpleXMLRPCRequestHandler, True, True)
-            except socket.error as e:
-                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
-                    continue
-            else:
-                if attempt > 0:
-                    BMConfigParser().set(
-                        "bitmessagesettings", "apiport", str(port))
-                    BMConfigParser().save()
-                break
-        se.register_introspection_functions()
-        se.serve_forever()
-
-
-# This is a list of current connections (the thread pointers at least)
-selfInitiatedConnections = {}
-
-if shared.useVeryEasyProofOfWorkForTesting:
-    defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
-    defaults.networkDefaultPayloadLengthExtraBytes = int(
-        defaults.networkDefaultPayloadLengthExtraBytes / 100)
+def signal_handler(signum, frame):
+    """Single handler for any signal sent to pybitmessage"""
+    process = multiprocessing.current_process()
+    thread = threading.current_thread()
+    logger.error(
+        'Got signal %i in %s/%s',
+        signum, process.name, thread.name
+    )
+    if process.name == "RegExParser":
+        # on Windows this isn't triggered, but it's fine,
+        # it has its own process termination thing
+        raise SystemExit
+    if "PoolWorker" in process.name:
+        raise SystemExit
+    if thread.name not in ("PyBitmessage", "MainThread"):
+        return
+    logger.error("Got signal %i", signum)
+    # there are possible non-UI variants to run bitmessage which should shutdown
+    # especially test-mode
+    if shared.thisapp.daemon or not state.enableGUI:
+        shutdown.doCleanShutdown()
+    else:
+        print('# Thread: %s(%d)' % (thread.name, thread.ident))
+        for filename, lineno, name, line in traceback.extract_stack(frame):
+            print('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                print('  %s' % line.strip())
+        print('Unfortunately you cannot use Ctrl+C when running the UI'
+              ' because the UI captures the signal.')
 
 
 class Main:
@@ -234,14 +205,32 @@ class Main:
                 sys.exit()
             elif opt in ("-d", "--daemon"):
                 daemon = True
-                state.enableGUI = False  # run without a UI
             elif opt in ("-c", "--curses"):
                 state.curses = True
             elif opt in ("-t", "--test"):
-                state.testmode = daemon = True
+                state.testmode = True
+                if os.path.isfile(os.path.join(
+                        state.appdata, 'unittest.lock')):
+                    daemon = True
                 state.enableGUI = False  # run without a UI
+                # Fallback: in case when no api command was issued
+                state.last_api_response = time.time()
+                # Apply special settings
+                config = BMConfigParser()
+                config.set(
+                    'bitmessagesettings', 'apienabled', 'true')
+                config.set(
+                    'bitmessagesettings', 'apiusername', 'username')
+                config.set(
+                    'bitmessagesettings', 'apipassword', 'password')
+                config.set(
+                    'bitmessagesettings', 'apinotifypath',
+                    os.path.join(app_dir, 'tests', 'apinotify_handler.py')
+                )
 
-        # is the application already running?  If yes then exit.
+        if daemon:
+            state.enableGUI = False  # run without a UI
+
         if state.enableGUI and not state.curses and not depends.check_pyqt():
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
@@ -255,9 +244,10 @@ class Main:
                 ' the curses TUI rather than Qt4 GUI interface by providing'
                 ' \'-c\' or \'--curses\'as a commandline argument.'
             )
+        # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
 
-        if daemon and not state.testmode:
+        if daemon:
             with shared.printLock:
                 print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
@@ -272,6 +262,13 @@ class Main:
         if state.dandelion and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
             state.dandelion = 0
+
+        if state.testmode or BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'extralowdifficulty'):
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
+            defaults.networkDefaultPayloadLengthExtraBytes = int(
+                defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
         knownnodes.readKnownNodes()
 
@@ -338,19 +335,9 @@ class Main:
             shared.reloadBroadcastSendersForWhichImWatching()
 
             # API is also objproc dependent
-            if BMConfigParser().safeGetBoolean(
-                    'bitmessagesettings', 'apienabled'):
-                try:
-                    apiNotifyPath = BMConfigParser().get(
-                        'bitmessagesettings', 'apinotifypath')
-                except:
-                    apiNotifyPath = ''
-                if apiNotifyPath != '':
-                    with shared.printLock:
-                        print('Trying to call', apiNotifyPath)
-
-                    call([apiNotifyPath, "startingUp"])
-                singleAPIThread = singleAPI()
+            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
+                import api  # pylint: disable=relative-import
+                singleAPIThread = api.singleAPI()
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
                 singleAPIThread.start()
@@ -377,6 +364,9 @@ class Main:
             state.downloadThread = DownloadThread()
             state.downloadThread.daemon = True
             state.downloadThread.start()
+            state.uploadThread = UploadThread()
+            state.uploadThread.daemon = True
+            state.uploadThread.start()
 
             connectToStream(1)
 
@@ -407,12 +397,22 @@ class Main:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
         if daemon:
-            if state.testmode:
-                sleep(30)
-                # make testing
-                self.stop()
             while state.shutdown == 0:
-                sleep(1)
+                time.sleep(1)
+                if (state.testmode and
+                        time.time() - state.last_api_response >= 30):
+                    self.stop()
+        elif not state.enableGUI:
+            from tests import core as test_core  # pylint: disable=relative-import
+            test_core_result = test_core.run()
+            state.enableGUI = True
+            self.stop()
+            test_core.cleanup()
+            sys.exit(
+                'Core tests failed!'
+                if test_core_result.errors or test_core_result.failures
+                else 0
+            )
 
     def daemonize(self):
         grandfatherPid = os.getpid()
@@ -423,7 +423,7 @@ class Main:
                 shared.thisapp.cleanup()
                 # wait until grandchild ready
                 while True:
-                    sleep(1)
+                    time.sleep(1)
                 os._exit(0)
         except AttributeError:
             # fork not implemented
@@ -444,7 +444,7 @@ class Main:
                 shared.thisapp.cleanup()
                 # wait until child ready
                 while True:
-                    sleep(1)
+                    time.sleep(1)
                 os._exit(0)
         except AttributeError:
             # fork not implemented
@@ -467,8 +467,8 @@ class Main:
             os.kill(grandfatherPid, signal.SIGTERM)
 
     def setSignalHandler(self):
-        signal.signal(signal.SIGINT, helper_generic.signal_handler)
-        signal.signal(signal.SIGTERM, helper_generic.signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def usage(self):

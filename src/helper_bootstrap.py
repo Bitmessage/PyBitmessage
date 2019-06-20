@@ -40,8 +40,8 @@ def dns():
                     port, exc_info=True
                 )
     elif proxy_type == 'SOCKS5':
-        knownnodes.addKnownNode(1, state.Peer('quzwelsuziwqgpt2.onion', 8444))
-        logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
+        knownnodes.createDefaultKnownNodes(onion=True)
+        logger.debug('Adding default onion knownNodes.')
         for port in [8080, 8444]:
             logger.debug("Resolving %i through SOCKS...", port)
             address_family = socket.AF_INET

@@ -651,6 +651,14 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.lineEditSubject, self.textEditMessage)
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonAddSubscription)
 
+        # Popup menu actions container for the Sent page
+        # pylint: disable=attribute-defined-outside-init
+        self.sentContextMenuToolbar = QtGui.QToolBar()
+        # Popup menu actions container for chans tree
+        self.addressContextMenuToolbar = QtGui.QToolBar()
+        # Popup menu actions container for subscriptions tree
+        self.subscriptionsContextMenuToolbar = QtGui.QToolBar()
+
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
         if dontconnect is None:
             dontconnect = BMConfigParser().safeGetBoolean(

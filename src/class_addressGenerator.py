@@ -15,6 +15,7 @@ import highlevelcrypto
 from bmconfigparser import BMConfigParser
 from debug import logger
 from addresses import decodeAddress, encodeAddress, encodeVarint
+from fallback import RIPEMD160Hash
 from helper_threading import StoppableThread
 
 
@@ -133,16 +134,17 @@ class addressGenerator(threading.Thread, StoppableThread):
                     potentialPrivEncryptionKey = OpenSSL.rand(32)
                     potentialPubEncryptionKey = highlevelcrypto.pointMult(
                         potentialPrivEncryptionKey)
-                    ripe = hashlib.new('ripemd160')
                     sha = hashlib.new('sha512')
                     sha.update(
                         potentialPubSigningKey + potentialPubEncryptionKey)
-                    ripe.update(sha.digest())
-                    if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
+                    ripe = RIPEMD160Hash(sha.digest()).digest()
+                    if (
+                        ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
+                        '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                    ):
                         break
                 logger.info(
-                    'Generated address with ripe digest: %s',
-                    hexlify(ripe.digest()))
+                    'Generated address with ripe digest: %s', hexlify(ripe))
                 try:
                     logger.info(
                         'Address generator calculated %s addresses at %s'
@@ -156,7 +158,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     # time.time() - startTime equaled zero.
                     pass
                 address = encodeAddress(
-                    addressVersionNumber, streamNumber, ripe.digest())
+                    addressVersionNumber, streamNumber, ripe)
 
                 # An excellent way for us to store our keys
                 # is in Wallet Import Format. Let us convert now.
@@ -203,7 +205,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                 shared.reloadMyAddressHashes()
                 if addressVersionNumber == 3:
                     queues.workerQueue.put((
-                        'sendOutOrStoreMyV3Pubkey', ripe.digest()))
+                        'sendOutOrStoreMyV3Pubkey', ripe))
                 elif addressVersionNumber == 4:
                     queues.workerQueue.put((
                         'sendOutOrStoreMyV4Pubkey', address))
@@ -255,17 +257,18 @@ class addressGenerator(threading.Thread, StoppableThread):
                             potentialPrivEncryptionKey)
                         signingKeyNonce += 2
                         encryptionKeyNonce += 2
-                        ripe = hashlib.new('ripemd160')
                         sha = hashlib.new('sha512')
                         sha.update(
                             potentialPubSigningKey + potentialPubEncryptionKey)
-                        ripe.update(sha.digest())
-                        if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
+                        ripe = RIPEMD160Hash(sha.digest()).digest()
+                        if (
+                            ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
+                            '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                        ):
                             break
 
                     logger.info(
-                        'Generated address with ripe digest: %s',
-                        hexlify(ripe.digest()))
+                        'Generated address with ripe digest: %s', hexlify(ripe))
                     try:
                         logger.info(
                             'Address generator calculated %s addresses'
@@ -280,7 +283,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                         # time.time() - startTime equaled zero.
                         pass
                     address = encodeAddress(
-                        addressVersionNumber, streamNumber, ripe.digest())
+                        addressVersionNumber, streamNumber, ripe)
 
                     saveAddressToDisk = True
                     # If we are joining an existing chan, let us check
@@ -357,13 +360,13 @@ class addressGenerator(threading.Thread, StoppableThread):
                             ))
                             listOfNewAddressesToSendOutThroughTheAPI.append(
                                 address)
-                            shared.myECCryptorObjects[ripe.digest()] = \
+                            shared.myECCryptorObjects[ripe] = \
                                 highlevelcrypto.makeCryptor(
                                 hexlify(potentialPrivEncryptionKey))
-                            shared.myAddressesByHash[ripe.digest()] = address
+                            shared.myAddressesByHash[ripe] = address
                             tag = hashlib.sha512(hashlib.sha512(
                                 encodeVarint(addressVersionNumber) +
-                                encodeVarint(streamNumber) + ripe.digest()
+                                encodeVarint(streamNumber) + ripe
                             ).digest()).digest()[32:]
                             shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
@@ -371,7 +374,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                                 # the worker thread won't send out
                                 # the pubkey over the network.
                                 queues.workerQueue.put((
-                                    'sendOutOrStoreMyV3Pubkey', ripe.digest()))
+                                    'sendOutOrStoreMyV3Pubkey', ripe))
                             elif addressVersionNumber == 4:
                                 queues.workerQueue.put((
                                     'sendOutOrStoreMyV4Pubkey', address))

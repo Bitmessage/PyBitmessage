@@ -90,7 +90,10 @@ def do_opencl_pow(hash, target):
     while output[0][0] == 0 and shutdown == 0:
         kernel.set_arg(2, pack("<Q", progress))
         cl.enqueue_nd_range_kernel(queue, kernel, (globamt,), (worksize,))
-        cl.enqueue_read_buffer(queue, dest_buf, output)
+        try:
+            cl.enqueue_read_buffer(queue, dest_buf, output)
+        except AttributeError:
+            cl.enqueue_copy(queue, output, dest_buf)
         queue.finish()
         progress += globamt
         sofar = time.time() - start

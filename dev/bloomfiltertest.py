@@ -1,9 +1,15 @@
-from math import ceil
-from os import stat, getenv, path
-from pybloom import BloomFilter as BloomFilter1
-from pybloomfilter import BloomFilter as BloomFilter2
+"""
+dev/bloomfiltertest.py
+======================
+
+"""
+
 import sqlite3
+from os import getenv, path
 from time import time
+
+from pybloom import BloomFilter as BloomFilter1  # pylint: disable=import-error
+from pybloomfilter import BloomFilter as BloomFilter2  # pylint: disable=import-error
 
 # Ubuntu: apt-get install python-pybloomfiltermmap
 
@@ -41,9 +47,9 @@ for row in cur.fetchall():
     except IndexError:
         pass
 
-#f = open("/home/shurdeek/tmp/bloom.dat", "wb")
-#sb1.tofile(f)
-#f.close()
+# f = open("/home/shurdeek/tmp/bloom.dat", "wb")
+# sb1.tofile(f)
+# f.close()
 
 
 print "Item count: %i" % (itemcount)

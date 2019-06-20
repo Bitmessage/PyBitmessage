@@ -12,7 +12,7 @@ from src.version import softwareVersion
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
     'notify2': ['notify2'],
-    'pyopencl': ['pyopencl'],
+    'opencl': ['pyopencl', 'numpy'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
@@ -22,7 +22,7 @@ EXTRAS_REQUIRE = {
         'curses',  # src/depends.py
         'python2-pythondialog',  # src/depends.py
         'm2r',  # fab build_docs
-    ],
+    ]
 }
 
 
@@ -50,6 +50,9 @@ if __name__ == "__main__":
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
 
+    with open(os.path.join(here, 'requirements.txt'), 'r') as f:
+        requirements = list(f.readlines())
+
     bitmsghash = Extension(
         'pybitmessage.bitmsghash.bitmsghash',
         sources=['src/bitmsghash/bitmsghash.cpp'],
@@ -61,12 +64,13 @@ if __name__ == "__main__":
         'pybitmessage',
         'pybitmessage.bitmessageqt',
         'pybitmessage.bitmessagecurses',
+        'pybitmessage.fallback',
         'pybitmessage.messagetypes',
         'pybitmessage.network',
+        'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
         'pybitmessage.socks',
-        'pybitmessage.storage',
-        'pybitmessage.plugins'
+        'pybitmessage.storage'
     ]
 
     # this will silently accept alternative providers of msgpack
@@ -74,13 +78,14 @@ if __name__ == "__main__":
 
     try:
         import msgpack
-        installRequires.append("msgpack-python")
+        installRequires.append(
+            "msgpack-python" if msgpack.version[:2] == (0, 4) else "msgpack")
     except ImportError:
         try:
             import umsgpack
             installRequires.append("umsgpack")
         except ImportError:
-            packages += ['pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
+            packages += ['pybitmessage.fallback.umsgpack']
 
     dist = setup(
         name='pybitmessage',
@@ -96,6 +101,7 @@ if __name__ == "__main__":
         # TODO: add keywords
         #keywords='',
         install_requires=installRequires,
+        tests_require=requirements,
         extras_require=EXTRAS_REQUIRE,
         classifiers=[
             "License :: OSI Approved :: MIT License"
