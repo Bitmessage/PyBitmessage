@@ -6,11 +6,11 @@ src/bitmessageqt/address_dialogs.py
 # pylint: disable=attribute-defined-outside-init
 
 import hashlib
+import queues
+import widgets
 
 from PyQt4 import QtCore, QtGui
 
-import queues
-import widgets
 from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass, getSortedAccounts
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
 from inventory import Inventory
@@ -27,20 +27,20 @@ class AddressCheckMixin(object):
         QtCore.QObject.connect(  # pylint: disable=no-member
             self.lineEditAddress,
             QtCore.SIGNAL("textChanged(QString)"),
-            self.addressChanged)
+            self.address_changed)
 
     def _onSuccess(self, addressVersion, streamNumber, ripe):
         pass
 
-    def addressChanged(self, QString):
+    def address_changed(self, q_string):
         """Address validation callback, performs validation and gives feedback"""
-        status, addressVersion, streamNumber, ripe = decodeAddress(
-            str(QString))
+        status, address_version, stream_number, ripe = decodeAddress(
+            str(q_string))
         self.valid = status == 'success'
         if self.valid:
             self.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
-            self._onSuccess(addressVersion, streamNumber, ripe)
+            self._onSuccess(address_version, stream_number, ripe)
         elif status == 'missingbm':
             self.labelAddressCheck.setText(_translate(
                 "MainWindow",  # dialog name should be here
@@ -135,14 +135,14 @@ class NewAddressDialog(QtGui.QDialog, RetranslateMixin):
         # self.buttonBox.enabled = False
         if self.radioButtonRandomAddress.isChecked():
             if self.radioButtonMostAvailable.isChecked():
-                streamNumberForAddress = 1
+                stream_number_for_address = 1
             else:
                 # User selected 'Use the same stream as an existing
                 # address.'
-                streamNumberForAddress = decodeAddress(
+                stream_number_for_address = decodeAddress(
                     self.comboBoxExisting.currentText())[2]
             queues.addressGeneratorQueue.put((
-                'createRandomAddress', 4, streamNumberForAddress,
+                'createRandomAddress', 4, stream_number_for_address,
                 str(self.newaddresslabel.text().toUtf8()), 1, "",
                 self.checkBoxEighteenByteRipe.isChecked()
             ))
@@ -165,9 +165,9 @@ class NewAddressDialog(QtGui.QDialog, RetranslateMixin):
             else:
                 # this will eventually have to be replaced by logic
                 # to determine the most available stream number.
-                streamNumberForAddress = 1
+                stream_number_for_address = 1
                 queues.addressGeneratorQueue.put((
-                    'createDeterministicAddresses', 4, streamNumberForAddress,
+                    'createDeterministicAddresses', 4, stream_number_for_address,
                     "unused deterministic address",
                     self.spinBoxNumberOfAddressesToMake.value(),
                     self.lineEditPassphrase.text().toUtf8(),
@@ -183,8 +183,8 @@ class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
         widgets.load('newsubscriptiondialog.ui', self)
         AddressCheckMixin.__init__(self)
 
-    def _onSuccess(self, addressVersion, streamNumber, ripe):
-        if addressVersion <= 3:
+    def _onSuccess(self, address_version, stream_number, ripe):
+        if address_version <= 3:
             self.checkBoxDisplayMessagesAlreadyInInventory.setText(_translate(
                 "MainWindow",
                 "Address is an old type. We cannot display its past"
@@ -192,11 +192,11 @@ class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
             ))
         else:
             Inventory().flush()
-            doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) +
-                encodeVarint(streamNumber) + ripe
+            double_hash_of_address_data = hashlib.sha512(hashlib.sha512(
+                encodeVarint(address_version) +
+                encodeVarint(stream_number) + ripe
             ).digest()).digest()
-            tag = doubleHashOfAddressData[32:]
+            tag = double_hash_of_address_data[32:]
             self.recent = Inventory().by_type_and_tag(3, tag)
             count = len(self.recent)
             if count == 0:
@@ -207,7 +207,7 @@ class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
                         " to display."
                     ))
             else:
-                self.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
+                self.checkBoxDisplayMessagesAlreadyInInventory.set_enabled(True)
                 self.checkBoxDisplayMessagesAlreadyInInventory.setText(
                     _translate(
                         "MainWindow",
@@ -257,12 +257,12 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog, RetranslateMixin):
                 else:
                     self.radioButtonBehaveNormalAddress.click()
                 try:
-                    mailingListName = config.get(
+                    mailing_list_name = config.get(
                         self.address, 'mailinglistname')
                 except:
-                    mailingListName = ''
+                    mailing_list_name = ''
                 self.lineEditMailingListName.setText(
-                    unicode(mailingListName, 'utf-8')
+                    unicode(mailing_list_name, 'utf-8')
                 )
 
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
@@ -325,11 +325,11 @@ class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
                 if "@" in label:
                     self.lineEditEmail.setText(label)
             if isinstance(self.acct, GatewayAccount):
-                self.radioButtonUnregister.setEnabled(True)
-                self.radioButtonStatus.setEnabled(True)
+                self.radioButtonUnregister.set_enabled(True)
+                self.radioButtonStatus.set_enabled(True)
                 self.radioButtonStatus.setChecked(True)
-                self.radioButtonSettings.setEnabled(True)
-                self.lineEditEmail.setEnabled(False)
+                self.radioButtonSettings.set_enabled(True)
+                self.lineEditEmail.set_enabled(False)
             else:
                 self.acct = MailchuckAccount(address)
         self.lineEditEmail.setFocus()

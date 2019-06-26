@@ -95,11 +95,11 @@ if __name__ == "__main__":
         long_description=README,
         license='MIT',
         # TODO: add author info
-        #author='',
-        #author_email='',
+        # author='',
+        # author_email='',
         url='https://bitmessage.org',
         # TODO: add keywords
-        #keywords='',
+        # keywords='',
         install_requires=installRequires,
         tests_require=requirements,
         extras_require=EXTRAS_REQUIRE,

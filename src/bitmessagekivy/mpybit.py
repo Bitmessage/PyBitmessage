@@ -1,9 +1,9 @@
-import kivy_helper_search
 import os
 import queues
 import shutdown
 import state
 import time
+import kivy_helper_search
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -14,7 +14,6 @@ from kivy.properties import ObjectProperty, StringProperty, ListProperty
 from kivy.uix.screenmanager import Screen
 from kivy.uix.textinput import TextInput
 from kivymd.theming import ThemeManager
-from kivymd.toolbar import Toolbar
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
 from addresses import decodeAddress, addBMIfNotPresent

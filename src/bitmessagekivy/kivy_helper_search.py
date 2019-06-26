@@ -8,38 +8,38 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         what = None
 
     if folder == "sent":
-        sqlStatementBase = '''
+        sql_statement_base = '''
             SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
             FROM sent '''
     else:
-        sqlStatementBase = '''SELECT folder, msgid, toaddress, fromaddress, subject, received, read
+        sql_statement_base = '''SELECT folder, msgid, toaddress, fromaddress, subject, received, read
             FROM inbox '''
-    sqlStatementParts = []
+    sql_statement_parts = []
     sqlArguments = []
     if account is not None:
         if xAddress == 'both':
-            sqlStatementParts.append("(fromaddress = ? OR toaddress = ?)")
+            sql_statement_parts.append("(fromaddress = ? OR toaddress = ?)")
             sqlArguments.append(account)
             sqlArguments.append(account)
         else:
-            sqlStatementParts.append(xAddress + " = ? ")
+            sql_statement_parts.append(xAddress + " = ? ")
             sqlArguments.append(account)
     if folder is not None:
         if folder == "new":
             folder = "inbox"
             unreadOnly = True
-        sqlStatementParts.append("folder = ? ")
+        sql_statement_parts.append("folder = ? ")
         sqlArguments.append(folder)
     else:
-        sqlStatementParts.append("folder != ?")
+        sql_statement_parts.append("folder != ?")
         sqlArguments.append("trash")
     if what is not None:
-        sqlStatementParts.append("%s LIKE ?" % (where))
+        sql_statement_parts.append("%s LIKE ?" % (where))
         sqlArguments.append(what)
     if unreadOnly:
-        sqlStatementParts.append("read = 0")
-    if len(sqlStatementParts) > 0:
-        sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
+        sql_statement_parts.append("read = 0")
+    if len(sql_statement_parts) > 0:
+        sql_statement_base += "WHERE " + " AND ".join(sql_statement_parts)
     if folder == "sent":
-        sqlStatementBase += " ORDER BY lastactiontime"
-    return sqlQuery(sqlStatementBase, sqlArguments)
+        sql_statement_base += " ORDER BY lastactiontime"
+    return sqlQuery(sql_statement_base, sqlArguments)

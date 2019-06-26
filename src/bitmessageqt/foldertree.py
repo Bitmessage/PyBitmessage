@@ -30,7 +30,7 @@ class AccountMixin(object):
     SUBSCRIPTION = 4
     BROADCAST = 5
 
-    def accountColor(self):
+    def account_color(self):
         """QT UI color for an account"""
         if not self.isEnabled:
             return QtGui.QColor(128, 128, 128)
@@ -40,25 +40,25 @@ class AccountMixin(object):
             return QtGui.QColor(137, 4, 177)
         return QtGui.QApplication.palette().text().color()
 
-    def folderColor(self):
+    def folder_color(self):
         """QT UI color for a folder"""
         if not self.parent().isEnabled:
             return QtGui.QColor(128, 128, 128)
         return QtGui.QApplication.palette().text().color()
 
-    def accountBrush(self):
+    def account_brush(self):
         """Account brush (for QT UI)"""
-        brush = QtGui.QBrush(self.accountColor())
+        brush = QtGui.QBrush(self.account_color())
         brush.setStyle(QtCore.Qt.NoBrush)
         return brush
 
-    def folderBrush(self):
+    def folder_brush(self):
         """Folder brush (for QT UI)"""
-        brush = QtGui.QBrush(self.folderColor())
+        brush = QtGui.QBrush(self.folder_color())
         brush.setStyle(QtCore.Qt.NoBrush)
         return brush
 
-    def accountString(self):
+    def account_string(self):
         """Account string suitable for use in To: field: label <address>"""
         label = self._getLabel()
         return (
@@ -66,14 +66,11 @@ class AccountMixin(object):
             else '%s <%s>' % (label, self.address)
         )
 
-    def setAddress(self, address):
+    def set_address(self, address):
         """Set bitmessage address of the object"""
-        if address is None:
-            self.address = None
-        else:
-            self.address = str(address)
+        self.address = None if address is None else str(address)
 
-    def setUnreadCount(self, cnt):
+    def set_unread_count(self, cnt):
         """Set number of unread messages"""
         try:
             if self.unreadCount == int(cnt):
@@ -84,17 +81,17 @@ class AccountMixin(object):
         if isinstance(self, QtGui.QTreeWidgetItem):
             self.emitDataChanged()
 
-    def setEnabled(self, enabled):
+    def set_enabled(self, enabled):
         """Set account enabled (QT UI)"""
         self.isEnabled = enabled
         try:
             self.setExpanded(enabled)
         except AttributeError:
             pass
-        if isinstance(self, Ui_AddressWidget):
+        if isinstance(self, UiAddressWidget):
             for i in range(self.childCount()):
-                if isinstance(self.child(i), Ui_FolderWidget):
-                    self.child(i).setEnabled(enabled)
+                if isinstance(self.child(i), UiFolderWidget):
+                    self.child(i).set_enabled(enabled)
         if isinstance(self, QtGui.QTreeWidgetItem):
             self.emitDataChanged()
 
@@ -114,7 +111,7 @@ class AccountMixin(object):
         else:
             self.type = self.NORMAL
 
-    def defaultLabel(self):
+    def default_label(self):
         """Default label (in case no label is set manually)"""
         queryreturn = None
         retval = None
@@ -131,7 +128,7 @@ class AccountMixin(object):
             queryreturn = sqlQuery(
                 '''select label from subscriptions where address=?''', self.address)
         if queryreturn is not None:
-            if queryreturn != []:
+            if queryreturn:
                 for row in queryreturn:
                     retval, = row
                     retval = unicode(retval, 'utf-8')
@@ -145,25 +142,25 @@ class AccountMixin(object):
 class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
     """A common abstract class for Tree widget item"""
 
-    def __init__(self, parent, pos, address, unreadCount):
+    def __init__(self, parent, pos, address, unread_count):
         super(QtGui.QTreeWidgetItem, self).__init__()
-        self.setAddress(address)
-        self.setUnreadCount(unreadCount)
+        self.set_address(address)
+        self.set_unread_count(unread_count)
         self._setup(parent, pos)
 
-    def _getAddressBracket(self, unreadCount=False):
+    def _get_address_bracket(self, unreadCount=False):
         return " (" + str(self.unreadCount) + ")" if unreadCount else ""
 
     def data(self, column, role):
         """Override internal QT method for returning object data"""
         if column == 0:
             if role == QtCore.Qt.DisplayRole:
-                return self._getLabel() + self._getAddressBracket(
+                return self._getLabel() + self._get_address_bracket(
                     self.unreadCount > 0)
             elif role == QtCore.Qt.EditRole:
                 return self._getLabel()
             elif role == QtCore.Qt.ToolTipRole:
-                return self._getLabel() + self._getAddressBracket(False)
+                return self._getLabel() + self._get_address_bracket(False)
             elif role == QtCore.Qt.FontRole:
                 font = QtGui.QFont()
                 font.setBold(self.unreadCount > 0)
@@ -171,35 +168,35 @@ class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
         return super(BMTreeWidgetItem, self).data(column, role)
 
 
-class Ui_FolderWidget(BMTreeWidgetItem):
+class UiFolderWidget(BMTreeWidgetItem):
     """Item in the account/folder tree representing a folder"""
     folderWeight = {"inbox": 1, "new": 2, "sent": 3, "trash": 4}
 
     def __init__(
-            self, parent, pos=0, address="", folderName="", unreadCount=0):
-        self.setFolderName(folderName)
-        super(Ui_FolderWidget, self).__init__(
-            parent, pos, address, unreadCount)
+            self, parent, pos=0, address="", folder_name="", unread_count=0):
+        self.set_folder_name(folder_name)
+        super(UiFolderWidget, self).__init__(
+            parent, pos, address, unread_count)
 
     def _setup(self, parent, pos):
         parent.insertChild(pos, self)
 
-    def _getLabel(self):
+    def _get_label(self):
         return _translate("MainWindow", self.folderName)
 
-    def setFolderName(self, fname):
+    def set_folder_name(self, fname):
         """Set folder name (for QT UI)"""
         self.folderName = str(fname)
 
     def data(self, column, role):
         """Override internal QT method for returning object data"""
         if column == 0 and role == QtCore.Qt.ForegroundRole:
-            return self.folderBrush()
-        return super(Ui_FolderWidget, self).data(column, role)
+            return self.folder_brush()
+        return super(UiFolderWidget, self).data(column, role)
 
     # inbox, sent, thrash first, rest alphabetically
     def __lt__(self, other):
-        if isinstance(other, Ui_FolderWidget):
+        if isinstance(other, UiFolderWidget):
             if self.folderName in self.folderWeight:
                 x = self.folderWeight[self.folderName]
             else:
@@ -217,18 +214,18 @@ class Ui_FolderWidget(BMTreeWidgetItem):
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
 
 
-class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
+class UiAddressWidget(BMTreeWidgetItem, SettingsMixin):
     """Item in the account/folder tree representing an account"""
-    def __init__(self, parent, pos=0, address=None, unreadCount=0, enabled=True):
-        super(Ui_AddressWidget, self).__init__(
-            parent, pos, address, unreadCount)
-        self.setEnabled(enabled)
+    def __init__(self, parent, pos=0, address=None, unread_count=0, enabled=True):
+        super(UiAddressWidget, self).__init__(
+            parent, pos, address, unread_count)
+        self.set_enabled(enabled)
 
     def _setup(self, parent, pos):
         self.setType()
         parent.insertTopLevelItem(pos, self)
 
-    def _getLabel(self):
+    def _get_label(self):
         if self.address is None:
             return unicode(_translate(
                 "MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
@@ -240,11 +237,11 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
             except:
                 return unicode(self.address, 'utf-8')
 
-    def _getAddressBracket(self, unreadCount=False):
+    def _get_address_bracket(self, unread_count=False):
         ret = "" if self.isExpanded() \
-            else super(Ui_AddressWidget, self)._getAddressBracket(unreadCount)
+            else super(UiAddressWidget, self)._get_address_bracket(unread_count)
         if self.address is not None:
-            ret += " (" + self.address + ")"
+            ret += " (%s)" % self.address
         return ret
 
     def data(self, column, role):
@@ -252,10 +249,10 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         if column == 0:
             if role == QtCore.Qt.DecorationRole:
                 return avatarize(
-                    self.address or self._getLabel().encode('utf8'))
+                    self.address or self._get_label().encode('utf8'))
             elif role == QtCore.Qt.ForegroundRole:
-                return self.accountBrush()
-        return super(Ui_AddressWidget, self).data(column, role)
+                return self.account_brush()
+        return super(UiAddressWidget, self).data(column, role)
 
     def setData(self, column, role, value):
         """Save account label (if you edit in the the UI, this will be triggered and will save it to keys.dat)"""
@@ -268,42 +265,42 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
                 else value.encode('utf-8')
             )
             BMConfigParser().save()
-        return super(Ui_AddressWidget, self).setData(column, role, value)
+        return super(UiAddressWidget, self).setData(column, role, value)
 
-    def setAddress(self, address):
+    def set_address(self, address):
         """Set address to object (for QT UI)"""
-        super(Ui_AddressWidget, self).setAddress(address)
+        super(UiAddressWidget, self).set_address(address)
         self.setData(0, QtCore.Qt.UserRole, self.address)
 
-    def _getSortRank(self):
+    def _get_sort_rank(self):
         return self.type if self.isEnabled else (self.type + 100)
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
         # pylint: disable=protected-access
-        if isinstance(other, Ui_AddressWidget):
+        if isinstance(other, UiAddressWidget):
             reverse = QtCore.Qt.DescendingOrder == \
                 self.treeWidget().header().sortIndicatorOrder()
-            if self._getSortRank() == other._getSortRank():
-                x = self._getLabel().lower()
-                y = other._getLabel().lower()
+            if self._get_sort_rank() == other._get_sort_rank():
+                x = self._get_label().lower()
+                y = other._get_label().lower()
                 return x < y
             return (
                 not reverse
-                if self._getSortRank() < other._getSortRank() else reverse
+                if self._get_sort_rank() < other._get_sort_rank() else reverse
             )
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
 
 
-class Ui_SubscriptionWidget(Ui_AddressWidget):
+class UiSubscriptionWidget(UiAddressWidget):
     """Special treating of subscription addresses"""
     # pylint: disable=unused-argument
-    def __init__(self, parent, pos=0, address="", unreadCount=0, label="", enabled=True):
-        super(Ui_SubscriptionWidget, self).__init__(
-            parent, pos, address, unreadCount, enabled)
+    def __init__(self, parent, pos=0, address="", unread_count=0, label="", enabled=True):
+        super(UiSubscriptionWidget, self).__init__(
+            parent, pos, address, unread_count, enabled)
 
-    def _getLabel(self):
+    def _get_label(self):
         queryreturn = sqlQuery(
             '''select label from subscriptions where address=?''', self.address)
         if queryreturn != []:
@@ -314,7 +311,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
 
     def setType(self):
         """Set account type"""
-        super(Ui_SubscriptionWidget, self).setType()  # sets it editable
+        super(UiSubscriptionWidget, self).setType()  # sets it editable
         self.type = AccountMixin.SUBSCRIPTION  # overrides type
 
     def setData(self, column, role, value):
@@ -328,7 +325,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
                 label, self.address)
-        return super(Ui_SubscriptionWidget, self).setData(column, role, value)
+        return super(UiSubscriptionWidget, self).setData(column, role, value)
 
 
 class BMTableWidgetItem(QtGui.QTableWidgetItem, SettingsMixin):
@@ -336,17 +333,17 @@ class BMTableWidgetItem(QtGui.QTableWidgetItem, SettingsMixin):
 
     def __init__(self, parent=None, label=None, unread=False):
         super(QtGui.QTableWidgetItem, self).__init__()
-        self.setLabel(label)
-        self.setUnread(unread)
+        self.set_label(label)
+        self.set_unread(unread)
         self._setup()
         if parent is not None:
             parent.append(self)
 
-    def setLabel(self, label):
+    def set_label(self, label):
         """Set object label"""
         self.label = label
 
-    def setUnread(self, unread):
+    def set_unread(self, unread):
         """Set/unset read state of an item"""
         self.unread = unread
 
@@ -367,9 +364,9 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
     """A common class for Table widget item with account"""
 
     def _setup(self):
-        self.setEnabled(True)
+        self.set_enabled(True)
 
-    def _getLabel(self):
+    def _get_label(self):
         return self.label
 
     def data(self, role):
@@ -381,33 +378,33 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
                     'bitmessagesettings', 'useidenticons'):
                 return avatarize(self.address or self.label)
         elif role == QtCore.Qt.ForegroundRole:
-            return self.accountBrush()
+            return self.account_brush()
         return super(BMAddressWidget, self).data(role)
 
 
-class MessageList_AddressWidget(BMAddressWidget):
+class MessageListAddressWidget(BMAddressWidget):
     """Address item in a messagelist"""
     def __init__(self, parent, address=None, label=None, unread=False):
-        self.setAddress(address)
-        super(MessageList_AddressWidget, self).__init__(parent, label, unread)
+        self.set_address(address)
+        super(MessageListAddressWidget, self).__init__(parent, label, unread)
 
     def _setup(self):
         self.isEnabled = True
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         self.setType()
 
-    def setLabel(self, label=None):
+    def set_label(self, label=None):
         """Set label"""
-        super(MessageList_AddressWidget, self).setLabel(label)
+        super(MessageListAddressWidget, self).set_label(label)
         if label is not None:
             return
-        newLabel = self.address
+        new_label = self.address
         queryreturn = None
         if self.type in (
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                newLabel = unicode(
+                new_label = unicode(
                     BMConfigParser().get(self.address, 'label'),
                     'utf-8', 'ignore')
             except:
@@ -418,39 +415,39 @@ class MessageList_AddressWidget(BMAddressWidget):
                 '''select label from subscriptions where address=?''', self.address)
         if queryreturn:
             for row in queryreturn:
-                newLabel = unicode(row[0], 'utf-8', 'ignore')
+                new_label = unicode(row[0], 'utf-8', 'ignore')
 
-        self.label = newLabel
+        self.label = new_label
 
     def data(self, role):
         """Return object data (QT UI)"""
         if role == QtCore.Qt.UserRole:
             return self.address
-        return super(MessageList_AddressWidget, self).data(role)
+        return super(MessageListAddressWidget, self).data(role)
 
     def setData(self, role, value):
         """Set object data"""
         if role == QtCore.Qt.EditRole:
-            self.setLabel()
-        return super(MessageList_AddressWidget, self).setData(role, value)
+            self.set_label()
+        return super(MessageListAddressWidget, self).setData(role, value)
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
-        if isinstance(other, MessageList_AddressWidget):
+        if isinstance(other, MessageListAddressWidget):
             return self.label.lower() < other.label.lower()
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
 
 
-class MessageList_SubjectWidget(BMTableWidgetItem):
+class MessageListSubjectWidget(BMTableWidgetItem):
     """Message list subject item"""
     def __init__(self, parent, subject=None, label=None, unread=False):
-        self.setSubject(subject)
-        super(MessageList_SubjectWidget, self).__init__(parent, label, unread)
+        self.set_subject(subject)
+        super(MessageListSubjectWidget, self).__init__(parent, label, unread)
 
     def _setup(self):
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
-    def setSubject(self, subject):
+    def set_subject(self, subject):
         """Set subject"""
         self.subject = subject
 
@@ -460,27 +457,27 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
             return self.subject
         if role == QtCore.Qt.ToolTipRole:
             return escape(unicode(self.subject, 'utf-8'))
-        return super(MessageList_SubjectWidget, self).data(role)
+        return super(MessageListSubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
-        if isinstance(other, MessageList_SubjectWidget):
+        if isinstance(other, MessageListSubjectWidget):
             return self.label.lower() < other.label.lower()
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
 
 
-class Ui_AddressBookWidgetItem(BMAddressWidget):
+class UiAddressBookWidgetItem(BMAddressWidget):
     """Addressbook item"""
     # pylint: disable=unused-argument
     def __init__(self, label=None, acc_type=AccountMixin.NORMAL):
         self.type = acc_type
-        super(Ui_AddressBookWidgetItem, self).__init__(label=label)
+        super(UiAddressBookWidgetItem, self).__init__(label=label)
 
     def data(self, role):
         """Return object data"""
         if role == QtCore.Qt.UserRole:
             return self.type
-        return super(Ui_AddressBookWidgetItem, self).data(role)
+        return super(UiAddressBookWidgetItem, self).data(role)
 
     def setData(self, role, value):
         """Set data"""
@@ -502,10 +499,10 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                 sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
             else:
                 pass
-        return super(Ui_AddressBookWidgetItem, self).setData(role, value)
+        return super(UiAddressBookWidgetItem, self).setData(role, value)
 
     def __lt__(self, other):
-        if isinstance(other, Ui_AddressBookWidgetItem):
+        if isinstance(other, UiAddressBookWidgetItem):
             reverse = QtCore.Qt.DescendingOrder == \
                 self.tableWidget().horizontalHeader().sortIndicatorOrder()
 
@@ -515,22 +512,22 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
 
 
-class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
+class UiAddressBookWidgetItemLabel(UiAddressBookWidgetItem):
     """Addressbook label item"""
     def __init__(self, address, label, acc_type):
-        super(Ui_AddressBookWidgetItemLabel, self).__init__(label, acc_type)
+        super(UiAddressBookWidgetItemLabel, self).__init__(label, acc_type)
         self.address = address
 
     def data(self, role):
         """Return object data"""
-        self.label = self.defaultLabel()
-        return super(Ui_AddressBookWidgetItemLabel, self).data(role)
+        self.label = self.default_label()
+        return super(UiAddressBookWidgetItemLabel, self).data(role)
 
 
-class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
+class UiAddressBookWidgetItemAddress(UiAddressBookWidgetItem):
     """Addressbook address item"""
     def __init__(self, address, label, acc_type):
-        super(Ui_AddressBookWidgetItemAddress, self).__init__(address, acc_type)
+        super(UiAddressBookWidgetItemAddress, self).__init__(address, acc_type)
         self.address = address
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
@@ -540,7 +537,7 @@ class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
             return self.address
         if role == QtCore.Qt.DecorationRole:
             return None
-        return super(Ui_AddressBookWidgetItemAddress, self).data(role)
+        return super(UiAddressBookWidgetItemAddress, self).data(role)
 
 
 class AddressBookCompleter(QtGui.QCompleter):
@@ -550,7 +547,7 @@ class AddressBookCompleter(QtGui.QCompleter):
         super(AddressBookCompleter, self).__init__()
         self.cursorPos = -1
 
-    def onCursorPositionChanged(self, oldPos, newPos):  # pylint: disable=unused-argument
+    def on_cursor_position_changed(self, oldPos, newPos):  # pylint: disable=unused-argument
         """Callback for cursor position change"""
         if oldPos != self.cursorPos:
             self.cursorPos = -1
@@ -562,7 +559,7 @@ class AddressBookCompleter(QtGui.QCompleter):
 
     def pathFromIndex(self, index):
         """Perform autocompletion (reimplemented QCompleter method)"""
-        autoString = unicode(
+        auto_string = unicode(
             index.data(QtCore.Qt.EditRole).toString().toUtf8(), 'utf-8')
         text = unicode(self.widget().text().toUtf8(), 'utf-8')
 
@@ -573,28 +570,28 @@ class AddressBookCompleter(QtGui.QCompleter):
             self.cursorPos = self.widget().cursorPosition()
 
         # Get current prosition
-        curIndex = self.widget().cursorPosition()
+        cur_index = self.widget().cursorPosition()
 
         # prev_delimiter_index should actually point at final white space
         # AFTER the delimiter
         # Get index of last delimiter before current position
-        prevDelimiterIndex = text[0:curIndex].rfind(";")
-        while text[prevDelimiterIndex + 1] == " ":
-            prevDelimiterIndex += 1
+        prev_delimiter_index = text[0:cur_index].rfind(";")
+        while text[prev_delimiter_index + 1] == " ":
+            prev_delimiter_index += 1
 
         # Get index of first delimiter after current position
         # (or EOL if no delimiter after cursor)
-        nextDelimiterIndex = text.find(";", curIndex)
-        if nextDelimiterIndex == -1:
-            nextDelimiterIndex = len(text)
+        next_delimiter_index = text.find(";", cur_index)
+        if next_delimiter_index == -1:
+            next_delimiter_index = len(text)
 
         # Get part of string that occurs before cursor
-        part1 = text[0:prevDelimiterIndex + 1]
+        part1 = text[0:prev_delimiter_index + 1]
 
         # Get string value from before auto finished string is selected
-        # pre = text[prevDelimiterIndex + 1:curIndex - 1]
+        # pre = text[prev_delimiter_index + 1:cur_index - 1]
 
         # Get part of string that occurs AFTER cursor
-        part2 = text[nextDelimiterIndex:]
+        part2 = text[next_delimiter_index:]
 
-        return part1 + autoString + part2
+        return part1 + auto_string + part2

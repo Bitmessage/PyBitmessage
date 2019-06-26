@@ -28,9 +28,9 @@ import namecoin
 from messageview import MessageView
 from migrationwizard import Ui_MigrationWizard
 from foldertree import (
-    AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
-    MessageList_AddressWidget, MessageList_SubjectWidget,
-    Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress)
+    AccountMixin, UiFolderWidget, UiAddressWidget, UiSubscriptionWidget,
+    MessageListAddressWidget, MessageListSubjectWidget,
+    UiAddressBookWidgetItemLabel, UiAddressBookWidgetItemAddress)
 from settings import Ui_settingsDialog
 import settingsmixin
 import support
@@ -404,7 +404,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
-        folders = Ui_FolderWidget.folderWeight.keys()
+        folders = UiFolderWidget.folderWeight.keys()
         folders.remove("new")
 
         # sort ascending when creating
@@ -440,7 +440,7 @@ class MyForm(settingsmixin.SMainWindow):
             while j < widget.childCount():
                 subwidget = widget.child(j)
                 try:
-                    subwidget.setUnreadCount(db[toAddress][subwidget.folderName]['count'])
+                    subwidget.set_unread_count(db[toAddress][subwidget.folderName]['count'])
                     unread += db[toAddress][subwidget.folderName]['count']
                     db[toAddress].pop(subwidget.folderName, None)
                 except:
@@ -454,9 +454,9 @@ class MyForm(settingsmixin.SMainWindow):
                 j = 0
                 for f, c in db[toAddress].iteritems():
                     try:
-                        subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
+                        subwidget = UiFolderWidget(widget, j, toAddress, f, c['count'])
                     except KeyError:
-                        subwidget = Ui_FolderWidget(widget, j, toAddress, f, 0)
+                        subwidget = UiFolderWidget(widget, j, toAddress, f, 0)
                     j += 1
             widget.setUnreadCount(unread)
             db.pop(toAddress, None)
@@ -464,17 +464,17 @@ class MyForm(settingsmixin.SMainWindow):
         
         i = 0
         for toAddress in db:
-            widget = Ui_SubscriptionWidget(treeWidget, i, toAddress, db[toAddress]["inbox"]['count'], db[toAddress]["inbox"]['label'], db[toAddress]["inbox"]['enabled'])
+            widget = UiSubscriptionWidget(treeWidget, i, toAddress, db[toAddress]["inbox"]['count'], db[toAddress]["inbox"]['label'], db[toAddress]["inbox"]['enabled'])
             j = 0
             unread = 0
             for folder in folders:
                 try:
-                    subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder]['count'])
+                    subwidget = UiFolderWidget(widget, j, toAddress, folder, db[toAddress][folder]['count'])
                     unread += db[toAddress][folder]['count']
                 except KeyError:
-                    subwidget = Ui_FolderWidget(widget, j, toAddress, folder, 0)
+                    subwidget = UiFolderWidget(widget, j, toAddress, folder, 0)
                 j += 1
-            widget.setUnreadCount(unread)
+            widget.set_unread_count(unread)
             i += 1
         
         treeWidget.setSortingEnabled(True)
@@ -491,7 +491,7 @@ class MyForm(settingsmixin.SMainWindow):
             treeWidget = self.ui.treeWidgetYourIdentities
         elif tab == 'chan':
             treeWidget = self.ui.treeWidgetChans
-        folders = Ui_FolderWidget.folderWeight.keys()
+        folders = UiFolderWidget.folderWeight.keys()
         
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
@@ -559,7 +559,7 @@ class MyForm(settingsmixin.SMainWindow):
             while j < widget.childCount():
                 subwidget = widget.child(j)
                 try:
-                    subwidget.setUnreadCount(db[toAddress][subwidget.folderName])
+                    subwidget.set_unread_count(db[toAddress][subwidget.folderName])
                     if subwidget.folderName not in ["new", "trash", "sent"]:
                         unread += db[toAddress][subwidget.folderName]
                     db[toAddress].pop(subwidget.folderName, None)
@@ -575,7 +575,7 @@ class MyForm(settingsmixin.SMainWindow):
                 for f, c in db[toAddress].iteritems():
                     if toAddress is not None and tab == 'messages' and folder == "new":
                         continue
-                    subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
+                    subwidget = UiFolderWidget(widget, j, toAddress, f, c)
                     if subwidget.folderName not in ["new", "trash", "sent"]:
                         unread += c
                     j += 1
@@ -585,17 +585,17 @@ class MyForm(settingsmixin.SMainWindow):
         
         i = 0
         for toAddress in db:
-            widget = Ui_AddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"], enabled[toAddress])
+            widget = UiAddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"], enabled[toAddress])
             j = 0
             unread = 0
             for folder in folders:
                 if toAddress is not None and tab == 'messages' and folder == "new":
                     continue
-                subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
+                subwidget = UiFolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
                 if subwidget.folderName not in ["new", "trash", "sent"]:
                     unread += db[toAddress][folder]
                 j += 1
-            widget.setUnreadCount(unread)
+            widget.set_unread_count(unread)
             i += 1
         
         treeWidget.setSortingEnabled(True)
@@ -693,7 +693,7 @@ class MyForm(settingsmixin.SMainWindow):
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetAddressBookItemChanged)
         # This is necessary for the completer to work if multiple recipients
         QtCore.QObject.connect(self.ui.lineEditTo, QtCore.SIGNAL(
-            "cursorPositionChanged(int, int)"), self.ui.lineEditTo.completer().onCursorPositionChanged)
+            "cursorPositionChanged(int, int)"), self.ui.lineEditTo.completer().on_cursor_position_changed)
 
         # show messages from message list
         QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
@@ -957,7 +957,7 @@ class MyForm(settingsmixin.SMainWindow):
             font.setBold(not status)
             widget.item(row, 3).setFont(font)
             for col in (0, 1, 2):
-                widget.item(row, col).setUnread(not status)
+                widget.item(row, col).set_unread(not status)
 
             try:
                 related.item(rrow, 3).setFont(font)
@@ -965,7 +965,7 @@ class MyForm(settingsmixin.SMainWindow):
                 pass
             else:
                 for col in (0, 1, 2):
-                    related.item(rrow, col).setUnread(not status)
+                    related.item(rrow, col).set_unread(not status)
 
     # Here we need to update unread count for:
     # - all widgets if there is no args
@@ -1023,7 +1023,7 @@ class MyForm(settingsmixin.SMainWindow):
                     except KeyError:
                         newCount = 0
                 if newCount != addressItem.unreadCount:
-                    addressItem.setUnreadCount(newCount)
+                    addressItem.set_unread_count(newCount)
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
                     folderName = folderItem.folderName
@@ -1043,7 +1043,7 @@ class MyForm(settingsmixin.SMainWindow):
                         except KeyError:
                             newCount = 0
                     if newCount != folderItem.unreadCount:
-                        folderItem.setUnreadCount(newCount)
+                        folderItem.set_unread_count(newCount)
 
     def addMessageListItem(self, tableWidget, items):
         sortingEnabled = tableWidget.isSortingEnabled()
@@ -1062,9 +1062,9 @@ class MyForm(settingsmixin.SMainWindow):
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
-        MessageList_AddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
-        MessageList_AddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
+        MessageListAddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
+        MessageListAddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
+        MessageListSubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
 
         if status == 'awaitingpubkey':
             statusText = _translate(
@@ -1133,11 +1133,11 @@ class MyForm(settingsmixin.SMainWindow):
             
         items = []
         #to
-        MessageList_AddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
+        MessageListAddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
         # from
-        MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
+        MessageListAddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
         # subject
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
+        MessageListSubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
         # time received
         time_item = myTableWidgetItem(l10n.formatTimestamp(received))
         time_item.setToolTip(l10n.formatTimestamp(received))
@@ -1835,19 +1835,19 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderMessagelistFromLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
             for i in range(messagelist.rowCount()):
-                messagelist.item(i, 1).setLabel()
+                messagelist.item(i, 1).set_label()
 
     def rerenderMessagelistToLabels(self):
         for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
             for i in range(messagelist.rowCount()):
-                messagelist.item(i, 0).setLabel()
+                messagelist.item(i, 0).set_label()
 
     def rerenderAddressBook(self):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            newItem = UiAddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
+            newItem = UiAddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
 
         oldRows = {}
@@ -2233,7 +2233,7 @@ class MyForm(settingsmixin.SMainWindow):
             address = str(self.ui.comboBoxSendFrom.itemData(
                 i, QtCore.Qt.UserRole).toString())
             self.ui.comboBoxSendFrom.setItemData(
-                i, AccountColor(address).accountColor(),
+                i, AccountColor(address).account_color(),
                 QtCore.Qt.ForegroundRole)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
         if(self.ui.comboBoxSendFrom.count() == 2):
@@ -2256,7 +2256,7 @@ class MyForm(settingsmixin.SMainWindow):
             address = str(self.ui.comboBoxSendFromBroadcast.itemData(
                 i, QtCore.Qt.UserRole).toString())
             self.ui.comboBoxSendFromBroadcast.setItemData(
-                i, AccountColor(address).accountColor(),
+                i, AccountColor(address).account_color(),
                 QtCore.Qt.ForegroundRole)
         self.ui.comboBoxSendFromBroadcast.insertItem(0, '', '')
         if(self.ui.comboBoxSendFromBroadcast.count() == 2):
@@ -2649,7 +2649,7 @@ class MyForm(settingsmixin.SMainWindow):
         account_item = self.getCurrentItem()
         if not account_item:
             return
-        self.ui.lineEditTo.setText(account_item.accountString())
+        self.ui.lineEditTo.setText(account_item.account_string())
         self.ui.tabWidget.setCurrentIndex(
             self.ui.tabWidget.indexOf(self.ui.send)
         )
@@ -2710,9 +2710,9 @@ class MyForm(settingsmixin.SMainWindow):
         for i in range(0, idCount):
             msgids.append(str(tableWidget.item(
                 i, 3).data(QtCore.Qt.UserRole).toPyObject()))
-            tableWidget.item(i, 0).setUnread(False)
-            tableWidget.item(i, 1).setUnread(False)
-            tableWidget.item(i, 2).setUnread(False)
+            tableWidget.item(i, 0).set_unread(False)
+            tableWidget.item(i, 1).set_unread(False)
+            tableWidget.item(i, 2).set_unread(False)
             tableWidget.item(i, 3).setFont(font)
 
         markread = sqlExecuteChunked(
@@ -3140,7 +3140,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.lineEditTo.setText(str(acct.fromAddress))
         else:
             self.ui.lineEditTo.setText(
-                tableWidget.item(currentInboxRow, column_from).accountString()
+                tableWidget.item(currentInboxRow, column_from).account_string()
             )
 
         # If the previous message was to a chan then we should send our
@@ -3155,7 +3155,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
             else:
                 self.ui.lineEditTo.setText(
-                    tableWidget.item(currentInboxRow, column_to).accountString()
+                    tableWidget.item(currentInboxRow, column_to).account_string()
                 )
 
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
@@ -3408,7 +3408,7 @@ class MyForm(settingsmixin.SMainWindow):
         addresses_string = unicode(
             self.ui.lineEditTo.text().toUtf8(), 'utf-8')
         for item in selected_items:
-            address_string = item.accountString()
+            address_string = item.account_string()
             if not addresses_string:
                 addresses_string = address_string
             else:
@@ -3496,7 +3496,7 @@ class MyForm(settingsmixin.SMainWindow):
             '''update subscriptions set enabled=1 WHERE address=?''',
             address)
         account = self.getCurrentItem()
-        account.setEnabled(True)
+        account.set_enabled(True)
         self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
@@ -3506,14 +3506,14 @@ class MyForm(settingsmixin.SMainWindow):
             '''update subscriptions set enabled=0 WHERE address=?''',
             address)
         account = self.getCurrentItem()
-        account.setEnabled(False)
+        account.set_enabled(False)
         self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
         currentItem = self.getCurrentItem()
         self.popMenuSubscriptions = QtGui.QMenu(self)
-        if isinstance(currentItem, Ui_AddressWidget):
+        if isinstance(currentItem, UiAddressWidget):
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
             self.popMenuSubscriptions.addSeparator()
@@ -3740,7 +3740,7 @@ class MyForm(settingsmixin.SMainWindow):
         addressAtCurrentRow = self.getCurrentAccount()
         self.enableIdentity(addressAtCurrentRow)
         account = self.getCurrentItem()
-        account.setEnabled(True)
+        account.set_enabled(True)
 
     def enableIdentity(self, address):
         BMConfigParser().set(address, 'enabled', 'true')
@@ -3752,7 +3752,7 @@ class MyForm(settingsmixin.SMainWindow):
         address = self.getCurrentAccount()
         self.disableIdentity(address)
         account = self.getCurrentItem()
-        account.setEnabled(False)
+        account.set_enabled(False)
 
     def disableIdentity(self, address):
         BMConfigParser().set(str(address), 'enabled', 'false')
@@ -3925,7 +3925,7 @@ class MyForm(settingsmixin.SMainWindow):
     def on_context_menuYourIdentities(self, point):
         currentItem = self.getCurrentItem()
         self.popMenuYourIdentities = QtGui.QMenu(self)
-        if isinstance(currentItem, Ui_AddressWidget):
+        if isinstance(currentItem, UiAddressWidget):
             self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
             self.popMenuYourIdentities.addSeparator()
             self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
@@ -3954,7 +3954,7 @@ class MyForm(settingsmixin.SMainWindow):
     def on_context_menuChan(self, point):
         currentItem = self.getCurrentItem()
         self.popMenu = QtGui.QMenu(self)
-        if isinstance(currentItem, Ui_AddressWidget):
+        if isinstance(currentItem, UiAddressWidget):
             self.popMenu.addAction(self.actionNew)
             self.popMenu.addAction(self.actionDelete)
             self.popMenu.addSeparator()
@@ -4077,10 +4077,10 @@ class MyForm(settingsmixin.SMainWindow):
         if column != 0:
             return
         # only account names of normal addresses (no chans/mailinglists)
-        if (not isinstance(item, Ui_AddressWidget)) or (not self.getCurrentTreeWidget()) or self.getCurrentTreeWidget().currentItem() is None:
+        if (not isinstance(item, UiAddressWidget)) or (not self.getCurrentTreeWidget()) or self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
-        if (not self.getCurrentItem()) or (not isinstance (self.getCurrentItem(), Ui_AddressWidget)):
+        if (not self.getCurrentItem()) or (not isinstance (self.getCurrentItem(), UiAddressWidget)):
             return
         # only currently selected item
         if item.address != self.getCurrentAccount():
@@ -4090,7 +4090,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         
         newLabel = unicode(item.text(0), 'utf-8', 'ignore')
-        oldLabel = item.defaultLabel()
+        oldLabel = item.default_label()
 
         # unchanged, do not do anything either
         if newLabel == oldLabel:
@@ -4284,12 +4284,12 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'sockslisten'))
         if str(BMConfigParser().get('bitmessagesettings', 'socksproxytype')) == 'none':
             self.ui.comboBoxProxyType.setCurrentIndex(0)
-            self.ui.lineEditSocksHostname.setEnabled(False)
-            self.ui.lineEditSocksPort.setEnabled(False)
-            self.ui.lineEditSocksUsername.setEnabled(False)
-            self.ui.lineEditSocksPassword.setEnabled(False)
-            self.ui.checkBoxAuthentication.setEnabled(False)
-            self.ui.checkBoxSocksListen.setEnabled(False)
+            self.ui.lineEditSocksHostname.set_enabled(False)
+            self.ui.lineEditSocksPort.set_enabled(False)
+            self.ui.lineEditSocksUsername.set_enabled(False)
+            self.ui.lineEditSocksPassword.set_enabled(False)
+            self.ui.checkBoxAuthentication.set_enabled(False)
+            self.ui.checkBoxSocksListen.set_enabled(False)
         elif str(BMConfigParser().get('bitmessagesettings', 'socksproxytype')) == 'SOCKS4a':
             self.ui.comboBoxProxyType.setCurrentIndex(1)
         elif str(BMConfigParser().get('bitmessagesettings', 'socksproxytype')) == 'SOCKS5':
@@ -4326,9 +4326,9 @@ class settingsDialog(QtGui.QDialog):
 
         # OpenCL
         if openclpow.openclAvailable():
-            self.ui.comboBoxOpenCL.setEnabled(True)
+            self.ui.comboBoxOpenCL.set_enabled(True)
         else:
-            self.ui.comboBoxOpenCL.setEnabled(False)
+            self.ui.comboBoxOpenCL.set_enabled(False)
         self.ui.comboBoxOpenCL.clear()
         self.ui.comboBoxOpenCL.addItem("None")
         self.ui.comboBoxOpenCL.addItems(openclpow.vendors)
@@ -4353,10 +4353,10 @@ class settingsDialog(QtGui.QDialog):
             self.ui.radioButtonNamecoinNamecoind.setChecked(True)
         elif nmctype == "nmcontrol":
             self.ui.radioButtonNamecoinNmcontrol.setChecked(True)
-            self.ui.lineEditNamecoinUser.setEnabled(False)
-            self.ui.labelNamecoinUser.setEnabled(False)
-            self.ui.lineEditNamecoinPassword.setEnabled(False)
-            self.ui.labelNamecoinPassword.setEnabled(False)
+            self.ui.lineEditNamecoinUser.set_enabled(False)
+            self.ui.labelNamecoinUser.set_enabled(False)
+            self.ui.lineEditNamecoinPassword.set_enabled(False)
+            self.ui.labelNamecoinPassword.set_enabled(False)
         else:
             assert False
 
@@ -4396,20 +4396,20 @@ class settingsDialog(QtGui.QDialog):
 
     def comboBoxProxyTypeChanged(self, comboBoxIndex):
         if comboBoxIndex == 0:
-            self.ui.lineEditSocksHostname.setEnabled(False)
-            self.ui.lineEditSocksPort.setEnabled(False)
-            self.ui.lineEditSocksUsername.setEnabled(False)
-            self.ui.lineEditSocksPassword.setEnabled(False)
-            self.ui.checkBoxAuthentication.setEnabled(False)
-            self.ui.checkBoxSocksListen.setEnabled(False)
+            self.ui.lineEditSocksHostname.set_enabled(False)
+            self.ui.lineEditSocksPort.set_enabled(False)
+            self.ui.lineEditSocksUsername.set_enabled(False)
+            self.ui.lineEditSocksPassword.set_enabled(False)
+            self.ui.checkBoxAuthentication.set_enabled(False)
+            self.ui.checkBoxSocksListen.set_enabled(False)
         elif comboBoxIndex == 1 or comboBoxIndex == 2:
-            self.ui.lineEditSocksHostname.setEnabled(True)
-            self.ui.lineEditSocksPort.setEnabled(True)
-            self.ui.checkBoxAuthentication.setEnabled(True)
-            self.ui.checkBoxSocksListen.setEnabled(True)
+            self.ui.lineEditSocksHostname.set_enabled(True)
+            self.ui.lineEditSocksPort.set_enabled(True)
+            self.ui.checkBoxAuthentication.set_enabled(True)
+            self.ui.checkBoxSocksListen.set_enabled(True)
             if self.ui.checkBoxAuthentication.isChecked():
-                self.ui.lineEditSocksUsername.setEnabled(True)
-                self.ui.lineEditSocksPassword.setEnabled(True)
+                self.ui.lineEditSocksUsername.set_enabled(True)
+                self.ui.lineEditSocksPassword.set_enabled(True)
 
     # Check status of namecoin integration radio buttons and translate
     # it to a string as in the options.
@@ -4426,10 +4426,10 @@ class settingsDialog(QtGui.QDialog):
         assert nmctype == "namecoind" or nmctype == "nmcontrol"
 
         isNamecoind = (nmctype == "namecoind")
-        self.ui.lineEditNamecoinUser.setEnabled(isNamecoind)
-        self.ui.labelNamecoinUser.setEnabled(isNamecoind)
-        self.ui.lineEditNamecoinPassword.setEnabled(isNamecoind)
-        self.ui.labelNamecoinPassword.setEnabled(isNamecoind)
+        self.ui.lineEditNamecoinUser.set_enabled(isNamecoind)
+        self.ui.labelNamecoinUser.set_enabled(isNamecoind)
+        self.ui.lineEditNamecoinPassword.set_enabled(isNamecoind)
+        self.ui.labelNamecoinPassword.set_enabled(isNamecoind)
 
         if isNamecoind:
             self.ui.lineEditNamecoinPort.setText(defaults.namecoinDefaultRpcPort)

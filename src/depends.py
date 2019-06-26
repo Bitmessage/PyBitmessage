@@ -4,6 +4,10 @@ and suggest how it may be installed
 """
 
 import sys
+import logging
+import os
+
+from importlib import import_module
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -13,10 +17,6 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
         'PyBitmessage requires Python 2.7.4 or greater (but not Python 3)'
         % sys.version
     )
-
-import logging
-import os
-from importlib import import_module
 
 # We can now use logging so set up a simple configuration
 formatter = logging.Formatter('%(levelname)s: %(message)s')
@@ -112,39 +112,39 @@ PACKAGES = {
 }
 
 
-def detectOS():
-    if detectOS.result is not None:
-        return detectOS.result
+def detect_os():
+    if detect_os.result is not None:
+        return detect_os.result
     if sys.platform.startswith('openbsd'):
-        detectOS.result = "OpenBSD"
+        detect_os.result = "OpenBSD"
     elif sys.platform.startswith('freebsd'):
-        detectOS.result = "FreeBSD"
+        detect_os.result = "FreeBSD"
     elif sys.platform.startswith('win'):
-        detectOS.result = "Windows"
+        detect_os.result = "Windows"
     elif os.path.isfile("/etc/os-release"):
-        detectOSRelease()
+        detect_os_release()
     elif os.path.isfile("/etc/config.scm"):
-        detectOS.result = "Guix"
-    return detectOS.result
+        detect_os.result = "Guix"
+    return detect_os.result
 
 
-detectOS.result = None
+detect_os.result = None
 
 
-def detectOSRelease():
+def detect_os_release():
     with open("/etc/os-release", 'r') as osRelease:
         version = None
         for line in osRelease:
             if line.startswith("NAME="):
-                detectOS.result = OS_RELEASE.get(
+                detect_os.result = OS_RELEASE.get(
                     line.replace('"', '').split("=")[-1].strip().lower())
             elif line.startswith("VERSION_ID="):
                 try:
                     version = float(line.split("=")[1].replace("\"", ""))
                 except ValueError:
                     pass
-        if detectOS.result == "Ubuntu" and version < 14:
-            detectOS.result = "Ubuntu 12"
+        if detect_os.result == "Ubuntu" and version < 14:
+            detect_os.result = "Ubuntu 12"
 
 
 def try_import(module, log_extra=False):
@@ -155,7 +155,7 @@ def try_import(module, log_extra=False):
         logger.error('The %s module is not available.', module)
         if log_extra:
             logger.error(log_extra)
-            dist = detectOS()
+            dist = detect_os()
             logger.error(
                 'On %s, try running "%s %s" as root.',
                 dist, PACKAGE_MANAGER[dist], PACKAGES[module][dist])

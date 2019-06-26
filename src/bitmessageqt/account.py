@@ -13,14 +13,15 @@ import inspect
 import re
 import sys
 import time
+import queues
 
 from PyQt4 import QtGui
 
-import queues
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute
+
 from .foldertree import AccountMixin
 from .utils import str_broadcast_subscribers
 

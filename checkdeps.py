@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#! /usr/bin/env python2
 """
 Check dependendies and give recommendations about how to satisfy them
 
@@ -12,7 +12,9 @@ Limitations:
 
 import os
 import sys
+
 from distutils.errors import CompileError
+
 try:
     from setuptools.dist import Distribution
     from setuptools.extension import Extension
@@ -25,8 +27,7 @@ except ImportError:
     EXTRAS_REQUIRE = {}
 
 from importlib import import_module
-
-from src.depends import detectOS, PACKAGES, PACKAGE_MANAGER
+from src.depends import detect_os, PACKAGES, PACKAGE_MANAGER
 
 
 COMPILING = {
@@ -72,15 +73,15 @@ def prereqToPackages():
     if not detectPrereqs():
         return
     print("%s %s" % (
-        PACKAGE_MANAGER[detectOS()], " ".join(
-            PACKAGES[x][detectOS()] for x in detectPrereqs())))
+        PACKAGE_MANAGER[detect_os()], " ".join(
+            PACKAGES[x][detect_os()] for x in detectPrereqs())))
 
 
 def compilerToPackages():
-    if not detectOS() in COMPILING:
+    if not detect_os() in COMPILING:
         return
     print("%s %s" % (
-        PACKAGE_MANAGER[detectOS.result], COMPILING[detectOS.result]))
+        PACKAGE_MANAGER[detect_os.result], COMPILING[detect_os.result]))
 
 
 def testCompiler():
@@ -112,11 +113,11 @@ def testCompiler():
 prereqs = detectPrereqs()
 compiler = testCompiler()
 
-if (not compiler or prereqs) and detectOS() in PACKAGE_MANAGER:
+if (not compiler or prereqs) and detect_os() in PACKAGE_MANAGER:
     print(
         "It looks like you're using %s. "
         "It is highly recommended to use the package manager\n"
-        "to install the missing dependencies." % detectOS.result)
+        "to install the missing dependencies." % detect_os.result)
 
 if not compiler:
     print(
@@ -134,7 +135,7 @@ if prereqs:
             print(PACKAGES[package].get('description'))
 
 # Install the system dependencies of optional extras_require components
-OPSYS = detectOS()
+OPSYS = detect_os()
 CMD = PACKAGE_MANAGER[OPSYS] if OPSYS in PACKAGE_MANAGER else 'UNKNOWN_INSTALLER'
 for lhs, rhs in EXTRAS_REQUIRE.items():
     if OPSYS is None:
