@@ -85,3 +85,15 @@ detailPageType = None
 ackdata = None
 
 status = None
+
+screen_density = None
+
+msg_counter_objs = None
+
+check_sent_acc = None
+
+sent_count = 0
+
+inbox_count = 0
+
+trash_count = 0

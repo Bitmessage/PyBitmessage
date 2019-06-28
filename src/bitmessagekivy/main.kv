@@ -35,11 +35,18 @@
 #:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
 #:import Factory kivy.factory.Factory
 
+#:set color_button (0.784, 0.443, 0.216, 1)  # brown
+#:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
+#:set color_font   (0.957, 0.890, 0.843, 1)  # off white
+
 <MyNavigationDrawerIconButton@NavigationDrawerIconButton>:
     icon: 'checkbox-blank-circle'
 
 <MySpinnerOption@SpinnerOption>:
     font_size: '12.5sp'
+    background_color: color_button if self.state == 'down' else color_button_pressed
+    background_down: 'atlas://data/images/defaulttheme/button'
+    color: color_font
 
 <ContentNavigationDrawer@Navigatorss>:
     drawer_logo: './images/drawer_logo1.png'
@@ -54,19 +61,24 @@
             option_cls: Factory.get("MySpinnerOption")
             font_size: '12.5sp'
             text: app.getDefaultAccData()
+            background_color: color_button if self.state == 'normal' else color_button_pressed
+            background_down: 'atlas://data/images/defaulttheme/spinner'
+            color: color_font
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
             on_press: app.limit_spinner()
     NavigationDrawerIconButton:
+        id: inbox_cnt
         icon: 'email-open'
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: "99+"
+        badge_text: app.mail_count(self.text)
     NavigationDrawerIconButton:
+        id: send_cnt
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
-        badge_text: "0"
+        badge_text: app.mail_count(self.text)
     NavigationDrawerIconButton:
         icon: 'message-draw'
         text: "Draft"
@@ -87,10 +99,11 @@
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "8+"
     NavigationDrawerIconButton:
+        id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
-        badge_text: "9+"
+        badge_text: app.mail_count(self.text)
     NavigationDrawerIconButton: 
         text: "All Mails"
         icon:'contact-mail'
@@ -182,6 +195,8 @@ NavigationLayout:
                 id:sc13
             MailDetail:
                 id:sc14
+            ShowQRCode:
+                id:sc15
 
 <Inbox>:
     name: 'inbox'
@@ -233,7 +248,7 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(app.scr_size)
+            height: dp(600)
             padding: dp(32)
             spacing: 15
             BoxLayout:
@@ -249,11 +264,10 @@ NavigationLayout:
 
                 BoxLayout:
                     size_hint_y: None
-                    height: 100
+                    height: dp(40)
                     Spinner:
                         background_color: app.theme_cls.primary_dark
                         id: btn
-                        text: 'select'
                         values: app.variable_1
                         on_text: ti.text = self.text
                         option_cls: Factory.get("MySpinnerOption")
@@ -289,17 +303,19 @@ NavigationLayout:
                 required: True
                 helper_text_mode: "on_error"
             BoxLayout:
+                spacing:50
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .3
+                        size_hint: 1, None
+                        height: dp(40)
                         text: 'send'
                         on_press: root.send()
-            BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .3
+                        size_hint: 1, None
+                        height: dp(40)
                         text: 'reset'
-                        on_press: app.root.ids.scr_mngr.current = 'random'             
+                        on_press: app.root.ids.scr_mngr.current = 'random' 
 
 <MyTextInput>:
     readonly: False
@@ -341,7 +357,7 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(800)
+            height: dp(700)
             BoxLayout:
                 MDLabel:
                     font_style: 'Body1'
@@ -483,7 +499,7 @@ NavigationLayout:
                 MDCheckbox:
                     id:            chkbox
                     size_hint:    None, None
-                    size:        dp(48), dp(48)
+                    size:        dp(48), dp(64)
                     active: True
                 MDLabel:
                     font_style: 'Body1'
@@ -519,44 +535,62 @@ NavigationLayout:
     id: popup
     title: 'add contact\'s'
     background: './images/popup.jpeg'
-    title_size: sp(30)
+    title_size: sp(20)
     title_color: 0.4, 0.3765, 0.3451, 1
     size_hint: 1, 1
     auto_dismiss: False
     separator_color: 0.3529, 0.3922, 0.102, 0.7
     BoxLayout:
-        size_hint_y: None
+        size_hint_y: 0.5
         orientation: 'vertical'
-        spacing:50
+        spacing:dp(20)
         id: popup_box
-        orientation: 'vertical'
-        MDTextField:
-            id: label
-            multiline: True
-            hint_text: "Label"
-            required: True
-            helper_text_mode: "on_error"
-        MDTextField:
-            id: address
-            hint_text: "Address"
-            required: True
-            helper_text_mode: "on_error"
-        MDRaisedButton:
-            size_hint: 1, None
-            height: dp(40)
-            text: 'Save'
-            on_release:                 
-                root.savecontact()
-                app.root.ids.scr_mngr.current = 'addressbook'
-        MDRaisedButton:
-            size_hint: 1, None
-            height: dp(40)
-            text: 'Cancel'
-            on_press: root.dismiss()
-        MDRaisedButton:
-            size_hint: 1, None
-            height: dp(40)
-            text: 'Scan QR code'
+        BoxLayout:
+            orientation: 'vertical'
+            MDTextField:
+                id: label
+                multiline: True
+                hint_text: "Label"
+                required: True
+                helper_text_mode: "on_error"
+            MDTextField:
+                id: address
+                hint_text: "Address"
+                required: True
+                helper_text_mode: "on_error"
+        BoxLayout:
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_release:                 
+                    root.savecontact()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Save'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 2, None
+                height: dp(40)
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Scan QR code'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
 
 <NetworkStat>:
     name: 'networkstat'
@@ -659,7 +693,8 @@ NavigationLayout:
                 MDRaisedButton:
                     size_hint: 1, None
                     height: dp(40)
-                    text: 'Copy'
+                    text: 'Reply' if root.page_type == 'inbox' else 'Copy'
+                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail()
                 MDRaisedButton:
                     size_hint: 1, None
                     height: dp(40)
@@ -680,6 +715,7 @@ NavigationLayout:
         elevation_normal: 8
         md_bg_color: [0.941, 0, 0,1]
         on_press: app.root.ids.scr_mngr.current = 'create'
+        on_release: app.clear_composer()
 
 <MyaddDetailPopup>:
     id: myadd_popup
@@ -688,39 +724,151 @@ NavigationLayout:
     auto_dismiss: False
     BoxLayout:
         size_hint_y: None
-        spacing:50
-        id: popup_box
+        spacing:dp(70)
+        id: myadd_popup_box
         orientation: 'vertical'
-        MDLabel:
-            font_style: 'Title'
-            theme_text_color: 'Primary'
-            text: "Label"
-            halign: 'left'
-        MDLabel:
-            font_style: 'Subhead'
-            theme_text_color: 'Primary'
-            text: root.address_label
-            halign: 'left'
-        MDLabel:
-            font_style: 'Title'
-            theme_text_color: 'Primary'
-            text: "Address"
-            halign: 'left'
-        MDLabel:
-            font_style: 'Subhead'
-            theme_text_color: 'Primary'
-            text: root.address
-            halign: 'left'
-        MDRaisedButton:
-            size_hint: 1, None
-            height: dp(40)
-            text: 'Save'
-        MDRaisedButton:
-            size_hint: 1, None
-            height: dp(40)
-            text: 'Cancel'
-            on_press: root.dismiss()
-        MDRaisedButton:
-            size_hint: 1, None
-            height: dp(40)
-            text: 'Scan QR code'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(25)
+            MDLabel:
+                font_style: 'Title'
+                theme_text_color: 'Primary'
+                text: "Label"
+                font_size: '17sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: root.address_label
+                font_size: '15sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Title'
+                theme_text_color: 'Primary'
+                text: "Address"
+                font_size: '17sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: root.address
+                font_size: '15sp'
+                halign: 'left'
+        BoxLayout:
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 2, None
+                height: dp(40)
+                on_press: root.send_message_from()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Send message from'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                on_press: app.root.ids.scr_mngr.current = 'showqrcode'
+                on_press: app.root.ids.sc15.qrdisplay()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Show QR code'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+<AddbookDetailPopup>:
+    id: addbook_popup
+    background: './images/popup.jpeg'
+    separator_height: 0 
+    auto_dismiss: False
+    BoxLayout:
+        size_hint_y: None
+        spacing:dp(70)
+        id: addbook_popup_box
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(20)
+            MDLabel:
+                font_style: 'Title'
+                theme_text_color: 'Primary'
+                text: "Label"
+                font_size: '17sp'
+                halign: 'left'
+            MDTextField:
+                id: add_label
+                font_style: 'Subhead'
+                font_size: '15sp'
+                halign: 'left'
+                text: root.address_label
+                theme_text_color: 'Primary'
+                required: True
+                helper_text_mode: "on_error"
+            MDLabel:
+                font_style: 'Title'
+                theme_text_color: 'Primary'
+                text: "Address"
+                font_size: '17sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: root.address
+                font_size: '15sp'
+                halign: 'left'
+        BoxLayout:
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 2, None
+                height: dp(40)
+                on_press: root.send_message_to()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Send message to'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                font_size: '10sp'
+                on_press: root.update_addbook_label(root.address)
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Save'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                MDLabel:
+                    font_style: 'Title'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+<ShowQRCode>:
+    name: 'showqrcode'
+    BoxLayout:
+        orientation: 'vertical'
+        id: qr
