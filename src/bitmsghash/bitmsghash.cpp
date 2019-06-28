@@ -1,7 +1,7 @@
 // bitmessage cracker, build with g++ or MSVS to a shared library, use included python code for usage under bitmessage
 #ifdef _WIN32
-#include "Winsock.h"
-#include "Windows.h"
+#include "winsock.h"
+#include "windows.h"
 #define uint64_t unsigned __int64
 #else
 #include <arpa/inet.h>
