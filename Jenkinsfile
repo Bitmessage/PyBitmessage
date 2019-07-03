@@ -1,26 +1,12 @@
 pipeline {
-    agent admin
+    agent any
 
     triggers {
         pollSCM('*/5 * * * *')
     }
-    options {
-        skipDefaultCheckout(true)
-        // Keep the 10 most recent builds
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timestamps()
-    }
-    environment {
-      PATH="/home/cis/Desktop/ENV/pybitenv/bin:$PATH"
-    }
+  
 
     stages {
-
-        stage ("Code pull"){
-            steps{
-                checkout scm
-            }
-        }
         stage('Build environment') {
             steps {
                 sh '''export WORKSPACE=`pwd`
