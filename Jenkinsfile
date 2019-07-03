@@ -9,9 +9,8 @@ pipeline {
     stages {
         stage('Build environment') {
             steps {
-                sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate
-                      pip install -r /home/cis/Desktop/Python/PyBitmessage/requirements.txt
-                    '''
+                sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate'''
+                sh '''pip install -r /home/cis/Desktop/Python/PyBitmessage/requirements.txt'''
             }
         }
         stage('Test environment') {
