@@ -9,16 +9,14 @@ pipeline {
     stages {
         stage('Build environment') {
             steps {
-                sh '''export WORKSPACE=`pwd`
-                      source /home/cis/Desktop/ENV/pybitenv/bin/activate
+                sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate
                       pip install -r /home/cis/Desktop/Python/PyBitmessage/requirements.txt
                     '''
             }
         }
         stage('Test environment') {
             steps {
-                sh '''export WORKSPACE=`pwd` 
-                      source /home/cis/Desktop/ENV/pybitenv/bin/activate
+                sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate
                       cd /home/cis/Desktop/Python/PyBitmessage
                       sudo python setup.py install
                       sudo /home/cis/.local/bin/nosetests --with-xunit tests
