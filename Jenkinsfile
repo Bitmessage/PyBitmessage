@@ -11,7 +11,7 @@ pipeline {
         timestamps()
     }
     environment {
-      PATH="/var/lib/jenkins/miniconda3/bin:$PATH"
+      PATH="/home/cis/Desktop/ENV/pybitenv/bin:$PATH"
     }
 
     stages {
