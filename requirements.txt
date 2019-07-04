@@ -2,8 +2,8 @@ python_prctl
 psutil
 pycrypto
 python
-libssl-dev 
-libffi-dev
+libssl-dev
 git
 python-msgpack
 python-qt4
+pyOpenSSL
