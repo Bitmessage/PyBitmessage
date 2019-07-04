@@ -2,6 +2,7 @@ python_prctl
 psutil
 pycrypto
 python-git
+pathlib
 python-msgpack
 python-qt4
 pyOpenSSL
