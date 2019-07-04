@@ -2,7 +2,6 @@ python_prctl
 psutil
 pycrypto
 python
-libssl-dev
 git
 python-msgpack
 python-qt4
