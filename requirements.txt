@@ -1,8 +1,4 @@
 python_prctl
 psutil
 pycrypto
-python-git
-pathlib2
-python-msgpack
-python-qt4
-pyOpenSSL
+nose
