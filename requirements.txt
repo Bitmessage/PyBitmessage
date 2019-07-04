@@ -1,8 +1,7 @@
 python_prctl
 psutil
 pycrypto
-python
-git
+python-git
 python-msgpack
 python-qt4
 pyOpenSSL
