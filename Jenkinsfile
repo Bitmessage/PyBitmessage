@@ -79,7 +79,8 @@ pipeline {
                 virtualenv venv
                 #. venv/bin/activate
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                sudo var/lib/jenkins/.local/bin/nosetests --with-xunit tests
+                sudo python setup.py install
+                sudo /home/cis/.local/bin/nosetests --with-xunit tests
 
                 '''
             }
