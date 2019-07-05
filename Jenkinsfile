@@ -112,5 +112,5 @@ pipeline {
     //              subject: "${env.projectName} ${env.JOB_NAME} (${env.BUILD_NUMBER}) build successful",
     //              to: env.emailTo
     //     }
-    // }
+    }
 }
