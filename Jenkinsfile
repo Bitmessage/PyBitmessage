@@ -60,10 +60,16 @@ pipeline {
             steps {
                 sh '''
 
-                source /home/cis/Desktop/ENV/pybitenv/bin/activate
-                sh '''cd /home/cis/Desktop/Python/PyBitmessage'''
-                sh '''sudo python setup.py install'''
-                sh '''sudo /home/cis/.local/bin/nosetests --with-xunit tests'''
+                echo ${SHELL}
+                [ -d venv ] && rm -rf venv
+                #virtualenv --python=python2.7 venv
+                virtualenv venv
+                #. venv/bin/activate
+                export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                sudo python setup.py install
+                sudo admin:///var/lib/jenkins/.local/bin/nosetests --with-xunit tests
+
+                '''
             }
         }
 
