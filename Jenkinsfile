@@ -1,31 +1,13 @@
-#!/usr/bin/env groovy
-
-/**
- * Jenkinsfile
- */
 pipeline {
     agent any
-    options {
-        buildDiscarder(
-            // Only keep the 10 most recent builds
-            logRotator(numToKeepStr:'10'))
+
+    triggers {
+        pollSCM('*/5 * * * *')
     }
-    environment {
-        projectName = 'BitMessage'
-        emailTo = 'kuldeep.m@cisinlabs.com'
-        emailFrom = 'kuldeep.m@cisinlabs.com'
-        VIRTUAL_ENV = "${env.WORKSPACE}/venv"
-    }
+  
 
     stages {
 
-        /*
-        stage ('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        */
 
         stage ('Install_Requirements') {
             steps {
@@ -43,108 +25,51 @@ pipeline {
             }
         }
 
-        // stage ('Check_style') {
-        //     steps {
-        //         sh """
-        //             #. venv/bin/activate
-        //             [ -d report ] || mkdir report
-        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
-        //             make check || true
-        //         """
-        //         sh """
-        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
-        //             make flake8 | tee report/flake8.log || true
-        //         """
-        //         sh """
-        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
-        //             make pylint | tee report/pylint.log || true
-        //         """
-        //         step([$class: 'WarningsPublisher',
-        //           parserConfigurations: [[
-        //             parserName: 'Pep8',
-        //             pattern: 'report/flake8.log'
-        //           ],
-        //           [
-        //             parserName: 'pylint',
-        //             pattern: 'report/pylint.log'
-        //           ]],
-        //           unstableTotalAll: '0',
-        //           usePreviousBuildAsReference: true
-        //         ])
-        //     }
-        // }
-
-        stage ('Unit Tests') {
+        stage ('Check_style') {
             steps {
                 sh """
-                    #. venv/bin/activate
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    make unittest || true
-                """
-            }
+                    if [ ! -d venv ] ; then
 
-            post {
-                always {
-                    junit keepLongStdio: true, testResults: 'report/nosetests.xml'
-                    publishHTML target: [
-                        reportDir: 'report/coverage',
-                        reportFiles: 'index.html',
-                        reportName: 'Coverage Report - Unit Test'
-                    ]
-                }
+                       virtualenv --python=python2.7 venv
+                    fi
+                    source venv/bin/activate
+                    export PYTHONPATH="$PWD:$PYTHONPATH"
+
+                    pip install pylint
+
+                    cd repo
+                    ### Need this because some strange control sequences when using default TERM=xterm
+                    export TERM="linux"
+
+                    ## || exit 0 because pylint only exits with 0 if everything is correct
+                    pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) MYMODULE/ > pylint.log || exit 0
+                """
+                step([$class: 'WarningsPublisher',
+                  parserConfigurations: [
+                  [
+                    parserName: 'pylint',
+                    pattern: 'report/pylint.log'
+                  ]],
+                  unstableTotalAll: '0',
+                  usePreviousBuildAsReference: true
+                ])
             }
         }
 
-        stage ('System Tests') {
+        stage('Test environment') {
             steps {
-                sh """
-                    #. venv/bin/activate
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    // Write file containing test node connection information if needed.
-                    // writeFile file: "test/fixtures/nodes.yaml", text: "---\n- node: <some-ip>\n"
-                    make systest || true
-                """
-            }
-
-            post {
-                always {
-                    junit keepLongStdio: true, testResults: 'report/nosetests.xml'
-                    publishHTML target: [
-                        reportDir: 'report/coverage',
-                        reportFiles: 'index.html',
-                        reportName: 'Coverage Report - System Test'
-                    ]
-                }
+                sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate
+                sh '''cd /home/cis/Desktop/Python/PyBitmessage'''
+                sh '''sudo python setup.py install'''
+                sh '''sudo /home/cis/.local/bin/nosetests --with-xunit tests'''
             }
         }
-
-        stage ('Docs') {
+        stage('Test Run') {
             steps {
-                sh """
-                    #. venv/bin/activate
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    PYTHONPATH=. pdoc --html --html-dir docs --overwrite env.projectName
-                """
-            }
-
-            post {
-                always {
-                    publishHTML target: [
-                        reportDir: 'docs/*',
-                        reportFiles: 'index.html',
-                        reportName: 'Module Documentation'
-                    ]
-                }
-            }
-        }
-
-        stage ('Cleanup') {
-            steps {
-                sh 'rm -rf venv'
+                sh '''python /home/cis/Desktop/Python/PyBitmessage/src/bitmessagemain.py -t'''
             }
         }
     }
-
     post {
         failure {
             mail body: "${env.JOB_NAME} (${env.BUILD_NUMBER}) ${env.projectName} build error " +
