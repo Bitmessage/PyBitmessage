@@ -20,7 +20,7 @@
 ########################################################
 # variable section
 
-NAME = "python_jenkinsfile_testing"
+NAME = "PyBitmessage"
 
 PYTHON=python
 COVERAGE=coverage
