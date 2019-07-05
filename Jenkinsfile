@@ -43,36 +43,36 @@ pipeline {
             }
         }
 
-        stage ('Check_style') {
-            steps {
-                // sh """
-                //     #. venv/bin/activate
-                //     [ -d report ] || mkdir report
-                //     export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                //     make check || true
-                // """
-                sh """
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    make flake8 | tee report/flake8.log || true
-                """
-                sh """
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    make pylint | tee report/pylint.log || true
-                """
-                step([$class: 'WarningsPublisher',
-                  parserConfigurations: [[
-                    parserName: 'Pep8',
-                    pattern: 'report/flake8.log'
-                  ],
-                  [
-                    parserName: 'pylint',
-                    pattern: 'report/pylint.log'
-                  ]],
-                  unstableTotalAll: '0',
-                  usePreviousBuildAsReference: true
-                ])
-            }
-        }
+        // stage ('Check_style') {
+        //     steps {
+        //         sh """
+        //             #. venv/bin/activate
+        //             [ -d report ] || mkdir report
+        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        //             make check || true
+        //         """
+        //         sh """
+        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        //             make flake8 | tee report/flake8.log || true
+        //         """
+        //         sh """
+        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        //             make pylint | tee report/pylint.log || true
+        //         """
+        //         step([$class: 'WarningsPublisher',
+        //           parserConfigurations: [[
+        //             parserName: 'Pep8',
+        //             pattern: 'report/flake8.log'
+        //           ],
+        //           [
+        //             parserName: 'pylint',
+        //             pattern: 'report/pylint.log'
+        //           ]],
+        //           unstableTotalAll: '0',
+        //           usePreviousBuildAsReference: true
+        //         ])
+        //     }
+        // }
 
         stage ('Unit Tests') {
             steps {
