@@ -4,6 +4,19 @@ pipeline {
     triggers {
         pollSCM('*/5 * * * *')
     }
+
+
+    options {
+        buildDiscarder(
+            // Only keep the 10 most recent builds
+            logRotator(numToKeepStr:'10'))
+    }
+    environment {
+        projectName = 'BitMessage'
+        emailTo = 'kuldeep.m@cisinlabs.com'
+        emailFrom = 'kuldeep.m@cisinlabs.com'
+        VIRTUAL_ENV = "${env.WORKSPACE}/venv"
+    }
   
 
     stages {
@@ -66,7 +79,6 @@ pipeline {
                 virtualenv venv
                 #. venv/bin/activate
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                sudo python setup.py install
                 sudo var/lib/jenkins/.local/bin/nosetests --with-xunit tests
 
                 '''
