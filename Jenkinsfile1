@@ -7,6 +7,7 @@ pipeline {
   
 
     stages {
+
         stage('Build environment') {
             steps {
                 sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate'''
@@ -18,6 +19,7 @@ pipeline {
                 sh '''source /home/cis/Desktop/ENV/pybitenv/bin/activate
                       cd /home/cis/Desktop/Python/PyBitmessage
                       sudo python setup.py install
+                      sudo su
                       sudo /home/cis/.local/bin/nosetests --with-xunit tests
                     '''
             }
@@ -29,6 +31,7 @@ pipeline {
             }
         }
     }
+
     post {
         failure {
             echo "Send e-mail, when failed"
