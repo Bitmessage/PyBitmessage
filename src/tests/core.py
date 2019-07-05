@@ -70,6 +70,14 @@ class TestCore(unittest.TestCase):
         self.assertEqual(msg_data['subject'], obj3e.subject)
         self.assertEqual(msg_data['body'], obj3e.body)
 
+        try:
+            MsgEncode({'body': 'A msg with no subject'}, 3)
+        except Exception as e:
+            self.fail(
+                'Exception %s whyle trying to encode message'
+                ' with no subject!' % e
+            )
+
     def _wipe_knownnodes(self):
         with knownnodes.knownNodesLock:
             knownnodes.knownNodes = {stream: {} for stream in range(1, 4)}
