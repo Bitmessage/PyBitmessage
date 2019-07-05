@@ -905,7 +905,7 @@ class BMRPCDispatcher(object):
              'msgqueued',
              0,
              'sent',
-             2,
+             encodingType,
              TTL)
         helper_sent.insert(t)
 
@@ -965,7 +965,7 @@ class BMRPCDispatcher(object):
              'broadcastqueued',
              0,
              'sent',
-             2,
+             encodingType,
              TTL)
         helper_sent.insert(t)
 
