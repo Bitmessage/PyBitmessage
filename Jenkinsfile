@@ -30,7 +30,7 @@ pipeline {
         stage ('Install_Requirements') {
             steps {
                 sh """
-                        echo ${SHELL}
+                    echo ${SHELL}
                     [ -d venv ] && rm -rf venv
                     #virtualenv --python=python2.7 venv
                     virtualenv venv
@@ -45,12 +45,12 @@ pipeline {
 
         stage ('Check_style') {
             steps {
-                sh """
-                    #. venv/bin/activate
-                    [ -d report ] || mkdir report
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    make check || true
-                """
+                // sh """
+                //     #. venv/bin/activate
+                //     [ -d report ] || mkdir report
+                //     export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                //     make check || true
+                // """
                 sh """
                     export PATH=${VIRTUAL_ENV}/bin:${PATH}
                     make flake8 | tee report/flake8.log || true
