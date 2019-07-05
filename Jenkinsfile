@@ -1,11 +1,5 @@
 pipeline {
     agent any
-
-    triggers {
-        pollSCM('*/5 * * * *')
-    }
-
-
     options {
         buildDiscarder(
             // Only keep the 10 most recent builds
@@ -17,10 +11,16 @@ pipeline {
         emailFrom = 'kuldeep.m@cisinlabs.com'
         VIRTUAL_ENV = "${env.WORKSPACE}/venv"
     }
-  
 
     stages {
 
+        /*
+        stage ('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        */
 
         stage ('Install_Requirements') {
             steps {
@@ -37,6 +37,7 @@ pipeline {
                 """
             }
         }
+
 
         // stage ('Check_style') {
         //     steps {
@@ -72,16 +73,14 @@ pipeline {
         stage('Test environment') {
             steps {
                 sh '''
-
                 echo ${SHELL}
                 [ -d venv ] && rm -rf venv
                 #virtualenv --python=python2.7 venv
                 virtualenv venv
                 #. venv/bin/activate
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                sudo python setup.py install
+                python setup.py install
                 sudo /home/cis/.local/bin/nosetests --with-xunit tests
-
                 '''
             }
         }
@@ -89,7 +88,13 @@ pipeline {
 
         stage('Test Run') {
             steps {
-                sh '''python /home/cis/Desktop/Python/PyBitmessage/src/bitmessagemain.py -t'''
+                sh '''python src/bitmessagemain.py -t'''
+            }
+        }
+
+        stage ('Cleanup') {
+            steps {
+                sh 'rm -rf venv'
             }
         }
     }
@@ -97,7 +102,22 @@ pipeline {
 
     post {
         failure {
-            echo "Send e-mail, when failed"
+            mail body: "${env.JOB_NAME} (${env.BUILD_NUMBER}) ${env.projectName} build error " +
+                       "is here: ${env.BUILD_URL}\nStarted by ${env.BUILD_CAUSE}" ,
+                 from: env.emailFrom,
+                 //replyTo: env.emailFrom,
+                 subject: "${env.projectName} ${env.JOB_NAME} (${env.BUILD_NUMBER}) build failed",
+                 to: env.emailTo
+        }
+        success {
+            mail body: "${env.JOB_NAME} (${env.BUILD_NUMBER}) ${env.projectName} build successful\n" +
+                       "Started by ${env.BUILD_CAUSE}",
+                 from: env.emailFrom,
+                 //replyTo: env.emailFrom,
+                 subject: "${env.projectName} ${env.JOB_NAME} (${env.BUILD_NUMBER}) build successful",
+                 to: env.emailTo
         }
     }
+
+
 }
