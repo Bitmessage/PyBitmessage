@@ -97,7 +97,7 @@ pipeline {
 
                     pip install pylint
 
-                    cd repo
+                    echo ${pwd}
                     ### Need this because some strange control sequences when using default TERM=xterm
                     export TERM="linux"
 
