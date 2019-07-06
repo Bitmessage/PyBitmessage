@@ -8,7 +8,7 @@ pipeline {
     environment {
         projectName = 'BitMessage'
         emailTo = 'kuldeep.m@cisinlabs.com'
-        emailFrom = 'kuldeep.m@cisinlabs.com'
+        emailFrom = 'cis.dev393@gmail.com'
         VIRTUAL_ENV = "${env.WORKSPACE}/venv"
     }
 
@@ -81,6 +81,28 @@ pipeline {
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
                 python setup.py install
                 sudo /home/cis/.local/bin/nosetests --with-xunit tests
+                '''
+            }
+        }
+
+        stage('Pylint Checker') {
+            steps {
+                sh '''
+                    echo ${SHELL}
+                    [ -d venv ] && rm -rf venv
+                    #virtualenv --python=python2.7 venv
+                    virtualenv venv
+                    #. venv/bin/activate
+                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
+
+                    pip install pylint
+
+                    cd repo
+                    ### Need this because some strange control sequences when using default TERM=xterm
+                    export TERM="linux"
+
+                    ## || exit 0 because pylint only exits with 0 if everything is correct
+                    pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) Pybitmessage/ > pylint.log || exit 0
                 '''
             }
         }
