@@ -29,7 +29,7 @@ pipeline {
                     [ -d venv ] && rm -rf venv
                     #virtualenv --python=python2.7 venv
                     virtualenv venv
-                    source venv/bin/activate
+                    #. venv/bin/activate
                     export PATH=${VIRTUAL_ENV}/bin:${PATH}
                     pip install --upgrade pip
                     pip install -r requirements.txt -r dev-requirements.txt
@@ -77,7 +77,7 @@ pipeline {
                 [ -d venv ] && rm -rf venv
                 #virtualenv --python=python2.7 venv
                 virtualenv venv
-                source venv/bin/activate
+                #. venv/bin/activate
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
                 python setup.py install
                 sudo /home/cis/.local/bin/nosetests --with-xunit tests
@@ -85,27 +85,26 @@ pipeline {
             }
         }
 
-        // stage('Pylint Checker') {
-        //     steps {
-        //         sh '''
-        //             echo ${SHELL}
-        //             [ -d venv ] && rm -rf venv
-        //             #virtualenv --python=python2.7 venv
-        //             virtualenv venv
-        //             source venv/bin/activate
-        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        stage('Pylint Checker') {
+            steps {
+                sh '''
+                    echo ${SHELL}
+                    [ -d venv ] && rm -rf venv
+                    #virtualenv --python=python2.7 venv
+                    virtualenv venv
+                    #. venv/bin/activate
+                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
 
-        //             pip install pylint
+                    pip install pylint
 
-        //             echo ${pwd}
-        //             ### Need this because some strange control sequences when using default TERM=xterm
-        //             export TERM="linux"
+                    
+                    export TERM="linux"
 
-        //             ## || exit 0 because pylint only exits with 0 if everything is correct
-        //             pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) Pybitmessage/ > pylint.log || exit 0
-        //         '''
-        //     }
-        // }
+                    ## || exit 0 because pylint only exits with 0 if everything is correct
+                    pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) Pybitmessage/ > pylint.log || exit 0
+                '''
+            }
+        }
 
 
         stage('Test Run') {
