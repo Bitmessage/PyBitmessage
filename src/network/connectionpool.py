@@ -21,6 +21,7 @@ from udp import UDPSocket
 
 @Singleton
 class BMConnectionPool(object):
+    """Pool of all existing connections"""
     def __init__(self):
         asyncore.set_rates(
             BMConfigParser().safeGetInt(
@@ -38,9 +39,14 @@ class BMConnectionPool(object):
         self.bootstrapped = False
 
     def connectToStream(self, streamNumber):
+        """Connect to a bitmessage stream"""
         self.streams.append(streamNumber)
 
     def getConnectionByAddr(self, addr):
+        """
+        Return an (existing) connection object based on a `Peer` object
+        (IP and port)
+        """
         try:
             return self.inboundConnections[addr]
         except KeyError:
@@ -60,6 +66,7 @@ class BMConnectionPool(object):
         raise KeyError
 
     def isAlreadyConnected(self, nodeid):
+        """Check if we're already connected to this peer"""
         for i in (
             self.inboundConnections.values() +
             self.outboundConnections.values()
@@ -72,6 +79,7 @@ class BMConnectionPool(object):
         return False
 
     def addConnection(self, connection):
+        """Add a connection object to our internal dict"""
         if isinstance(connection, UDPSocket):
             return
         if connection.isOutbound:
@@ -84,6 +92,7 @@ class BMConnectionPool(object):
                     connection
 
     def removeConnection(self, connection):
+        """Remove a connection from our internal dict"""
         if isinstance(connection, UDPSocket):
             del self.udpSockets[connection.listening.host]
         elif isinstance(connection, TCPServer):
@@ -105,6 +114,7 @@ class BMConnectionPool(object):
         connection.handle_close()
 
     def getListeningIP(self):
+        """What IP are we supposed to be listening on?"""
         if BMConfigParser().safeGet(
                 "bitmessagesettings", "onionhostname").endswith(".onion"):
             host = BMConfigParser().safeGet(
@@ -121,6 +131,7 @@ class BMConnectionPool(object):
         return host
 
     def startListening(self, bind=None):
+        """Open a listening socket and start accepting connections on it"""
         if bind is None:
             bind = self.getListeningIP()
         port = BMConfigParser().safeGetInt("bitmessagesettings", "port")
@@ -129,6 +140,10 @@ class BMConnectionPool(object):
         self.listeningSockets[ls.destination] = ls
 
     def startUDPSocket(self, bind=None):
+        """
+        Open an UDP socket. Depending on settings, it can either only
+        accept incoming UDP packets, or also be able to send them.
+        """
         if bind is None:
             host = self.getListeningIP()
             udpSocket = UDPSocket(host=host, announcing=True)
@@ -140,6 +155,7 @@ class BMConnectionPool(object):
         self.udpSockets[udpSocket.listening.host] = udpSocket
 
     def loop(self):
+        """Main Connectionpool's loop"""
         # defaults to empty loop if outbound connections are maxed
         spawnConnections = False
         acceptConnections = True

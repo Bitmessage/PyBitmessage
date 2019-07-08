@@ -9,6 +9,7 @@ from debug import logger
 
 
 class ProxyError(Exception):
+    """Base proxy exception class"""
     errorCodes = ("Unknown error",)
 
     def __init__(self, code=-1):
@@ -21,6 +22,7 @@ class ProxyError(Exception):
 
 
 class GeneralProxyError(ProxyError):
+    """General proxy error class (not specfic to an implementation)"""
     errorCodes = (
         "Success",
         "Invalid data",
@@ -36,6 +38,7 @@ class GeneralProxyError(ProxyError):
 
 
 class Proxy(AdvancedDispatcher):
+    """Base proxy class"""
     # these are global, and if you change config during runtime,
     # all active/new instances should change too
     _proxy = ("127.0.0.1", 9050)
@@ -46,10 +49,12 @@ class Proxy(AdvancedDispatcher):
 
     @property
     def proxy(self):
+        """Return proxy IP and port"""
         return self.__class__._proxy
 
     @proxy.setter
     def proxy(self, address):
+        """Set proxy IP and port"""
         if (not isinstance(address, tuple) or len(address) < 2 or
             not isinstance(address[0], str) or
                 not isinstance(address[1], int)):
@@ -58,18 +63,25 @@ class Proxy(AdvancedDispatcher):
 
     @property
     def auth(self):
+        """Return proxy authentication settings"""
         return self.__class__._auth
 
     @auth.setter
     def auth(self, authTuple):
+        """Set proxy authentication (username and password)"""
         self.__class__._auth = authTuple
 
     @property
     def onion_proxy(self):
+        """
+        Return separate proxy IP and port for use only with onion
+        addresses. Untested.
+        """
         return self.__class__._onion_proxy
 
     @onion_proxy.setter
     def onion_proxy(self, address):
+        """Set onion proxy address"""
         if address is not None and (
             not isinstance(address, tuple) or len(address) < 2 or
             not isinstance(address[0], str) or
@@ -79,10 +91,12 @@ class Proxy(AdvancedDispatcher):
 
     @property
     def onion_auth(self):
+        """Return proxy authentication settings for onion hosts only"""
         return self.__class__._onion_auth
 
     @onion_auth.setter
     def onion_auth(self, authTuple):
+        """Set proxy authentication for onion hosts only. Untested."""
         self.__class__._onion_auth = authTuple
 
     def __init__(self, address):
@@ -110,6 +124,7 @@ class Proxy(AdvancedDispatcher):
         )
 
     def handle_connect(self):
+        """Handle connection event (to the proxy)"""
         self.set_state("init")
         try:
             AdvancedDispatcher.handle_connect(self)
@@ -122,5 +137,6 @@ class Proxy(AdvancedDispatcher):
         self.state_init()
 
     def state_proxy_handshake_done(self):
+        """Handshake is complete at this point"""
         self.connectedAt = time.time()
         return False
