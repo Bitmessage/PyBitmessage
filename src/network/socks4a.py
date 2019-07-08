@@ -5,6 +5,7 @@ from proxy import Proxy, ProxyError, GeneralProxyError
 
 
 class Socks4aError(ProxyError):
+    """SOCKS4a error base class"""
     errorCodes = (
         "Request granted",
         "Request rejected or failed",
@@ -17,16 +18,19 @@ class Socks4aError(ProxyError):
 
 
 class Socks4a(Proxy):
+    """SOCKS4a proxy class"""
     def __init__(self, address=None):
         Proxy.__init__(self, address)
         self.ipaddr = None
         self.destport = address[1]
 
     def state_init(self):
+        """Protocol initialisation (before connection is established)"""
         self.set_state("auth_done", 0)
         return True
 
     def state_pre_connect(self):
+        """Handle feedback from SOCKS4a while it is connecting on our behalf"""
         # Get the response
         if self.read_buf[0:1] != chr(0x00).encode():
             # bad data
@@ -53,14 +57,20 @@ class Socks4a(Proxy):
         return True
 
     def proxy_sock_name(self):
+        """
+        Handle return value when using SOCKS4a for DNS resolving
+        instead of connecting.
+        """
         return socket.inet_ntoa(self.__proxysockname[0])
 
 
 class Socks4aConnection(Socks4a):
+    """Child SOCKS4a class used for making outbound connections."""
     def __init__(self, address):
         Socks4a.__init__(self, address=address)
 
     def state_auth_done(self):
+        """Request connection to be made"""
         # Now we can request the actual connection
         rmtrslv = False
         self.append_write_buf(
@@ -92,6 +102,7 @@ class Socks4aConnection(Socks4a):
         return True
 
     def state_pre_connect(self):
+        """Tell SOCKS4a to initiate a connection"""
         try:
             return Socks4a.state_pre_connect(self)
         except Socks4aError as e:
@@ -100,6 +111,7 @@ class Socks4aConnection(Socks4a):
 
 
 class Socks4aResolver(Socks4a):
+    """DNS resolver class using SOCKS4a"""
     def __init__(self, host):
         self.host = host
         self.port = 8444
@@ -118,4 +130,9 @@ class Socks4aResolver(Socks4a):
         return True
 
     def resolved(self):
+        """
+        Resolving is done, process the return value. To use this within
+        PyBitmessage, a callback needs to be implemented which hasn't
+        been done yet.
+        """
         print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
