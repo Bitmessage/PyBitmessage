@@ -32,13 +32,14 @@ def get_tool_results(file_list):
             'pycodestyle_violations': get_filtered_pycodestyle_output(path_to_file),
             'flake8_violations': get_filtered_flake8_output(path_to_file),
             'pylint_violations': get_filtered_pylint_output(path_to_file),
-            'path_to_file': path_to_file,
-            'total_violations': sum([
-                len(result['pycodestyle_violations']),
-                len(result['flake8_violations']),
-                len(result['pylint_violations']),
-            ])
+            'path_to_file': path_to_file
         }
+        result['total_violations'] = sum([
+            len(result['pycodestyle_violations']),
+            len(result['flake8_violations']),
+            len(result['pylint_violations'])
+        ])
+
         results.append(result)
     return results
 
@@ -73,17 +74,17 @@ def print_results(results, top, verbose, details):
             print("pycodestyle:")
             for detail in flatten(item['pycodestyle_violations']):
                 print(detail)
-            print
+            print()
 
             print("flake8:")
             for detail in flatten(item['flake8_violations']):
                 print(detail)
-            print
+            print()
 
             print("pylint:")
             for detail in flatten(item['pylint_violations']):
                 print(detail)
-            print
+            print()
 
 
 def sort_and_slice(results, top):

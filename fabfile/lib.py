@@ -17,7 +17,7 @@ from fabvenv import virtualenv
 FABRIC_ROOT = os.path.dirname(__file__)
 project_root = os.path.dirname(FABRIC_ROOT)
 VENV_ROOT = os.path.expanduser(os.path.join('~', '.virtualenvs', 'pybitmessage-devops'))
-PYTHONPATH = os.path.join(project_root, 'src', )
+PYTHONPATH = os.path.join(project_root, 'src',)
 
 
 def coerce_list(value):
