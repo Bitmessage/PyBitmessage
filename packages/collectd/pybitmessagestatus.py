@@ -7,18 +7,20 @@ import xmlrpclib
 pybmurl = ""
 api = ""
 
+
 def init_callback():
     global api
     api = xmlrpclib.ServerProxy(pybmurl)
     collectd.info('pybitmessagestatus.py init done')
 
-def config_callback(ObjConfiguration):
+
+def config_callback(obj_configuration):
     global pybmurl
     apiUsername = ""
     apiPassword = ""
     apiInterface = "127.0.0.1"
     apiPort = 8445
-    for node in ObjConfiguration.children:
+    for node in obj_configuration.children:
         key = node.key.lower()
         if key.lower() == "apiusername" and node.values:
             apiUsername = node.values[0]
@@ -31,14 +33,17 @@ def config_callback(ObjConfiguration):
     pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface+ ":" + str(int(apiPort)) + "/"
     collectd.info('pybitmessagestatus.py config done')
 
+
 def read_callback():
     try:
-        clientStatus = json.loads(api.clientStatus())
+        client_status = json.loads(api.clientStatus())
     except:
         collectd.info("Exception loading or parsing JSON")
         return
 
-    for i in ["networkConnections", "numberOfPubkeysProcessed", "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]:
+    con_data = ["networkConnections", "numberOfPubkeysProcessed",
+                "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]
+    for i in con_data:
         metric = collectd.Values()
         metric.plugin = "pybitmessagestatus"
         if i[0:6] == "number":
@@ -47,10 +52,11 @@ def read_callback():
             metric.type = 'gauge'
         metric.type_instance = i.lower()
         try:
-            metric.values = [clientStatus[i]]
+            metric.values = [client_status[i]]
         except:
             collectd.info("Value for %s missing" % (i))
         metric.dispatch()
+
 
 if __name__ == "__main__":
     main()

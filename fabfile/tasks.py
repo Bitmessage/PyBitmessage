@@ -15,7 +15,7 @@ from fabric.contrib.project import rsync_project
 from fabvenv import virtualenv
 
 from fabfile.lib import (
-    autopep8, PROJECT_ROOT, VENV_ROOT, coerce_bool, flatten, filelist_from_git, default_hosts,
+    autopep8, project_root, VENV_ROOT, coerce_bool, flatten, filelist_from_git, default_hosts,
     get_filtered_pycodestyle_output, get_filtered_flake8_output, get_filtered_pylint_output,
 )
 
@@ -28,16 +28,17 @@ def get_tool_results(file_list):
 
     results = []
     for path_to_file in file_list:
-        result = {}
-        result['pycodestyle_violations'] = get_filtered_pycodestyle_output(path_to_file)
-        result['flake8_violations'] = get_filtered_flake8_output(path_to_file)
-        result['pylint_violations'] = get_filtered_pylint_output(path_to_file)
-        result['path_to_file'] = path_to_file
-        result['total_violations'] = sum([
-            len(result['pycodestyle_violations']),
-            len(result['flake8_violations']),
-            len(result['pylint_violations']),
-        ])
+        result = {
+            'pycodestyle_violations': get_filtered_pycodestyle_output(path_to_file),
+            'flake8_violations': get_filtered_flake8_output(path_to_file),
+            'pylint_violations': get_filtered_pylint_output(path_to_file),
+            'path_to_file': path_to_file,
+            'total_violations': sum([
+                len(result['pycodestyle_violations']),
+                len(result['flake8_violations']),
+                len(result['pylint_violations']),
+            ])
+        }
         results.append(result)
     return results
 
@@ -46,13 +47,13 @@ def print_results(results, top, verbose, details):
     """Print an item with the appropriate verbosity / detail"""
 
     if verbose and results:
-        print ''.join(
+        print(''.join(
             [
                 os.linesep,
                 'total pycodestyle flake8 pylint path_to_file',
                 os.linesep,
             ]
-        )
+        ))
 
     for item in sort_and_slice(results, top):
 
@@ -66,22 +67,22 @@ def print_results(results, top, verbose, details):
             )
         else:
             line = item['path_to_file']
-        print line
+        print(line)
 
         if details:
-            print "pycodestyle:"
+            print("pycodestyle:")
             for detail in flatten(item['pycodestyle_violations']):
-                print detail
+                print(detail)
             print
 
-            print "flake8:"
+            print("flake8:")
             for detail in flatten(item['flake8_violations']):
-                print detail
+                print(detail)
             print
 
-            print "pylint:"
+            print("pylint:")
             for detail in flatten(item['pylint_violations']):
-                print detail
+                print(detail)
             print
 
 
@@ -107,13 +108,13 @@ def generate_file_list(filename):
             if filename:
                 filename = os.path.abspath(filename)
                 if not os.path.exists(filename):
-                    print "Bad filename, specify a Python file"
+                    print("Bad filename, specify a Python file")
                     sys.exit(1)
                 else:
                     file_list = [filename]
 
             else:
-                with cd(PROJECT_ROOT):
+                with cd(project_root):
                     file_list = [
                         os.path.abspath(i.rstrip('\r'))
                         for i in run('find . -name "*.py"').split(os.linesep)
@@ -137,15 +138,15 @@ def create_dependency_graphs():
         with hide('running', 'stdout'):
 
             # .. todo:: consider a better place to put this, use a particular commit
-            with cd(PROJECT_ROOT):
+            with cd(project_root):
                 with settings(warn_only=True):
                     if run('stat pyan').return_code:
                         run('git clone https://github.com/davidfraser/pyan.git')
-            with cd(os.path.join(PROJECT_ROOT, 'pyan')):
+            with cd(os.path.join(project_root, 'pyan')):
                 run('git checkout pre-python3')
 
             # .. todo:: Use better settings. This is MVP to make a diagram
-            with cd(PROJECT_ROOT):
+            with cd(project_root):
                 file_list = run("find . -type f -name '*.py' ! -path './src/.eggs/*'").split('\r\n')
                 for cmd in [
                         'neato -Goverlap=false -Tpng > deps-neato.png',
@@ -215,7 +216,7 @@ def code_quality(verbose=True, details=False, fix=False, filename=None, top=10, 
 def test():
     """Run tests on the code"""
 
-    with cd(PROJECT_ROOT):
+    with cd(project_root):
         with virtualenv(VENV_ROOT):
 
             run('pip uninstall -y pybitmessage')
@@ -264,14 +265,14 @@ def build_docs(dep_graph=False, apidoc=True):
 
             apidoc_result = 0
             if apidoc:
-                run('mkdir -p {}'.format(os.path.join(PROJECT_ROOT, 'docs', 'autodoc')))
-                with cd(os.path.join(PROJECT_ROOT, 'docs', 'autodoc')):
+                run('mkdir -p {}'.format(os.path.join(project_root, 'docs', 'autodoc')))
+                with cd(os.path.join(project_root, 'docs', 'autodoc')):
                     with settings(warn_only=True):
                         run('rm *.rst')
-                with cd(os.path.join(PROJECT_ROOT, 'docs')):
+                with cd(os.path.join(project_root, 'docs')):
                     apidoc_result = run('sphinx-apidoc -o autodoc ..').return_code
 
-            with cd(os.path.join(PROJECT_ROOT, 'docs')):
+            with cd(os.path.join(project_root, 'docs')):
                 make_result = run('make html').return_code
                 return_code = apidoc_result + make_result
 
@@ -294,16 +295,16 @@ def push_docs(path=None):
     """
 
     # Making assumptions
-    WEB_ROOT = path if path is not None else os.path.join('var', 'www', 'html', 'pybitmessage', 'en', 'latest')
-    VERSION_ROOT = os.path.join(os.path.dirname(WEB_ROOT), softwareVersion)
+    web_root = path if path is not None else os.path.join('var', 'www', 'html', 'pybitmessage', 'en', 'latest')
+    version_root = os.path.join(os.path.dirname(web_root), softwareVersion)
 
     rsync_project(
-        remote_dir=VERSION_ROOT,
-        local_dir=os.path.join(PROJECT_ROOT, 'docs', '_build', 'html')
+        remote_dir=version_root,
+        local_dir=os.path.join(project_root, 'docs', '_build', 'html')
     )
-    result = run('ln -sf {0} {1}'.format(WEB_ROOT, VERSION_ROOT))
+    result = run('ln -sf {0} {1}'.format(web_root, version_root))
     if result.return_code:
-        print 'Linking the new release failed'
+        print('Linking the new release failed')
 
     # More assumptions
     sudo('systemctl restart apache2')
@@ -314,5 +315,5 @@ def push_docs(path=None):
 def clean():
     """Clean up files generated by fabric commands."""
     with hide('running', 'stdout'):
-        with cd(PROJECT_ROOT):
+        with cd(project_root):
             run(r"find . -name '*.pyc' -exec rm '{}' \;")

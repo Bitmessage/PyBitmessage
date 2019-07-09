@@ -15,9 +15,9 @@ from fabvenv import virtualenv
 
 
 FABRIC_ROOT = os.path.dirname(__file__)
-PROJECT_ROOT = os.path.dirname(FABRIC_ROOT)
+project_root = os.path.dirname(FABRIC_ROOT)
 VENV_ROOT = os.path.expanduser(os.path.join('~', '.virtualenvs', 'pybitmessage-devops'))
-PYTHONPATH = os.path.join(PROJECT_ROOT, 'src',)
+PYTHONPATH = os.path.join(project_root, 'src', )
 
 
 def coerce_list(value):
@@ -72,7 +72,7 @@ def filelist_from_git(rev=None):
         else:
             cmd += ' -r {}'.format(rev)
 
-    with cd(PROJECT_ROOT):
+    with cd(project_root):
         with hide('running', 'stdout'):
             results = []
             ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
@@ -92,7 +92,7 @@ def pycodestyle(path_to_file):
                 return run(
                     'pycodestyle --config={0} {1}'.format(
                         os.path.join(
-                            PROJECT_ROOT,
+                            project_root,
                             'setup.cfg',
                         ),
                         path_to_file,
@@ -108,7 +108,7 @@ def flake8(path_to_file):
                 return run(
                     'flake8 --config={0} {1}'.format(
                         os.path.join(
-                            PROJECT_ROOT,
+                            project_root,
                             'setup.cfg',
                         ),
                         path_to_file,
@@ -125,7 +125,7 @@ def pylint(path_to_file):
                     return run(
                         'pylint --rcfile={0} {1}'.format(
                             os.path.join(
-                                PROJECT_ROOT,
+                                project_root,
                                 'setup.cfg',
                             ),
                             path_to_file,
