@@ -19,7 +19,9 @@ class CipherName:
         self._blocksize = blocksize
 
     def __str__(self):
-        return "Cipher : " + self._name + " | Blocksize : " + str(self._blocksize) + " | Fonction pointer : " + str(self._pointer)
+        return "Cipher : {} | Blocksize : {} | Fonction pointer : {}".format(
+            self._name, str(self._blocksize), str(self._pointer)
+        )
 
     def get_pointer(self):
         return self._pointer()
@@ -33,33 +35,33 @@ class CipherName:
 
 def get_version(library):
     version = None
-    hexversion = None
+    hex_version = None
     cflags = None
     try:
-        #OpenSSL 1.1
-        OPENSSL_VERSION = 0
-        OPENSSL_CFLAGS = 1
+        #  OpenSSL 1.1
+        openssl_version = 0
+        openssl_cflags = 1
         library.OpenSSL_version.argtypes = [ctypes.c_int]
         library.OpenSSL_version.restype = ctypes.c_char_p
-        version = library.OpenSSL_version(OPENSSL_VERSION)
-        cflags = library.OpenSSL_version(OPENSSL_CFLAGS)
+        version = library.OpenSSL_version(openssl_version)
+        cflags = library.OpenSSL_version(openssl_cflags)
         library.OpenSSL_version_num.restype = ctypes.c_long
-        hexversion = library.OpenSSL_version_num()
+        hex_version = library.OpenSSL_version_num()
     except AttributeError:
         try:
-            #OpenSSL 1.0
-            SSLEAY_VERSION = 0
-            SSLEAY_CFLAGS = 2
+            #  OpenSSL 1.0
+            ssleay_version = 0
+            ssleay_cflags = 2
             library.SSLeay.restype = ctypes.c_long
             library.SSLeay_version.restype = ctypes.c_char_p
             library.SSLeay_version.argtypes = [ctypes.c_int]
-            version = library.SSLeay_version(SSLEAY_VERSION)
-            cflags = library.SSLeay_version(SSLEAY_CFLAGS)
-            hexversion = library.SSLeay()
+            version = library.SSLeay_version(ssleay_version)
+            cflags = library.SSLeay_version(ssleay_cflags)
+            hex_version = library.SSLeay()
         except AttributeError:
-            #raise NotImplementedError('Cannot determine version of this OpenSSL library.')
+            #  raise NotImplementedError('Cannot determine version of this OpenSSL library.')
             pass
-    return (version, hexversion, cflags)
+    return version, hex_version, cflags
 
 
 class _OpenSSL:
@@ -130,7 +132,8 @@ class _OpenSSL:
 
         self.EC_POINT_get_affine_coordinates_GFp = self._lib.EC_POINT_get_affine_coordinates_GFp
         self.EC_POINT_get_affine_coordinates_GFp.restype = ctypes.c_int
-        self.EC_POINT_get_affine_coordinates_GFp.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.EC_POINT_get_affine_coordinates_GFp.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.EC_KEY_set_private_key = self._lib.EC_KEY_set_private_key
         self.EC_KEY_set_private_key.restype = ctypes.c_int
@@ -148,7 +151,8 @@ class _OpenSSL:
 
         self.EC_POINT_set_affine_coordinates_GFp = self._lib.EC_POINT_set_affine_coordinates_GFp
         self.EC_POINT_set_affine_coordinates_GFp.restype = ctypes.c_int
-        self.EC_POINT_set_affine_coordinates_GFp.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.EC_POINT_set_affine_coordinates_GFp.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.EC_POINT_new = self._lib.EC_POINT_new
         self.EC_POINT_new.restype = ctypes.c_void_p
@@ -164,7 +168,8 @@ class _OpenSSL:
 
         self.EC_POINT_mul = self._lib.EC_POINT_mul
         self.EC_POINT_mul.restype = None
-        self.EC_POINT_mul.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.EC_POINT_mul.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.EC_KEY_set_private_key = self._lib.EC_KEY_set_private_key
         self.EC_KEY_set_private_key.restype = ctypes.c_int
@@ -223,13 +228,13 @@ class _OpenSSL:
         self.EVP_aes_256_cbc.restype = ctypes.c_void_p
         self.EVP_aes_256_cbc.argtypes = []
 
-        #self.EVP_aes_128_ctr = self._lib.EVP_aes_128_ctr
-        #self.EVP_aes_128_ctr.restype = ctypes.c_void_p
-        #self.EVP_aes_128_ctr.argtypes = []
+        # self.EVP_aes_128_ctr = self._lib.EVP_aes_128_ctr
+        # self.EVP_aes_128_ctr.restype = ctypes.c_void_p
+        # self.EVP_aes_128_ctr.argtypes = []
 
-        #self.EVP_aes_256_ctr = self._lib.EVP_aes_256_ctr
-        #self.EVP_aes_256_ctr.restype = ctypes.c_void_p
-        #self.EVP_aes_256_ctr.argtypes = []
+        # self.EVP_aes_256_ctr = self._lib.EVP_aes_256_ctr
+        # self.EVP_aes_256_ctr.restype = ctypes.c_void_p
+        # self.EVP_aes_256_ctr.argtypes = []
 
         self.EVP_aes_128_ofb = self._lib.EVP_aes_128_ofb
         self.EVP_aes_128_ofb.restype = ctypes.c_void_p
@@ -266,8 +271,8 @@ class _OpenSSL:
 
         self.EVP_CipherUpdate = self._lib.EVP_CipherUpdate
         self.EVP_CipherUpdate.restype = ctypes.c_int
-        self.EVP_CipherUpdate.argtypes = [ctypes.c_void_p,
-                                          ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+        self.EVP_CipherUpdate.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
 
         self.EVP_CipherFinal_ex = self._lib.EVP_CipherFinal_ex
         self.EVP_CipherFinal_ex.restype = ctypes.c_int
@@ -388,11 +393,11 @@ class _OpenSSL:
             'aes-256-cfb': CipherName('aes-256-cfb', self.EVP_aes_256_cfb128, 16),
             'aes-128-ofb': CipherName('aes-128-ofb', self._lib.EVP_aes_128_ofb, 16),
             'aes-256-ofb': CipherName('aes-256-ofb', self._lib.EVP_aes_256_ofb, 16),
-            #'aes-128-ctr': CipherName('aes-128-ctr', self._lib.EVP_aes_128_ctr, 16),
-            #'aes-256-ctr': CipherName('aes-256-ctr', self._lib.EVP_aes_256_ctr, 16),
+            # 'aes-128-ctr': CipherName('aes-128-ctr', self._lib.EVP_aes_128_ctr, 16),
+            # 'aes-256-ctr': CipherName('aes-256-ctr', self._lib.EVP_aes_256_ctr, 16),
             'bf-cfb': CipherName('bf-cfb', self.EVP_bf_cfb64, 8),
             'bf-cbc': CipherName('bf-cbc', self.EVP_bf_cbc, 8),
-            'rc4': CipherName('rc4', self.EVP_rc4, 128), # 128 is the initialisation size not block size
+            'rc4': CipherName('rc4', self.EVP_rc4, 128),  # 128 is the initialisation size not block size
         }
 
     def _set_curves(self):
@@ -430,9 +435,9 @@ class _OpenSSL:
             'sect571r1': 734,
         }
 
-    def BN_num_bytes(self, x):
+    def bn_num_bytes(self, x):
         """
-        returns the length of a BN (OpenSSl API)
+            returns the length of a BN (OpenSSl API)
         """
         return int((self.BN_num_bits(x) + 7) / 8)
 
@@ -452,13 +457,13 @@ class _OpenSSL:
             raise Exception("Unknown curve")
         return self.curves[name]
 
-    def get_curve_by_id(self, id):
+    def get_curve_by_id(self, curve_id):
         """
         returns the name of a elliptic curve with his id
         """
         res = None
         for i in self.curves:
-            if self.curves[i] == id:
+            if self.curves[i] == curve_id:
                 res = i
                 break
         if res is None:
@@ -485,7 +490,6 @@ class _OpenSSL:
         """
         returns a create_string_buffer (ctypes)
         """
-        buffer = None
         if data != 0:
             if sys.version_info.major == 3 and isinstance(data, type('')):
                 data = data.encode()
@@ -494,26 +498,27 @@ class _OpenSSL:
             buffer = self.create_string_buffer(size)
         return buffer
 
-def loadOpenSSL():
+
+def load_open_ssl():
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library
     
-    libdir = []
-    if getattr(sys,'frozen', None):
+    lib_dir = []
+    if getattr(sys, 'frozen', None):
         if 'darwin' in sys.platform:
-            libdir.extend([
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.1.1.0.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.1.0.2.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.1.0.1.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.1.0.0.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.0.9.8.dylib'),
+            lib_dir.extend([
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.dylib'),
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.1.0.dylib'),
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.0.2.dylib'),
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.0.1.dylib'),
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.0.0.dylib'),
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.0.9.8.dylib'),
                 ])
         elif 'win32' in sys.platform or 'win64' in sys.platform:
-            libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
+            lib_dir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
         else:
-            libdir.extend([
+            lib_dir.extend([
                 path.join(sys._MEIPASS, 'libcrypto.so'),
                 path.join(sys._MEIPASS, 'libssl.so'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.1.0'),
@@ -528,19 +533,19 @@ def loadOpenSSL():
                 path.join(sys._MEIPASS, 'libssl.so.0.9.8'),
             ])
     if 'darwin' in sys.platform:
-        libdir.extend(['libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
+        lib_dir.extend(['libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
     elif 'win32' in sys.platform or 'win64' in sys.platform:
-        libdir.append('libeay32.dll')
+        lib_dir.append('libeay32.dll')
     else:
-        libdir.append('libcrypto.so')
-        libdir.append('libssl.so')
-        libdir.append('libcrypto.so.1.0.0')
-        libdir.append('libssl.so.1.0.0')
+        lib_dir.append('libcrypto.so')
+        lib_dir.append('libssl.so')
+        lib_dir.append('libcrypto.so.1.0.0')
+        lib_dir.append('libssl.so.1.0.0')
     if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
-        libdir.append(find_library('ssl'))
+        lib_dir.append(find_library('ssl'))
     elif 'win32' in sys.platform or 'win64' in sys.platform:
-        libdir.append(find_library('libeay32'))
-    for library in libdir:
+        lib_dir.append(find_library('libeay32'))
+    for library in lib_dir:
         try:
             OpenSSL = _OpenSSL(library)
             return
@@ -548,4 +553,5 @@ def loadOpenSSL():
             pass
     raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
 
-loadOpenSSL()
+
+load_open_ssl()

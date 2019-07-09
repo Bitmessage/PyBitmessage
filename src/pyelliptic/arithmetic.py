@@ -74,7 +74,7 @@ def base10_add(a, b):
     m = ((b[1] - a[1]) * inv(b[0] - a[0], P)) % P
     x = (m * m - a[0] - b[0]) % P
     y = (m * (a[0] - x) - a[1]) % P
-    return (x, y)
+    return x, y
 
 
 def base10_double(a):
@@ -83,7 +83,7 @@ def base10_double(a):
     m = ((3 * a[0] * a[0] + A) * inv(2 * a[1], P)) % P
     x = (m * m - 2 * a[0]) % P
     y = (m * (a[0] - x) - a[1]) % P
-    return (x, y)
+    return x, y
 
 
 def base10_multiply(a, n):
@@ -99,7 +99,7 @@ def base10_multiply(a, n):
 
 
 def hex_to_point(h):
-    return (decode(h[2:66], 16), decode(h[66:], 16))
+    return decode(h[2:66], 16), decode(h[66:], 16)
 
 
 def point_to_hex(p):

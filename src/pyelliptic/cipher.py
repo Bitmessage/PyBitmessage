@@ -21,17 +21,17 @@ class Cipher:
         ctx2 = pyelliptic.Cipher("secretkey", iv, 0, ciphername='aes-256-cfb')
         print ctx2.ciphering(ciphertext)
     """
-    def __init__(self, key, iv, do, ciphername='aes-256-cbc'):
+    def __init__(self, key, iv, do, cipher_name='aes-256-cbc'):
         """
         do == 1 => Encrypt; do == 0 => Decrypt
         """
-        self.cipher = OpenSSL.get_cipher(ciphername)
+        self.cipher = OpenSSL.get_cipher(cipher_name)
         self.ctx = OpenSSL.EVP_CIPHER_CTX_new()
         if do == 1 or do == 0:
             k = OpenSSL.malloc(key, len(key))
-            IV = OpenSSL.malloc(iv, len(iv))
+            iv1 = OpenSSL.malloc(iv, len(iv))
             OpenSSL.EVP_CipherInit_ex(
-                self.ctx, self.cipher.get_pointer(), 0, k, IV, do)
+                self.ctx, self.cipher.get_pointer(), 0, k, iv1, do)
         else:
             raise Exception("RTFM ...")
 
@@ -43,21 +43,21 @@ class Cipher:
         return OpenSSL.cipher_algo.keys()
 
     @staticmethod
-    def get_blocksize(ciphername):
-        cipher = OpenSSL.get_cipher(ciphername)
+    def get_blocksize(cipher_name):
+        cipher = OpenSSL.get_cipher(cipher_name)
         return cipher.get_blocksize()
 
     @staticmethod
-    def gen_IV(ciphername):
-        cipher = OpenSSL.get_cipher(ciphername)
+    def gen_IV(cipher_name):
+        cipher = OpenSSL.get_cipher(cipher_name)
         return OpenSSL.rand(cipher.get_blocksize())
 
-    def update(self, input):
+    def update(self, in_put):
         i = OpenSSL.c_int(0)
-        buffer = OpenSSL.malloc(b"", len(input) + self.cipher.get_blocksize())
-        inp = OpenSSL.malloc(input, len(input))
+        buffer = OpenSSL.malloc(b"", len(in_put) + self.cipher.get_blocksize())
+        inp = OpenSSL.malloc(in_put, len(in_put))
         if OpenSSL.EVP_CipherUpdate(self.ctx, OpenSSL.byref(buffer),
-                                    OpenSSL.byref(i), inp, len(input)) == 0:
+                                    OpenSSL.byref(i), inp, len(in_put)) == 0:
             raise Exception("[OpenSSL] EVP_CipherUpdate FAIL ...")
         return buffer.raw[0:i.value]
 
@@ -69,11 +69,11 @@ class Cipher:
             raise Exception("[OpenSSL] EVP_CipherFinal_ex FAIL ...")
         return buffer.raw[0:i.value]
 
-    def ciphering(self, input):
+    def ciphering(self, in_put):
         """
         Do update and final in one method
         """
-        buff = self.update(input)
+        buff = self.update(in_put)
         return buff + self.final()
 
     def __del__(self):

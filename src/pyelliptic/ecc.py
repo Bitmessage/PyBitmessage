@@ -175,9 +175,9 @@ class ECC(object):
                     group, pub_key, pub_key_x, pub_key_y, 0) == 0:
                 raise Exception("[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ...")
 
-            privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(priv_key))
-            pubkeyx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_x))
-            pubkeyy = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_y))
+            privkey = OpenSSL.malloc(0, OpenSSL.bn_num_bytes(priv_key))
+            pubkeyx = OpenSSL.malloc(0, OpenSSL.bn_num_bytes(pub_key_x))
+            pubkeyy = OpenSSL.malloc(0, OpenSSL.bn_num_bytes(pub_key_y))
             OpenSSL.BN_bn2bin(priv_key, privkey)
             privkey = privkey.raw
             OpenSSL.BN_bn2bin(pub_key_x, pubkeyx)
