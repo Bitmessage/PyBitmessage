@@ -45,10 +45,10 @@ def dns():
         for port in [8080, 8444]:
             logger.debug("Resolving %i through SOCKS...", port)
             address_family = socket.AF_INET
-            sock = socks.socksocket(address_family, socket.SOCK_STREAM)
+            sock = socks.SockSocket(address_family, socket.SOCK_STREAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
-            proxytype = socks.PROXY_TYPE_SOCKS5
+            proxytype = socks.proxy_type_socks5
             sockshostname = BMConfigParser().get(
                 'bitmessagesettings', 'sockshostname')
             socksport = BMConfigParser().getint(

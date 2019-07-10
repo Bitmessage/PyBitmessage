@@ -129,12 +129,12 @@ def wrapmodule(module):
     most of the Python Standard Library falls into this category.
     """
     if _default_proxy is not None:
-        module.socket.socket = Socksocket
+        module.socket.socket = SockSocket
     else:
         raise GeneralProxyError((4, "no proxy specified"))
 
 
-class Socksocket(socket.socket):
+class SockSocket(socket.socket):
     """socksocket([family[, type[, proto]]]) -> socket object
     Open a SOCKS enabled socket. The parameters are the same as
     those of the standard socket init. In order for SOCKS to work,
@@ -160,7 +160,7 @@ class Socksocket(socket.socket):
         except socket.timeout:
             raise GeneralProxyError((6, "timed out"))
         while len(data) < count:
-            d = self.recv(count-len(data))
+            d = self.recv(count - len(data))
             if not d:
                 raise GeneralProxyError((0, "connection closed unexpectedly"))
             data = data + d
@@ -226,8 +226,8 @@ class Socksocket(socket.socket):
             # Okay, we need to perform a basic username/password
             # authentication.
             self.sendall(
-                chr(0x01).encode() + chr(len(self.__proxy[4])) +
-                self.__proxy[4] + chr(len(self.__proxy[5])) + self.__proxy[5]
+                chr(0x01).encode() + chr(len(self.__proxy[4])) + self.__proxy[4] + chr(
+                    len(self.__proxy[5])) + self.__proxy[5]
             )
             authstat = self.__recvall(2)
             if authstat[0:1] != chr(0x01).encode():
@@ -404,9 +404,9 @@ class Socksocket(socket.socket):
             addr = socket.gethostbyname(destination_address)
         else:
             addr = destination_address
-        self.sendall(("CONNECT {} : {} HTTP/1.1\r\n Host: {} \r\n\r\n".format(
-            addr, str(destination_port), destination_address)
-                     ).encode())
+        self.sendall(
+            ("CONNECT {} : {} HTTP/1.1\r\n Host: {} \r\n\r\n".format(
+                addr, str(destination_port), destination_address)).encode())
         # We read the response until we get the string "\r\n\r\n"
         resp = self.recv(1)
         while resp.find("\r\n\r\n".encode()) == -1:
@@ -438,9 +438,8 @@ class Socksocket(socket.socket):
         To select the proxy server use setproxy().
         """
         # Do a minimal input check first
-        if (not type(destination_pair) in (list, tuple)) or \
-                (len(destination_pair) < 2) or \
-                (type(destination_pair[0]) != type('')) or (not isinstance(destination_pair[1], int)):
+        if (not isinstance(destination_pair, (list, tuple))) or (len(destination_pair) < 2) \
+                or not isinstance(destination_pair[0], str) or not isinstance(destination_pair[1], int):
             raise GeneralProxyError((5, _generalerrors[5]))
 
         if self.__proxy[0] == proxy_type_socks5:
