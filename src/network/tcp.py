@@ -381,14 +381,3 @@ class TCPServer(AdvancedDispatcher):
                 TCPConnection(sock=sock))
         except socket.error:
             pass
-
-
-if __name__ == "__main__":
-    # initial fill
-
-    for host in (("127.0.0.1", 8448),):
-        direct = TCPConnection(host)
-        while asyncore.socket_map:
-            print "loop, state = %s" % (direct.state)
-            asyncore.loop(timeout=10, count=1)
-        continue

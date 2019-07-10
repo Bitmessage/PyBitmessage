@@ -14,6 +14,8 @@ import unittest
 import knownnodes
 import state
 from helper_msgcoding import MsgEncode, MsgDecode
+from network import asyncore_pollchoose as asyncore
+from network.tcp import TCPConnection
 from queues import excQueue
 
 knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
@@ -74,9 +76,20 @@ class TestCore(unittest.TestCase):
             MsgEncode({'body': 'A msg with no subject'}, 3)
         except Exception as e:
             self.fail(
-                'Exception %s whyle trying to encode message'
+                'Exception %s while trying to encode message'
                 ' with no subject!' % e
             )
+
+    def test_tcpconnection(self):
+        """initial fill script from network.tcp"""
+        try:
+            for peer in (state.Peer("127.0.0.1", 8448),):
+                direct = TCPConnection(peer)
+                while asyncore.socket_map:
+                    print("loop, state = %s" % direct.state)
+                    asyncore.loop(timeout=10, count=1)
+        except:
+            self.fail('Exception in test loop')
 
     def _wipe_knownnodes(self):
         with knownnodes.knownNodesLock:
