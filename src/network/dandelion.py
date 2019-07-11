@@ -122,11 +122,13 @@ class Dandelion():
     def expire(self):
         with self.lock:
             deadline = time()
-            # only expire those that have a child node, i.e. those without a child not will stick around
-            toDelete = [[v.stream, k, v.child] for k, v in self.hashMap.iteritems() if v.timeout < deadline and v.child]
+            toDelete = [[v.stream, k, v.child]
+                        for k, v in self.hashMap.iteritems()
+                        if v.timeout < deadline]
             for row in toDelete:
                 self.removeHash(row[1], 'expiration')
                 invQueue.put((row[0], row[1], row[2]))
+        return toDelete
 
     def reRandomiseStems(self):
         with self.lock:

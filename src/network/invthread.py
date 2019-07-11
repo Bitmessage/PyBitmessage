@@ -12,6 +12,27 @@ from queues import invQueue
 import protocol
 import state
 
+
+def handleExpiredDandelion(expired):
+    """For expired dandelion objects, mark all remotes as not having
+       the object"""
+    if not expired:
+        return
+    for i in \
+        BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().outboundConnections.values():
+        if not i.fullyEstablished:
+            continue
+        for x in expired:
+            streamNumber, hashid, _ = x
+            try:
+                del i.objectsNewToMe[hashid]
+            except KeyError:
+                if streamNumber in i.streams:
+                    with i.objectsNewToThemLock:
+                        i.objectsNewToThem[hashid] = time()
+
+
 class InvThread(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="InvBroadcaster")
@@ -20,8 +41,9 @@ class InvThread(threading.Thread, StoppableThread):
 
     def handleLocallyGenerated(self, stream, hashId):
         Dandelion().addHash(hashId, stream=stream)
-        for connection in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+        for connection in \
+                BMConnectionPool().inboundConnections.values() + \
+                BMConnectionPool().outboundConnections.values():
                 if state.dandelion and connection != Dandelion().objectChildStem(hashId):
                     continue
                 connection.objectsNewToThem[hashId] = time()
@@ -31,7 +53,7 @@ class InvThread(threading.Thread, StoppableThread):
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
-                Dandelion().expire()
+                handleExpiredDandelion(Dandelion().expire())
                 try:
                     data = invQueue.get(False)
                     chunk.append((data[0], data[1]))
