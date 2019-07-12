@@ -8,6 +8,7 @@ src/network/socks5.py
 import socket
 import struct
 
+import state
 from proxy import GeneralProxyError, Proxy, ProxyError
 
 
@@ -160,9 +161,6 @@ class Socks5(Proxy):
 
 class Socks5Connection(Socks5):
     """Child socks5 class used for making outbound connections."""
-    def __init__(self, address):
-        Socks5.__init__(self, address=address)
-
     def state_auth_done(self):
         """Request connection to be made"""
         # Now we can request the actual connection
@@ -172,9 +170,9 @@ class Socks5Connection(Socks5):
         try:
             self.ipaddr = socket.inet_aton(self.destination[0])
             self.append_write_buf(chr(0x01).encode() + self.ipaddr)
-        except socket.error:
+        except socket.error:  # may be IPv6!
             # Well it's not an IP number,  so it's probably a DNS name.
-            if Proxy._remote_dns:  # pylint: disable=protected-access
+            if self._remote_dns:
                 # Resolve remotely
                 self.ipaddr = None
                 self.append_write_buf(chr(0x03).encode() + chr(
@@ -202,7 +200,7 @@ class Socks5Resolver(Socks5):
     def __init__(self, host):
         self.host = host
         self.port = 8444
-        Socks5.__init__(self, address=(self.host, self.port))
+        Socks5.__init__(self, address=state.Peer(self.host, self.port))
 
     def state_auth_done(self):
         """Perform resolving"""

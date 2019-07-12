@@ -73,11 +73,14 @@ class TCPConnection(BMProto, TLSDispatcher):
             logger.debug(
                 'Connecting to %s:%i',
                 self.destination.host, self.destination.port)
-        encodedAddr = protocol.encodeHost(self.destination.host)
-        self.local = all([
-            protocol.checkIPAddress(encodedAddr, True),
-            not protocol.checkSocksIP(self.destination.host)
-        ])
+        try:
+            self.local = (
+                protocol.checkIPAddress(
+                    protocol.encodeHost(self.destination.host), True) and
+                not protocol.checkSocksIP(self.destination.host)
+            )
+        except socket.error:
+            pass  # it's probably a hostname
         ObjectTracker.__init__(self)  # pylint: disable=non-parent-init-called
         self.bm_proto_reset()
         self.set_state("bm_header", expectBytes=protocol.Header.size)

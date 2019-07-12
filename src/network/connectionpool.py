@@ -8,7 +8,6 @@ import socket
 import time
 
 import asyncore_pollchoose as asyncore
-import helper_bootstrap
 import helper_random
 import knownnodes
 import protocol
@@ -185,7 +184,7 @@ class BMConnectionPool(object):
         # pylint: disable=too-many-nested-blocks
         if spawnConnections:
             if not knownnodes.knownNodesActual:
-                helper_bootstrap.dns()
+                knownnodes.dns()
             if not self.bootstrapped:
                 self.bootstrapped = True
                 Proxy.proxy = (

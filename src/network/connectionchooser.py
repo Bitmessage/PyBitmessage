@@ -46,7 +46,8 @@ def chooseConnection(stream):
             # onion addresses have a higher priority when SOCKS
             if peer.host.endswith('.onion') and rating > 0:
                 rating = 1
-            else:
+            # TODO: need better check
+            elif not peer.host.startswith('bootstrap'):
                 encodedAddr = protocol.encodeHost(peer.host)
                 # don't connect to local IPs when using SOCKS
                 if not protocol.checkIPAddress(encodedAddr, False):

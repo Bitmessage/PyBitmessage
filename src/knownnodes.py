@@ -11,7 +11,6 @@ import time
 import state
 from bmconfigparser import BMConfigParser
 from debug import logger
-from helper_bootstrap import dns
 
 knownNodesLock = threading.Lock()
 knownNodes = {stream: {} for stream in range(1, 4)}
@@ -123,6 +122,8 @@ def readKnownNodes():
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
+        if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
+            createDefaultKnownNodes(onion=True)
 
     config = BMConfigParser()
 
@@ -175,6 +176,13 @@ def trimKnownNodes(recAddrStream=1):
         )[:knownNodesTrimAmount]
         for oldest in oldestList:
             del knownNodes[recAddrStream][oldest]
+
+
+def dns():
+    """Add DNS names to knownnodes"""
+    for port in [8080, 8444]:
+        addKnownNode(
+            1, state.Peer('bootstrap%s.bitmessage.org' % port, port))
 
 
 def cleanupKnownNodes():
