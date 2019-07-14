@@ -66,7 +66,7 @@ def json_deserialize_knownnodes(source):
         knownNodes[node['stream']][peer] = info
 
         if (
-            not (knownNodesActual or info.get('is_self')) and
+            not (knownNodesActual or info.get('self')) and
             peer not in DEFAULT_NODES and
             peer not in DEFAULT_NODES_ONION
         ):
