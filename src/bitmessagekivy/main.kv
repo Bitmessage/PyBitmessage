@@ -1,3 +1,4 @@
+
 #:import Toolbar kivymd.toolbar.Toolbar
 #:import ThemeManager kivymd.theming.ThemeManager
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
@@ -34,6 +35,7 @@
 #:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
 #:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
 #:import Factory kivy.factory.Factory
+#:import MDTextButton kivymd.button.MDTextButton
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -67,6 +69,7 @@
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
             on_press: app.limit_spinner()
+            ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
         icon: 'email-open'
@@ -80,10 +83,11 @@
         on_release: app.root.ids.scr_mngr.current = 'sent'
         badge_text: app.mail_count(self.text)
     NavigationDrawerIconButton:
+        id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: "99+"
+        on_release: app.root.ids.scr_mngr.current = 'draft'
+        badge_text: app.mail_count(self.text)
     NavigationDrawerIconButton: 
         text: "Starred"
         icon:'star'
@@ -147,6 +151,7 @@ NavigationLayout:
         orientation: 'vertical'
         Toolbar:
             id: toolbar
+            title: app.current_address_label()
             opacity: 1 if app.addressexist() else 0
             disabled: False if app.addressexist() else True
             md_bg_color: app.theme_cls.primary_color
@@ -197,6 +202,9 @@ NavigationLayout:
                 id:sc14
             ShowQRCode:
                 id:sc15
+            Draft:
+                id:sc16
+
 
 <Inbox>:
     name: 'inbox'
@@ -225,9 +233,12 @@ NavigationLayout:
     
 <Draft>:
     name: 'draft'
-    Label:
-        text:"I have a good dialox box"
-        color: 0,0,0,1
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+    
 <Test>:
     name: 'test'
     Label:
@@ -258,8 +269,10 @@ NavigationLayout:
                     hint_text: 'type or select sender address'
                     size_hint_y: None
                     height: 100
+                    font_size: '13sp'
                     multiline: False
                     required: True
+                    allow_copy: True
                     helper_text_mode: "on_error"
 
                 BoxLayout:
@@ -269,9 +282,13 @@ NavigationLayout:
                         background_color: app.theme_cls.primary_dark
                         id: btn
                         values: app.variable_1
-                        on_text: ti.text = self.text
+                        on_text: ti.text = self.text if self.text != 'Select' else ''
                         option_cls: Factory.get("MySpinnerOption")
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
                         font_size: '12.5sp'
+                        ArrowImg:
                     
             BoxLayout:
                 orientation: 'vertical'
@@ -282,6 +299,7 @@ NavigationLayout:
                 MyTextInput:
                     id: txt_input
                     size_hint_y: None
+                    font_size: '13sp'
                     height: 100
                     hint_text: 'type or search recipients address starting with BM-'
                 RV:
@@ -291,6 +309,7 @@ NavigationLayout:
                 hint_text: 'subject'
                 required: True
                 height: 100
+                font_size: '13sp'
                 size_hint_y: None
                 multiline: False
                 helper_text_mode: "on_error"
@@ -300,6 +319,7 @@ NavigationLayout:
                 multiline: True
                 hint_text: 'body'
                 size_hint_y: None
+                font_size: '13sp'
                 required: True
                 helper_text_mode: "on_error"
             BoxLayout:
@@ -308,14 +328,24 @@ NavigationLayout:
                     MDRaisedButton:
                         size_hint: 1, None
                         height: dp(40)
-                        text: 'send'
                         on_press: root.send()
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'send'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
                 AnchorLayout:
                     MDRaisedButton:
                         size_hint: 1, None
                         height: dp(40)
-                        text: 'reset'
-                        on_press: app.root.ids.scr_mngr.current = 'random' 
+                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'reset'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
 
 <MyTextInput>:
     readonly: False
@@ -357,7 +387,8 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(700)
+            height: dp(750)
+            padding: dp(10)
             BoxLayout:
                 MDLabel:
                     font_style: 'Body1'
@@ -404,9 +435,15 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .5
-                        text: 'proceed'
+                        size_hint: .5, .35
+                        height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'proceed'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
 
 <Random>:
     name: 'random'
@@ -415,8 +452,8 @@ NavigationLayout:
             orientation: 'vertical'
             size_hint_y: None
             height: self.minimum_height
-            padding: dp(48)
-            spacing: 200
+            padding: dp(20)
+            spacing: 100
             MDLabel:
                 font_style: 'Body1'
                 theme_text_color: 'Primary'
@@ -439,13 +476,19 @@ NavigationLayout:
                 hint_text: "Label"
                 required: True
                 helper_text_mode: "on_error"
-    MDRaisedButton:
-        text: 'next'
-        size_hint_y: 0.13
-        size_hint_x: 0.8
-        pos_hint: {'x': .1, 'y': 0.3}
-        opposite_colors: True
-        on_release: root.generateaddress()
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .5, None
+                        height: dp(40)
+                        on_release: root.generateaddress()
+                        opposite_colors: True
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'next'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
 
 <AddressSuccessful>:
     name: 'add_sucess'
@@ -466,25 +509,40 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .6
-                        text: 'Server  '
-                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        size_hint: .6, .55
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'Server'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
             OneLineListItem:
                 text: "DATA SETTINGS"
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .6
-                        text: 'Import or export data'
-                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        size_hint: .6, .55
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'Import or export data'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
             OneLineListItem:
                 text: "OTHER SETTINGS"
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .8, .6
-                        text: 'Restart background service'
-                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        size_hint: .6, .55
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'Restart background service'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
             BoxLayout:
                 AnchorLayout:
                     MDLabel:
@@ -549,7 +607,7 @@ NavigationLayout:
             orientation: 'vertical'
             MDTextField:
                 id: label
-                multiline: True
+                multiline: False
                 hint_text: "Label"
                 required: True
                 helper_text_mode: "on_error"
@@ -612,8 +670,14 @@ NavigationLayout:
                     BoxLayout:
                         AnchorLayout:
                             MDRaisedButton:
-                                size_hint: .8, .5
-                                text: root.text_variable_1
+                                size_hint: .6, .35
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'Title'
+                                    text: root.text_variable_1
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
         MDTab:
             name: 'processes'
             text: 'Processes'
@@ -628,30 +692,53 @@ NavigationLayout:
                     BoxLayout:
                         AnchorLayout:
                             MDRaisedButton:
-                                size_hint: .8, .6
-                                text: root.text_variable_2
+                                size_hint: .7, .6
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'Title'
+                                    text: root.text_variable_2
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
                     OneLineListItem:
                         text: "Brodcast"
                     BoxLayout:
                         AnchorLayout:
                             MDRaisedButton:
-                                size_hint: .8, .6
-                                text: root.text_variable_3
+                                size_hint: .7, .6
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'Title'
+                                    text: root.text_variable_3
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
                     OneLineListItem:
                         text: "publickeys"
                     BoxLayout:
                         AnchorLayout:
                             MDRaisedButton:
-                                size_hint: .8, .6
-                                text: root.text_variable_4
-
+                                size_hint: .7, .6
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'Title'
+                                    text: root.text_variable_4
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
                     OneLineListItem:
                         text: "objects"
                     BoxLayout:
                         AnchorLayout:
                             MDRaisedButton:
-                                size_hint: .8, .6
-                                text: root.text_variable_5
+                                size_hint: .7, .6
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'Title'
+                                    text: root.text_variable_5
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
 
 <MailDetail>:
     name: 'mailDetail'
@@ -689,17 +776,27 @@ NavigationLayout:
                 halign: 'left'
                 bold: True
             BoxLayout:
-                spacing:50
+                spacing:20
                 MDRaisedButton:
                     size_hint: 1, None
                     height: dp(40)
-                    text: 'Reply' if root.page_type == 'inbox' else 'Copy'
                     on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail()
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Reply' if root.page_type == 'inbox' else 'Copy'
+                        font_size: '13sp'
+                        color: (1,1,1,1)
+                        halign: 'center'
                 MDRaisedButton:
                     size_hint: 1, None
                     height: dp(40)
-                    text: 'Delete'
                     on_press: root.delete_mail()
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Delete'
+                        font_size: '13sp'
+                        color: (1,1,1,1)
+                        halign: 'center'
 
 <ComposerButton@BoxLayout>:
     size_hint_y: None
@@ -715,7 +812,7 @@ NavigationLayout:
         elevation_normal: 8
         md_bg_color: [0.941, 0, 0,1]
         on_press: app.root.ids.scr_mngr.current = 'create'
-        on_release: app.clear_composer()
+        on_press: app.clear_composer()
 
 <MyaddDetailPopup>:
     id: myadd_popup
@@ -872,3 +969,10 @@ NavigationLayout:
     BoxLayout:
         orientation: 'vertical'
         id: qr
+
+
+<ArrowImg@Image>:
+    source: './images/down-arrow.png' if self.parent.is_open == True else './images/right-arrow.png'
+    size: 15, 15
+    x: self.parent.x + self.parent.width - self.width - 5
+    y: self.parent.y + self.parent.height/2 - self.height + 5
