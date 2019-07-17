@@ -74,8 +74,6 @@ kivyapp = None
 
 navinstance = None
 
-totalSentMail = 0
-
 sentMailTime = 0
 
 myAddressObj = None
@@ -97,3 +95,5 @@ sent_count = 0
 inbox_count = 0
 
 trash_count = 0
+
+draft_count = 0
