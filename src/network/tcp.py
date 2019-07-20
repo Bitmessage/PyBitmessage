@@ -325,6 +325,39 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         return True
 
 
+def bootstrap(connection_class):
+    """Make bootstrapper class for connection type (connection_class)"""
+    class Bootstrapper(connection_class):
+        """Base class for bootstrappers"""
+        _connection_base = connection_class
+
+        def __init__(self, host, port):
+            self._connection_base.__init__(self, state.Peer(host, port))
+            self.close_reason = self._succeed = False
+
+        def bm_command_addr(self):
+            """
+            Got addr message - the bootstrap succeed.
+            Let BMProto process the addr message and switch state to 'close'
+            """
+            BMProto.bm_command_addr(self)
+            self._succeed = True
+            # pylint: disable=attribute-defined-outside-init
+            self.close_reason = "Thanks for bootstrapping!"
+            self.set_state("close")
+
+        def handle_close(self):
+            """
+            After closing the connection switch knownnodes.knownNodesActual
+            back to False if the bootstrapper failed.
+            """
+            self._connection_base.handle_close(self)
+            if not self._succeed:
+                knownnodes.knownNodesActual = False
+
+    return Bootstrapper
+
+
 class TCPServer(AdvancedDispatcher):
     """TCP connection server for Bitmessage protocol"""
 
