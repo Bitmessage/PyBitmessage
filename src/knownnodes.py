@@ -191,33 +191,24 @@ def cleanupKnownNodes():
     """
     now = int(time.time())
     needToWriteKnownNodesToDisk = False
-    dns_done = False
-    spawnConnections = not BMConfigParser().safeGetBoolean(
-        'bitmessagesettings', 'dontconnect'
-    ) and BMConfigParser().safeGetBoolean(
-        'bitmessagesettings', 'sendoutgoingconnections')
 
     with knownNodesLock:
         for stream in knownNodes:
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             keys = knownNodes[stream].keys()
-            if len(keys) <= 1:  # leave at least one node
-                if not dns_done and spawnConnections:
-                    dns()
-                    dns_done = True
-                continue
             for node in keys:
+                if len(knownNodes[stream]) <= 1:  # leave at least one node
+                    break
                 try:
-                    # scrap old nodes
-                    if (now - knownNodes[stream][node]["lastseen"] >
-                            2419200):  # 28 days
+                    age = now - knownNodes[stream][node]["lastseen"]
+                    # scrap old nodes (age > 28 days)
+                    if age > 2419200:
                         needToWriteKnownNodesToDisk = True
                         del knownNodes[stream][node]
                         continue
-                    # scrap old nodes with low rating
-                    if (now - knownNodes[stream][node]["lastseen"] > 10800 and
-                        knownNodes[stream][node]["rating"] <=
+                    # scrap old nodes (age > 3 hours) with low rating
+                    if (age > 10800 and knownNodes[stream][node]["rating"] <=
                             knownNodesForgetRating):
                         needToWriteKnownNodesToDisk = True
                         del knownNodes[stream][node]
