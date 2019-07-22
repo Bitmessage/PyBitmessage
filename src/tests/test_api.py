@@ -4,31 +4,48 @@ Tests using API.
 
 import base64
 import json
+import time
 import xmlrpclib  # nosec
-from time import sleep
 
-from test_process import TestProcessProto
+from test_process import TestProcessProto, TestProcessShutdown
 
 
-class TestAPI(TestProcessProto):
-    """A test case for API"""
+class TestAPIProto(TestProcessProto):
+    """Test case logic for testing API"""
     _process_cmd = ['pybitmessage', '-t']
-    _seed = base64.encodestring(
-        'TIGER, tiger, burning bright. In the forests of the night'
-    )
 
     @classmethod
     def setUpClass(cls):
         """Setup XMLRPC proxy for pybitmessage API"""
-        super(TestAPI, cls).setUpClass()
+        super(TestAPIProto, cls).setUpClass()
         cls.addresses = []
         cls.api = xmlrpclib.ServerProxy(
             "http://username:password@127.0.0.1:8442/")
-        for _ in range(0, 5):
+        for _ in range(5):
             if cls._get_readline('.api_started'):
-                print('API start detected!')
                 return
-            sleep(1)
+            time.sleep(1)
+
+
+class TestAPIShutdown(TestAPIProto, TestProcessShutdown):
+    """Separate test case for API command 'shutdown'"""
+    def test_shutdown(self):
+        """Shutdown the pybitmessage"""
+        self.assertEquals(self.api.shutdown(), 'done')
+        for _ in range(5):
+            if not self.process.is_running():
+                break
+            time.sleep(2)
+        else:
+            self.fail(
+                '%s has not stopped in 10 sec' % ' '.join(self._process_cmd))
+
+
+class TestAPI(TestAPIProto):
+    """Main API test case"""
+    _seed = base64.encodestring(
+        'TIGER, tiger, burning bright. In the forests of the night'
+    )
 
     def _add_random_address(self, label):
         return self.api.createRandomAddress(base64.encodestring(label))
