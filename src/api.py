@@ -204,6 +204,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             self.wfile.flush()
             self.connection.shutdown(1)
 
+            # actually handle shutdown command after sending response
+            if state.shutdown is False:
+                shutdown.doCleanShutdown()
+
     def APIAuthenticateClient(self):
         """Predicate to check for valid API credentials in the request header"""
 
@@ -1386,10 +1390,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return None
 
     def HandleShutdown(self, params):
-        """Handle a request to huutdown the client"""
+        """Handle a request to shutdown the node"""
 
         if not params:
-            shutdown.doCleanShutdown()
+            # backward compatible trick because False == 0 is True
+            state.shutdown = False
             return 'done'
         return None
 
