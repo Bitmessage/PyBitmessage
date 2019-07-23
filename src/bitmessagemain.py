@@ -184,6 +184,27 @@ def signal_handler(signum, frame):
 
 
 class Main:
+    @staticmethod
+    def start_proxyconfig(config):
+        """Check socksproxytype and start any proxy configuration plugin"""
+        proxy_type = config.safeGet('bitmessagesettings', 'socksproxytype')
+        if proxy_type not in ('none', 'SOCKS4a', 'SOCKS5'):
+            # pylint: disable=relative-import
+            from plugins.plugin import get_plugin
+            try:
+                proxyconfig_start = time.time()
+                get_plugin('proxyconfig', name=proxy_type)(config)
+            except TypeError:
+                logger.error(
+                    'Failed to run proxy config plugin %s',
+                    proxy_type, exc_info=True)
+                shutdown.doCleanShutdown()
+                sys.exit(2)
+            else:
+                logger.info(
+                    'Started proxy config plugin %s in %s sec',
+                    proxy_type, time.time() - proxyconfig_start)
+
     def start(self):
         _fixSocket()
 
@@ -343,6 +364,7 @@ class Main:
 
         # start network components if networking is enabled
         if state.enableNetwork:
+            self.start_proxyconfig(config)
             BMConnectionPool()
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
