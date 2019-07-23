@@ -187,8 +187,8 @@ class Main:
     def start(self):
         _fixSocket()
 
-        daemon = BMConfigParser().safeGetBoolean(
-            'bitmessagesettings', 'daemon')
+        config = BMConfigParser()
+        daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
             opts, args = getopt.getopt(
@@ -216,7 +216,6 @@ class Main:
                 # Fallback: in case when no api command was issued
                 state.last_api_response = time.time()
                 # Apply special settings
-                config = BMConfigParser()
                 config.set(
                     'bitmessagesettings', 'apienabled', 'true')
                 config.set(
@@ -256,14 +255,14 @@ class Main:
 
         helper_threading.set_thread_name("PyBitmessage")
 
-        state.dandelion = BMConfigParser().safeGetInt('network', 'dandelion')
+        state.dandelion = config.safeGetInt('network', 'dandelion')
         # dandelion requires outbound connections, without them,
         # stem objects will get stuck forever
-        if state.dandelion and not BMConfigParser().safeGetBoolean(
+        if state.dandelion and not config.safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
             state.dandelion = 0
 
-        if state.testmode or BMConfigParser().safeGetBoolean(
+        if state.testmode or config.safeGetBoolean(
                 'bitmessagesettings', 'extralowdifficulty'):
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
                 defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
@@ -302,15 +301,15 @@ class Main:
         if state.enableObjProc:
 
             # SMTP delivery thread
-            if daemon and BMConfigParser().safeGet(
-                    "bitmessagesettings", "smtpdeliver", '') != '':
+            if daemon and config.safeGet(
+                    'bitmessagesettings', 'smtpdeliver', '') != '':
                 from class_smtpDeliver import smtpDeliver
                 smtpDeliveryThread = smtpDeliver()
                 smtpDeliveryThread.start()
 
             # SMTP daemon thread
-            if daemon and BMConfigParser().safeGetBoolean(
-                    "bitmessagesettings", "smtpd"):
+            if daemon and config.safeGetBoolean(
+                    'bitmessagesettings', 'smtpd'):
                 from class_smtpServer import smtpServer
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
@@ -335,7 +334,7 @@ class Main:
             shared.reloadBroadcastSendersForWhichImWatching()
 
             # API is also objproc dependent
-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
+            if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
                 singleAPIThread = api.singleAPI()
                 # close the main program even if there are threads left
@@ -348,7 +347,7 @@ class Main:
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
-            for i in range(BMConfigParser().getint("threads", "receive")):
+            for i in range(config.getint('threads', 'receive')):
                 receiveQueueThread = ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()
@@ -370,8 +369,7 @@ class Main:
 
             connectToStream(1)
 
-            if BMConfigParser().safeGetBoolean(
-                    'bitmessagesettings', 'upnp'):
+            if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
@@ -387,14 +385,14 @@ class Main:
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
             elif state.kivy:
-                BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+                config.remove_option('bitmessagesettings', 'dontconnect')
                 from bitmessagekivy.mpybit import NavigateApp
                 NavigateApp().run()
             else:
                 import bitmessageqt
                 bitmessageqt.run()
         else:
-            BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+            config.remove_option('bitmessagesettings', 'dontconnect')
 
         if daemon:
             while state.shutdown == 0:
