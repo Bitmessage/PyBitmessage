@@ -1,10 +1,13 @@
 """
+
 dev/bloomfiltertest.py
 ======================
 
 """
 
 import sqlite3
+
+
 from os import getenv, path
 from time import time
 
@@ -52,15 +55,12 @@ for row in cur.fetchall():
 # f.close()
 
 
-print "Item count: %i" % (itemcount)
-print "Raw length: %i" % (rawlen)
-print "Bloom filter 1 length: %i, reduction to: %.2f%%" % \
-      (bf1.bitarray.buffer_info()[1],
-       100.0 * bf1.bitarray.buffer_info()[1] / rawlen)
-print "Bloom filter 1 capacity: %i and error rate: %.3f%%" % (bf1.capacity, 100.0 * bf1.error_rate)
-print "Bloom filter 1 took %.2fs" % (bf1time)
-print "Bloom filter 2 length: %i, reduction to: %.3f%%" % \
-      (bf2.num_bits / 8,
-       100.0 * bf2.num_bits / 8 / rawlen)
-print "Bloom filter 2 capacity: %i and error rate: %.3f%%" % (bf2.capacity, 100.0 * bf2.error_rate)
-print "Bloom filter 2 took %.2fs" % (bf2time)
+print("Item count: %i" % itemcount)
+print("Raw length: %i" % rawlen)
+print("Bloom filter 1 length: %i, reduction to: %.2f%%" % (
+    bf1.bitarray.buffer_info()[1], 100.0 * bf1.bitarray.buffer_info()[1] / rawlen))
+print("Bloom filter 1 capacity: %i and error rate: %.3f%%" % bf1.capacity, 100.0 * bf1.error_rate)
+print("Bloom filter 1 took %.2fs" % bf1time)
+print("Bloom filter 2 length: %i, reduction to: %.3f%%" % bf2.num_bits / 8, 100.0 * bf2.num_bits / 8 / rawlen)
+print("Bloom filter 2 capacity: %i and error rate: %.3f%%" % bf2.capacity, 100.0 * bf2.error_rate)
+print("Bloom filter 2 took %.2fs" % bf2time)
