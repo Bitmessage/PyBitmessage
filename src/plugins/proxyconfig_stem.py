@@ -87,7 +87,7 @@ def connect_plugin(config):
         response = controller.create_ephemeral_hidden_service(
             config.safeGetInt('bitmessagesettings', 'onionport', 8444),
             key_type=(onionkeytype or 'NEW'),
-            key_content=(onionkey or 'BEST')
+            key_content=(onionkey or onionhostname and 'ED25519-V3' or 'BEST')
         )
 
         if not response.is_ok():
@@ -95,17 +95,16 @@ def connect_plugin(config):
             return
 
         if not onionkey:
+            logwrite('Started hidden service %s.onion' % response.service_id)
+            # only save new service keys if onionhostname was not set previously
             if not onionhostname:
                 onionhostname = response.service_id + '.onion'
                 config.set(
                     'bitmessagesettings', 'onionhostname', onionhostname)
-            else:
-                onionhostname = response.service_id + '.onion'
-            logwrite('Started hidden service %s' % onionhostname)
-            config.add_section(onionhostname)
-            config.set(
-                onionhostname, 'privsigningkey', response.private_key)
-            config.set(
-                onionhostname, 'keytype', response.private_key_type)
-            config.save()
+                config.add_section(onionhostname)
+                config.set(
+                    onionhostname, 'privsigningkey', response.private_key)
+                config.set(
+                    onionhostname, 'keytype', response.private_key_type)
+                config.save()
         config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
