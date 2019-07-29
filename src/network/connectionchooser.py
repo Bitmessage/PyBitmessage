@@ -1,3 +1,4 @@
+# pylint: disable=too-many-branches
 import random  # nosec
 
 import knownnodes
@@ -38,7 +39,10 @@ def chooseConnection(stream):
     for _ in range(50):
         peer = random.choice(knownnodes.knownNodes[stream].keys())
         try:
-            rating = knownnodes.knownNodes[stream][peer]['rating']
+            peer_info = knownnodes.knownNodes[stream][peer]
+            if peer_info.get('self'):
+                continue
+            rating = peer_info["rating"]
         except TypeError:
             logger.warning('Error in %s', peer)
             rating = 0
