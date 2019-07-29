@@ -1,16 +1,16 @@
-from queues import Queue
-import random
+import random  # nosec
 
-from bmconfigparser import BMConfigParser
 import knownnodes
 import protocol
-from queues import portCheckerQueue
 import state
-import helper_random
+from bmconfigparser import BMConfigParser
+from debug import logger
+from queues import Queue, portCheckerQueue
+
 
 def getDiscoveredPeer():
     try:
-        peer = helper_random.randomchoice(state.discoveredPeers.keys())
+        peer = random.choice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -19,8 +19,10 @@ def getDiscoveredPeer():
         pass
     return peer
 
+
 def chooseConnection(stream):
-    haveOnion = BMConfigParser().safeGet("bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
+    haveOnion = BMConfigParser().safeGet(
+        "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
     if state.trustedPeer:
         return state.trustedPeer
     try:
@@ -30,15 +32,15 @@ def chooseConnection(stream):
     except Queue.Empty:
         pass
     # with a probability of 0.5, connect to a discovered peer
-    if helper_random.randomchoice((False, True)) and not haveOnion:
+    if random.choice((False, True)) and not haveOnion:
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = helper_random.randomchoice(knownnodes.knownNodes[stream].keys())
+        peer = random.choice(knownnodes.knownNodes[stream].keys())
         try:
-            rating = knownnodes.knownNodes[stream][peer]["rating"]
+            rating = knownnodes.knownNodes[stream][peer]['rating']
         except TypeError:
-            print "Error in %s" % (peer)
+            logger.warning('Error in %s', peer)
             rating = 0
         if haveOnion:
             # onion addresses have a higher priority when SOCKS
@@ -52,7 +54,7 @@ def chooseConnection(stream):
         if rating > 1:
             rating = 1
         try:
-            if 0.05/(1.0-rating) > random.random():
+            if 0.05 / (1.0 - rating) > random.random():
                 return peer
         except ZeroDivisionError:
             return peer
