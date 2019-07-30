@@ -315,8 +315,7 @@ class SettingsDialog(QtGui.QDialog):
         ):
             self.net_restart_needed = True
             self.parent.statusbar.clearMessage()
-        # just in case we changed something in the network connectivity
-        state.resetNetworkProtocolAvailability()
+
         self.config.set(
             'bitmessagesettings', 'socksproxytype',
             str(self.comboBoxProxyType.currentText())
