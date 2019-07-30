@@ -1,9 +1,13 @@
 pipeline {
     agent any
+    triggers {
+        pollSCM('*/5 * * * 1-5')
+    }
     options {
-        buildDiscarder(
-            // Only keep the 10 most recent builds
-            logRotator(numToKeepStr:'10'))
+        skipDefaultCheckout(true)
+        // Keep the 10 most recent builds
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
     }
     environment {
         projectName = 'BitMessage'
@@ -14,13 +18,13 @@ pipeline {
 
     stages {
 
-        /*
+        
         stage ('Checkout') {
             steps {
                 checkout scm
             }
         }
-        */
+        
 
         stage ('Install_Requirements') {
             steps {
