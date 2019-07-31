@@ -17,7 +17,6 @@ from urlparse import urlparse
 from xml.dom.minidom import Document, parseString
 
 import queues
-import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
@@ -286,7 +285,6 @@ class uPnPThread(threading.Thread, StoppableThread):
             if router.extPort is not None:
                 deleted = True
                 self.deletePortMapping(router)
-        shared.extPort = None
         if deleted:
             queues.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", 'UPnP port mapping removed')))
         logger.debug("UPnP thread done")
@@ -333,7 +331,6 @@ class uPnPThread(threading.Thread, StoppableThread):
                     self.localPort,
                     extPort)
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
-                shared.extPort = extPort
                 self.extPort = extPort
                 BMConfigParser().set('bitmessagesettings', 'extport', str(extPort))
                 BMConfigParser().save()
