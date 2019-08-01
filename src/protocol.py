@@ -290,7 +290,6 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     else:  # no extport and not incoming over Tor
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'port'))
 
-    random.seed()
     if nodeid is not None:
         payload += nodeid[0:8]
     else:
