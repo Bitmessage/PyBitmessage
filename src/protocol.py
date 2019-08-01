@@ -276,14 +276,18 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     )
     # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack('>L', 2130706433)
-    # we have a separate extPort and incoming over clearnet or outgoing through clearnet
-    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and state.extPort \
-        and ((server and not checkSocksIP(remoteHost)) or
-             (BMConfigParser().get("bitmessagesettings", "socksproxytype") == "none" and not server)):
-        payload += pack('>H', state.extPort)
+    # we have a separate extPort and incoming over clearnet
+    # or outgoing through clearnet
+    extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
+    if (
+        extport and ((server and not checkSocksIP(remoteHost)) or (
+            BMConfigParser().get('bitmessagesettings', 'socksproxytype') ==
+            'none' and not server))
+    ):
+        payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
-    else:  # no extPort and not incoming over Tor
+    else:  # no extport and not incoming over Tor
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'port'))
 
     random.seed()
