@@ -1,4 +1,3 @@
-import threading
 import time
 
 from bmconfigparser import BMConfigParser
@@ -9,11 +8,10 @@ from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
 import state
 
-class AnnounceThread(threading.Thread, StoppableThread):
+
+class AnnounceThread(StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self, name="Announcer")
-        self.initStop()
-        self.name = "Announcer"
+        super(AnnounceThread, self).__init__(name="Announcer")
         logger.info("init announce thread")
 
     def run(self):

@@ -154,10 +154,10 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 continue
         return
 
-class smtpServer(threading.Thread, StoppableThread):
+
+class smtpServer(StoppableThread):
     def __init__(self, parent=None):
-        threading.Thread.__init__(self, name="smtpServerThread")
-        self.initStop()
+        super(smtpServer, self).__init__(name="smtpServerThread")
         self.server = smtpServerPyBitmessage(('127.0.0.1', LISTENPORT), None)
 
     def stopThread(self):

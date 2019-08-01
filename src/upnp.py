@@ -9,7 +9,6 @@ Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-por
 
 import httplib
 import socket
-import threading
 import time
 import urllib2
 from random import randint
@@ -201,7 +200,7 @@ class Router:  # pylint: disable=old-style-class
         return resp
 
 
-class uPnPThread(threading.Thread, StoppableThread):
+class uPnPThread(StoppableThread):
     """Start a thread to handle UPnP activity"""
 
     SSDP_ADDR = "239.255.255.250"
@@ -211,7 +210,7 @@ class uPnPThread(threading.Thread, StoppableThread):
     SSDP_ST = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
 
     def __init__(self):
-        threading.Thread.__init__(self, name="uPnPThread")
+        super(uPnPThread, self).__init__(name="uPnPThread")
         try:
             self.extPort = BMConfigParser().getint('bitmessagesettings', 'extport')
         except:
@@ -223,7 +222,6 @@ class uPnPThread(threading.Thread, StoppableThread):
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
         self.sock.settimeout(5)
         self.sendSleep = 60
-        self.initStop()
 
     def run(self):
         """Start the thread to manage UPnP activity"""

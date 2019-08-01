@@ -7,7 +7,6 @@ src/class_singleWorker.py
 from __future__ import division
 
 import hashlib
-import threading
 import time
 from binascii import hexlify, unhexlify
 from struct import pack
@@ -43,12 +42,11 @@ def sizeof_fmt(num, suffix='h/s'):
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
 
-class singleWorker(threading.Thread, StoppableThread):
+class singleWorker(StoppableThread):
     """Thread for performing PoW"""
 
     def __init__(self):
-        threading.Thread.__init__(self, name="singleWorker")
-        self.initStop()
+        super(singleWorker, self).__init__(name="singleWorker")
         proofofwork.init()
 
     def stopThread(self):

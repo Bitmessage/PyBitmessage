@@ -21,7 +21,6 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 import gc
 import os
 import shared
-import threading
 import time
 
 import tr
@@ -36,13 +35,10 @@ import queues
 import state
 
 
-class singleCleaner(threading.Thread, StoppableThread):
+class singleCleaner(StoppableThread):
+    name = "singleCleaner"
     cycleLength = 300
     expireDiscoveredPeers = 300
-
-    def __init__(self):
-        threading.Thread.__init__(self, name="singleCleaner")
-        self.initStop()
 
     def run(self):
         gc.disable()

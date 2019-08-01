@@ -1,27 +1,18 @@
 import errno
 import Queue
 import socket
-import sys
-import threading
-import time
 
-import addresses
-from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_threading import StoppableThread
-from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-from network.bmproto import BMProto
 from network.advanceddispatcher import UnknownStateError
 from queues import receiveDataQueue
-import protocol
 import state
 
-class ReceiveQueueThread(threading.Thread, StoppableThread):
+
+class ReceiveQueueThread(StoppableThread):
     def __init__(self, num=0):
-        threading.Thread.__init__(self, name="ReceiveQueue_%i" %(num))
-        self.initStop()
-        self.name = "ReceiveQueue_%i" % (num)
+        super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
         logger.info("init receive queue thread %i", num)
 
     def run(self):

@@ -1,4 +1,3 @@
-import threading
 import time
 
 import addresses
@@ -12,7 +11,7 @@ from network.connectionpool import BMConnectionPool
 from objectracker import missingObjects
 
 
-class DownloadThread(threading.Thread, StoppableThread):
+class DownloadThread(StoppableThread):
     minPending = 200
     maxRequestChunk = 1000
     requestTimeout = 60
@@ -20,9 +19,7 @@ class DownloadThread(threading.Thread, StoppableThread):
     requestExpires = 3600
 
     def __init__(self):
-        threading.Thread.__init__(self, name="Downloader")
-        self.initStop()
-        self.name = "Downloader"
+        super(DownloadThread, self).__init__(name="Downloader")
         logger.info("init download thread")
         self.lastCleaned = time.time()
 

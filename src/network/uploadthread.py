@@ -2,7 +2,6 @@
 src/network/uploadthread.py
 """
 # pylint: disable=unsubscriptable-object
-import threading
 import time
 
 import helper_random
@@ -15,14 +14,12 @@ from network.dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
 
 
-class UploadThread(threading.Thread, StoppableThread):
+class UploadThread(StoppableThread):
     """This is a thread that uploads the objects that the peers requested from me """
     maxBufSize = 2097152  # 2MB
 
     def __init__(self):
-        threading.Thread.__init__(self, name="Uploader")
-        self.initStop()
-        self.name = "Uploader"
+        super(UploadThread, self).__init__(name="Uploader")
         logger.info("init upload thread")
 
     def run(self):
