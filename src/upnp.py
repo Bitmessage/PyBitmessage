@@ -16,6 +16,7 @@ from random import randint
 from urlparse import urlparse
 from xml.dom.minidom import Document, parseString
 
+import knownnodes
 import queues
 import state
 import tr
@@ -166,9 +167,11 @@ class Router:  # pylint: disable=old-style-class
     def GetExternalIPAddress(self):
         """Get the external address"""
 
-        resp = self.soapRequest(self.upnp_schema + ':1', 'GetExternalIPAddress')
-        dom = parseString(resp)
-        return dom.getElementsByTagName('NewExternalIPAddress')[0].childNodes[0].data
+        resp = self.soapRequest(
+            self.upnp_schema + ':1', 'GetExternalIPAddress')
+        dom = parseString(resp.read())
+        return dom.getElementsByTagName(
+            'NewExternalIPAddress')[0].childNodes[0].data
 
     def soapRequest(self, service, action, arguments=None):
         """Make a request to a router"""
@@ -261,6 +264,17 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
+                        try:
+                            self_peer = state.Peer(
+                                newRouter.GetExternalIPAddress(),
+                                self.extPort
+                            )
+                        except:
+                            logger.debug('Failed to get external IP')
+                        else:
+                            with knownnodes.knownNodesLock:
+                                knownnodes.addKnownNode(
+                                    1, self_peer, is_self=True)
                         queues.UISignalQueue.put(('updateStatusBar', tr._translate(
                             "MainWindow", 'UPnP port mapping established on port %1'
                         ).arg(str(self.extPort))))
