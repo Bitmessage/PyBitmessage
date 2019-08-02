@@ -36,6 +36,8 @@
 #:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
 #:import Factory kivy.factory.Factory
 #:import MDTextButton kivymd.button.MDTextButton
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+#:import MDScrollViewRefreshLayout kivymd.refreshlayout.MDScrollViewRefreshLayout
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -57,7 +59,7 @@
     NavigationDrawerTwoLineListItem:
         text: "Accounts"
     NavigationDrawerIconButton:
-        Spinner:
+        CustomSpinner:
             pos_hint:{"x":0,"y":.25}
             id: btn
             option_cls: Factory.get("MySpinnerOption")
@@ -68,7 +70,6 @@
             color: color_font
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
-            on_press: app.limit_spinner()
             ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
@@ -76,43 +77,51 @@
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: app.mail_count(self.text)
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
         badge_text: app.mail_count(self.text)
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
         badge_text: app.mail_count(self.text)
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "Starred"
         icon:'star'
         on_release: app.root.ids.scr_mngr.current = 'inbox'
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         icon: 'archive'
         text: "Archieve"
         on_release: app.root.ids.scr_mngr.current = 'trash'
         badge_text: "9+"
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         icon: 'email-open-outline'
         text: "Spam"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "8+"
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
         badge_text: app.mail_count(self.text)
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "All Mails"
         icon:'contact-mail'
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "999+"
+        on_press: app.check_search_screen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
         text: "All labels"
@@ -120,26 +129,32 @@
         text: "Address Book"
         icon:'book-multiple'
         on_release: app.root.ids.scr_mngr.current = 'addressbook' 
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "Settings"
         icon:'settings'
-        on_release: app.root.ids.scr_mngr.current = 'set'                                   
+        on_release: app.root.ids.scr_mngr.current = 'set'
+        on_press: app.check_search_screen(self)                                   
     NavigationDrawerIconButton: 
         text: "Subscriptions/Payment"
         icon:'wallet'
         on_release: app.root.ids.scr_mngr.current = 'payment'
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "new address"
         icon:'account-plus'
         on_release: app.root.ids.scr_mngr.current = 'login'
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "Network Status"
         icon:'server-network'
         on_release: app.root.ids.scr_mngr.current = 'networkstat'
+        on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "My Addresses"
         icon:'account-multiple'
         on_release: app.root.ids.scr_mngr.current = 'myaddress'
+        on_press: app.check_search_screen(self)
 
 NavigationLayout:
     id: nav_layout
@@ -148,6 +163,7 @@ NavigationLayout:
         id: nav_drawer
 
     BoxLayout:
+        id: box_layout
         orientation: 'vertical'
         Toolbar:
             id: toolbar
@@ -158,6 +174,45 @@ NavigationLayout:
             background_palette: 'Primary'
             background_hue: '500'
             left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
+            Button:
+                id: reset_navbar
+                size_hint_y: 0.35
+                size_hint_x: 0.2
+                opacity: 0
+                disabled: True
+                pos_hint: {'x': .1, 'y': 0.3}
+                color: 0,0,0,1
+                background_color: (0,0,0,0)
+                on_press:app.reset_navdrawer(self)
+                Image:
+                    source: './images/left_arrow.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    size: 40, 40 
+            TextInput:
+                id: search_input
+                hint_text: 'search'
+                opacity: 0
+                size_hint: 1,None
+                height: dp(32)
+                disabled: True
+                pos_hint: {'center_x':.565,'center_y': .5}
+                multiline: False
+                padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
+                padding_x: 20,20                                                        
+            Button:
+                id: serch_btn
+                size_hint_y: 0.35
+                size_hint_x: 0.2
+                pos_hint: {'x': .1, 'y': 0.3}
+                color: 0,0,0,1
+                background_color: (0,0,0,0)
+                on_press:app.searchQuery(self, search_input.text)
+                Image:
+                    source: './images/search_mail.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    size: 55, 55
             Button:
                 id: myButton
                 size_hint_y: 0.35
@@ -170,6 +225,7 @@ NavigationLayout:
                     source: './images/addressbookadd.png'
                     center_x: self.parent.center_x
                     center_y: self.parent.center_y
+                    size: 55, 55
         ScreenManager:
             id: scr_mngr
             Inbox:
@@ -208,12 +264,14 @@ NavigationLayout:
 
 <Inbox>:
     name: 'inbox'
-    ScrollView:
-        do_scroll_x: False
-        MDList:
-            id: ml
-
-    ComposerButton:
+    FloatLayout:
+        MDScrollViewRefreshLayout:
+            id: refresh_layout
+            refresh_callback: root.refresh_callback
+            root_layout: root
+            MDList:
+                id: ml
+    ComposerButton
 
 <Sent>:
     name: 'sent'
@@ -272,13 +330,12 @@ NavigationLayout:
                     font_size: '13sp'
                     multiline: False
                     required: True
-                    allow_copy: True
                     helper_text_mode: "on_error"
 
                 BoxLayout:
                     size_hint_y: None
                     height: dp(40)
-                    Spinner:
+                    CustomSpinner:
                         background_color: app.theme_cls.primary_dark
                         id: btn
                         values: app.variable_1
@@ -569,10 +626,13 @@ NavigationLayout:
 
 <MyAddress>:
     name: 'myaddress'
-    ScrollView:
-        do_scroll_x: False
-        MDList:
-            id: ml
+    FloatLayout:
+        MDScrollViewRefreshLayout:
+            id: refresh_layout
+            refresh_callback: root.refresh_callback
+            root_layout: root
+            MDList:
+                id: ml
     ComposerButton:
 
 <AddressBook>:

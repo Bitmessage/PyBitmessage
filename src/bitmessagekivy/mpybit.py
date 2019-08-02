@@ -4,7 +4,7 @@ from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ObjectProperty
 from kivy.uix.image import Image
-from kivy.uix.screenmanager import Screen
+from kivy.uix.screenmanager import Screen, NoTransition
 from kivymd.bottomsheet import MDListBottomSheet, MDGridBottomSheet
 from kivymd.button import MDIconButton
 from kivymd.date_picker import MDDatePicker
@@ -48,7 +48,7 @@ from kivy.core.window import Window
 from functools import partial
 from kivy.uix.carousel import Carousel
 from kivy.utils import platform
-
+from kivy.uix.spinner import Spinner
 
 class Navigatorss(MDNavigationDrawer):
     image_source = StringProperty('images/qidenticon_two.png')
@@ -79,6 +79,9 @@ class Inbox(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox list for Inbox messages."""
+        if state.searcing_text:
+            where = ['subject', 'message']
+            what = state.searcing_text
         xAddress = 'toaddress'
         data = []
         queryreturn = kivy_helper_search.search_sql(
@@ -86,15 +89,16 @@ class Inbox(Screen):
         if queryreturn:
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
-                # ('inbox', 'j\xe5(M\xcfPbe\rl\x0f\xa3\r\xef>\xf0\x0b&\t\'}"RYg\x03\x80\x14\x82\xeb&,', 'BM-2cXpNNd7dhTjsv7LHNfmphfUabZk958sA3', 'hello', 'BM-2cWyUfBdY2FbgyuCb7abFZ49JYxSzUhNFe', 'test from peter', '1559121770', 0)
                 data.append({'text': mail[4].strip(), 'secondary_text': mail[5][:10] + '...........' if len(mail[3]) > 10 else mail[3] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'receivedTime':  mail[6] })
             for item in data:
                 meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom', text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['secondary_text'][0].upper())))
+                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['secondary_text'][0].upper() if (item['secondary_text'][0].upper() >= 'A' and item['secondary_text'][0].upper() <= 'Z') else '!')))
                 meny.bind(on_press = partial(self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
-                    carousel.height = 150 
+                    carousel.height = 150
+                elif platform == 'linux':
+                    carousel.height = meny.height - 10                    
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -109,7 +113,7 @@ class Inbox(Screen):
                 ach_btn.background_color = (0,1,0,1)
                 ach_btn.bind(on_press=partial(self.archive, item['receivedTime']))
                 carousel.add_widget(ach_btn)
-                carousel.index=1
+                carousel.index = 1
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(font_style='Body1',
@@ -129,6 +133,8 @@ class Inbox(Screen):
             src_mng_obj = self.manager
         else:
             src_mng_obj = self.parent.parent
+
+        hide_search_btn(src_mng_obj)
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
         src_mng_obj.current = 'mailDetail'
@@ -160,6 +166,23 @@ class Inbox(Screen):
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
 
+    def refresh_callback(self, *args):
+        """A method that updates the state of your application
+        while the spinner remains on the screen."""
+
+        def refresh_callback(interval):
+            """This methods is used for loading the inbox screen data"""
+            self.ids.ml.clear_widgets()
+            self.remove_widget(self.children[1])
+            try:
+                screens_obj = self.parent.screens[0]
+            except Exception as e:
+                screens_obj = self.parent.parent.screens[0]
+            screens_obj.add_widget(Inbox())
+            self.ids.refresh_layout.refresh_done()
+            self.tick = 0
+
+        Clock.schedule_once(refresh_callback, 1)
 
 
 class MyAddress(Screen):
@@ -176,7 +199,7 @@ class MyAddress(Screen):
                 data.append({'text': BMConfigParser().get(address, 'label'), 'secondary_text': address})
             for item in data:
                 meny = TwoLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['text'][0].upper())))
+                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['text'][0].upper() if (item['text'][0].upper() >= 'A' and item['text'][0].upper() <= 'Z') else '!')))
                 meny.bind(on_press=partial(self.myadd_detail, item['secondary_text'], item['text']))
                 self.ids.ml.add_widget(meny)
         else:
@@ -198,6 +221,24 @@ class MyAddress(Screen):
         p.open()
         p.set_address(fromaddress, label)
 
+    def refresh_callback(self, *args):
+        """A method that updates the state of your application
+        while the spinner remains on the screen."""
+
+        def refresh_callback(interval):
+            """This methods is used for loading the myaddress screen data"""
+            self.ids.ml.clear_widgets()
+            self.remove_widget(self.children[1])
+            try:
+                screens_obj = self.parent.screens[9]
+            except Exception as e:
+                screens_obj = self.parent.parent.screens[9]
+            screens_obj.add_widget(MyAddress())
+            self.ids.refresh_layout.refresh_done()
+            self.tick = 0
+
+        Clock.schedule_once(refresh_callback, 1)
+
 
 class AddressBook(Screen):
     """AddressBook Screen uses screen to show widgets of screens."""
@@ -211,12 +252,13 @@ class AddressBook(Screen):
         if data:
             for item in data:
                 meny = TwoLineAvatarIconListItem(text=item[0], secondary_text=item[1], theme_text_color='Custom',text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item[0][0].upper())))
+                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item[0][0].upper() if (item[0][0].upper() >= 'A' and item[0][0].upper() <= 'Z') else '!')))
                 meny.bind(on_press = partial(self.addBook_detail, item[1], item[0]))
-                # self.ids.ml.add_widget(meny)
                 carousel = Carousel(direction='right')
                 if platform == 'android':
-                    carousel.height = 140 
+                    carousel.height = 140
+                elif platform == 'linux':
+                    carousel.height = meny.height - 10
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -358,6 +400,8 @@ class DropDownWidget(BoxLayout):
                     self.parent.parent.current = 'sent'
                     self.ids.btn.text = 'select'
                     self.ids.ti.text = ''
+                    self.parent.parent.parent.parent.parent.ids.serch_btn.opacity = 1
+                    self.parent.parent.parent.parent.parent.ids.serch_btn.disabled = False
 
                     return None
                 else:
@@ -487,10 +531,6 @@ class AddressSuccessful(Screen):
     pass
 
 
-class NavigationLayout():
-    pass
-
-
 class Sent(Screen):
     """Sent Screen uses screen to show widgets of screens."""
     data = ListProperty()
@@ -514,6 +554,9 @@ class Sent(Screen):
 
     def loadSent(self, account, where="", what=""):
         """Load Sent list for Sent messages."""
+        if state.searcing_text:
+            where = ['subject', 'message']
+            what = state.searcing_text
         xAddress = 'fromaddress'
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "sent", where, what, False)
@@ -528,11 +571,13 @@ class Sent(Screen):
                 self.data.append({'text': mail[1].strip(), 'secondary_text': mail[2][:10] + '...........' if len(mail[2]) > 10 else mail[2] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'lastactiontime':  mail[6]})
             for item in self.data:
                 meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom', text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['secondary_text'][0].upper())))
+                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['secondary_text'][0].upper() if (item['secondary_text'][0].upper() >= 'A' and item['secondary_text'][0].upper() <= 'Z') else '!')))
                 meny.bind(on_press = partial(self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
-                    carousel.height = 150 
+                    carousel.height = 150
+                elif platform == 'linux':
+                    carousel.height = meny.height - 10 
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -549,7 +594,6 @@ class Sent(Screen):
                 carousel.add_widget(ach_btn)
                 carousel.index=1
                 self.ids.ml.add_widget(carousel)
-                # self.ids.ml.add_widget(meny)
         else:
             content = MDLabel(font_style='Body1',
                               theme_text_color='Primary',
@@ -568,6 +612,7 @@ class Sent(Screen):
             src_mng_obj = self.manager
         else:
             src_mng_obj = self.parent.parent
+        hide_search_btn(src_mng_obj)
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
         src_mng_obj.current = 'mailDetail'
@@ -575,7 +620,7 @@ class Sent(Screen):
     def delete(self, data_index, instance, *args):
         """delete sent mail from sent mail listing"""
         try:
-            msg_count_objs = self.parent.parent.parent.parent.children[2].ids
+            msg_count_objs = self.parent.parent.parent.parent.children[2].children[0].ids
         except Exception as e:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[2].children[0].ids
         if int(state.sent_count) > 0:
@@ -586,7 +631,6 @@ class Sent(Screen):
 
         sqlExecute("UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
-        # self.update_mail_count()
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
@@ -623,7 +667,7 @@ class Trash(Screen):
 
         for item in trash_data:
             meny = ThreeLineAvatarIconListItem(text=item[1], secondary_text=item[2], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
-            meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item[2][0].upper())))
+            meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item[2][0].upper() if (item[2][0].upper() >= 'A' and item[2][0].upper() <= 'Z') else '!')))
             self.ids.ml.add_widget(meny)
 
 class Page(Screen):
@@ -676,7 +720,7 @@ class NavigateApp(App):
     ]
 
     def build(self):
-        import os
+        import os 
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
@@ -705,7 +749,6 @@ class NavigateApp(App):
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
         if name == "text":
-            # return BMConfigParser().get(BMConfigParser().addresses()[0], 'label')[:12] + '..'
             if bmconfigparserigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
             else:
@@ -774,16 +817,12 @@ class NavigateApp(App):
             return True
         return False
 
-    def limit_spinner(self):
-        max = 2.8
-        spinner_obj = ContentNavigationDrawer().ids.btn
-        spinner_obj.dropdown_cls.max_height = spinner_obj.height* max + max * 4
-
     def on_key(self, window, key, *args):
         """This method is used for going on previous screen"""
         if key == 27:  # the esc key
             if self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = 'sent' if state.detailPageType == 'sent' else 'inbox'
+                show_search_btn(self)
                 # this is for direction of the screen comesup
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
@@ -791,19 +830,21 @@ class NavigateApp(App):
                 to_addr = str(self.root.children[1].children[0].children[0].children[0].children[0].ids.txt_input.text)
                 if from_addr and to_addr:
                     Draft().draft_msg(composer_objs)
-                    # self.root.ids.scr_mngr.current
+                self.root.ids.serch_btn.opacity = 1
+                self.root.ids.serch_btn.disabled = False
                 self.root.ids.scr_mngr.current = 'inbox'
             elif self.root.ids.scr_mngr.current == "showqrcode":
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
-                self.root.ids.scr_mngr.current = 'login'    
+                self.root.ids.scr_mngr.current = 'login'
             else:
                 self.root.ids.scr_mngr.current = 'inbox'
+                show_search_btn(self)
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.restart)
             return True
 
-    def restart(self,  *args):
+    def restart(self, *args):
         """this method is used to set transition direction"""
         self.root.ids.scr_mngr.transition.direction = 'left'
         self.root.ids.scr_mngr.transition.unbind(on_complete=self.restart)
@@ -815,6 +856,8 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """if slow down the nwe will make new composer edit screen"""
+        self.root.ids.serch_btn.opacity = 0
+        self.root.ids.serch_btn.disabled = True
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
@@ -844,15 +887,76 @@ class NavigateApp(App):
             state.draft_count = str(sqlQuery("SELECT COUNT(*) FROM sent WHERE fromaddress = '{1}' and folder = '{0}' ;".format(text.lower(), state.association))[0][0])
             return state.draft_count
 
-    def current_address_label(self, current_address = None):
+    def current_address_label(self, current_address=None):
         if BMConfigParser().addresses() or current_address:
             if current_address:
                 first_name = current_address
-            else:    
+            else:
                 first_name = BMConfigParser().get(BMConfigParser().addresses()[0], 'label')
             f_name = first_name.split()
             return f_name[0][:14]+ '...' if len(f_name[0])>15 else f_name[0]
         return ''
+
+    def searchQuery(self, instance, text):
+        '''This method is used for showing searched mails'''
+        if self.root.ids.search_input.opacity == 0:
+            self.root.ids.search_input.opacity = 1
+            self.root.ids.search_input.size_hint = 4,None
+            # self.root.ids.serch_btn.opacity = 0
+            # self.root.ids.serch_btn.disabled = True
+            self.root.ids.search_input.disabled = False
+            self.root.ids.search_input.focus = True
+            self.root.ids.toolbar.left_action_items = []
+            self.root.ids.toolbar.title = ''
+            self.root.ids.myButton.opacity = 0
+            self.root.ids.myButton.disabled = True
+            self.root.ids.reset_navbar.opacity = 1
+            self.root.ids.reset_navbar.disabled = False
+        elif str(text):
+            state.search_screen = self.root.ids.scr_mngr.current
+            state.searcing_text = str(text).strip()
+            if state.search_screen == 'inbox':
+                self.root.ids.sc1.clear_widgets()
+                self.root.ids.sc1.add_widget(Inbox())
+            else:
+                self.root.ids.sc4.clear_widgets()
+                self.root.ids.sc4.add_widget(Sent())
+            self.root.ids.scr_mngr.current = state.search_screen
+
+    def reset_navdrawer(self, instance):
+        '''This methos is used for reseting navigation drawer'''
+        self.root.ids.search_input.text = ''
+        self.root.ids.search_input.opacity = 0
+        self.root.ids.search_input.size_hint = 1,None
+        self.root.ids.search_input.disabled = True
+        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.root.ids.toolbar.title = self.current_address_label()
+        self.root.ids.myButton.opacity = 1
+        self.root.ids.myButton.disabled = False
+        self.root.ids.reset_navbar.opacity = 0
+        self.root.ids.reset_navbar.disabled = True
+        state.searcing_text = ''
+        if state.search_screen == 'inbox':  
+            self.root.ids.sc1.clear_widgets()
+            self.root.ids.sc1.add_widget(Inbox())
+        else:
+            self.root.ids.sc4.clear_widgets()
+            self.root.ids.sc4.add_widget(Sent())
+
+    def check_search_screen(self, instance):
+        '''This method is used for showing search button only on inbox or sent screen'''
+        if instance.text == 'Inbox' or instance.text == 'Sent':
+            self.root.ids.serch_btn.opacity = 1
+            self.root.ids.serch_btn.disabled = False
+            state.searcing_text = ''
+            self.root.ids.sc1.clear_widgets()
+            self.root.ids.sc4.clear_widgets()
+            self.root.ids.sc1.add_widget(Inbox())
+            self.root.ids.sc4.add_widget(Sent())
+        else:
+            self.root.ids.serch_btn.opacity = 0
+            self.root.ids.serch_btn.disabled = True
+        return
 
 
 class GrashofPopup(Popup):
@@ -882,6 +986,8 @@ class GrashofPopup(Popup):
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            self.parent.children[1].ids.serch_btn.opacity = 0
+            self.parent.children[1].ids.serch_btn.disabled = True
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
 
     def show_error_message(self):
@@ -993,6 +1099,8 @@ class MailDetail(Screen):
         state.trash_count = str(int(state.trash_count) + 1)
         self.parent.parent.screens[4].clear_widgets()
         self.parent.parent.screens[4].add_widget(Trash())
+        self.parent.parent.parent.parent.parent.ids.serch_btn.opacity = 1
+        self.parent.parent.parent.parent.parent.ids.serch_btn.disabled = False
 
     def inbox_reply(self):
         """This method is used for replying inbox messages"""
@@ -1124,12 +1232,11 @@ class Draft(Screen):
             for item in self.data:
                 meny = TwoLineAvatarIconListItem(text='Draft', secondary_text=item['text'], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(source='./images/avatar.png'))
-                # wimg = Image(source='/home/cis/transparent1.png', size= (10, 10))
-                # meny.bind(on_press = partial(self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
-                # carousel = MDCardPost(text_post='Card with text',swipe=True, callback=callback)
                 if platform == 'android':
-                    carousel.height = 150 
+                    carousel.height = 150
+                elif platform == 'linux':
+                    carousel.height = meny.height - 10
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -1208,3 +1315,33 @@ class Draft(Screen):
             src_object.ids.sc16.clear_widgets()
             src_object.ids.sc16.add_widget(Draft())
         return
+
+
+def show_search_btn(self):
+    '''This method is used to show search button'''
+    self.root.ids.serch_btn.opacity = 1
+    self.root.ids.serch_btn.disabled = False
+
+
+def hide_search_btn(mgr_objs):
+    '''This method is used to hide search button and search box'''
+    mgr_objs.parent.parent.parent.ids.serch_btn.opacity = 0
+    mgr_objs.parent.parent.parent.ids.serch_btn.disabled = True
+    mgr_objs.parent.parent.parent.ids.search_input.size_hint = 1,None
+    mgr_objs.parent.parent.parent.ids.search_input.disabled = True
+    mgr_objs.parent.parent.parent.ids.search_input.opacity = 0
+    mgr_objs.parent.parent.parent.ids.toolbar.left_action_items = [['menu', lambda x: mgr_objs.parent.parent.parent.toggle_nav_drawer()]]
+    mgr_objs.parent.parent.parent.ids.toolbar.title = NavigateApp().current_address_label()
+    mgr_objs.parent.parent.parent.ids.myButton.opacity = 1
+    mgr_objs.parent.parent.parent.ids.myButton.disabled = False
+    mgr_objs.parent.parent.parent.ids.reset_navbar.opacity = 0
+    mgr_objs.parent.parent.parent.ids.reset_navbar.disabled = True
+
+
+class CustomSpinner(Spinner):
+    '''This class is used for setting spinner size'''
+    def __init__(self, *args, **kwargs):
+        '''This methods is used for setting size of spinner'''
+        super(CustomSpinner, self).__init__(*args, **kwargs)
+        max = 2.8
+        self.dropdown_cls.max_height = self.height * max + max * 4
