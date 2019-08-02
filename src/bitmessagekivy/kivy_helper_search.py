@@ -7,7 +7,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
     else:
         what = None
 
-    if folder == "sent":
+    if folder == "sent" or folder == "draft":
         sqlStatementBase = '''
             SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
             FROM sent '''
@@ -34,8 +34,16 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlStatementParts.append("folder != ?")
         sqlArguments.append("trash")
     if what is not None:
-        sqlStatementParts.append("%s LIKE ?" % (where))
-        sqlArguments.append(what)
+        for colmns in where:
+            if len(where) > 1:
+                if where[0] == colmns:
+                    filter_col = "(%s LIKE ?" % (colmns)
+                else:
+                    filter_col += " or %s LIKE ? )" % (colmns)
+            else:
+                filter_col = "%s LIKE ?" % (colmns)
+            sqlArguments.append(what)
+        sqlStatementParts.append(filter_col)
     if unreadOnly:
         sqlStatementParts.append("read = 0")
     if len(sqlStatementParts) > 0:
