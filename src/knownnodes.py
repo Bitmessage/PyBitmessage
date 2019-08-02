@@ -98,7 +98,7 @@ def saveKnownNodes(dirName=None):
 def addKnownNode(stream, peer, lastseen=None, is_self=False):
     knownNodes[stream][peer] = {
         "lastseen": lastseen or time.time(),
-        "rating": 0,
+        "rating": 1 if is_self else 0,
         "self": is_self,
     }
 
