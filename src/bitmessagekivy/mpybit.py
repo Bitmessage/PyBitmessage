@@ -1,22 +1,17 @@
-# -*- coding: utf-8 -*-
+"""Coding: utf-8."""
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ObjectProperty
 from kivy.uix.image import Image
-from kivy.uix.screenmanager import Screen, NoTransition
-from kivymd.bottomsheet import MDListBottomSheet, MDGridBottomSheet
+from kivy.uix.screenmanager import Screen
 from kivymd.button import MDIconButton
-from kivymd.date_picker import MDDatePicker
 from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
-from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBodyTouch, BaseListItem
-from kivymd.material_resources import DEVICE_TYPE
+from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBodyTouch
 from kivymd.navigationdrawer import MDNavigationDrawer, NavigationDrawerHeaderBase
 from kivymd.selectioncontrols import MDCheckbox
-from kivymd.snackbar import Snackbar
 from kivymd.theming import ThemeManager
-from kivymd.time_picker import MDTimePicker
 from kivymd.list import ThreeLineAvatarIconListItem, TwoLineAvatarIconListItem, TwoLineListItem
 from kivy.properties import ListProperty, StringProperty, BooleanProperty
 from kivy.clock import Clock
@@ -24,16 +19,12 @@ from bmconfigparser import BMConfigParser
 import state
 import queues
 from kivy.uix.popup import Popup
-from helper_sql import *
-from kivy.uix.gridlayout import GridLayout
-from kivy.app import App
+from helper_sql import sqlQuery, sqlExecute
 from kivy.uix.textinput import TextInput
-from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import NumericProperty, ListProperty, BooleanProperty, ObjectProperty
+from kivy.properties import NumericProperty
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.recyclegridlayout import RecycleGridLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.label import Label
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
@@ -50,7 +41,10 @@ from kivy.uix.carousel import Carousel
 from kivy.utils import platform
 from kivy.uix.spinner import Spinner
 
+
 class Navigatorss(MDNavigationDrawer):
+    """Navigators class contains image, title and logo."""
+
     image_source = StringProperty('images/qidenticon_two.png')
     title = StringProperty('Navigation')
     drawer_logo = StringProperty()
@@ -58,9 +52,11 @@ class Navigatorss(MDNavigationDrawer):
 
 class Inbox(Screen):
     """Inbox Screen uses screen to show widgets of screens."""
+
     data = ListProperty()
 
     def __init__(self, *args, **kwargs):
+        """Method Parsing the address."""
         super(Inbox, self).__init__(*args, **kwargs)
         if state.association == '':
             if BMConfigParser().addresses():
@@ -89,16 +85,31 @@ class Inbox(Screen):
         if queryreturn:
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
-                data.append({'text': mail[4].strip(), 'secondary_text': mail[5][:10] + '...........' if len(mail[3]) > 10 else mail[3] + '\n' + " " + (third_text[:25] + '...!') if len(third_text) > 25 else third_text, 'receivedTime':  mail[6] })
+                data.append({
+                    'text': mail[4].strip(),
+                    'secondary_text': mail[5][:10] + '...........' if len(
+                        mail[3]) > 10 else mail[3] + '\n' + " " + (
+                        third_text[:25] + '...!') if len(
+                        third_text) > 25 else third_text,
+                    'receivedTime': mail[6]})
             for item in data:
-                meny = ThreeLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom', text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['secondary_text'][0].upper() if (item['secondary_text'][0].upper() >= 'A' and item['secondary_text'][0].upper() <= 'Z') else '!')))
-                meny.bind(on_press = partial(self.inbox_detail, item['receivedTime']))
+                meny = ThreeLineAvatarIconListItem(
+                    text=item['text'],
+                    secondary_text=item['secondary_text'],
+                    theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color)
+                meny.add_widget(
+                    AvatarSampleWidget(
+                        source='./images/text_images/{}.png'.format(
+                            item['secondary_text'][0].upper() if (
+                                item['secondary_text'][0].upper() >= 'A' and item[
+                                    'secondary_text'][0].upper() <= 'Z') else '!')))
+                meny.bind(on_press=partial(self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
                     carousel.height = 150
                 elif platform == 'linux':
-                    carousel.height = meny.height - 10                    
+                    carousel.height = meny.height - 10
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -110,7 +121,7 @@ class Inbox(Screen):
                 carousel.add_widget(del_btn)
                 carousel.add_widget(meny)
                 ach_btn = Button(text='Achieve')
-                ach_btn.background_color = (0,1,0,1)
+                ach_btn.background_color = (0, 1, 0, 1)
                 ach_btn.bind(on_press=partial(self.archive, item['receivedTime']))
                 carousel.add_widget(ach_btn)
                 carousel.index = 1
@@ -126,7 +137,7 @@ class Inbox(Screen):
             self.ids.ml.add_widget(content)
 
     def inbox_detail(self, receivedTime, *args):
-        """Load inbox page details"""
+        """Load inbox page details."""
         state.detailPageType = 'inbox'
         state.sentMailTime = receivedTime
         if self.manager:
@@ -140,7 +151,7 @@ class Inbox(Screen):
         src_mng_obj.current = 'mailDetail'
 
     def delete(self, data_index, instance, *args):
-        """Delete inbox mail from inbox listing"""
+        """Delete inbox mail from inbox listing."""
         sqlExecute("UPDATE inbox SET folder = 'trash' WHERE received = {};".format(data_index))
         msg_count_objs = self.parent.parent.parent.parent.children[2].children[0].ids
         if int(state.inbox_count) > 0:
@@ -152,13 +163,13 @@ class Inbox(Screen):
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
-        """Archive inbox mail from inbox listing"""
+        """Archive inbox mail from inbox listing."""
         sqlExecute("UPDATE inbox SET folder = 'trash' WHERE received = {};".format(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
     def update_trash(self):
-        """Update trash screen mails which is deleted from inbox"""
+        """Update trash screen mails which is deleted from inbox."""
         try:
             self.parent.screens[4].clear_widgets()
             self.parent.screens[4].add_widget(Trash())
@@ -167,11 +178,9 @@ class Inbox(Screen):
             self.parent.parent.screens[4].add_widget(Trash())
 
     def refresh_callback(self, *args):
-        """A method that updates the state of your application
-        while the spinner remains on the screen."""
-
+        """A method that updates the state of your application while the spinner remains on the screen."""
         def refresh_callback(interval):
-            """This methods is used for loading the inbox screen data"""
+            """Method used for loading the inbox screen data."""
             self.ids.ml.clear_widgets()
             self.remove_widget(self.children[1])
             try:
@@ -187,7 +196,9 @@ class Inbox(Screen):
 
 class MyAddress(Screen):
     """MyAddress Screen uses screen to show widgets of screens."""
+
     def __init__(self, *args, **kwargs):
+        """Clock Schdule for method inbox accounts."""
         super(MyAddress, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
@@ -198,8 +209,15 @@ class MyAddress(Screen):
             for address in state.kivyapp.variable_1:
                 data.append({'text': BMConfigParser().get(address, 'label'), 'secondary_text': address})
             for item in data:
-                meny = TwoLineAvatarIconListItem(text=item['text'], secondary_text=item['secondary_text'], theme_text_color= 'Custom',text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item['text'][0].upper() if (item['text'][0].upper() >= 'A' and item['text'][0].upper() <= 'Z') else '!')))
+                meny = TwoLineAvatarIconListItem(
+                    text=item['text'],
+                    secondary_text=item['secondary_text'],
+                    theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color)
+                meny.add_widget(AvatarSampleWidget(
+                    source='./images/text_images/{}.png'.format(
+                        item['text'][0].upper() if (item['text'][0].upper() >= 'A' and item[
+                            'text'][0].upper() <= 'Z') else '!')))
                 meny.bind(on_press=partial(self.myadd_detail, item['secondary_text'], item['text']))
                 self.ids.ml.add_widget(meny)
         else:
@@ -217,16 +235,15 @@ class MyAddress(Screen):
                 pass
 
     def myadd_detail(self, fromaddress, label, *args):
+        """Myaddress Details."""
         p = MyaddDetailPopup()
         p.open()
         p.set_address(fromaddress, label)
 
     def refresh_callback(self, *args):
-        """A method that updates the state of your application
-        while the spinner remains on the screen."""
-
+        """A method that updates the state of your application while the spinner remains on the screen."""
         def refresh_callback(interval):
-            """This methods is used for loading the myaddress screen data"""
+            """Method used for loading the myaddress screen data."""
             self.ids.ml.clear_widgets()
             self.remove_widget(self.children[1])
             try:
@@ -242,7 +259,9 @@ class MyAddress(Screen):
 
 class AddressBook(Screen):
     """AddressBook Screen uses screen to show widgets of screens."""
+
     def __init__(self, *args, **kwargs):
+        """Getting AddressBook Details."""
         super(AddressBook, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
@@ -251,9 +270,15 @@ class AddressBook(Screen):
         data = sqlQuery("SELECT label, address from addressbook")
         if data:
             for item in data:
-                meny = TwoLineAvatarIconListItem(text=item[0], secondary_text=item[1], theme_text_color='Custom',text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(source='./images/text_images/{}.png'.format(item[0][0].upper() if (item[0][0].upper() >= 'A' and item[0][0].upper() <= 'Z') else '!')))
-                meny.bind(on_press = partial(self.addBook_detail, item[1], item[0]))
+                meny = TwoLineAvatarIconListItem(
+                    text=item[0],
+                    secondary_text=item[1],
+                    theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color)
+                meny.add_widget(AvatarSampleWidget(
+                    source='./images/text_images/{}.png'.format(
+                        item[0][0].upper() if (item[0][0].upper() >= 'A' and item[0][0].upper() <= 'Z') else '!')))
+                meny.bind(on_press=partial(self.addBook_detail, item[1], item[0]))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
                     carousel.height = 140
@@ -269,7 +294,7 @@ class AddressBook(Screen):
                 del_btn.bind(on_press=partial(self.delete_address, item[1]))
                 carousel.add_widget(del_btn)
                 carousel.add_widget(meny)
-                carousel.index=1
+                carousel.index = 1
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(font_style='Body1',
@@ -282,59 +307,69 @@ class AddressBook(Screen):
             self.ids.ml.add_widget(content)
 
     def refreshs(self, *args):
+        """Refresh the Widget."""
         state.navinstance.ids.sc11.clear_widgets()
         state.navinstance.ids.sc11.add_widget(AddressBook())
 
     def addBook_detail(self, address, label, *args):
+        """Addressbook Details."""
         p = AddbookDetailPopup()
         p.open()
         p.set_addbook_data(address, label)
 
     def delete_address(self, address, instance, *args):
-        """Delete inbox mail from inbox listing"""
+        """Delete inbox mail from inbox listing."""
         self.ids.ml.remove_widget(instance.parent.parent)
         sqlExecute("DELETE FROM  addressbook WHERE address = '{}';".format(address))
 
 
 class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
-    ''' Adds selection and focus behaviour to the view. '''
+    """Adds selection and focus behaviour to the view."""
+
     pass
 
 
 class SelectableLabel(RecycleDataViewBehavior, Label):
-    ''' Add selection support to the Label '''
+    """Add selection support to the Label."""
+
     index = None
     selected = BooleanProperty(False)
     selectable = BooleanProperty(True)
 
     def refresh_view_attrs(self, rv, index, data):
-        ''' Catch and handle the view changes '''
+        """Catch and handle the view changes."""
         self.index = index
         return super(SelectableLabel, self).refresh_view_attrs(
             rv, index, data)
 
     def on_touch_down(self, touch):
-        ''' Add selection on touch down '''
+        """Add selection on touch down."""
         if super(SelectableLabel, self).on_touch_down(touch):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
             return self.parent.select_with_touch(self.index, touch)
 
     def apply_selection(self, rv, index, is_selected):
-        ''' Respond to the selection of items in the view. '''
+        """Respond to the selection of items in the view."""
         self.selected = is_selected
         if is_selected:
             print("selection changed to {0}".format(rv.data[index]))
-            rv.parent.txt_input.text = rv.parent.txt_input.text.replace(rv.parent.txt_input.text, rv.data[index]['text'])
+            rv.parent.txt_input.text = rv.parent.txt_input.text.replace(
+                rv.parent.txt_input.text, rv.data[index]['text'])
 
 
 class RV(RecycleView):
+    """Recycling View."""
+
     def __init__(self, **kwargs):
+        """Recycling Method."""
         super(RV, self).__init__(**kwargs)
 
 
 class DropDownWidget(BoxLayout):
+    """Adding Dropdown Widget."""
+
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
@@ -353,7 +388,7 @@ class DropDownWidget(BoxLayout):
                 status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                     toAddress)
                 if status == 'success':
-                    from addresses import *
+                    from addresses import addBMIfNotPresent
                     toAddress = addBMIfNotPresent(toAddress)
                     statusIconColor = 'red'
                     if addressVersionNumber > 4 or addressVersionNumber <= 1:
@@ -385,9 +420,8 @@ class DropDownWidget(BoxLayout):
                         encoding,
                         BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
-                    state.msg_counter_objs = self.parent.parent.parent.parent.parent.parent.children[0].children[2].children[0].ids
-                    # state.msg_counter_objs.send_cnt.badge_text = str(int(state.sent_count) + 1)
-                    # state.sent_count = str(int(state.sent_count) + 1)
+                    state.msg_counter_objs = \
+                        self.parent.parent.parent.parent.parent.parent.children[0].children[2].children[0].ids
                     self.parent.parent.screens[3].clear_widgets()
                     self.parent.parent.screens[3].add_widget(Sent())
                     toLabel = ''
@@ -423,7 +457,6 @@ class DropDownWidget(BoxLayout):
         self.main_pop = Popup(title="Error", content=self.box,
                               size_hint=(None, None), size=(550, 400), auto_dismiss=False, title_size=30)
         self.but.bind(on_press=self.main_pop.dismiss)
-        # self.main_pop.background = './images/popup.jpeg'
         self.main_pop.open()
 
 
