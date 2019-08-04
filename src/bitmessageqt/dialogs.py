@@ -2,19 +2,20 @@
 src/bitmessageqt/dialogs.py
 ===========================
 """
+from __future__ import absolute_import
 
 from PyQt4 import QtGui
 
 from version import softwareVersion
 
 import paths
-import widgets
-from address_dialogs import (
+from . import widgets
+from .address_dialogs import (
     AddAddressDialog, EmailGatewayDialog, NewAddressDialog, NewSubscriptionDialog, RegenerateAddressesDialog,
     SpecialAddressBehaviorDialog
 )
-from newchandialog import NewChanDialog
-from retranslateui import RetranslateMixin
+from .newchandialog import NewChanDialog
+from .retranslateui import RetranslateMixin
 from tr import _translate
 
 __all__ = [

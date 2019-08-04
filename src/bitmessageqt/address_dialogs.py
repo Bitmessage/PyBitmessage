@@ -3,6 +3,7 @@ src/bitmessageqt/address_dialogs.py
 ===================================
 
 """
+from __future__ import absolute_import
 # pylint: disable=attribute-defined-outside-init
 
 import hashlib
@@ -10,11 +11,11 @@ import hashlib
 from PyQt4 import QtCore, QtGui
 
 import queues
-import widgets
-from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass, getSortedAccounts
+from . import widgets
+from .account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass, getSortedAccounts
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
 from inventory import Inventory
-from retranslateui import RetranslateMixin
+from .retranslateui import RetranslateMixin
 from tr import _translate
 
 

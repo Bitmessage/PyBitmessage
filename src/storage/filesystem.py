@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
 import string
@@ -6,7 +8,7 @@ import time
 import traceback
 
 from paths import lookupAppdataFolder
-from storage import InventoryStorage, InventoryItem
+from .storage import InventoryStorage, InventoryItem
 
 class FilesystemInventory(InventoryStorage):
     topDir = "inventory"
@@ -108,7 +110,7 @@ class FilesystemInventory(InventoryStorage):
                     newInventory[streamNumber] = {}
                     newInventory[streamNumber][hashId] = InventoryItem(objectType, streamNumber, None, expiresTime, tag)
             except KeyError:
-                print "error loading %s" % (hexlify(hashId))
+                print("error loading %s" % (hexlify(hashId)))
                 pass
         self._inventory = newInventory
 #        for i, v in self._inventory.items():

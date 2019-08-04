@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import collections
 from threading import current_thread, enumerate as threadingEnumerate, RLock
 import Queue
@@ -5,7 +6,7 @@ import sqlite3
 import time
 
 from helper_sql import *
-from storage import InventoryStorage, InventoryItem
+from .storage import InventoryStorage, InventoryItem
 
 class SqliteInventory(InventoryStorage):
     def __init__(self):

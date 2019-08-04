@@ -50,6 +50,7 @@ control than multi-threaded programming. The module documented here solves
 many of the difficult problems for you, making the task of building
 sophisticated high-performance network servers and clients a snap.
 """
+from __future__ import print_function
 
 import os
 import select
@@ -788,7 +789,7 @@ class dispatcher:
     def log_info(self, message, log_type='info'):
         """Conditionally print a message"""
         if log_type not in self.ignore_log_types:
-            print '%s: %s' % (log_type, message)
+            print('%s: %s' % (log_type, message))
 
     def handle_read_event(self):
         """Handle a read event"""

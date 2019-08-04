@@ -1,22 +1,23 @@
+from __future__ import absolute_import
 import errno
 import re
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
+from . import asyncore_pollchoose as asyncore
 import helper_bootstrap
 import helper_random
 import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from connectionchooser import chooseConnection
+from .connectionchooser import chooseConnection
 from debug import logger
-from proxy import Proxy
+from .proxy import Proxy
 from singleton import Singleton
-from tcp import (
+from .tcp import (
     TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection)
-from udp import UDPSocket
+from .udp import UDPSocket
 
 
 @Singleton

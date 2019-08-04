@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 import hashlib
 import socket
@@ -6,7 +7,7 @@ import time
 from binascii import hexlify
 
 import addresses
-import connectionpool
+from . import connectionpool
 import knownnodes
 import protocol
 import state
@@ -21,7 +22,7 @@ from network.bmobject import (
     BMObjectInvalidError, BMObjectAlreadyHaveError)
 from network.node import Node
 from network.proxy import ProxyError
-from objectracker import missingObjects, ObjectTracker
+from .objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from randomtrackingdict import RandomTrackingDict
 

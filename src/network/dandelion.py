@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from random import choice, sample, expovariate
 from threading import RLock
 from time import time
 
-import connectionpool
+from . import connectionpool
 import state
 from debug import logging
 from queues import invQueue

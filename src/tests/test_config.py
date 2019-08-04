@@ -1,12 +1,13 @@
 """
 Various tests for config
 """
+from __future__ import absolute_import
 
 import os
 import unittest
 
 from pybitmessage.bmconfigparser import BMConfigParser
-from test_process import TestProcessProto
+from .test_process import TestProcessProto
 
 
 class TestConfig(unittest.TestCase):

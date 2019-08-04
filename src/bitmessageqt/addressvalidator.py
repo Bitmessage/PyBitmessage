@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 from PyQt4 import QtGui
 from Queue import Empty
 
 from addresses import decodeAddress, addBMIfNotPresent
-from account import getSortedAccounts
+from .account import getSortedAccounts
 from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
-from utils import str_chan
+from .utils import str_chan
 
 class AddressPassPhraseValidatorMixin():
     def setParams(self, passPhraseObject=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):

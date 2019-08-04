@@ -1,14 +1,15 @@
+from __future__ import absolute_import
 import ctypes
 from PyQt4 import QtCore, QtGui
 import ssl
 import sys
 import time
 
-import account
+from . import account
 from bmconfigparser import BMConfigParser
 from debug import logger
 import defaults
-from foldertree import AccountMixin
+from .foldertree import AccountMixin
 from helper_sql import *
 from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled

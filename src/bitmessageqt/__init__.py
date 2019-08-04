@@ -1,6 +1,7 @@
 """
 PyQt based UI for bitmessage, the main module
 """
+from __future__ import absolute_import
 
 import hashlib
 import locale
@@ -21,41 +22,41 @@ from debug import logger
 from tr import _translate
 from addresses import decodeAddress, addBMIfNotPresent
 import shared
-from bitmessageui import Ui_MainWindow
+from .bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
 import defaults
 import namecoin
-from messageview import MessageView
-from migrationwizard import Ui_MigrationWizard
-from foldertree import (
+from .messageview import MessageView
+from .migrationwizard import Ui_MigrationWizard
+from .foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress)
-from settings import Ui_settingsDialog
-import settingsmixin
-import support
+from .settings import Ui_settingsDialog
+from . import settingsmixin
+from . import support
 import debug
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_search
 import l10n
 import openclpow
-from utils import str_broadcast_subscribers, avatarize
-from account import (
+from .utils import str_broadcast_subscribers, avatarize
+from .account import (
     getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
     GatewayAccount, MailchuckAccount, AccountColor)
-import dialogs
+from . import dialogs
 from network.stats import pendingDownload, pendingUpload
-from uisignaler import UISignaler
+from .uisignaler import UISignaler
 import knownnodes
 import paths
 from proofofwork import getPowType
 import queues
 import shutdown
 import state
-from statusbar import BMStatusBar
+from .statusbar import BMStatusBar
 from network.asyncore_pollchoose import set_rates
-import sound
+from . import sound
 
 
 try:

@@ -3,11 +3,12 @@
 Utility configured as apinotifypath in bitmessagesettings
 when pybitmessage started in test mode.
 """
+from __future__ import absolute_import
 
 import sys
 import tempfile
 
-from test_process import put_signal_file
+from .test_process import put_signal_file
 
 
 if __name__ == '__main__':

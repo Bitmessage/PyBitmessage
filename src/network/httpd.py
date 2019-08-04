@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import asyncore
 import socket
 
-from tls import TLSHandshake
+from .tls import TLSHandshake
 
 class HTTPRequestHandler(asyncore.dispatcher):
     response = """HTTP/1.0 200 OK\r

@@ -1,15 +1,16 @@
+from __future__ import absolute_import
 from PyQt4 import QtCore, QtGui
 
-import widgets
+from . import widgets
 from addresses import addBMIfNotPresent
 from bmconfigparser import BMConfigParser
-from dialogs import AddAddressDialog
+from .dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
 from queues import UISignalQueue
-from retranslateui import RetranslateMixin
+from .retranslateui import RetranslateMixin
 from tr import _translate
-from uisignaler import UISignaler
-from utils import avatarize
+from .uisignaler import UISignaler
+from .utils import avatarize
 
 
 class Blacklist(QtGui.QWidget, RetranslateMixin):

@@ -1,4 +1,6 @@
-import kivy_helper_search
+from __future__ import print_function
+from __future__ import absolute_import
+from . import kivy_helper_search
 import os
 import queues
 import shutdown
@@ -308,7 +310,7 @@ class Create(Screen):
         message = self.ids.message.text
         subject = self.ids.subject.text
         encoding = 3
-        print("message: ", self.ids.message.text)
+        print(("message: ", self.ids.message.text))
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '':

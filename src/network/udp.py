@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 import time
 import socket
 
 import state
 import protocol
-from bmproto import BMProto
+from .bmproto import BMProto
 from debug import logger
-from objectracker import ObjectTracker
+from .objectracker import ObjectTracker
 from queues import receiveDataQueue
 
 

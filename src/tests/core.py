@@ -2,6 +2,7 @@
 Tests for core and those that do not work outside
 (because of import error for example)
 """
+from __future__ import print_function
 
 import os
 import pickle  # nosec

@@ -3,10 +3,11 @@ src/bitmessageqt/messageview.py
 ===============================
 
 """
+from __future__ import absolute_import
 
 from PyQt4 import QtCore, QtGui
 
-from safehtmlparser import SafeHTMLParser
+from .safehtmlparser import SafeHTMLParser
 
 
 class MessageView(QtGui.QTextBrowser):

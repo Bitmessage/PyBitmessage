@@ -1,13 +1,14 @@
 """
 Tests using API.
 """
+from __future__ import absolute_import
 
 import base64
 import json
 import time
 import xmlrpclib  # nosec
 
-from test_process import TestProcessProto, TestProcessShutdown
+from .test_process import TestProcessProto, TestProcessShutdown
 
 
 class TestAPIProto(TestProcessProto):

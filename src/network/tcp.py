@@ -3,6 +3,7 @@
 src/network/tcp.py
 ==================
 """
+from __future__ import absolute_import
 
 import math
 import random
@@ -10,8 +11,8 @@ import socket
 import time
 
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
+from . import asyncore_pollchoose as asyncore
+from . import connectionpool
 import helper_random
 import knownnodes
 import protocol

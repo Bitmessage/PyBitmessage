@@ -7,14 +7,15 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+from __future__ import absolute_import
 from PyQt4 import QtCore, QtGui
 from bmconfigparser import BMConfigParser
-from foldertree import AddressBookCompleter
-from messageview import MessageView
-from messagecompose import MessageCompose
-import settingsmixin
-from networkstatus import NetworkStatus
-from blacklist import Blacklist
+from .foldertree import AddressBookCompleter
+from .messageview import MessageView
+from .messagecompose import MessageCompose
+from . import settingsmixin
+from .networkstatus import NetworkStatus
+from .blacklist import Blacklist
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -771,7 +772,7 @@ class Ui_MainWindow(object):
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
-import bitmessage_icons_rc
+from . import bitmessage_icons_rc
 
 if __name__ == "__main__":
     import sys

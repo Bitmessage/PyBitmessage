@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
+from . import asyncore_pollchoose as asyncore
 import state
-from advanceddispatcher import AdvancedDispatcher
+from .advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import BMConfigParser
 from debug import logger
 

@@ -3,12 +3,14 @@ src/network/socks5.py
 =====================
 
 """
+from __future__ import print_function
+from __future__ import absolute_import
 # pylint: disable=attribute-defined-outside-init
 
 import socket
 import struct
 
-from proxy import GeneralProxyError, Proxy, ProxyError
+from .proxy import GeneralProxyError, Proxy, ProxyError
 
 
 class Socks5AuthError(ProxyError):
@@ -226,4 +228,4 @@ class Socks5Resolver(Socks5):
         To use this within PyBitmessage, a callback needs to be
         implemented which hasn't been done yet.
         """
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        print("Resolved %s as %s" % (self.host, self.proxy_sock_name()))

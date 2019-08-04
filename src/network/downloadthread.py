@@ -1,15 +1,16 @@
+from __future__ import absolute_import
 import threading
 import time
 
 import addresses
 import helper_random
 import protocol
-from dandelion import Dandelion
+from .dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-from objectracker import missingObjects
+from .objectracker import missingObjects
 
 
 class DownloadThread(threading.Thread, StoppableThread):

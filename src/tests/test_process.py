@@ -1,6 +1,7 @@
 """
 Common reusable code for tests and tests for pybitmessage process.
 """
+from __future__ import print_function
 
 import os
 import signal

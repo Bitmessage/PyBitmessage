@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 from kivy.lang import Builder
 from kivy.uix.modalview import ModalView
 from kivymd.label import MDLabel

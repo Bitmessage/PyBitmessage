@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 from os import path
 from PyQt4 import QtGui
 from debug import logger
-import widgets
+from . import widgets
 
 class RetranslateMixin(object):
     def retranslateUi(self):

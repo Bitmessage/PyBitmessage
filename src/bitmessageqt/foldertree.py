@@ -2,6 +2,7 @@
 src/bitmessageqt/foldertree.py
 ==============================
 """
+from __future__ import absolute_import
 # pylint: disable=too-many-arguments,bad-super-call,attribute-defined-outside-init
 
 from cgi import escape
@@ -10,9 +11,9 @@ from PyQt4 import QtCore, QtGui
 
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
-from settingsmixin import SettingsMixin
+from .settingsmixin import SettingsMixin
 from tr import _translate
-from utils import avatarize
+from .utils import avatarize
 
 # for pylupdate
 _translate("MainWindow", "inbox")

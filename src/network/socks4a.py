@@ -1,7 +1,9 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import socket
 import struct
 
-from proxy import Proxy, ProxyError, GeneralProxyError
+from .proxy import Proxy, ProxyError, GeneralProxyError
 
 
 class Socks4aError(ProxyError):
@@ -135,4 +137,4 @@ class Socks4aResolver(Socks4a):
         PyBitmessage, a callback needs to be implemented which hasn't
         been done yet.
         """
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        print("Resolved %s as %s" % (self.host, self.proxy_sock_name()))
