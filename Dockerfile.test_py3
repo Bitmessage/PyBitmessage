@@ -1,0 +1,27 @@
+# Dockerfile for testing PyBitmessage with Python 3
+# docker build -f Dockerfile.test_py3 .
+
+FROM ubuntu:xenial
+
+RUN apt-get update
+RUN apt-get install -yq --no-install-suggests --no-install-recommends \
+    build-essential libcap-dev libssl-dev python3-all-dev python3-setuptools \
+    virtualenv
+
+WORKDIR /home/bitmessage
+RUN ln -s src pybitmessage  # tests environment
+
+ENV VIRTUAL_ENV=/home/bitmessage/venv
+RUN virtualenv -p python3 $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN python --version
+RUN pip --version
+
+ADD requirements.txt .
+RUN pip install -r requirements.txt
+
+ADD . .
+
+RUN python setup.py install
+RUN python setup.py test

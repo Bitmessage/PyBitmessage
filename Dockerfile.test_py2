@@ -1,0 +1,26 @@
+# Dockerfile for testing PyBitmessage with Python 2
+# docker build -f Dockerfile.test_py2 .
+
+FROM ubuntu:xenial
+
+RUN apt-get update
+RUN apt-get install -yq --no-install-suggests --no-install-recommends \
+    build-essential libcap-dev python-all-dev python-setuptools virtualenv
+
+WORKDIR /home/bitmessage
+RUN ln -s src pybitmessage  # tests environment
+
+ENV VIRTUAL_ENV=/home/bitmessage/venv
+RUN virtualenv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN python --version
+RUN pip --version
+
+ADD requirements.txt .
+RUN pip install -r requirements.txt
+
+ADD . .
+
+RUN python setup.py install
+RUN python setup.py test
