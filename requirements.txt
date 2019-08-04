@@ -1,3 +1,4 @@
-python_prctl
+coverage
 psutil
 pycrypto
+python_prctl
