@@ -207,7 +207,6 @@ NavigationLayout:
                 pos_hint: {'x': .1, 'y': 0.3}
                 color: 0,0,0,1
                 background_color: (0,0,0,0)
-                on_press:app.searchQuery(self, search_input.text)
                 Image:
                     source: './images/search_mail.png'
                     center_x: self.parent.center_x
@@ -226,6 +225,18 @@ NavigationLayout:
                     center_x: self.parent.center_x
                     center_y: self.parent.center_y
                     size: 55, 55
+        BoxLayout:
+            id: search_bar
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDIconButton:
+                icon: 'magnify'
+
+            MDTextField:
+                id: search_field
+                hint_text: 'Search icon'
+                on_text: app.searchQuery(self)
         ScreenManager:
             id: scr_mngr
             Inbox:
