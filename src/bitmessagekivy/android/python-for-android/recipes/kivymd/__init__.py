@@ -10,35 +10,13 @@ from pythonforandroid.recipe import PythonRecipe
 class KivyMDRecipe(PythonRecipe):
     # This recipe installs KivyMD into the android dist from source
     version = 'master'
-    # url = 'https://gitlab.com/kivymd/KivyMD/repository/{version}/archive.zip'
-    url = 'https://github.com/HeaTTheatR/KivyMD/archive/master.zip'
+    url = 'https://github.com/surbhicis/kivymd/archive/master.zip'
     depends = ['kivy']
     site_packages_name = 'kivymd'
     call_hostpython_via_targetpython = False
-    # patches = ['kivymd-fix-dev-compatibility.patch']
-    # Made commented as use different repo for updates
 
     def should_build(self, arch):
         return True
-
-    # def unpack(self, arch):
-    #     info_main('Unpacking {} for {}'.format(self.name, arch))
-    #
-    #     build_dir = self.get_build_container_dir(arch)
-    #
-    #     user_dir = environ.get('P4A_{}_DIR'.format(self.name.lower()))
-    #
-    #     if user_dir is not None:
-    #         info("Installing KivyMD development version (from modded source)")
-    #         self.clean_build()
-    #         shprint(sh.rm, '-rf', build_dir)
-    #         shprint(sh.mkdir, '-p', build_dir)
-    #         shprint(sh.rmdir, build_dir)
-    #         ensure_dir(build_dir)
-    #         ensure_dir(build_dir + "/kivymd")
-    #         shprint(sh.cp, user_dir + '/setup.py', self.get_build_dir(arch) + "/setup.py")
-    #         shprint(sh.cp, '-a', user_dir + "/kivymd", self.get_build_dir(arch) + "/kivymd")
-    #         return
 
     def get_recipe_env(self, arch):
         env = super(KivyMDRecipe, self).get_recipe_env(arch)
