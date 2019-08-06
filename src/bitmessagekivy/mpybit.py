@@ -1383,7 +1383,8 @@ class ShowQRCode(Screen):
         """Method used for showing QR Code."""
         self.ids.qr.clear_widgets()
         from kivy.garden.qrcode import QRCodeWidget
-        self.ids.qr.add_widget(QRCodeWidget(data=self.manager.get_parent_window().children[0].address))
+        self.ids.qr.add_widget(QRCodeWidget(
+            data=self.manager.get_parent_window().children[0].address))
 
 
 class Draft(Screen):
@@ -1536,7 +1537,6 @@ class CustomSpinner(Spinner):
         super(CustomSpinner, self).__init__(*args, **kwargs)
         max = 2.8
         self.dropdown_cls.max_height = self.height * max + max * 4
-        print(args)
 
 
 def remove_search_bar(self):
