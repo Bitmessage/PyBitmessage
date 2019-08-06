@@ -1,9 +1,8 @@
-"""
-src/messagetypes/message.py
-===========================
-"""
-from debug import logger
+import logging
+
 from messagetypes import MsgBase
+
+logger = logging.getLogger('default')
 
 
 class Message(MsgBase):

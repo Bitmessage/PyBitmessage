@@ -1,26 +1,23 @@
 """
 src/network/uploadthread.py
 """
-# pylint: disable=unsubscriptable-object
 import time
 
 import helper_random
 import protocol
-from debug import logger
-from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
+from threads import StoppableThread
 
 
 class UploadThread(StoppableThread):
-    """This is a thread that uploads the objects that the peers requested from me """
+    """
+    This is a thread that uploads the objects that the peers requested from me
+    """
     maxBufSize = 2097152  # 2MB
-
-    def __init__(self):
-        super(UploadThread, self).__init__(name="Uploader")
-        logger.info("init upload thread")
+    name = "Uploader"
 
     def run(self):
         while not self._stopped:
@@ -47,22 +44,26 @@ class UploadThread(StoppableThread):
                     if Dandelion().hasHash(chunk) and \
                        i != Dandelion().objectChildStem(chunk):
                         i.antiIntersectionDelay()
-                        logger.info('%s asked for a stem object we didn\'t offer to it.',
-                                    i.destination)
+                        self.logger.info(
+                            '%s asked for a stem object we didn\'t offer to it.',
+                            i.destination)
                         break
                     try:
-                        payload.extend(protocol.CreatePacket('object',
-                                                             Inventory()[chunk].payload))
+                        payload.extend(protocol.CreatePacket(
+                            'object', Inventory()[chunk].payload))
                         chunk_count += 1
                     except KeyError:
                         i.antiIntersectionDelay()
-                        logger.info('%s asked for an object we don\'t have.', i.destination)
+                        self.logger.info(
+                            '%s asked for an object we don\'t have.',
+                            i.destination)
                         break
                 if not chunk_count:
                     continue
                 i.append_write_buf(payload)
-                logger.debug("%s:%i Uploading %i objects",
-                             i.destination.host, i.destination.port, chunk_count)
+                self.logger.debug(
+                    '%s:%i Uploading %i objects',
+                    i.destination.host, i.destination.port, chunk_count)
                 uploaded += chunk_count
             if not uploaded:
                 self.stop.wait(1)

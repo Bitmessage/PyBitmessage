@@ -3,15 +3,15 @@ import Queue
 import threading
 import time
 
-from debug import logger
-from helper_sql import sqlQuery, sqlStoredProcedure
-from helper_threading import StoppableThread
-from knownnodes import saveKnownNodes
-from inventory import Inventory
-from queues import (
-    addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)
 import shared
 import state
+from debug import logger
+from helper_sql import sqlQuery, sqlStoredProcedure
+from inventory import Inventory
+from knownnodes import saveKnownNodes
+from network.threads import StoppableThread
+from queues import (
+    addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)
 
 
 def doCleanShutdown():

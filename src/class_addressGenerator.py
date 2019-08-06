@@ -12,10 +12,9 @@ import shared
 import defaults
 import highlevelcrypto
 from bmconfigparser import BMConfigParser
-from debug import logger
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from fallback import RIPEMD160Hash
-from helper_threading import StoppableThread
+from network.threads import StoppableThread
 
 
 class addressGenerator(StoppableThread):
@@ -85,12 +84,12 @@ class addressGenerator(StoppableThread):
             elif queueValue[0] == 'stopThread':
                 break
             else:
-                logger.error(
+                self.logger.error(
                     'Programming error: A structure with the wrong number'
                     ' of values was passed into the addressGeneratorQueue.'
                     ' Here is the queueValue: %r\n', queueValue)
             if addressVersionNumber < 3 or addressVersionNumber > 4:
-                logger.error(
+                self.logger.error(
                     'Program error: For some reason the address generator'
                     ' queue has been given a request to create at least'
                     ' one version %s address which it cannot do.\n',
@@ -139,10 +138,10 @@ class addressGenerator(StoppableThread):
                         '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
-                logger.info(
+                self.logger.info(
                     'Generated address with ripe digest: %s', hexlify(ripe))
                 try:
-                    logger.info(
+                    self.logger.info(
                         'Address generator calculated %s addresses at %s'
                         ' addresses per second before finding one with'
                         ' the correct ripe-prefix.',
@@ -210,7 +209,7 @@ class addressGenerator(StoppableThread):
                     or command == 'getDeterministicAddress' \
                     or command == 'createChan' or command == 'joinChan':
                 if len(deterministicPassphrase) == 0:
-                    logger.warning(
+                    self.logger.warning(
                         'You are creating deterministic'
                         ' address(es) using a blank passphrase.'
                         ' Bitmessage will do it but it is rather stupid.')
@@ -263,10 +262,10 @@ class addressGenerator(StoppableThread):
                         ):
                             break
 
-                    logger.info(
+                    self.logger.info(
                         'Generated address with ripe digest: %s', hexlify(ripe))
                     try:
-                        logger.info(
+                        self.logger.info(
                             'Address generator calculated %s addresses'
                             ' at %s addresses per second before finding'
                             ' one with the correct ripe-prefix.',
@@ -316,7 +315,7 @@ class addressGenerator(StoppableThread):
                             addressAlreadyExists = True
 
                         if addressAlreadyExists:
-                            logger.info(
+                            self.logger.info(
                                 '%s already exists. Not adding it again.',
                                 address
                             )
@@ -329,7 +328,7 @@ class addressGenerator(StoppableThread):
                                 ).arg(address)
                             ))
                         else:
-                            logger.debug('label: %s', label)
+                            self.logger.debug('label: %s', label)
                             BMConfigParser().set(address, 'label', label)
                             BMConfigParser().set(address, 'enabled', 'true')
                             BMConfigParser().set(address, 'decoy', 'false')

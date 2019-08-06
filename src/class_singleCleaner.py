@@ -24,16 +24,15 @@ import os
 import shared
 import time
 
-import tr
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlQuery, sqlExecute
-from helper_threading import StoppableThread
-from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from debug import logger
 import knownnodes
 import queues
 import state
+import tr
+from bmconfigparser import BMConfigParser
+from helper_sql import sqlQuery, sqlExecute
+from inventory import Inventory
+from network.connectionpool import BMConnectionPool
+from network.threads import StoppableThread
 
 
 class singleCleaner(StoppableThread):
@@ -99,7 +98,7 @@ class singleCleaner(StoppableThread):
                 )
                 for row in queryreturn:
                     if len(row) < 2:
-                        logger.error(
+                        self.logger.error(
                             'Something went wrong in the singleCleaner thread:'
                             ' a query did not return the requested fields. %r',
                             row
@@ -108,9 +107,9 @@ class singleCleaner(StoppableThread):
                         break
                     toAddress, ackData, status = row
                     if status == 'awaitingpubkey':
-                        resendPubkeyRequest(toAddress)
+                        self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
-                        resendMsg(ackData)
+                        self.resendMsg(ackData)
 
             try:
                 # Cleanup knownnodes and handle possible severe exception
@@ -118,7 +117,7 @@ class singleCleaner(StoppableThread):
                 knownnodes.cleanupKnownNodes()
             except Exception as err:
                 if "Errno 28" in str(err):
-                    logger.fatal(
+                    self.logger.fatal(
                         '(while writing knownnodes to disk)'
                         ' Alert: Your disk or data storage volume is full.'
                     )
@@ -161,41 +160,41 @@ class singleCleaner(StoppableThread):
             if state.shutdown == 0:
                 self.stop.wait(singleCleaner.cycleLength)
 
+    def resendPubkeyRequest(self, address):
+        """Resend pubkey request for address"""
+        self.logger.debug(
+            'It has been a long time and we haven\'t heard a response to our'
+            ' getpubkey request. Sending again.'
+        )
+        try:
+            # We need to take this entry out of the neededPubkeys structure
+            # because the queues.workerQueue checks to see whether the entry
+            # is already present and will not do the POW and send the message
+            # because it assumes that it has already done it recently.
+            del state.neededPubkeys[address]
+        except:
+            pass
 
-def resendPubkeyRequest(address):
-    logger.debug(
-        'It has been a long time and we haven\'t heard a response to our'
-        ' getpubkey request. Sending again.'
-    )
-    try:
-        # We need to take this entry out of the neededPubkeys structure
-        # because the queues.workerQueue checks to see whether the entry
-        # is already present and will not do the POW and send the message
-        # because it assumes that it has already done it recently.
-        del state.neededPubkeys[address]
-    except:
-        pass
+        queues.UISignalQueue.put((
+            'updateStatusBar',
+            'Doing work necessary to again attempt to request a public key...'
+        ))
+        sqlExecute(
+            '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
+            address)
+        queues.workerQueue.put(('sendmessage', ''))
 
-    queues.UISignalQueue.put((
-        'updateStatusBar',
-        'Doing work necessary to again attempt to request a public key...'
-    ))
-    sqlExecute(
-        '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
-        address)
-    queues.workerQueue.put(('sendmessage', ''))
-
-
-def resendMsg(ackdata):
-    logger.debug(
-        'It has been a long time and we haven\'t heard an acknowledgement'
-        ' to our msg. Sending again.'
-    )
-    sqlExecute(
-        '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
-        ackdata)
-    queues.workerQueue.put(('sendmessage', ''))
-    queues.UISignalQueue.put((
-        'updateStatusBar',
-        'Doing work necessary to again attempt to deliver a message...'
-    ))
+    def resendMsg(self, ackdata):
+        """Resend message by ackdata"""
+        self.logger.debug(
+            'It has been a long time and we haven\'t heard an acknowledgement'
+            ' to our msg. Sending again.'
+        )
+        sqlExecute(
+            '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
+            ackdata)
+        queues.workerQueue.put(('sendmessage', ''))
+        queues.UISignalQueue.put((
+            'updateStatusBar',
+            'Doing work necessary to again attempt to deliver a message...'
+        ))

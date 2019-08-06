@@ -38,8 +38,8 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
-from helper_threading import StoppableThread
 from inventory import Inventory
+from network.threads import StoppableThread
 
 str_chan = '[chan]'
 

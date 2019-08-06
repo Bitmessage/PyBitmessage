@@ -1,9 +1,6 @@
-"""Helper threading perform all the threading operations."""
+"""set_thread_name for threads that don't use StoppableThread"""
 
 import threading
-from contextlib import contextmanager
-
-import helper_random
 
 try:
     import prctl
@@ -22,37 +19,3 @@ else:
 
     threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
     threading.Thread._Thread__bootstrap = _thread_name_hack
-
-
-class StoppableThread(threading.Thread):
-    name = None
-
-    def __init__(self, name=None):
-        if name:
-            self.name = name
-        super(StoppableThread, self).__init__(name=self.name)
-        self.initStop()
-        helper_random.seed()
-
-    def initStop(self):
-        self.stop = threading.Event()
-        self._stopped = False
-
-    def stopThread(self):
-        self._stopped = True
-        self.stop.set()
-
-
-class BusyError(threading.ThreadError):
-    pass
-
-
-@contextmanager
-def nonBlocking(lock):
-    locked = lock.acquire(False)
-    if not locked:
-        raise BusyError
-    try:
-        yield
-    finally:
-        lock.release()

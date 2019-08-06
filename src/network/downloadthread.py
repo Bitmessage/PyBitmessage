@@ -2,17 +2,17 @@
 src/network/downloadthread.py
 =============================
 """
+
 import time
 
 import addresses
 import helper_random
 import protocol
 from dandelion import Dandelion
-from debug import logger
-from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from objectracker import missingObjects
+from threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):
@@ -25,7 +25,6 @@ class DownloadThread(StoppableThread):
 
     def __init__(self):
         super(DownloadThread, self).__init__(name="Downloader")
-        logger.info("init download thread")
         self.lastCleaned = time.time()
 
     def cleanPending(self):
@@ -78,7 +77,9 @@ class DownloadThread(StoppableThread):
                     continue
                 payload[0:0] = addresses.encodeVarint(chunkCount)
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
-                logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, chunkCount)
+                self.logger.debug(
+                    '%s:%i Requesting %i objects',
+                    i.destination.host, i.destination.port, chunkCount)
                 requested += chunkCount
             if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
                 self.cleanPending()

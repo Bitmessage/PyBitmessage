@@ -2,24 +2,27 @@
 src/network/udp.py
 ==================
 """
+import logging
 import time
 import socket
 
 import state
 import protocol
 from bmproto import BMProto
-from debug import logger
 from objectracker import ObjectTracker
 from queues import receiveDataQueue
 
+logger = logging.getLogger('default')
 
-class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attributes
+
+class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
     """Bitmessage protocol over UDP (class)"""
     port = 8444
     announceInterval = 60
 
     def __init__(self, host=None, sock=None, announcing=False):
-        super(BMProto, self).__init__(sock=sock)        # pylint: disable=bad-super-call
+        # pylint: disable=bad-super-call
+        super(BMProto, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
         # .. todo:: sort out streams
@@ -79,7 +82,8 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if (seenTime < time.time() - self.maxTimeOffset or seenTime > time.time() + self.maxTimeOffset):
+            if (seenTime < time.time() - self.maxTimeOffset
+                    or seenTime > time.time() + self.maxTimeOffset):
                 continue
             if decodedIP is False:
                 # if the address isn't local, interpret it as

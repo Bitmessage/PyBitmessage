@@ -41,7 +41,7 @@ import shared
 import knownnodes
 import state
 import shutdown
-from debug import logger
+from debug import logger  # this should go before any threads
 
 # Classes
 from class_sqlThread import sqlThread

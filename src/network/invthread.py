@@ -9,10 +9,10 @@ from time import time
 import addresses
 import protocol
 import state
-from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from queues import invQueue
+from threads import StoppableThread
 
 
 def handleExpiredDandelion(expired):

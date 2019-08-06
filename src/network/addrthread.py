@@ -1,9 +1,9 @@
 import Queue
 
-from helper_threading import StoppableThread
+import state
 from network.connectionpool import BMConnectionPool
 from queues import addrQueue
-import state
+from threads import StoppableThread
 
 
 class AddrThread(StoppableThread):

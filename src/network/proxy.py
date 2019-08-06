@@ -3,6 +3,7 @@ src/network/proxy.py
 ====================
 """
 # pylint: disable=protected-access
+import logging
 import socket
 import time
 
@@ -10,7 +11,8 @@ import asyncore_pollchoose as asyncore
 import state
 from advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import BMConfigParser
-from debug import logger
+
+logger = logging.getLogger('default')
 
 
 class ProxyError(Exception):
@@ -144,5 +146,6 @@ class Proxy(AdvancedDispatcher):
 
     def state_proxy_handshake_done(self):
         """Handshake is complete at this point"""
-        self.connectedAt = time.time()      # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=attribute-defined-outside-init
+        self.connectedAt = time.time()
         return False

@@ -1,25 +1,27 @@
 import asyncore
 import base64
 import email
-from email.parser import Parser
-from email.header import decode_header
+import logging
 import re
 import signal
 import smtpd
 import threading
 import time
+from email.header import decode_header
+from email.parser import Parser
 
+import queues
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
-from debug import logger
-from helper_sql import sqlExecute
 from helper_ackPayload import genAckPayload
-from helper_threading import StoppableThread
-import queues
+from helper_sql import sqlExecute
+from network.threads import StoppableThread
 from version import softwareVersion
 
 SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
+
+logger = logging.getLogger('default')
 
 
 class smtpServerChannel(smtpd.SMTPChannel):
@@ -39,7 +41,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
             decoded = base64.b64decode(authstring)
             correctauth = "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdusername", "") + \
                     "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
-            logger.debug("authstring: %s / %s", correctauth, decoded)
+            logger.debug('authstring: %s / %s', correctauth, decoded)
             if correctauth == decoded:
                 self.auth = True
                 self.push('235 2.7.0 Authentication successful')
@@ -50,7 +52,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
 
     def smtp_DATA(self, arg):
         if not hasattr(self, "auth") or not self.auth:
-            self.push ("530 Authentication required")
+            self.push('530 Authentication required')
             return
         smtpd.SMTPChannel.smtp_DATA(self, arg)
 
@@ -98,17 +100,15 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
         return ret
 
-
     def process_message(self, peer, mailfrom, rcpttos, data):
-#        print 'Receiving message from:', peer
         p = re.compile(".*<([^>]+)>")
         if not hasattr(self.channel, "auth") or not self.channel.auth:
-            logger.error("Missing or invalid auth")
+            logger.error('Missing or invalid auth')
             return
         try:
             self.msg_headers = Parser().parsestr(data)
         except:
-            logger.error("Invalid headers")
+            logger.error('Invalid headers')
             return
 
         try:
@@ -118,7 +118,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             if sender not in BMConfigParser().addresses():
                 raise Exception("Nonexisting user %s" % sender)
         except Exception as err:
-            logger.debug("Bad envelope from %s: %s", mailfrom, repr(err))
+            logger.debug('Bad envelope from %s: %r', mailfrom, err)
             msg_from = self.decode_header("from")
             try:
                 msg_from = p.sub(r'\1', self.decode_header("from")[0])
@@ -128,7 +128,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 if sender not in BMConfigParser().addresses():
                     raise Exception("Nonexisting user %s" % sender)
             except Exception as err:
-                logger.error("Bad headers from %s: %s", msg_from, repr(err))
+                logger.error('Bad headers from %s: %r', msg_from, err)
                 return
 
         try:
@@ -147,11 +147,12 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 rcpt, domain = p.sub(r'\1', to).split("@")
                 if domain != SMTPDOMAIN:
                     raise Exception("Bad domain %s" % domain)
-                logger.debug("Sending %s to %s about %s", sender, rcpt, msg_subject)
+                logger.debug(
+                    'Sending %s to %s about %s', sender, rcpt, msg_subject)
                 self.send(sender, rcpt, msg_subject, body)
-                logger.info("Relayed %s to %s", sender, rcpt)
+                logger.info('Relayed %s to %s', sender, rcpt)
             except Exception as err:
-                logger.error( "Bad to %s: %s", to, repr(err))
+                logger.error('Bad to %s: %r', to, err)
                 continue
         return
 
@@ -169,21 +170,24 @@ class smtpServer(StoppableThread):
     def run(self):
         asyncore.loop(1)
 
+
 def signals(signal, frame):
-    print "Got signal, terminating"
+    logger.warning('Got signal, terminating')
     for thread in threading.enumerate():
         if thread.isAlive() and isinstance(thread, StoppableThread):
             thread.stopThread()
 
+
 def runServer():
-    print "Running SMTPd thread"
+    logger.warning('Running SMTPd thread')
     smtpThread = smtpServer()
     smtpThread.start()
     signal.signal(signal.SIGINT, signals)
     signal.signal(signal.SIGTERM, signals)
-    print "Processing"
+    logger.warning('Processing')
     smtpThread.join()
-    print "The end"
+    logger.warning('The end')
+
 
 if __name__ == "__main__":
     runServer()

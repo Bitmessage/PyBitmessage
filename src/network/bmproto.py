@@ -5,6 +5,7 @@ src/network/bmproto.py
 # pylint: disable=attribute-defined-outside-init
 import base64
 import hashlib
+import logging
 import socket
 import struct
 import time
@@ -16,7 +17,6 @@ import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from debug import logger
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
 from network.dandelion import Dandelion
@@ -29,6 +29,8 @@ from network.proxy import ProxyError
 from objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from randomtrackingdict import RandomTrackingDict
+
+logger = logging.getLogger('default')
 
 
 class BMProtoError(ProxyError):

@@ -2,22 +2,20 @@
 src/network/announcethread.py
 =================================
 """
+
 import time
 
+import state
 from bmconfigparser import BMConfigParser
-from debug import logger
-from helper_threading import StoppableThread
 from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
-import state
+from threads import StoppableThread
 
 
 class AnnounceThread(StoppableThread):
     """A thread to manage regular announcing of this node"""
-    def __init__(self):
-        super(AnnounceThread, self).__init__(name="Announcer")
-        logger.info("init announce thread")
+    name = "Announcer"
 
     def run(self):
         lastSelfAnnounced = 0

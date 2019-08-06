@@ -2,14 +2,16 @@
 BMObject and it's exceptions.
 """
 
+import logging
 import time
 
 import protocol
 import state
 from addresses import calculateInventoryHash
-from debug import logger
 from inventory import Inventory
 from network.dandelion import Dandelion
+
+logger = logging.getLogger('default')
 
 
 class BMObjectInsufficientPOWError(Exception):

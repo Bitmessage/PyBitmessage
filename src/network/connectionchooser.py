@@ -1,12 +1,14 @@
 # pylint: disable=too-many-branches
+import logging
 import random  # nosec
 
 import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from debug import logger
 from queues import Queue, portCheckerQueue
+
+logger = logging.getLogger('default')
 
 
 def getDiscoveredPeer():

@@ -4,6 +4,7 @@ src/network/tcp.py
 ==================
 """
 
+import logging
 import math
 import random
 import socket
@@ -18,7 +19,6 @@ import protocol
 import shared
 import state
 from bmconfigparser import BMConfigParser
-from debug import logger
 from helper_random import randomBytes
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
@@ -29,6 +29,8 @@ from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
 from queues import UISignalQueue, invQueue, receiveDataQueue
+
+logger = logging.getLogger('default')
 
 
 class TCPConnection(BMProto, TLSDispatcher):

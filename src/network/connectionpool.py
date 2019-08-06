@@ -3,6 +3,7 @@ src/network/connectionpool.py
 ==================================
 """
 import errno
+import logging
 import re
 import socket
 import time
@@ -14,13 +15,14 @@ import protocol
 import state
 from bmconfigparser import BMConfigParser
 from connectionchooser import chooseConnection
-from debug import logger
 from proxy import Proxy
 from singleton import Singleton
 from tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)
 from udp import UDPSocket
+
+logger = logging.getLogger('default')
 
 
 @Singleton

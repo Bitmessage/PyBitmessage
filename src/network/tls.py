@@ -2,17 +2,18 @@
 SSL/TLS negotiation.
 """
 
+import logging
 import os
 import socket
 import ssl
 import sys
 
-from debug import logger
 from network.advanceddispatcher import AdvancedDispatcher
 import network.asyncore_pollchoose as asyncore
 from queues import receiveDataQueue
 import paths
 
+logger = logging.getLogger('default')
 
 _DISCONNECTED_SSL = frozenset((ssl.SSL_ERROR_EOF,))
 
