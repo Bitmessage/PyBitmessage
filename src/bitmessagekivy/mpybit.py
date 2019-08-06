@@ -45,6 +45,7 @@ from functools import partial
 from kivy.uix.carousel import Carousel
 from kivy.utils import platform
 from kivy.uix.spinner import Spinner
+from kivymd.textfields import MDTextField
 
 
 class Navigatorss(MDNavigationDrawer):
@@ -1085,29 +1086,40 @@ class NavigateApp(App):
             return f_name[0][:14] + '...' if len(f_name[0]) > 15 else f_name[0]
         return ''
 
-    def searchQuery(self, instance, text):
-        """Method used for showing searched mails."""
-        if self.root.ids.search_input.opacity == 0:
-            self.root.ids.search_input.opacity = 1
-            self.root.ids.search_input.size_hint = 4, None
-            self.root.ids.search_input.disabled = False
-            self.root.ids.search_input.focus = True
-            self.root.ids.toolbar.left_action_items = []
-            self.root.ids.toolbar.title = ''
-            self.root.ids.myButton.opacity = 0
-            self.root.ids.myButton.disabled = True
-            self.root.ids.reset_navbar.opacity = 1
-            self.root.ids.reset_navbar.disabled = False
-        elif str(text):
-            state.search_screen = self.root.ids.scr_mngr.current
-            state.searcing_text = str(text).strip()
-            if state.search_screen == 'inbox':
-                self.root.ids.sc1.clear_widgets()
-                self.root.ids.sc1.add_widget(Inbox())
-            else:
-                self.root.ids.sc4.clear_widgets()
-                self.root.ids.sc4.add_widget(Sent())
-            self.root.ids.scr_mngr.current = state.search_screen
+    def searchQuery(self, instance):
+        '''This method is used for showing searched mails'''
+        state.search_screen = self.root.ids.scr_mngr.current
+        state.searcing_text = str(instance.text).strip()
+        if state.search_screen == 'inbox':
+            self.root.ids.sc1.clear_widgets()
+            self.root.ids.sc1.add_widget(Inbox())
+        else:
+            self.root.ids.sc4.clear_widgets()
+            self.root.ids.sc4.add_widget(Sent())
+        self.root.ids.scr_mngr.current = state.search_screen
+        # if self.root.ids.search_input.opacity == 0:
+        #     self.root.ids.search_input.opacity = 1
+        #     self.root.ids.search_input.size_hint = 4,None
+        #     # self.root.ids.serch_btn.opacity = 0
+        #     # self.root.ids.serch_btn.disabled = True
+        #     self.root.ids.search_input.disabled = False
+        #     self.root.ids.search_input.focus = True
+        #     self.root.ids.toolbar.left_action_items = []
+        #     self.root.ids.toolbar.title = ''
+        #     self.root.ids.myButton.opacity = 0
+        #     self.root.ids.myButton.disabled = True
+        #     self.root.ids.reset_navbar.opacity = 1
+        #     self.root.ids.reset_navbar.disabled = False
+        # elif str(text):
+        #     state.search_screen = self.root.ids.scr_mngr.current
+        #     state.searcing_text = str(text).strip()
+        #     if state.search_screen == 'inbox':
+        #         self.root.ids.sc1.clear_widgets()
+        #         self.root.ids.sc1.add_widget(Inbox())
+        #     else:
+        #         self.root.ids.sc4.clear_widgets()
+        #         self.root.ids.sc4.add_widget(Sent())
+        #     self.root.ids.scr_mngr.current = state.search_screen
 
     def reset_navdrawer(self, instance):
         """Method used for reseting navigation drawer."""
@@ -1133,6 +1145,9 @@ class NavigateApp(App):
     def check_search_screen(self, instance):
         """Method shows search button on inbox and sent screen only."""
         if instance.text == 'Inbox' or instance.text == 'Sent':
+            if not self.root.ids.search_bar.children:
+                self.root.ids.search_bar.add_widget(MDIconButton(icon = 'magnify'))
+                # self.root.ids.search_bar.add_widget(MDTextField(id='search_field', hint_text='Search icon', on_text=app.searchQuery(self)))
             self.root.ids.serch_btn.opacity = 1
             self.root.ids.serch_btn.disabled = False
             state.searcing_text = ''
@@ -1141,6 +1156,7 @@ class NavigateApp(App):
             self.root.ids.sc1.add_widget(Inbox())
             self.root.ids.sc4.add_widget(Sent())
         else:
+            self.root.ids.search_bar.clear_widgets()
             self.root.ids.serch_btn.opacity = 0
             self.root.ids.serch_btn.disabled = True
         return
@@ -1415,10 +1431,8 @@ class ShowQRCode(Screen):
     def qrdisplay(self):
         """Method used for showing QR Code."""
         self.ids.qr.clear_widgets()
-        if platform == 'android':
-            from kivy.garden.qrcode import QRCodeWidget
-            self.ids.qr.add_widget(QRCodeWidget(
-                data=self.manager.get_parent_window().children[0].address))
+        from kivy.garden.qrcode import QRCodeWidget
+        self.ids.qr.add_widget(QRCodeWidget(data=self.manager.get_parent_window().children[0].address))
 
 
 class Draft(Screen):
