@@ -247,7 +247,10 @@ class Main:
                 ' \'-c\' as a commandline argument.'
             )
         # is the application already running?  If yes then exit.
-        shared.thisapp = singleinstance("", daemon)
+        try:
+            shared.thisapp = singleinstance("", daemon)
+        except Exception as e:
+            pass
 
         if daemon:
             with shared.printLock:

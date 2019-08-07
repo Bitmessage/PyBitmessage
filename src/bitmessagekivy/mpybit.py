@@ -45,6 +45,7 @@ from functools import partial
 from kivy.uix.carousel import Carousel
 from kivy.utils import platform
 from kivy.uix.spinner import Spinner
+from kivymd.textfields import MDTextField
 
 
 class Navigatorss(MDNavigationDrawer):
@@ -147,6 +148,7 @@ class Inbox(Screen):
 
     def inbox_detail(self, receivedTime, *args):
         """Load inbox page details."""
+        remove_search_bar(self)
         state.detailPageType = 'inbox'
         state.sentMailTime = receivedTime
         if self.manager:
@@ -154,7 +156,6 @@ class Inbox(Screen):
         else:
             src_mng_obj = self.parent.parent
 
-        hide_search_btn(src_mng_obj)
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
         src_mng_obj.current = 'mailDetail'
@@ -463,10 +464,6 @@ class DropDownWidget(BoxLayout):
                     self.parent.parent.current = 'sent'
                     self.ids.btn.text = 'select'
                     self.ids.ti.text = ''
-                    self.parent.parent.parent.parent.parent\
-                        .ids.serch_btn.opacity = 1
-                    self.parent.parent.parent.parent.parent\
-                        .ids.serch_btn.disabled = False
 
                     return None
                 else:
@@ -727,13 +724,13 @@ class Sent(Screen):
 
     def sent_detail(self, lastsenttime, *args):
         """Load sent mail details."""
+        remove_search_bar(self)
         state.detailPageType = 'sent'
         state.sentMailTime = lastsenttime
         if self.manager:
             src_mng_obj = self.manager
         else:
             src_mng_obj = self.parent.parent
-        hide_search_btn(src_mng_obj)
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
         src_mng_obj.current = 'mailDetail'
@@ -993,7 +990,7 @@ class NavigateApp(App):
             if self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = \
                     'sent' if state.detailPageType == 'sent' else 'inbox'
-                show_search_btn(self)
+                self.add_search_bar()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
                 from_addr = str(self.root.children[1].children[0].children[
@@ -1002,16 +999,15 @@ class NavigateApp(App):
                     0].children[0].children[0].ids.txt_input.text)
                 if from_addr and to_addr:
                     Draft().draft_msg(composer_objs)
-                self.root.ids.serch_btn.opacity = 1
-                self.root.ids.serch_btn.disabled = False
                 self.root.ids.scr_mngr.current = 'inbox'
+                self.add_search_bar()
             elif self.root.ids.scr_mngr.current == "showqrcode":
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
                 self.root.ids.scr_mngr.current = 'login'
             else:
                 self.root.ids.scr_mngr.current = 'inbox'
-                show_search_btn(self)
+                self.add_search_bar()
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.restart)
             return True
@@ -1029,8 +1025,7 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
-        self.root.ids.serch_btn.opacity = 0
-        self.root.ids.serch_btn.disabled = True
+        self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
@@ -1085,8 +1080,8 @@ class NavigateApp(App):
             return f_name[0][:14] + '...' if len(f_name[0]) > 15 else f_name[0]
         return ''
 
-    def searchQuery(self, instance):
-        """Method used for showing searched mails."""
+    def searchQuery(self, instance, *args):
+        '''This method is used for showing searched mails'''
         state.search_screen = self.root.ids.scr_mngr.current
         state.searcing_text = str(instance.text).strip()
         if state.search_screen == 'inbox':
@@ -1097,35 +1092,14 @@ class NavigateApp(App):
             self.root.ids.sc4.add_widget(Sent())
         self.root.ids.scr_mngr.current = state.search_screen
 
-    def reset_navdrawer(self, instance):
-        """Method used for reseting navigation drawer."""
-        self.root.ids.search_input.text = ''
-        self.root.ids.search_input.opacity = 0
-        self.root.ids.search_input.size_hint = 1, None
-        self.root.ids.search_input.disabled = True
-        self.root.ids.toolbar.left_action_items = [
-            ['menu', lambda x: self.root.toggle_nav_drawer()]]
-        self.root.ids.toolbar.title = self.current_address_label()
-        self.root.ids.myButton.opacity = 1
-        self.root.ids.myButton.disabled = False
-        self.root.ids.reset_navbar.opacity = 0
-        self.root.ids.reset_navbar.disabled = True
-        state.searcing_text = ''
-        if state.search_screen == 'inbox':
-            self.root.ids.sc1.clear_widgets()
-            self.root.ids.sc1.add_widget(Inbox())
-        else:
-            self.root.ids.sc4.clear_widgets()
-            self.root.ids.sc4.add_widget(Sent())
-
     def check_search_screen(self, instance):
-        """Method shows search button on inbox and sent screen only."""
+        """Method used for showing search button only on inbox or sent screen."""
         if instance.text == 'Inbox' or instance.text == 'Sent':
             if not self.root.ids.search_bar.children:
-                self.root.ids.search_bar.add_widget(
-                    MDIconButton(icon='magnify'))
-            self.root.ids.serch_btn.opacity = 1
-            self.root.ids.serch_btn.disabled = False
+                self.root.ids.search_bar.add_widget(MDIconButton(icon = 'magnify'))
+                text_field = MDTextField(id='search_field', hint_text='Search icon')
+                text_field.bind(text = self.searchQuery)
+                self.root.ids.search_bar.add_widget(text_field)
             state.searcing_text = ''
             self.root.ids.sc1.clear_widgets()
             self.root.ids.sc4.clear_widgets()
@@ -1133,10 +1107,15 @@ class NavigateApp(App):
             self.root.ids.sc4.add_widget(Sent())
         else:
             self.root.ids.search_bar.clear_widgets()
-            self.root.ids.serch_btn.opacity = 0
-            self.root.ids.serch_btn.disabled = True
         return
 
+    def add_search_bar(self):
+        """This method is used for adding search function on screen"""
+        if not self.root.ids.search_bar.children:
+            self.root.ids.search_bar.add_widget(MDIconButton(icon = 'magnify'))
+            text_field = MDTextField(id='search_field', hint_text='Search icon')
+            text_field.bind(text = self.searchQuery)
+            self.root.ids.search_bar.add_widget(text_field)
 
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
@@ -1170,8 +1149,6 @@ class GrashofPopup(Popup):
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-            self.parent.children[1].ids.serch_btn.opacity = 0
-            self.parent.children[1].ids.serch_btn.disabled = True
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
 
     def show_error_message(self):
@@ -1306,8 +1283,6 @@ class MailDetail(Screen):
         state.trash_count = str(int(state.trash_count) + 1)
         self.parent.parent.screens[4].clear_widgets()
         self.parent.parent.screens[4].add_widget(Trash())
-        self.parent.parent.parent.parent.parent.ids.serch_btn.opacity = 1
-        self.parent.parent.parent.parent.parent.ids.serch_btn.disabled = False
 
     def inbox_reply(self):
         """Method used for replying inbox messages."""
@@ -1554,29 +1529,6 @@ class Draft(Screen):
         return
 
 
-def show_search_btn(self):
-    """Method used to show search button."""
-    self.root.ids.serch_btn.opacity = 1
-    self.root.ids.serch_btn.disabled = False
-
-
-def hide_search_btn(mgr_objs):
-    """Method used to hide search button and search box."""
-    mgr_objs.parent.parent.parent.ids.serch_btn.opacity = 0
-    mgr_objs.parent.parent.parent.ids.serch_btn.disabled = True
-    mgr_objs.parent.parent.parent.ids.search_input.size_hint = 1, None
-    mgr_objs.parent.parent.parent.ids.search_input.disabled = True
-    mgr_objs.parent.parent.parent.ids.search_input.opacity = 0
-    mgr_objs.parent.parent.parent.ids.toolbar.left_action_items = \
-        [['menu', lambda x: mgr_objs.parent.parent.parent.toggle_nav_drawer()]]
-    mgr_objs.parent.parent.parent.ids.toolbar.title = \
-        NavigateApp().current_address_label()
-    mgr_objs.parent.parent.parent.ids.myButton.opacity = 1
-    mgr_objs.parent.parent.parent.ids.myButton.disabled = False
-    mgr_objs.parent.parent.parent.ids.reset_navbar.opacity = 0
-    mgr_objs.parent.parent.parent.ids.reset_navbar.disabled = True
-
-
 class CustomSpinner(Spinner):
     """This class is used for setting spinner size."""
 
@@ -1585,3 +1537,7 @@ class CustomSpinner(Spinner):
         super(CustomSpinner, self).__init__(*args, **kwargs)
         max = 2.8
         self.dropdown_cls.max_height = self.height * max + max * 4
+
+
+def remove_search_bar(self):
+    self.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()

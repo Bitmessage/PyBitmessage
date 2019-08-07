@@ -534,6 +534,8 @@ def loadOpenSSL():
     elif platform == "android":
         libdir.append('libcrypto1.0.2p.so')
         libdir.append('libssl1.0.2p.so')
+        libdir.append('libcrypto1.1.so')
+        libdir.append('libssl1.1.so')
 
     else:
         libdir.append('libcrypto.so')
@@ -541,7 +543,10 @@ def loadOpenSSL():
         libdir.append('libcrypto.so.1.0.0')
         libdir.append('libssl.so.1.0.0')
     if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
-        libdir.append(find_library('ssl'))
+        try:
+            libdir.append(find_library('ssl'))
+        except OSError:
+            pass
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
     for library in libdir:

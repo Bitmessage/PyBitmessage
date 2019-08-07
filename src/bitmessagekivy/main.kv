@@ -175,44 +175,6 @@ NavigationLayout:
             background_hue: '500'
             left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
             Button:
-                id: reset_navbar
-                size_hint_y: 0.35
-                size_hint_x: 0.2
-                opacity: 0
-                disabled: True
-                pos_hint: {'x': .1, 'y': 0.3}
-                color: 0,0,0,1
-                background_color: (0,0,0,0)
-                on_press:app.reset_navdrawer(self)
-                Image:
-                    source: './images/left_arrow.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    size: 40, 40 
-            TextInput:
-                id: search_input
-                hint_text: 'search'
-                opacity: 0
-                size_hint: 1,None
-                height: dp(32)
-                disabled: True
-                pos_hint: {'center_x':.565,'center_y': .5}
-                multiline: False
-                padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
-                padding_x: 20,20                                                        
-            Button:
-                id: serch_btn
-                size_hint_y: 0.35
-                size_hint_x: 0.2
-                pos_hint: {'x': .1, 'y': 0.3}
-                color: 0,0,0,1
-                background_color: (0,0,0,0)
-                Image:
-                    source: './images/search_mail.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    size: 55, 55
-            Button:
                 id: myButton
                 size_hint_y: 0.35
                 size_hint_x: 0.2
@@ -282,7 +244,7 @@ NavigationLayout:
             root_layout: root
             MDList:
                 id: ml
-    ComposerButton
+    ComposerButton:
 
 <Sent>:
     name: 'sent'
