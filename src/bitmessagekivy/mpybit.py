@@ -290,10 +290,20 @@ class AddressBook(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method inbox accounts."""
-        data = sqlQuery("SELECT label, address from addressbook")
-        if data:
-            for item in data:
+        """Clock Schdule for method AddressBook"""
+        self.loadAddresslist(None, 'All', '')
+        print(dt)
+
+    def loadAddresslist(self, account, where="", what=""):
+        """Clock Schdule for method AddressBook"""
+        if state.searcing_text:
+            where = ['label', 'address']
+            what = state.searcing_text
+        xAddress = ''
+        queryreturn = kivy_helper_search.search_sql(
+            xAddress, account, "addressbook", where, what, False)
+        if queryreturn:
+            for item in queryreturn:
                 meny = TwoLineAvatarIconListItem(
                     text=item[0],
                     secondary_text=item[1],
@@ -1088,6 +1098,9 @@ class NavigateApp(App):
         if state.search_screen == 'inbox':
             self.root.ids.sc1.clear_widgets()
             self.root.ids.sc1.add_widget(Inbox())
+        elif state.search_screen == 'addressbook':
+            self.root.ids.sc11.clear_widgets()
+            self.root.ids.sc11.add_widget(AddressBook())
         else:
             self.root.ids.sc4.clear_widgets()
             self.root.ids.sc4.add_widget(Sent())
@@ -1095,7 +1108,7 @@ class NavigateApp(App):
 
     def check_search_screen(self, instance):
         """Method show search button only on inbox or sent screen."""
-        if instance.text == 'Inbox' or instance.text == 'Sent':
+        if instance.text in ['Inbox', 'Sent', 'Address Book']:   
             if not self.root.ids.search_bar.children:
                 self.root.ids.search_bar.add_widget(
                     MDIconButton(icon='magnify'))
@@ -1103,13 +1116,10 @@ class NavigateApp(App):
                     id='search_field', hint_text='Search icon')
                 text_field.bind(text=self.searchQuery)
                 self.root.ids.search_bar.add_widget(text_field)
-            state.searcing_text = ''
-            self.root.ids.sc1.clear_widgets()
-            self.root.ids.sc4.clear_widgets()
-            self.root.ids.sc1.add_widget(Inbox())
-            self.root.ids.sc4.add_widget(Sent())
+            self.root.ids.search_bar.children[0].text = ''
         else:
             self.root.ids.search_bar.clear_widgets()
+        state.searcing_text = ''
         return
 
     def add_search_bar(self):
