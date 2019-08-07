@@ -1039,6 +1039,7 @@ class NavigateApp(App):
         shutdown.doCleanShutdown()
 
     def mail_count(self, text):
+        """Counting Mail numbers."""
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
@@ -1081,7 +1082,7 @@ class NavigateApp(App):
         return ''
 
     def searchQuery(self, instance, *args):
-        '''This method is used for showing searched mails'''
+        """Method used for showing searched mails."""
         state.search_screen = self.root.ids.scr_mngr.current
         state.searcing_text = str(instance.text).strip()
         if state.search_screen == 'inbox':
@@ -1093,12 +1094,14 @@ class NavigateApp(App):
         self.root.ids.scr_mngr.current = state.search_screen
 
     def check_search_screen(self, instance):
-        """Method used for showing search button only on inbox or sent screen."""
+        """Method show search button only on inbox or sent screen."""
         if instance.text == 'Inbox' or instance.text == 'Sent':
             if not self.root.ids.search_bar.children:
-                self.root.ids.search_bar.add_widget(MDIconButton(icon = 'magnify'))
-                text_field = MDTextField(id='search_field', hint_text='Search icon')
-                text_field.bind(text = self.searchQuery)
+                self.root.ids.search_bar.add_widget(
+                    MDIconButton(icon='magnify'))
+                text_field = MDTextField(
+                    id='search_field', hint_text='Search icon')
+                text_field.bind(text=self.searchQuery)
                 self.root.ids.search_bar.add_widget(text_field)
             state.searcing_text = ''
             self.root.ids.sc1.clear_widgets()
@@ -1110,12 +1113,14 @@ class NavigateApp(App):
         return
 
     def add_search_bar(self):
-        """This method is used for adding search function on screen"""
+        """Method used for adding search function on screen."""
         if not self.root.ids.search_bar.children:
-            self.root.ids.search_bar.add_widget(MDIconButton(icon = 'magnify'))
-            text_field = MDTextField(id='search_field', hint_text='Search icon')
-            text_field.bind(text = self.searchQuery)
+            self.root.ids.search_bar.add_widget(MDIconButton(icon='magnify'))
+            text_field = MDTextField(
+                id='search_field', hint_text='Search icon')
+            text_field.bind(text=self.searchQuery)
             self.root.ids.search_bar.add_widget(text_field)
+
 
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
@@ -1540,4 +1545,5 @@ class CustomSpinner(Spinner):
 
 
 def remove_search_bar(self):
+    """Remove search bar."""
     self.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
