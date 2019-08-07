@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import random
 import shared
 import threading
@@ -24,9 +25,10 @@ import protocol
 import queues
 import state
 import tr
-from debug import logger
 from fallback import RIPEMD160Hash
 import l10n
+
+logger = logging.getLogger('default')
 
 
 class objectProcessor(threading.Thread):
@@ -316,13 +318,14 @@ class objectProcessor(threading.Thread):
                 '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
-            logger.debug(
-                'within recpubkey, addressVersion: %s, streamNumber: %s'
-                '\nripe %s\npublicSigningKey in hex: %s'
-                '\npublicEncryptionKey in hex: %s',
-                addressVersion, streamNumber, hexlify(ripe),
-                hexlify(publicSigningKey), hexlify(publicEncryptionKey)
-            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    'within recpubkey, addressVersion: %s, streamNumber: %s'
+                    '\nripe %s\npublicSigningKey in hex: %s'
+                    '\npublicEncryptionKey in hex: %s',
+                    addressVersion, streamNumber, hexlify(ripe),
+                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
 
@@ -380,13 +383,14 @@ class objectProcessor(threading.Thread):
             sha.update(publicSigningKey + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
-            logger.debug(
-                'within recpubkey, addressVersion: %s, streamNumber: %s'
-                '\nripe %s\npublicSigningKey in hex: %s'
-                '\npublicEncryptionKey in hex: %s',
-                addressVersion, streamNumber, hexlify(ripe),
-                hexlify(publicSigningKey), hexlify(publicEncryptionKey)
-            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    'within recpubkey, addressVersion: %s, streamNumber: %s'
+                    '\nripe %s\npublicSigningKey in hex: %s'
+                    '\npublicEncryptionKey in hex: %s',
+                    addressVersion, streamNumber, hexlify(ripe),
+                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
             queryreturn = sqlQuery(
@@ -579,17 +583,18 @@ class objectProcessor(threading.Thread):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
-        logger.debug(
-            'As a matter of intellectual curiosity, here is the Bitcoin'
-            ' address associated with the keys owned by the other person:'
-            ' %s  ..and here is the testnet address: %s. The other person'
-            ' must take their private signing key from Bitmessage and'
-            ' import it into Bitcoin (or a service like Blockchain.info)'
-            ' for it to be of any use. Do not use this unless you know'
-            ' what you are doing.',
-            helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey),
-            helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey)
-        )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                'As a matter of intellectual curiosity, here is the Bitcoin'
+                ' address associated with the keys owned by the other person:'
+                ' %s  ..and here is the testnet address: %s. The other person'
+                ' must take their private signing key from Bitmessage and'
+                ' import it into Bitcoin (or a service like Blockchain.info)'
+                ' for it to be of any use. Do not use this unless you know'
+                ' what you are doing.',
+                helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey),
+                helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey)
+            )
         # Used to detect and ignore duplicate messages in our inbox
         sigHash = hashlib.sha512(
             hashlib.sha512(signature).digest()).digest()[32:]

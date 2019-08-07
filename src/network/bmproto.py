@@ -510,7 +510,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.timeOffset = self.timestamp - int(time.time())
         logger.debug('remoteProtocolVersion: %i', self.remoteProtocolVersion)
         logger.debug('services: 0x%08X', self.services)
-        logger.debug('time offset: %i', self.timestamp - int(time.time()))
+        logger.debug('time offset: %i', self.timeOffset)
         logger.debug('my external IP: %s', self.sockNode.host)
         logger.debug(
             'remote node incoming address: %s:%i',
