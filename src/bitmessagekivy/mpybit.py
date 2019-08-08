@@ -104,12 +104,11 @@ class Inbox(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
+                img_latter = item['secondary_text'][0].upper() if (
+                    item['secondary_text'][0].upper() >= 'A' and item[
+                        'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        item['secondary_text'][0].upper() if (
-                            item['secondary_text'][0].upper() >= 'A' and item[
-                                'secondary_text'][0].upper() <= 'Z')
-                        else '!')))
+                    source='./images/text_images/{}.png'.format(img_latter)))
                 meny.bind(on_press=partial(
                     self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
@@ -233,12 +232,11 @@ class MyAddress(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
+                img_latter = item['text'][0].upper() if (
+                    item['text'][0].upper() >= 'A' and item['text'][
+                        0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        item['text'][0].upper() if (
-                            item['text'][0].upper() >= 'A' and item['text'][
-                                0].upper() <= 'Z')
-                        else '!')))
+                    source='./images/text_images/{}.png'.format(img_latter)))
                 meny.bind(on_press=partial(
                     self.myadd_detail, item['secondary_text'], item['text']))
                 self.ids.ml.add_widget(meny)
@@ -290,12 +288,12 @@ class AddressBook(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method AddressBook"""
+        """Clock Schdule for method AddressBook."""
         self.loadAddresslist(None, 'All', '')
         print(dt)
 
     def loadAddresslist(self, account, where="", what=""):
-        """Clock Schdule for method AddressBook"""
+        """Clock Schdule for method AddressBook."""
         if state.searcing_text:
             where = ['label', 'address']
             what = state.searcing_text
@@ -309,11 +307,11 @@ class AddressBook(Screen):
                     secondary_text=item[1],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
+                img_latter = item[0][0].upper() if (
+                    item[0][0].upper() >= 'A' and item[0][
+                        0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        item[0][0].upper() if (
-                            item[0][0].upper() >= 'A' and item[0][
-                                0].upper() <= 'Z') else '!')))
+                    source='./images/text_images/{}.png'.format(img_latter)))
                 meny.bind(on_press=partial(
                     self.addBook_detail, item[1], item[0]))
                 carousel = Carousel(direction='right')
@@ -609,7 +607,6 @@ class Random(Screen):
 
     def generateaddress(self):
         """Method for Address Generator."""
-        import queues
         streamNumberForAddress = 1
         label = self.ids.label.text
         eighteenByteRipe = False
@@ -690,12 +687,11 @@ class Sent(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
+                img_latter = item['secondary_text'][0].upper() if (
+                    item['secondary_text'][0].upper() >= 'A' and item[
+                        'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        item['secondary_text'][0].upper() if (
-                            item['secondary_text'][0].upper() >= 'A' and item[
-                                'secondary_text'][0].upper() <= 'Z')
-                        else '!')))
+                    source='./images/text_images/{}.png'.format(img_latter)))
                 meny.bind(on_press=partial(
                     self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
@@ -814,10 +810,11 @@ class Trash(Screen):
                 secondary_text=item[2],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            img_latter = item[2][0].upper() if (
+                item[2][0].upper() >= 'A' and item[
+                    2][0].upper() <= 'Z') else '!'
             meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
-                    item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                        2][0].upper() <= 'Z') else '!')))
+                source='./images/text_images/{}.png'.format(img_latter)))
             self.ids.ml.add_widget(meny)
 
 
@@ -894,17 +891,6 @@ class NavigateApp(App):
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
-    def show_address_success(self):
-        """Showing the succesfull address."""
-        content = MDLabel(font_style='Body1',
-                          theme_text_color='Secondary',
-                          text="Successfully Saved your contact address. "
-                               "That's pretty awesome right!",
-                          size_hint_y=None,
-                          valign='top')
-        content.bind(texture_size=content.setter('size'))
-        self.dialog.open()
-
     @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
@@ -960,14 +946,6 @@ class NavigateApp(App):
             msg_counter_objs.inbox_cnt.badge_text = state.inbox_count
             msg_counter_objs.trash_cnt.badge_text = state.trash_count
             msg_counter_objs.draft_cnt.badge_text = state.draft_count
-
-    def getInboxMessageDetail(self, instance):
-        """Getting message detail after selected message description."""
-        try:
-            self.root.ids._mngr.current = 'page'
-        except AttributeError:
-            self.parent.manager.current = 'page'
-        print('Message Clicked {}'.format(instance))
 
     @staticmethod
     def getCurrentAccount():
@@ -1108,7 +1086,7 @@ class NavigateApp(App):
 
     def check_search_screen(self, instance):
         """Method show search button only on inbox or sent screen."""
-        if instance.text in ['Inbox', 'Sent', 'Address Book']:   
+        if instance.text in ['Inbox', 'Sent', 'Address Book']:
             if not self.root.ids.search_bar.children:
                 self.root.ids.search_bar.add_widget(
                     MDIconButton(icon='magnify'))
@@ -1550,10 +1528,10 @@ class CustomSpinner(Spinner):
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner."""
         super(CustomSpinner, self).__init__(*args, **kwargs)
-        max = 2.8
-        self.dropdown_cls.max_height = self.height * max + max * 4
+        max_value = 2.8
+        self.dropdown_cls.max_height = self.height * max_value + max_value * 4
 
 
-def remove_search_bar(self):
+def remove_search_bar(obj):
     """Remove search bar."""
-    self.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
+    obj.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
