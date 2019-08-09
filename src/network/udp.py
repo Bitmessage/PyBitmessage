@@ -4,9 +4,8 @@ import socket
 
 import state
 import protocol
-from .bmproto import BMProto
+from .fix_circular_imports import BMProto, ObjectTracker
 from debug import logger
-from .objectracker import ObjectTracker
 from queues import receiveDataQueue
 
 

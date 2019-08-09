@@ -53,8 +53,7 @@ from bmconfigparser import BMConfigParser
 
 from inventory import Inventory
 
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
+from network.fix_circular_imports import BMConnectionPool, Dandelion
 from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from network.announcethread import AnnounceThread

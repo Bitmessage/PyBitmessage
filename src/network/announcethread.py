@@ -4,8 +4,7 @@ import time
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_threading import StoppableThread
-from network.bmproto import BMProto
-from network.connectionpool import BMConnectionPool
+from .fix_circular_imports import BMConnectionPool, BMProto
 from network.udp import UDPSocket
 import state
 

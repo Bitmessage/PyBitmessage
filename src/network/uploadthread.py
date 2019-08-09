@@ -10,8 +10,7 @@ import protocol
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
+from .fix_circular_imports import BMConnectionPool, Dandelion
 from randomtrackingdict import RandomTrackingDict
 
 

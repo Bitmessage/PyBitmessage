@@ -4,7 +4,7 @@ import network.asyncore_pollchoose as asyncore
 import state
 from debug import logger
 from helper_threading import StoppableThread
-from network.connectionpool import BMConnectionPool
+from .fix_circular_imports import BMConnectionPool
 from queues import excQueue
 
 

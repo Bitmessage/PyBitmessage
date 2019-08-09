@@ -29,7 +29,7 @@ from bmconfigparser import BMConfigParser
 from helper_sql import sqlQuery, sqlExecute
 from helper_threading import StoppableThread
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
+from network.fix_circular_imports import BMConnectionPool
 from debug import logger
 import knownnodes
 import queues

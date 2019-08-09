@@ -19,7 +19,7 @@ import helper_msgcoding
 import helper_sent
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from helper_ackPayload import genAckPayload
-from network import bmproto
+from network.fix_circular_imports import BMStringParser
 import protocol
 import queues
 import state
@@ -50,7 +50,7 @@ class objectProcessor(threading.Thread):
         logger.debug(
             'Loaded %s objects from disk into the objectProcessorQueue.',
             len(queryreturn))
-        self._ack_obj = bmproto.BMStringParser()
+        self._ack_obj = BMStringParser()
         self.successfullyDecryptMessageTimings = []
 
     def run(self):
@@ -151,7 +151,7 @@ class objectProcessor(threading.Thread):
         readPosition += length
         stream, length = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += length
-        # it seems that stream is checked in network.bmproto
+        # it seems that stream is checked in network.fix_circular_imports
         port, length = decodeVarint(data[readPosition:readPosition + 10])
         host = protocol.checkIPAddress(data[readPosition + length:])
 

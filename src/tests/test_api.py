@@ -33,13 +33,13 @@ class TestAPIShutdown(TestAPIProto, TestProcessShutdown):
     def test_shutdown(self):
         """Shutdown the pybitmessage"""
         self.assertEquals(self.api.shutdown(), 'done')
-        for _ in range(5):
+        for _ in range(10):
             if not self.process.is_running():
                 break
             time.sleep(2)
         else:
             self.fail(
-                '%s has not stopped in 10 sec' % ' '.join(self._process_cmd))
+                '%s has not stopped in 20 sec' % ' '.join(self._process_cmd))
 
 
 class TestAPI(TestAPIProto):

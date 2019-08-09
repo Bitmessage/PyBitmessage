@@ -3,7 +3,7 @@ import threading
 
 import addresses
 from helper_threading import StoppableThread
-from network.connectionpool import BMConnectionPool
+from .fix_circular_imports import BMConnectionPool
 from queues import addrQueue
 import protocol
 import state

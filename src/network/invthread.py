@@ -6,8 +6,7 @@ from time import time
 import addresses
 from bmconfigparser import BMConfigParser
 from helper_threading import StoppableThread
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
+from .fix_circular_imports import BMConnectionPool, Dandelion
 from queues import invQueue
 import protocol
 import state

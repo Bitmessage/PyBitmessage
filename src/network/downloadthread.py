@@ -5,12 +5,10 @@ import time
 import addresses
 import helper_random
 import protocol
-from .dandelion import Dandelion
+from .fix_circular_imports import BMConnectionPool, Dandelion, missingObjects
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from .objectracker import missingObjects
 
 
 class DownloadThread(threading.Thread, StoppableThread):

@@ -10,8 +10,7 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from network.bmproto import BMProto
+from .fix_circular_imports import BMConnectionPool, BMProto
 from network.advanceddispatcher import UnknownStateError
 from queues import receiveDataQueue
 import protocol
