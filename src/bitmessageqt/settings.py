@@ -11,7 +11,15 @@ Created: Thu Dec 25 23:21:20 2014
 
 WARNING! All changes made in this file will be lost!
 """
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 from sys import platform
 
 from PyQt4 import QtCore, QtGui

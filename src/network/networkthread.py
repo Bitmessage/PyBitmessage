@@ -1,3 +1,10 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import threading
 
 import network.asyncore_pollchoose as asyncore
@@ -25,17 +32,17 @@ class BMNetworkThread(threading.Thread, StoppableThread):
 
     def stopThread(self):
         super(BMNetworkThread, self).stopThread()
-        for i in BMConnectionPool().listeningSockets.values():
+        for i in list(BMConnectionPool().listeningSockets.values()):
             try:
                 i.close()
             except:
                 pass
-        for i in BMConnectionPool().outboundConnections.values():
+        for i in list(BMConnectionPool().outboundConnections.values()):
             try:
                 i.close()
             except:
                 pass
-        for i in BMConnectionPool().inboundConnections.values():
+        for i in list(BMConnectionPool().inboundConnections.values()):
             try:
                 i.close()
             except:

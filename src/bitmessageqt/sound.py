@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # sound type constants
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 SOUND_NONE = 0
 SOUND_KNOWN = 1
 SOUND_UNKNOWN = 2

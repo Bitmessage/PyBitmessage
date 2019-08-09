@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
 from kivy.lang import Builder
 from kivy.properties import StringProperty, ListProperty, NumericProperty
 from kivy.uix.behaviors import ToggleButtonBehavior
@@ -124,8 +132,8 @@ class Thumb(RoundElevationBehavior, CircularRippleBehavior, ButtonBehavior,
         self.ellipse.pos = (self.center_x - self.ripple_rad / 2.,
                             self.center_y - self.ripple_rad / 2.)
         self.stencil.pos = (
-            self.center_x - (self.width * self.ripple_scale) / 2,
-            self.center_y - (self.height * self.ripple_scale) / 2)
+            self.center_x - old_div((self.width * self.ripple_scale), 2),
+            self.center_y - old_div((self.height * self.ripple_scale), 2))
 
 
 class MDSwitch(ThemableBehavior, ButtonBehavior, FloatLayout):

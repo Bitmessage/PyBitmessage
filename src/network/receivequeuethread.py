@@ -1,5 +1,13 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
 import errno
-import Queue
+import queue
 import socket
 import sys
 import threading
@@ -27,7 +35,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
         while not self._stopped and state.shutdown == 0:
             try:
                 dest = receiveDataQueue.get(block=True, timeout=1)
-            except Queue.Empty:
+            except queue.Empty:
                 continue
 
             if self._stopped or state.shutdown:

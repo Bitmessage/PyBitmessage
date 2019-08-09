@@ -4,7 +4,15 @@ src/bitmessageqt/messageview.py
 
 """
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from past.utils import old_div
 from PyQt4 import QtCore, QtGui
 
 from .safehtmlparser import SafeHTMLParser
@@ -52,7 +60,7 @@ class MessageView(QtGui.QTextBrowser):
         super(MessageView, self).wheelEvent(event)
         if (QtGui.QApplication.queryKeyboardModifiers() &
                 QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
-            zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
+            zoom = old_div(self.currentFont().pointSize() * 100, self.defaultFontPointSize)
             QtGui.QApplication.activeWindow().statusBar().showMessage(
                 QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
 
@@ -89,7 +97,7 @@ class MessageView(QtGui.QTextBrowser):
             QtGui.QApplication.translate(
                 "MessageView",
                 "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you"
-                " or download malicious data. Are you sure?").arg(unicode(link.toString())),
+                " or download malicious data. Are you sure?").arg(str(link.toString())),
             QtGui.QMessageBox.Yes,
             QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
@@ -131,7 +139,7 @@ class MessageView(QtGui.QTextBrowser):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw
         if self.html.has_html:
-            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(
+            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(
                 QtGui.QApplication.translate(
                     "MessageView", "HTML detected, click here to display")) + "</b></div><br/>" + out
         self.out = out
@@ -143,7 +151,7 @@ class MessageView(QtGui.QTextBrowser):
         """Render message as HTML"""
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(
+        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(
             QtGui.QApplication.translate("MessageView", "Click here to disable HTML")) + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0

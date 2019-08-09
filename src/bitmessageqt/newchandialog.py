@@ -4,7 +4,14 @@ src/bitmessageqt/newchandialog.py
 
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
 from PyQt4 import QtCore, QtGui
 
 from . import widgets
@@ -67,7 +74,7 @@ class NewChanDialog(QtGui.QDialog, RetranslateMixin):
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if addressGeneratorReturnValue and addressGeneratorReturnValue[0] != 'chan name does not match address':
             UISignalQueue.put(('updateStatusBar', _translate(
-                "newchandialog", "Successfully created / joined chan %1").arg(unicode(self.chanPassPhrase.text()))))
+                "newchandialog", "Successfully created / joined chan %1").arg(str(self.chanPassPhrase.text()))))
             self.parent.ui.tabWidget.setCurrentIndex(
                 self.parent.ui.tabWidget.indexOf(self.parent.ui.chans)
             )

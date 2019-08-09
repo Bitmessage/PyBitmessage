@@ -1,4 +1,12 @@
-import Queue
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
+import queue
 from random import randint, shuffle
 import threading
 from time import time
@@ -18,8 +26,8 @@ def handleExpiredDandelion(expired):
     if not expired:
         return
     for i in \
-        BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+        list(BMConnectionPool().inboundConnections.values()) + \
+            list(BMConnectionPool().outboundConnections.values()):
         if not i.fullyEstablished:
             continue
         for x in expired:
@@ -41,8 +49,8 @@ class InvThread(threading.Thread, StoppableThread):
     def handleLocallyGenerated(self, stream, hashId):
         Dandelion().addHash(hashId, stream=stream)
         for connection in \
-                BMConnectionPool().inboundConnections.values() + \
-                BMConnectionPool().outboundConnections.values():
+                list(BMConnectionPool().inboundConnections.values()) + \
+                list(BMConnectionPool().outboundConnections.values()):
                 if state.dandelion and connection != Dandelion().objectChildStem(hashId):
                     continue
                 connection.objectsNewToThem[hashId] = time()
@@ -59,12 +67,12 @@ class InvThread(threading.Thread, StoppableThread):
                     # locally generated
                     if len(data) == 2 or data[2] is None:
                         self.handleLocallyGenerated(data[0], data[1])
-                except Queue.Empty:
+                except queue.Empty:
                     break
 
             if chunk:
-                for connection in BMConnectionPool().inboundConnections.values() + \
-                        BMConnectionPool().outboundConnections.values():
+                for connection in list(BMConnectionPool().inboundConnections.values()) + \
+                        list(BMConnectionPool().outboundConnections.values()):
                     fluffs = []
                     stems = []
                     for inv in chunk:

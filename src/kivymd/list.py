@@ -139,7 +139,15 @@ Python example:
 API
 ---
 '''
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, \
@@ -338,7 +346,7 @@ class BaseListItem(ThemableBehavior, RectangularRippleBehavior,
     _num_lines = 2
 
 
-class ILeftBody:
+class ILeftBody(object):
     '''Pseudo-interface for widgets that go in the left container for
     ListItems that support it.
 
@@ -347,14 +355,14 @@ class ILeftBody:
     pass
 
 
-class ILeftBodyTouch:
+class ILeftBodyTouch(object):
     '''Same as :class:`~ILeftBody`, but allows the widget to receive touch
     events instead of triggering the ListItem's ripple effect
     '''
     pass
 
 
-class IRightBody:
+class IRightBody(object):
     '''Pseudo-interface for widgets that go in the right container for
     ListItems that support it.
 
@@ -363,14 +371,14 @@ class IRightBody:
     pass
 
 
-class IRightBodyTouch:
+class IRightBodyTouch(object):
     '''Same as :class:`~IRightBody`, but allows the widget to receive touch
     events instead of triggering the ListItem's ripple effect
     '''
     pass
 
 
-class ContainerSupport:
+class ContainerSupport(object):
     '''Overrides add_widget in a ListItem to include support for I*Body
     widgets when the appropiate containers are present.
     '''

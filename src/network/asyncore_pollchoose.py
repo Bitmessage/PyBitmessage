@@ -51,7 +51,15 @@ many of the difficult problems for you, making the task of building
 sophisticated high-performance network servers and clients a snap.
 """
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from builtins import object
 import os
 import select
 import socket
@@ -366,7 +374,7 @@ def epoll_poller(timeout=0.0, map=None):
     except AttributeError:
         epoll_poller.pollster = select.epoll()
     if map:
-        for fd, obj in map.items():
+        for fd, obj in list(map.items()):
             flags = newflags = 0
             if obj.readable():
                 flags |= select.POLLIN | select.POLLPRI
@@ -424,7 +432,7 @@ def kqueue_poller(timeout=0.0, map=None):
     if map:
         updates = []
         selectables = 0
-        for fd, obj in map.items():
+        for fd, obj in list(map.items()):
             kq_filter = 0
             if obj.readable():
                 kq_filter |= 1
@@ -521,7 +529,7 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None, poller=None):
             count = count - 1
 
 
-class dispatcher:
+class dispatcher(object):
     """Dispatcher for socket objects"""
     # pylint: disable=too-many-public-methods,too-many-instance-attributes,old-style-class
 
@@ -999,7 +1007,7 @@ def close_all(map=None, ignore_all=False):
 if os.name == 'posix':
     import fcntl
 
-    class file_wrapper:
+    class file_wrapper(object):
         """
         Here we override just enough to make a file look like a socket for the purposes of asyncore.
 

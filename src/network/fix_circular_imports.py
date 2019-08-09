@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
 
 
 
@@ -10,6 +13,14 @@ from __future__ import absolute_import
 
 
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import map
+from builtins import str
+from builtins import range
+from builtins import *
+from past.utils import old_div
+from builtins import object
 import time
 
 import protocol
@@ -232,7 +243,7 @@ class ObjectTracker(object):
                 # release memory
                 deadline = time.time() - ObjectTracker.trackingExpires
                 with self.objectsNewToThemLock:
-                    self.objectsNewToThem = {k: v for k, v in self.objectsNewToThem.iteritems() if v >= deadline}
+                    self.objectsNewToThem = {k: v for k, v in self.objectsNewToThem.items() if v >= deadline}
             self.lastCleaned = time.time()
 
     def hasObj(self, hashid):
@@ -254,7 +265,7 @@ class ObjectTracker(object):
         self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
-        for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+        for i in list(BMConnectionPool().inboundConnections.values()) + list(BMConnectionPool().outboundConnections.values()):
             if not i.fullyEstablished:
                 continue
             try:
@@ -940,8 +951,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def stopDownloadingObject(hashId, forwardAnyway=False):
         """Stop downloading an object"""
         for connection in (
-            BMConnectionPool().inboundConnections.values() +
-            BMConnectionPool().outboundConnections.values()
+            list(BMConnectionPool().inboundConnections.values()) +
+            list(BMConnectionPool().outboundConnections.values())
         ):
             try:
                 del connection.objectsNewToMe[hashId]
@@ -1038,7 +1049,7 @@ Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
 
 
 @Singleton
-class Dandelion():
+class Dandelion(object):
     """Dandelion class for tracking stem/fluff stages."""
     def __init__(self):
         # currently assignable child stems
@@ -1110,12 +1121,12 @@ class Dandelion():
         with self.lock:
             if len(self.stem) < MAX_STEMS:
                 self.stem.append(connection)
-                for k in (k for k, v in self.nodeMap.iteritems() if v is None):
+                for k in (k for k, v in self.nodeMap.items() if v is None):
                     self.nodeMap[k] = connection
                 for k, v in {
-                    k: v for k, v in self.hashMap.iteritems()
+                    k: v for k, v in self.hashMap.items()
                     if v.child is None
-                }.iteritems():
+                }.items():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
@@ -1131,13 +1142,13 @@ class Dandelion():
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
                 for k in (
-                    k for k, v in self.nodeMap.iteritems() if v == connection
+                    k for k, v in self.nodeMap.items() if v == connection
                 ):
                     self.nodeMap[k] = None
                 for k, v in {
-                    k: v for k, v in self.hashMap.iteritems()
+                    k: v for k, v in self.hashMap.items()
                     if v.child == connection
-                }.iteritems():
+                }.items():
                     self.hashMap[k] = Stem(
                         None, v.stream, self.poissonTimeout())
 
@@ -1148,7 +1159,7 @@ class Dandelion():
         """
         try:
             # pick a random from available stems
-            stem = choice(range(len(self.stem)))
+            stem = choice(list(range(len(self.stem))))
             if self.stem[stem] == parent:
                 # one stem available and it's the parent
                 if len(self.stem) == 1:
@@ -1178,7 +1189,7 @@ class Dandelion():
         with self.lock:
             deadline = time.time()
             toDelete = [
-                [v.stream, k, v.child] for k, v in self.hashMap.iteritems()
+                [v.stream, k, v.child] for k, v in self.hashMap.items()
                 if v.timeout < deadline
             ]
 
@@ -1193,12 +1204,12 @@ class Dandelion():
             try:
                 # random two connections
                 self.stem = sample(
-                    BMConnectionPool(
-                    ).outboundConnections.values(), MAX_STEMS)
+                    list(BMConnectionPool(
+                    ).outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = BMConnectionPool(
-                ).outboundConnections.values()
+                self.stem = list(BMConnectionPool(
+                ).outboundConnections.values())
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time.time() + REASSIGN_INTERVAL
@@ -1281,8 +1292,8 @@ class BMConnectionPool(object):
     def isAlreadyConnected(self, nodeid):
         """Check if we're already connected to this peer"""
         for i in (
-            self.inboundConnections.values() +
-            self.outboundConnections.values()
+            list(self.inboundConnections.values()) +
+            list(self.outboundConnections.values())
         ):
             try:
                 if nodeid == i.nodeid:
@@ -1414,7 +1425,7 @@ class BMConnectionPool(object):
                 except ValueError:
                     Proxy.onion_proxy = None
             established = sum(
-                1 for c in self.outboundConnections.values()
+                1 for c in list(self.outboundConnections.values())
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt(
@@ -1454,8 +1465,8 @@ class BMConnectionPool(object):
                     self.lastSpawned = time.time()
         else:
             for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values()
+                list(self.inboundConnections.values()) +
+                list(self.outboundConnections.values())
             ):
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
@@ -1484,12 +1495,12 @@ class BMConnectionPool(object):
                 logger.info('Starting UDP socket(s).')
         else:
             if self.listeningSockets:
-                for i in self.listeningSockets.values():
+                for i in list(self.listeningSockets.values()):
                     i.close_reason = "Stopping listening"
                     i.accepting = i.connecting = i.connected = False
                 logger.info('Stopped listening for incoming connections.')
             if self.udpSockets:
-                for i in self.udpSockets.values():
+                for i in list(self.udpSockets.values()):
                     i.close_reason = "Stopping UDP socket"
                     i.accepting = i.connecting = i.connected = False
                 logger.info('Stopped udp sockets.')
@@ -1501,8 +1512,8 @@ class BMConnectionPool(object):
 
         reaper = []
         for i in (
-            self.inboundConnections.values() +
-            self.outboundConnections.values()
+            list(self.inboundConnections.values()) +
+            list(self.outboundConnections.values())
         ):
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -1515,10 +1526,10 @@ class BMConnectionPool(object):
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
-            self.inboundConnections.values() +
-            self.outboundConnections.values() +
-            self.listeningSockets.values() +
-            self.udpSockets.values()
+            list(self.inboundConnections.values()) +
+            list(self.outboundConnections.values()) +
+            list(self.listeningSockets.values()) +
+            list(self.udpSockets.values())
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)
@@ -1695,7 +1706,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
                     filtered = [
-                        (k, v) for k, v in nodes.iteritems()
+                        (k, v) for k, v in nodes.items()
                         if v["lastseen"] > int(time.time()) -
                         shared.maximumAgeOfNodesThatIAdvertiseToOthers and
                         v["rating"] >= 0 and len(k.host) <= 22
@@ -1703,7 +1714,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
                         len(filtered),
-                        maxAddrCount / 2 if n else maxAddrCount)
+                        old_div(maxAddrCount, 2) if n else maxAddrCount)
                     addrs[s] = helper_random.randomsample(filtered, elemCount)
         for substream in addrs:
             for peer, params in addrs[substream]:
@@ -1741,7 +1752,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         payload = b''
         # Now let us start appending all of these hashes together. They will be
         # sent out in a big inv message to our new peer.
-        for obj_hash, _ in bigInvList.items():
+        for obj_hash, _ in list(bigInvList.items()):
             payload += obj_hash
             objectCount += 1
 

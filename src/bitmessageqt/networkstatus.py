@@ -4,7 +4,17 @@ src/bitmessageqt/networkstatus.py
 
 """
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import map
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import time
 
 from PyQt4 import QtCore, QtGui
@@ -235,7 +245,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def runEveryTwoSeconds(self):
         """Updates counters, runs every 2 seconds if the timer is running"""
         self.labelLookupsPerSecond.setText(_translate("networkstatus", "Inventory lookups per second: %1").arg(
-            str(Inventory().numberOfInventoryLookupsPerformed / 2)))
+            str(old_div(Inventory().numberOfInventoryLookupsPerformed, 2))))
         Inventory().numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()

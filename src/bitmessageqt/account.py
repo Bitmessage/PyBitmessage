@@ -8,7 +8,16 @@ Account related functions.
 """
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
 
+from past.builtins import cmp
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from builtins import object
 import inspect
 import re
 import sys
@@ -31,12 +40,12 @@ def getSortedAccounts():
     configSections = BMConfigParser().addresses()
     configSections.sort(
         cmp=lambda x, y: cmp(
-            unicode(
+            str(
                 BMConfigParser().get(
                     x,
                     'label'),
                 'utf-8').lower(),
-            unicode(
+            str(
                 BMConfigParser().get(
                     y,
                     'label'),
@@ -169,7 +178,7 @@ class BMAccount(object):
 
         self.toAddress = toAddress
         self.fromAddress = fromAddress
-        if isinstance(subject, unicode):
+        if isinstance(subject, str):
             self.subject = str(subject)
         else:
             self.subject = subject

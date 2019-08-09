@@ -1,4 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
 from PyQt4 import QtCore, QtGui
 
 from . import widgets
@@ -74,7 +81,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                 if queryreturn == []:
                     self.tableWidgetBlacklist.setSortingEnabled(False)
                     self.tableWidgetBlacklist.insertRow(0)
-                    newItem = QtGui.QTableWidgetItem(unicode(
+                    newItem = QtGui.QTableWidgetItem(str(
                         self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8(), 'utf-8'))
                     newItem.setIcon(avatarize(address))
                     self.tableWidgetBlacklist.setItem(0, 0, newItem)
@@ -173,7 +180,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         for row in queryreturn:
             label, address, enabled = row
             self.tableWidgetBlacklist.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            newItem = QtGui.QTableWidgetItem(str(label, 'utf-8'))
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             newItem.setIcon(avatarize(address))

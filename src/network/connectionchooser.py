@@ -1,3 +1,11 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
 import random  # nosec
 
 import knownnodes
@@ -10,7 +18,7 @@ from queues import Queue, portCheckerQueue
 
 def getDiscoveredPeer():
     try:
-        peer = random.choice(state.discoveredPeers.keys())
+        peer = random.choice(list(state.discoveredPeers.keys()))
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -36,7 +44,7 @@ def chooseConnection(stream):
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = random.choice(knownnodes.knownNodes[stream].keys())
+        peer = random.choice(list(knownnodes.knownNodes[stream].keys()))
         try:
             rating = knownnodes.knownNodes[stream][peer]['rating']
         except TypeError:

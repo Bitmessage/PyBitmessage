@@ -1,4 +1,12 @@
-import Queue
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
+import queue
 import threading
 
 import addresses
@@ -23,7 +31,7 @@ class AddrThread(threading.Thread, StoppableThread):
                     chunk.append((data[0], data[1]))
                     if len(data) > 2:
                         source = BMConnectionPool().getConnectionByAddr(data[2])
-                except Queue.Empty:
+                except queue.Empty:
                     break
                 except KeyError:
                     continue

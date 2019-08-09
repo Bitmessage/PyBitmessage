@@ -1,8 +1,16 @@
-from HTMLParser import HTMLParser
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from html.parser import HTMLParser
 import inspect
 import re
-from urllib import quote, quote_plus
-from urlparse import urlparse
+from urllib.parse import quote, quote_plus
+from urllib.parse import urlparse
 
 class SafeHTMLParser(HTMLParser):
     # from html5lib.sanitiser
@@ -99,9 +107,9 @@ class SafeHTMLParser(HTMLParser):
 
     def feed(self, data):
         try:
-            data = unicode(data, 'utf-8')
+            data = str(data, 'utf-8')
         except UnicodeDecodeError:
-            data = unicode(data, 'utf-8', errors='replace')
+            data = str(data, 'utf-8', errors='replace')
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.replace_pre(data)
         tmp = SafeHTMLParser.uriregex1.sub(

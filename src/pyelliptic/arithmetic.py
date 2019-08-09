@@ -1,5 +1,15 @@
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
 # pylint: disable=missing-docstring,too-many-function-args
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import hashlib
 import re
 
@@ -14,7 +24,7 @@ def inv(a, n):
     lm, hm = 1, 0
     low, high = a % n, n
     while low > 1:
-        r = high / low
+        r = old_div(high, low)
         nm, new = hm - lm * r, high - low * r
         lm, low, hm, high = nm, new, lm, low
     return lm % n
@@ -92,9 +102,9 @@ def base10_multiply(a, n):
     if n == 1:
         return a
     if (n % 2) == 0:
-        return base10_double(base10_multiply(a, n / 2))
+        return base10_double(base10_multiply(a, old_div(n, 2)))
     if (n % 2) == 1:
-        return base10_add(base10_double(base10_multiply(a, n / 2)), a)
+        return base10_add(base10_double(base10_multiply(a, old_div(n, 2))), a)
     return None
 
 

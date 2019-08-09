@@ -4,11 +4,19 @@
 src/pyelliptic/ecc.py
 =====================
 """
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 # pylint: disable=protected-access
 
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 from hashlib import sha512
 from struct import pack, unpack
 
@@ -94,7 +102,7 @@ class ECC(object):
         """
         static method, returns the list of all the curves available
         """
-        return OpenSSL.curves.keys()
+        return list(OpenSSL.curves.keys())
 
     def get_curve(self):
         """Encryption object from curve name"""

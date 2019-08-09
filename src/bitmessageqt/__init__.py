@@ -2,7 +2,16 @@
 PyQt based UI for bitmessage, the main module
 """
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import hashlib
 import locale
 import os
@@ -405,7 +414,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
-        folders = Ui_FolderWidget.folderWeight.keys()
+        folders = list(Ui_FolderWidget.folderWeight.keys())
         folders.remove("new")
 
         # sort ascending when creating
@@ -453,7 +462,7 @@ class MyForm(settingsmixin.SMainWindow):
             # add missing folders
             if len(db[toAddress]) > 0:
                 j = 0
-                for f, c in db[toAddress].iteritems():
+                for f, c in db[toAddress].items():
                     try:
                         subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
                     except KeyError:
@@ -492,7 +501,7 @@ class MyForm(settingsmixin.SMainWindow):
             treeWidget = self.ui.treeWidgetYourIdentities
         elif tab == 'chan':
             treeWidget = self.ui.treeWidgetChans
-        folders = Ui_FolderWidget.folderWeight.keys()
+        folders = list(Ui_FolderWidget.folderWeight.keys())
         
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
@@ -573,7 +582,7 @@ class MyForm(settingsmixin.SMainWindow):
             # add missing folders
             if len(db[toAddress]) > 0:
                 j = 0
-                for f, c in db[toAddress].iteritems():
+                for f, c in db[toAddress].items():
                     if toAddress is not None and tab == 'messages' and folder == "new":
                         continue
                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
@@ -836,7 +845,7 @@ class MyForm(settingsmixin.SMainWindow):
         BMConfigParser().save()
 
     def updateHumanFriendlyTTLDescription(self, TTL):
-        numberOfHours = int(round(TTL / (60*60)))
+        numberOfHours = int(round(old_div(TTL, (60*60))))
         font = QtGui.QFont()
         stylesheet = ""
 
@@ -849,7 +858,7 @@ class MyForm(settingsmixin.SMainWindow):
             stylesheet = "QLabel { color : red; }"
             font.setBold(True)
         else:
-            numberOfDays = int(round(TTL / (24*60*60)))
+            numberOfDays = int(round(old_div(TTL, (24*60*60))))
             self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n day(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfDays))
             font.setBold(False)
         self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
@@ -956,7 +965,7 @@ class MyForm(settingsmixin.SMainWindow):
             # rrow = related.row(msgid), msgid should be QTableWidgetItem
             # related = related.findItems(msgid, QtCore.Qt.MatchExactly),
             # returns an empty list
-            for rrow in xrange(related.rowCount()):
+            for rrow in range(related.rowCount()):
                 if msgid == str(related.item(rrow, 3).data(
                         QtCore.Qt.UserRole).toPyObject()):
                     break
@@ -1023,7 +1032,7 @@ class MyForm(settingsmixin.SMainWindow):
             for i in range(root.childCount()):
                 addressItem = root.child(i)
                 if addressItem.type == AccountMixin.ALL:
-                    newCount = sum(totalUnread.itervalues())
+                    newCount = sum(totalUnread.values())
                     self.drawTrayIcon(self.currentTrayIconFileName, newCount)
                 else:
                     try:
@@ -1031,7 +1040,7 @@ class MyForm(settingsmixin.SMainWindow):
                             broadcastsUnread
                             if addressItem.type == AccountMixin.SUBSCRIPTION
                             else normalUnread
-                        )[addressItem.address].itervalues())
+                        )[addressItem.address].values())
                     except KeyError:
                         newCount = 0
                 if newCount != addressItem.unreadCount:
@@ -1074,9 +1083,9 @@ class MyForm(settingsmixin.SMainWindow):
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
-        MessageList_AddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
-        MessageList_AddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
+        MessageList_AddressWidget(items, str(toAddress), str(acct.toLabel, 'utf-8'))
+        MessageList_AddressWidget(items, str(fromAddress), str(acct.fromLabel, 'utf-8'))
+        MessageList_SubjectWidget(items, str(subject), str(acct.subject, 'utf-8', 'replace'))
 
         if status == 'awaitingpubkey':
             statusText = _translate(
@@ -1145,11 +1154,11 @@ class MyForm(settingsmixin.SMainWindow):
             
         items = []
         #to
-        MessageList_AddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
+        MessageList_AddressWidget(items, toAddress, str(acct.toLabel, 'utf-8'), not read)
         # from
-        MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
+        MessageList_AddressWidget(items, fromAddress, str(acct.fromLabel, 'utf-8'), not read)
         # subject
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
+        MessageList_SubjectWidget(items, str(subject), str(acct.subject, 'utf-8', 'replace'), not read)
         # time received
         time_item = myTableWidgetItem(l10n.formatTimestamp(received))
         time_item.setToolTip(l10n.formatTimestamp(received))
@@ -1428,7 +1437,7 @@ class MyForm(settingsmixin.SMainWindow):
             self, title, subtitle, category, label=None, icon=None):
         self.playSound(category, label)
         self._notifier(
-            unicode(title), unicode(subtitle), category, label, icon)
+            str(title), str(subtitle), category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -1857,9 +1866,9 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderAddressBook(self):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemLabel(address, str(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemAddress(address, str(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
 
         oldRows = {}
@@ -1893,13 +1902,13 @@ class MyForm(settingsmixin.SMainWindow):
         completerList = []
         for address in sorted(oldRows, key = lambda x: oldRows[x][2], reverse = True):
             if address in newRows:
-                completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
+                completerList.append(str(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
                 newRows.pop(address)
             else:
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
-            completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
+            completerList.append(str(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
 
         # sort
         self.ui.tableWidgetAddressBook.sortByColumn(
@@ -2011,7 +2020,7 @@ class MyForm(settingsmixin.SMainWindow):
                         toAddress)
                     if status != 'success':
                         try:
-                            toAddress = unicode(toAddress, 'utf-8', 'ignore')
+                            toAddress = str(toAddress, 'utf-8', 'ignore')
                         except:
                             pass
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
@@ -2236,7 +2245,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
             isMaillinglist = BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
-                label = unicode(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = str(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
@@ -2260,7 +2269,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
             isChan = BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                label = unicode(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = str(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
@@ -2299,7 +2308,7 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
-            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8', 'replace'))
+            self.getAccountTextedit(acct).setPlainText(str(message, 'utf-8', 'replace'))
             sent.setCurrentCell(0, 0)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
@@ -2332,7 +2341,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.notifierShow(
                 _translate("MainWindow", "New Message"),
                 _translate("MainWindow", "From %1").arg(
-                    unicode(acct.fromLabel, 'utf-8')),
+                    str(acct.fromLabel, 'utf-8')),
                 sound.SOUND_UNKNOWN
             )
         if self.getCurrentAccount() is not None and ((self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address):
@@ -2880,8 +2889,8 @@ class MyForm(settingsmixin.SMainWindow):
                 if curWorkerQueue > 0:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Waiting for PoW to finish... %1%"
-                    ).arg(50 * (maxWorkerQueue - curWorkerQueue) /
-                          maxWorkerQueue))
+                    ).arg(old_div(50 * (maxWorkerQueue - curWorkerQueue),
+                          maxWorkerQueue)))
                     time.sleep(0.5)
                     QtCore.QCoreApplication.processEvents(
                         QtCore.QEventLoop.AllEvents, 1000
@@ -2909,7 +2918,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.updateStatusBar(_translate(
                     "MainWindow",
                     "Waiting for objects to be sent... %1%"
-                ).arg(int(50 + 20 * (pendingUpload() / maxPendingUpload))))
+                ).arg(int(50 + 20 * (old_div(pendingUpload(), maxPendingUpload)))))
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2929,7 +2938,7 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.QEventLoop.AllEvents, 1000
         )
         self.saveSettings()
-        for attr, obj in self.ui.__dict__.iteritems():
+        for attr, obj in self.ui.__dict__.items():
             if hasattr(obj, "__class__") \
                     and isinstance(obj, settingsmixin.SettingsMixin):
                 saveMethod = getattr(obj, "saveSettings", None)
@@ -2979,7 +2988,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         lines = messageText.split('\n')
         totalLines = len(lines)
-        for i in xrange(totalLines):
+        for i in range(totalLines):
             if 'Message ostensibly from ' in lines[i]:
                 lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (
                     lines[i])
@@ -2990,7 +2999,7 @@ class MyForm(settingsmixin.SMainWindow):
                 lines[i] = '<br><br>'
         content = ' '.join(lines) # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
-        content = unicode(content, 'utf-8)')
+        content = str(content, 'utf-8)')
         textEdit.setHtml(QtCore.QString(content))
 
     def on_action_InboxMarkUnread(self):
@@ -3173,7 +3182,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
 
         quotedText = self.quoted_text(
-            unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
+            str(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ['Re:', 'RE:']:
             widget['subject'].setText(
@@ -3417,7 +3426,7 @@ class MyForm(settingsmixin.SMainWindow):
             return self.updateStatusBar(_translate(
                 "MainWindow", "No addresses selected."))
 
-        addresses_string = unicode(
+        addresses_string = str(
             self.ui.lineEditTo.text().toUtf8(), 'utf-8')
         for item in selected_items:
             address_string = item.accountString()
@@ -3805,7 +3814,7 @@ class MyForm(settingsmixin.SMainWindow):
             text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
-        text = unicode(str(text), 'utf-8', 'ignore')
+        text = str(str(text), 'utf-8', 'ignore')
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(text)
 
@@ -3901,11 +3910,11 @@ class MyForm(settingsmixin.SMainWindow):
         self.setAddressSound(widget.item(widget.currentRow(), 0).text())
 
     def setAddressSound(self, addr):
-        filters = [unicode(_translate(
+        filters = [str(_translate(
             "MainWindow", "Sound files (%s)" %
             ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
         ))]
-        sourcefile = unicode(QtGui.QFileDialog.getOpenFileName(
+        sourcefile = str(QtGui.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set notification sound..."),
             filter=';;'.join(filters)
         ))
@@ -3914,7 +3923,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
 
         destdir = os.path.join(state.appdata, 'sounds')
-        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
+        destfile = str(addr) + os.path.splitext(sourcefile)[-1]
         destination = os.path.join(destdir, destfile)
 
         if sourcefile == destination:
@@ -4121,7 +4130,7 @@ class MyForm(settingsmixin.SMainWindow):
         if item.type == AccountMixin.ALL:
             return
         
-        newLabel = unicode(item.text(0), 'utf-8', 'ignore')
+        newLabel = str(item.text(0), 'utf-8', 'ignore')
         oldLabel = item.defaultLabel()
 
         # unchanged, do not do anything either
@@ -4192,7 +4201,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
         for i in range(len(completerList)):
-            if unicode(completerList[i]).endswith(" <" + item.address + ">"):
+            if str(completerList[i]).endswith(" <" + item.address + ">"):
                 completerList[i] = item.label + " <" + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
@@ -4246,7 +4255,7 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
         QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
         self.loadSettings()
-        for attr, obj in self.ui.__dict__.iteritems():
+        for attr, obj in self.ui.__dict__.items():
             if hasattr(obj, "__class__") and \
                     isinstance(obj, settingsmixin.SettingsMixin):
                 loadMethod = getattr(obj, "loadSettings", None)

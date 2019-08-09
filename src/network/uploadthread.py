@@ -1,7 +1,14 @@
 """
 src/network/uploadthread.py
 """
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 # pylint: disable=unsubscriptable-object
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import threading
 import time
 
@@ -28,8 +35,8 @@ class UploadThread(threading.Thread, StoppableThread):
         while not self._stopped:
             uploaded = 0
             # Choose downloading peers randomly
-            connections = [x for x in BMConnectionPool().inboundConnections.values() +
-                           BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
+            connections = [x for x in list(BMConnectionPool().inboundConnections.values()) +
+                           list(BMConnectionPool().outboundConnections.values()) if x.fullyEstablished]
             helper_random.randomshuffle(connections)
             for i in connections:
                 now = time.time()

@@ -2,8 +2,15 @@
 """
 A menu plugin showing QR-Code for bitmessage address in modal dialog.
 """
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
-import urllib
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+import urllib.request, urllib.parse, urllib.error
 
 import qrcode
 from PyQt4 import QtGui, QtCore
@@ -91,7 +98,7 @@ def connect_plugin(form):
                 return
         dialog.render(
             'bitmessage:%s' % account.address + (
-                '?' + urllib.urlencode({'label': label.encode('utf-8')})
+                '?' + urllib.parse.urlencode({'label': label.encode('utf-8')})
                 if label != account.address else '')
         )
         dialog.exec_()

@@ -1,4 +1,12 @@
 from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
+from past.utils import old_div
 import asyncore
 import socket
 import time
@@ -45,6 +53,6 @@ if __name__ == "__main__":
             for i in range(parallel - len(asyncore.socket_map)):
                 HTTPClient('127.0.0.1', '/')
         print("Active connections: %i" % (len(asyncore.socket_map)))
-        asyncore.loop(count=len(asyncore.socket_map)/2)
+        asyncore.loop(count=old_div(len(asyncore.socket_map),2))
         if requestCount % 100 == 0:
             print("Processed %i total messages" % (requestCount))

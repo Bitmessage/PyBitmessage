@@ -1,4 +1,12 @@
 # coding=utf-8
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 from kivy.lang import Builder
 from kivy.properties import StringProperty, BooleanProperty, ObjectProperty, \
     NumericProperty, ListProperty, OptionProperty
@@ -154,14 +162,14 @@ class SmartTileWithLabel(SmartTile):
     """Determines the text for the box footer/header"""
 
 
-class IBoxOverlay():
+class IBoxOverlay(object):
     """An interface to specify widgets that belong to to the image overlay
     in the :class:`SmartTile` widget when added as a child.
     """
     pass
 
 
-class IOverlay():
+class IOverlay(object):
     """An interface to specify widgets that belong to to the image overlay
     in the :class:`SmartTile` widget when added as a child.
     """

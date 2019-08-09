@@ -3,10 +3,17 @@ Tests for core and those that do not work outside
 (because of import error for example)
 """
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
 import os
 import pickle  # nosec
-import Queue
+import queue
 import random  # nosec
 import string
 import time
@@ -101,9 +108,9 @@ class TestCore(unittest.TestCase):
         pickle_knownnodes()
         self._wipe_knownnodes()
         knownnodes.readKnownNodes()
-        for nodes in knownnodes.knownNodes.itervalues():
+        for nodes in knownnodes.knownNodes.values():
             self_count = n = 0
-            for n, node in enumerate(nodes.itervalues()):
+            for n, node in enumerate(nodes.values()):
                 if node.get('self'):
                     self_count += 1
             self.assertEqual(n - self_count, 2)
@@ -118,15 +125,15 @@ class TestCore(unittest.TestCase):
 
     def test_0_cleaner(self):
         """test knownnodes starvation leading to IndexError in Asyncore"""
-        for nodes in knownnodes.knownNodes.itervalues():
-            for node in nodes.itervalues():
+        for nodes in knownnodes.knownNodes.values():
+            for node in nodes.values():
                 node['lastseen'] -= 2419205  # older than 28 days
         # time.sleep(303)  # singleCleaner wakes up every 5 min
         knownnodes.cleanupKnownNodes()
         while True:
             try:
                 thread, exc = excQueue.get(block=False)
-            except Queue.Empty:
+            except queue.Empty:
                 return
             if thread == 'Asyncore' and isinstance(exc, IndexError):
                 self.fail("IndexError because of empty knownNodes!")

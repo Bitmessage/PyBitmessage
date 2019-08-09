@@ -2,11 +2,18 @@
 Tests using API.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import *
 import base64
 import json
 import time
-import xmlrpclib  # nosec
+import xmlrpc.client  # nosec
 
 from .test_process import TestProcessProto, TestProcessShutdown
 
@@ -20,7 +27,7 @@ class TestAPIProto(TestProcessProto):
         """Setup XMLRPC proxy for pybitmessage API"""
         super(TestAPIProto, cls).setUpClass()
         cls.addresses = []
-        cls.api = xmlrpclib.ServerProxy(
+        cls.api = xmlrpc.client.ServerProxy(
             "http://username:password@127.0.0.1:8442/")
         for _ in range(5):
             if cls._get_readline('.api_started'):
@@ -53,7 +60,7 @@ class TestAPI(TestAPIProto):
 
     def test_user_password(self):
         """Trying to connect with wrong username/password"""
-        api_wrong = xmlrpclib.ServerProxy("http://test:wrong@127.0.0.1:8442/")
+        api_wrong = xmlrpc.client.ServerProxy("http://test:wrong@127.0.0.1:8442/")
         self.assertEqual(
             api_wrong.clientStatus(),
             'RPC Username or password incorrect or HTTP header lacks'

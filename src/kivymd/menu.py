@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -109,7 +117,7 @@ class MDDropdownMenu(ThemableBehavior, BoxLayout):
         if target_width > Window.width:
             # ...reduce our multiplier to max allowed.
             target_width = int(
-                Window.width / m_res.STANDARD_INCREMENT) * m_res.STANDARD_INCREMENT
+                old_div(Window.width, m_res.STANDARD_INCREMENT)) * m_res.STANDARD_INCREMENT
 
         target_height = sum([dp(48) for i in self.items])
         # If we're over max_height...

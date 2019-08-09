@@ -8,6 +8,14 @@
 # WARNING! All changes made in this file will be lost!
 
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
+from past.utils import old_div
 from PyQt4 import QtCore, QtGui
 from bmconfigparser import BMConfigParser
 from .foldertree import AddressBookCompleter
@@ -709,7 +717,7 @@ class Ui_MainWindow(object):
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
         try:
-            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl')/60/60)
+            hours = int(old_div(BMConfigParser().getint('bitmessagesettings', 'ttl'),60/60))
         except:
             pass
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))

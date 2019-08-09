@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from builtins import object
+from past.utils import old_div
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.properties import (ListProperty, ObjectProperty, NumericProperty)
@@ -75,7 +85,7 @@ class ElevationBehavior(object):
 
     def _update_shadow(self, *args):
         if self.elevation > 0:
-            ratio = self.width / (self.height if self.height != 0 else 1)
+            ratio = old_div(self.width, (self.height if self.height != 0 else 1))
             if ratio > -2 and ratio < 2:
                 self._shadow = App.get_running_app().theme_cls.quad_shadow
                 width = soft_width = self.width * 1.9
@@ -106,19 +116,19 @@ class ElevationBehavior(object):
                 #                 soft_width = self.width + dp(ratio) + dp(self.elevation) * .9
                 #                 height = soft_height = self.height * 1.9
 
-            x = self.center_x - width / 2
-            soft_x = self.center_x - soft_width / 2
+            x = self.center_x - old_div(width, 2)
+            soft_x = self.center_x - old_div(soft_width, 2)
             self._soft_shadow_size = (soft_width, soft_height)
             self._hard_shadow_size = (width, height)
 
-            y = self.center_y - soft_height / 2 - dp(
+            y = self.center_y - old_div(soft_height, 2) - dp(
                 .1 * 1.5 ** self.elevation)
             self._soft_shadow_pos = (soft_x, y)
             self._soft_shadow_a = 0.1 * 1.1 ** self.elevation
             self._soft_shadow_texture = self._shadow.textures[
                 str(int(round(self.elevation - 1)))]
 
-            y = self.center_y - height / 2 - dp(.5 * 1.18 ** self.elevation)
+            y = self.center_y - old_div(height, 2) - dp(.5 * 1.18 ** self.elevation)
             self._hard_shadow_pos = (x, y)
             self._hard_shadow_a = .4 * .9 ** self.elevation
             self._hard_shadow_texture = self._shadow.textures[
@@ -165,18 +175,18 @@ class RoundElevationBehavior(object):
             width = self.width * 2
             height = self.height * 2
 
-            x = self.center_x - width / 2
+            x = self.center_x - old_div(width, 2)
             self._soft_shadow_size = (width, height)
 
             self._hard_shadow_size = (width, height)
 
-            y = self.center_y - height / 2 - dp(.1 * 1.5 ** self.elevation)
+            y = self.center_y - old_div(height, 2) - dp(.1 * 1.5 ** self.elevation)
             self._soft_shadow_pos = (x, y)
             self._soft_shadow_a = 0.1 * 1.1 ** self.elevation
             self._soft_shadow_texture = self._shadow.textures[
                 str(int(round(self.elevation)))]
 
-            y = self.center_y - height / 2 - dp(.5 * 1.18 ** self.elevation)
+            y = self.center_y - old_div(height, 2) - dp(.5 * 1.18 ** self.elevation)
             self._hard_shadow_pos = (x, y)
             self._hard_shadow_a = .4 * .9 ** self.elevation
             self._hard_shadow_texture = self._shadow.textures[

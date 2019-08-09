@@ -1,4 +1,11 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
 import time
 
 from . import asyncore_pollchoose as asyncore
@@ -13,8 +20,8 @@ currentSentSpeed = 0
 
 def connectedHostsList():
     retval = []
-    for i in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+    for i in list(BMConnectionPool().inboundConnections.values()) + \
+            list(BMConnectionPool().outboundConnections.values()):
         if not i.fullyEstablished:
             continue
         try:
@@ -31,7 +38,7 @@ def uploadSpeed():
     currentTimestamp = time.time()
     if int(lastSentTimestamp) < int(currentTimestamp):
         currentSentBytes = asyncore.sentBytes
-        currentSentSpeed = int((currentSentBytes - lastSentBytes) / (currentTimestamp - lastSentTimestamp))
+        currentSentSpeed = int(old_div((currentSentBytes - lastSentBytes), (currentTimestamp - lastSentTimestamp)))
         lastSentBytes = currentSentBytes
         lastSentTimestamp = currentTimestamp
     return currentSentSpeed
@@ -44,8 +51,8 @@ def downloadSpeed():
     currentTimestamp = time.time()
     if int(lastReceivedTimestamp) < int(currentTimestamp):
         currentReceivedBytes = asyncore.receivedBytes
-        currentReceivedSpeed = int((currentReceivedBytes - lastReceivedBytes) /
-            (currentTimestamp - lastReceivedTimestamp))
+        currentReceivedSpeed = int(old_div((currentReceivedBytes - lastReceivedBytes),
+            (currentTimestamp - lastReceivedTimestamp)))
         lastReceivedBytes = currentReceivedBytes
         lastReceivedTimestamp = currentTimestamp
     return currentReceivedSpeed

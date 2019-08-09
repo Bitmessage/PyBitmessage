@@ -6,13 +6,23 @@
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
 
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from past.utils import old_div
+from builtins import object
 import sys
 import ctypes
 
 OpenSSL = None
 
 
-class CipherName:
+class CipherName(object):
     def __init__(self, name, pointer, blocksize):
         self._name = name
         self._pointer = pointer
@@ -62,7 +72,7 @@ def get_version(library):
     return (version, hexversion, cflags)
 
 
-class _OpenSSL:
+class _OpenSSL(object):
     """
     Wrapper for OpenSSL using ctypes
     """
@@ -434,7 +444,7 @@ class _OpenSSL:
         """
         returns the length of a BN (OpenSSl API)
         """
-        return int((self.BN_num_bits(x) + 7) / 8)
+        return int(old_div((self.BN_num_bits(x) + 7), 8))
 
     def get_cipher(self, name):
         """

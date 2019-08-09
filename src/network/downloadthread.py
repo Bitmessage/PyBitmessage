@@ -1,4 +1,11 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from past.utils import old_div
 import threading
 import time
 
@@ -28,7 +35,7 @@ class DownloadThread(threading.Thread, StoppableThread):
     def cleanPending(self):
         deadline = time.time() - DownloadThread.requestExpires
         try:
-            toDelete = [k for k, v in missingObjects.iteritems() if v < deadline]
+            toDelete = [k for k, v in missingObjects.items() if v < deadline]
         except RuntimeError:
             pass
         else:
@@ -40,10 +47,10 @@ class DownloadThread(threading.Thread, StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = [x for x in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
+            connections = [x for x in list(BMConnectionPool().inboundConnections.values()) + list(BMConnectionPool().outboundConnections.values()) if x.fullyEstablished]
             helper_random.randomshuffle(connections)
             try:
-                requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
+                requestChunk =  max(int(old_div(min(DownloadThread.maxRequestChunk, len(missingObjects)), len(connections))), 1)
             except ZeroDivisionError:
                 requestChunk = 1
             for i in connections:

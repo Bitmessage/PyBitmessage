@@ -1,5 +1,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
 import string
@@ -31,13 +36,13 @@ class FilesystemInventory(InventoryStorage):
 
     def __contains__(self, hash):
         retval = False
-        for streamDict in self._inventory.values():
+        for streamDict in list(self._inventory.values()):
             if hash in streamDict:
                 return True
         return False
 
     def __getitem__(self, hash):
-        for streamDict in self._inventory.values():
+        for streamDict in list(self._inventory.values()):
             try:
                 retval = streamDict[hash]
             except KeyError:
@@ -68,7 +73,7 @@ class FilesystemInventory(InventoryStorage):
                 self._inventory[value.stream][hash] = value
 
     def delHashId(self, hash):
-        for stream in self._inventory.keys():
+        for stream in list(self._inventory.keys()):
             try:
                 del self._inventory[stream][hash]
             except KeyError:
@@ -89,13 +94,13 @@ class FilesystemInventory(InventoryStorage):
 
     def __iter__(self):
         elems = []
-        for streamDict in self._inventory.values():
-            elems.extend (streamDict.keys())
+        for streamDict in list(self._inventory.values()):
+            elems.extend (list(streamDict.keys()))
         return elems.__iter__()
 
     def __len__(self):
         retval = 0
-        for streamDict in self._inventory.values():
+        for streamDict in list(self._inventory.values()):
             retval += len(streamDict)
         return retval
 
@@ -117,7 +122,7 @@ class FilesystemInventory(InventoryStorage):
 #            print "loaded stream: %s, %i items" % (i, len(v))
 
     def stream_list(self):
-        return self._inventory.keys()
+        return list(self._inventory.keys())
 
     def object_list(self):
         return [unhexlify(x) for x in listdir(path.join(self.baseDir, FilesystemInventory.objectDir))]
@@ -152,14 +157,14 @@ class FilesystemInventory(InventoryStorage):
 
     def hashes_by_stream(self, stream):
         try:
-            return self._inventory[stream].keys()
+            return list(self._inventory[stream].keys())
         except KeyError:
             return []
 
     def unexpired_hashes_by_stream(self, stream):
         t = int(time.time())
         try:
-            return [x for x, value in self._inventory[stream].items() if value.expires > t]
+            return [x for x, value in list(self._inventory[stream].items()) if value.expires > t]
         except KeyError:
             return []
 
@@ -169,8 +174,8 @@ class FilesystemInventory(InventoryStorage):
     def clean(self):
         minTime = int(time.time()) - (60 * 60 * 30)
         deletes = []
-        for stream, streamDict in self._inventory.items():
-            for hashId, item in streamDict.items():
+        for stream, streamDict in list(self._inventory.items()):
+            for hashId, item in list(streamDict.items()):
                 if item.expires < minTime:
                     deletes.append(hashId)
         for hashId in deletes:

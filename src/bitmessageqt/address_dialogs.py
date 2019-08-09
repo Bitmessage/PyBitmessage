@@ -4,8 +4,16 @@ src/bitmessageqt/address_dialogs.py
 
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
 # pylint: disable=attribute-defined-outside-init
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
+from builtins import object
 import hashlib
 
 from PyQt4 import QtCore, QtGui
@@ -263,7 +271,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog, RetranslateMixin):
                 except:
                     mailingListName = ''
                 self.lineEditMailingListName.setText(
-                    unicode(mailingListName, 'utf-8')
+                    str(mailingListName, 'utf-8')
                 )
 
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))

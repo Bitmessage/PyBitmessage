@@ -1,7 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import *
 import collections
 from threading import current_thread, enumerate as threadingEnumerate, RLock
-import Queue
+import queue
 import sqlite3
 import time
 
@@ -45,7 +52,7 @@ class SqliteInventory(InventoryStorage):
 
     def __iter__(self):
         with self.lock:
-            hashes = self._inventory.keys()[:]
+            hashes = list(self._inventory.keys())[:]
             hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
@@ -55,21 +62,21 @@ class SqliteInventory(InventoryStorage):
 
     def by_type_and_tag(self, objectType, tag):
         with self.lock:
-            values = [value for value in self._inventory.values() if value.type == objectType and value.tag == tag]
+            values = [value for value in list(self._inventory.values()) if value.type == objectType and value.tag == tag]
             values += (InventoryItem(*value) for value in sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE objecttype=? AND tag=?', objectType, sqlite3.Binary(tag)))
             return values
 
     def unexpired_hashes_by_stream(self, stream):
         with self.lock:
             t = int(time.time())
-            hashes = [x for x, value in self._inventory.items() if value.stream == stream and value.expires > t]
+            hashes = [x for x, value in list(self._inventory.items()) if value.stream == stream and value.expires > t]
             hashes += (str(payload) for payload, in sqlQuery('SELECT hash FROM inventory WHERE streamnumber=? AND expirestime>?', stream, t))
             return hashes
 
     def flush(self):
         with self.lock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
             with SqlBulkExecute() as sql:
-                for objectHash, value in self._inventory.items():
+                for objectHash, value in list(self._inventory.items()):
                     sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', sqlite3.Binary(objectHash), *value)
                 self._inventory.clear()
 
@@ -77,6 +84,6 @@ class SqliteInventory(InventoryStorage):
         with self.lock:
             sqlExecute('DELETE FROM inventory WHERE expirestime<?',int(time.time()) - (60 * 60 * 3))
             self._objects.clear()
-            for objectHash, value in self._inventory.items():
+            for objectHash, value in list(self._inventory.items()):
                 self._objects[objectHash] = value.stream
 

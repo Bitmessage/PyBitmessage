@@ -1,3 +1,10 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
 import threading
 import time
 
@@ -26,7 +33,7 @@ class AnnounceThread(threading.Thread, StoppableThread):
                 self.stop.wait(10)
 
     def announceSelf(self):
-        for connection in BMConnectionPool().udpSockets.values():
+        for connection in list(BMConnectionPool().udpSockets.values()):
             if not connection.announcing:
                 continue
             for stream in state.streamsInWhichIAmParticipating:

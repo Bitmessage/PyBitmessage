@@ -1,11 +1,20 @@
 """
 Test the alternatives for crypto primitives
 """
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 import hashlib
 import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify, unhexlify
+from future.utils import with_metaclass
 
 try:
     from Crypto.Hash import RIPEMD
@@ -29,10 +38,8 @@ _sha.update(sample_pubsigningkey + sample_pubencryptionkey)
 pubkey_sha = _sha.digest()
 
 
-class RIPEMD160TestCase(object):
+class RIPEMD160TestCase(with_metaclass(ABCMeta, object)):
     """Base class for RIPEMD160 test case"""
-    # pylint: disable=too-few-public-methods,no-member
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def _hashdigest(self, data):

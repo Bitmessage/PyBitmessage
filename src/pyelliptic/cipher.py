@@ -4,10 +4,18 @@
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
 from pyelliptic.openssl import OpenSSL
 
 
-class Cipher:
+class Cipher(object):
     """
     Symmetric encryption
 
@@ -40,7 +48,7 @@ class Cipher:
         """
         static method, returns all ciphers available
         """
-        return OpenSSL.cipher_algo.keys()
+        return list(OpenSSL.cipher_algo.keys())
 
     @staticmethod
     def get_blocksize(ciphername):
