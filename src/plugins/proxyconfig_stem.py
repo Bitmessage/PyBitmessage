@@ -8,6 +8,7 @@ import tempfile
 import stem
 import stem.control
 import stem.process
+import stem.version
 
 
 class DebugLogger(object):
@@ -31,7 +32,7 @@ class DebugLogger(object):
             self._logger.log(self._levels.get(level, 10), '(tor)' + line)
 
 
-def connect_plugin(config):
+def connect_plugin(config):  # pylint: disable=too-many-branches
     """Run stem proxy configurator"""
     logwrite = DebugLogger()
     if config.safeGet('bitmessagesettings', 'sockshostname') not in (
@@ -60,8 +61,14 @@ def connect_plugin(config):
         # So if there is a system wide tor, use it for outbound connections.
         try:
             stem.process.launch_tor_with_config(
-                tor_config, take_ownership=True, init_msg_handler=logwrite)
+                tor_config, take_ownership=True, timeout=20,
+                init_msg_handler=logwrite)
         except OSError:
+            if not attempt:
+                try:
+                    stem.version.get_system_tor_version()
+                except IOError:
+                    return
             continue
         else:
             logwrite('Started tor on port %s' % port)
@@ -108,3 +115,5 @@ def connect_plugin(config):
                     onionhostname, 'keytype', response.private_key_type)
                 config.save()
         config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+
+        return True

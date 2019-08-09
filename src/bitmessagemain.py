@@ -193,7 +193,8 @@ class Main:
             from plugins.plugin import get_plugin
             try:
                 proxyconfig_start = time.time()
-                get_plugin('proxyconfig', name=proxy_type)(config)
+                if not get_plugin('proxyconfig', name=proxy_type)(config):
+                    raise TypeError
             except TypeError:
                 logger.error(
                     'Failed to run proxy config plugin %s',
@@ -424,7 +425,7 @@ class Main:
                     self.stop()
         elif not state.enableGUI:
             from tests import core as test_core  # pylint: disable=relative-import
-            test_core_result = test_core.run()
+            test_core_result = test_core.run(self)
             state.enableGUI = True
             self.stop()
             test_core.cleanup()
