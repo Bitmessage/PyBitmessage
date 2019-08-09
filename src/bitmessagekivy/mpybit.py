@@ -222,8 +222,13 @@ class MyAddress(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
         if BMConfigParser().addresses() or state.kivyapp.variable_1:
+            addresses_list = state.kivyapp.variable_1
+            if state.searcing_text:
+                filtered_list = filter(lambda addr: self.filter_address(addr), BMConfigParser().addresses())
+                addresses_list = filtered_list
+
             data = []
-            for address in state.kivyapp.variable_1:
+            for address in addresses_list:
                 data.append({
                     'text': BMConfigParser().get(address, 'label'),
                     'secondary_text': address})
@@ -253,6 +258,7 @@ class MyAddress(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
             try:
+                self.manager.parent.parent.parent.ids.search_bar.clear_widgets()
                 self.manager.current = 'login'
             except Exception as e:
                 pass
@@ -279,6 +285,13 @@ class MyAddress(Screen):
             self.tick = 0
 
         Clock.schedule_once(refresh_callback, 1)
+
+    def filter_address(self, address):
+        '''This method will filter the my address list data'''
+        # if (state.searcing_text).lower() in BMConfigParser().get(address, 'label') or (state.searcing_text).lower() in address:
+        if filter(lambda x: (state.searcing_text).lower() in x, [BMConfigParser().get(address, 'label').lower(), address.lower()]): 
+            return True
+        return False
 
 
 class AddressBook(Screen):
@@ -471,7 +484,7 @@ class DropDownWidget(BoxLayout):
                     self.ids.ti.text = ''
                     self.ids.subject.text = ''
                     self.ids.txt_input.text = ''
-                    self.parent.parent.current = 'sent'
+                    self.parent.parent.current = 'inbox'
                     self.ids.btn.text = 'select'
                     self.ids.ti.text = ''
 
@@ -944,11 +957,11 @@ class NavigateApp(App):
                 folder = 'sent' ;".format(state.association))[0][0])
         state.inbox_count = str(
             sqlQuery(
-                "SELECT COUNT(*) FROM inbox WHERE fromaddress = '{}' and \
+                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and \
                 folder = 'inbox' ;".format(state.association))[0][0])
         state.trash_count = str(sqlQuery("SELECT (SELECT count(*) FROM  sent \
             where fromaddress = '{0}' and  folder = 'trash' ) \
-            +(SELECT count(*) FROM inbox where fromaddress = '{0}' and  \
+            +(SELECT count(*) FROM inbox where toaddress = '{0}' and  \
             folder = 'trash') AS SumCount".format(state.association))[0][0])
         state.draft_count = str(
             sqlQuery(
@@ -1061,7 +1074,7 @@ class NavigateApp(App):
             return state.sent_count
         elif text == 'Inbox':
             state.inbox_count = str(sqlQuery(
-                "SELECT COUNT(*) FROM {0} WHERE fromaddress = '{1}' and \
+                "SELECT COUNT(*) FROM {0} WHERE toaddress = '{1}' and \
                 folder = '{0}' ;".format(
                     text.lower(), state.association))[0][0])
             return state.inbox_count
@@ -1069,7 +1082,7 @@ class NavigateApp(App):
             state.trash_count = str(sqlQuery(
                 "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' \
                 and  folder = 'trash' )+(SELECT count(*) FROM inbox where \
-                fromaddress = '{0}' and  folder = 'trash') AS SumCount".format(
+                toaddress = '{0}' and  folder = 'trash') AS SumCount".format(
                     state.association))[0][0])
             return state.trash_count
         elif text == 'Draft':
@@ -1101,6 +1114,9 @@ class NavigateApp(App):
         elif state.search_screen == 'addressbook':
             self.root.ids.sc11.clear_widgets()
             self.root.ids.sc11.add_widget(AddressBook())
+        elif state.search_screen == 'myaddress':
+            self.root.ids.sc10.clear_widgets()
+            self.root.ids.sc10.add_widget(MyAddress())
         else:
             self.root.ids.sc4.clear_widgets()
             self.root.ids.sc4.add_widget(Sent())
@@ -1108,7 +1124,7 @@ class NavigateApp(App):
 
     def check_search_screen(self, instance):
         """Method show search button only on inbox or sent screen."""
-        if instance.text in ['Inbox', 'Sent', 'Address Book']:   
+        if instance.text in ['Inbox', 'Sent', 'Address Book', 'My Addresses']:   
             if not self.root.ids.search_bar.children:
                 self.root.ids.search_bar.add_widget(
                     MDIconButton(icon='magnify'))
