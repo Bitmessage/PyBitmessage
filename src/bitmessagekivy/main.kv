@@ -197,7 +197,7 @@ NavigationLayout:
 
             MDTextField:
                 id: search_field
-                hint_text: 'Search icon'
+                hint_text: 'Search'
                 on_text: app.searchQuery(self)
         ScreenManager:
             id: scr_mngr
@@ -369,7 +369,7 @@ NavigationLayout:
                     MDRaisedButton:
                         size_hint: 1, None
                         height: dp(40)
-                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        on_press: root.reset_composer()
                         MDLabel:
                             font_style: 'Title'
                             text: 'reset'
@@ -667,6 +667,7 @@ NavigationLayout:
                 size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
+                on_press: root.close_pop()
                 MDLabel:
                     font_style: 'Title'
                     text: 'Cancel'
@@ -914,6 +915,7 @@ NavigationLayout:
                 size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
+                on_press: root.close_pop()
                 MDLabel:
                     font_style: 'Title'
                     text: 'Cancel'
@@ -990,6 +992,7 @@ NavigationLayout:
                 size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
+                on_press: root.close_pop()
                 MDLabel:
                     font_style: 'Title'
                     text: 'Cancel'

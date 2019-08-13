@@ -48,6 +48,14 @@ from kivy.uix.spinner import Spinner
 from kivymd.textfields import MDTextField
 
 
+def toast(text):
+    """Method will display the toast message."""
+    if platform == 'linux':
+        from kivymd.toast.kivytoast import toast
+        toast(text)
+    return
+
+
 class Navigatorss(MDNavigationDrawer):
     """Navigators class contains image, title and logo."""
 
@@ -138,7 +146,8 @@ class Inbox(Screen):
             content = MDLabel(
                 font_style='Body1',
                 theme_text_color='Primary',
-                text="yet no message for this account!!!!!!!!!!!!!",
+                text="No message found!" if state.searcing_text
+                else "yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
                 bold=True,
                 size_hint_y=None,
@@ -165,7 +174,7 @@ class Inbox(Screen):
             "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
                 data_index))
         msg_count_objs = \
-            self.parent.parent.parent.parent.children[2].children[0].ids
+            self.parent.parent.parent.parent.parent.children[2].children[0].ids
         if int(state.inbox_count) > 0:
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
@@ -174,6 +183,7 @@ class Inbox(Screen):
             state.inbox_count = str(int(state.inbox_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
         self.ids.ml.remove_widget(instance.parent.parent)
+        toast('Deleted')
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
@@ -220,9 +230,14 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
-        if BMConfigParser().addresses() or state.kivyapp.variable_1:
+        addresses_list = state.kivyapp.variable_1
+        if state.searcing_text:
+            filtered_list = filter(lambda addr: self.filter_address(
+                addr), BMConfigParser().addresses())
+            addresses_list = filtered_list
+        if addresses_list:
             data = []
-            for address in state.kivyapp.variable_1:
+            for address in addresses_list:
                 data.append({
                     'text': BMConfigParser().get(address, 'label'),
                     'secondary_text': address})
@@ -244,13 +259,16 @@ class MyAddress(Screen):
             content = MDLabel(
                 font_style='Body1',
                 theme_text_color='Primary',
-                text="yet no address is created by user!!!!!!!!!!!!!",
+                text="No address found!" if state.searcing_text
+                else "yet no address is created by user!!!!!!!!!!!!!",
                 halign='center',
                 bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
             try:
+                self.manager.parent.parent\
+                    .parent.ids.search_bar.clear_widgets()
                 self.manager.current = 'login'
             except Exception as e:
                 pass
@@ -277,6 +295,16 @@ class MyAddress(Screen):
             self.tick = 0
 
         Clock.schedule_once(refresh_callback, 1)
+
+    def filter_address(self, address):
+        """Method will filter the my address list data."""
+        if filter(lambda x: (
+                state.searcing_text).lower() in x, [
+                    BMConfigParser().get(
+                        address,
+                        'label').lower(), address.lower()]):
+            return True
+        return False
 
 
 class AddressBook(Screen):
@@ -332,13 +360,15 @@ class AddressBook(Screen):
                 carousel.index = 1
                 self.ids.ml.add_widget(carousel)
         else:
-            content = MDLabel(font_style='Body1',
-                              theme_text_color='Primary',
-                              text="No Contact Found yet...... ",
-                              halign='center',
-                              bold=True,
-                              size_hint_y=None,
-                              valign='top')
+            content = MDLabel(
+                font_style='Body1',
+                theme_text_color='Primary',
+                text="No contact found!" if state.searcing_text
+                else "No contact found yet...... ",
+                halign='center',
+                bold=True,
+                size_hint_y=None,
+                valign='top')
             self.ids.ml.add_widget(content)
 
     def refreshs(self, *args):
@@ -469,10 +499,10 @@ class DropDownWidget(BoxLayout):
                     self.ids.ti.text = ''
                     self.ids.subject.text = ''
                     self.ids.txt_input.text = ''
-                    self.parent.parent.current = 'sent'
+                    self.parent.parent.current = 'inbox'
                     self.ids.btn.text = 'select'
                     self.ids.ti.text = ''
-
+                    toast('send')
                     return None
                 else:
                     msg = 'Enter a valid recipients address'
@@ -507,6 +537,14 @@ class DropDownWidget(BoxLayout):
             title_size=30)
         self.but.bind(on_press=self.main_pop.dismiss)
         self.main_pop.open()
+
+    def reset_composer(self):
+        """Method will reset composer."""
+        self.ids.ti.text = ''
+        self.ids.btn.text = 'Select'
+        self.ids.txt_input.text = ''
+        self.ids.subject.text = ''
+        self.ids.body.text = ''
 
 
 class MyTextInput(TextInput):
@@ -626,6 +664,7 @@ class Random(Screen):
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
             self.parent.parent.parent.parent.ids.sc10.clear_widgets()
             self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
+            toast('New address created')
 
 
 class AddressSuccessful(Screen):
@@ -721,7 +760,8 @@ class Sent(Screen):
             content = MDLabel(
                 font_style='Body1',
                 theme_text_color='Primary',
-                text="yet no message for this account!!!!!!!!!!!!!",
+                text="No message found!" if state.searcing_text
+                else "yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
                 bold=True,
                 size_hint_y=None,
@@ -760,6 +800,7 @@ class Sent(Screen):
             "UPDATE sent SET folder = 'trash' \
             WHERE lastactiontime = {};".format(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
+        toast('Deleted')
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
@@ -930,11 +971,11 @@ class NavigateApp(App):
                 folder = 'sent' ;".format(state.association))[0][0])
         state.inbox_count = str(
             sqlQuery(
-                "SELECT COUNT(*) FROM inbox WHERE fromaddress = '{}' and \
+                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and \
                 folder = 'inbox' ;".format(state.association))[0][0])
         state.trash_count = str(sqlQuery("SELECT (SELECT count(*) FROM  sent \
             where fromaddress = '{0}' and  folder = 'trash' ) \
-            +(SELECT count(*) FROM inbox where fromaddress = '{0}' and  \
+            +(SELECT count(*) FROM inbox where toaddress = '{0}' and  \
             folder = 'trash') AS SumCount".format(state.association))[0][0])
         state.draft_count = str(
             sqlQuery(
@@ -1013,6 +1054,8 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
+        # self.root.ids.toolbar.left_action_items = ''
+        # self.root.ids.myButton.opacity = 0
         self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
@@ -1039,7 +1082,7 @@ class NavigateApp(App):
             return state.sent_count
         elif text == 'Inbox':
             state.inbox_count = str(sqlQuery(
-                "SELECT COUNT(*) FROM {0} WHERE fromaddress = '{1}' and \
+                "SELECT COUNT(*) FROM {0} WHERE toaddress = '{1}' and \
                 folder = '{0}' ;".format(
                     text.lower(), state.association))[0][0])
             return state.inbox_count
@@ -1047,7 +1090,7 @@ class NavigateApp(App):
             state.trash_count = str(sqlQuery(
                 "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' \
                 and  folder = 'trash' )+(SELECT count(*) FROM inbox where \
-                fromaddress = '{0}' and  folder = 'trash') AS SumCount".format(
+                toaddress = '{0}' and  folder = 'trash') AS SumCount".format(
                     state.association))[0][0])
             return state.trash_count
         elif text == 'Draft':
@@ -1079,6 +1122,9 @@ class NavigateApp(App):
         elif state.search_screen == 'addressbook':
             self.root.ids.sc11.clear_widgets()
             self.root.ids.sc11.add_widget(AddressBook())
+        elif state.search_screen == 'myaddress':
+            self.root.ids.sc10.clear_widgets()
+            self.root.ids.sc10.add_widget(MyAddress())
         else:
             self.root.ids.sc4.clear_widgets()
             self.root.ids.sc4.add_widget(Sent())
@@ -1086,12 +1132,12 @@ class NavigateApp(App):
 
     def check_search_screen(self, instance):
         """Method show search button only on inbox or sent screen."""
-        if instance.text in ['Inbox', 'Sent', 'Address Book']:
+        if instance.text in ['Inbox', 'Sent', 'Address Book', 'My Addresses']:
             if not self.root.ids.search_bar.children:
                 self.root.ids.search_bar.add_widget(
                     MDIconButton(icon='magnify'))
                 text_field = MDTextField(
-                    id='search_field', hint_text='Search icon')
+                    id='search_field', hint_text='Search')
                 text_field.bind(text=self.searchQuery)
                 self.root.ids.search_bar.add_widget(text_field)
             self.root.ids.search_bar.children[0].text = ''
@@ -1105,7 +1151,7 @@ class NavigateApp(App):
         if not self.root.ids.search_bar.children:
             self.root.ids.search_bar.add_widget(MDIconButton(icon='magnify'))
             text_field = MDTextField(
-                id='search_field', hint_text='Search icon')
+                id='search_field', hint_text='Search')
             text_field.bind(text=self.searchQuery)
             self.root.ids.search_bar.add_widget(text_field)
 
@@ -1137,12 +1183,15 @@ class GrashofPopup(Popup):
 
         label = self.ids.label.text
         address = self.ids.address.text
-        if label and address:
+        stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
+            folder="addressbook")]
+        if label and address and address not in stored_address:
             state.navinstance = self.parent.children[1]
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
+            toast('Saved')
 
     def show_error_message(self):
         """Showing error message."""
@@ -1162,6 +1211,10 @@ class GrashofPopup(Popup):
         self.dialog.add_action_button("ok",
                                       action=lambda *x: self.dialog.dismiss())
         self.dialog.open()
+
+    def close_pop(self):
+        """Pop is Canceled."""
+        toast('Canceled')
 
 
 class AvatarSampleWidget(ILeftBody, Image):
@@ -1276,6 +1329,7 @@ class MailDetail(Screen):
         state.trash_count = str(int(state.trash_count) + 1)
         self.parent.parent.screens[4].clear_widgets()
         self.parent.parent.screens[4].add_widget(Trash())
+        toast('Deleted')
 
     def inbox_reply(self):
         """Method used for replying inbox messages."""
@@ -1326,6 +1380,10 @@ class MyaddDetailPopup(Popup):
         window_obj.scr_mngr.current = 'create'
         self.dismiss()
 
+    def close_pop(self):
+        """Pop is Canceled."""
+        toast('Canceled')
+
 
 class AddbookDetailPopup(Popup):
     """AddbookDetailPopup pop is used for showing my address detail."""
@@ -1356,6 +1414,7 @@ class AddbookDetailPopup(Popup):
             self.parent.children[1].ids.sc11.clear_widgets()
             self.parent.children[1].ids.sc11.add_widget(AddressBook())
             self.dismiss()
+            toast('Saved')
 
     def send_message_to(self):
         """Method used to fill to_address of composer autofield."""
@@ -1368,16 +1427,22 @@ class AddbookDetailPopup(Popup):
         window_obj.scr_mngr.current = 'create'
         self.dismiss()
 
+    def close_pop(self):
+        """Pop is Canceled."""
+        toast('Canceled')
+
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails."""
 
     def qrdisplay(self):
         """Method used for showing QR Code."""
+        self.manager.parent.parent.parent.ids.search_bar.clear_widgets()
         self.ids.qr.clear_widgets()
         from kivy.garden.qrcode import QRCodeWidget
         self.ids.qr.add_widget(QRCodeWidget(
             data=self.manager.get_parent_window().children[0].address))
+        toast('Show QR code')
 
 
 class Draft(Screen):
@@ -1473,6 +1538,7 @@ class Draft(Screen):
                 int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
         self.ids.ml.remove_widget(instance.parent.parent)
+        toast('Deleted')
 
     def draft_msg(self, src_object):
         """Method used for saving draft mails."""
@@ -1519,6 +1585,7 @@ class Draft(Screen):
             state.draft_count = str(int(state.draft_count) + 1)
             src_object.ids.sc16.clear_widgets()
             src_object.ids.sc16.add_widget(Draft())
+            toast('Save draft')
         return
 
 
@@ -1534,4 +1601,7 @@ class CustomSpinner(Spinner):
 
 def remove_search_bar(obj):
     """Remove search bar."""
-    obj.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
+    try:
+        obj.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
+    except Exception as e:
+        obj.parent.parent.parent.parent.ids.search_bar.clear_widgets()

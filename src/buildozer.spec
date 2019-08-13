@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = messageapp
+title = bitapp
 
 # (str) Package name
-package.name = messageapp
+package.name = bitapp
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.test
