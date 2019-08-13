@@ -43,36 +43,36 @@ pipeline {
         }
 
 
-        stage ('Check_style') {
-            steps {
-                sh """
-                    if [ ! -d venv ] ; then
+        // stage ('Check_style') {
+        //     steps {
+        //         sh """
+        //             if [ ! -d venv ] ; then
 
-                       virtualenv --python=python2.7 venv
-                    fi
-                    source venv/bin/activate
-                    export PYTHONPATH="$PWD:$PYTHONPATH"
+        //                virtualenv --python=python2.7 venv
+        //             fi
+        //             source venv/bin/activate
+        //             export PYTHONPATH="$PWD:$PYTHONPATH"
 
-                    pip install pylint
+        //             pip install pylint
 
-                    cd repo
-                    ### Need this because some strange control sequences when using default TERM=xterm
-                    export TERM="linux"
+        //             cd repo
+        //             ### Need this because some strange control sequences when using default TERM=xterm
+        //             export TERM="linux"
 
-                    ## || exit 0 because pylint only exits with 0 if everything is correct
-                    pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) MYMODULE/ > pylint.log || exit 0
-                """
-                step([$class: 'WarningsPublisher',
-                  parserConfigurations: [
-                  [
-                    parserName: 'pylint',
-                    pattern: 'report/pylint.log'
-                  ]],
-                  unstableTotalAll: '0',
-                  usePreviousBuildAsReference: true
-                ])
-            }
-        }
+        //             ## || exit 0 because pylint only exits with 0 if everything is correct
+        //             pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) MYMODULE/ > pylint.log || exit 0
+        //         """
+        //         step([$class: 'WarningsPublisher',
+        //           parserConfigurations: [
+        //           [
+        //             parserName: 'pylint',
+        //             pattern: 'report/pylint.log'
+        //           ]],
+        //           unstableTotalAll: '0',
+        //           usePreviousBuildAsReference: true
+        //         ])
+        //     }
+        // }
 
         stage('Test environment') {
             steps {
@@ -89,26 +89,26 @@ pipeline {
             }
         }
 
-        stage('Pylint Checker') {
-            steps {
-                sh '''
-                    echo ${SHELL}
-                    [ -d venv ] && rm -rf venv
-                    #virtualenv --python=python2.7 venv
-                    virtualenv venv
-                    #. venv/bin/activate
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        // stage('Pylint Checker') {
+        //     steps {
+        //         sh '''
+        //             echo ${SHELL}
+        //             [ -d venv ] && rm -rf venv
+        //             #virtualenv --python=python2.7 venv
+        //             virtualenv venv
+        //             #. venv/bin/activate
+        //             export PATH=${VIRTUAL_ENV}/bin:${PATH}
 
-                    pip install pylint
+        //             pip install pylint
 
                     
-                    export TERM="linux"
+        //             export TERM="linux"
 
-                    ## || exit 0 because pylint only exits with 0 if everything is correct
-                    pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) Pybitmessage/ > pylint.log || exit 0
-                '''
-            }
-        }
+        //             ## || exit 0 because pylint only exits with 0 if everything is correct
+        //             pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) Pybitmessage/ > pylint.log || exit 0
+        //         '''
+        //     }
+        // }
 
 
         stage('Test Run') {
