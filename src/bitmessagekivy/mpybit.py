@@ -80,7 +80,7 @@ class Inbox(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
-        print(dt)
+        print dt
 
     def inboxaccounts(self):
         """Load inbox accounts."""
@@ -103,8 +103,8 @@ class Inbox(Screen):
                     'text': mail[4].strip(),
                     'secondary_text': mail[5][:10] + '...........' if len(
                         mail[3]) > 10 else mail[3] + '\n' + " " + (
-                        third_text[:25] + '...!') if len(
-                        third_text) > 25 else third_text,
+                            third_text[:25] + '...!') if len(
+                                third_text) > 25 else third_text,
                     'receivedTime': mail[6]})
             for item in data:
                 meny = ThreeLineAvatarIconListItem(
@@ -198,7 +198,7 @@ class Inbox(Screen):
         try:
             self.parent.screens[4].clear_widgets()
             self.parent.screens[4].add_widget(Trash())
-        except Exception as e:
+        except Exception:
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
 
@@ -211,7 +211,7 @@ class Inbox(Screen):
             self.remove_widget(self.children[1])
             try:
                 screens_obj = self.parent.screens[0]
-            except Exception as e:
+            except Exception:
                 screens_obj = self.parent.parent.screens[0]
             screens_obj.add_widget(Inbox())
             self.ids.refresh_layout.refresh_done()
@@ -270,7 +270,7 @@ class MyAddress(Screen):
                 self.manager.parent.parent\
                     .parent.ids.search_bar.clear_widgets()
                 self.manager.current = 'login'
-            except Exception as e:
+            except Exception:
                 pass
 
     def myadd_detail(self, fromaddress, label, *args):
@@ -288,7 +288,7 @@ class MyAddress(Screen):
             self.remove_widget(self.children[1])
             try:
                 screens_obj = self.parent.screens[9]
-            except Exception as e:
+            except Exception:
                 screens_obj = self.parent.parent.screens[9]
             screens_obj.add_widget(MyAddress())
             self.ids.refresh_layout.refresh_done()
@@ -318,7 +318,7 @@ class AddressBook(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method AddressBook."""
         self.loadAddresslist(None, 'All', '')
-        print(dt)
+        print dt
 
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook."""
@@ -420,7 +420,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         """Respond to the selection of items in the view."""
         self.selected = is_selected
         if is_selected:
-            print("selection changed to {0}".format(rv.data[index]))
+            print "selection changed to {0}".format(rv.data[index])
             rv.parent.txt_input.text = rv.parent.txt_input.text.replace(
                 rv.parent.txt_input.text, rv.data[index]['text'])
 
@@ -446,7 +446,7 @@ class DropDownWidget(BoxLayout):
         subject = str(self.ids.subject.text)
         message = str(self.ids.body.text)
         encoding = 3
-        print("message: ", self.ids.body.text)
+        print "message: ", self.ids.body.text
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
@@ -458,12 +458,12 @@ class DropDownWidget(BoxLayout):
                     toAddress = addBMIfNotPresent(toAddress)
                     statusIconColor = 'red'
                     if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                        print("addressVersionNumber > 4 \
-                        or addressVersionNumber <= 1")
+                        print "addressVersionNumber > 4 \
+                        or addressVersionNumber <= 1"
                     if streamNumber > 1 or streamNumber == 0:
-                        print("streamNumber > 1 or streamNumber == 0")
+                        print "streamNumber > 1 or streamNumber == 0"
                     if statusIconColor == 'red':
-                        print("shared.statusIconColor == 'red'")
+                        print "shared.statusIconColor == 'red'"
                     stealthLevel = BMConfigParser().safeGetInt(
                         'bitmessagesettings', 'ackstealthlevel')
                     from helper_ackPayload import genAckPayload
@@ -494,7 +494,7 @@ class DropDownWidget(BoxLayout):
                     self.parent.parent.screens[3].add_widget(Sent())
                     toLabel = ''
                     queues.workerQueue.put(('sendmessage', toAddress))
-                    print("sqlExecute successfully #######################")
+                    print "sqlExecute successfully #######################"
                     self.ids.body.text = ''
                     self.ids.ti.text = ''
                     self.ids.subject.text = ''
@@ -565,7 +565,7 @@ class MyTextInput(TextInput):
         self.parent.parent.parent.parent.ids.rv.data = []
         matches = [self.word_list[i] for i in range(
             len(self.word_list)) if self.word_list[
-            i][:self.starting_no] == value[:self.starting_no]]
+                i][:self.starting_no] == value[:self.starting_no]]
         display_data = []
         for i in matches:
             display_data.append({'text': i})
@@ -656,8 +656,7 @@ class Random(Screen):
                 4, streamNumberForAddress,
                 label, 1, "", eighteenByteRipe,
                 nonceTrialsPerByte,
-                payloadLengthExtraBytes)
-            )
+                payloadLengthExtraBytes))
             self.manager.current = 'myaddress'
             self.ids.label.text = ''
             self.parent.parent.parent.parent.ids.toolbar.opacity = 1
@@ -689,7 +688,7 @@ class Sent(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method sent accounts."""
         self.sentaccounts()
-        print(dt)
+        print dt
 
     def sentaccounts(self):
         """Load sent accounts."""
@@ -717,8 +716,8 @@ class Sent(Screen):
                     'text': mail[1].strip(),
                     'secondary_text': mail[2][:10] + '...........' if len(
                         mail[2]) > 10 else mail[2] + '\n' + " " + (
-                        third_text[:25] + '...!') if len(
-                        third_text) > 25 else third_text,
+                            third_text[:25] + '...!') if len(
+                                third_text) > 25 else third_text,
                     'lastactiontime': mail[6]})
             for item in self.data:
                 meny = ThreeLineAvatarIconListItem(
@@ -786,7 +785,7 @@ class Sent(Screen):
         try:
             msg_count_objs = self.parent.parent.parent.parent.children[
                 2].children[0].ids
-        except Exception as e:
+        except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
         if int(state.sent_count) > 0:
@@ -816,7 +815,7 @@ class Sent(Screen):
         try:
             self.parent.screens[4].clear_widgets()
             self.parent.screens[4].add_widget(Trash())
-        except Exception as e:
+        except Exception:
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
 
@@ -1065,7 +1064,7 @@ class NavigateApp(App):
 
     def on_stop(self):
         """On stop methos is used for stoping the runing script."""
-        print("*******************EXITING FROM APPLICATION*******************")
+        print "*******************EXITING FROM APPLICATION*******************"
         import shutdown
         shutdown.doCleanShutdown()
 
@@ -1461,7 +1460,7 @@ class Draft(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method draft accounts."""
         self.sentaccounts()
-        print(dt)
+        print dt
 
     def sentaccounts(self):
         """Load draft accounts."""
@@ -1483,8 +1482,8 @@ class Draft(Screen):
                     'text': mail[1].strip(),
                     'secondary_text': mail[2][:10] + '...........' if len(
                         mail[2]) > 10 else mail[2] + '\n' + " " + (
-                        third_text[:25] + '...!') if len(
-                        third_text) > 25 else third_text,
+                            third_text[:25] + '...!') if len(
+                                third_text) > 25 else third_text,
                     'lastactiontime': mail[6]})
             for item in self.data:
                 meny = TwoLineAvatarIconListItem(
@@ -1530,7 +1529,7 @@ class Draft(Screen):
         try:
             msg_count_objs = \
                 self.parent.parent.parent.parent.children[2].children[0].ids
-        except Exception as e:
+        except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
         if int(state.draft_count) > 0:
@@ -1603,5 +1602,5 @@ def remove_search_bar(obj):
     """Remove search bar."""
     try:
         obj.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
-    except Exception as e:
+    except Exception:
         obj.parent.parent.parent.parent.ids.search_bar.clear_widgets()
