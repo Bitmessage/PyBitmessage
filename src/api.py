@@ -95,6 +95,8 @@ class singleAPI(StoppableThread):
         for attempt in range(50):
             try:
                 if attempt > 0:
+                    logger.warning(
+                        'Failed to start API listener on port %s', port)
                     port = random.randint(32767, 65535)
                 se = StoppableXMLRPCServer(
                     (BMConfigParser().get(
@@ -106,8 +108,9 @@ class singleAPI(StoppableThread):
                     continue
             else:
                 if attempt > 0:
+                    logger.warning('Setting apiport to %s', port)
                     BMConfigParser().set(
-                        "bitmessagesettings", "apiport", str(port))
+                        'bitmessagesettings', 'apiport', str(port))
                     BMConfigParser().save()
                 break
         se.register_introspection_functions()

@@ -371,6 +371,7 @@ class TCPServer(AdvancedDispatcher):
         for attempt in range(50):
             try:
                 if attempt > 0:
+                    logger.warning('Failed to bind on port %s', port)
                     port = random.randint(32767, 65535)
                 self.bind((host, port))
             except socket.error as e:
@@ -378,6 +379,7 @@ class TCPServer(AdvancedDispatcher):
                     continue
             else:
                 if attempt > 0:
+                    logger.warning('Setting port to %s', port)
                     BMConfigParser().set(
                         'bitmessagesettings', 'port', str(port))
                     BMConfigParser().save()
