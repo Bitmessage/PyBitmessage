@@ -1,12 +1,12 @@
 """Helper Sql performs sql operations."""
 
 import threading
-import Queue
+from queue import Queue
 
-sqlSubmitQueue = Queue.Queue()
+sqlSubmitQueue = Queue()
 # SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks.
 # SQL objects #can only be called from one thread.
-sqlReturnQueue = Queue.Queue()
+sqlReturnQueue = Queue()
 sqlLock = threading.Lock()
 
 

@@ -1,4 +1,6 @@
+configparser
 coverage
+future
 psutil
 pycrypto
 python_prctl

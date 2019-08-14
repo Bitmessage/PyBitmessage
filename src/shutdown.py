@@ -1,5 +1,5 @@
+import queue
 import os
-import Queue
 import threading
 import time
 
@@ -73,7 +73,7 @@ def doCleanShutdown():
             try:
                 queue.get(False)
                 queue.task_done()
-            except Queue.Empty:
+            except queue.Empty:
                 break
 
     if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?

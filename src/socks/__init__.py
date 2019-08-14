@@ -1,3 +1,8 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+
 """SocksiPy - Python SOCKS module.
 Version 1.00
 
@@ -40,10 +45,6 @@ Minor modifications made by Mario Vilas (http://breakingcode.wordpress.com/)
 mainly to merge bug fixes found in Sourceforge
 
 """
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from future import standard_library
 standard_library.install_aliases()

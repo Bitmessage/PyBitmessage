@@ -471,8 +471,8 @@ class Main:
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def usage(self):
-        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
-        print '''
+        print('Usage: ' + sys.argv[0] + ' [OPTIONS]')
+        print('''
 Options:
   -h, --help            show this help message and exit
   -c, --curses          use curses (text mode) interface
@@ -481,6 +481,7 @@ Options:
 
 All parameters are optional.
 '''
+        )
 
     def stop(self):
         with shared.printLock:
