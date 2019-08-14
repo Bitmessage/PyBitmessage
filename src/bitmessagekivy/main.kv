@@ -116,11 +116,12 @@
         on_release: app.root.ids.scr_mngr.current = 'trash'
         badge_text: app.mail_count(self.text)
         on_press: app.check_search_screen(self)
-    NavigationDrawerIconButton: 
+    NavigationDrawerIconButton:
+        id: allmail_cnt
         text: "All Mails"
         icon:'contact-mail'
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: "999+"
+        on_release: app.root.ids.scr_mngr.current = 'allmails'
+        badge_text: app.mail_count(self.text)
         on_press: app.check_search_screen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
@@ -233,6 +234,8 @@ NavigationLayout:
                 id:sc15
             Draft:
                 id:sc16
+            Allmails:
+                id:sc17
 
 
 <Inbox>:
@@ -268,6 +271,17 @@ NavigationLayout:
         do_scroll_x: False
         MDList:
             id: ml
+    ComposerButton:
+
+<Allmails>:
+    name: 'allmails'
+    FloatLayout:
+        MDScrollViewRefreshLayout:
+            id: refresh_layout
+            refresh_callback: root.refresh_callback
+            root_layout: root
+            MDList:
+                id: ml
     ComposerButton:
     
 <Test>:
