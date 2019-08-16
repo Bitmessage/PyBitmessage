@@ -3270,8 +3270,8 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         idCount = len(inventoryHashesToTrash)
         sqlExecuteChunked(
-            "DELETE FROM inbox" if folder == "trash" or shifted else
-            "UPDATE inbox SET folder='trash'"
+            ("DELETE FROM inbox" if folder == "trash" or shifted else
+             "UPDATE inbox SET folder='trash'") +
             " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
