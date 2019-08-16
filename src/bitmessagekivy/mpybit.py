@@ -1546,14 +1546,14 @@ class Draft(Screen):
 
     def delete_draft(self, data_index, instance, *args):
         """Method used to delete draft message permanently."""
-        sqlExecute(
-            "UPDATE sent SET folder = 'draft, trash' WHERE lastactiontime = {};".format(
-                data_index))
+        # sqlExecute(
+        #     "UPDATE sent SET folder = 'draft, trash' WHERE lastactiontime = {};".format(
+        #         data_index))
         # sqlExecute(
         #     "UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(
         #         data_index))
-        # sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
-        #     data_index))
+        sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
+            data_index))
         try:
             msg_count_objs = \
                 self.parent.parent.parent.parent.children[2].children[0].ids
