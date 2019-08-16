@@ -98,6 +98,8 @@ trash_count = 0
 
 draft_count = 0
 
+all_count = 0
+
 searcing_text = ''
 
 search_screen = ''

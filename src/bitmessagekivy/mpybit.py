@@ -699,6 +699,8 @@ class Sent(Screen):
                 state.check_sent_acc:
             state.msg_counter_objs.send_cnt.badge_text = str(len(queryreturn))
             state.sent_count = str(int(state.sent_count) + 1)
+            state.all_count = str(int(state.all_count) + 1)
+            state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
             state.check_sent_acc = None
 
         if queryreturn:
@@ -785,8 +787,11 @@ class Sent(Screen):
                 int(state.sent_count) - 1)
             msg_count_objs.trash_cnt.badge_text = str(
                 int(state.trash_count) + 1)
+            msg_count_objs.allmail_cnt.badge_text = str(
+                int(state.all_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
+            state.all_count = str(int(state.all_count) - 1)
         sqlExecute(
             "UPDATE sent SET folder = 'trash' \
             WHERE lastactiontime = {};".format(data_index))
@@ -827,25 +832,25 @@ class Trash(Screen):
                 state.association = BMConfigParser().addresses()[0]
 
         inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message from inbox \
-            WHERE folder = 'trash' and fromaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder from inbox \
+            WHERE folder = 'trash' and toaddress = '{}';".format(
                 state.association))
         sent = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message from sent \
+            "SELECT toaddress, fromaddress, subject, message, folder from sent \
             WHERE folder = 'trash' and fromaddress = '{}';".format(
                 state.association))
         trash_data = inbox + sent
 
         for item in trash_data:
             meny = ThreeLineAvatarIconListItem(
-                text=item[1],
-                secondary_text=item[2],
+                text= 'Draft' if item[4] == 'draft' else item[1],
+                secondary_text=item[2] if item[2] else item[1],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
+            img_latter = './images/avatar.png' if item[4] == 'draft' else './images/text_images/{}.png'.format(
                     item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                        2][0].upper() <= 'Z') else '!')))
+                        2][0].upper() <= 'Z') else '!')
+            meny.add_widget(AvatarSampleWidget(source=img_latter))
             self.ids.ml.add_widget(meny)
 
 
@@ -1108,6 +1113,13 @@ class NavigateApp(App):
                 folder = '{0}' ;".format(
                     text.lower(), state.association))[0][0])
             return state.draft_count
+        elif text == 'All Mails':
+            state.all_count = str(sqlQuery(
+                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' and \
+                 folder != 'trash' )+(SELECT count(*) FROM inbox where \
+                 toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
+                    state.association))[0][0])
+            return state.all_count
 
     def current_address_label(self, current_address=None):
         """Getting current address labels."""
@@ -1332,7 +1344,9 @@ class MailDetail(Screen):
             self.parent.parent.screens[0].add_widget(Inbox())
             self.parent.parent.current = 'inbox'
         msg_count_objs.trash_cnt.badge_text = str(int(state.trash_count) + 1)
+        msg_count_objs.allmail_cnt.badge_text = str(int(state.all_count) - 1)
         state.trash_count = str(int(state.trash_count) + 1)
+        state.all_count = str(int(state.all_count) - 1)
         self.parent.parent.screens[4].clear_widgets()
         self.parent.parent.screens[4].add_widget(Trash())
         toast('Deleted')
@@ -1479,6 +1493,9 @@ class Draft(Screen):
             xAddress, account, "draft", where, what, False)
         if state.msg_counter_objs:
             state.msg_counter_objs.draft_cnt.badge_text = str(len(queryreturn))
+            state.all_count = str(int(state.all_count) + 1)
+            state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
+            state.msg_counter_objs = None
 
         if queryreturn:
             for mail in queryreturn:
@@ -1529,8 +1546,14 @@ class Draft(Screen):
 
     def delete_draft(self, data_index, instance, *args):
         """Method used to delete draft message permanently."""
-        sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
-            data_index))
+        sqlExecute(
+            "UPDATE sent SET folder = 'draft, trash' WHERE lastactiontime = {};".format(
+                data_index))
+        # sqlExecute(
+        #     "UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(
+        #         data_index))
+        # sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
+        #     data_index))
         try:
             msg_count_objs = \
                 self.parent.parent.parent.parent.children[2].children[0].ids
@@ -1540,7 +1563,13 @@ class Draft(Screen):
         if int(state.draft_count) > 0:
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
+            msg_count_objs.allmail_cnt.badge_text = str(
+                int(state.all_count) - 1)
+            msg_count_objs.trash_cnt.badge_text = str(
+                int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
+            state.all_count = str(int(state.all_count) - 1)
+            state.trash_count = str(int(state.trash_count) + 1)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
@@ -1609,3 +1638,95 @@ def remove_search_bar(self):
         self.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
     except Exception as e:
         self.parent.parent.parent.parent.ids.search_bar.clear_widgets()
+
+
+class Allmails(Screen):
+    """all mails Screen uses screen to show widgets of screens."""
+
+    data = ListProperty()
+
+    def __init__(self, *args, **kwargs):
+        """Method Parsing the address."""
+        super(Allmails, self).__init__(*args, **kwargs)
+        if state.association == '':
+            if BMConfigParser().addresses():
+                state.association = BMConfigParser().addresses()[0]
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for method all mails."""
+        self.mailaccounts()
+        print(dt)
+
+    def mailaccounts(self):
+        """Load all mails for account."""
+        account = state.association
+        self.loadMessagelist(account, 'All', '')
+
+    def loadMessagelist(self, account, where="", what=""):
+        """Load Inbox, Sent anf Draft list of messages."""
+        inbox = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder from inbox \
+            WHERE folder = 'inbox' and toaddress = '{}';".format(
+                account))
+        sent_and_draft = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder from sent \
+            WHERE folder != 'trash' and fromaddress = '{}';".format(
+                account))
+
+        all_mails = inbox + sent_and_draft
+        if all_mails:
+            for item in all_mails:
+                meny = ThreeLineAvatarIconListItem(
+                    text='Draft' if item[4] == 'draft' else item[1],
+                    secondary_text=item[1] if item[4] == 'draft' else item[2],
+                    theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color)
+                img_latter = './images/avatar.png' if item[4] == 'draft' else './images/text_images/{}.png'.format(
+                        item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
+                            2][0].upper() <= 'Z') else '!')
+                meny.add_widget(AvatarSampleWidget(
+                    source=img_latter))
+                carousel = Carousel(direction='right')
+                if platform == 'android':
+                    carousel.height = 150
+                elif platform == 'linux':
+                    carousel.height = meny.height - 10
+                carousel.size_hint_y = None
+                carousel.ignore_perpendicular_swipes = True
+                carousel.data_index = 0
+                carousel.min_move = 0.2
+                del_btn = Button(text='Delete')
+                del_btn.background_normal = ''
+                del_btn.background_color = (1.0, 0.0, 0.0, 1.0)
+                carousel.add_widget(del_btn)
+                carousel.add_widget(meny)
+                carousel.index = 1
+                self.ids.ml.add_widget(carousel)
+        else:
+            content = MDLabel(
+                font_style='Body1',
+                theme_text_color='Primary',
+                text="yet no message for this account!!!!!!!!!!!!!",
+                halign='center',
+                bold=True,
+                size_hint_y=None,
+                valign='top')
+            self.ids.ml.add_widget(content)
+
+    def refresh_callback(self, *args):
+        """A method that updates the state of your application."""
+        """While the spinner remains on the screen."""
+        def refresh_callback(interval):
+            """Method used for loading the allmails screen data."""
+            self.ids.ml.clear_widgets()
+            self.remove_widget(self.children[1])
+            try:
+                screens_obj = self.parent.screens[16]
+            except Exception as e:
+                screens_obj = self.parent.parent.screens[16]
+            screens_obj.add_widget(Allmails())
+            self.ids.refresh_layout.refresh_done()
+            self.tick = 0
+
+        Clock.schedule_once(refresh_callback, 1)
