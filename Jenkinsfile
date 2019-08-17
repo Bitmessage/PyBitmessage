@@ -95,7 +95,6 @@ pipeline {
         stage('Pylint Checker'){
             steps{
                 sh '''
-                cd repo
                 export TERM="linux"                
                 pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) PyBitmessage/ > pylint.log || exit 0
                 '''
