@@ -84,8 +84,8 @@ pipeline {
                 #. venv/bin/activate
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
                 python setup.py install
-                sudo /home/cis/.local/bin/nosetests --with-xunit tests
                 '''
+                // sudo /home/cis/.local/bin/nosetests --with-xunit tests
             }
         }
 
