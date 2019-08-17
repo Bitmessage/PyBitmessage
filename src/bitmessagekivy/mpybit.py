@@ -1,51 +1,65 @@
 """Coding: utf-8."""
+import time
+from functools import partial
+
+from bmconfigparser import BMConfigParser
+
+from helper_sql import sqlExecute, sqlQuery
+
 from kivy.app import App
+from kivy.clock import Clock
+from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import ObjectProperty
+from kivy.properties import (
+    BooleanProperty,
+    ListProperty,
+    NumericProperty,
+    ObjectProperty,
+    StringProperty)
+from kivy.uix.behaviors import FocusBehavior
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.carousel import Carousel
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleview.layout import LayoutSelectionBehavior
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.screenmanager import Screen
+from kivy.uix.spinner import Spinner
+from kivy.uix.textinput import TextInput
+from kivy.utils import platform
+
+import kivy_helper_search
+
 from kivymd.button import MDIconButton
 from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
-from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBodyTouch
+from kivymd.list import (
+    ILeftBody,
+    ILeftBodyTouch,
+    IRightBodyTouch,
+    ThreeLineAvatarIconListItem,
+    TwoLineAvatarIconListItem,
+    TwoLineListItem)
 from kivymd.navigationdrawer import (
     MDNavigationDrawer,
     NavigationDrawerHeaderBase)
 from kivymd.selectioncontrols import MDCheckbox
-from kivymd.theming import ThemeManager
-from kivymd.list import (
-    ThreeLineAvatarIconListItem,
-    TwoLineAvatarIconListItem,
-    TwoLineListItem)
-from kivy.properties import ListProperty, StringProperty, BooleanProperty
-from kivy.clock import Clock
-from bmconfigparser import BMConfigParser
-import state
-import queues
-from kivy.uix.popup import Popup
-from helper_sql import sqlQuery, sqlExecute
-from kivy.uix.textinput import TextInput
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import NumericProperty
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.label import Label
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
-from kivy.uix.behaviors import FocusBehavior
-from kivy.uix.recycleview.layout import LayoutSelectionBehavior
-import time
-from uikivysignaler import UIkivySignaler
-from semaphores import kivyuisignaler
-from kivy.uix.button import Button
-import kivy_helper_search
-from kivy.core.window import Window
-from functools import partial
-from kivy.uix.carousel import Carousel
-from kivy.utils import platform
-from kivy.uix.spinner import Spinner
 from kivymd.textfields import MDTextField
+from kivymd.theming import ThemeManager
+
+import queues
+
+from semaphores import kivyuisignaler
+
+import state
+
+from uikivysignaler import UIkivySignaler
 
 
 def toast(text):
@@ -58,7 +72,7 @@ def toast(text):
 
 class Navigatorss(MDNavigationDrawer):
     """Navigators class contains image, title and logo."""
-
+    # pylint: disable=too-few-public-methods
     image_source = StringProperty('images/qidenticon_two.png')
     title = StringProperty('Navigation')
     drawer_logo = StringProperty()
@@ -204,8 +218,8 @@ class Inbox(Screen):
             self.parent.parent.screens[4].add_widget(Trash())
 
     def refresh_callback(self, *args):
-        """A method that updates the state of your application."""
-        """While the spinner remains on the screen."""
+        """Method updates the state of application, \
+        While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
             self.ids.ml.clear_widgets()
@@ -233,8 +247,9 @@ class MyAddress(Screen):
         """Clock Schdule for method inbox accounts."""
         addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
-            filtered_list = filter(lambda addr: self.filter_address(
-                addr), BMConfigParser().addresses())
+            filtered_list = filter(
+                lambda addr: self.filter_address(
+                    addr), BMConfigParser().addresses())
             addresses_list = filtered_list
         if addresses_list:
             data = []
@@ -282,8 +297,8 @@ class MyAddress(Screen):
         p.set_address(fromaddress, label)
 
     def refresh_callback(self, *args):
-        """A method that updates the state of your application."""
-        """While the spinner remains on the screen."""
+        """Method updates the state of application, \
+        While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the myaddress screen data."""
             self.ids.ml.clear_widgets()
@@ -304,8 +319,7 @@ class MyAddress(Screen):
         if filter(lambda x: (
                 state.searcing_text).lower() in x, [
                     BMConfigParser().get(
-                        address,
-                        'label').lower(), address.lower()]):
+                        address, 'label').lower(), address.lower()]):
             return True
         return False
 
@@ -397,7 +411,7 @@ class AddressBook(Screen):
 class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
     """Adds selection and focus behaviour to the view."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -432,6 +446,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 
 class RV(RecycleView):
     """Recycling View."""
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
         """Recycling Method."""
@@ -592,19 +607,19 @@ class MyTextInput(TextInput):
 
 class Payment(Screen):
     """Payment Method."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class Login(Screen):
     """Login Screeen."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class NetworkStat(Screen):
     """Method used to show network stat."""
-
+    # pylint: disable=too-few-public-methods
     text_variable_1 = StringProperty(
         '{0}::{1}'.format('Total Connections', '0'))
     text_variable_2 = StringProperty(
@@ -639,13 +654,13 @@ class NetworkStat(Screen):
 
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class Random(Screen):
     """Generates Random Address."""
-
+    # pylint: disable=too-few-public-methods
     is_active = BooleanProperty(False)
     checked = StringProperty("")
 
@@ -674,7 +689,7 @@ class Random(Screen):
 
 class AddressSuccessful(Screen):
     """Getting Address Detail."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -833,6 +848,7 @@ class Sent(Screen):
 
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
         """Trash method, delete sent message and add in Trash."""
@@ -846,12 +862,12 @@ class Trash(Screen):
                 state.association = BMConfigParser().addresses()[0]
 
         inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from inbox \
-            WHERE folder = 'trash' and toaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder from \
+            inbox WHERE folder = 'trash' and toaddress = '{}';".format(
                 state.association))
         sent = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from sent \
-            WHERE folder = 'trash' and fromaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder from \
+            sent WHERE folder = 'trash' and fromaddress = '{}';".format(
                 state.association))
         trash_data = inbox + sent
 
@@ -871,12 +887,13 @@ class Trash(Screen):
 
 class Page(Screen):
     """Page Screen show widgets of page."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class Create(Screen):
     """Creates the screen widgets."""
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
         """Getting Labels and address from addressbook."""
@@ -891,7 +908,7 @@ class Create(Screen):
 
 class Setting(Screen):
     """Setting the Screen components."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -1068,8 +1085,6 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
-        # self.root.ids.toolbar.left_action_items = ''
-        # self.root.ids.myButton.opacity = 0
         self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
@@ -1078,7 +1093,7 @@ class NavigateApp(App):
         composer_obj.subject.text = ''
 
     @staticmethod
-    def on_stop(self):
+    def on_stop():
         """On stop methos is used for stoping the runing script."""
         print "*******************EXITING FROM APPLICATION*******************"
         import shutdown
@@ -1117,8 +1132,8 @@ class NavigateApp(App):
             return state.draft_count
         elif text == 'All Mails':
             state.all_count = str(sqlQuery(
-                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' and \
-                folder != 'trash' )+(SELECT count(*) FROM inbox where \
+                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}'\
+                and folder != 'trash' )+(SELECT count(*) FROM inbox where \
                 toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
                     state.association))[0][0])
             return state.all_count
@@ -1236,26 +1251,27 @@ class GrashofPopup(Popup):
                                       action=lambda *x: self.dialog.dismiss())
         self.dialog.open()
 
-    def close_pop(self):
+    @staticmethod
+    def close_pop():
         """Pop is Canceled."""
         toast('Canceled')
 
 
 class AvatarSampleWidget(ILeftBody, Image):
     """Avatar Sample Widget."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     """Left icon sample widget."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget."""
-
+    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -1462,6 +1478,7 @@ class AddbookDetailPopup(Popup):
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails."""
+    # pylint: disable=too-few-public-methods
 
     def qrdisplay(self):
         """Method used for showing QR Code."""
@@ -1556,12 +1573,6 @@ class Draft(Screen):
 
     def delete_draft(self, data_index, instance, *args):
         """Method used to delete draft message permanently."""
-        # sqlExecute(
-        #     "UPDATE sent SET folder = 'draft, trash' WHERE lastactiontime = {};".format(
-        #         data_index))
-        # sqlExecute(
-        #     "UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(
-        #         data_index))
         sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
             data_index))
         try:
@@ -1583,7 +1594,8 @@ class Draft(Screen):
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
-    def draft_msg(self, src_object):
+    @staticmethod
+    def draft_msg(src_object):
         """Method used for saving draft mails."""
         # pylint: disable=too-many-locals
         composer_object = src_object.children[1].children[0].children[
@@ -1635,6 +1647,7 @@ class Draft(Screen):
 
 class CustomSpinner(Spinner):
     """This class is used for setting spinner size."""
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner."""
@@ -1677,12 +1690,12 @@ class Allmails(Screen):
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
         inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from inbox \
-            WHERE folder = 'inbox' and toaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder from\
+            inbox WHERE folder = 'inbox' and toaddress = '{}';".format(
                 account))
         sent_and_draft = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from sent \
-            WHERE folder != 'trash' and fromaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder from\
+            sent WHERE folder != 'trash' and fromaddress = '{}';".format(
                 account))
 
         all_mails = inbox + sent_and_draft
@@ -1728,8 +1741,8 @@ class Allmails(Screen):
             self.ids.ml.add_widget(content)
 
     def refresh_callback(self, *args):
-        """A method that updates the state of your application."""
-        """While the spinner remains on the screen."""
+        """Method updates the state of application, \
+        While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the allmails screen data."""
             self.ids.ml.clear_widgets()
@@ -1741,5 +1754,4 @@ class Allmails(Screen):
             screens_obj.add_widget(Allmails())
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
-
         Clock.schedule_once(refresh_callback, 1)
