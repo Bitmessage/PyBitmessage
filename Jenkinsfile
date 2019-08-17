@@ -84,6 +84,7 @@ pipeline {
                 #. venv/bin/activate
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
                 python setup.py install
+                pip install pylint
                 '''
                 // sudo /home/cis/.local/bin/nosetests --with-xunit tests
             }
@@ -94,7 +95,9 @@ pipeline {
         stage('Pylint Checker'){
             steps{
                 sh '''
-                pylint --disable=W0622,W0611,F0401,R0914,W0221,W0222,W0142,F0010,W0703,R0911 -f parseable heroku
+                cd repo
+                export TERM="linux"                
+                pylint --rcfile=pylint.cfg $(find . -maxdepth 1 -name "*.py" -print) PyBitmessage/ > pylint.log || exit 0
                 '''
             }
         }
