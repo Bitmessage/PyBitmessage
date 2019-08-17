@@ -89,6 +89,16 @@ pipeline {
             }
         }
 
+
+
+        stage('Pylint Checker'){
+            steps{
+                sh '''
+                pylint --disable=W0622,W0611,F0401,R0914,W0221,W0222,W0142,F0010,W0703,R0911 -f parseable heroku
+                '''
+            }
+        }
+
         // stage('Pylint Checker') {
         //     steps {
         //         sh '''
