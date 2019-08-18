@@ -4,7 +4,7 @@ from pyelliptic import arithmetic
 # This function expects that pubkey begin with \x04
 def calculateBitcoinAddressFromPubkey(pubkey):
     if len(pubkey) != 65:
-        print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'
+        print('Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.')
         return "error"
     ripe = hashlib.new('ripemd160')
     sha = hashlib.new('sha256')
@@ -25,7 +25,7 @@ def calculateBitcoinAddressFromPubkey(pubkey):
 
 def calculateTestnetAddressFromPubkey(pubkey):
     if len(pubkey) != 65:
-        print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'
+        print('Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.')
         return "error"
     ripe = hashlib.new('ripemd160')
     sha = hashlib.new('sha256')

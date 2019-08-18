@@ -3,13 +3,13 @@ src/multiqueue.py
 =================
 """
 
-import Queue
+from queue import Queue
 from collections import deque
 
 import helper_random
 
 
-class MultiQueue(Queue.Queue):
+class MultiQueue(Queue):
     """A base queue class"""
     # pylint: disable=redefined-builtin,attribute-defined-outside-init
     defaultQueueCount = 10
@@ -19,7 +19,7 @@ class MultiQueue(Queue.Queue):
             self.queueCount = MultiQueue.defaultQueueCount
         else:
             self.queueCount = count
-        Queue.Queue.__init__(self, maxsize)
+        Queue.__init__(self, maxsize)
 
     # Initialize the queue representation
     def _init(self, maxsize):

@@ -8,7 +8,6 @@ from builtins import *
 from builtins import object
 from importlib import import_module
 from os import path, listdir
-from string import lower
 
 from debug import logger
 import messagetypes
@@ -16,7 +15,7 @@ import paths
 
 class MsgBase(object):
     def encode(self):
-        self.data = {"": lower(type(self).__name__)}
+        self.data = {"": type(self).__name__.lower()}
 
 
 def constructObject(data):
