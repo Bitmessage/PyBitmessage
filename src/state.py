@@ -103,3 +103,5 @@ all_count = 0
 searcing_text = ''
 
 search_screen = ''
+
+send_draft_mail = None

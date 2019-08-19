@@ -828,10 +828,10 @@ NavigationLayout:
                 MDRaisedButton:
                     size_hint: 1, None
                     height: dp(40)
-                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail()
+                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail() if root.page_type == 'sent' else root.write_msg()
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Reply' if root.page_type == 'inbox' else 'Copy'
+                        text: 'Reply' if root.page_type == 'inbox' else 'Copy' if root.page_type == 'sent' else 'Write'
                         font_size: '13sp'
                         color: (1,1,1,1)
                         halign: 'center'
