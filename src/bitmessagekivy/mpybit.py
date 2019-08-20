@@ -72,6 +72,7 @@ def toast(text):
 
 class Navigatorss(MDNavigationDrawer):
     """Navigators class contains image, title and logo."""
+
     # pylint: disable=too-few-public-methods
     image_source = StringProperty('images/qidenticon_two.png')
     title = StringProperty('Navigation')
@@ -178,7 +179,6 @@ class Inbox(Screen):
             src_mng_obj = self.manager
         else:
             src_mng_obj = self.parent.parent
-
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
         src_mng_obj.current = 'mailDetail'
@@ -195,16 +195,20 @@ class Inbox(Screen):
                 int(state.inbox_count) - 1)
             msg_count_objs.trash_cnt.badge_text = str(
                 int(state.trash_count) + 1)
-            state.inbox_count = str(int(state.inbox_count) - 1)
-            state.trash_count = str(int(state.trash_count) + 1)
-        self.ids.ml.remove_widget(instance.parent.parent)
+            state.inbox_count = str(
+                int(state.inbox_count) - 1)
+            state.trash_count = str(
+                int(state.trash_count) + 1)
+        self.ids.ml.remove_widget(
+            instance.parent.parent)
         toast('Deleted')
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing."""
-        sqlExecute("UPDATE inbox SET folder = 'trash' WHERE \
-            received = {};".format(data_index))
+        sqlExecute(
+            "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
+                data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -218,7 +222,7 @@ class Inbox(Screen):
             self.parent.parent.screens[4].add_widget(Trash())
 
     def refresh_callback(self, *args):
-        """Method updates the state of application, \
+        """Method updates the state of application,\
         While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
@@ -247,9 +251,8 @@ class MyAddress(Screen):
         """Clock Schdule for method inbox accounts."""
         addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
-            filtered_list = filter(
-                lambda addr: self.filter_address(
-                    addr), BMConfigParser().addresses())
+            filtered_list = filter(lambda addr: self.filter_address(
+                addr), BMConfigParser().addresses())
             addresses_list = filtered_list
         if addresses_list:
             data = []
@@ -310,16 +313,14 @@ class MyAddress(Screen):
             screens_obj.add_widget(MyAddress())
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
-
         Clock.schedule_once(refresh_callback, 1)
 
     @staticmethod
     def filter_address(address):
         """Method will filter the my address list data."""
-        if filter(lambda x: (
-                state.searcing_text).lower() in x, [
-                    BMConfigParser().get(
-                        address, 'label').lower(), address.lower()]):
+        if filter(lambda x: (state.searcing_text).lower() in x, [
+                BMConfigParser().get(
+                    address, 'label').lower(), address.lower()]):
             return True
         return False
 
@@ -411,6 +412,7 @@ class AddressBook(Screen):
 class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
     """Adds selection and focus behaviour to the view."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -428,6 +430,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         return super(SelectableLabel, self).refresh_view_attrs(
             rv, index, data)
 
+    # pylint: disable=inconsistent-return-statements
     def on_touch_down(self, touch):
         """Add selection on touch down."""
         if super(SelectableLabel, self).on_touch_down(touch):
@@ -446,6 +449,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 
 class RV(RecycleView):
     """Recycling View."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
@@ -459,6 +463,7 @@ class DropDownWidget(BoxLayout):
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
+    # pylint: disable=inconsistent-return-statements
     def send(self):
         """Send message from one address to another."""
         # pylint: disable=too-many-locals
@@ -607,18 +612,21 @@ class MyTextInput(TextInput):
 
 class Payment(Screen):
     """Payment Method."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class Login(Screen):
     """Login Screeen."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class NetworkStat(Screen):
     """Method used to show network stat."""
+
     # pylint: disable=too-few-public-methods
     text_variable_1 = StringProperty(
         '{0}::{1}'.format('Total Connections', '0'))
@@ -654,12 +662,14 @@ class NetworkStat(Screen):
 
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class Random(Screen):
     """Generates Random Address."""
+
     # pylint: disable=too-few-public-methods
     is_active = BooleanProperty(False)
     checked = StringProperty("")
@@ -689,6 +699,7 @@ class Random(Screen):
 
 class AddressSuccessful(Screen):
     """Getting Address Detail."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -848,6 +859,7 @@ class Sent(Screen):
 
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
@@ -887,12 +899,14 @@ class Trash(Screen):
 
 class Page(Screen):
     """Page Screen show widgets of page."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class Create(Screen):
     """Creates the screen widgets."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
@@ -908,6 +922,7 @@ class Create(Screen):
 
 class Setting(Screen):
     """Setting the Screen components."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -959,20 +974,19 @@ class NavigateApp(App):
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
+    # pylint: disable=inconsistent-return-statements
     @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
         if name == "text":
             if BMConfigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
-            else:
-                return "textdemo"
+            return "textdemo"
         elif name == "values":
             if BMConfigParser().addresses():
                 return [address[:16] + '..'
                         for address in BMConfigParser().addresses()]
-            else:
-                return "valuesdemo"
+            return "valuesdemo"
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
@@ -1020,8 +1034,7 @@ class NavigateApp(App):
         """It uses to get current account label."""
         if state.association:
             return state.association
-        else:
-            return "Bitmessage Login"
+        return "Bitmessage Login"
 
     @staticmethod
     def addingtoaddressbook():
@@ -1259,18 +1272,21 @@ class GrashofPopup(Popup):
 
 class AvatarSampleWidget(ILeftBody, Image):
     """Avatar Sample Widget."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     """Left icon sample widget."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -1478,6 +1494,7 @@ class AddbookDetailPopup(Popup):
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails."""
+
     # pylint: disable=too-few-public-methods
 
     def qrdisplay(self):
@@ -1647,6 +1664,7 @@ class Draft(Screen):
 
 class CustomSpinner(Spinner):
     """This class is used for setting spinner size."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
