@@ -61,6 +61,9 @@ import state
 
 from uikivysignaler import UIkivySignaler
 
+# pylint: disable=unused-argument
+# pylint: disable=broad-except
+
 
 def toast(text):
     """Method will display the toast message."""
@@ -221,9 +224,9 @@ class Inbox(Screen):
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
 
+    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
-        """Method updates the state of application,\
-        While the spinner remains on the screen."""
+        """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
             self.ids.ml.clear_widgets()
@@ -299,9 +302,9 @@ class MyAddress(Screen):
         p.open()
         p.set_address(fromaddress, label)
 
+    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
-        """Method updates the state of application, \
-        While the spinner remains on the screen."""
+        """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the myaddress screen data."""
             self.ids.ml.clear_widgets()
@@ -451,7 +454,6 @@ class RV(RecycleView):
     """Recycling View."""
 
     # pylint: disable=too-few-public-methods
-
     def __init__(self, **kwargs):
         """Recycling Method."""
         super(RV, self).__init__(**kwargs)
@@ -464,6 +466,8 @@ class DropDownWidget(BoxLayout):
     rv = ObjectProperty()
 
     # pylint: disable=inconsistent-return-statements
+    # pylint: disable=unused-variable
+    # pylint: disable=too-many-statements
     def send(self):
         """Send message from one address to another."""
         # pylint: disable=too-many-locals
@@ -482,8 +486,15 @@ class DropDownWidget(BoxLayout):
                 if status == 'success':
                     if state.detailPageType == 'draft' and state.send_draft_mail:
                         sqlExecute(
-                            "UPDATE sent SET toaddress = '{0}', fromaddress ='{1}' , subject = '{2}', message = '{3}', folder = 'sent' \
-                            WHERE lastactiontime = '{4}';".format(toAddress, fromAddress, subject, message, state.send_draft_mail))
+                            "UPDATE sent SET toaddress = '{0}' \
+                            , fromaddress ='{1}' , subject = '{2}'\
+                            , message = '{3}', folder = 'sent'\
+                            WHERE lastactiontime = '{4}';".format(
+                                toAddress,
+                                fromAddress,
+                                subject,
+                                message,
+                                state.send_draft_mail))
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
                         state.detailPageType = 'draft'
@@ -520,7 +531,8 @@ class DropDownWidget(BoxLayout):
                             0,
                             'sent',
                             encoding,
-                            BMConfigParser().getint('bitmessagesettings', 'ttl'))
+                            BMConfigParser().getint(
+                                'bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[0].children[2].children[0].ids
@@ -548,6 +560,7 @@ class DropDownWidget(BoxLayout):
                 msg = 'Please fill the form'
             self.address_error_message(msg)
 
+    # pylint: disable=attribute-defined-outside-init
     def address_error_message(self, msg):
         """Show Error Message."""
         self.box = FloatLayout()
@@ -583,6 +596,7 @@ class DropDownWidget(BoxLayout):
         self.ids.body.text = ''
 
     def auto_fill_fromaddr(self):
+        """Mehtod used to fill the text automatically From Address."""
         self.ids.ti.text = self.ids.btn.text
         self.ids.ti.focus = True
 
@@ -1079,9 +1093,10 @@ class NavigateApp(App):
         """Method is used for going on previous screen."""
         if key == 27:
             if self.root.ids.scr_mngr.current == "mailDetail":
-                self.root.ids.scr_mngr.current = \
-                    'sent' if state.detailPageType == 'sent' else 'inbox' if state.detailPageType == 'inbox' else 'draft'
-                if state.detailPageType in ['sent', 'inbox']:   
+                self.root.ids.scr_mngr.current = 'sent'\
+                    if state.detailPageType == 'sent' else 'inbox' \
+                    if state.detailPageType == 'inbox' else 'draft'
+                if state.detailPageType in ['sent', 'inbox']:
                     self.add_search_bar()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
@@ -1117,7 +1132,8 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
-        self.root.ids.toolbar.left_action_items = [['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.toolbar.left_action_items = [
+            ['arrow-left', lambda x: self.back_press()]]
         self.root.ids.myButton.opacity = 0
         self.root.ids.myButton.disabled = True
         self.root.ids.search_bar.clear_widgets()
@@ -1128,10 +1144,11 @@ class NavigateApp(App):
         composer_obj.subject.text = ''
 
     def back_press(self):
-        """This method is used for going back from composer to previous page"""
+        """Method used for going back from composer to previous page."""
         self.root.ids.myButton.opacity = 1
         self.root.ids.myButton.disabled = False
-        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.root.ids.toolbar.left_action_items = \
+            [['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.scr_mngr.current = 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
@@ -1177,9 +1194,9 @@ class NavigateApp(App):
             return state.draft_count
         elif text == 'All Mails':
             state.all_count = str(sqlQuery(
-                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' and \
-                 folder = 'sent' )+(SELECT count(*) FROM inbox where \
-                 toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
+                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' \
+                and folder = 'sent' )+(SELECT count(*) FROM inbox where \
+                toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
                     state.association))[0][0])
             return state.all_count
 
@@ -1278,6 +1295,7 @@ class GrashofPopup(Popup):
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
 
+    # pylint: disable=attribute-defined-outside-init
     def show_error_message(self):
         """Showing error message."""
         content = MDLabel(
@@ -1386,7 +1404,8 @@ class MailDetail(Screen):
         """Assigning mail details."""
         self.to_addr = data[0][0]
         self.from_addr = data[0][1]
-        self.subject = data[0][2].upper() if data[0][2].upper() else '(no subject)'
+        self.subject = data[0][2].upper(
+        ) if data[0][2].upper() else '(no subject)'
         self.message = data[0][3]
         if len(data[0]) == 6:
             self.status = data[0][4]
@@ -1439,13 +1458,15 @@ class MailDetail(Screen):
         pass
 
     def write_msg(self):
-        """This method is used to write on draft mail."""
+        """Method used to write on draft mail."""
         state.send_draft_mail = state.sentMailTime
-        composer_ids = self.parent.parent.parent.parent.parent.ids.sc3.children[0].ids
+        composer_ids = \
+            self.parent.parent.parent.parent.parent.ids.sc3.children[0].ids
         composer_ids.ti.text = self.from_addr
         composer_ids.btn.text = self.from_addr
         composer_ids.txt_input.text = self.to_addr
-        composer_ids.subject.text = '' if self.subject == '(no subject)' else self.subject.lower()
+        composer_ids.subject.text = '' \
+            if self.subject == '(no subject)' else self.subject.lower()
         composer_ids.body.text = self.message
         self.parent.parent.current = 'create'
 
@@ -1635,6 +1656,7 @@ class Draft(Screen):
             self.ids.ml.add_widget(content)
 
     def draft_detail(self, lastsenttime, *args):
+        """Method used to show draft Details."""
         state.detailPageType = 'draft'
         state.sentMailTime = lastsenttime
         if self.manager:
@@ -1668,6 +1690,7 @@ class Draft(Screen):
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
+    # pylint: disable=unused-variable
     @staticmethod
     def draft_msg(src_object):
         """Method used for saving draft mails."""
@@ -1815,9 +1838,9 @@ class Allmails(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
+    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
-        """Method updates the state of application, \
-        While the spinner remains on the screen."""
+        """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the allmails screen data."""
             self.ids.ml.clear_widgets()
