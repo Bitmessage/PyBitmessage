@@ -475,44 +475,54 @@ class DropDownWidget(BoxLayout):
                 status, addressVersionNumber, streamNumber, ripe = \
                     decodeAddress(toAddress)
                 if status == 'success':
-                    from addresses import addBMIfNotPresent
-                    toAddress = addBMIfNotPresent(toAddress)
-                    statusIconColor = 'red'
-                    if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                        print "addressVersionNumber > 4 \
-                        or addressVersionNumber <= 1"
-                    if streamNumber > 1 or streamNumber == 0:
-                        print "streamNumber > 1 or streamNumber == 0"
-                    if statusIconColor == 'red':
-                        print "shared.statusIconColor == 'red'"
-                    stealthLevel = BMConfigParser().safeGetInt(
-                        'bitmessagesettings', 'ackstealthlevel')
-                    from helper_ackPayload import genAckPayload
-                    ackdata = genAckPayload(streamNumber, stealthLevel)
-                    t = ()
-                    sqlExecute(
-                        '''INSERT INTO sent VALUES
-                        (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                        '',
-                        toAddress,
-                        ripe,
-                        fromAddress,
-                        subject,
-                        message,
-                        ackdata,
-                        int(time.time()),
-                        int(time.time()),
-                        0,
-                        'msgqueued',
-                        0,
-                        'sent',
-                        encoding,
-                        BMConfigParser().getint('bitmessagesettings', 'ttl'))
+                    if state.detailPageType == 'draft' and state.send_draft_mail:
+                        sqlExecute(
+                            "UPDATE sent SET toaddress = '{0}', fromaddress ='{1}' , subject = '{2}', message = '{3}', folder = 'sent' \
+                            WHERE lastactiontime = '{4}';".format(toAddress, fromAddress, subject, message, state.send_draft_mail))
+                        self.parent.parent.screens[15].clear_widgets()
+                        self.parent.parent.screens[15].add_widget(Draft())
+                        state.detailPageType = 'draft'
+                    else:
+                        from addresses import addBMIfNotPresent
+                        toAddress = addBMIfNotPresent(toAddress)
+                        statusIconColor = 'red'
+                        if addressVersionNumber > 4 or addressVersionNumber <= 1:
+                            print "addressVersionNumber > 4 \
+                            or addressVersionNumber <= 1"
+                        if streamNumber > 1 or streamNumber == 0:
+                            print "streamNumber > 1 or streamNumber == 0"
+                        if statusIconColor == 'red':
+                            print "shared.statusIconColor == 'red'"
+                        stealthLevel = BMConfigParser().safeGetInt(
+                            'bitmessagesettings', 'ackstealthlevel')
+                        from helper_ackPayload import genAckPayload
+                        ackdata = genAckPayload(streamNumber, stealthLevel)
+                        t = ()
+                        sqlExecute(
+                            '''INSERT INTO sent VALUES
+                            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                            '',
+                            toAddress,
+                            ripe,
+                            fromAddress,
+                            subject,
+                            message,
+                            ackdata,
+                            int(time.time()),
+                            int(time.time()),
+                            0,
+                            'msgqueued',
+                            0,
+                            'sent',
+                            encoding,
+                            BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[0].children[2].children[0].ids
                     self.parent.parent.screens[3].clear_widgets()
                     self.parent.parent.screens[3].add_widget(Sent())
+                    self.parent.parent.screens[16].clear_widgets()
+                    self.parent.parent.screens[16].add_widget(Allmails())
                     toLabel = ''
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
@@ -566,6 +576,10 @@ class DropDownWidget(BoxLayout):
         self.ids.txt_input.text = ''
         self.ids.subject.text = ''
         self.ids.body.text = ''
+
+    def auto_fill_fromaddr(self):
+        self.ids.ti.text = self.ids.btn.text
+        self.ids.ti.focus = True
 
 
 class MyTextInput(TextInput):
@@ -664,7 +678,7 @@ class Random(Screen):
     is_active = BooleanProperty(False)
     checked = StringProperty("")
 
-    def generateaddress(self):
+    def generateaddress(self, navApp):
         """Method for Address Generator."""
         streamNumberForAddress = 1
         label = self.ids.label.text
@@ -684,6 +698,7 @@ class Random(Screen):
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
             self.parent.parent.parent.parent.ids.sc10.clear_widgets()
             self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
+            navApp.add_search_bar()
             toast('New address created')
 
 
@@ -984,10 +999,12 @@ class NavigateApp(App):
         self.root.ids.sc4.clear_widgets()
         self.root.ids.sc5.clear_widgets()
         self.root.ids.sc16.clear_widgets()
+        self.root.ids.sc17.clear_widgets()
         self.root.ids.sc1.add_widget(Inbox())
         self.root.ids.sc4.add_widget(Sent())
         self.root.ids.sc5.add_widget(Trash())
         self.root.ids.sc16.add_widget(Draft())
+        self.root.ids.sc17.add_widget(Allmails())
         self.root.ids.scr_mngr.current = 'inbox'
 
         msg_counter_objs = \
@@ -1008,12 +1025,14 @@ class NavigateApp(App):
             sqlQuery(
                 "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and \
                 folder = 'draft' ;".format(state.association))[0][0])
+        state.all_count = str(int(state.sent_count) + int(state.inbox_count))
 
         if msg_counter_objs:
             msg_counter_objs.send_cnt.badge_text = state.sent_count
             msg_counter_objs.inbox_cnt.badge_text = state.inbox_count
             msg_counter_objs.trash_cnt.badge_text = state.trash_count
             msg_counter_objs.draft_cnt.badge_text = state.draft_count
+            msg_counter_objs.allmail_cnt.badge_text = state.all_count
 
     @staticmethod
     def getCurrentAccount():
@@ -1048,18 +1067,18 @@ class NavigateApp(App):
         if key == 27:
             if self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = \
-                    'sent' if state.detailPageType == 'sent' else 'inbox'
-                self.add_search_bar()
+                    'sent' if state.detailPageType == 'sent' else 'inbox' if state.detailPageType == 'inbox' else 'draft'
+                if state.detailPageType in ['sent', 'inbox']:   
+                    self.add_search_bar()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
-                from_addr = str(self.root.children[1].children[0].children[
-                    0].children[0].children[0].ids.ti.text)
-                to_addr = str(self.root.children[1].children[0].children[
-                    0].children[0].children[0].ids.txt_input.text)
-                if from_addr and to_addr:
+                from_addr = str(self.root.ids.sc3.children[0].ids.ti.text)
+                to_addr = str(self.root.ids.sc3.children[0].ids.txt_input.text)
+                if from_addr and to_addr and state.detailPageType != 'draft':
                     Draft().draft_msg(composer_objs)
                 self.root.ids.scr_mngr.current = 'inbox'
                 self.add_search_bar()
+                self.back_press()
             elif self.root.ids.scr_mngr.current == "showqrcode":
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
@@ -1068,13 +1087,13 @@ class NavigateApp(App):
                 self.root.ids.scr_mngr.current = 'inbox'
                 self.add_search_bar()
             self.root.ids.scr_mngr.transition.direction = 'right'
-            self.root.ids.scr_mngr.transition.bind(on_complete=self.restart)
+            self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
 
-    def restart(self, *args):
+    def reset(self, *args):
         """Method used to set transition direction."""
         self.root.ids.scr_mngr.transition.direction = 'left'
-        self.root.ids.scr_mngr.transition.unbind(on_complete=self.restart)
+        self.root.ids.scr_mngr.transition.unbind(on_complete=self.reset)
 
     @staticmethod
     def status_dispatching(data):
@@ -1085,12 +1104,25 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
+        self.root.ids.toolbar.left_action_items = [['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.myButton.opacity = 0
+        self.root.ids.myButton.disabled = True
         self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
         composer_obj.txt_input.text = ''
         composer_obj.subject.text = ''
+
+    def back_press(self):
+        """This method is used for going back from composer to previous page"""
+        self.root.ids.myButton.opacity = 1
+        self.root.ids.myButton.disabled = False
+        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.root.ids.scr_mngr.current = 'inbox'
+        self.root.ids.scr_mngr.transition.direction = 'right'
+        self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
+        self.add_search_bar()
 
     @staticmethod
     def on_stop():
@@ -1132,9 +1164,9 @@ class NavigateApp(App):
             return state.draft_count
         elif text == 'All Mails':
             state.all_count = str(sqlQuery(
-                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}'\
-                and folder != 'trash' )+(SELECT count(*) FROM inbox where \
-                toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
+                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' and \
+                 folder = 'sent' )+(SELECT count(*) FROM inbox where \
+                 toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
                     state.association))[0][0])
             return state.all_count
 
@@ -1212,12 +1244,13 @@ class GrashofPopup(Popup):
         """Method is used for Saving Contacts."""
         my_addresses = \
             self.parent.children[1].children[2].children[0].ids.btn.values
-        entered_text = str(self.ids.label.text)
+        entered_text = str(self.ids.address.text)
         if entered_text in my_addresses:
-            self.ids.label.focus = True
-            self.ids.label.helper_text = 'Please Enter corrent address'
+            self.ids.address.focus = False
+            self.ids.address.helper_text = 'Please Enter corrent address'
         elif entered_text == '':
             self.ids.label.focus = True
+            # self.ids.address.focus = True
             self.ids.label.helper_text = 'This field is required'
 
         label = self.ids.label.text
@@ -1319,7 +1352,7 @@ class MailDetail(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method MailDetail mails."""
         self.page_type = state.detailPageType if state.detailPageType else ''
-        if state.detailPageType == 'sent':
+        if state.detailPageType == 'sent' or state.detailPageType == 'draft':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message, status, \
                 ackdata from sent where lastactiontime = {};".format(
@@ -1337,7 +1370,7 @@ class MailDetail(Screen):
         """Assigning mail details."""
         self.to_addr = data[0][0]
         self.from_addr = data[0][1]
-        self.subject = data[0][2].upper()
+        self.subject = data[0][2].upper() if data[0][2].upper() else '(no subject)'
         self.message = data[0][3]
         if len(data[0]) == 6:
             self.status = data[0][4]
@@ -1388,6 +1421,17 @@ class MailDetail(Screen):
     def copy_sent_mail(self):
         """Method used for copying sent mail to the composer."""
         pass
+
+    def write_msg(self):
+        """This method is used to write on draft mail."""
+        state.send_draft_mail = state.sentMailTime
+        composer_ids = self.parent.parent.parent.parent.parent.ids.sc3.children[0].ids
+        composer_ids.ti.text = self.from_addr
+        composer_ids.btn.text = self.from_addr
+        composer_ids.txt_input.text = self.to_addr
+        composer_ids.subject.text = '' if self.subject == '(no subject)' else self.subject.lower()
+        composer_ids.body.text = self.message
+        self.parent.parent.current = 'create'
 
 
 class MyaddDetailPopup(Popup):
@@ -1520,9 +1564,9 @@ class Draft(Screen):
             xAddress, account, "draft", where, what, False)
         if state.msg_counter_objs:
             state.msg_counter_objs.draft_cnt.badge_text = str(len(queryreturn))
-            state.all_count = str(int(state.all_count) + 1)
-            state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
-            state.msg_counter_objs = None
+            # state.all_count = str(int(state.all_count) + 1)
+            # state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
+            # state.msg_counter_objs = None
 
         if queryreturn:
             for mail in queryreturn:
@@ -1542,6 +1586,8 @@ class Draft(Screen):
                     text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(
                     source='./images/avatar.png'))
+                meny.bind(on_press=partial(
+                    self.draft_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
                     carousel.height = 150
@@ -1570,6 +1616,17 @@ class Draft(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def draft_detail(self, lastsenttime, *args):
+        state.detailPageType = 'draft'
+        state.sentMailTime = lastsenttime
+        if self.manager:
+            src_mng_obj = self.manager
+        else:
+            src_mng_obj = self.parent.parent
+        src_mng_obj.screens[13].clear_widgets()
+        src_mng_obj.screens[13].add_widget(MailDetail())
+        src_mng_obj.current = 'mailDetail'
 
     def delete_draft(self, data_index, instance, *args):
         """Method used to delete draft message permanently."""
@@ -1694,8 +1751,8 @@ class Allmails(Screen):
             inbox WHERE folder = 'inbox' and toaddress = '{}';".format(
                 account))
         sent_and_draft = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from\
-            sent WHERE folder != 'trash' and fromaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder from sent \
+            WHERE folder = 'sent' and fromaddress = '{}';".format(
                 account))
 
         all_mails = inbox + sent_and_draft

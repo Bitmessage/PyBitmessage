@@ -304,7 +304,7 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(600)
+            height: dp(500)
             padding: dp(32)
             spacing: 15
             BoxLayout:
@@ -326,7 +326,7 @@ NavigationLayout:
                         background_color: app.theme_cls.primary_dark
                         id: btn
                         values: app.variable_1
-                        on_text: ti.text = self.text if self.text != 'Select' else ''
+                        on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
                         option_cls: Factory.get("MySpinnerOption")
                         background_color: color_button if self.state == 'normal' else color_button_pressed
                         background_down: 'atlas://data/images/defaulttheme/spinner'
@@ -344,7 +344,7 @@ NavigationLayout:
                     id: txt_input
                     size_hint_y: None
                     font_size: '13sp'
-                    height: 100
+                    height: 70
                     hint_text: 'type or search recipients address starting with BM-'
                 RV:
                     id: rv
@@ -525,7 +525,7 @@ NavigationLayout:
                     MDRaisedButton:
                         size_hint: .5, None
                         height: dp(40)
-                        on_release: root.generateaddress()
+                        on_release: root.generateaddress(app)
                         opposite_colors: True
                         MDLabel:
                             font_style: 'Title'
@@ -828,10 +828,10 @@ NavigationLayout:
                 MDRaisedButton:
                     size_hint: 1, None
                     height: dp(40)
-                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail()
+                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail() if root.page_type == 'sent' else root.write_msg()
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Reply' if root.page_type == 'inbox' else 'Copy'
+                        text: 'Reply' if root.page_type == 'inbox' else 'Copy' if root.page_type == 'sent' else 'Write'
                         font_size: '13sp'
                         color: (1,1,1,1)
                         halign: 'center'
