@@ -577,6 +577,10 @@ class DropDownWidget(BoxLayout):
         self.ids.subject.text = ''
         self.ids.body.text = ''
 
+    def auto_fill_fromaddr(self):
+        self.ids.ti.text = self.ids.btn.text
+        self.ids.ti.focus = True
+
 
 class MyTextInput(TextInput):
     """Takes the text input in the field."""
@@ -674,7 +678,7 @@ class Random(Screen):
     is_active = BooleanProperty(False)
     checked = StringProperty("")
 
-    def generateaddress(self):
+    def generateaddress(self, navApp):
         """Method for Address Generator."""
         streamNumberForAddress = 1
         label = self.ids.label.text
@@ -694,6 +698,7 @@ class Random(Screen):
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
             self.parent.parent.parent.parent.ids.sc10.clear_widgets()
             self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
+            navApp.add_search_bar()
             toast('New address created')
 
 
@@ -1067,14 +1072,13 @@ class NavigateApp(App):
                     self.add_search_bar()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
-                from_addr = str(self.root.children[1].children[0].children[
-                    0].children[0].children[0].ids.ti.text)
-                to_addr = str(self.root.children[1].children[0].children[
-                    0].children[0].children[0].ids.txt_input.text)
+                from_addr = str(self.root.ids.sc3.children[0].ids.ti.text)
+                to_addr = str(self.root.ids.sc3.children[0].ids.txt_input.text)
                 if from_addr and to_addr and state.detailPageType != 'draft':
                     Draft().draft_msg(composer_objs)
                 self.root.ids.scr_mngr.current = 'inbox'
                 self.add_search_bar()
+                self.back_press()
             elif self.root.ids.scr_mngr.current == "showqrcode":
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
@@ -1083,13 +1087,13 @@ class NavigateApp(App):
                 self.root.ids.scr_mngr.current = 'inbox'
                 self.add_search_bar()
             self.root.ids.scr_mngr.transition.direction = 'right'
-            self.root.ids.scr_mngr.transition.bind(on_complete=self.restart)
+            self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
 
-    def restart(self, *args):
+    def reset(self, *args):
         """Method used to set transition direction."""
         self.root.ids.scr_mngr.transition.direction = 'left'
-        self.root.ids.scr_mngr.transition.unbind(on_complete=self.restart)
+        self.root.ids.scr_mngr.transition.unbind(on_complete=self.reset)
 
     @staticmethod
     def status_dispatching(data):
@@ -1100,12 +1104,25 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
+        self.root.ids.toolbar.left_action_items = [['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.myButton.opacity = 0
+        self.root.ids.myButton.disabled = True
         self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
         composer_obj.txt_input.text = ''
         composer_obj.subject.text = ''
+
+    def back_press(self):
+        """This method is used for going back from composer to previous page"""
+        self.root.ids.myButton.opacity = 1
+        self.root.ids.myButton.disabled = False
+        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.root.ids.scr_mngr.current = 'inbox'
+        self.root.ids.scr_mngr.transition.direction = 'right'
+        self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
+        self.add_search_bar()
 
     @staticmethod
     def on_stop():
@@ -1227,12 +1244,13 @@ class GrashofPopup(Popup):
         """Method is used for Saving Contacts."""
         my_addresses = \
             self.parent.children[1].children[2].children[0].ids.btn.values
-        entered_text = str(self.ids.label.text)
+        entered_text = str(self.ids.address.text)
         if entered_text in my_addresses:
-            self.ids.label.focus = True
-            self.ids.label.helper_text = 'Please Enter corrent address'
+            self.ids.address.focus = False
+            self.ids.address.helper_text = 'Please Enter corrent address'
         elif entered_text == '':
             self.ids.label.focus = True
+            # self.ids.address.focus = True
             self.ids.label.helper_text = 'This field is required'
 
         label = self.ids.label.text
