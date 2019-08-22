@@ -465,10 +465,7 @@ class DropDownWidget(BoxLayout):
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
-    # pylint: disable=inconsistent-return-statements
-    # pylint: disable=unused-variable
-    # pylint: disable=too-many-statements
-    def send(self):
+    def send(self, navApp):
         """Send message from one address to another."""
         # pylint: disable=too-many-locals
         fromAddress = str(self.ids.ti.text)
@@ -550,6 +547,7 @@ class DropDownWidget(BoxLayout):
                     self.parent.parent.current = 'inbox'
                     self.ids.btn.text = 'select'
                     self.ids.ti.text = ''
+                    navApp.back_press()
                     toast('send')
                     return None
                 else:
@@ -914,12 +912,11 @@ class Trash(Screen):
 
         for item in trash_data:
             meny = ThreeLineAvatarIconListItem(
-                text='Draft' if item[4] == 'draft' else item[1],
-                secondary_text=item[2] if item[2] else item[1],
+                text=item[1],
+                secondary_text=item[2],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            img_latter = './images/avatar.png' if item[
-                4] == 'draft' else './images/text_images/{}.png'.format(
+            img_latter = './images/text_images/{}.png'.format(
                     item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
                         2][0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
@@ -1020,7 +1017,7 @@ class NavigateApp(App):
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
         address_label = self.current_address_label(
-            BMConfigParser().get(text, 'label'))
+            BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
         state.association = text
         self.root.ids.sc1.clear_widgets()
@@ -1201,16 +1198,19 @@ class NavigateApp(App):
             return state.all_count
 
     @staticmethod
-    def current_address_label(current_address=None):
+    def current_address_label(current_add_label = None, current_addr = None):
         """Getting current address labels."""
-        if BMConfigParser().addresses() or current_address:
-            if current_address:
-                first_name = current_address
+        if BMConfigParser().addresses():
+            if current_add_label:
+                first_name = current_add_label
+                addr = current_addr
             else:
-                first_name = BMConfigParser().get(
-                    BMConfigParser().addresses()[0], 'label')
+                addr = BMConfigParser().addresses()[0]
+                first_name = BMConfigParser().get(addr, 'label')
             f_name = first_name.split()
-            return f_name[0][:14] + '...' if len(f_name[0]) > 15 else f_name[0]
+            label = f_name[0][:14].capitalize() + '...' if len(f_name[0]) > 15 else f_name[0].capitalize()
+            address = ' (' + addr[:6] + '...)'
+            return label + address
         return ''
 
     def searchQuery(self, instance, *args):
@@ -1682,11 +1682,11 @@ class Draft(Screen):
                 int(state.draft_count) - 1)
             msg_count_objs.allmail_cnt.badge_text = str(
                 int(state.all_count) - 1)
-            msg_count_objs.trash_cnt.badge_text = str(
-                int(state.trash_count) + 1)
+            # msg_count_objs.trash_cnt.badge_text = str(
+                # int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
             state.all_count = str(int(state.all_count) - 1)
-            state.trash_count = str(int(state.trash_count) + 1)
+            # state.trash_count = str(int(state.trash_count) + 1)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
