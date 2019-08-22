@@ -73,8 +73,8 @@ from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
 
 import defaults
+import helper_db
 import helper_inbox
-import helper_sent
 import network.stats
 import proofofwork
 import queues
@@ -587,14 +587,9 @@ class BMRPCDispatcher(object):
         label = self._decode(label, "base64")
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
-        # TODO: add unique together constraint in the table
-        queryreturn = sqlQuery(
-            "SELECT address FROM addressbook WHERE address=?", address)
-        if queryreturn != []:
+        if not helper_db.put_addressbook(label, address):
             raise APIError(
                 16, 'You already have this address in your address book.')
-
-        sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
@@ -1110,18 +1105,15 @@ class BMRPCDispatcher(object):
         if not fromAddressEnabled:
             raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
 
-        ackdata = helper_sent.insert(
-            toAddress=toAddress, fromAddress=fromAddress,
-            subject=subject, message=message, encoding=encodingType, ttl=TTL)
+        stealthLevel = BMConfigParser().safeGetInt(
+            'bitmessagesettings', 'ackstealthlevel')
+        ackdata = genAckPayload(streamNumber, stealthLevel)
 
-        toLabel = ''
-        queryreturn = sqlQuery(
-            "SELECT label FROM addressbook WHERE address=?", toAddress)
-        try:
-            toLabel, = queryreturn[0][0]
-        except IndexError:
-            pass
+        helper_db.put_sent(
+            toAddress, fromAddress, subject, message, ackdata,
+            'msgqueued', encodingType, ttl=TTL)
 
+        toLabel = helper_db.get_label(toAddress) or ''
         queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
         queues.workerQueue.put(('sendmessage', toAddress))
@@ -1151,15 +1143,15 @@ class BMRPCDispatcher(object):
             self.config.getboolean(fromAddress, 'enabled')
         except BaseException:
             raise APIError(
-                13, 'Could not find your fromAddress in the keys.dat file.')
-        toAddress = str_broadcast_subscribers
+                13, 'could not find your fromAddress in the keys.dat file.')
+        streamNumber = decodeAddress(fromAddress)[2]
+        ackdata = genAckPayload(streamNumber, 0)
+        toAddress = toLabel = str_broadcast_subscribers
 
-        ackdata = helper_sent.insert(
-            fromAddress=fromAddress, subject=subject,
-            message=message, status='broadcastqueued',
-            encoding=encodingType)
+        helper_db.put_sent(
+            toAddress, fromAddress, subject, message, ackdata,
+            'broadcastqueued', encodingType, ttl=TTL)
 
-        toLabel = str_broadcast_subscribers
         queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
         queues.workerQueue.put(('sendbroadcast', ''))
@@ -1197,15 +1189,8 @@ class BMRPCDispatcher(object):
             except UnicodeDecodeError:
                 raise APIError(17, 'Label is not valid UTF-8 data.')
         self._verifyAddress(address)
-        address = addBMIfNotPresent(address)
-        # First we must check to see if the address is already in the
-        # subscriptions list.
-        queryreturn = sqlQuery(
-            "SELECT * FROM subscriptions WHERE address=?", address)
-        if queryreturn:
+        if not helper_db.put_subscriptions(label, address):
             raise APIError(16, 'You are already subscribed to that address.')
-        sqlExecute(
-            "INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
         shared.reloadBroadcastSendersForWhichImWatching()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
