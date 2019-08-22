@@ -61,6 +61,9 @@ import state
 
 from uikivysignaler import UIkivySignaler
 
+# pylint: disable=unused-argument
+# pylint: disable=broad-except
+
 
 def toast(text):
     """Method will display the toast message."""
@@ -72,6 +75,7 @@ def toast(text):
 
 class Navigatorss(MDNavigationDrawer):
     """Navigators class contains image, title and logo."""
+
     # pylint: disable=too-few-public-methods
     image_source = StringProperty('images/qidenticon_two.png')
     title = StringProperty('Navigation')
@@ -178,7 +182,6 @@ class Inbox(Screen):
             src_mng_obj = self.manager
         else:
             src_mng_obj = self.parent.parent
-
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
         src_mng_obj.current = 'mailDetail'
@@ -195,16 +198,20 @@ class Inbox(Screen):
                 int(state.inbox_count) - 1)
             msg_count_objs.trash_cnt.badge_text = str(
                 int(state.trash_count) + 1)
-            state.inbox_count = str(int(state.inbox_count) - 1)
-            state.trash_count = str(int(state.trash_count) + 1)
-        self.ids.ml.remove_widget(instance.parent.parent)
+            state.inbox_count = str(
+                int(state.inbox_count) - 1)
+            state.trash_count = str(
+                int(state.trash_count) + 1)
+        self.ids.ml.remove_widget(
+            instance.parent.parent)
         toast('Deleted')
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing."""
-        sqlExecute("UPDATE inbox SET folder = 'trash' WHERE \
-            received = {};".format(data_index))
+        sqlExecute(
+            "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
+                data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -217,9 +224,9 @@ class Inbox(Screen):
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
 
+    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
-        """Method updates the state of application, \
-        While the spinner remains on the screen."""
+        """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
             self.ids.ml.clear_widgets()
@@ -247,9 +254,8 @@ class MyAddress(Screen):
         """Clock Schdule for method inbox accounts."""
         addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
-            filtered_list = filter(
-                lambda addr: self.filter_address(
-                    addr), BMConfigParser().addresses())
+            filtered_list = filter(lambda addr: self.filter_address(
+                addr), BMConfigParser().addresses())
             addresses_list = filtered_list
         if addresses_list:
             data = []
@@ -296,9 +302,9 @@ class MyAddress(Screen):
         p.open()
         p.set_address(fromaddress, label)
 
+    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
-        """Method updates the state of application, \
-        While the spinner remains on the screen."""
+        """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the myaddress screen data."""
             self.ids.ml.clear_widgets()
@@ -310,16 +316,14 @@ class MyAddress(Screen):
             screens_obj.add_widget(MyAddress())
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
-
         Clock.schedule_once(refresh_callback, 1)
 
     @staticmethod
     def filter_address(address):
         """Method will filter the my address list data."""
-        if filter(lambda x: (
-                state.searcing_text).lower() in x, [
-                    BMConfigParser().get(
-                        address, 'label').lower(), address.lower()]):
+        if filter(lambda x: (state.searcing_text).lower() in x, [
+                BMConfigParser().get(
+                    address, 'label').lower(), address.lower()]):
             return True
         return False
 
@@ -411,6 +415,7 @@ class AddressBook(Screen):
 class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
     """Adds selection and focus behaviour to the view."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -428,6 +433,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         return super(SelectableLabel, self).refresh_view_attrs(
             rv, index, data)
 
+    # pylint: disable=inconsistent-return-statements
     def on_touch_down(self, touch):
         """Add selection on touch down."""
         if super(SelectableLabel, self).on_touch_down(touch):
@@ -446,8 +452,8 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 
 class RV(RecycleView):
     """Recycling View."""
-    # pylint: disable=too-few-public-methods
 
+    # pylint: disable=too-few-public-methods
     def __init__(self, **kwargs):
         """Recycling Method."""
         super(RV, self).__init__(**kwargs)
@@ -477,8 +483,15 @@ class DropDownWidget(BoxLayout):
                 if status == 'success':
                     if state.detailPageType == 'draft' and state.send_draft_mail:
                         sqlExecute(
-                            "UPDATE sent SET toaddress = '{0}', fromaddress ='{1}' , subject = '{2}', message = '{3}', folder = 'sent' \
-                            WHERE lastactiontime = '{4}';".format(toAddress, fromAddress, subject, message, state.send_draft_mail))
+                            "UPDATE sent SET toaddress = '{0}' \
+                            , fromaddress ='{1}' , subject = '{2}'\
+                            , message = '{3}', folder = 'sent'\
+                            WHERE lastactiontime = '{4}';".format(
+                                toAddress,
+                                fromAddress,
+                                subject,
+                                message,
+                                state.send_draft_mail))
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
                         state.detailPageType = 'draft'
@@ -515,7 +528,8 @@ class DropDownWidget(BoxLayout):
                             0,
                             'sent',
                             encoding,
-                            BMConfigParser().getint('bitmessagesettings', 'ttl'))
+                            BMConfigParser().getint(
+                                'bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[0].children[2].children[0].ids
@@ -544,6 +558,7 @@ class DropDownWidget(BoxLayout):
                 msg = 'Please fill the form'
             self.address_error_message(msg)
 
+    # pylint: disable=attribute-defined-outside-init
     def address_error_message(self, msg):
         """Show Error Message."""
         self.box = FloatLayout()
@@ -579,6 +594,7 @@ class DropDownWidget(BoxLayout):
         self.ids.body.text = ''
 
     def auto_fill_fromaddr(self):
+        """Mehtod used to fill the text automatically From Address."""
         self.ids.ti.text = self.ids.btn.text
         self.ids.ti.focus = True
 
@@ -622,18 +638,21 @@ class MyTextInput(TextInput):
 
 class Payment(Screen):
     """Payment Method."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class Login(Screen):
     """Login Screeen."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class NetworkStat(Screen):
     """Method used to show network stat."""
+
     # pylint: disable=too-few-public-methods
     text_variable_1 = StringProperty(
         '{0}::{1}'.format('Total Connections', '0'))
@@ -669,12 +688,14 @@ class NetworkStat(Screen):
 
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class Random(Screen):
     """Generates Random Address."""
+
     # pylint: disable=too-few-public-methods
     is_active = BooleanProperty(False)
     checked = StringProperty("")
@@ -705,6 +726,7 @@ class Random(Screen):
 
 class AddressSuccessful(Screen):
     """Getting Address Detail."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -864,6 +886,7 @@ class Sent(Screen):
 
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
@@ -902,12 +925,14 @@ class Trash(Screen):
 
 class Page(Screen):
     """Page Screen show widgets of page."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class Create(Screen):
     """Creates the screen widgets."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
@@ -923,6 +948,7 @@ class Create(Screen):
 
 class Setting(Screen):
     """Setting the Screen components."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -974,20 +1000,19 @@ class NavigateApp(App):
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
+    # pylint: disable=inconsistent-return-statements
     @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown."""
         if name == "text":
             if BMConfigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
-            else:
-                return "textdemo"
+            return "textdemo"
         elif name == "values":
             if BMConfigParser().addresses():
                 return [address[:16] + '..'
                         for address in BMConfigParser().addresses()]
-            else:
-                return "valuesdemo"
+            return "valuesdemo"
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
@@ -1039,8 +1064,7 @@ class NavigateApp(App):
         """It uses to get current account label."""
         if state.association:
             return state.association
-        else:
-            return "Bitmessage Login"
+        return "Bitmessage Login"
 
     @staticmethod
     def addingtoaddressbook():
@@ -1066,9 +1090,10 @@ class NavigateApp(App):
         """Method is used for going on previous screen."""
         if key == 27:
             if self.root.ids.scr_mngr.current == "mailDetail":
-                self.root.ids.scr_mngr.current = \
-                    'sent' if state.detailPageType == 'sent' else 'inbox' if state.detailPageType == 'inbox' else 'draft'
-                if state.detailPageType in ['sent', 'inbox']:   
+                self.root.ids.scr_mngr.current = 'sent'\
+                    if state.detailPageType == 'sent' else 'inbox' \
+                    if state.detailPageType == 'inbox' else 'draft'
+                if state.detailPageType in ['sent', 'inbox']:
                     self.add_search_bar()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
@@ -1104,7 +1129,8 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
-        self.root.ids.toolbar.left_action_items = [['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.toolbar.left_action_items = [
+            ['arrow-left', lambda x: self.back_press()]]
         self.root.ids.myButton.opacity = 0
         self.root.ids.myButton.disabled = True
         self.root.ids.search_bar.clear_widgets()
@@ -1115,10 +1141,11 @@ class NavigateApp(App):
         composer_obj.subject.text = ''
 
     def back_press(self):
-        """This method is used for going back from composer to previous page"""
+        """Method used for going back from composer to previous page."""
         self.root.ids.myButton.opacity = 1
         self.root.ids.myButton.disabled = False
-        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.root.ids.toolbar.left_action_items = \
+            [['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.scr_mngr.current = 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
@@ -1164,9 +1191,9 @@ class NavigateApp(App):
             return state.draft_count
         elif text == 'All Mails':
             state.all_count = str(sqlQuery(
-                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' and \
-                 folder = 'sent' )+(SELECT count(*) FROM inbox where \
-                 toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
+                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' \
+                and folder = 'sent' )+(SELECT count(*) FROM inbox where \
+                toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
                     state.association))[0][0])
             return state.all_count
 
@@ -1268,6 +1295,7 @@ class GrashofPopup(Popup):
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
 
+    # pylint: disable=attribute-defined-outside-init
     def show_error_message(self):
         """Showing error message."""
         content = MDLabel(
@@ -1295,18 +1323,21 @@ class GrashofPopup(Popup):
 
 class AvatarSampleWidget(ILeftBody, Image):
     """Avatar Sample Widget."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     """Left icon sample widget."""
+
     # pylint: disable=too-few-public-methods
     pass
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget."""
+
     # pylint: disable=too-few-public-methods
     pass
 
@@ -1373,7 +1404,8 @@ class MailDetail(Screen):
         """Assigning mail details."""
         self.to_addr = data[0][0]
         self.from_addr = data[0][1]
-        self.subject = data[0][2].upper() if data[0][2].upper() else '(no subject)'
+        self.subject = data[0][2].upper(
+        ) if data[0][2].upper() else '(no subject)'
         self.message = data[0][3]
         if len(data[0]) == 6:
             self.status = data[0][4]
@@ -1426,13 +1458,15 @@ class MailDetail(Screen):
         pass
 
     def write_msg(self):
-        """This method is used to write on draft mail."""
+        """Method used to write on draft mail."""
         state.send_draft_mail = state.sentMailTime
-        composer_ids = self.parent.parent.parent.parent.parent.ids.sc3.children[0].ids
+        composer_ids = \
+            self.parent.parent.parent.parent.parent.ids.sc3.children[0].ids
         composer_ids.ti.text = self.from_addr
         composer_ids.btn.text = self.from_addr
         composer_ids.txt_input.text = self.to_addr
-        composer_ids.subject.text = '' if self.subject == '(no subject)' else self.subject.lower()
+        composer_ids.subject.text = '' \
+            if self.subject == '(no subject)' else self.subject.lower()
         composer_ids.body.text = self.message
         self.parent.parent.current = 'create'
 
@@ -1525,6 +1559,7 @@ class AddbookDetailPopup(Popup):
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails."""
+
     # pylint: disable=too-few-public-methods
 
     def qrdisplay(self):
@@ -1621,6 +1656,7 @@ class Draft(Screen):
             self.ids.ml.add_widget(content)
 
     def draft_detail(self, lastsenttime, *args):
+        """Method used to show draft Details."""
         state.detailPageType = 'draft'
         state.sentMailTime = lastsenttime
         if self.manager:
@@ -1654,6 +1690,7 @@ class Draft(Screen):
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
+    # pylint: disable=unused-variable
     @staticmethod
     def draft_msg(src_object):
         """Method used for saving draft mails."""
@@ -1707,6 +1744,7 @@ class Draft(Screen):
 
 class CustomSpinner(Spinner):
     """This class is used for setting spinner size."""
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
@@ -1800,9 +1838,9 @@ class Allmails(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
+    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
-        """Method updates the state of application, \
-        While the spinner remains on the screen."""
+        """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the allmails screen data."""
             self.ids.ml.clear_widgets()
