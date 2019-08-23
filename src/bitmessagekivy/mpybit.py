@@ -494,7 +494,8 @@ class DropDownWidget(BoxLayout):
                                 state.send_draft_mail))
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
-                        state.detailPageType = 'draft'
+                        state.detailPageType = ''
+                        state.send_draft_mail = None
                     else:
                         from addresses import addBMIfNotPresent
                         toAddress = addBMIfNotPresent(toAddress)
@@ -1139,6 +1140,7 @@ class NavigateApp(App):
         composer_obj.btn.text = 'Select'
         composer_obj.txt_input.text = ''
         composer_obj.subject.text = ''
+        composer_obj.body.text = ''
 
     def back_press(self):
         """Method used for going back from composer to previous page."""
@@ -1150,6 +1152,7 @@ class NavigateApp(App):
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         self.add_search_bar()
+        state.detailPageType = ''
 
     @staticmethod
     def on_stop():
@@ -1457,7 +1460,7 @@ class MailDetail(Screen):
         """Method used for copying sent mail to the composer."""
         pass
 
-    def write_msg(self):
+    def write_msg(self, navApp):
         """Method used to write on draft mail."""
         state.send_draft_mail = state.sentMailTime
         composer_ids = \
@@ -1469,6 +1472,7 @@ class MailDetail(Screen):
             if self.subject == '(no subject)' else self.subject.lower()
         composer_ids.body.text = self.message
         self.parent.parent.current = 'create'
+        navApp.clear_composer()
 
 
 class MyaddDetailPopup(Popup):
