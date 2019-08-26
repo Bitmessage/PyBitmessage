@@ -1450,6 +1450,8 @@ class MailDetail(Screen):
         state.all_count = str(int(state.all_count) - 1)
         self.parent.parent.screens[4].clear_widgets()
         self.parent.parent.screens[4].add_widget(Trash())
+        self.parent.parent.screens[16].clear_widgets()
+        self.parent.parent.screens[16].add_widget(Allmails())
         toast('Deleted')
 
     def inbox_reply(self):
