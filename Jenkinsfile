@@ -122,7 +122,7 @@ pipeline {
         //     }
         // }
 
-         stage('Static code metrics') {
+        stage('Static code metrics') {
             steps {
                 echo "Raw metrics"
                 sh  ''' source activate ${BUILD_TAG}
@@ -166,6 +166,8 @@ pipeline {
                  subject: "${env.projectName} ${env.JOB_NAME} (${env.BUILD_NUMBER}) build successful",
                  to: env.emailTo
         }
+
+        
     }
 
 
