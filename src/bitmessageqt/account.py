@@ -34,7 +34,8 @@ def getSortedAccounts():
 
 
 def getSortedSubscriptions(count=False):
-    """Actually return a grouped dictionary rather than a sorted list
+    """Actually return a grouped dictionary rather than a sorted list."""
+    """
     :param count: Whether to count messages for each fromaddress in the inbox
     :type count: bool, default False
     :retuns: dict keys are addresses, values are dicts containing settings
@@ -51,7 +52,8 @@ def getSortedSubscriptions(count=False):
         ret[address]["inbox"]['enabled'] = enabled
         ret[address]["inbox"]['count'] = 0
     if count:
-        queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
+        queryreturn = sqlQuery(
+            '''SELECT fromaddress, folder, count(msgid) as cnt
             FROM inbox, subscriptions ON subscriptions.address = inbox.fromaddress
             WHERE read = 0 AND toaddress = ?
             GROUP BY inbox.fromaddress, folder''', str_broadcast_subscribers)
@@ -82,12 +84,13 @@ def accountClass(address):
         return subscription
     try:
         gateway = BMConfigParser().get(address, "gateway")
-        for _, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+        for _, cls in inspect.getmembers(
+                sys.modules[__name__], inspect.isclass):
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
         # general gateway
         return GatewayAccount(address)
-    except:
+    except Exception:
         pass
     # no gateway
     return BMAccount(address)
@@ -108,7 +111,8 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
             elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
-                    '''select label from subscriptions where address=?''', self.address):
+                    '''select label from subscriptions where address=?''',
+                    self.address):
                 self.type = AccountMixin.SUBSCRIPTION
             else:
                 self.type = AccountMixin.NORMAL
@@ -132,7 +136,8 @@ class BMAccount(object):
             self.type = AccountMixin.BROADCAST
         else:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                '''select label from subscriptions where address=?''',
+                self.address)
             if queryreturn:
                 self.type = AccountMixin.SUBSCRIPTION
 
@@ -148,7 +153,8 @@ class BMAccount(object):
                 label, = row
         else:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', address)
+                '''select label from subscriptions where address=?''',
+                address)
             if queryreturn != []:
                 for row in queryreturn:
                     label, = row
@@ -208,8 +214,10 @@ class GatewayAccount(BMAccount):
     def send(self):
         """Override the send method for gateway accounts."""
         # pylint: disable=unused-variable
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+            self.toAddress)
+        stealthLevel = BMConfigParser().safeGetInt(
+            'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -228,9 +236,9 @@ class GatewayAccount(BMAccount):
             'sent',  # folder
             2,  # encodingtype
             # not necessary to have a TTL higher than 2 days
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)
+            min(BMConfigParser().getint(
+                'bitmessagesettings', 'ttl'), 86400 * 2)
         )
-
         queues.workerQueue.put(('sendmessage', self.toAddress))
 
 
@@ -331,7 +339,8 @@ class MailchuckAccount(GatewayAccount):
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """Parsemessage specific to a MailchuckAccount."""
-        super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(MailchuckAccount, self).parseMessage(
+            toAddress, fromAddress, subject, message)
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
             if matches is not None:
@@ -352,6 +361,7 @@ class MailchuckAccount(GatewayAccount):
                     self.toLabel = matches.group(1)
                     self.toAddress = matches.group(1)
         self.feedback = self.ALL_OK
-        if fromAddress == self.registrationAddress and self.subject == "Registration Request Denied":
+        if fromAddress == self.registrationAddress \
+                and self.subject == "Registration Request Denied":
             self.feedback = self.REGISTRATION_DENIED
         return self.feedback
