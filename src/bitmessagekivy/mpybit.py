@@ -539,6 +539,7 @@ class DropDownWidget(BoxLayout):
                     self.parent.parent.screens[16].clear_widgets()
                     self.parent.parent.screens[16].add_widget(Allmails())
                     toLabel = ''
+
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
                     self.ids.body.text = ''
@@ -1130,10 +1131,7 @@ class NavigateApp(App):
 
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
-        self.root.ids.toolbar.left_action_items = [
-            ['arrow-left', lambda x: self.back_press()]]
-        self.root.ids.myButton.opacity = 0
-        self.root.ids.myButton.disabled = True
+        self.set_navbar_for_composer()
         self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
@@ -1141,6 +1139,13 @@ class NavigateApp(App):
         composer_obj.txt_input.text = ''
         composer_obj.subject.text = ''
         composer_obj.body.text = ''
+
+    def set_navbar_for_composer(self):
+        """This method is used for clearing toolbar data when composer open"""
+        self.root.ids.toolbar.left_action_items = [
+            ['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.myButton.opacity = 0
+        self.root.ids.myButton.disabled = True
 
     def back_press(self):
         """Method used for going back from composer to previous page."""
@@ -1425,7 +1430,6 @@ class MailDetail(Screen):
             state.sent_count = str(int(state.sent_count) - 1)
             self.parent.parent.screens[3].clear_widgets()
             self.parent.parent.screens[3].add_widget(Sent())
-            self.parent.parent.current = 'sent'
         elif state.detailPageType == 'inbox':
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
@@ -1435,13 +1439,19 @@ class MailDetail(Screen):
             state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.parent.screens[0].clear_widgets()
             self.parent.parent.screens[0].add_widget(Inbox())
-            self.parent.parent.current = 'inbox'
+        if state.is_allmail:
+            self.parent.parent.current = 'allmails'
+            state.is_allmail = False
+        else:
+            self.parent.parent.current = state.detailPageType    
         msg_count_objs.trash_cnt.badge_text = str(int(state.trash_count) + 1)
         msg_count_objs.allmail_cnt.badge_text = str(int(state.all_count) - 1)
         state.trash_count = str(int(state.trash_count) + 1)
         state.all_count = str(int(state.all_count) - 1)
         self.parent.parent.screens[4].clear_widgets()
         self.parent.parent.screens[4].add_widget(Trash())
+        self.parent.parent.screens[16].clear_widgets()
+        self.parent.parent.screens[16].add_widget(Allmails())
         toast('Deleted')
 
     def inbox_reply(self):
@@ -1472,7 +1482,7 @@ class MailDetail(Screen):
             if self.subject == '(no subject)' else self.subject.lower()
         composer_ids.body.text = self.message
         self.parent.parent.current = 'create'
-        navApp.clear_composer()
+        navApp.set_navbar_for_composer()
 
 
 class MyaddDetailPopup(Popup):
@@ -1792,11 +1802,11 @@ class Allmails(Screen):
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
         inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from\
+            "SELECT toaddress, fromaddress, subject, message, folder, received from\
             inbox WHERE folder = 'inbox' and toaddress = '{}';".format(
                 account))
         sent_and_draft = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from sent \
+            "SELECT toaddress, fromaddress, subject, message, folder, lastactiontime from sent \
             WHERE folder = 'sent' and fromaddress = '{}';".format(
                 account))
 
@@ -1815,6 +1825,8 @@ class Allmails(Screen):
                                 2][0].upper() <= 'Z') else '!')
                 meny.add_widget(AvatarSampleWidget(
                     source=img_latter))
+                meny.bind(on_press=partial(
+                    self.mail_detail, item[5], item[4]))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
                     carousel.height = 150
@@ -1827,6 +1839,8 @@ class Allmails(Screen):
                 del_btn = Button(text='Delete')
                 del_btn.background_normal = ''
                 del_btn.background_color = (1.0, 0.0, 0.0, 1.0)
+                del_btn.bind(on_press=partial(
+                    self.swipe_delete, item[5], item[4]))
                 carousel.add_widget(del_btn)
                 carousel.add_widget(meny)
                 carousel.index = 1
@@ -1841,6 +1855,62 @@ class Allmails(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def mail_detail(self, unique_id, folder, *args):
+        """Load sent and inbox mail details."""
+        remove_search_bar(self)
+        state.detailPageType = folder
+        state.is_allmail = True
+        state.sentMailTime = unique_id
+        if self.manager:
+            src_mng_obj = self.manager
+        else:
+            src_mng_obj = self.parent.parent
+        src_mng_obj.screens[13].clear_widgets()
+        src_mng_obj.screens[13].add_widget(MailDetail())
+        src_mng_obj.current = 'mailDetail'
+
+    def swipe_delete(self, unique_id, folder, instance, *args):
+        """Delete inbox mail from all mail listing listing."""
+        if folder == 'inbox':
+            sqlExecute(
+                "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
+                    unique_id))
+        else:
+            sqlExecute(
+                "UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(
+                    unique_id))
+        self.ids.ml.remove_widget(instance.parent.parent)
+        try:
+            msg_count_objs = self.parent.parent.parent.parent.children[
+                2].children[0].ids
+            nav_lay_obj = self.parent.parent.parent.parent.ids
+        except Exception:
+            msg_count_objs = self.parent.parent.parent.parent.parent.children[
+                2].children[0].ids
+            nav_lay_obj = self.parent.parent.parent.parent.parent.ids
+        if folder == 'inbox':
+            msg_count_objs.inbox_cnt.badge_text = str(
+                int(state.inbox_count) - 1)
+            state.inbox_count = str(int(state.inbox_count) - 1)
+            nav_lay_obj.sc1.clear_widgets()
+            nav_lay_obj.sc1.add_widget(Inbox())
+        else:
+            msg_count_objs.send_cnt.badge_text = str(
+                int(state.sent_count) - 1)
+            state.sent_count = str(int(state.sent_count) - 1)
+            nav_lay_obj.sc4.clear_widgets()
+            nav_lay_obj.sc4.add_widget(Sent())
+        msg_count_objs.trash_cnt.badge_text = str(
+            int(state.trash_count) + 1)
+        msg_count_objs.allmail_cnt.badge_text = str(
+            int(state.all_count) - 1)
+        state.trash_count = str(int(state.trash_count) + 1)
+        state.all_count = str(int(state.all_count) - 1)
+        nav_lay_obj.sc5.clear_widgets()
+        nav_lay_obj.sc5.add_widget(Trash())
+        nav_lay_obj.sc17.clear_widgets()
+        nav_lay_obj.sc17.add_widget(Allmails())
 
     # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):

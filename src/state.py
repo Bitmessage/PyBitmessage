@@ -105,3 +105,5 @@ searcing_text = ''
 search_screen = ''
 
 send_draft_mail = None
+
+is_allmail = False
