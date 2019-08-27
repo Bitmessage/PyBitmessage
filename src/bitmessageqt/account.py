@@ -39,7 +39,7 @@ def getSortedSubscriptions(count=False):
     :param count: Whether to count messages for each fromaddress in the inbox
     :type count: bool, default False
     :retuns: dict keys are addresses, values are dicts containing settings
-    :rtype: dict, default {}"""
+    :rtype: dict, default {}"""    # pylint: disable=pointless-string-statement
     queryreturn = sqlQuery(
         'SELECT label, address, enabled FROM subscriptions \
         ORDER BY label COLLATE NOCASE ASC')
@@ -90,7 +90,7 @@ def accountClass(address):
                 return cls(address)
         # general gateway
         return GatewayAccount(address)
-    except Exception:
+    except Exception:   # pylint: disable=broad-except
         pass
     # no gateway
     return BMAccount(address)
