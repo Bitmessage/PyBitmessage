@@ -85,6 +85,7 @@ pipeline {
                 export PATH=${VIRTUAL_ENV}/bin:${PATH}
                 python setup.py install
                 pip install pylint
+                pip install radon
                 '''
                 // sudo /home/cis/.local/bin/nosetests --with-xunit tests
             }
