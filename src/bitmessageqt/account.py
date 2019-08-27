@@ -1,33 +1,22 @@
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
-"""
-account.py
-==========
-
-Account related functions.
-
-"""
-
+"""Account related functions."""
 from __future__ import absolute_import
-
 import inspect
 import re
 import sys
 import time
-
 from PyQt4 import QtGui
-
-import queues
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from helper_ackPayload import genAckPayload
-from helper_sql import sqlQuery, sqlExecute
+from helper_sql import sqlExecute, sqlQuery
+import queues
 from .foldertree import AccountMixin
 from .utils import str_broadcast_subscribers
 
 
 def getSortedAccounts():
-    """Get a sorted list of configSections"""
-
+    """Get a sorted list of configSections."""
     configSections = BMConfigParser().addresses()
     configSections.sort(
         cmp=lambda x, y: cmp(
@@ -45,15 +34,14 @@ def getSortedAccounts():
 
 
 def getSortedSubscriptions(count=False):
-    """
-    Actually return a grouped dictionary rather than a sorted list
-
+    """Actually return a grouped dictionary rather than a sorted list
     :param count: Whether to count messages for each fromaddress in the inbox
     :type count: bool, default False
     :retuns: dict keys are addresses, values are dicts containing settings
-    :rtype: dict, default {}
-    """
-    queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions ORDER BY label COLLATE NOCASE ASC')
+    :rtype: dict, default {}"""
+    queryreturn = sqlQuery(
+        'SELECT label, address, enabled FROM subscriptions \
+        ORDER BY label COLLATE NOCASE ASC')
     ret = {}
     for row in queryreturn:
         label, address, enabled = row
@@ -79,7 +67,7 @@ def getSortedSubscriptions(count=False):
 
 
 def accountClass(address):
-    """Return a BMAccount for the address"""
+    """Return a BMAccount for the address."""
     if not BMConfigParser().has_section(address):
         # .. todo:: This BROADCAST section makes no sense
         if address == str_broadcast_subscribers:
@@ -106,9 +94,10 @@ def accountClass(address):
 
 
 class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
-    """Set the type of account"""
+    """Set the type of account."""
 
     def __init__(self, address, address_type=None):
+        """Setting the Account Type."""
         self.isEnabled = True
         self.address = address
         if address_type is None:
@@ -128,9 +117,10 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
 
 
 class BMAccount(object):
-    """Encapsulate a Bitmessage account"""
+    """Encapsulate a Bitmessage account."""
 
     def __init__(self, address=None):
+        """Method for encapsulating Bitmessage account."""
         self.address = address
         self.type = AccountMixin.NORMAL
         if BMConfigParser().has_section(address):
@@ -147,7 +137,7 @@ class BMAccount(object):
                 self.type = AccountMixin.SUBSCRIPTION
 
     def getLabel(self, address=None):
-        """Get a label for this bitmessage account"""
+        """Get a label for this bitmessage account."""
         if address is None:
             address = self.address
         label = BMConfigParser().safeGet(address, 'label', address)
@@ -165,8 +155,7 @@ class BMAccount(object):
         return label
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        """Set metadata and address labels on self"""
-
+        """Set metadata and address labels on self."""
         self.toAddress = toAddress
         self.fromAddress = fromAddress
         if isinstance(subject, unicode):
@@ -179,41 +168,45 @@ class BMAccount(object):
 
 
 class NoAccount(BMAccount):
-    """Override the __init__ method on a BMAccount"""
+    """Override the __init__ method on a BMAccount."""
 
     def __init__(self, address=None):  # pylint: disable=super-init-not-called
+        """Getting address and type."""
         self.address = address
         self.type = AccountMixin.NORMAL
 
     def getLabel(self, address=None):
+        """Getting Labels."""
         if address is None:
             address = self.address
         return address
 
 
 class SubscriptionAccount(BMAccount):
-    """Encapsulate a subscription account"""
+    """Encapsulate a subscription account."""
+
     pass
 
 
 class BroadcastAccount(BMAccount):
-    """Encapsulate a broadcast account"""
+    """Encapsulate a broadcast account."""
+
     pass
 
 
 class GatewayAccount(BMAccount):
-    """Encapsulate a gateway account"""
+    """Encapsulate a gateway account."""
 
     gatewayName = None
     ALL_OK = 0
     REGISTRATION_DENIED = 1
 
     def __init__(self, address):
+        """Method for gateway account."""
         super(GatewayAccount, self).__init__(address)
 
     def send(self):
-        """Override the send method for gateway accounts"""
-
+        """Override the send method for gateway accounts."""
         # pylint: disable=unused-variable
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
         stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
@@ -242,7 +235,7 @@ class GatewayAccount(BMAccount):
 
 
 class MailchuckAccount(GatewayAccount):
-    """Encapsulate a particular kind of gateway account"""
+    """Encapsulate a particular kind of gateway account."""
 
     # set "gateway" in keys.dat to this
     gatewayName = "mailchuck"
@@ -253,18 +246,19 @@ class MailchuckAccount(GatewayAccount):
     regExpOutgoing = re.compile(r"(\S+) (.*)")
 
     def __init__(self, address):
+        """Mailchuk account method."""
         super(MailchuckAccount, self).__init__(address)
         self.feedback = self.ALL_OK
 
     def createMessage(self, toAddress, fromAddress, subject, message):
-        """createMessage specific to a MailchuckAccount"""
+        """Createmessage specific to a MailchuckAccount."""
         self.subject = toAddress + " " + subject
         self.toAddress = self.relayAddress
         self.fromAddress = fromAddress
         self.message = message
 
     def register(self, email):
-        """register specific to a MailchuckAccount"""
+        """Register specific to a MailchuckAccount."""
         self.toAddress = self.registrationAddress
         self.subject = email
         self.message = ""
@@ -272,7 +266,7 @@ class MailchuckAccount(GatewayAccount):
         self.send()
 
     def unregister(self):
-        """unregister specific to a MailchuckAccount"""
+        """Unregister specific to a MailchuckAccount."""
         self.toAddress = self.unregistrationAddress
         self.subject = ""
         self.message = ""
@@ -280,7 +274,7 @@ class MailchuckAccount(GatewayAccount):
         self.send()
 
     def status(self):
-        """status specific to a MailchuckAccount"""
+        """Getting status specific to a MailchuckAccount."""
         self.toAddress = self.registrationAddress
         self.subject = "status"
         self.message = ""
@@ -288,8 +282,7 @@ class MailchuckAccount(GatewayAccount):
         self.send()
 
     def settings(self):
-        """settings specific to a MailchuckAccount"""
-
+        """Setting specific to a MailchuckAccount."""
         self.toAddress = self.registrationAddress
         self.subject = "config"
         self.message = QtGui.QApplication.translate(
@@ -337,8 +330,7 @@ class MailchuckAccount(GatewayAccount):
         self.fromAddress = self.address
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        """parseMessage specific to a MailchuckAccount"""
-
+        """Parsemessage specific to a MailchuckAccount."""
         super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
