@@ -125,8 +125,7 @@ pipeline {
         stage('Static code metrics') {
             steps {
                 echo "Raw metrics"
-                sh  ''' source activate ${BUILD_TAG}
-                        radon raw --json src/ > raw_report.json
+                sh  ''' radon raw --json src/ > raw_report.json
                         radon cc --json src/ > cc_report.json
                         radon mi --json src/ > mi_report.json
                         //TODO: add conversion and HTML publisher step
