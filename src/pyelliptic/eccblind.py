@@ -64,23 +64,42 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         OpenSSL.EC_POINT_mul(group, Q, d, 0, 0, 0)
         return (d, Q)
 
-    def __init__(self, curve="secp256k1"):
-        self.group = OpenSSL.EC_GROUP_new_by_curve_name(OpenSSL.get_curve(curve))
+    @staticmethod
+    def ec_Ftor(F, group, ctx):
+        """
+        x0 coordinate of F
+        """
+        # F = (x0, y0)
+        x0 = OpenSSL.BN_new()
+        y0 = OpenSSL.BN_new()
+        OpenSSL.EC_POINT_get_affine_coordinates_GFp(group, F, x0, y0,
+                                                    ctx)
+        return x0
+
+    def __init__(self, curve="secp256k1", pubkey=None):
         self.ctx = OpenSSL.BN_CTX_new()
 
-        # Order n
-        self.n = OpenSSL.BN_new()
-        OpenSSL.EC_GROUP_get_order(self.group, self.n, self.ctx)
+        if pubkey:
+            self.group, self.G, self.n, self.Q = pubkey
+        else:
+            self.group = OpenSSL.EC_GROUP_new_by_curve_name(OpenSSL.get_curve(curve))
+            # Order n
+            self.n = OpenSSL.BN_new()
+            OpenSSL.EC_GROUP_get_order(self.group, self.n, self.ctx)
+
+            # Generator G
+            self.G = OpenSSL.EC_GROUP_get0_generator(self.group)
+
+            # new keypair
+            self.keypair = ECCBlind.ec_gen_keypair(self.group, self.ctx)
+
+            self.Q = self.keypair[1]
+
+        self.pubkey = (self.group, self.G, self.n, self.Q)
 
         # Identity O (infinity)
         self.iO = OpenSSL.EC_POINT_new(self.group)
         OpenSSL.EC_POINT_set_to_infinity(self.group, self.iO)
-
-        # Generator G
-        self.G = OpenSSL.EC_GROUP_get0_generator(self.group)
-
-        # Certifier's pubkey
-        self.pubkey = (self.group, self.G, self.n)
 
     def signer_init(self):
         """
@@ -93,18 +112,18 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         self.R = OpenSSL.EC_POINT_new(self.group)
         OpenSSL.EC_POINT_mul(self.group, self.R, self.k, 0, 0, 0)
 
-    def create_signing_request(self, msg):
+        return self.R
+
+    def create_signing_request(self, R, msg):
         """
         Requester creates a new signing request
         """
-        # new keypair
-        self.keypair = ECCBlind.ec_gen_keypair(self.group, self.ctx)
+        self.R = R
 
         # Requester: 3 random blinding factors
         self.F = OpenSSL.EC_POINT_new(self.group)
         OpenSSL.EC_POINT_set_to_infinity(self.group, self.F)
         temp = OpenSSL.EC_POINT_new(self.group)
-        self.Q = self.keypair[1]
         abinv = OpenSSL.BN_new()
 
         # F != O
@@ -128,11 +147,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
             OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, 0)
 
         # F = (x0, y0)
-        x0 = OpenSSL.BN_new()
-        y0 = OpenSSL.BN_new()
-        OpenSSL.EC_POINT_get_affine_coordinates_GFp(self.group, self.F, x0, y0,
-                                                    self.ctx)
-        self.r = x0
+        self.r = ECCBlind.ec_Ftor(self.F, self.group, self.ctx)
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
@@ -142,32 +157,48 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         OpenSSL.BN_mod_mul(self.m_, self.b, self.r, self.n, self.ctx)
         OpenSSL.BN_mod_mul(self.m_, self.m_, self.m, self.n, self.ctx)
         OpenSSL.BN_mod_add(self.m_, self.m_, self.a, self.n, self.ctx)
+        return self.m_
 
-    def blind_sign(self):
+    def blind_sign(self, m_):
         """
         Signer blind-signs the request
         """
+        self.m_ = m_
         self.s_ = OpenSSL.BN_new()
         OpenSSL.BN_mod_mul(self.s_, self.keypair[0], self.m_, self.n, self.ctx)
         OpenSSL.BN_mod_add(self.s_, self.s_, self.k, self.n, self.ctx)
+        return self.s_
 
-    def unblind(self):
+    def unblind(self, s_):
         """
         Requester unblinds the signature
         """
+        self.s_ = s_
         s = OpenSSL.BN_new()
         OpenSSL.BN_mod_mul(s, self.binv, self.s_, self.n, self.ctx)
         OpenSSL.BN_mod_add(s, s, self.c, self.n, self.ctx)
         self.signature = (s, self.F)
+        return self.signature
 
-    def verify(self):
+    def verify(self, msg, signature):
         """
         Verify signature with certifier's pubkey
         """
+
+        # convert msg to BIGNUM
+        self.m = OpenSSL.BN_new()
+        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+
+        # init
+        s, self.F = signature
+        if self.r is None:
+            self.r = ECCBlind.ec_Ftor(self.F, self.group, self.ctx)
+
         lhs = OpenSSL.EC_POINT_new(self.group)
         rhs = OpenSSL.EC_POINT_new(self.group)
 
-        OpenSSL.EC_POINT_mul(self.group, lhs, self.signature[0], 0, 0, 0)
+        OpenSSL.EC_POINT_mul(self.group, lhs, s, 0, 0, 0)
+
         OpenSSL.EC_POINT_mul(self.group, rhs, 0, self.Q, self.m, 0)
         OpenSSL.EC_POINT_mul(self.group, rhs, 0, rhs, self.r, 0)
         OpenSSL.EC_POINT_add(self.group, rhs, rhs, self.F, self.ctx)
