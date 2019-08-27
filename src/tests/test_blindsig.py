@@ -4,7 +4,7 @@ Test for ECC blind signatures
 import os
 import unittest
 
-from src.pyelliptic.eccblind import ECCBlind
+from pybitmessage.pyelliptic.eccblind import ECCBlind
 
 
 class TestBlindSig(unittest.TestCase):
