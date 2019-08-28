@@ -136,7 +136,7 @@ pipeline {
                 echo "Test coverage"
                 sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
                         coverage run src/bitmessagemain.py -t 1 1 2 3
-                        python -m coverage xml -o coverage.xml
+                        python -m coverage xml -o PyBitmessage/coverage.xml
                     '''
                 echo "Style check"
                 sh  ''' source activate ${BUILD_TAG}
@@ -148,7 +148,7 @@ pipeline {
                     step([$class: 'CoberturaPublisher',
                                    autoUpdateHealth: false,
                                    autoUpdateStability: false,
-                                   coberturaReportFile: 'coverage.xml',
+                                   coberturaReportFile: 'PyBitmessage/coverage.xml',
                                    failNoReports: false,
                                    failUnhealthy: false,
                                    failUnstable: false,
