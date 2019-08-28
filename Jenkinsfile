@@ -135,7 +135,8 @@ pipeline {
 
 
                 echo "Test coverage"
-                sh  ''' coverage run src/bitmessagemain.py -t 1 1 2 3
+                sh  ''' pip install coverage
+                        coverage run src/bitmessagemain.py -t 1 1 2 3
                         python -m coverage xml -o PyBitmessage/coverage.xml
                     '''
                 echo "Style check"
