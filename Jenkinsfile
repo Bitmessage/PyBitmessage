@@ -86,6 +86,7 @@ pipeline {
                 python setup.py install
                 pip install pylint
                 pip install radon
+                pip install coverage
                 '''
                 // sudo /home/cis/.local/bin/nosetests --with-xunit tests
             }
