@@ -125,12 +125,12 @@ pipeline {
 
         stage('Static code metrics') {
             steps {
-                echo "Raw metrics"
-                sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                        radon raw --json src/ > raw_report.json
-                        radon cc --json src/ > cc_report.json
-                        radon mi --json src/ > mi_report.json
-                    '''
+                // echo "Raw metrics"
+                // sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                //         radon raw --json src/ > raw_report.json
+                //         radon cc --json src/ > cc_report.json
+                //         radon mi --json src/ > mi_report.json
+                //     '''
 
 
                 echo "Test coverage"
