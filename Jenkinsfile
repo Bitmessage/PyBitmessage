@@ -171,7 +171,7 @@ pipeline {
                     // Archive unit tests for the future
                     junit (allowEmptyResults: true,
                           testResults: './reports/unit_tests.xml',
-                          fingerprint: true)
+                          testResults: true)
                 }
             }
         }
