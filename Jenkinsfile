@@ -184,6 +184,27 @@ pipeline {
             }
         }
 
+        stage ('Unit Tests') {
+            steps {
+                sh """
+                    #. venv/bin/activate
+                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                    make unittest || true
+                """
+            }
+
+            post {
+                always {
+                    junit keepLongStdio: true, testResults: 'nosetests.xml'
+                    publishHTML target: [
+                        reportDir: 'PyBitmessage',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report - Unit Test'
+                    ]
+                }
+            }
+        }
+
         // stage('Unit tests') {
         //     steps {
         //         sh  ''' source activate ${BUILD_TAG}
