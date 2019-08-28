@@ -135,7 +135,7 @@ pipeline {
 
 
                 echo "Test coverage"
-                sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                sh  ''' source activate ${BUILD_TAG}
                         coverage run src/bitmessagemain.py -t 1 1 2 3
                         python -m coverage xml -o PyBitmessage/coverage.xml
                     '''
