@@ -136,7 +136,7 @@ pipeline {
                 echo "Test coverage"
                 sh  ''' source activate ${BUILD_TAG}
                         coverage run src/bitmessagemain.py -t 1 1 2 3
-                        python -m coverage xml -o reports/coverage.xml
+                        python -m coverage xml -o coverage.xml
                     '''
                 echo "Style check"
                 sh  ''' source activate ${BUILD_TAG}
@@ -148,7 +148,7 @@ pipeline {
                     step([$class: 'CoberturaPublisher',
                                    autoUpdateHealth: false,
                                    autoUpdateStability: false,
-                                   coberturaReportFile: 'reports/coverage.xml',
+                                   coberturaReportFile: 'coverage.xml',
                                    failNoReports: false,
                                    failUnhealthy: false,
                                    failUnstable: false,
