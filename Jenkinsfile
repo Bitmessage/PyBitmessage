@@ -126,12 +126,19 @@ pipeline {
 
         stage('Static code metrics') {
             steps {
-                // echo "Raw metrics"
-                // sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                //         radon raw --json src/ > raw_report.json
-                //         radon cc --json src/ > cc_report.json
-                //         radon mi --json src/ > mi_report.json
-                //     '''
+                echo "Raw metrics"
+                sh  ''' echo ${SHELL}
+                        [ -d venv ] && rm -rf venv
+                        #virtualenv --python=python2.7 venv
+                        virtualenv venv
+                        #. venv/bin/activate
+                        export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                        python setup.py install
+                        pip install radon
+                        radon raw --json PyBitmessage/ > raw_report.json
+                        radon cc --json PyBitmessage/ > cc_report.json
+                        radon mi --json PyBitmessage/ > mi_report.json
+                    '''
 
 
                 echo "Test coverage"
