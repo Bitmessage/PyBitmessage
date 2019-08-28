@@ -130,8 +130,49 @@ pipeline {
                         radon raw --json src/ > raw_report.json
                         radon cc --json src/ > cc_report.json
                         radon mi --json src/ > mi_report.json
-                        //TODO: add conversion and HTML publisher step
                     '''
+
+
+                echo "Test coverage"
+                sh  ''' source activate ${BUILD_TAG}
+                        coverage run src/bitmessagemain.py -t 1 1 2 3
+                        python -m coverage xml -o reports/coverage.xml
+                    '''
+                echo "Style check"
+                sh  ''' source activate ${BUILD_TAG}
+                        pylint PyBitmessage || true
+                    '''
+            }
+            post{
+                always{
+                    step([$class: 'CoberturaPublisher',
+                                   autoUpdateHealth: false,
+                                   autoUpdateStability: false,
+                                   coberturaReportFile: 'reports/coverage.xml',
+                                   failNoReports: false,
+                                   failUnhealthy: false,
+                                   failUnstable: false,
+                                   maxNumberOfBuilds: 10,
+                                   onlyStable: false,
+                                   sourceEncoding: 'ASCII',
+                                   zoomCoverageChart: false])
+                }
+            }
+        }
+
+        stage('Unit tests') {
+            steps {
+                sh  ''' source activate ${BUILD_TAG}
+                        python -m pytest --verbose --junit-xml reports/unit_tests.xml
+                    '''
+            }
+            post {
+                always {
+                    // Archive unit tests for the future
+                    junit (allowEmptyResults: true,
+                          testResults: './reports/unit_tests.xml',
+                          fingerprint: true)
+                }
             }
         }
 
