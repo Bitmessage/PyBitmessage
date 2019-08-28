@@ -135,10 +135,19 @@ pipeline {
 
 
                 echo "Test coverage"
-                sh  ''' pip install coverage
+                sh  '''
+                        echo ${SHELL}
+                        [ -d venv ] && rm -rf venv
+                        #virtualenv --python=python2.7 venv
+                        virtualenv venv
+                        #. venv/bin/activate
+                        export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                        python setup.py install 
+                        pip install coverage
                         coverage run src/bitmessagemain.py -t 1 1 2 3
                         python -m coverage xml -o PyBitmessage/coverage.xml
                     '''
+                
                 echo "Style check"
                 sh  ''' source activate ${BUILD_TAG}
                         pylint PyBitmessage || true
