@@ -160,21 +160,21 @@ pipeline {
             }
         }
 
-        stage('Unit tests') {
-            steps {
-                sh  ''' source activate ${BUILD_TAG}
-                        python -m pytest --verbose --junit-xml reports/unit_tests.xml
-                    '''
-            }
-            post {
-                always {
-                    // Archive unit tests for the future
-                    junit (allowEmptyResults: true,
-                          testResults: './reports/unit_tests.xml',
-                          testResults: true)
-                }
-            }
-        }
+        // stage('Unit tests') {
+        //     steps {
+        //         sh  ''' source activate ${BUILD_TAG}
+        //                 python -m pytest --verbose --junit-xml reports/unit_tests.xml
+        //             '''
+        //     }
+        //     post {
+        //         always {
+        //             // Archive unit tests for the future
+        //             junit (allowEmptyResults: true,
+        //                   testResults: './reports/unit_tests.xml',
+        //                   testResults: true)
+        //         }
+        //     }
+        // }
 
 
         stage('Test Run') {
