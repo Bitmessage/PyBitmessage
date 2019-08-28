@@ -147,11 +147,6 @@ pipeline {
                         coverage run src/bitmessagemain.py -t 1 1 2 3
                         python -m coverage xml -o PyBitmessage/coverage.xml
                     '''
-                
-                echo "Style check"
-                sh  ''' source activate ${BUILD_TAG}
-                        pylint PyBitmessage || true
-                    '''
             }
             post{
                 always{
