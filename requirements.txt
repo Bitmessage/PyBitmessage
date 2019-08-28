@@ -3,3 +3,4 @@ psutil
 pycrypto
 nose
 radon
+coverage
