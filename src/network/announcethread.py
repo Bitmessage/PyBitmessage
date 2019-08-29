@@ -1,3 +1,7 @@
+"""
+src/network/announcethread.py
+=================================
+"""
 import time
 
 from bmconfigparser import BMConfigParser
@@ -10,6 +14,7 @@ import state
 
 
 class AnnounceThread(StoppableThread):
+    """A thread to manage regular announcing of this node"""
     def __init__(self):
         super(AnnounceThread, self).__init__(name="Announcer")
         logger.info("init announce thread")
@@ -24,7 +29,9 @@ class AnnounceThread(StoppableThread):
             if processed == 0:
                 self.stop.wait(10)
 
-    def announceSelf(self):
+    @staticmethod
+    def announceSelf():
+        """Announce our presence"""
         for connection in BMConnectionPool().udpSockets.values():
             if not connection.announcing:
                 continue
