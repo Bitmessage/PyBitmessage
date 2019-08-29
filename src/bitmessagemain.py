@@ -87,10 +87,10 @@ def connectToStream(streamNumber):
     with knownnodes.knownNodesLock:
         if streamNumber not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber] = {}
-        if streamNumber*2 not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber*2] = {}
-        if streamNumber*2+1 not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber*2+1] = {}
+        if streamNumber * 2 not in knownnodes.knownNodes:
+            knownnodes.knownNodes[streamNumber * 2] = {}
+        if streamNumber * 2 + 1 not in knownnodes.knownNodes:
+            knownnodes.knownNodes[streamNumber * 2 + 1] = {}
 
     BMConnectionPool().connectToStream(streamNumber)
 
@@ -419,8 +419,8 @@ class Main:
         if daemon:
             while state.shutdown == 0:
                 time.sleep(1)
-                if (state.testmode and
-                        time.time() - state.last_api_response >= 30):
+                if (
+                        state.testmode and time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
             from tests import core as test_core  # pylint: disable=relative-import
