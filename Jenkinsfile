@@ -198,7 +198,6 @@ pipeline {
                 }
             }
         }
-
         // stage('Unit tests') {
         //     steps {
         //         sh  ''' source activate ${BUILD_TAG}
