@@ -188,6 +188,7 @@ pipeline {
             steps {
                 sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
                         pip install pytest
+                        pip install psutil
                         python -m pytest --verbose --junit-xml results.xml
                     '''
             }
