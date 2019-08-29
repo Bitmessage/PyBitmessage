@@ -187,13 +187,13 @@ pipeline {
         stage('Unit tests') {
             steps {
                 sh  ''' source activate ${BUILD_TAG}
-                        python -m pytest --verbose --junit-xml results.xml
+                        python -m pytest --verbose --junit-xml result.xml
                     '''
             }
             post {
                 always {
                     // Archive unit tests for the future
-                    junit allowEmptyResults: true, testResults: 'results.xml', fingerprint: true
+                    junit allowEmptyResults: true, testResults: 'result.xml', fingerprint: true
                 }
             }
         }
