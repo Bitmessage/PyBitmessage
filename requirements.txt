@@ -4,3 +4,4 @@ pycrypto
 nose
 radon
 coverage
+pytest
