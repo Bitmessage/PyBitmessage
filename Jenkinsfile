@@ -184,25 +184,16 @@ pipeline {
             }
         }
 
-        stage ('Unit Tests') {
+        stage('Unit tests') {
             steps {
-                sh """
-                    #. venv/bin/activate
-                    export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                    cd PyBitmessage
-                    touch *.xml
-                    make unittest || true
-                """
+                sh  ''' source activate ${BUILD_TAG}
+                        python -m pytest --verbose --junit-xml results.xml
+                    '''
             }
-
             post {
                 always {
-                    junit keepLongStdio: true, testResults: 'nosetests.xml'
-                    publishHTML target: [
-                        reportDir: 'PyBitmessage',
-                        reportFiles: 'index.html',
-                        reportName: 'Coverage Report - Unit Test'
-                    ]
+                    // Archive unit tests for the future
+                    junit allowEmptyResults: true, testResults: 'results.xml', fingerprint: true
                 }
             }
         }
