@@ -186,7 +186,7 @@ pipeline {
 
         stage('Unit tests') {
             steps {
-                sh  ''' source activate ${BUILD_TAG}
+                sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
                         python -m pytest --verbose --junit-xml results.xml
                     '''
             }
