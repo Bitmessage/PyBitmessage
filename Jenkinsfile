@@ -189,6 +189,8 @@ pipeline {
                 sh """
                     #. venv/bin/activate
                     export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                    cd PyBitmessage
+                    touch *.xml
                     make unittest || true
                 """
             }
