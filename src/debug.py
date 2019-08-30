@@ -68,7 +68,8 @@ def configureLogging():
     fail_msg = ''
     try:
         logging_config = os.path.join(state.appdata, 'logging.dat')
-        logging.config.fileConfig(logging_config)
+        logging.config.fileConfig(
+            logging_config, disable_existing_loggers=False)
         return (
             False,
             'Loaded logger configuration from %s' % logging_config
@@ -80,7 +81,8 @@ def configureLogging():
                 ' logging config\n%s' % \
                 (logging_config, sys.exc_info())
         else:
-            # no need to confuse the user if the logger config is missing entirely
+            # no need to confuse the user if the logger config
+            # is missing entirely
             fail_msg = 'Using default logger configuration'
 
     logging_config = {
