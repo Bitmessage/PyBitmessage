@@ -184,21 +184,21 @@ pipeline {
             }
         }
 
-        stage('Unit tests') {
-            steps {
-                sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
-                        pip install pytest
-                        pip install psutil
-                        python -m pytest --verbose --junit-xml results.xml
-                    '''
-            }
-            post {
-                always {
-                    // Archive unit tests for the future
-                    junit allowEmptyResults: true, testResults: 'results.xml'
-                }
-            }
-        }
+        // stage('Unit tests') {
+        //     steps {
+        //         sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        //                 pip install pytest
+        //                 pip install psutil
+        //                 python -m pytest --verbose --junit-xml results.xml
+        //             '''
+        //     }
+        //     post {
+        //         always {
+        //             // Archive unit tests for the future
+        //             junit allowEmptyResults: true, testResults: 'results.xml'
+        //         }
+        //     }
+        // }
         // stage('Unit tests') {
         //     steps {
         //         sh  ''' source activate ${BUILD_TAG}
