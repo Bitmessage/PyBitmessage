@@ -1,3 +1,7 @@
+"""
+src/network/connectionpool.py
+==================================
+"""
 import errno
 import re
 import socket
@@ -20,6 +24,7 @@ from udp import UDPSocket
 
 
 @Singleton
+# pylint: disable=too-many-instance-attributes
 class BMConnectionPool(object):
     """Pool of all existing connections"""
     def __init__(self):
@@ -68,8 +73,8 @@ class BMConnectionPool(object):
     def isAlreadyConnected(self, nodeid):
         """Check if we're already connected to this peer"""
         for i in (
-            self.inboundConnections.values() +
-            self.outboundConnections.values()
+                self.inboundConnections.values() +
+                self.outboundConnections.values()
         ):
             try:
                 if nodeid == i.nodeid:
@@ -113,7 +118,8 @@ class BMConnectionPool(object):
                     pass
         connection.handle_close()
 
-    def getListeningIP(self):
+    @staticmethod
+    def getListeningIP():
         """What IP are we supposed to be listening on?"""
         if BMConfigParser().safeGet(
                 "bitmessagesettings", "onionhostname").endswith(".onion"):
@@ -123,8 +129,8 @@ class BMConnectionPool(object):
             host = '127.0.0.1'
         if (BMConfigParser().safeGetBoolean(
                 "bitmessagesettings", "sockslisten") or
-            BMConfigParser().safeGet(
-                "bitmessagesettings", "socksproxytype") == "none"):
+                BMConfigParser().safeGet(
+                    "bitmessagesettings", "socksproxytype") == "none"):
             # python doesn't like bind + INADDR_ANY?
             # host = socket.INADDR_ANY
             host = BMConfigParser().get("network", "bind")
@@ -154,7 +160,7 @@ class BMConnectionPool(object):
                 udpSocket = UDPSocket(host=bind, announcing=True)
         self.udpSockets[udpSocket.listening.host] = udpSocket
 
-    def loop(self):
+    def loop(self):     # pylint: disable=too-many-branches, too-many-statements
         """Main Connectionpool's loop"""
         # defaults to empty loop if outbound connections are maxed
         spawnConnections = False
@@ -170,12 +176,13 @@ class BMConnectionPool(object):
         onionsocksproxytype = BMConfigParser().safeGet(
             'bitmessagesettings', 'onionsocksproxytype', '')
         if (socksproxytype[:5] == 'SOCKS' and
-            not BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'sockslisten') and
-            '.onion' not in BMConfigParser().safeGet(
-                'bitmessagesettings', 'onionhostname', '')):
+                not BMConfigParser().safeGetBoolean(
+                    'bitmessagesettings', 'sockslisten') and
+                '.onion' not in BMConfigParser().safeGet(
+                    'bitmessagesettings', 'onionhostname', '')):
             acceptConnections = False
 
+        # pylint: disable=too-many-nested-blocks
         if spawnConnections:
             if not knownnodes.knownNodesActual:
                 helper_bootstrap.dns()
@@ -241,8 +248,8 @@ class BMConnectionPool(object):
                     self.lastSpawned = time.time()
         else:
             for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values()
+                    self.inboundConnections.values() +
+                    self.outboundConnections.values()
             ):
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
@@ -253,8 +260,8 @@ class BMConnectionPool(object):
                     self.startListening()
                 else:
                     for bind in re.sub(
-                        "[^\w.]+", " ",
-                        BMConfigParser().safeGet('network', 'bind')
+                            '[^\w.]+', ' ',     # pylint: disable=anomalous-backslash-in-string
+                            BMConfigParser().safeGet('network', 'bind')
                     ).split():
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
@@ -263,8 +270,8 @@ class BMConnectionPool(object):
                     self.startUDPSocket()
                 else:
                     for bind in re.sub(
-                        "[^\w.]+", " ",
-                        BMConfigParser().safeGet('network', 'bind')
+                            '[^\w.]+', ' ',     # pylint: disable=anomalous-backslash-in-string
+                            BMConfigParser().safeGet('network', 'bind')
                     ).split():
                         self.startUDPSocket(bind)
                     self.startUDPSocket(False)
@@ -288,8 +295,8 @@ class BMConnectionPool(object):
 
         reaper = []
         for i in (
-            self.inboundConnections.values() +
-            self.outboundConnections.values()
+                self.inboundConnections.values() +
+                self.outboundConnections.values()
         ):
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -302,10 +309,10 @@ class BMConnectionPool(object):
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
-            self.inboundConnections.values() +
-            self.outboundConnections.values() +
-            self.listeningSockets.values() +
-            self.udpSockets.values()
+                self.inboundConnections.values() +
+                self.outboundConnections.values() +
+                self.listeningSockets.values() +
+                self.udpSockets.values()
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)
