@@ -1,3 +1,7 @@
+"""
+src/network/dandelion.py
+========================
+"""
 from collections import namedtuple
 from random import choice, sample, expovariate
 from threading import RLock
@@ -22,7 +26,7 @@ Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
 
 
 @Singleton
-class Dandelion():
+class Dandelion():      # pylint: disable=old-style-class
     """Dandelion class for tracking stem/fluff stages."""
     def __init__(self):
         # currently assignable child stems
@@ -35,7 +39,8 @@ class Dandelion():
         self.refresh = time() + REASSIGN_INTERVAL
         self.lock = RLock()
 
-    def poissonTimeout(self, start=None, average=0):
+    @staticmethod
+    def poissonTimeout(start=None, average=0):
         """Generate deadline using Poisson distribution"""
         if start is None:
             start = time()
@@ -97,8 +102,8 @@ class Dandelion():
                 for k in (k for k, v in self.nodeMap.iteritems() if v is None):
                     self.nodeMap[k] = connection
                 for k, v in {
-                    k: v for k, v in self.hashMap.iteritems()
-                    if v.child is None
+                        k: v for k, v in self.hashMap.iteritems()
+                        if v.child is None
                 }.iteritems():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
@@ -115,12 +120,12 @@ class Dandelion():
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
                 for k in (
-                    k for k, v in self.nodeMap.iteritems() if v == connection
+                        k for k, v in self.nodeMap.iteritems() if v == connection
                 ):
                     self.nodeMap[k] = None
                 for k, v in {
-                    k: v for k, v in self.hashMap.iteritems()
-                    if v.child == connection
+                        k: v for k, v in self.hashMap.iteritems()
+                        if v.child == connection
                 }.iteritems():
                     self.hashMap[k] = Stem(
                         None, v.stream, self.poissonTimeout())
