@@ -1,3 +1,7 @@
+"""
+src/network/downloadthread.py
+=============================
+"""
 import time
 
 import addresses
@@ -12,6 +16,7 @@ from objectracker import missingObjects
 
 
 class DownloadThread(StoppableThread):
+    """Thread-based class for downloading from connections"""
     minPending = 200
     maxRequestChunk = 1000
     requestTimeout = 60
@@ -24,6 +29,7 @@ class DownloadThread(StoppableThread):
         self.lastCleaned = time.time()
 
     def cleanPending(self):
+        """Expire pending downloads eventually"""
         deadline = time.time() - DownloadThread.requestExpires
         try:
             toDelete = [k for k, v in missingObjects.iteritems() if v < deadline]
