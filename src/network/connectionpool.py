@@ -165,10 +165,14 @@ class BMConnectionPool(object):
         proxy_type = BMConfigParser().safeGet(
             'bitmessagesettings', 'socksproxytype')
         # A plugins may be added here
+        hostname = None
         if not proxy_type or proxy_type == 'none':
             connection_base = TCPConnection
         elif proxy_type == 'SOCKS5':
             connection_base = Socks5BMConnection
+            hostname = helper_random.randomchoice([
+                'quzwelsuziwqgpt2.onion', None
+            ])
         elif proxy_type == 'SOCKS4a':
             connection_base = Socks4aBMConnection  # FIXME: I cannot test
         else:
@@ -177,8 +181,11 @@ class BMConnectionPool(object):
             return
 
         bootstrapper = bootstrap(connection_base)
-        port = helper_random.randomchoice([8080, 8444])
-        hostname = 'bootstrap%s.bitmessage.org' % port
+        if not hostname:
+            port = helper_random.randomchoice([8080, 8444])
+            hostname = 'bootstrap%s.bitmessage.org' % port
+        else:
+            port = 8444
         self.addConnection(bootstrapper(hostname, port))
 
     def loop(self):  # pylint: disable=too-many-branches,too-many-statements

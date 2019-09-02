@@ -34,10 +34,6 @@ DEFAULT_NODES = (
     state.Peer('178.11.46.221', 8444)
 )
 
-DEFAULT_NODES_ONION = (
-    state.Peer('quzwelsuziwqgpt2.onion', 8444),
-)
-
 
 def json_serialize_knownnodes(output):
     """
@@ -66,8 +62,7 @@ def json_deserialize_knownnodes(source):
 
         if (
             not (knownNodesActual or info.get('self')) and
-            peer not in DEFAULT_NODES and
-            peer not in DEFAULT_NODES_ONION
+            peer not in DEFAULT_NODES
         ):
             knownNodesActual = True
 
@@ -102,9 +97,9 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     }
 
 
-def createDefaultKnownNodes(onion=False):
+def createDefaultKnownNodes():
     past = time.time() - 2418600  # 28 days - 10 min
-    for peer in DEFAULT_NODES_ONION if onion else DEFAULT_NODES:
+    for peer in DEFAULT_NODES:
         addKnownNode(1, peer, past)
     saveKnownNodes()
 
@@ -122,8 +117,6 @@ def readKnownNodes():
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
-        if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
-            createDefaultKnownNodes(onion=True)
 
     config = BMConfigParser()
 
