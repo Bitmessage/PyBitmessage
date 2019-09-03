@@ -1,3 +1,7 @@
+"""
+src/network/http-old.py
+=======================
+"""
 import asyncore
 import socket
 import time
@@ -8,6 +12,7 @@ duration = 60
 
 
 class HTTPClient(asyncore.dispatcher):
+    """An asyncore dispatcher"""
     port = 12345
 
     def __init__(self, host, path, connect=True):
@@ -19,6 +24,7 @@ class HTTPClient(asyncore.dispatcher):
         self.buffer = 'GET %s HTTP/1.0\r\n\r\n' % path
 
     def handle_close(self):
+        # pylint: disable=global-statement
         global requestCount
         requestCount += 1
         self.close()
@@ -28,7 +34,7 @@ class HTTPClient(asyncore.dispatcher):
         self.recv(8192)
 
     def writable(self):
-        return (len(self.buffer) > 0)
+        return len(self.buffer) > 0
 
     def handle_write(self):
         sent = self.send(self.buffer)
@@ -40,8 +46,8 @@ if __name__ == "__main__":
     for i in range(parallel):
         HTTPClient('127.0.0.1', '/')
     start = time.time()
-    while (time.time() - start < duration):
-        if (len(asyncore.socket_map) < parallel):
+    while time.time() - start < duration:
+        if len(asyncore.socket_map) < parallel:
             for i in range(parallel - len(asyncore.socket_map)):
                 HTTPClient('127.0.0.1', '/')
         print "Active connections: %i" % (len(asyncore.socket_map))
