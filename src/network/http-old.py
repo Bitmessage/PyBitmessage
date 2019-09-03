@@ -24,7 +24,7 @@ class HTTPClient(asyncore.dispatcher):
         self.close()
 
     def handle_read(self):
-#        print self.recv(8192)
+        # print self.recv(8192)
         self.recv(8192)
 
     def writable(self):
@@ -33,6 +33,7 @@ class HTTPClient(asyncore.dispatcher):
     def handle_write(self):
         sent = self.send(self.buffer)
         self.buffer = self.buffer[sent:]
+
 
 if __name__ == "__main__":
     # initial fill
@@ -44,6 +45,6 @@ if __name__ == "__main__":
             for i in range(parallel - len(asyncore.socket_map)):
                 HTTPClient('127.0.0.1', '/')
         print "Active connections: %i" % (len(asyncore.socket_map))
-        asyncore.loop(count=len(asyncore.socket_map)/2)
+        asyncore.loop(count=len(asyncore.socket_map) / 2)
         if requestCount % 100 == 0:
             print "Processed %i total messages" % (requestCount)
