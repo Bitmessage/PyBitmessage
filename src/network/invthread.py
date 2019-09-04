@@ -37,11 +37,11 @@ class InvThread(StoppableThread):
     def handleLocallyGenerated(self, stream, hashId):
         Dandelion().addHash(hashId, stream=stream)
         for connection in \
-                BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().inboundConnections.values() + \
                 BMConnectionPool().outboundConnections.values():
-                if state.dandelion and connection != Dandelion().objectChildStem(hashId):
-                    continue
-                connection.objectsNewToThem[hashId] = time()
+            if state.dandelion and connection != Dandelion().objectChildStem(hashId):
+                continue
+            connection.objectsNewToThem[hashId] = time()
 
     def run(self):
         while not state.shutdown:
