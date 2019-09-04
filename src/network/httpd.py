@@ -3,6 +3,7 @@ import socket
 
 from tls import TLSHandshake
 
+
 class HTTPRequestHandler(asyncore.dispatcher):
     response = """HTTP/1.0 200 OK\r
 Date: Sun, 23 Oct 2016 18:02:00 GMT\r
@@ -66,7 +67,12 @@ class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
         if not hasattr(self, '_map'):
             asyncore.dispatcher.__init__(self, sock)
 #        self.tlsDone = False
-        TLSHandshake.__init__(self, sock=sock, certfile='/home/shurdeek/src/PyBitmessage/src/sslkeys/cert.pem', keyfile='/home/shurdeek/src/PyBitmessage/src/sslkeys/key.pem', server_side=True)
+        TLSHandshake.__init__(
+            self,
+            sock=sock,
+            certfile='/home/shurdeek/src/PyBitmessage/src/sslkeys/cert.pem',
+            keyfile='/home/shurdeek/src/PyBitmessage/src/sslkeys/key.pem',
+            server_side=True)
         HTTPRequestHandler.__init__(self, sock)
 
     def handle_connect(self):
@@ -142,6 +148,7 @@ class HTTPSServer(HTTPServer):
 #            if self.connections % 1000 == 0:
 #                print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
             HTTPSRequestHandler(sock)
+
 
 if __name__ == "__main__":
     client = HTTPSServer()
