@@ -1,3 +1,7 @@
+"""
+src/network/invthread.py
+========================
+"""
 import Queue
 import random
 from time import time
@@ -32,9 +36,13 @@ def handleExpiredDandelion(expired):
 
 
 class InvThread(StoppableThread):
+    """A thread to manage inventory"""
+
     name = "InvBroadcaster"
 
-    def handleLocallyGenerated(self, stream, hashId):
+    @staticmethod
+    def handleLocallyGenerated(stream, hashId):
+        """Locally generated inventory items require special handling"""
         Dandelion().addHash(hashId, stream=stream)
         for connection in \
             BMConnectionPool().inboundConnections.values() + \
@@ -43,8 +51,8 @@ class InvThread(StoppableThread):
                 continue
             connection.objectsNewToThem[hashId] = time()
 
-    def run(self):
-        while not state.shutdown:
+    def run(self):      # pylint: disable=too-many-branches
+        while not state.shutdown:       # pylint: disable=too-many-nested-blocks
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
