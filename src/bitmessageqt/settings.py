@@ -490,11 +490,11 @@ class SettingsDialog(QtGui.QDialog):
 
         if self.net_restart_needed:
             self.net_restart_needed = False
-            self.config.set('bitmessagesettings', 'dontconnect', 'true')
+            self.config.setTemp('bitmessagesettings', 'dontconnect', 'true')
             self.timer.singleShot(
                 5000, lambda:
-                self.config.remove_option(
-                    'bitmessagesettings', 'dontconnect')
+                self.config.setTemp(
+                    'bitmessagesettings', 'dontconnect', 'false')
             )
 
         self.parent.updateStartOnLogon()
