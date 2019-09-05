@@ -85,15 +85,15 @@ class ObjectTracker(object):
         self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
-        for i in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
+        for i in network.connectionpool.BMConnectionPool().inboundConnections.values(
+        ) + network.connectionpool.BMConnectionPool().outboundConnections.values():
             if not i.fullyEstablished:
                 continue
             try:
                 del i.objectsNewToMe[hashid]
             except KeyError:
-                if streamNumber in i.streams and \
-                    (not Dandelion().hasHash(hashid) or \
-                    Dandelion().objectChildStem(hashid) == i):
+                if streamNumber in i.streams and (
+                        not Dandelion().hasHash(hashid) or Dandelion().objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
                         i.objectsNewToThem[hashid] = time.time()
                     # update stream number, which we didn't have when we just received the dinv
@@ -116,16 +116,18 @@ class ObjectTracker(object):
         if haveBloom:
             self.addrBloom.add(hashid)
 
-# addr sending -> per node upload queue, and flush every minute or so
-# inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue and flush every minute or so
-# data sending -> a simple queue
 
-# no bloom
-# - if inv arrives
-#   - if we don't have it, add tracking and download queue
-#   - if we do have it, remove from tracking
-# tracking downloads
-# - per node hash of items the node has but we don't
-# tracking inv
-# - per node hash of items that neither the remote node nor we have
-#
+"""
+    addr sending -> per node upload queue, and flush every minute or so
+    inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue
+    and flush every minute or so
+    data sending -> a simple queue
+    no bloom
+    - if inv arrives
+    - if we don't have it, add tracking and download queue
+    - if we do have it, remove from tracking
+     tracking downloads
+    - per node hash of items the node has but we don't
+     tracking inv
+    - per node hash of items that neither the remote node nor we have
+"""
