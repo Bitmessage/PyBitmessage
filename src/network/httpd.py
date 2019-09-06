@@ -1,3 +1,7 @@
+"""
+src/network/httpd.py
+=======================
+"""
 import asyncore
 import socket
 
@@ -5,25 +9,26 @@ from tls import TLSHandshake
 
 
 class HTTPRequestHandler(asyncore.dispatcher):
+    """Handling HTTP request"""
     response = """HTTP/1.0 200 OK\r
-Date: Sun, 23 Oct 2016 18:02:00 GMT\r
-Content-Type: text/html; charset=UTF-8\r
-Content-Encoding: UTF-8\r
-Content-Length: 136\r
-Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\r
-Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)\r
-ETag: "3f80f-1b6-3e1cb03b"\r
-Accept-Ranges: bytes\r
-Connection: close\r
-\r
-<html>
-<head>
-  <title>An Example Page</title>
-</head>
-  <body>
-     Hello World, this is a very simple HTML document.
-  </body>
-</html>"""
+    Date: Sun, 23 Oct 2016 18:02:00 GMT\r
+    Content-Type: text/html; charset=UTF-8\r
+    Content-Encoding: UTF-8\r
+    Content-Length: 136\r
+    Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\r
+    Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)\r
+    ETag: "3f80f-1b6-3e1cb03b"\r
+    Accept-Ranges: bytes\r
+    Connection: close\r
+    \r
+    <html>
+    <head>
+      <title>An Example Page</title>
+    </head>
+      <body>
+         Hello World, this is a very simple HTML document.
+      </body>
+    </html>"""
 
     def __init__(self, sock):
         if not hasattr(self, '_map'):
@@ -63,10 +68,11 @@ Connection: close\r
 
 
 class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
+    """Handling HTTPS request"""
     def __init__(self, sock):
         if not hasattr(self, '_map'):
-            asyncore.dispatcher.__init__(self, sock)
-#        self.tlsDone = False
+            asyncore.dispatcher.__init__(self, sock)        # pylint: disable=non-parent-init-called
+        # self.tlsDone = False
         TLSHandshake.__init__(
             self,
             sock=sock,
@@ -87,8 +93,7 @@ class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
     def readable(self):
         if self.tlsDone:
             return HTTPRequestHandler.readable(self)
-        else:
-            return TLSHandshake.readable(self)
+        return TLSHandshake.readable(self)
 
     def handle_read(self):
         if self.tlsDone:
@@ -99,8 +104,7 @@ class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
     def writable(self):
         if self.tlsDone:
             return HTTPRequestHandler.writable(self)
-        else:
-            return TLSHandshake.writable(self)
+        return TLSHandshake.writable(self)
 
     def handle_write(self):
         if self.tlsDone:
@@ -110,6 +114,7 @@ class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
 
 
 class HTTPServer(asyncore.dispatcher):
+    """Handling HTTP Server"""
     port = 12345
 
     def __init__(self):
@@ -125,14 +130,15 @@ class HTTPServer(asyncore.dispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-#            print 'Incoming connection from %s' % repr(addr)
+            # print 'Incoming connection from %s' % repr(addr)
             self.connections += 1
-#            if self.connections % 1000 == 0:
-#                print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
+            # if self.connections % 1000 == 0:
+            #       print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
             HTTPRequestHandler(sock)
 
 
 class HTTPSServer(HTTPServer):
+    """Handling HTTPS Server"""
     port = 12345
 
     def __init__(self):
@@ -143,10 +149,10 @@ class HTTPSServer(HTTPServer):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-#            print 'Incoming connection from %s' % repr(addr)
+            # print 'Incoming connection from %s' % repr(addr)
             self.connections += 1
-#            if self.connections % 1000 == 0:
-#                print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
+            # if self.connections % 1000 == 0:
+            #       print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
             HTTPSRequestHandler(sock)
 
 

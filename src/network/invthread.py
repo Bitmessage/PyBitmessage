@@ -36,7 +36,7 @@ def handleExpiredDandelion(expired):
 
 
 class InvThread(StoppableThread):
-    """A thread to manage inventory"""
+    """A thread to send inv annoucements."""
 
     name = "InvBroadcaster"
 
