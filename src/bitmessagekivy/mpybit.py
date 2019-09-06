@@ -61,6 +61,12 @@ import state
 
 from uikivysignaler import UIkivySignaler
 
+import identiconGeneration
+
+import os
+
+from kivy.core.clipboard import Clipboard
+
 # pylint: disable=unused-argument
 # pylint: disable=broad-except
 
@@ -120,10 +126,7 @@ class Inbox(Screen):
                 third_text = mail[3].replace('\n', ' ')
                 data.append({
                     'text': mail[4].strip(),
-                    'secondary_text': mail[5][:10] + '...........' if len(
-                        mail[3]) > 10 else mail[3] + '\n' + " " + (
-                            third_text[:25] + '...!') if len(
-                                third_text) > 25 else third_text,
+                    'secondary_text': mail[5][:50] + '........' if len(mail[5]) >= 50 else (mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'receivedTime': mail[6]})
             for item in data:
                 meny = ThreeLineAvatarIconListItem(
@@ -131,11 +134,11 @@ class Inbox(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
-                img_latter = item['secondary_text'][0].upper() if (
-                    item['secondary_text'][0].upper() >= 'A' and item[
-                        'secondary_text'][0].upper() <= 'Z') else '!'
+                # img_latter = item['secondary_text'][0].upper() if (
+                #     item['secondary_text'][0].upper() >= 'A' and item[
+                #         'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(img_latter)))
+                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
                     self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
@@ -269,11 +272,8 @@ class MyAddress(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
-                img_latter = item['text'][0].upper() if (
-                    item['text'][0].upper() >= 'A' and item['text'][
-                        0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(img_latter)))
+                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['text'].strip()))))
                 meny.bind(on_press=partial(
                     self.myadd_detail, item['secondary_text'], item['text']))
                 self.ids.ml.add_widget(meny)
@@ -356,11 +356,8 @@ class AddressBook(Screen):
                     secondary_text=item[1],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
-                img_latter = item[0][0].upper() if (
-                    item[0][0].upper() >= 'A' and item[0][
-                        0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(img_latter)))
+                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item[0].strip()))))
                 meny.bind(on_press=partial(
                     self.addBook_detail, item[1], item[0]))
                 carousel = Carousel(direction='right')
@@ -470,8 +467,8 @@ class DropDownWidget(BoxLayout):
         # pylint: disable=too-many-locals
         fromAddress = str(self.ids.ti.text)
         toAddress = str(self.ids.txt_input.text)
-        subject = str(self.ids.subject.text)
-        message = str(self.ids.body.text)
+        subject = self.ids.subject.text.encode('utf-8').strip()
+        message = self.ids.body.text.encode('utf-8').strip()
         encoding = 3
         print "message: ", self.ids.body.text
         sendMessageToPeople = True
@@ -542,13 +539,7 @@ class DropDownWidget(BoxLayout):
 
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
-                    self.ids.body.text = ''
-                    self.ids.ti.text = ''
-                    self.ids.subject.text = ''
-                    self.ids.txt_input.text = ''
                     self.parent.parent.current = 'inbox'
-                    self.ids.btn.text = 'select'
-                    self.ids.ti.text = ''
                     navApp.back_press()
                     toast('send')
                     return None
@@ -709,7 +700,7 @@ class Random(Screen):
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
-        if self.ids.label.text:
+        if str(self.ids.label.text).strip():
             queues.addressGeneratorQueue.put((
                 'createRandomAddress',
                 4, streamNumberForAddress,
@@ -774,13 +765,9 @@ class Sent(Screen):
 
         if queryreturn:
             for mail in queryreturn:
-                third_text = mail[3].replace('\n', ' ')
                 self.data.append({
                     'text': mail[1].strip(),
-                    'secondary_text': mail[2][:10] + '...........' if len(
-                        mail[2]) > 10 else mail[2] + '\n' + " " + (
-                            third_text[:25] + '...!') if len(
-                                third_text) > 25 else third_text,
+                    'secondary_text': mail[2][:50] + '........' if len(mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'lastactiontime': mail[6]})
             for item in self.data:
                 meny = ThreeLineAvatarIconListItem(
@@ -788,11 +775,8 @@ class Sent(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
-                img_latter = item['secondary_text'][0].upper() if (
-                    item['secondary_text'][0].upper() >= 'A' and item[
-                        'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(img_latter)))
+                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
                     self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
@@ -806,7 +790,7 @@ class Sent(Screen):
                 carousel.min_move = 0.2
                 del_btn = Button(text='Delete')
                 del_btn.background_normal = ''
-                del_btn.background_color = (1.0, 0.0, 0.0, 1.0)
+                del_btn.background_color = (1, 0, 0, 1)
                 del_btn.bind(on_press=partial(
                     self.delete, item['lastactiontime']))
                 carousel.add_widget(del_btn)
@@ -881,9 +865,13 @@ class Sent(Screen):
         try:
             self.parent.screens[4].clear_widgets()
             self.parent.screens[4].add_widget(Trash())
+            self.parent.screens[16].clear_widgets()
+            self.parent.screens[16].add_widget(Allmails())
         except Exception:
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
+            self.parent.parent.screens[16].clear_widgets()
+            self.parent.parent.screens[16].add_widget(Allmails())
 
 
 class Trash(Screen):
@@ -903,26 +891,58 @@ class Trash(Screen):
                 state.association = BMConfigParser().addresses()[0]
 
         inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from \
+            "SELECT toaddress, fromaddress, subject, message, folder, received from \
             inbox WHERE folder = 'trash' and toaddress = '{}';".format(
                 state.association))
         sent = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder from \
+            "SELECT toaddress, fromaddress, subject, message, folder, lastactiontime from \
             sent WHERE folder = 'trash' and fromaddress = '{}';".format(
                 state.association))
         trash_data = inbox + sent
 
-        for item in trash_data:
-            meny = ThreeLineAvatarIconListItem(
-                text=item[1],
-                secondary_text=item[2],
-                theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
-            img_latter = './images/text_images/{}.png'.format(
-                    item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                        2][0].upper() <= 'Z') else '!')
-            meny.add_widget(AvatarSampleWidget(source=img_latter))
-            self.ids.ml.add_widget(meny)
+        if trash_data:
+            for item in trash_data:
+                meny = ThreeLineAvatarIconListItem(
+                    text=item[1],
+                    secondary_text=item[2][:50] + '........' if len(item[2]) >= 50 else (item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                    theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color)
+                img_latter = './images/text_images/{}.png'.format(
+                        item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
+                            2][0].upper() <= 'Z') else '!')
+                meny.add_widget(AvatarSampleWidget(source=img_latter))
+                carousel = Carousel(direction='right')
+                if platform == 'android':
+                    carousel.height = 150
+                elif platform == 'linux':
+                    carousel.height = meny.height - 10
+                carousel.size_hint_y = None
+                carousel.ignore_perpendicular_swipes = True
+                carousel.data_index = 0
+                carousel.min_move = 0.2
+                del_btn = Button(text='Delete')
+                del_btn.background_normal = ''
+                del_btn.background_color = (1, 0, 0, 1)
+                del_btn.bind(on_press=partial(
+                    self.delete_permanently, item[5]))
+                carousel.add_widget(del_btn)
+                carousel.add_widget(meny)
+                carousel.index = 1
+                self.ids.ml.add_widget(carousel)
+        else:
+            content = MDLabel(
+                font_style='Body1',
+                theme_text_color='Primary',
+                text="yet no trashed message for this account!!!!!!!!!!!!!",
+                halign='center',
+                bold=True,
+                size_hint_y=None,
+                valign='top')
+            self.ids.ml.add_widget(content)
+
+    def delete_permanently(self, data_index, instance, *args):
+        """Deleting trash mail permanently."""
+        pass
 
 
 class Page(Screen):
@@ -986,7 +1006,6 @@ class NavigateApp(App):
 
     def build(self):
         """Method builds the widget."""
-        import os
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
@@ -1018,6 +1037,7 @@ class NavigateApp(App):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
+        self.set_identicon(text)
         address_label = self.current_address_label(
             BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
@@ -1074,12 +1094,28 @@ class NavigateApp(App):
         p = GrashofPopup()
         p.open()
 
-    @staticmethod
-    def getDefaultAccData():
+    def getDefaultAccData(self):
         """Getting Default Account Data."""
         if BMConfigParser().addresses():
+            img = identiconGeneration.generate(BMConfigParser().addresses()[0])
+            self.createFolder('./images/default_identicon/')
+            img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
+
+    def createFolder(self, directory):
+        """This method is used to create the directory when app starts"""
+        try:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+        except OSError:
+            print ('Error: Creating directory. ' + directory)
+
+    def get_default_image(self):
+        if BMConfigParser().addresses():
+            # BMConfigParser().addresses()[0]
+            return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
+        return ''
 
     @staticmethod
     def addressexist():
@@ -1206,7 +1242,7 @@ class NavigateApp(App):
             return state.all_count
 
     @staticmethod
-    def current_address_label(current_add_label = None, current_addr = None):
+    def current_address_label(current_add_label=None, current_addr=None):
         """Getting current address labels."""
         if BMConfigParser().addresses():
             if current_add_label:
@@ -1264,6 +1300,17 @@ class NavigateApp(App):
             text_field.bind(text=self.searchQuery)
             self.root.ids.search_bar.add_widget(text_field)
 
+    def set_identicon(self, text):
+        """This method is use for showing identicon in address spinner"""
+        img = identiconGeneration.generate(text)
+        img.size = 20, 20
+        img.y = self.root.children[2].children[0].ids.btn.children[0].y
+        img.x = 5
+        self.root.children[2].children[0].ids.btn.add_widget(img)
+
+    def address_identicon(self):
+        return './images/drawer_logo1.png'
+
 
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
@@ -1280,19 +1327,16 @@ class GrashofPopup(Popup):
 
     def savecontact(self):
         """Method is used for Saving Contacts."""
-        my_addresses = \
-            self.parent.children[1].children[2].children[0].ids.btn.values
-        entered_text = str(self.ids.address.text)
-        if entered_text in my_addresses:
-            self.ids.address.focus = False
-            self.ids.address.helper_text = 'Please Enter corrent address'
-        elif entered_text == '':
+        label = self.ids.label.text.strip()
+        address = self.ids.address.text.strip()
+        if label == '' and address == '':
             self.ids.label.focus = True
-            # self.ids.address.focus = True
-            self.ids.label.helper_text = 'This field is required'
+            self.ids.address.focus = True
+        elif address == '':
+            self.ids.address.focus = True
+        elif label == '':
+            self.ids.label.focus = True
 
-        label = self.ids.label.text
-        address = self.ids.address.text
         stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         if label and address and address not in stored_address:
@@ -1327,6 +1371,30 @@ class GrashofPopup(Popup):
     def close_pop():
         """Pop is Canceled."""
         toast('Canceled')
+
+    def checkAddress_valid(self, instance):
+        my_addresses = self.parent.children[1].children[2].children[0].ids.btn.values
+        add_book = [addr[1] for addr in kivy_helper_search.search_sql(
+            folder="addressbook")]
+        entered_text = str(instance.text).strip()
+        if entered_text in add_book:
+            text = 'Address is already in the addressbook.'
+        elif entered_text in my_addresses:
+            text = 'You can not save your own address.'
+
+        if entered_text in my_addresses or entered_text in add_book:
+            if len(self.ids.popup_box.children) <= 2:
+                err_msg = MDLabel(
+                    id='erro_msg',
+                    font_style='Body2',
+                    text=text,
+                    font_size=5)
+                err_msg.color = 1, 0, 0, 1
+                self.ids.popup_box.add_widget(err_msg)
+                self.ids.save_addr.disabled = True
+        elif len(self.ids.popup_box.children) > 2:
+            self.ids.popup_box.remove_widget(self.ids.popup_box.children[0])
+            self.ids.save_addr.disabled = False
 
 
 class AvatarSampleWidget(ILeftBody, Image):
@@ -1443,7 +1511,7 @@ class MailDetail(Screen):
             self.parent.parent.current = 'allmails'
             state.is_allmail = False
         else:
-            self.parent.parent.current = state.detailPageType    
+            self.parent.parent.current = state.detailPageType
         msg_count_objs.trash_cnt.badge_text = str(int(state.trash_count) + 1)
         msg_count_objs.allmail_cnt.badge_text = str(int(state.all_count) - 1)
         state.trash_count = str(int(state.trash_count) + 1)
@@ -1483,6 +1551,15 @@ class MailDetail(Screen):
         composer_ids.body.text = self.message
         self.parent.parent.current = 'create'
         navApp.set_navbar_for_composer()
+
+    def copy_composer_text(self, instance, *args):
+        """This method is used for copying the data from mail detail page"""
+        if len(instance.parent.text.split(':')) > 1:
+            cpy_text = instance.parent.text.split(':')[1].strip()
+        else:
+            cpy_text = instance.parent.text
+        Clipboard.copy(cpy_text)
+        toast('Copied')
 
 
 class MyaddDetailPopup(Popup):
@@ -1651,7 +1728,7 @@ class Draft(Screen):
                 carousel.min_move = 0.2
                 del_btn = Button(text='Delete')
                 del_btn.background_normal = ''
-                del_btn.background_color = (1.0, 0.0, 0.0, 1.0)
+                del_btn.background_color = (1, 0, 0, 1)
                 del_btn.bind(on_press=partial(
                     self.delete_draft, item['lastactiontime']))
                 carousel.add_widget(del_btn)
@@ -1694,12 +1771,12 @@ class Draft(Screen):
         if int(state.draft_count) > 0:
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
-            msg_count_objs.allmail_cnt.badge_text = str(
-                int(state.all_count) - 1)
+            # msg_count_objs.allmail_cnt.badge_text = str(
+            #     int(state.all_count) - 1)
             # msg_count_objs.trash_cnt.badge_text = str(
                 # int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
-            state.all_count = str(int(state.all_count) - 1)
+            # state.all_count = str(int(state.all_count) - 1)
             # state.trash_count = str(int(state.trash_count) + 1)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
@@ -1764,8 +1841,9 @@ class CustomSpinner(Spinner):
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner."""
         super(CustomSpinner, self).__init__(*args, **kwargs)
-        max_value = 2.8
-        self.dropdown_cls.max_height = self.height * max_value + max_value * 4
+        # max_value = 2.8
+        # self.dropdown_cls.max_height = self.height / 2 * max_value + max_value * 4
+        self.dropdown_cls.max_height = Window.size[1] / 3
 
 
 def remove_search_bar(obj):
@@ -1814,17 +1892,12 @@ class Allmails(Screen):
         if all_mails:
             for item in all_mails:
                 meny = ThreeLineAvatarIconListItem(
-                    text='Draft' if item[4] == 'draft' else item[1],
-                    secondary_text=item[1] if item[4] == 'draft' else item[2],
+                    text=item[1],
+                    secondary_text=item[2][:50] + '........' if len(item[2]) >= 50 else (item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
-                img_latter = './images/avatar.png' if item[
-                    4] == 'draft' else './images/text_images/{}.png'.format(
-                        item[2][0].upper() if (
-                            item[2][0].upper() >= 'A' and item[
-                                2][0].upper() <= 'Z') else '!')
                 meny.add_widget(AvatarSampleWidget(
-                    source=img_latter))
+                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item[2].strip()))))
                 meny.bind(on_press=partial(
                     self.mail_detail, item[5], item[4]))
                 carousel = Carousel(direction='right')
@@ -1838,7 +1911,7 @@ class Allmails(Screen):
                 carousel.min_move = 0.2
                 del_btn = Button(text='Delete')
                 del_btn.background_normal = ''
-                del_btn.background_color = (1.0, 0.0, 0.0, 1.0)
+                del_btn.background_color = (1, 0, 0, 1)
                 del_btn.bind(on_press=partial(
                     self.swipe_delete, item[5], item[4]))
                 carousel.add_widget(del_btn)
@@ -1927,3 +2000,15 @@ class Allmails(Screen):
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
         Clock.schedule_once(refresh_callback, 1)
+
+
+def avatarImageFirstLetter(letter_string):
+    """This method is used to the first letter for the avatar image"""
+    if letter_string[0].upper() >= 'A' and letter_string[0].upper() <= 'Z':
+        img_latter = letter_string[0].upper()
+    elif int(letter_string[0]) >= 0 and int(letter_string[0]) <= 9:
+        img_latter = letter_string[0]
+    else:
+        img_latter = '!'
+
+    return img_latter
