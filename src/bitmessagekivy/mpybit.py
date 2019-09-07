@@ -126,7 +126,9 @@ class Inbox(Screen):
                 third_text = mail[3].replace('\n', ' ')
                 data.append({
                     'text': mail[4].strip(),
-                    'secondary_text': mail[5][:50] + '........' if len(mail[5]) >= 50 else (mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                    'secondary_text': mail[5][:50] + '........' if len(
+                        mail[5]) >= 50 else (
+                            mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'receivedTime': mail[6]})
             for item in data:
                 meny = ThreeLineAvatarIconListItem(
@@ -138,7 +140,8 @@ class Inbox(Screen):
                 #     item['secondary_text'][0].upper() >= 'A' and item[
                 #         'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['secondary_text'].strip()))))
+                    source='./images/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
                     self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
@@ -767,7 +770,9 @@ class Sent(Screen):
             for mail in queryreturn:
                 self.data.append({
                     'text': mail[1].strip(),
-                    'secondary_text': mail[2][:50] + '........' if len(mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                    'secondary_text': mail[2][:50] + '........' if len(
+                        mail[2]) >= 50 else (
+                            mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'lastactiontime': mail[6]})
             for item in self.data:
                 meny = ThreeLineAvatarIconListItem(
@@ -776,7 +781,8 @@ class Sent(Screen):
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['secondary_text'].strip()))))
+                    source='./images/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
                     self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
@@ -904,12 +910,14 @@ class Trash(Screen):
             for item in trash_data:
                 meny = ThreeLineAvatarIconListItem(
                     text=item[1],
-                    secondary_text=item[2][:50] + '........' if len(item[2]) >= 50 else (item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                    secondary_text=item[2][:50] + '........' if len(
+                        item[2]) >= 50 else (
+                            item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
                 img_latter = './images/text_images/{}.png'.format(
-                        item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                            2][0].upper() <= 'Z') else '!')
+                    item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
+                        2][0].upper() <= 'Z') else '!')
                 meny.add_widget(AvatarSampleWidget(source=img_latter))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
@@ -1109,7 +1117,7 @@ class NavigateApp(App):
             if not os.path.exists(directory):
                 os.makedirs(directory)
         except OSError:
-            print ('Error: Creating directory. ' + directory)
+            print('Error: Creating directory. ' + directory)
 
     def get_default_image(self):
         if BMConfigParser().addresses():
@@ -1774,7 +1782,7 @@ class Draft(Screen):
             # msg_count_objs.allmail_cnt.badge_text = str(
             #     int(state.all_count) - 1)
             # msg_count_objs.trash_cnt.badge_text = str(
-                # int(state.trash_count) + 1)
+            #     int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
             # state.all_count = str(int(state.all_count) - 1)
             # state.trash_count = str(int(state.trash_count) + 1)
@@ -1893,11 +1901,14 @@ class Allmails(Screen):
             for item in all_mails:
                 meny = ThreeLineAvatarIconListItem(
                     text=item[1],
-                    secondary_text=item[2][:50] + '........' if len(item[2]) >= 50 else (item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                    secondary_text=item[2][:50] + '........' if len(
+                        item[2]) >= 50 else (
+                            item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item[2].strip()))))
+                    source='./images/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item[2].strip()))))
                 meny.bind(on_press=partial(
                     self.mail_detail, item[5], item[4]))
                 carousel = Carousel(direction='right')
