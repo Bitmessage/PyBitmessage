@@ -139,9 +139,9 @@ function install_pyinstaller()
 
 function build_dll(){
 	cd $BASE_DIR
-	# rm -rf master.zip
-	# rm -rf PyBitmessage
-	# git clone https://github.com/Bitmessage/PyBitmessage.git
+	rm -rf master.zip
+	rm -rf PyBitmessage
+	git clone https://github.com/Bitmessage/PyBitmessage.git
 	echo "Current directory"
 	echo `pwd`
 	cd PyBitmessage/src/bitmsghash
@@ -150,8 +150,8 @@ function build_dll(){
 		echo "Install MinGW"
 		sudo apt-get install mingw-w64
 		echo "Create dll"
-		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native -I/home/cis/.wine64/drive_c/OpenSSL-Win64/include -I/usr/x86_64-w64-mingw32/include -L/home/cis/.wine64/drive_c/OpenSSL-Win64/lib -c 	bitmsghash.cpp
-		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native  -I/home/cis/.wine64/drive_c/OpenSSL-Win64/include -L/home/cis/.wine64/drive_c/OpenSSL-Win64 -L/usr/lib/x86_64-linux-gnu/wine -fPIC -shared -lcrypt32 -leay32 -lwsock32 -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
+		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -I/usr/x86_64-w64-mingw32/include -L$HOME/.wine64/drive_c/OpenSSL-Win64/lib -c 	bitmsghash.cpp
+		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native  -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -L$HOME/.wine64/drive_c/OpenSSL-Win64 -L/usr/lib/x86_64-linux-gnu/wine -fPIC -shared -lcrypt32 -leay32 -lwsock32 -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
 		echo "DLL generated successfully "
 		cd ../..
 
@@ -171,9 +171,9 @@ function build_dll(){
 }
 
 
-# install_wine
-# install_python
-# install_pyqt
-# install_openssl
-# install_pyinstaller
+install_wine
+install_python
+install_pyqt
+install_openssl
+install_pyinstaller
 build_dll

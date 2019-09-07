@@ -1,6 +1,7 @@
 import ctypes
 import os
 import time
+import sys
 
 
 if ctypes.sizeof(ctypes.c_voidp) == 4:
@@ -19,6 +20,10 @@ msvcrDllPath = cdrivePath+"windows\\system32\\"
 pythonDllPath = cdrivePath+"Python27\\"
 outPath = spec_root+"\\bitmessagemain"
 
+importPath = srcPath
+sys.path.insert(0,importPath)
+os.chdir(sys.path[0])
+from version import softwareName
 
 today = time.strftime("%Y%m%d")
 snapshot = False
@@ -29,7 +34,7 @@ os.rename(os.path.join(srcPath, '__init__.py'), os.path.join(srcPath, '__init__.
 a = Analysis(
              [srcPath + 'bitmessagemain.py'],
              pathex=[outPath],
-             hiddenimports=['pyopencl','numpy', 'win32com' , 'setuptools.msvc' ],
+             hiddenimports=['pyopencl','numpy', 'win32com' , 'setuptools.msvc' ,'_cffi_backend'],
              hookspath=None,
              runtime_hooks=None
              )
@@ -62,8 +67,6 @@ def addUIs():
 a.datas += addTranslations()
 a.datas += addUIs()
 
-
-
 a.binaries += [('libeay32.dll', openSSLPath + 'libeay32.dll', 'BINARY'),
          ('python27.dll', pythonDllPath + 'python27.dll', 'BINARY'),
          ('msvcr120.dll', msvcrDllPath + 'msvcr120.dll','BINARY'),
@@ -73,10 +76,8 @@ a.binaries += [('libeay32.dll', openSSLPath + 'libeay32.dll', 'BINARY'),
          (os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
          ]
 
-with open(os.path.join(srcPath, 'version.py'), 'rt') as f:
-    softwareVersion = f.readline().split('\'')[1]
     
-fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareVersion)
+fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareName)
 if snapshot:
     fname = 'Bitmessagedev_%s_%s.exe' % ("x86" if arch == 32 else "x64", today)
     
@@ -89,9 +90,9 @@ exe = EXE(pyz,
           a.binaries,
           [],
           name=fname,
-          debug=all,
+          debug=False,
           strip=None,
-          upx=True,
+          upx=False,
           console=True, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
 
 coll = COLLECT(exe,
@@ -99,6 +100,6 @@ coll = COLLECT(exe,
                a.zipfiles,
                a.datas,
                strip=False,
-               upx=True,
+               upx=False,
                name='main')
 
