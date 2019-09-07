@@ -53,15 +53,15 @@
     color: color_font
 
 <ContentNavigationDrawer@Navigatorss>:
-    drawer_logo: './images/drawer_logo1.png'
+    drawer_logo: app.address_identicon()
     NavigationDrawerDivider:
-     
+    
     NavigationDrawerTwoLineListItem:
         text: "Accounts"
     NavigationDrawerIconButton:
         CustomSpinner:
-            pos_hint:{"x":0,"y":.25}
             id: btn
+            pos_hint:{"x":0,"y":.25}
             option_cls: Factory.get("MySpinnerOption")
             font_size: '12.5sp'
             text: app.getDefaultAccData()
@@ -70,6 +70,11 @@
             color: color_font
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
+            Image:
+                source: app.get_default_image()
+                x: self.width/4
+                y: self.parent.y + self.parent.height/2 - self.height + 10
+                size: 20, 20
             ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
@@ -200,6 +205,7 @@ NavigationLayout:
                 id: search_field
                 hint_text: 'Search'
                 on_text: app.searchQuery(self)
+
         ScreenManager:
             id: scr_mngr
             Inbox:
@@ -304,7 +310,7 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(500)
+            height: self.minimum_height + 2 * self.parent.height/4
             padding: dp(32)
             spacing: 15
             BoxLayout:
@@ -634,7 +640,118 @@ NavigationLayout:
 
 <Payment>:
     name: 'payment'
-
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: dp(20)
+            spacing: 10
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: 0.957, 0.890, 0.843, 1
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: 'Platinum'
+                    halign: 'center'
+                MDLabel:
+                    font_style: 'Subhead'
+                    theme_text_color: 'Primary'
+                    text: 'We provide subscriptions to real-time streaming market data directly from exchanges, quote aggregators and index providers. The Market Data Subscriptions page lets you sign up for additional market data subscriptions such as NASDAQ TotalView and NYSE Open Book or unsubscribe from market data. '
+                    halign: 'center'
+                MDLabel:
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: '€ 50.0'
+                    halign: 'center'
+                MDRaisedButton:
+                    size_hint: 1, None
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Select'
+                        font_size: '13sp'
+                        color: (1,1,1,1)
+                        halign: 'center'
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: 0.957, 0.890, 0.843, 1
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: 'Silver'
+                    halign: 'center'
+                MDLabel:
+                    font_style: 'Subhead'
+                    theme_text_color: 'Primary'
+                    text: 'We provide subscriptions to real-time streaming market data directly from exchanges, quote aggregators and index providers. The Market Data Subscriptions page lets you sign up for additional market data subscriptions such as NASDAQ TotalView and NYSE Open Book or unsubscribe from market data. '
+                    halign: 'center'
+                MDLabel:
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: '€ 100.0'
+                    halign: 'center'
+                MDRaisedButton:
+                    size_hint: 1, None
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Select'
+                        font_size: '13sp'
+                        color: (1,1,1,1)
+                        halign: 'center'
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: 0.957, 0.890, 0.843, 1
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: 'Gold'
+                    halign: 'center'
+                MDLabel:
+                    font_style: 'Subhead'
+                    theme_text_color: 'Primary'
+                    text: 'We provide subscriptions to real-time streaming market data directly from exchanges, quote aggregators and index providers. The Market Data Subscriptions page lets you sign up for additional market data subscriptions such as NASDAQ TotalView and NYSE Open Book or unsubscribe from market data. '
+                    halign: 'center'
+                MDLabel:
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: '€ 500.0'
+                    halign: 'center'
+                MDRaisedButton:
+                    size_hint: 1, None
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Select'
+                        font_size: '13sp'
+                        color: (1,1,1,1)
+                        halign: 'center'
+        
 
 <GrashofPopup>:
     id: popup
@@ -663,10 +780,12 @@ NavigationLayout:
                 hint_text: "Address"
                 required: True
                 helper_text_mode: "on_error"
+                on_text: root.checkAddress_valid(self)
         BoxLayout:
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
+                id: save_addr
                 size_hint: 1.5, None
                 height: dp(40)
                 on_release:                 
@@ -697,6 +816,7 @@ NavigationLayout:
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
+
 
 <NetworkStat>:
     name: 'networkstat'
@@ -795,23 +915,27 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(400)
+            height: dp(400) + self.minimum_height
             padding: dp(32)
             MDLabel:
                 font_style: 'Headline'
                 theme_text_color: 'Primary'
                 text: root.subject
                 halign: 'left'
+                font_size: '20sp'
+                CopyTextBtn:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
                 text: "From: " + root.from_addr
                 halign: 'left'
+                CopyTextBtn:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
                 text: "To: " + root.to_addr
                 halign: 'left'
+                CopyTextBtn:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
@@ -823,28 +947,46 @@ NavigationLayout:
                 text: root.message
                 halign: 'left'
                 bold: True
+                CopyTextBtn:
             BoxLayout:
-                spacing:20
-                MDRaisedButton:
-                    size_hint: 1, None
-                    height: dp(40)
-                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail() if root.page_type == 'sent' else root.write_msg(app)
-                    MDLabel:
-                        font_style: 'Title'
-                        text: 'Reply' if root.page_type == 'inbox' else 'Copy' if root.page_type == 'sent' else 'Write'
-                        font_size: '13sp'
-                        color: (1,1,1,1)
-                        halign: 'center'
-                MDRaisedButton:
-                    size_hint: 1, None
-                    height: dp(40)
-                    on_press: root.delete_mail()
-                    MDLabel:
-                        font_style: 'Title'
-                        text: 'Delete'
-                        font_size: '13sp'
-                        color: (1,1,1,1)
-                        halign: 'center'
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(100) + self.minimum_height
+                BoxLayout:
+                    spacing:20
+                    MDRaisedButton:
+                        size_hint: 1, None
+                        height: dp(40)
+                        on_press: root.inbox_reply() if root.page_type == 'inbox' else root.write_msg(app) if root.page_type == 'draft' else root.copy_sent_mail()
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'Reply' if root.page_type == 'inbox' else 'Copy' if root.page_type == 'sent' else 'Write'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+                    MDRaisedButton:
+                        size_hint: 1, None
+                        height: dp(40)
+                        on_press: root.delete_mail()
+                        MDLabel:
+                            font_style: 'Title'
+                            text: 'Delete'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+
+<CopyTextBtn@Button>:
+    id: cpyButton
+    color: 0,0,0,1
+    background_color: (0,0,0,0)
+    center_x: self.parent.center_x * 2 - self.parent.parent.padding[0]/2
+    center_y: self.parent.center_y
+    on_press:app.root.ids.sc14.copy_composer_text(self)
+    Image:
+        source: './images/copy_text.png'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        size: 20, 20    
 
 <ComposerButton@BoxLayout>:
     size_hint_y: None
