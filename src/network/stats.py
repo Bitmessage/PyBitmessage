@@ -1,3 +1,7 @@
+"""
+src/network/stats.py
+====================
+"""
 import time
 
 import asyncore_pollchoose as asyncore
@@ -14,6 +18,7 @@ currentSentSpeed = 0
 
 
 def connectedHostsList():
+    """List of all the connected hosts"""
     retval = []
     for i in BMConnectionPool().inboundConnections.values() + \
             BMConnectionPool().outboundConnections.values():
@@ -27,10 +32,13 @@ def connectedHostsList():
 
 
 def sentBytes():
+    """Sending Bytes"""
     return asyncore.sentBytes
 
 
 def uploadSpeed():
+    """Getting upload speed"""
+    # pylint: disable=global-statement
     global lastSentTimestamp, lastSentBytes, currentSentSpeed
     currentTimestamp = time.time()
     if int(lastSentTimestamp) < int(currentTimestamp):
@@ -42,10 +50,13 @@ def uploadSpeed():
 
 
 def receivedBytes():
+    """Receiving Bytes"""
     return asyncore.receivedBytes
 
 
 def downloadSpeed():
+    """Getting download speed"""
+    # pylint: disable=global-statement
     global lastReceivedTimestamp, lastReceivedBytes, currentReceivedSpeed
     currentTimestamp = time.time()
     if int(lastReceivedTimestamp) < int(currentTimestamp):
@@ -58,6 +69,7 @@ def downloadSpeed():
 
 
 def pendingDownload():
+    """Getting pending downloads"""
     return len(missingObjects)
     # tmp = {}
     # for connection in BMConnectionPool().inboundConnections.values() + \
@@ -68,6 +80,7 @@ def pendingDownload():
 
 
 def pendingUpload():
+    """Getting pending uploads"""
     # tmp = {}
     # for connection in BMConnectionPool().inboundConnections.values() + \
     #         BMConnectionPool().outboundConnections.values():
