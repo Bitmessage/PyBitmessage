@@ -124,10 +124,7 @@ class UDPSocket(BMProto):
 
         self.destination = state.Peer(*addr)
         encodedAddr = protocol.encodeHost(addr[0])
-        if protocol.checkIPAddress(encodedAddr, True):
-            self.local = True
-        else:
-            self.local = False
+        self.local = bool(protocol.checkIPAddress(encodedAddr, True))
         # overwrite the old buffer to avoid mixing data and so that
         # self.local works correctly
         self.read_buf[0:] = recdata
