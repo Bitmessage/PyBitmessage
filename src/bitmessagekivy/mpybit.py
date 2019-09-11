@@ -1,11 +1,8 @@
 """Coding: utf-8."""
 import time
 from functools import partial
-
 from bmconfigparser import BMConfigParser
-
 from helper_sql import sqlExecute, sqlQuery
-
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -33,9 +30,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
-
 import kivy_helper_search
-
 from kivymd.button import MDIconButton
 from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
@@ -52,24 +47,17 @@ from kivymd.navigationdrawer import (
 from kivymd.selectioncontrols import MDCheckbox
 from kivymd.textfields import MDTextField
 from kivymd.theming import ThemeManager
-
 import queues
-
 from semaphores import kivyuisignaler
-
 import state
-
 from uikivysignaler import UIkivySignaler
 
 if platform == 'linux':
     import identiconGeneration
-
+    
 import os
-
 from kivy.core.clipboard import Clipboard
-
-# pylint: disable=unused-argument
-# pylint: disable=broad-except
+# pylint: disable=unused-argument, too-few-public-methods
 
 
 def toast(text):
@@ -83,7 +71,6 @@ def toast(text):
 class Navigatorss(MDNavigationDrawer):
     """Navigators class contains image, title and logo."""
 
-    # pylint: disable=too-few-public-methods
     image_source = StringProperty('images/qidenticon_two.png')
     title = StringProperty('Navigation')
     drawer_logo = StringProperty()
@@ -127,7 +114,9 @@ class Inbox(Screen):
                 third_text = mail[3].replace('\n', ' ')
                 data.append({
                     'text': mail[4].strip(),
-                    'secondary_text': mail[5][:50] + '........' if len(mail[5]) >= 50 else (mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                    'secondary_text': mail[5][:50] + '........' if len(
+                        mail[5]) >= 50 else (
+                            mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'receivedTime': mail[6]})
             for item in data:
                 meny = ThreeLineAvatarIconListItem(
@@ -139,7 +128,8 @@ class Inbox(Screen):
                 #     item['secondary_text'][0].upper() >= 'A' and item[
                 #         'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['secondary_text'].strip()))))
+                    source='./images/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
                     self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
@@ -256,10 +246,12 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
+        # pylint: disable=unnecessary-lambda, deprecated-lambda
         addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
-            filtered_list = filter(lambda addr: self.filter_address(
-                addr), BMConfigParser().addresses())
+            filtered_list = filter(
+                lambda addr: self.filter_address(
+                    addr), BMConfigParser().addresses())
             addresses_list = filtered_list
         if addresses_list:
             data = []
@@ -322,6 +314,7 @@ class MyAddress(Screen):
     @staticmethod
     def filter_address(address):
         """Method will filter the my address list data."""
+        # pylint: disable=deprecated-lambda
         if filter(lambda x: (state.searcing_text).lower() in x, [
                 BMConfigParser().get(
                     address, 'label').lower(), address.lower()]):
@@ -414,7 +407,6 @@ class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
     """Adds selection and focus behaviour to the view."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -451,8 +443,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 class RV(RecycleView):
     """Recycling View."""
 
-    # pylint: disable=too-few-public-methods
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
         """Recycling Method."""
         super(RV, self).__init__(**kwargs)
 
@@ -463,7 +454,7 @@ class DropDownWidget(BoxLayout):
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
-    def send(self, navApp):
+    def send(self, navApp):     # pylint: disable=too-many-statements, inconsistent-return-statements
         """Send message from one address to another."""
         # pylint: disable=too-many-locals
         fromAddress = str(self.ids.ti.text)
@@ -589,7 +580,7 @@ class MyTextInput(TextInput):
     starting_no = NumericProperty(3)
     suggestion_text = ''
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
         """Getting Text Input."""
         super(MyTextInput, self).__init__(**kwargs)
 
@@ -620,21 +611,18 @@ class MyTextInput(TextInput):
 class Payment(Screen):
     """Payment Method."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class Login(Screen):
     """Login Screeen."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class NetworkStat(Screen):
     """Method used to show network stat."""
 
-    # pylint: disable=too-few-public-methods
     text_variable_1 = StringProperty(
         '{0}::{1}'.format('Total Connections', '0'))
     text_variable_2 = StringProperty(
@@ -670,14 +658,12 @@ class NetworkStat(Screen):
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class Random(Screen):
     """Generates Random Address."""
 
-    # pylint: disable=too-few-public-methods
     is_active = BooleanProperty(False)
     checked = StringProperty("")
 
@@ -708,7 +694,6 @@ class Random(Screen):
 class AddressSuccessful(Screen):
     """Getting Address Detail."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -755,7 +740,9 @@ class Sent(Screen):
             for mail in queryreturn:
                 self.data.append({
                     'text': mail[1].strip(),
-                    'secondary_text': mail[2][:50] + '........' if len(mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                    'secondary_text': mail[2][:50] + '........' if len(
+                        mail[2]) >= 50 else (
+                            mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'lastactiontime': mail[6]})
             for item in self.data:
                 meny = ThreeLineAvatarIconListItem(
@@ -764,7 +751,8 @@ class Sent(Screen):
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['secondary_text'].strip()))))
+                    source='./images/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
                     self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
@@ -865,8 +853,6 @@ class Sent(Screen):
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
 
-    # pylint: disable=too-few-public-methods
-
     def __init__(self, *args, **kwargs):
         """Trash method, delete sent message and add in Trash."""
         super(Trash, self).__init__(*args, **kwargs)
@@ -892,12 +878,14 @@ class Trash(Screen):
             for item in trash_data:
                 meny = ThreeLineAvatarIconListItem(
                     text=item[1],
-                    secondary_text=item[2][:50] + '........' if len(item[2]) >= 50 else (item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                    secondary_text=item[2][:50] + '........' if len(
+                        item[2]) >= 50 else (
+                            item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
                 img_latter = './images/text_images/{}.png'.format(
-                        item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                            2][0].upper() <= 'Z') else '!')
+                    item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
+                        2][0].upper() <= 'Z') else '!')
                 meny.add_widget(AvatarSampleWidget(source=img_latter))
                 carousel = Carousel(direction='right')
                 if platform == 'android':
@@ -936,14 +924,11 @@ class Trash(Screen):
 class Page(Screen):
     """Page Screen show widgets of page."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class Create(Screen):
     """Creates the screen widgets."""
-
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, **kwargs):
         """Getting Labels and address from addressbook."""
@@ -959,11 +944,10 @@ class Create(Screen):
 class Setting(Screen):
     """Setting the Screen components."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
-class NavigateApp(App):
+class NavigateApp(App):     # pylint: disable=too-many-public-methods
     """Navigation Layout of class."""
 
     theme_cls = ThemeManager()
@@ -1094,15 +1078,18 @@ class NavigateApp(App):
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
-    def createFolder(self, directory):
+    @staticmethod
+    def createFolder(directory):
         """This method is used to create the directory when app starts"""
         try:
             if not os.path.exists(directory):
                 os.makedirs(directory)
         except OSError:
-            print ('Error: Creating directory. ' + directory)
+            print 'Error: Creating directory. ' + directory
 
-    def get_default_image(self):
+    @staticmethod
+    def get_default_image():
+        """Getting default image on address"""
         if BMConfigParser().addresses():
             if platform == 'linux':
                 return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
@@ -1320,7 +1307,9 @@ class NavigateApp(App):
         img.x = 5
         self.root.children[2].children[0].ids.btn.add_widget(img)
 
-    def address_identicon(self):
+    @staticmethod
+    def address_identicon():
+        """Address identicon"""
         return './images/drawer_logo1.png'
 
     def set_mail_detail_header(self):
@@ -1398,6 +1387,7 @@ class GrashofPopup(Popup):
         toast('Canceled')
 
     def checkAddress_valid(self, instance):
+        """Checking is address is valid or not"""
         my_addresses = self.parent.children[1].children[2].children[0].ids.btn.values
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
@@ -1425,21 +1415,18 @@ class GrashofPopup(Popup):
 class AvatarSampleWidget(ILeftBody, Image):
     """Avatar Sample Widget."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     """Left icon sample widget."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget."""
 
-    # pylint: disable=too-few-public-methods
     pass
 
 
@@ -1589,7 +1576,8 @@ class MailDetail(Screen):
         self.parent.current = 'create'
         navApp.set_navbar_for_composer()
 
-    def copy_composer_text(self, instance, *args):
+    @staticmethod
+    def copy_composer_text(instance, *args):
         """This method is used for copying the data from mail detail page"""
         if len(instance.parent.text.split(':')) > 1:
             cpy_text = instance.parent.text.split(':')[1].strip()
@@ -1687,8 +1675,6 @@ class AddbookDetailPopup(Popup):
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails."""
-
-    # pylint: disable=too-few-public-methods
 
     def qrdisplay(self):
         """Method used for showing QR Code."""
@@ -1811,7 +1797,7 @@ class Draft(Screen):
             # msg_count_objs.allmail_cnt.badge_text = str(
             #     int(state.all_count) - 1)
             # msg_count_objs.trash_cnt.badge_text = str(
-                # int(state.trash_count) + 1)
+            #     int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
             # state.all_count = str(int(state.all_count) - 1)
             # state.trash_count = str(int(state.trash_count) + 1)
@@ -1873,8 +1859,6 @@ class Draft(Screen):
 class CustomSpinner(Spinner):
     """This class is used for setting spinner size."""
 
-    # pylint: disable=too-few-public-methods
-
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner."""
         super(CustomSpinner, self).__init__(*args, **kwargs)
@@ -1930,11 +1914,14 @@ class Allmails(Screen):
             for item in all_mails:
                 meny = ThreeLineAvatarIconListItem(
                     text=item[1],
-                    secondary_text=item[2][:50] + '........' if len(item[2]) >= 50 else (item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                    secondary_text=item[2][:50] + '........' if len(
+                        item[2]) >= 50 else (
+                            item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
                 meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item[2].strip()))))
+                    source='./images/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item[2].strip()))))
                 meny.bind(on_press=partial(
                     self.mail_detail, item[5], item[4]))
                 carousel = Carousel(direction='right')
