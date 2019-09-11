@@ -107,3 +107,7 @@ search_screen = ''
 send_draft_mail = None
 
 is_allmail = False
+
+in_composer = False
+
+write_msg = {}

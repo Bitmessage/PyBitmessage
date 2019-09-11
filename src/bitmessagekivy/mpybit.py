@@ -61,7 +61,8 @@ import state
 
 from uikivysignaler import UIkivySignaler
 
-import identiconGeneration
+if platform == 'linux':
+    import identiconGeneration
 
 import os
 
@@ -540,6 +541,7 @@ class DropDownWidget(BoxLayout):
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
                     self.parent.parent.current = 'inbox'
+                    state.in_composer = True
                     navApp.back_press()
                     toast('send')
                     return None
@@ -554,29 +556,15 @@ class DropDownWidget(BoxLayout):
     # pylint: disable=attribute-defined-outside-init
     def address_error_message(self, msg):
         """Show Error Message."""
-        self.box = FloatLayout()
-        self.lab = (Label(
+        msg_dialog = MDDialog(
             text=msg,
-            font_size=25,
-            size_hint=(None, None),
-            pos_hint={'x': .25, 'y': .6}))
-        self.box.add_widget(self.lab)
-        self.but = (Button(
-            text="dismiss",
-            size_hint=(None, None),
-            width=200,
-            height=50,
-            pos_hint={'x': .3, 'y': 0}))
-        self.box.add_widget(self.but)
-        self.main_pop = Popup(
-            title="Error",
-            content=self.box,
-            size_hint=(None, None),
-            size=(550, 400),
-            auto_dismiss=False,
-            title_size=30)
-        self.but.bind(on_press=self.main_pop.dismiss)
-        self.main_pop.open()
+            title='', size_hint=(.8, .25), text_button_ok='Ok',
+            events_callback=self.callback_for_menu_items)
+        msg_dialog.open()
+
+    def callback_for_menu_items(self, text_item):
+        """Method is used for getting the callback of alert box"""
+        toast(text_item)
 
     def reset_composer(self):
         """Method will reset composer."""
@@ -984,6 +972,7 @@ class NavigateApp(App):
     variable_1 = ListProperty(BMConfigParser().addresses())
     nav_drawer = ObjectProperty()
     state.screen_density = Window.size
+    window_size = state.screen_density
     title = "PyBitmessage"
     imgstatus = False
     count = 0
@@ -1037,21 +1026,22 @@ class NavigateApp(App):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
-        self.set_identicon(text)
+        if platform == 'linux':
+            self.set_identicon(text)
         address_label = self.current_address_label(
             BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
         state.association = text
         self.root.ids.sc1.clear_widgets()
-        self.root.ids.sc4.clear_widgets()
-        self.root.ids.sc5.clear_widgets()
-        self.root.ids.sc16.clear_widgets()
-        self.root.ids.sc17.clear_widgets()
         self.root.ids.sc1.add_widget(Inbox())
-        self.root.ids.sc4.add_widget(Sent())
-        self.root.ids.sc5.add_widget(Trash())
-        self.root.ids.sc16.add_widget(Draft())
-        self.root.ids.sc17.add_widget(Allmails())
+        # self.root.ids.sc4.clear_widgets()
+        # self.root.ids.sc5.clear_widgets()
+        # self.root.ids.sc16.clear_widgets()
+        # self.root.ids.sc17.clear_widgets()
+        # self.root.ids.sc4.add_widget(Sent())
+        # self.root.ids.sc5.add_widget(Trash())
+        # self.root.ids.sc16.add_widget(Draft())
+        # self.root.ids.sc17.add_widget(Allmails())
         self.root.ids.scr_mngr.current = 'inbox'
 
         msg_counter_objs = \
@@ -1097,9 +1087,10 @@ class NavigateApp(App):
     def getDefaultAccData(self):
         """Getting Default Account Data."""
         if BMConfigParser().addresses():
-            img = identiconGeneration.generate(BMConfigParser().addresses()[0])
-            self.createFolder('./images/default_identicon/')
-            img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
+            if platform == 'linux':
+                img = identiconGeneration.generate(BMConfigParser().addresses()[0])
+                self.createFolder('./images/default_identicon/')
+                img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
@@ -1113,8 +1104,8 @@ class NavigateApp(App):
 
     def get_default_image(self):
         if BMConfigParser().addresses():
-            # BMConfigParser().addresses()[0]
-            return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
+            if platform == 'linux':
+                return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
         return ''
 
     @staticmethod
@@ -1131,8 +1122,9 @@ class NavigateApp(App):
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
-                if state.detailPageType in ['sent', 'inbox']:
-                    self.add_search_bar()
+                # if state.detailPageType in ['sent', 'inbox']:
+                #     self.add_search_bar()
+                self.back_press()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
                 from_addr = str(self.root.ids.sc3.children[0].ids.ti.text)
@@ -1140,7 +1132,6 @@ class NavigateApp(App):
                 if from_addr and to_addr and state.detailPageType != 'draft':
                     Draft().draft_msg(composer_objs)
                 self.root.ids.scr_mngr.current = 'inbox'
-                self.add_search_bar()
                 self.back_press()
             elif self.root.ids.scr_mngr.current == "showqrcode":
                 self.root.ids.scr_mngr.current = 'myaddress'
@@ -1175,25 +1166,30 @@ class NavigateApp(App):
         composer_obj.txt_input.text = ''
         composer_obj.subject.text = ''
         composer_obj.body.text = ''
+        state.in_composer = True
 
     def set_navbar_for_composer(self):
         """This method is used for clearing toolbar data when composer open"""
         self.root.ids.toolbar.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
-        self.root.ids.myButton.opacity = 0
-        self.root.ids.myButton.disabled = True
+        self.root.ids.toolbar.right_action_items = [
+            ['send', lambda x: self.root.ids.sc3.children[0].send(self)]]
 
     def back_press(self):
         """Method used for going back from composer to previous page."""
-        self.root.ids.myButton.opacity = 1
-        self.root.ids.myButton.disabled = False
+        self.root.ids.toolbar.right_action_items = \
+            [['account-plus', lambda x: self.addingtoaddressbook()]]
         self.root.ids.toolbar.left_action_items = \
             [['menu', lambda x: self.root.toggle_nav_drawer()]]
-        self.root.ids.scr_mngr.current = 'inbox'
+        self.root.ids.scr_mngr.current = 'inbox' if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
-        self.add_search_bar()
+        if state.is_allmail or state.detailPageType == 'draft':
+            state.is_allmail = False
+        else:
+            self.add_search_bar()
         state.detailPageType = ''
+        state.in_composer = False
 
     @staticmethod
     def on_stop():
@@ -1275,8 +1271,24 @@ class NavigateApp(App):
             self.root.ids.sc4.add_widget(Sent())
         self.root.ids.scr_mngr.current = state.search_screen
 
+    def clearSreeen(self, text):
+        if text == 'Sent':
+            self.root.ids.sc4.clear_widgets()
+            self.root.ids.sc4.add_widget(Sent())
+        elif text == 'Draft':
+            self.root.ids.sc16.clear_widgets()
+            self.root.ids.sc16.add_widget(Draft())
+        elif text == 'Trash':
+            self.root.ids.sc5.clear_widgets()
+            self.root.ids.sc5.add_widget(Trash())
+        elif text == 'All Mails':
+            self.root.ids.sc17.clear_widgets()
+            self.root.ids.sc17.add_widget(Allmails())
+
     def check_search_screen(self, instance):
         """Method show search button only on inbox or sent screen."""
+        if instance.text in ['Sent', 'Draft', 'Trash', 'All Mails']:
+            self.clearSreeen(instance.text)
         if instance.text in ['Inbox', 'Sent', 'Address Book', 'My Addresses']:
             if not self.root.ids.search_bar.children:
                 self.root.ids.search_bar.add_widget(
@@ -1310,6 +1322,19 @@ class NavigateApp(App):
 
     def address_identicon(self):
         return './images/drawer_logo1.png'
+
+    def set_mail_detail_header(self):
+        toolbar_obj = self.root.ids.toolbar
+        toolbar_obj.left_action_items = [['arrow-left', lambda x: self.back_press()]]
+        delete_btn = ['delete-forever', lambda x: self.root.ids.sc14.delete_mail()]
+        dynamic_list = []
+        if state.detailPageType == 'inbox':
+            dynamic_list = [['reply', lambda x: self.root.ids.sc14.inbox_reply()], delete_btn]
+        elif state.detailPageType == 'sent':
+            dynamic_list = [delete_btn]
+        elif state.detailPageType == 'draft':
+            dynamic_list = [['pencil', lambda x: self.root.ids.sc14.write_msg(self)], delete_btn]
+        toolbar_obj.right_action_items = dynamic_list
 
 
 class GrashofPopup(Popup):
@@ -1470,11 +1495,13 @@ class MailDetail(Screen):
             state.status = self
             state.ackdata = data[0][5]
             self.assign_mail_details(data)
+            state.kivyapp.set_mail_detail_header()
         elif state.detailPageType == 'inbox':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message from inbox \
                 where received = {};".format(state.sentMailTime))
             self.assign_mail_details(data)
+            state.kivyapp.set_mail_detail_header()
 
     def assign_mail_details(self, data):
         """Assigning mail details."""
@@ -1485,19 +1512,22 @@ class MailDetail(Screen):
         self.message = data[0][3]
         if len(data[0]) == 6:
             self.status = data[0][4]
+        state.write_msg = {'to_addr': self.to_addr,
+                           'from_addr': self.from_addr,
+                           'subject': self.subject,
+                           'message': self.message}
 
     def delete_mail(self):
         """Method for mail delete."""
-        msg_count_objs = \
-            self.parent.parent.parent.parent.parent.children[2].children[0].ids
+        msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         if state.detailPageType == 'sent':
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE \
                 lastactiontime = {};".format(state.sentMailTime))
             msg_count_objs.send_cnt.badge_text = str(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
-            self.parent.parent.screens[3].clear_widgets()
-            self.parent.parent.screens[3].add_widget(Sent())
+            self.parent.screens[3].clear_widgets()
+            self.parent.screens[3].add_widget(Sent())
         elif state.detailPageType == 'inbox':
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
@@ -1505,21 +1535,27 @@ class MailDetail(Screen):
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
-            self.parent.parent.screens[0].clear_widgets()
-            self.parent.parent.screens[0].add_widget(Inbox())
-        if state.is_allmail:
-            self.parent.parent.current = 'allmails'
-            state.is_allmail = False
-        else:
-            self.parent.parent.current = state.detailPageType
-        msg_count_objs.trash_cnt.badge_text = str(int(state.trash_count) + 1)
-        msg_count_objs.allmail_cnt.badge_text = str(int(state.all_count) - 1)
-        state.trash_count = str(int(state.trash_count) + 1)
-        state.all_count = str(int(state.all_count) - 1)
-        self.parent.parent.screens[4].clear_widgets()
-        self.parent.parent.screens[4].add_widget(Trash())
-        self.parent.parent.screens[16].clear_widgets()
-        self.parent.parent.screens[16].add_widget(Allmails())
+            self.parent.screens[0].clear_widgets()
+            self.parent.screens[0].add_widget(Inbox())
+        elif state.detailPageType == 'draft':
+            sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
+                state.sentMailTime))
+            msg_count_objs.draft_cnt.badge_text = str(int(state.draft_count) - 1)
+            state.draft_count = str(int(state.draft_count) - 1)
+            self.parent.screens[15].clear_widgets()
+            self.parent.screens[15].add_widget(Draft())
+
+        self.parent.current = 'allmails' if state.is_allmail else state.detailPageType
+        if state.detailPageType != 'draft':
+            msg_count_objs.trash_cnt.badge_text = str(int(state.trash_count) + 1)
+            msg_count_objs.allmail_cnt.badge_text = str(int(state.all_count) - 1)
+            state.trash_count = str(int(state.trash_count) + 1)
+            state.all_count = str(int(state.all_count) - 1)
+            self.parent.screens[4].clear_widgets()
+            self.parent.screens[4].add_widget(Trash())
+            self.parent.screens[16].clear_widgets()
+            self.parent.screens[16].add_widget(Allmails())
+        state.kivyapp.back_press()
         toast('Deleted')
 
     def inbox_reply(self):
@@ -1527,12 +1563,14 @@ class MailDetail(Screen):
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message from inbox where \
             received = {};".format(state.sentMailTime))
-        composer_obj = self.parent.parent.screens[2].children[0].ids
-        composer_obj.ti.text = data[0][1]
-        composer_obj.btn.text = data[0][1]
-        composer_obj.txt_input.text = data[0][0]
+        composer_obj = self.parent.screens[2].children[0].ids
+        composer_obj.ti.text = data[0][0]
+        composer_obj.btn.text = data[0][0]
+        composer_obj.txt_input.text = data[0][1]
         composer_obj.subject.text = data[0][2]
-        self.parent.parent.current = 'create'
+        state.kivyapp.root.ids.sc3.children[0].ids.rv.data = ''
+        self.parent.current = 'create'
+        state.kivyapp.set_navbar_for_composer()
 
     def copy_sent_mail(self):
         """Method used for copying sent mail to the composer."""
@@ -1542,14 +1580,13 @@ class MailDetail(Screen):
         """Method used to write on draft mail."""
         state.send_draft_mail = state.sentMailTime
         composer_ids = \
-            self.parent.parent.parent.parent.parent.ids.sc3.children[0].ids
-        composer_ids.ti.text = self.from_addr
-        composer_ids.btn.text = self.from_addr
-        composer_ids.txt_input.text = self.to_addr
-        composer_ids.subject.text = '' \
-            if self.subject == '(no subject)' else self.subject.lower()
-        composer_ids.body.text = self.message
-        self.parent.parent.current = 'create'
+            self.parent.parent.parent.parent.ids.sc3.children[0].ids
+        composer_ids.ti.text = state.write_msg['from_addr']
+        composer_ids.btn.text = state.write_msg['from_addr']
+        composer_ids.txt_input.text = state.write_msg['to_addr']
+        composer_ids.subject.text = state.write_msg['subject']
+        composer_ids.body.text = state.write_msg['message']
+        self.parent.current = 'create'
         navApp.set_navbar_for_composer()
 
     def copy_composer_text(self, instance, *args):
