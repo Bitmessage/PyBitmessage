@@ -38,10 +38,12 @@ else:
     sslProtocolCiphers = "AECDH-AES256-SHA"
 
 
-class TLSDispatcher(AdvancedDispatcher):
+class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instance-attributes
+    """TLS functionality for classes derived from AdvancedDispatcher"""
+    # pylint: disable=too-many-arguments, super-init-not-called, unused-argument
     def __init__(
-        self, address=None, sock=None, certfile=None, keyfile=None,
-        server_side=False, ciphers=sslProtocolCiphers
+            self, address=None, sock=None, certfile=None, keyfile=None,
+            server_side=False, ciphers=sslProtocolCiphers
     ):
         self.want_read = self.want_write = True
         if certfile is None:
@@ -60,6 +62,8 @@ class TLSDispatcher(AdvancedDispatcher):
         self.isSSL = False
 
     def state_tls_init(self):
+        """Prepare sockets for TLS handshake"""
+        # pylint: disable=attribute-defined-outside-init
         self.isSSL = True
         self.tlsStarted = True
         # Once the connection has been established, it's safe to wrap the
@@ -89,10 +93,13 @@ class TLSDispatcher(AdvancedDispatcher):
 #        if hasattr(self.socket, "context"):
 #            self.socket.context.set_ecdh_curve("secp256k1")
 
-    def state_tls_handshake(self):
+    @staticmethod
+    def state_tls_handshake():
+        """Do nothing while TLS handshake is pending, as during this phase we need to react to callbacks instead"""
         return False
 
     def writable(self):
+        """Handle writable checks for TLS-enabled sockets"""
         try:
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 return self.want_write
@@ -101,6 +108,7 @@ class TLSDispatcher(AdvancedDispatcher):
             return AdvancedDispatcher.writable(self)
 
     def readable(self):
+        """Handle readable check for TLS-enabled sockets"""
         try:
             # during TLS handshake, and after flushing write buffer, return status of last handshake attempt
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
@@ -113,7 +121,11 @@ class TLSDispatcher(AdvancedDispatcher):
         except AttributeError:
             return AdvancedDispatcher.readable(self)
 
-    def handle_read(self):
+    def handle_read(self):      # pylint: disable=inconsistent-return-statements
+        """
+        Handle reads for sockets during TLS handshake. Requires special treatment as during the handshake, buffers must
+        remain empty and normal reads must be ignored
+        """
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
@@ -134,7 +146,11 @@ class TLSDispatcher(AdvancedDispatcher):
             self.handle_close()
             return
 
-    def handle_write(self):
+    def handle_write(self):     # pylint: disable=inconsistent-return-statements
+        """
+        Handle writes for sockets during TLS handshake. Requires special treatment as during the handshake, buffers
+        must remain empty and normal writes must be ignored
+        """
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
@@ -156,6 +172,7 @@ class TLSDispatcher(AdvancedDispatcher):
             return
 
     def tls_handshake(self):
+        """Perform TLS handshake and handle its stages"""
         # wait for flush
         if self.write_buf:
             return False
@@ -175,7 +192,7 @@ class TLSDispatcher(AdvancedDispatcher):
             if not (self.want_write or self.want_read):
                 raise
         except socket.error as err:
-            if err.errno in asyncore._DISCONNECTED:
+            if err.errno in asyncore._DISCONNECTED:     # pylint: disable=protected-access
                 self.handle_close()
             else:
                 raise
