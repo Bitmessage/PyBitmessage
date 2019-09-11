@@ -63,7 +63,7 @@
             id: btn
             pos_hint:{"x":0,"y":.25}
             option_cls: Factory.get("MySpinnerOption")
-            font_size: '12.5sp'
+            font_size: '11.9sp'
             text: app.getDefaultAccData()
             background_color: color_button if self.state == 'normal' else color_button_pressed
             background_down: 'atlas://data/images/defaulttheme/spinner'
@@ -180,19 +180,7 @@ NavigationLayout:
             background_palette: 'Primary'
             background_hue: '500'
             left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
-            Button:
-                id: myButton
-                size_hint_y: 0.35
-                size_hint_x: 0.2
-                pos_hint: {'x': .1, 'y': 0.3}
-                color: 0,0,0,1
-                background_color: (0,0,0,0)
-                on_press:app.addingtoaddressbook()
-                Image:
-                    source: './images/addressbookadd.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    size: 55, 55
+            right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
         BoxLayout:
             id: search_bar
             size_hint_y: None
@@ -350,7 +338,7 @@ NavigationLayout:
                     id: txt_input
                     size_hint_y: None
                     font_size: '13sp'
-                    height: 70
+                    height: 50
                     hint_text: 'type or search recipients address starting with BM-'
                 RV:
                     id: rv
@@ -374,17 +362,6 @@ NavigationLayout:
                 helper_text_mode: "on_error"
             BoxLayout:
                 spacing:50
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: 1, None
-                        height: dp(40)
-                        on_press: root.send(app)
-                        MDLabel:
-                            font_style: 'Title'
-                            text: 'send'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
                 AnchorLayout:
                     MDRaisedButton:
                         size_hint: 1, None
@@ -643,9 +620,11 @@ NavigationLayout:
     ScrollView:
         do_scroll_x: False
         BoxLayout:
-            orientation: 'horizontal'
+            orientation: 'vertical'
             padding: dp(20)
             spacing: 10
+            size_hint_y: None
+            height: self.minimum_height + dp(app.window_size[1]) if app.window_size[1] > app.window_size[0] else dp(app.window_size[0])
             BoxLayout:
                 orientation: 'vertical'
                 padding: dp(5)
@@ -665,7 +644,7 @@ NavigationLayout:
                 MDLabel:
                     font_style: 'Subhead'
                     theme_text_color: 'Primary'
-                    text: 'We provide subscriptions to real-time streaming market data directly from exchanges, quote aggregators and index providers. The Market Data Subscriptions page lets you sign up for additional market data subscriptions such as NASDAQ TotalView and NYSE Open Book or unsubscribe from market data. '
+                    text: 'We provide subscriptions for proof of work calculation for first month. '
                     halign: 'center'
                 MDLabel:
                     font_style: 'Headline'
@@ -677,7 +656,7 @@ NavigationLayout:
                     height: dp(40)
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Select'
+                        text: 'Get Credits'
                         font_size: '13sp'
                         color: (1,1,1,1)
                         halign: 'center'
@@ -700,7 +679,7 @@ NavigationLayout:
                 MDLabel:
                     font_style: 'Subhead'
                     theme_text_color: 'Primary'
-                    text: 'We provide subscriptions to real-time streaming market data directly from exchanges, quote aggregators and index providers. The Market Data Subscriptions page lets you sign up for additional market data subscriptions such as NASDAQ TotalView and NYSE Open Book or unsubscribe from market data. '
+                    text: 'We provide for proof of work calculation for six month. '
                     halign: 'center'
                 MDLabel:
                     font_style: 'Headline'
@@ -712,7 +691,7 @@ NavigationLayout:
                     height: dp(40)
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Select'
+                        text: 'Get Credits'
                         font_size: '13sp'
                         color: (1,1,1,1)
                         halign: 'center'
@@ -735,7 +714,7 @@ NavigationLayout:
                 MDLabel:
                     font_style: 'Subhead'
                     theme_text_color: 'Primary'
-                    text: 'We provide subscriptions to real-time streaming market data directly from exchanges, quote aggregators and index providers. The Market Data Subscriptions page lets you sign up for additional market data subscriptions such as NASDAQ TotalView and NYSE Open Book or unsubscribe from market data. '
+                    text: 'We provide for proof of work calculation for 1years. '
                     halign: 'center'
                 MDLabel:
                     font_style: 'Headline'
@@ -747,7 +726,7 @@ NavigationLayout:
                     height: dp(40)
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Select'
+                        text: 'Get Credits'
                         font_size: '13sp'
                         color: (1,1,1,1)
                         halign: 'center'
@@ -915,7 +894,7 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(400) + self.minimum_height
+            height: dp(500) + self.minimum_height
             padding: dp(32)
             MDLabel:
                 font_style: 'Headline'
@@ -952,28 +931,6 @@ NavigationLayout:
                 orientation: 'vertical'
                 size_hint_y: None
                 height: dp(100) + self.minimum_height
-                BoxLayout:
-                    spacing:20
-                    MDRaisedButton:
-                        size_hint: 1, None
-                        height: dp(40)
-                        on_press: root.inbox_reply() if root.page_type == 'inbox' else root.write_msg(app) if root.page_type == 'draft' else root.copy_sent_mail()
-                        MDLabel:
-                            font_style: 'Title'
-                            text: 'Reply' if root.page_type == 'inbox' else 'Copy' if root.page_type == 'sent' else 'Write'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
-                    MDRaisedButton:
-                        size_hint: 1, None
-                        height: dp(40)
-                        on_press: root.delete_mail()
-                        MDLabel:
-                            font_style: 'Title'
-                            text: 'Delete'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
 
 <CopyTextBtn@Button>:
     id: cpyButton
