@@ -1,10 +1,12 @@
 """Coding: utf-8."""
+import os
 import time
 from functools import partial
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
@@ -18,7 +20,6 @@ from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.carousel import Carousel
-from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -51,13 +52,11 @@ import queues
 from semaphores import kivyuisignaler
 import state
 from uikivysignaler import UIkivySignaler
+# pylint: disable=unused-argument, too-few-public-methods
+
 
 if platform == 'linux':
     import identiconGeneration
-    
-import os
-from kivy.core.clipboard import Clipboard
-# pylint: disable=unused-argument, too-few-public-methods
 
 
 def toast(text):
@@ -1168,7 +1167,8 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
             [['account-plus', lambda x: self.addingtoaddressbook()]]
         self.root.ids.toolbar.left_action_items = \
             [['menu', lambda x: self.root.toggle_nav_drawer()]]
-        self.root.ids.scr_mngr.current = 'inbox' if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
+        self.root.ids.scr_mngr.current = 'inbox' \
+            if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
