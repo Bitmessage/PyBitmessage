@@ -13,7 +13,7 @@ sslName = 'OpenSSL-Win%s' % ("32" if arch == 32 else "64")
 site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
 cdrivePath= site_root[0:3]
-srcPath = spec_root[:-20]+"\\src\\"
+srcPath = spec_root[:-20]+"src\\"
 qtPath = site_root+"\\PyQt4\\"
 openSSLPath = cdrivePath+sslName+"\\" 
 msvcrDllPath = cdrivePath+"windows\\system32\\"
@@ -23,7 +23,7 @@ outPath = spec_root+"\\bitmessagemain"
 importPath = srcPath
 sys.path.insert(0,importPath)
 os.chdir(sys.path[0])
-from version import softwareName
+from version import softwareVersion
 
 today = time.strftime("%Y%m%d")
 snapshot = False
@@ -77,7 +77,7 @@ a.binaries += [('libeay32.dll', openSSLPath + 'libeay32.dll', 'BINARY'),
          ]
 
     
-fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareName)
+fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareVersion)
 if snapshot:
     fname = 'Bitmessagedev_%s_%s.exe' % ("x86" if arch == 32 else "x64", today)
     
