@@ -144,5 +144,5 @@ class Proxy(AdvancedDispatcher):
 
     def state_proxy_handshake_done(self):
         """Handshake is complete at this point"""
-        self.connectedAt = time.time()
+        self.connectedAt = time.time()      # pylint: disable=attribute-defined-outside-init
         return False
