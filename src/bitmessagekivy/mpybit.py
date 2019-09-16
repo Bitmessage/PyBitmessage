@@ -612,7 +612,20 @@ class MyTextInput(TextInput):
 class Payment(Screen):
     """Payment Method."""
 
-    pass
+    def get_available_credits(self, instance):
+        state.availabe_credit = instance.parent.children[1].text
+        existing_credits = state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[0].children[0].text
+        if len(existing_credits.split(' ')) > 1:
+            toast('We already have added free coins for the subscription to your account!')
+        else:
+            toast('Coins added to your account!')
+            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[0].children[0].text = '{0}'.format(state.availabe_credit)
+
+
+class Credits(Screen):
+    """Credits Method"""
+    available_credits = StringProperty(
+        '{0}'.format('0'))
 
 
 class Login(Screen):

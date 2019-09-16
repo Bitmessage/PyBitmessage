@@ -147,6 +147,11 @@
         on_release: app.root.ids.scr_mngr.current = 'payment'
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
+        text: "Credits"
+        icon:'wallet'
+        on_release: app.root.ids.scr_mngr.current = 'credits'
+        on_press: app.check_search_screen(self)
+    NavigationDrawerIconButton: 
         text: "new address"
         icon:'account-plus'
         on_release: app.root.ids.scr_mngr.current = 'login'
@@ -230,6 +235,8 @@ NavigationLayout:
                 id:sc16
             Allmails:
                 id:sc17
+            Credits:
+                id:sc18
 
 
 <Inbox>:
@@ -292,6 +299,28 @@ NavigationLayout:
 
 <Create>:
     name: 'create'
+
+<Credits>:
+    name: 'credits'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+            size_hint_y: None
+            height: dp(200)
+            OneLineListItem:
+                text: "Available Credits"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .6, .35
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'Title'
+                            text: root.available_credits
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
 
 <DropDownWidget>:
     ScrollView:
@@ -621,8 +650,8 @@ NavigationLayout:
         do_scroll_x: False
         BoxLayout:
             orientation: 'vertical'
-            padding: dp(20)
-            spacing: 10
+            padding: [dp(app.window_size[0]/4*1.1), dp(10)] 
+            spacing: 12
             size_hint_y: None
             height: self.minimum_height + dp(app.window_size[1]) if app.window_size[1] > app.window_size[0] else dp(app.window_size[0])
             BoxLayout:
@@ -630,7 +659,7 @@ NavigationLayout:
                 padding: dp(5)
                 canvas.before:
                     Color:
-                        rgba: 0.957, 0.890, 0.843, 1
+                        rgba: app.theme_cls.primary_dark
                     Rectangle:
                         # self here refers to the widget i.e FloatLayout
                         pos: self.pos
@@ -641,31 +670,42 @@ NavigationLayout:
                     theme_text_color: 'Primary'
                     text: 'Platinum'
                     halign: 'center'
+                    color: 1,1,1,1
                 MDLabel:
                     font_style: 'Subhead'
                     theme_text_color: 'Primary'
                     text: 'We provide subscriptions for proof of work calculation for first month. '
                     halign: 'center'
+                    color: 1,1,1,1
                 MDLabel:
+                    id: free_pak
                     font_style: 'Headline'
                     theme_text_color: 'Primary'
                     text: '€ 50.0'
                     halign: 'center'
+                    color: 1,1,1,1
                 MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
                     size_hint: 1, None
                     height: dp(40)
+                    on_press: root.get_available_credits(self)
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Get Credits'
+                        text: 'Get Free Credits'
                         font_size: '13sp'
-                        color: (1,1,1,1)
+                        color: (0,0,0,1)
                         halign: 'center'
             BoxLayout:
                 orientation: 'vertical'
                 padding: dp(5)
                 canvas.before:
                     Color:
-                        rgba: 0.957, 0.890, 0.843, 1
+                        rgba: app.theme_cls.primary_dark
                     Rectangle:
                         # self here refers to the widget i.e FloatLayout
                         pos: self.pos
@@ -676,31 +716,40 @@ NavigationLayout:
                     theme_text_color: 'Primary'
                     text: 'Silver'
                     halign: 'center'
+                    color: 1,1,1,1
                 MDLabel:
                     font_style: 'Subhead'
                     theme_text_color: 'Primary'
                     text: 'We provide for proof of work calculation for six month. '
                     halign: 'center'
+                    color: 1,1,1,1
                 MDLabel:
                     font_style: 'Headline'
                     theme_text_color: 'Primary'
                     text: '€ 100.0'
                     halign: 'center'
+                    color: 1,1,1,1
                 MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
                     size_hint: 1, None
                     height: dp(40)
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Get Credits'
+                        text: 'Get Monthly Credits'
                         font_size: '13sp'
-                        color: (1,1,1,1)
+                        color: (0,0,0,1)
                         halign: 'center'
             BoxLayout:
                 orientation: 'vertical'
                 padding: dp(5)
                 canvas.before:
                     Color:
-                        rgba: 0.957, 0.890, 0.843, 1
+                        rgba: app.theme_cls.primary_dark
                     Rectangle:
                         # self here refers to the widget i.e FloatLayout
                         pos: self.pos
@@ -711,24 +760,33 @@ NavigationLayout:
                     theme_text_color: 'Primary'
                     text: 'Gold'
                     halign: 'center'
+                    color: 1,1,1,1
                 MDLabel:
                     font_style: 'Subhead'
                     theme_text_color: 'Primary'
                     text: 'We provide for proof of work calculation for 1years. '
                     halign: 'center'
+                    color: 1,1,1,1
                 MDLabel:
                     font_style: 'Headline'
                     theme_text_color: 'Primary'
                     text: '€ 500.0'
                     halign: 'center'
+                    color: 1,1,1,1
                 MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
                     size_hint: 1, None
                     height: dp(40)
                     MDLabel:
                         font_style: 'Title'
-                        text: 'Get Credits'
+                        text: 'Get Yearly Credits'
                         font_size: '13sp'
-                        color: (1,1,1,1)
+                        color: (0,0,0,1)
                         halign: 'center'
         
 
