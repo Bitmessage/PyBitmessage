@@ -619,7 +619,8 @@ class Payment(Screen):
             toast('We already have added free coins for the subscription to your account!')
         else:
             toast('Coins added to your account!')
-            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[0].children[0].text = '{0}'.format(state.availabe_credit)
+            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[
+                0].children[0].text = '{0}'.format(state.availabe_credit)
 
 
 class Credits(Screen):
