@@ -1,10 +1,13 @@
 """Coding: utf-8."""
+# pylint: disable=relative-import, too-many-lines
+import os
 import time
 from functools import partial
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
@@ -18,7 +21,6 @@ from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.carousel import Carousel
-from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -51,19 +53,17 @@ import queues
 from semaphores import kivyuisignaler
 import state
 from uikivysignaler import UIkivySignaler
+# pylint: disable=unused-argument, too-few-public-methods
+
 
 if platform == 'linux':
     import identiconGeneration
-    
-import os
-from kivy.core.clipboard import Clipboard
-# pylint: disable=unused-argument, too-few-public-methods
 
 
 def toast(text):
     """Method will display the toast message."""
     if platform == 'linux':
-        from kivymd.toast.kivytoast import toast
+        from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
         toast(text)
     return
 
@@ -553,7 +553,8 @@ class DropDownWidget(BoxLayout):
             events_callback=self.callback_for_menu_items)
         msg_dialog.open()
 
-    def callback_for_menu_items(self, text_item):
+    @staticmethod
+    def callback_for_menu_items(text_item):
         """Method is used for getting the callback of alert box"""
         toast(text_item)
 
@@ -1168,7 +1169,8 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
             [['account-plus', lambda x: self.addingtoaddressbook()]]
         self.root.ids.toolbar.left_action_items = \
             [['menu', lambda x: self.root.toggle_nav_drawer()]]
-        self.root.ids.scr_mngr.current = 'inbox' if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
+        self.root.ids.scr_mngr.current = 'inbox' \
+            if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1259,6 +1261,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.scr_mngr.current = state.search_screen
 
     def clearSreeen(self, text):
+        """Method is used for clear screen"""
         if text == 'Sent':
             self.root.ids.sc4.clear_widgets()
             self.root.ids.sc4.add_widget(Sent())
@@ -1291,7 +1294,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         return
 
     def add_search_bar(self):
-        """Method used for adding search function on screen."""
+        """Method used for adding search function on screen"""
         if not self.root.ids.search_bar.children:
             self.root.ids.search_bar.add_widget(MDIconButton(icon='magnify'))
             text_field = MDTextField(
@@ -1313,6 +1316,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         return './images/drawer_logo1.png'
 
     def set_mail_detail_header(self):
+        """Method is used for setting the details of the page"""
         toolbar_obj = self.root.ids.toolbar
         toolbar_obj.left_action_items = [['arrow-left', lambda x: self.back_press()]]
         delete_btn = ['delete-forever', lambda x: self.root.ids.sc14.delete_mail()]
