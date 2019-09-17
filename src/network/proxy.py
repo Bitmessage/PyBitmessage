@@ -1,3 +1,8 @@
+"""
+src/network/proxy.py
+====================
+"""
+# pylint: disable=protected-access
 import socket
 import time
 
@@ -56,7 +61,7 @@ class Proxy(AdvancedDispatcher):
     def proxy(self, address):
         """Set proxy IP and port"""
         if (not isinstance(address, tuple) or len(address) < 2 or
-            not isinstance(address[0], str) or
+                not isinstance(address[0], str) or
                 not isinstance(address[1], int)):
             raise ValueError
         self.__class__._proxy = address
@@ -83,8 +88,8 @@ class Proxy(AdvancedDispatcher):
     def onion_proxy(self, address):
         """Set onion proxy address"""
         if address is not None and (
-            not isinstance(address, tuple) or len(address) < 2 or
-            not isinstance(address[0], str) or
+                not isinstance(address, tuple) or len(address) < 2 or
+                not isinstance(address[0], str) or
                 not isinstance(address[1], int)):
             raise ValueError
         self.__class__._onion_proxy = address
@@ -106,6 +111,7 @@ class Proxy(AdvancedDispatcher):
         self.destination = address
         self.isOutbound = True
         self.fullyEstablished = False
+        self.connectedAt = 0
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         if BMConfigParser().safeGetBoolean(
                 "bitmessagesettings", "socksauthentication"):
@@ -138,5 +144,5 @@ class Proxy(AdvancedDispatcher):
 
     def state_proxy_handshake_done(self):
         """Handshake is complete at this point"""
-        self.connectedAt = time.time()
+        self.connectedAt = time.time()      # pylint: disable=attribute-defined-outside-init
         return False

@@ -6,6 +6,11 @@ from pyelliptic.openssl import OpenSSL
 NoneType = type(None)
 
 
+def seed():
+    """Initialize random number generator"""
+    random.seed()
+
+
 def randomBytes(n):
     """Method randomBytes."""
     try:

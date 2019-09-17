@@ -6,7 +6,6 @@ src/class_smtpDeliver.py
 
 import smtplib
 import sys
-import threading
 import urlparse
 from email.header import Header
 from email.mime.text import MIMEText
@@ -20,13 +19,10 @@ from helper_threading import StoppableThread
 SMTPDOMAIN = "bmaddr.lan"
 
 
-class smtpDeliver(threading.Thread, StoppableThread):
+class smtpDeliver(StoppableThread):
     """SMTP client thread for delivery"""
+    name = "smtpDeliver"
     _instance = None
-
-    def __init__(self):
-        threading.Thread.__init__(self, name="smtpDeliver")
-        self.initStop()
 
     def stopThread(self):
         try:

@@ -1,7 +1,9 @@
 """Helper threading perform all the threading operations."""
 
-from contextlib import contextmanager
 import threading
+from contextlib import contextmanager
+
+import helper_random
 
 try:
     import prctl
@@ -22,7 +24,16 @@ else:
     threading.Thread._Thread__bootstrap = _thread_name_hack
 
 
-class StoppableThread(object):
+class StoppableThread(threading.Thread):
+    name = None
+
+    def __init__(self, name=None):
+        if name:
+            self.name = name
+        super(StoppableThread, self).__init__(name=self.name)
+        self.initStop()
+        helper_random.seed()
+
     def initStop(self):
         self.stop = threading.Event()
         self._stopped = False
@@ -34,6 +45,7 @@ class StoppableThread(object):
 
 class BusyError(threading.ThreadError):
     pass
+
 
 @contextmanager
 def nonBlocking(lock):

@@ -66,10 +66,9 @@ class Socks5(Proxy):
         elif ret[1] == 2:
             # username/password
             self.append_write_buf(
-                struct.pack('BB', 1, len(self._auth[0])) +
-                self._auth[0] + struct.pack('B', len(self._auth[1])) +
-                self._auth[1]
-            )
+                struct.pack(
+                    'BB', 1, len(self._auth[0])) + self._auth[0] + struct.pack(
+                        'B', len(self._auth[1])) + self._auth[1])
             self.set_state("auth_needed", length=2, expectBytes=2)
         else:
             if ret[1] == 0xff:
@@ -178,11 +177,8 @@ class Socks5Connection(Socks5):
             if Proxy._remote_dns:  # pylint: disable=protected-access
                 # Resolve remotely
                 self.ipaddr = None
-                self.append_write_buf(
-                    chr(0x03).encode() +
-                    chr(len(self.destination[0])).encode() +
-                    self.destination[0]
-                )
+                self.append_write_buf(chr(0x03).encode() + chr(
+                    len(self.destination[0])).encode() + self.destination[0])
             else:
                 # Resolve locally
                 self.ipaddr = socket.inet_aton(
@@ -212,10 +208,8 @@ class Socks5Resolver(Socks5):
         """Perform resolving"""
         # Now we can request the actual connection
         self.append_write_buf(struct.pack('BBB', 0x05, 0xF0, 0x00))
-        self.append_write_buf(
-            chr(0x03).encode() + chr(len(self.host)).encode() +
-            str(self.host)
-        )
+        self.append_write_buf(chr(0x03).encode() + chr(
+            len(self.host)).encode() + str(self.host))
         self.append_write_buf(struct.pack(">H", self.port))
         self.set_state("pre_connect", length=0, expectBytes=4)
         return True

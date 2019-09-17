@@ -21,7 +21,6 @@ import json
 import random  # nosec
 import socket
 import subprocess
-import threading
 import time
 from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
@@ -32,7 +31,6 @@ from version import softwareVersion
 import defaults
 import helper_inbox
 import helper_sent
-import helper_threading
 import network.stats
 import proofofwork
 import queues
@@ -44,6 +42,7 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
+from helper_threading import StoppableThread
 from inventory import Inventory
 
 str_chan = '[chan]'
@@ -73,11 +72,10 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
 
 
 # This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, helper_threading.StoppableThread):
+class singleAPI(StoppableThread):
     """API thread"""
-    def __init__(self):
-        threading.Thread.__init__(self, name="singleAPI")
-        self.initStop()
+
+    name = "singleAPI"
 
     def stopThread(self):
         super(singleAPI, self).stopThread()

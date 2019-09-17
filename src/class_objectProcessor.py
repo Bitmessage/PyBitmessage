@@ -35,12 +35,13 @@ class objectProcessor(threading.Thread):
     objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
     def __init__(self):
+        threading.Thread.__init__(self, name="objectProcessor")
+        random.seed()
         # It may be the case that the last time Bitmessage was running,
         # the user closed it before it finished processing everything in the
         # objectProcessorQueue. Assuming that Bitmessage wasn't closed
         # forcefully, it should have saved the data in the queue into the
         # objectprocessorqueue table. Let's pull it out.
-        threading.Thread.__init__(self, name="objectProcessor")
         queryreturn = sqlQuery(
             '''SELECT objecttype, data FROM objectprocessorqueue''')
         for row in queryreturn:

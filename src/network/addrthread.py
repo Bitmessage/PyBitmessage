@@ -1,18 +1,13 @@
 import Queue
-import threading
 
-import addresses
 from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool
 from queues import addrQueue
-import protocol
 import state
 
-class AddrThread(threading.Thread, StoppableThread):
-    def __init__(self):
-        threading.Thread.__init__(self, name="AddrBroadcaster")
-        self.initStop()
-        self.name = "AddrBroadcaster"
+
+class AddrThread(StoppableThread):
+    name = "AddrBroadcaster"
 
     def run(self):
         while not state.shutdown:
@@ -28,7 +23,7 @@ class AddrThread(threading.Thread, StoppableThread):
                 except KeyError:
                     continue
 
-            #finish
+            # finish
 
             addrQueue.iterate()
             for i in range(len(chunk)):

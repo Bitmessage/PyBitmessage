@@ -1,16 +1,18 @@
+"""
+src/network/invthread.py
+========================
+"""
 import Queue
-from random import randint, shuffle
-import threading
+import random
 from time import time
 
 import addresses
-from bmconfigparser import BMConfigParser
+import protocol
+import state
 from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from queues import invQueue
-import protocol
-import state
 
 
 def handleExpiredDandelion(expired):
@@ -33,23 +35,24 @@ def handleExpiredDandelion(expired):
                         i.objectsNewToThem[hashid] = time()
 
 
-class InvThread(threading.Thread, StoppableThread):
-    def __init__(self):
-        threading.Thread.__init__(self, name="InvBroadcaster")
-        self.initStop()
-        self.name = "InvBroadcaster"
+class InvThread(StoppableThread):
+    """A thread to send inv annoucements."""
 
-    def handleLocallyGenerated(self, stream, hashId):
+    name = "InvBroadcaster"
+
+    @staticmethod
+    def handleLocallyGenerated(stream, hashId):
+        """Locally generated inventory items require special handling"""
         Dandelion().addHash(hashId, stream=stream)
         for connection in \
-                BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().inboundConnections.values() + \
                 BMConnectionPool().outboundConnections.values():
-                if state.dandelion and connection != Dandelion().objectChildStem(hashId):
-                    continue
-                connection.objectsNewToThem[hashId] = time()
+            if state.dandelion and connection != Dandelion().objectChildStem(hashId):
+                continue
+            connection.objectsNewToThem[hashId] = time()
 
-    def run(self):
-        while not state.shutdown:
+    def run(self):      # pylint: disable=too-many-branches
+        while not state.shutdown:       # pylint: disable=too-many-nested-blocks
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
@@ -80,7 +83,7 @@ class InvThread(threading.Thread, StoppableThread):
                             if connection == Dandelion().objectChildStem(inv[1]):
                                 # Fluff trigger by RNG
                                 # auto-ignore if config set to 0, i.e. dandelion is off
-                                if randint(1, 100) >= state.dandelion:
+                                if random.randint(1, 100) >= state.dandelion:
                                     fluffs.append(inv[1])
                                 # send a dinv only if the stem node supports dandelion
                                 elif connection.services & protocol.NODE_DANDELION > 0:
@@ -91,13 +94,15 @@ class InvThread(threading.Thread, StoppableThread):
                             fluffs.append(inv[1])
 
                     if fluffs:
-                        shuffle(fluffs)
-                        connection.append_write_buf(protocol.CreatePacket('inv', \
-                                addresses.encodeVarint(len(fluffs)) + "".join(fluffs)))
+                        random.shuffle(fluffs)
+                        connection.append_write_buf(protocol.CreatePacket(
+                            'inv', addresses.encodeVarint(len(fluffs)) +
+                            "".join(fluffs)))
                     if stems:
-                        shuffle(stems)
-                        connection.append_write_buf(protocol.CreatePacket('dinv', \
-                                addresses.encodeVarint(len(stems)) + "".join(stems)))
+                        random.shuffle(stems)
+                        connection.append_write_buf(protocol.CreatePacket(
+                            'dinv', addresses.encodeVarint(len(stems)) +
+                            "".join(stems)))
 
             invQueue.iterate()
             for i in range(len(chunk)):

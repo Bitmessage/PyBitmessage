@@ -1,4 +1,7 @@
-import threading
+"""
+src/network/announcethread.py
+=================================
+"""
 import time
 
 from bmconfigparser import BMConfigParser
@@ -9,11 +12,11 @@ from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
 import state
 
-class AnnounceThread(threading.Thread, StoppableThread):
+
+class AnnounceThread(StoppableThread):
+    """A thread to manage regular announcing of this node"""
     def __init__(self):
-        threading.Thread.__init__(self, name="Announcer")
-        self.initStop()
-        self.name = "Announcer"
+        super(AnnounceThread, self).__init__(name="Announcer")
         logger.info("init announce thread")
 
     def run(self):
@@ -26,10 +29,15 @@ class AnnounceThread(threading.Thread, StoppableThread):
             if processed == 0:
                 self.stop.wait(10)
 
-    def announceSelf(self):
+    @staticmethod
+    def announceSelf():
+        """Announce our presence"""
         for connection in BMConnectionPool().udpSockets.values():
             if not connection.announcing:
                 continue
             for stream in state.streamsInWhichIAmParticipating:
-                addr = (stream, state.Peer('127.0.0.1', BMConfigParser().safeGetInt("bitmessagesettings", "port")), time.time())
+                addr = (
+                    stream,
+                    state.Peer('127.0.0.1', BMConfigParser().safeGetInt("bitmessagesettings", "port")),
+                    time.time())
                 connection.append_write_buf(BMProto.assembleAddr([addr]))

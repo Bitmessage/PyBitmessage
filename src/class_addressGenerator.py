@@ -1,6 +1,5 @@
 
 import time
-import threading
 import hashlib
 from binascii import hexlify
 from pyelliptic import arithmetic
@@ -18,12 +17,9 @@ from fallback import RIPEMD160Hash
 from helper_threading import StoppableThread
 
 
-class addressGenerator(threading.Thread, StoppableThread):
+class addressGenerator(StoppableThread):
 
-    def __init__(self):
-        # QThread.__init__(self, parent)
-        threading.Thread.__init__(self, name="addressGenerator")
-        self.initStop()
+    name = "addressGenerator"
 
     def stopThread(self):
         try:

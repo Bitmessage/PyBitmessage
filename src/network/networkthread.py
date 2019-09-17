@@ -1,5 +1,7 @@
-import threading
-
+"""
+src/network/networkthread.py
+============================
+"""
 import network.asyncore_pollchoose as asyncore
 import state
 from debug import logger
@@ -8,11 +10,10 @@ from network.connectionpool import BMConnectionPool
 from queues import excQueue
 
 
-class BMNetworkThread(threading.Thread, StoppableThread):
+class BMNetworkThread(StoppableThread):
+    """A thread to handle network concerns"""
     def __init__(self):
-        threading.Thread.__init__(self, name="Asyncore")
-        self.initStop()
-        self.name = "Asyncore"
+        super(BMNetworkThread, self).__init__(name="Asyncore")
         logger.info("init asyncore thread")
 
     def run(self):
