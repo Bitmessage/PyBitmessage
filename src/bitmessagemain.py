@@ -1,4 +1,8 @@
-#!/usr/bin/python2.7
+"""
+src/bitmessagemain.py
+=================================
+"""
+# !/usr/bin/python2.7
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2019 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -11,16 +15,6 @@
 
 import os
 import sys
-
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
-
-
-import depends
-
-depends.check_dependencies()
-
 import ctypes
 import getopt
 import multiprocessing
@@ -38,6 +32,7 @@ from helper_startup import (
 from singleinstance import singleinstance
 
 import defaults
+import depends
 import shared
 import knownnodes
 import state
@@ -67,8 +62,15 @@ from network.uploadthread import UploadThread
 # Helper Functions
 import helper_threading
 
+app_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(app_dir)
+sys.path.insert(0, app_dir)
+
+depends.check_dependencies()
+
 
 def connectToStream(streamNumber):
+    """Connecting to stream"""
     state.streamsInWhichIAmParticipating.append(streamNumber)
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
@@ -109,6 +111,7 @@ def _fixSocket():
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
 
         def inet_ntop(family, host):
+            """inet ntop"""
             if family == socket.AF_INET:
                 if len(host) != 4:
                     raise ValueError("invalid IPv4 host")
@@ -130,6 +133,7 @@ def _fixSocket():
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
 
         def inet_pton(family, host):
+            """inet pton"""
             buf = "\0" * 28
             lengthBuf = pack("I", len(buf))
             if stringToAddress(str(host),
@@ -175,16 +179,18 @@ def signal_handler(signum, frame):
     if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
-        print('# Thread: %s(%d)' % (thread.name, thread.ident))
+        print '# Thread: %s(%d)' % (thread.name, thread.ident)
         for filename, lineno, name, line in traceback.extract_stack(frame):
-            print('File: "%s", line %d, in %s' % (filename, lineno, name))
+            print 'File: "%s", line %d, in %s' % (filename, lineno, name)
             if line:
-                print('  %s' % line.strip())
-        print('Unfortunately you cannot use Ctrl+C when running the UI'
-              ' because the UI captures the signal.')
+                print '  %s' % line.strip()
+        print 'Unfortunately you cannot use Ctrl+C when running the UI \
+        because the UI captures the signal.'
 
 
-class Main:
+class Main:     # pylint: disable=no-init, old-style-class
+    """Main Method"""
+
     @staticmethod
     def start_proxyconfig(config):
         """Check socksproxytype and start any proxy configuration plugin"""
@@ -206,7 +212,8 @@ class Main:
                     'Started proxy config plugin %s in %s sec',
                     proxy_type, time.time() - proxyconfig_start)
 
-    def start(self):
+    def start(self):        # pylint: disable=too-many-statements, too-many-branches, too-many-locals
+        """Start the main method"""
         _fixSocket()
 
         config = BMConfigParser()
@@ -274,7 +281,7 @@ class Main:
 
         if daemon:
             with shared.printLock:
-                print('Running as a daemon. Send TERM signal to end.')
+                print 'Running as a daemon. Send TERM signal to end.'
             self.daemonize()
 
         self.setSignalHandler()
@@ -397,7 +404,7 @@ class Main:
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
-                print('Running with curses')
+                print 'Running with curses'
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
 
@@ -415,8 +422,7 @@ class Main:
         if daemon:
             while state.shutdown == 0:
                 time.sleep(1)
-                if (
-                        state.testmode and time.time() - state.last_api_response >= 30):
+                if (state.testmode and time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
             from tests import core as test_core  # pylint: disable=relative-import
@@ -430,7 +436,9 @@ class Main:
                 else 0
             )
 
-    def daemonize(self):
+    @staticmethod
+    def daemonize():
+        """Daemonize"""
         grandfatherPid = os.getpid()
         parentPid = None
         try:
@@ -440,7 +448,7 @@ class Main:
                 # wait until grandchild ready
                 while True:
                     time.sleep(1)
-                os._exit(0)
+                os._exit(0)     # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
@@ -461,7 +469,7 @@ class Main:
                 # wait until child ready
                 while True:
                     time.sleep(1)
-                os._exit(0)
+                os._exit(0)     # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
@@ -482,12 +490,15 @@ class Main:
             os.kill(parentPid, signal.SIGTERM)
             os.kill(grandfatherPid, signal.SIGTERM)
 
-    def setSignalHandler(self):
+    def setSignalHandler(self):      # pylint: disable=no-self-use
+        """Set Signal Handler"""
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    def usage(self):
+    @staticmethod
+    def usage():
+        """getting usages"""
         print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
         print '''
 Options:
@@ -499,13 +510,15 @@ Options:
 All parameters are optional.
 '''
 
-    def stop(self):
+    def stop(self):         # pylint: disable=no-self-use
+        """Stopping Bitmessage Deamon"""
         with shared.printLock:
-            print('Stopping Bitmessage Deamon.')
+            print 'Stopping Bitmessage Deamon.'
         shutdown.doCleanShutdown()
 
-    # TODO: nice function but no one is using this
-    def getApiAddress(self):
+    # ..todo: nice function but no one is using this
+    def getApiAddress(self):        # pylint: disable=no-self-use
+        """Getting Api Addresses"""
         if not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'apienabled'):
             return None
@@ -515,6 +528,7 @@ All parameters are optional.
 
 
 def main():
+    """Start of main thread"""
     mainprogram = Main()
     mainprogram.start()
 

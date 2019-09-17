@@ -1,9 +1,15 @@
+"""
+src/identiconGeneration
+=================================
+"""
 import hashlib
 from PIL import Image
 from kivy.core.image import Image as CoreImage
-# Core classes for loading images and converting them to a Texture. The raw image data can be keep in memory for further access
 from kivy.uix.image import Image as kiImage
 from io import BytesIO
+""" Core classes for loading images and converting them to a Texture.
+The raw image data can be keep in memory for further access """
+
 
 # constants
 RESOLUTION = 128, 128
@@ -13,6 +19,7 @@ MODE = "RGB"
 
 
 def generate(Generate_string=None):
+    """Generating string"""
     hash_string = generate_hash(Generate_string)
     color = random_color(hash_string)
     image = Image.new(MODE, V_RESOLUTION, BACKGROUND_COLOR)
@@ -32,20 +39,22 @@ def generate(Generate_string=None):
 
 
 def generate_hash(string):
+    """Generating hash"""
     try:
         # make input case insensitive
         string = str.lower(string)
         hash_object = hashlib.md5(str.encode(string))
-        print(hash_object.hexdigest())
+        print hash_object.hexdigest()
 
         # returned object is a hex string
         return hash_object.hexdigest()
 
     except IndexError:
-        print("Error: Please enter a string as an argument.")
+        print "Error: Please enter a string as an argument."
 
 
 def random_color(hash_string):
+    """Getting random color"""
     # remove first three digits from hex string
     split = 6
     rgb = hash_string[:split]
@@ -62,6 +71,7 @@ def random_color(hash_string):
 
 
 def generate_image(image, color, hash_string):
+    """Generating images"""
     hash_string = hash_string[6:]
 
     lower_x = 1
