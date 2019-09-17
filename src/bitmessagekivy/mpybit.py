@@ -612,14 +612,16 @@ class MyTextInput(TextInput):
 class Payment(Screen):
     """Payment Method."""
 
-    def get_available_credits(self, instance):
+    def get_available_credits(self, instance):      # pylint: disable=no-self-use
+        """Method helps to get the available credits"""
         state.availabe_credit = instance.parent.children[1].text
         existing_credits = state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[0].children[0].text
         if len(existing_credits.split(' ')) > 1:
             toast('We already have added free coins for the subscription to your account!')
         else:
             toast('Coins added to your account!')
-            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[0].children[0].text = '{0}'.format(state.availabe_credit)
+            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[
+                0].children[0].text = '{0}'.format(state.availabe_credit)
 
 
 class Credits(Screen):
@@ -1469,7 +1471,7 @@ class NavigationDrawerTwoLineListItem(
     def _update_specific_text_color(self, instance, value):
         pass
 
-    def _set_active(self, active, list):
+    def _set_active(self, active, list):        # pylint: disable=redefined-builtin
         pass
 
 
