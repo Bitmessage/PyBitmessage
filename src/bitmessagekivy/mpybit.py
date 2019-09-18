@@ -57,9 +57,10 @@ import state
 from uikivysignaler import UIkivySignaler
 # pylint: disable=unused-argument, too-few-public-methods, import-error
 
-
-if platform == 'linux':
-    import identiconGeneration
+import identiconGeneration    
+import os
+from kivy.core.clipboard import Clipboard
+# pylint: disable=unused-argument, too-few-public-methods
 
 
 def toast(text):
@@ -1028,8 +1029,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data."""
-        if platform == 'linux':
-            self.set_identicon(text)
+        self.set_identicon(text)
         address_label = self.current_address_label(
             BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
@@ -1089,10 +1089,9 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
     def getDefaultAccData(self):
         """Getting Default Account Data."""
         if BMConfigParser().addresses():
-            if platform == 'linux':
-                img = identiconGeneration.generate(BMConfigParser().addresses()[0])
-                self.createFolder('./images/default_identicon/')
-                img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
+            img = identiconGeneration.generate(BMConfigParser().addresses()[0])
+            self.createFolder('./images/default_identicon/')
+            img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
@@ -1109,8 +1108,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
     def get_default_image():
         """Getting default image on address"""
         if BMConfigParser().addresses():
-            if platform == 'linux':
-                return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
+            return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
         return ''
 
     @staticmethod

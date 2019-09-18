@@ -1213,6 +1213,7 @@ class singleWorker(StoppableThread):
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
+            print("nonce calculated value#############################", nonce)
             logger.info(
                 '(For msg message) Found proof of work %s Nonce: %s',
                 trialValue, nonce

@@ -44,7 +44,9 @@ requirements =
 	bitmsghash, 
 	kivymd,
 	kivy-garden, 
-	qrcode
+	qrcode,
+	Pillow,
+	msgpack
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes

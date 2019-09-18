@@ -650,7 +650,7 @@ NavigationLayout:
         do_scroll_x: False
         BoxLayout:
             orientation: 'vertical'
-            padding: [dp(app.window_size[0]/4*1.1), dp(10)] 
+            padding: [dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1), dp(10)] 
             spacing: 12
             size_hint_y: None
             height: self.minimum_height + dp(app.window_size[1]) if app.window_size[1] > app.window_size[0] else dp(app.window_size[0])
