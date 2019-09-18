@@ -1,5 +1,7 @@
-"""Coding: utf-8."""
-# pylint: disable=relative-import, too-many-lines
+"""
+src/bitmessagekivy/mpybit.py
+=================================
+"""
 import os
 import time
 from functools import partial
@@ -53,7 +55,7 @@ import queues
 from semaphores import kivyuisignaler
 import state
 from uikivysignaler import UIkivySignaler
-# pylint: disable=unused-argument, too-few-public-methods
+# pylint: disable=unused-argument, too-few-public-methods, import-error
 
 
 if platform == 'linux':
