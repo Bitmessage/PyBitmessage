@@ -13,28 +13,24 @@ class translateClass:
         else:
             return self.text
 
-# def _translate(context, text, disambiguation = None, encoding = None, n = None):
-#     return translateText(context, text, n)
-
 def _translate(context, text, disambiguation = None, encoding = None, n = None):
-    return text
+    return translateText(context, text, n)
+
+# def _translate(context, text, disambiguation = None, encoding = None, n = None):
+#      return translateClass(context, text.replace('%','',1))
 
 def translateText(context, text, n = None):
     try:
         enableGUI = state.enableGUI
     except AttributeError:  # inside the plugin
         enableGUI = True
-    if enableGUI:
+    if not state.kivy and enableGUI:
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
-            try:
-                if state.kivy:
-                    pass
-            except Exception as err:
-                print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
-                print 'Error message:', err
-                os._exit(0)
+            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
+            print 'Error message:', err
+            os._exit(0)
         if n is None:
             return QtGui.QApplication.translate(context, text)
         else:
