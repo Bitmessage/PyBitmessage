@@ -70,7 +70,7 @@ depends.check_dependencies()
 
 
 def connectToStream(streamNumber):
-    """Connecting to stream"""
+    """Method helps us to connect with the stream"""
     state.streamsInWhichIAmParticipating.append(streamNumber)
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
@@ -111,7 +111,7 @@ def _fixSocket():
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
 
         def inet_ntop(family, host):
-            """inet ntop"""
+            """Method converts an IP address in packed binary format to string format"""
             if family == socket.AF_INET:
                 if len(host) != 4:
                     raise ValueError("invalid IPv4 host")
@@ -133,7 +133,7 @@ def _fixSocket():
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
 
         def inet_pton(family, host):
-            """inet pton"""
+            """Method converts an IP address in string format to a packed binary format"""
             buf = "\0" * 28
             lengthBuf = pack("I", len(buf))
             if stringToAddress(str(host),
@@ -189,7 +189,7 @@ def signal_handler(signum, frame):
 
 
 class Main:     # pylint: disable=no-init, old-style-class
-    """Main Method"""
+    """Method starts the proxy config plugin"""
 
     @staticmethod
     def start_proxyconfig(config):
@@ -213,7 +213,7 @@ class Main:     # pylint: disable=no-init, old-style-class
                     proxy_type, time.time() - proxyconfig_start)
 
     def start(self):        # pylint: disable=too-many-statements, too-many-branches, too-many-locals
-        """Start the main method"""
+        """This method helps to start the daemon"""
         _fixSocket()
 
         config = BMConfigParser()
@@ -276,7 +276,7 @@ class Main:     # pylint: disable=no-init, old-style-class
         # is the application already running?  If yes then exit.
         try:
             shared.thisapp = singleinstance("", daemon)
-        except Exception as e:
+        except Exception:
             pass
 
         if daemon:
@@ -438,7 +438,7 @@ class Main:     # pylint: disable=no-init, old-style-class
 
     @staticmethod
     def daemonize():
-        """Daemonize"""
+        """Running as a daemon. Send signal in end."""
         grandfatherPid = os.getpid()
         parentPid = None
         try:
@@ -491,14 +491,14 @@ class Main:     # pylint: disable=no-init, old-style-class
             os.kill(grandfatherPid, signal.SIGTERM)
 
     def setSignalHandler(self):      # pylint: disable=no-self-use
-        """Set Signal Handler"""
+        """Setting the Signal Handler"""
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     @staticmethod
     def usage():
-        """getting usages"""
+        """After passing argument, method displays the usages"""
         print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
         print '''
 Options:
@@ -511,14 +511,14 @@ All parameters are optional.
 '''
 
     def stop(self):         # pylint: disable=no-self-use
-        """Stopping Bitmessage Deamon"""
+        """Method helps to stop the Bitmessage Deamon"""
         with shared.printLock:
             print 'Stopping Bitmessage Deamon.'
         shutdown.doCleanShutdown()
 
     # ..todo: nice function but no one is using this
     def getApiAddress(self):        # pylint: disable=no-self-use
-        """Getting Api Addresses"""
+        """This method returns the Api Addresses"""
         if not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'apienabled'):
             return None
@@ -528,7 +528,7 @@ All parameters are optional.
 
 
 def main():
-    """Start of main thread"""
+    """Start of the main thread"""
     mainprogram = Main()
     mainprogram.start()
 

@@ -2,7 +2,6 @@
 src/pyelliptic/openssl.py
 =================================
 """
-
 import sys
 import ctypes
 from kivy.utils import platform
@@ -19,7 +18,8 @@ OpenSSL = None
 
 
 class CipherName:       # pylint: disable=old-style-class
-    """Getting CipherName"""
+    """Method helps to get pointers, name and blocksize"""
+
     def __init__(self, name, pointer, blocksize):
         self._name = name
         self._pointer = pointer
@@ -31,20 +31,20 @@ class CipherName:       # pylint: disable=old-style-class
                " | Function pointer : " + str(self._pointer)
 
     def get_pointer(self):
-        """Getting pointer"""
+        """Method returns the pointer"""
         return self._pointer()
 
     def get_name(self):
-        """Getting Name"""
+        """Method returns the name"""
         return self._name
 
     def get_blocksize(self):
-        """Getting blocksize"""
+        """Method returns the blocksize"""
         return self._blocksize
 
 
 def get_version(library):
-    """Getting versions"""
+    """Method returns the version of the OpenSSL Library"""
     version = None
     hexversion = None
     cflags = None
@@ -645,7 +645,7 @@ class _OpenSSL:     # pylint: disable=too-many-instance-attributes, old-style-cl
 
 
 def loadOpenSSL():
-    """Loading OpenSSL"""
+    """Method find and load the OpenSSL library"""
     # pylint: disable=global-statement, protected-access, too-many-branches
     global OpenSSL
     from os import path, environ

@@ -5,6 +5,7 @@ src/bitmessagekivy/mpybit.py
 import os
 import time
 from functools import partial
+import identiconGeneration
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from kivy.app import App
@@ -57,16 +58,12 @@ import state
 from uikivysignaler import UIkivySignaler
 # pylint: disable=unused-argument, too-few-public-methods, import-error
 
-import identiconGeneration    
-import os
-from kivy.core.clipboard import Clipboard
-# pylint: disable=unused-argument, too-few-public-methods
-
 
 def toast(text):
     """Method will display the toast message."""
+    # pylint: disable=redefined-outer-name
     if platform == 'linux':
-        from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
+        from kivymd.toast.kivytoast import toast
         toast(text)
     return
 
@@ -104,7 +101,7 @@ class Inbox(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox list for Inbox messages."""
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals, unused-variable
         if state.searcing_text:
             where = ['subject', 'message']
             what = state.searcing_text
@@ -1866,7 +1863,6 @@ class Draft(Screen):
                 'draft',
                 encoding,
                 BMConfigParser().getint('bitmessagesettings', 'ttl'))
-
             state.msg_counter_objs = src_object.children[2].children[0].ids
             state.draft_count = str(int(state.draft_count) + 1)
             src_object.ids.sc16.clear_widgets()

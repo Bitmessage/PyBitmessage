@@ -1,5 +1,5 @@
 """
-src/identiconGeneration
+src/identiconGeneration.py
 =================================
 """
 import hashlib
