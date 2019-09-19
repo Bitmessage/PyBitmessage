@@ -5,7 +5,6 @@ src/bitmessagekivy/mpybit.py
 import os
 import time
 from functools import partial
-import identiconGeneration
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from kivy.app import App
@@ -58,12 +57,16 @@ import state
 from uikivysignaler import UIkivySignaler
 # pylint: disable=unused-argument, too-few-public-methods, import-error
 
+import identiconGeneration    
+import os
+from kivy.core.clipboard import Clipboard
+# pylint: disable=unused-argument, too-few-public-methods
+
 
 def toast(text):
     """Method will display the toast message."""
-    # pylint: disable=redefined-outer-name
     if platform == 'linux':
-        from kivymd.toast.kivytoast import toast
+        from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
         toast(text)
     return
 
@@ -101,7 +104,7 @@ class Inbox(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox list for Inbox messages."""
-        # pylint: disable=too-many-locals, unused-variable
+        # pylint: disable=too-many-locals
         if state.searcing_text:
             where = ['subject', 'message']
             what = state.searcing_text
@@ -110,6 +113,11 @@ class Inbox(Screen):
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "inbox", where, what, False)
         if queryreturn:
+            src_mng_obj = state.kivyapp.root.children[2].children[0].ids
+            src_mng_obj.inbox_cnt.badge_text = str(len(queryreturn))
+            state.inbox_count = str(len(queryreturn))
+            state.kivyapp.root.ids.sc17.clear_widgets()
+            state.kivyapp.root.ids.sc17.add_widget(Allmails())
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
                 data.append({
@@ -124,9 +132,6 @@ class Inbox(Screen):
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
                     text_color=NavigateApp().theme_cls.primary_color)
-                # img_latter = item['secondary_text'][0].upper() if (
-                #     item['secondary_text'][0].upper() >= 'A' and item[
-                #         'secondary_text'][0].upper() <= 'Z') else '!'
                 meny.add_widget(AvatarSampleWidget(
                     source='./images/text_images/{}.png'.format(
                         avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -192,10 +197,14 @@ class Inbox(Screen):
                 int(state.inbox_count) - 1)
             msg_count_objs.trash_cnt.badge_text = str(
                 int(state.trash_count) + 1)
+            msg_count_objs.allmail_cnt.badge_text = str(
+                int(state.all_count) - 1)
             state.inbox_count = str(
                 int(state.inbox_count) - 1)
             state.trash_count = str(
                 int(state.trash_count) + 1)
+            state.all_count = str(
+                int(state.all_count) - 1)
         self.ids.ml.remove_widget(
             instance.parent.parent)
         toast('Deleted')
@@ -753,6 +762,9 @@ class Sent(Screen):
             state.check_sent_acc = None
 
         if queryreturn:
+            src_mng_obj = state.kivyapp.root.children[2].children[0].ids
+            src_mng_obj.send_cnt.badge_text = str(len(queryreturn))
+            state.sent_count = str(len(queryreturn))
             for mail in queryreturn:
                 self.data.append({
                     'text': mail[1].strip(),
@@ -891,6 +903,9 @@ class Trash(Screen):
         trash_data = inbox + sent
 
         if trash_data:
+            src_mng_obj = state.kivyapp.root.children[2].children[0].ids
+            src_mng_obj.trash_cnt.badge_text = str(len(trash_data))
+            state.trash_count = str(len(trash_data))
             for item in trash_data:
                 meny = ThreeLineAvatarIconListItem(
                     text=item[1],
@@ -1200,45 +1215,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         shutdown.doCleanShutdown()
 
     @staticmethod
-    def mail_count(text):
-        """Counting Mail numbers."""
-        if state.association == '':
-            if BMConfigParser().addresses():
-                state.association = BMConfigParser().addresses()[0]
-        if text == 'Sent':
-            state.sent_count = str(sqlQuery(
-                "SELECT COUNT(*) FROM {0} WHERE fromaddress = '{1}' and \
-                folder = '{0}' ;".format(
-                    text.lower(), state.association))[0][0])
-            return state.sent_count
-        elif text == 'Inbox':
-            state.inbox_count = str(sqlQuery(
-                "SELECT COUNT(*) FROM {0} WHERE toaddress = '{1}' and \
-                folder = '{0}' ;".format(
-                    text.lower(), state.association))[0][0])
-            return state.inbox_count
-        elif text == 'Trash':
-            state.trash_count = str(sqlQuery(
-                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' \
-                and  folder = 'trash' )+(SELECT count(*) FROM inbox where \
-                toaddress = '{0}' and  folder = 'trash') AS SumCount".format(
-                    state.association))[0][0])
-            return state.trash_count
-        elif text == 'Draft':
-            state.draft_count = str(sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{1}' and \
-                folder = '{0}' ;".format(
-                    text.lower(), state.association))[0][0])
-            return state.draft_count
-        elif text == 'All Mails':
-            state.all_count = str(sqlQuery(
-                "SELECT (SELECT count(*) FROM  sent where fromaddress = '{0}' \
-                and folder = 'sent' )+(SELECT count(*) FROM inbox where \
-                toaddress = '{0}' and  folder != 'trash') AS SumCount".format(
-                    state.association))[0][0])
-            return state.all_count
-
-    @staticmethod
     def current_address_label(current_add_label=None, current_addr=None):
         """Getting current address labels."""
         if BMConfigParser().addresses():
@@ -1250,7 +1226,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
                 first_name = BMConfigParser().get(addr, 'label')
             f_name = first_name.split()
             label = f_name[0][:14].capitalize() + '...' if len(f_name[0]) > 15 else f_name[0].capitalize()
-            address = ' (' + addr[:6] + '...)'
+            address = ' (' + addr + '...)'
             return label + address
         return ''
 
@@ -1317,10 +1293,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
     def set_identicon(self, text):
         """This method is use for showing identicon in address spinner"""
         img = identiconGeneration.generate(text)
-        img.size = 20, 20
-        img.y = self.root.children[2].children[0].ids.btn.children[0].y
-        img.x = 5
-        self.root.children[2].children[0].ids.btn.add_widget(img)
+        self.root.children[2].children[0].ids.btn.children[1].texture = img.texture
 
     @staticmethod
     def address_identicon():
@@ -1348,6 +1321,7 @@ class GrashofPopup(Popup):
     def __init__(self, **kwargs):
         """Grash of pop screen settings."""
         super(GrashofPopup, self).__init__(**kwargs)
+        print("sssssssssssssssssssiiiiiiiiiiiiiiizzzzzzzzzzeeeeee...............", state.screen_density)
         if state.screen_density[0] <= 720:
             self.size_hint_y = 0.4
             self.size_hint_x = 0.9
@@ -1535,9 +1509,9 @@ class MailDetail(Screen):
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
                 received = {};".format(state.sentMailTime))
-            msg_count_objs.inbox_cnt.badge_text = str(
-                int(state.inbox_count) - 1)
-            state.inbox_count = str(int(state.inbox_count) - 1)
+            # msg_count_objs.inbox_cnt.badge_text = str(
+                # int(state.inbox_count) - 1)
+            # state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].clear_widgets()
             self.parent.screens[0].add_widget(Inbox())
         elif state.detailPageType == 'draft':
@@ -1737,6 +1711,9 @@ class Draft(Screen):
             # state.msg_counter_objs = None
 
         if queryreturn:
+            src_mng_obj = state.kivyapp.root.children[2].children[0].ids
+            src_mng_obj.draft_cnt.badge_text = str(len(queryreturn))
+            state.draft_count = str(len(queryreturn))
             for mail in queryreturn:
                 third_text = mail[3].replace('\n', ' ')
                 self.data.append({
@@ -1863,6 +1840,7 @@ class Draft(Screen):
                 'draft',
                 encoding,
                 BMConfigParser().getint('bitmessagesettings', 'ttl'))
+
             state.msg_counter_objs = src_object.children[2].children[0].ids
             state.draft_count = str(int(state.draft_count) + 1)
             src_object.ids.sc16.clear_widgets()
@@ -1926,6 +1904,8 @@ class Allmails(Screen):
 
         all_mails = inbox + sent_and_draft
         if all_mails:
+            state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
+            state.all_count = str(len(all_mails))
             for item in all_mails:
                 meny = ThreeLineAvatarIconListItem(
                     text=item[1],
@@ -2051,3 +2031,20 @@ def avatarImageFirstLetter(letter_string):
         img_latter = '!'
 
     return img_latter
+
+
+class Starred(Screen):
+    """Starred Screen show widgets of page."""
+
+    pass
+
+
+class Archieve(Screen):
+    """Archieve Screen show widgets of page."""
+
+    pass
+
+class Spam(Screen):
+    """Spam Screen show widgets of page."""
+
+    pass

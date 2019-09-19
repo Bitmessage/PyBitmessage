@@ -72,61 +72,61 @@
             on_text:app.getCurrentAccountData(self.text)
             Image:
                 source: app.get_default_image()
-                x: self.width/4
-                y: self.parent.y + self.parent.height/2 - self.height + 10
-                size: 20, 20
+                x: self.width/4-2
+                y: self.parent.y + self.parent.height/2 - self.height + 14
+                size: 28, 28
             ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
         icon: 'email-open'
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "Starred"
         icon:'star'
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
+        on_release: app.root.ids.scr_mngr.current = 'starred'
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         icon: 'archive'
         text: "Archieve"
-        on_release: app.root.ids.scr_mngr.current = 'trash'
-        badge_text: "9+"
+        on_release: app.root.ids.scr_mngr.current = 'archieve'
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         icon: 'email-open-outline'
         text: "Spam"
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: "8+"
+        on_release: app.root.ids.scr_mngr.current = 'spam'
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: allmail_cnt
         text: "All Mails"
         icon:'contact-mail'
         on_release: app.root.ids.scr_mngr.current = 'allmails'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
@@ -237,7 +237,12 @@ NavigationLayout:
                 id:sc17
             Credits:
                 id:sc18
-
+            Starred:
+                id:sc19
+            Archieve:
+                id:sc20
+            Spam:
+                id:sc21
 
 <Inbox>:
     name: 'inbox'
@@ -268,6 +273,30 @@ NavigationLayout:
     
 <Draft>:
     name: 'draft'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+
+<Starred>:
+    name: 'starred'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+
+<Archieve>:
+    name: 'archieve'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+
+<Spam>:
+    name: 'spam'
     ScrollView:
         do_scroll_x: False
         MDList:
