@@ -10,10 +10,10 @@ package.name = PyBitmessage
 package.domain = org.test
 
 # (str) Source code where the main.py live
-source.dir = .
+source.dir = src
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,kv,atlas,ttf
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -22,21 +22,18 @@ source.include_exts = py,png,jpg,kv,atlas
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-#source.exclude_dirs = tests, bin
+source.exclude_dirs = tests,bitmessagecurses,bitmessageqt,translations
 
 # (list) List of exclusions using pattern matching
-#source.exclude_patterns = license,images/*/*.jpg
-
-# (str) Application versioning (method 1)
-version = 0.1
+source.exclude_patterns = pybitmessage,build*,namecoin.py,message_data_reader.py,bitmessagecli.py,network/http*,plugins/*_*.py
 
 # (str) Application versioning (method 2)
-# version.regex = __version__ = ['"](.*)['"]
-# version.filename = %(source.dir)s/main.py
+version.regex = softwareVersion = ['"](.*)['"]
+version.filename = %(source.dir)s/version.py
 
 # (list) Application requirements
 # comma seperated e.g. requirements = sqlite3,kivy
-requirements = python2, sqlite3, kivy, openssl
+requirements = python2,sqlite3,kivy,openssl
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -50,7 +47,7 @@ requirements = python2, sqlite3, kivy, openssl
 #presplash.filename = %(source.dir)s/data/presplash.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/data/icon.png
+icon.filename = desktop/icon24.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait
@@ -77,7 +74,7 @@ osx.kivy_version = 1.9.1
 #
 
 # (bool) Indicate if the application should be fullscreen or not
-fullscreen = 0
+fullscreen = 1
 
 # (string) Presplash background color (for new android toolchain)
 # Supported formats are: #RRGGBB #AARRGGBB or one of the following names:
@@ -124,9 +121,6 @@ android.permissions = INTERNET
 # (list) Pattern to whitelist for the whole project
 #android.whitelist =
 
-android.whitelist = /usr/lib/komodo-edit/python/lib/python2.7/lib-dynload/_sqlite3.so
-
-
 # (str) Path to a custom whitelist file
 #android.whitelist_src =
 
@@ -150,7 +144,7 @@ android.whitelist = /usr/lib/komodo-edit/python/lib/python2.7/lib-dynload/_sqlit
 # (list) Gradle dependencies to add (currently works only with sdl2_gradle
 # bootstrap)
 #android.gradle_dependencies =
-, /home/cis/Downloads/libssl1.0.2_1.0.2l-2+deb9u2_amd64
+
 # (str) python-for-android branch to use, defaults to stable
 #p4a.branch = stable
 
@@ -182,7 +176,7 @@ android.whitelist = /usr/lib/komodo-edit/python/lib/python2.7/lib-dynload/_sqlit
 #android.library_references =
 
 # (str) Android logcat filters to use
-#android.logcat_filters = *:S python:D
+android.logcat_filters = *:S python:D
 
 # (bool) Copy library instead of making a libpymodules.so
 #android.copy_libs = 1

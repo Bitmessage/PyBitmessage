@@ -11,6 +11,7 @@ src/**/.dll
 src/**/*.o
 src/**/*.so
 src/**/a.out
+bin
 build/lib.*
 build/temp.*
 dist
@@ -19,3 +20,4 @@ docs/_*/*
 docs/autodoc/
 build/sphinx/
 pyan/
+.buildozer
