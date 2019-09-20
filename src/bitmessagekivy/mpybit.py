@@ -127,7 +127,7 @@ class Inbox(Screen):
                             mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'receivedTime': mail[6]})
             for item in data:
-                meny = ThreeLineAvatarIconListItem(
+                meny = TwoLineAvatarIconListItem(
                     text=item['text'],
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
@@ -138,10 +138,7 @@ class Inbox(Screen):
                 meny.bind(on_press=partial(
                     self.inbox_detail, item['receivedTime']))
                 carousel = Carousel(direction='right')
-                if platform == 'android':
-                    carousel.height = 150
-                elif platform == 'linux':
-                    carousel.height = meny.height - 10
+                carousel.height = meny.height
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -364,10 +361,7 @@ class AddressBook(Screen):
                 meny.bind(on_press=partial(
                     self.addBook_detail, item[1], item[0]))
                 carousel = Carousel(direction='right')
-                if platform == 'android':
-                    carousel.height = 140
-                elif platform == 'linux':
-                    carousel.height = meny.height - 10
+                carousel.height = meny.height
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -773,7 +767,7 @@ class Sent(Screen):
                             mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'lastactiontime': mail[6]})
             for item in self.data:
-                meny = ThreeLineAvatarIconListItem(
+                meny = TwoLineAvatarIconListItem(
                     text=item['text'],
                     secondary_text=item['secondary_text'],
                     theme_text_color='Custom',
@@ -784,10 +778,7 @@ class Sent(Screen):
                 meny.bind(on_press=partial(
                     self.sent_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
-                if platform == 'android':
-                    carousel.height = 150
-                elif platform == 'linux':
-                    carousel.height = meny.height - 10
+                carousel.height = meny.height
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -907,7 +898,7 @@ class Trash(Screen):
             src_mng_obj.trash_cnt.badge_text = str(len(trash_data))
             state.trash_count = str(len(trash_data))
             for item in trash_data:
-                meny = ThreeLineAvatarIconListItem(
+                meny = TwoLineAvatarIconListItem(
                     text=item[1],
                     secondary_text=item[2][:50] + '........' if len(
                         item[2]) >= 50 else (
@@ -919,10 +910,7 @@ class Trash(Screen):
                         2][0].upper() <= 'Z') else '!')
                 meny.add_widget(AvatarSampleWidget(source=img_latter))
                 carousel = Carousel(direction='right')
-                if platform == 'android':
-                    carousel.height = 150
-                elif platform == 'linux':
-                    carousel.height = meny.height - 10
+                carousel.height = meny.height
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -1734,10 +1722,7 @@ class Draft(Screen):
                 meny.bind(on_press=partial(
                     self.draft_detail, item['lastactiontime']))
                 carousel = Carousel(direction='right')
-                if platform == 'android':
-                    carousel.height = 150
-                elif platform == 'linux':
-                    carousel.height = meny.height - 10
+                carousel.height = meny.height
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
@@ -1907,7 +1892,7 @@ class Allmails(Screen):
             state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
             state.all_count = str(len(all_mails))
             for item in all_mails:
-                meny = ThreeLineAvatarIconListItem(
+                meny = TwoLineAvatarIconListItem(
                     text=item[1],
                     secondary_text=item[2][:50] + '........' if len(
                         item[2]) >= 50 else (
@@ -1920,10 +1905,7 @@ class Allmails(Screen):
                 meny.bind(on_press=partial(
                     self.mail_detail, item[5], item[4]))
                 carousel = Carousel(direction='right')
-                if platform == 'android':
-                    carousel.height = 150
-                elif platform == 'linux':
-                    carousel.height = meny.height - 10
+                carousel.height = meny.height
                 carousel.size_hint_y = None
                 carousel.ignore_perpendicular_swipes = True
                 carousel.data_index = 0
