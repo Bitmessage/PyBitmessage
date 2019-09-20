@@ -1,3 +1,8 @@
+"""
+src/messagetypes/__init__.py
+============================
+"""
+# pylint: disable=import-error
 from importlib import import_module
 from os import path, listdir
 from string import lower
@@ -9,12 +14,15 @@ from debug import logger
 import messagetypes
 import paths
 
-class MsgBase(object):
-    def encode(self):
+
+class MsgBase(object):    # pylint: disable=too-few-public-methods
+    """Base class for message types"""
+    def __init__(self):
         self.data = {"": lower(type(self).__name__)}
 
 
 def constructObject(data):
+    """Construct an object"""
     whitelist = ["message"]
     if data[""] not in whitelist:
         return None
@@ -34,6 +42,7 @@ def constructObject(data):
         return None
     else:
         return returnObj
+
 
 if paths.frozen is not None or platform == "android":
     import messagetypes.message

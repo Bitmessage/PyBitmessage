@@ -2,6 +2,7 @@
 src/pyelliptic/openssl.py
 =================================
 """
+# pylint: disable=import-error
 import sys
 import ctypes
 from kivy.utils import platform
@@ -646,7 +647,8 @@ class _OpenSSL:     # pylint: disable=too-many-instance-attributes, old-style-cl
 
 def loadOpenSSL():
     """Method find and load the OpenSSL library"""
-    # pylint: disable=global-statement, protected-access, too-many-branches
+    # pylint: disable=global-statement, protected-access, too-many-branches, no-member
+
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library

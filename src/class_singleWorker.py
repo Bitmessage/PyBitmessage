@@ -2,8 +2,8 @@
 src/class_singleWorker.py
 =========================
 """
-# pylint: disable=protected-access,too-many-branches,too-many-statements,no-self-use,too-many-lines,too-many-locals
-
+# pylint: disable=protected-access,too-many-branches,too-many-statements
+# pylint: disable=no-self-use,too-many-lines,too-many-locals,relative-import
 from __future__ import division
 
 import hashlib
@@ -33,6 +33,7 @@ from inventory import Inventory
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
+
 
 def sizeof_fmt(num, suffix='h/s'):
     """Format hashes per seconds nicely (SI prefix)"""
@@ -469,7 +470,7 @@ class singleWorker(StoppableThread):
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
         if not peer:  # find own onionhostname
-            for peer in state.ownAddresses:
+            for peer in state.ownAddresses:    # pylint: disable=redefined-argument-from-local
                 if peer.host.endswith('.onion'):
                     break
             else:
@@ -478,7 +479,7 @@ class singleWorker(StoppableThread):
         embeddedTime = int(time.time() + TTL)
         streamNumber = 1  # Don't know yet what should be here
         objectType = protocol.OBJECT_ONIONPEER
-        # FIXME: ideally the objectPayload should be signed
+        # ..FIXME: ideally the objectPayload should be signed
         objectPayload = encodeVarint(peer.port) + protocol.encodeHost(peer.host)
         tag = calculateInventoryHash(objectPayload)
 

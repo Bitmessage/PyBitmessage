@@ -1,20 +1,21 @@
+"""
+src/state.py
+=================================
+"""
 import collections
 
 neededPubkeys = {}
 streamsInWhichIAmParticipating = []
-
 # For UPnP
 extPort = None
-
 # for Tor hidden service
 socksIP = None
-
+# Network protocols availability, initialised below
+networkProtocolAvailability = None
 appdata = ''  # holds the location of the application data storage directory
-
 # Set to 1 by the doCleanShutdown function.
 # Used to tell the proof of work worker threads to exit.
 shutdown = 0
-
 # Component control flags - set on startup, do not change during runtime
 #     The defaults are for standalone GUI (default operating mode)
 enableNetwork = True  # enable network threads
@@ -23,18 +24,13 @@ enableAPI = True  # enable API (if configured)
 enableGUI = True  # enable GUI (QT or ncurses)
 enableSTDIO = False  # enable STDIO threads
 curses = False
-
 sqlReady = False  # set to true by sqlTread when ready for processing
-
 maximumNumberOfHalfOpenConnections = 0
-
 invThread = None
 addrThread = None
 downloadThread = None
 uploadThread = None
-
 ownAddresses = {}
-
 # If the trustedpeer option is specified in keys.dat then this will
 # contain a Peer which will be connected to instead of using the
 # addresses advertised by other peers. The client will only connect to
@@ -46,10 +42,18 @@ ownAddresses = {}
 # it will sync with the network a lot faster without compromising
 # security.
 trustedPeer = None
-
 discoveredPeers = {}
-
 Peer = collections.namedtuple('Peer', ['host', 'port'])
+
+
+def resetNetworkProtocolAvailability():
+    """This method helps to reset the availability of network protocol"""
+    # pylint: disable=global-statement
+    global networkProtocolAvailability
+    networkProtocolAvailability = {'IPv4': None, 'IPv6': None, 'onion': None}
+
+
+resetNetworkProtocolAvailability()
 
 dandelion = 0
 
