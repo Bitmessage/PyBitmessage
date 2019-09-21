@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = bluewhale
+title = bitapp
 
 # (str) Package name
-package.name = bluewhale
+package.name = bitapp
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.test
@@ -35,21 +35,31 @@ version = 0.1
 # version.filename = %(source.dir)s/main.py
 
 # (list) Application requirements
-# comma seperated e.g. requirements = sqlite3,kivy
-requirements = python2, sqlite3, kivy, openssl, bitmsghash, libexpat, kivymd
+# comma separated e.g. requirements = sqlite3,kivy
+requirements = 
+	openssl, 
+	sqlite3,
+	python2,
+	kivy, 
+	bitmsghash, 
+	kivymd,
+	kivy-garden, 
+	qrcode,
+	Pillow,
+	msgpack
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
 # requirements.source.kivy = ../../kivy
 
 # (list) Garden requirements
-#garden_requirements =
+garden_requirements = qrcode
 
 # (str) Presplash of the application
-presplash.filename = "images/presplas.gif"
+#presplash.filename = %(source.dir)s/data/presplash.png
 
 # (str) Icon of the application
-icon.filename ='images/if_android_1220385.png'
+#icon.filename = %(source.dir)s/data/icon.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait
@@ -88,28 +98,28 @@ fullscreen = 0
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 
 # (int) Android API to use
-android.api = 19
+android.api = 27
 
 # (int) Minimum API required
-#android.minapi = 9
+android.minapi = 21
 
 # (int) Android SDK version to use
 android.sdk = 20
 
 # (str) Android NDK version to use
-android.ndk = 10e
+android.ndk = 17c
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
-#android.private_storage = True
+# android.private_storage = True
 
 # (str) Android NDK directory (if empty, it will be automatically downloaded.)
-android.ndk_path =/home/cis/Downloads/android-ndk-r10e
+#android.ndk_path =
 
 # (str) Android SDK directory (if empty, it will be automatically downloaded.)
-android.sdk_path =/home/cis/Android/Sdk
+#android.sdk_path =
 
 # (str) ANT directory (if empty, it will be automatically downloaded.)
-android.ant_path =/home/cis/apache-ant-1.10.5
+#android.ant_path =
 
 # (bool) If True, then skip trying to update the Android sdk
 # This can be useful to avoid excess Internet downloads or save time
@@ -146,7 +156,10 @@ android.ant_path =/home/cis/apache-ant-1.10.5
 # bootstrap)
 #android.gradle_dependencies =
 
-# (str) python-for-android branch to use, defaults to master
+# (list) Java classes to add as activities to the manifest.
+#android.add_activites = com.example.ExampleActivity
+
+# (str) python-for-android branch to use, defaults to stable
 p4a.branch = master
 
 # (str) OUYA Console category. Should be one of GAME or APP
@@ -159,7 +172,10 @@ p4a.branch = master
 # (str) XML file to include as an intent filters in <activity> tag
 #android.manifest.intent_filters =
 
-# (list) Android additionnal libraries to copy into libs/armeabi
+# (str) launchMode to set for the main activity
+#android.manifest.launch_mode = standard
+
+# (list) Android additional libraries to copy into libs/armeabi
 #android.add_libs_armeabi = libs/android/*.so
 #android.add_libs_armeabi_v7a = libs/android-v7/*.so
 #android.add_libs_x86 = libs/android-x86/*.so
@@ -193,13 +209,16 @@ android.arch = armeabi-v7a
 #p4a.source_dir =
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-p4a.local_recipes =/home/cis/Desktop/Mobileandroid/peter_android/PyBitmessage/src/bitmessagekivy/android/python-for-android/recipes/
+p4a.local_recipes = /home/cis/navjotrepo/PyBitmessage/src/bitmessagekivy/android/python-for-android/recipes/
 
 # (str) Filename to the hook for p4a
 #p4a.hook =
 
 # (str) Bootstrap to use for android builds
 # p4a.bootstrap = sdl2
+
+# (int) port number to specify an explicit --port= p4a argument (eg for bootstrap flask)
+#p4a.port =
 
 
 #

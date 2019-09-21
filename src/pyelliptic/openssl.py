@@ -1,4 +1,14 @@
-#!/usr/bin/env python
+"""
+src/pyelliptic/openssl.py
+=================================
+"""
+import sys
+import ctypes
+from kivy.utils import platform
+
+OpenSSL = None
+
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
@@ -6,13 +16,10 @@
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
 
-import sys
-import ctypes
 
-OpenSSL = None
-from kivy.utils import platform
+class CipherName:       # pylint: disable=old-style-class
+    """Method helps to get pointers, name and blocksize"""
 
-class CipherName:
     def __init__(self, name, pointer, blocksize):
         self._name = name
         self._pointer = pointer
@@ -24,16 +31,20 @@ class CipherName:
                " | Function pointer : " + str(self._pointer)
 
     def get_pointer(self):
+        """Method returns the pointer"""
         return self._pointer()
 
     def get_name(self):
+        """Method returns the name"""
         return self._name
 
     def get_blocksize(self):
+        """Method returns the blocksize"""
         return self._blocksize
 
 
 def get_version(library):
+    """Method returns the version of the OpenSSL Library"""
     version = None
     hexversion = None
     cflags = None
@@ -64,14 +75,11 @@ def get_version(library):
     return (version, hexversion, cflags)
 
 
-class _OpenSSL:
-    """
-    Wrapper for OpenSSL using ctypes
-    """
+class _OpenSSL:     # pylint: disable=too-many-instance-attributes, old-style-class, too-many-statements
+    """Wrapper for OpenSSL using ctypes"""
+
     def __init__(self, library):
-        """
-        Build the wrapper
-        """
+        """Build the wrapper"""
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
         self._libreSSL = self._version.startswith("LibreSSL")
@@ -594,6 +602,7 @@ class _OpenSSL:
         """
         returns the name of a elliptic curve with his id
         """
+        # pylint: disable=redefined-builtin
         res = None
         for i in self.curves:
             if self.curves[i] == id:
@@ -607,6 +616,7 @@ class _OpenSSL:
         """
         OpenSSL random function
         """
+        # pylint: disable=redefined-builtin
         buffer = self.malloc(0, size)
         # This pyelliptic library, by default, didn't check the return value of RAND_bytes. It is
         # evidently possible that it returned an error and not-actually-random data. However, in
@@ -623,6 +633,7 @@ class _OpenSSL:
         """
         returns a create_string_buffer (ctypes)
         """
+        # pylint: disable=redefined-builtin
         buffer = None
         if data != 0:
             if sys.version_info.major == 3 and isinstance(data, type('')):
@@ -634,6 +645,8 @@ class _OpenSSL:
 
 
 def loadOpenSSL():
+    """Method find and load the OpenSSL library"""
+    # pylint: disable=global-statement, protected-access, too-many-branches
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library
@@ -673,14 +686,18 @@ def loadOpenSSL():
     elif platform == "android":
         libdir.append('libcrypto1.0.2p.so')
         libdir.append('libssl1.0.2p.so')
-
+        libdir.append('libcrypto1.1.so')
+        libdir.append('libssl1.1.so')
     else:
         libdir.append('libcrypto.so')
         libdir.append('libssl.so')
         libdir.append('libcrypto.so.1.0.0')
         libdir.append('libssl.so.1.0.0')
     if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
-        libdir.append(find_library('ssl'))
+        try:
+            libdir.append(find_library('ssl'))
+        except OSError:
+            pass
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
     for library in libdir:

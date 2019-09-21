@@ -98,6 +98,18 @@ trash_count = 0
 
 draft_count = 0
 
+all_count = 0
+
 searcing_text = ''
 
 search_screen = ''
+
+send_draft_mail = None
+
+is_allmail = False
+
+in_composer = False
+
+write_msg = {}
+
+availabe_credit = 0

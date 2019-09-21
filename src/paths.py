@@ -42,8 +42,7 @@ def lookupAppdataFolder():
                 print stringToLog
             sys.exit()
     elif platform == 'android':
-        # dataFolder = path.join(os.path.dirname(os.path.abspath("__file__")), "PyBitmessage") + '/'
-        dataFolder = path.join('/sdcard/', 'DCIM/', APPNAME) + '/'
+        dataFolder = path.join(os.environ['ANDROID_PRIVATE'] + '/', APPNAME) + '/'
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         dataFolder = path.join(environ['APPDATA'].decode(sys.getfilesystemencoding(), 'ignore'), APPNAME) + path.sep

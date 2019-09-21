@@ -92,7 +92,7 @@ class singleCleaner(StoppableThread):
                 queryreturn = sqlQuery(
                     "SELECT toaddress, ackdata, status FROM sent"
                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
-                    " AND folder='sent' AND sleeptill<? AND senttime>?)",
+                    " AND folder LIKE '%sent%' AND sleeptill<? AND senttime>?)",
                     int(time.time()), int(time.time()) -
                     shared.maximumLengthOfTimeToBotherResendingMessages
                 )

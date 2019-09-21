@@ -11,9 +11,12 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlStatementBase = '''
             SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
             FROM sent '''
+    elif folder == "addressbook":
+        sqlStatementBase = '''SELECT label, address From addressbook '''
     else:
         sqlStatementBase = '''SELECT folder, msgid, toaddress, message, fromaddress, subject, received, read
             FROM inbox '''
+
     sqlStatementParts = []
     sqlArguments = []
     if account is not None:
@@ -24,15 +27,16 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         else:
             sqlStatementParts.append(xAddress + " = ? ")
             sqlArguments.append(account)
-    if folder is not None:
-        if folder == "new":
-            folder = "inbox"
-            unreadOnly = True
-        sqlStatementParts.append("folder = ? ")
-        sqlArguments.append(folder)
-    else:
-        sqlStatementParts.append("folder != ?")
-        sqlArguments.append("trash")
+    if folder is not "addressbook":
+        if folder is not None:
+            if folder == "new":
+                folder = "inbox"
+                unreadOnly = True
+            sqlStatementParts.append("folder = ? ")
+            sqlArguments.append(folder)
+        else:
+            sqlStatementParts.append("folder != ?")
+            sqlArguments.append("trash")
     if what is not None:
         for colmns in where:
             if len(where) > 1:
@@ -49,5 +53,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
     if len(sqlStatementParts) > 0:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
     if folder == "sent":
-        sqlStatementBase += " ORDER BY lastactiontime"
+        sqlStatementBase += " ORDER BY lastactiontime DESC"
+    elif folder == "inbox":
+        sqlStatementBase += " ORDER BY received DESC"
     return sqlQuery(sqlStatementBase, sqlArguments)

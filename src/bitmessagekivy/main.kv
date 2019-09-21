@@ -53,74 +53,80 @@
     color: color_font
 
 <ContentNavigationDrawer@Navigatorss>:
-    drawer_logo: './images/drawer_logo1.png'
+    drawer_logo: app.address_identicon()
     NavigationDrawerDivider:
-     
+    
     NavigationDrawerTwoLineListItem:
         text: "Accounts"
     NavigationDrawerIconButton:
         CustomSpinner:
-            pos_hint:{"x":0,"y":.25}
             id: btn
+            pos_hint:{"x":0,"y":.25}
             option_cls: Factory.get("MySpinnerOption")
-            font_size: '12.5sp'
+            font_size: '11.9sp'
             text: app.getDefaultAccData()
             background_color: color_button if self.state == 'normal' else color_button_pressed
             background_down: 'atlas://data/images/defaulttheme/spinner'
             color: color_font
             values: app.variable_1
             on_text:app.getCurrentAccountData(self.text)
+            Image:
+                source: app.get_default_image()
+                x: self.width/4-2
+                y: self.parent.y + self.parent.height/2 - self.height + 14
+                size: 28, 28
             ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
         icon: 'email-open'
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "Starred"
         icon:'star'
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
+        on_release: app.root.ids.scr_mngr.current = 'starred'
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         icon: 'archive'
         text: "Archieve"
-        on_release: app.root.ids.scr_mngr.current = 'trash'
-        badge_text: "9+"
+        on_release: app.root.ids.scr_mngr.current = 'archieve'
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         icon: 'email-open-outline'
         text: "Spam"
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: "8+"
+        on_release: app.root.ids.scr_mngr.current = 'spam'
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
-        badge_text: app.mail_count(self.text)
+        badge_text: "0"
         on_press: app.check_search_screen(self)
-    NavigationDrawerIconButton: 
+    NavigationDrawerIconButton:
+        id: allmail_cnt
         text: "All Mails"
         icon:'contact-mail'
-        on_release: app.root.ids.scr_mngr.current = 'inbox'
-        badge_text: "999+"
+        on_release: app.root.ids.scr_mngr.current = 'allmails'
+        badge_text: "0"
         on_press: app.check_search_screen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
@@ -139,6 +145,11 @@
         text: "Subscriptions/Payment"
         icon:'wallet'
         on_release: app.root.ids.scr_mngr.current = 'payment'
+        on_press: app.check_search_screen(self)
+    NavigationDrawerIconButton: 
+        text: "Credits"
+        icon:'wallet'
+        on_release: app.root.ids.scr_mngr.current = 'credits'
         on_press: app.check_search_screen(self)
     NavigationDrawerIconButton: 
         text: "new address"
@@ -174,58 +185,20 @@ NavigationLayout:
             background_palette: 'Primary'
             background_hue: '500'
             left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
-            Button:
-                id: reset_navbar
-                size_hint_y: 0.35
-                size_hint_x: 0.2
-                opacity: 0
-                disabled: True
-                pos_hint: {'x': .1, 'y': 0.3}
-                color: 0,0,0,1
-                background_color: (0,0,0,0)
-                on_press:app.reset_navdrawer(self)
-                Image:
-                    source: './images/left_arrow.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    size: 40, 40 
-            TextInput:
-                id: search_input
-                hint_text: 'search'
-                opacity: 0
-                size_hint: 1,None
-                height: dp(32)
-                disabled: True
-                pos_hint: {'center_x':.565,'center_y': .5}
-                multiline: False
-                padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
-                padding_x: 20,20                                                        
-            Button:
-                id: serch_btn
-                size_hint_y: 0.35
-                size_hint_x: 0.2
-                pos_hint: {'x': .1, 'y': 0.3}
-                color: 0,0,0,1
-                background_color: (0,0,0,0)
-                on_press:app.searchQuery(self, search_input.text)
-                Image:
-                    source: './images/search_mail.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    size: 55, 55
-            Button:
-                id: myButton
-                size_hint_y: 0.35
-                size_hint_x: 0.2
-                pos_hint: {'x': .1, 'y': 0.3}
-                color: 0,0,0,1
-                background_color: (0,0,0,0)
-                on_press:app.addingtoaddressbook()
-                Image:
-                    source: './images/addressbookadd.png'
-                    center_x: self.parent.center_x
-                    center_y: self.parent.center_y
-                    size: 55, 55
+            right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
+        BoxLayout:
+            id: search_bar
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDIconButton:
+                icon: 'magnify'
+
+            MDTextField:
+                id: search_field
+                hint_text: 'Search'
+                on_text: app.searchQuery(self)
+
         ScreenManager:
             id: scr_mngr
             Inbox:
@@ -260,7 +233,16 @@ NavigationLayout:
                 id:sc15
             Draft:
                 id:sc16
-
+            Allmails:
+                id:sc17
+            Credits:
+                id:sc18
+            Starred:
+                id:sc19
+            Archieve:
+                id:sc20
+            Spam:
+                id:sc21
 
 <Inbox>:
     name: 'inbox'
@@ -271,7 +253,7 @@ NavigationLayout:
             root_layout: root
             MDList:
                 id: ml
-    ComposerButton
+    ComposerButton:
 
 <Sent>:
     name: 'sent'
@@ -296,6 +278,41 @@ NavigationLayout:
         MDList:
             id: ml
     ComposerButton:
+
+<Starred>:
+    name: 'starred'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+
+<Archieve>:
+    name: 'archieve'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+
+<Spam>:
+    name: 'spam'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+    ComposerButton:
+
+<Allmails>:
+    name: 'allmails'
+    FloatLayout:
+        MDScrollViewRefreshLayout:
+            id: refresh_layout
+            refresh_callback: root.refresh_callback
+            root_layout: root
+            MDList:
+                id: ml
+    ComposerButton:
     
 <Test>:
     name: 'test'
@@ -312,12 +329,34 @@ NavigationLayout:
 <Create>:
     name: 'create'
 
+<Credits>:
+    name: 'credits'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+            size_hint_y: None
+            height: dp(200)
+            OneLineListItem:
+                text: "Available Credits"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .6, .35
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'Title'
+                            text: root.available_credits
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+
 <DropDownWidget>:
     ScrollView:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(600)
+            height: self.minimum_height + 2 * self.parent.height/4
             padding: dp(32)
             spacing: 15
             BoxLayout:
@@ -339,7 +378,7 @@ NavigationLayout:
                         background_color: app.theme_cls.primary_dark
                         id: btn
                         values: app.variable_1
-                        on_text: ti.text = self.text if self.text != 'Select' else ''
+                        on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
                         option_cls: Factory.get("MySpinnerOption")
                         background_color: color_button if self.state == 'normal' else color_button_pressed
                         background_down: 'atlas://data/images/defaulttheme/spinner'
@@ -357,7 +396,7 @@ NavigationLayout:
                     id: txt_input
                     size_hint_y: None
                     font_size: '13sp'
-                    height: 100
+                    height: self.parent.height/2
                     hint_text: 'type or search recipients address starting with BM-'
                 RV:
                     id: rv
@@ -385,18 +424,7 @@ NavigationLayout:
                     MDRaisedButton:
                         size_hint: 1, None
                         height: dp(40)
-                        on_press: root.send()
-                        MDLabel:
-                            font_style: 'Title'
-                            text: 'send'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: 1, None
-                        height: dp(40)
-                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        on_press: root.reset_composer()
                         MDLabel:
                             font_style: 'Title'
                             text: 'reset'
@@ -538,7 +566,7 @@ NavigationLayout:
                     MDRaisedButton:
                         size_hint: .5, None
                         height: dp(40)
-                        on_release: root.generateaddress()
+                        on_release: root.generateaddress(app)
                         opposite_colors: True
                         MDLabel:
                             font_style: 'Title'
@@ -647,7 +675,149 @@ NavigationLayout:
 
 <Payment>:
     name: 'payment'
-
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            padding: [dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1), dp(10)] 
+            spacing: 12
+            size_hint_y: None
+            height: self.minimum_height + dp(app.window_size[1]) if app.window_size[1] > app.window_size[0] else dp(app.window_size[0])
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: app.theme_cls.primary_dark
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: 'Platinum'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Subhead'
+                    theme_text_color: 'Primary'
+                    text: 'We provide subscriptions for proof of work calculation for first month. '
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    id: free_pak
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: '€ 50.0'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size_hint: 1, None
+                    height: dp(40)
+                    on_press: root.get_available_credits(self)
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Get Free Credits'
+                        font_size: '13sp'
+                        color: (0,0,0,1)
+                        halign: 'center'
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: app.theme_cls.primary_dark
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: 'Silver'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Subhead'
+                    theme_text_color: 'Primary'
+                    text: 'We provide for proof of work calculation for six month. '
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: '€ 100.0'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size_hint: 1, None
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Get Monthly Credits'
+                        font_size: '13sp'
+                        color: (0,0,0,1)
+                        halign: 'center'
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: app.theme_cls.primary_dark
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: 'Gold'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Subhead'
+                    theme_text_color: 'Primary'
+                    text: 'We provide for proof of work calculation for 1years. '
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Headline'
+                    theme_text_color: 'Primary'
+                    text: '€ 500.0'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size_hint: 1, None
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'Title'
+                        text: 'Get Yearly Credits'
+                        font_size: '13sp'
+                        color: (0,0,0,1)
+                        halign: 'center'
+        
 
 <GrashofPopup>:
     id: popup
@@ -676,10 +846,12 @@ NavigationLayout:
                 hint_text: "Address"
                 required: True
                 helper_text_mode: "on_error"
+                on_text: root.checkAddress_valid(self)
         BoxLayout:
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
+                id: save_addr
                 size_hint: 1.5, None
                 height: dp(40)
                 on_release:                 
@@ -694,6 +866,7 @@ NavigationLayout:
                 size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
+                on_press: root.close_pop()
                 MDLabel:
                     font_style: 'Title'
                     text: 'Cancel'
@@ -709,6 +882,7 @@ NavigationLayout:
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
+
 
 <NetworkStat>:
     name: 'networkstat'
@@ -807,23 +981,27 @@ NavigationLayout:
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(400)
+            height: dp(500) + self.minimum_height
             padding: dp(32)
             MDLabel:
                 font_style: 'Headline'
                 theme_text_color: 'Primary'
                 text: root.subject
                 halign: 'left'
+                font_size: '20sp'
+                CopyTextBtn:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
                 text: "From: " + root.from_addr
                 halign: 'left'
+                CopyTextBtn:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
                 text: "To: " + root.to_addr
                 halign: 'left'
+                CopyTextBtn:
             MDLabel:
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
@@ -835,28 +1013,24 @@ NavigationLayout:
                 text: root.message
                 halign: 'left'
                 bold: True
+                CopyTextBtn:
             BoxLayout:
-                spacing:20
-                MDRaisedButton:
-                    size_hint: 1, None
-                    height: dp(40)
-                    on_press: root.inbox_reply() if root.page_type == 'inbox' else root.copy_sent_mail()
-                    MDLabel:
-                        font_style: 'Title'
-                        text: 'Reply' if root.page_type == 'inbox' else 'Copy'
-                        font_size: '13sp'
-                        color: (1,1,1,1)
-                        halign: 'center'
-                MDRaisedButton:
-                    size_hint: 1, None
-                    height: dp(40)
-                    on_press: root.delete_mail()
-                    MDLabel:
-                        font_style: 'Title'
-                        text: 'Delete'
-                        font_size: '13sp'
-                        color: (1,1,1,1)
-                        halign: 'center'
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(100) + self.minimum_height
+
+<CopyTextBtn@Button>:
+    id: cpyButton
+    color: 0,0,0,1
+    background_color: (0,0,0,0)
+    center_x: self.parent.center_x * 2 - self.parent.parent.padding[0]/2
+    center_y: self.parent.center_y
+    on_press:app.root.ids.sc14.copy_composer_text(self)
+    Image:
+        source: './images/copy_text.png'
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        size: 20, 20    
 
 <ComposerButton@BoxLayout>:
     size_hint_y: None
@@ -941,6 +1115,7 @@ NavigationLayout:
                 size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
+                on_press: root.close_pop()
                 MDLabel:
                     font_style: 'Title'
                     text: 'Cancel'
@@ -1017,6 +1192,7 @@ NavigationLayout:
                 size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
+                on_press: root.close_pop()
                 MDLabel:
                     font_style: 'Title'
                     text: 'Cancel'
