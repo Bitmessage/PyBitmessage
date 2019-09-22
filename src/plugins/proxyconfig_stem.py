@@ -43,6 +43,7 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
     ):
         # remote proxy is choosen for outbound connections,
         # nothing to do here, but need to set socksproxytype to SOCKS5!
+        config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         logwrite(
             'sockshostname is set to remote address,'
             ' aborting stem proxy configuration')
@@ -76,6 +77,8 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
         else:
             logwrite('Started tor on port %s' % port)
             break
+
+    config.setTemp('bitmessagesettings', 'socksproxytype', 'SOCKS5')
 
     if config.safeGetBoolean('bitmessagesettings', 'sockslisten'):
         # need a hidden service for inbound connections
@@ -117,6 +120,5 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
                 config.set(
                     onionhostname, 'keytype', response.private_key_type)
                 config.save()
-        config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
 
-        return True
+    return True
