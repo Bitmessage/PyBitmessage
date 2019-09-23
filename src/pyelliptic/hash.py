@@ -27,6 +27,7 @@ def _equals_str(a, b):
 
 
 def equals(a, b):
+    """Compare two strings or bytearrays"""
     if isinstance(a, str):
         return _equals_str(a, b)
     else:
@@ -58,6 +59,7 @@ def hmac_sha512(k, m):
 
 
 def pbkdf2(password, salt=None, i=10000, keylen=64):
+    """Compute the salt, key and the message with pbkdf2"""
     if salt is None:
         salt = OpenSSL.rand(8)
     p_password = OpenSSL.malloc(password, len(password))
