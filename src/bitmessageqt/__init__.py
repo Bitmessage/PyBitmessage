@@ -3191,8 +3191,7 @@ class MyForm(settingsmixin.SMainWindow):
                 0].row()
             item = self.ui.tableWidgetAddressBook.item(currentRow, 0)
             sqlExecute(
-                'DELETE FROM addressbook WHERE label=? AND address=?',
-                item.label, item.address)
+                'DELETE FROM addressbook WHERE address=?', item.address)
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
