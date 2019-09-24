@@ -9,9 +9,6 @@ extPort = None
 # for Tor hidden service
 socksIP = None
 
-# Network protocols availability, initialised below
-networkProtocolAvailability = None
-
 appdata = ''  # holds the location of the application data storage directory
 
 # Set to 1 by the doCleanShutdown function.
@@ -53,14 +50,6 @@ trustedPeer = None
 discoveredPeers = {}
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
-
-
-def resetNetworkProtocolAvailability():
-    global networkProtocolAvailability
-    networkProtocolAvailability = {'IPv4': None, 'IPv6': None, 'onion': None}
-
-
-resetNetworkProtocolAvailability()
 
 dandelion = 0
 
