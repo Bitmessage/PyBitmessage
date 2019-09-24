@@ -1,4 +1,4 @@
-# pylint: disable=too-many-branches,too-many-statements,protected-access
+    # pylint: disable=too-many-branches,too-many-statements,protected-access
 """
 src/proofofwork.py
 ==================

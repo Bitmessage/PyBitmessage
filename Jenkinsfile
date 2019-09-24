@@ -103,6 +103,23 @@ pipeline {
             }
         }
 
+
+        // stage('Nosetest'){
+        //     steps{
+        //         sh '''
+        //         echo ${SHELL}
+        //         [ -d venv ] && rm -rf venv
+        //         #virtualenv --python=python2.7 venv
+        //         virtualenv venv
+        //         #. venv/bin/activate
+        //         export PATH=${VIRTUAL_ENV}/bin:${PATH}
+        //         python setup.py install
+        //         sudo apt-get install python-mock python-nose python-coverage pylint
+                
+        //         '''
+        //     }
+        // }   
+
         // stage('Pylint Checker') {
         //     steps {
         //         sh '''
@@ -137,7 +154,7 @@ pipeline {
                         pip install radon
                         radon raw --json PyBitmessage/ > raw_report.json
                         radon cc --json PyBitmessage/ > cc_report.json
-                        radon mi --json PyBitmessage/ > mi_report.json
+                        radon mi --json PyBitmessage/ > mi_report.json  
                     '''
 
 
@@ -185,6 +202,23 @@ pipeline {
         }
 
         stage('Unit tests') {
+            steps {
+                sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
+                        pip install pytest
+                        pip install psutil
+                        pip install python-prctl==1.5.0
+                        python -m pytest --verbose --junit-xml results.xml
+                    '''
+            }
+            post {
+                always {
+                    // Archive unit tests for the future
+                    junit allowEmptyResults: true, testResults: 'results.xml'
+                }
+            }
+        }
+
+        stage('Setup Test') {
             steps {
                 sh  ''' export PATH=${VIRTUAL_ENV}/bin:${PATH}
                         pip install pytest
