@@ -1,3 +1,7 @@
+"""
+src/storage/filesystem.py
+=========================
+"""
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
 import string
@@ -8,14 +12,15 @@ from paths import lookupAppdataFolder
 from storage import InventoryStorage, InventoryItem
 
 
-class FilesystemInventory(InventoryStorage):
+class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ancestors, abstract-method
+    """Module for using filesystem (directory with files) for inventory storage"""
     topDir = "inventory"
     objectDir = "objects"
     metadataFilename = "metadata"
     dataFilename = "data"
 
     def __init__(self):
-        super(self.__class__, self).__init__()
+        super(FilesystemInventory, self).__init__()
         self.baseDir = path.join(lookupAppdataFolder(), FilesystemInventory.topDir)
         for createDir in [self.baseDir, path.join(self.baseDir, "objects")]:
             if path.exists(createDir):
@@ -29,29 +34,29 @@ class FilesystemInventory(InventoryStorage):
         self._inventory = {}
         self._load()
 
-    def __contains__(self, hash):
+    def __contains__(self, hashval):
         retval = False
         for streamDict in self._inventory.values():
-            if hash in streamDict:
+            if hashval in streamDict:
                 return True
         return False
 
-    def __getitem__(self, hash):
+    def __getitem__(self, hashval):
         for streamDict in self._inventory.values():
             try:
-                retval = streamDict[hash]
+                retval = streamDict[hashval]
             except KeyError:
                 continue
             if retval.payload is None:
-                retval = InventoryItem(retval.type, retval.stream, self.getData(hash), retval.expires, retval.tag)
+                retval = InventoryItem(retval.type, retval.stream, self.getData(hashval), retval.expires, retval.tag)
             return retval
-        raise KeyError(hash)
+        raise KeyError(hashval)
 
-    def __setitem__(self, hash, value):
+    def __setitem__(self, hashval, value):
         with self.lock:
             value = InventoryItem(*value)
             try:
-                makedirs(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hash)))
+                makedirs(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashval)))
             except OSError:
                 pass
             try:
@@ -59,7 +64,7 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hash),
+                        hexlify(hashval),
                         FilesystemInventory.metadataFilename,
                     ),
                     "w",
@@ -69,7 +74,7 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hash),
+                        hexlify(hashval),
                         FilesystemInventory.dataFilename,
                     ),
                     "w",
@@ -78,15 +83,16 @@ class FilesystemInventory(InventoryStorage):
             except IOError:
                 raise KeyError
             try:
-                self._inventory[value.stream][hash] = value
+                self._inventory[value.stream][hashval] = value
             except KeyError:
                 self._inventory[value.stream] = {}
-                self._inventory[value.stream][hash] = value
+                self._inventory[value.stream][hashval] = value
 
-    def delHashId(self, hash):
-        for stream in self._inventory.keys():
+    def delHashId(self, hashval):
+        """Remove object from inventory"""
+        for stream in self._inventory:
             try:
-                del self._inventory[stream][hash]
+                del self._inventory[stream][hashval]
             except KeyError:
                 pass
         with self.lock:
@@ -95,7 +101,7 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hash),
+                        hexlify(hashval),
                         FilesystemInventory.metadataFilename))
             except IOError:
                 pass
@@ -104,12 +110,12 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hash),
+                        hexlify(hashval),
                         FilesystemInventory.dataFilename))
             except IOError:
                 pass
             try:
-                rmdir(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hash)))
+                rmdir(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashval)))
             except IOError:
                 pass
 
@@ -139,18 +145,20 @@ class FilesystemInventory(InventoryStorage):
                         objectType, streamNumber, None, expiresTime, tag)
             except KeyError:
                 print "error loading %s" % (hexlify(hashId))
-                pass
         self._inventory = newInventory
 #        for i, v in self._inventory.items():
 #            print "loaded stream: %s, %i items" % (i, len(v))
 
     def stream_list(self):
+        """Return list of streams"""
         return self._inventory.keys()
 
     def object_list(self):
+        """Return inventory vectors (hashes) from a directory"""
         return [unhexlify(x) for x in listdir(path.join(self.baseDir, FilesystemInventory.objectDir))]
 
     def getData(self, hashId):
+        """Get object data"""
         try:
             with open(
                 path.join(
@@ -166,6 +174,7 @@ class FilesystemInventory(InventoryStorage):
             raise AttributeError
 
     def getMetadata(self, hashId):
+        """Get object metadata"""
         try:
             with open(
                 path.join(
@@ -196,12 +205,14 @@ class FilesystemInventory(InventoryStorage):
         return retval
 
     def hashes_by_stream(self, stream):
+        """Return inventory vectors (hashes) for a stream"""
         try:
             return self._inventory[stream].keys()
         except KeyError:
             return []
 
     def unexpired_hashes_by_stream(self, stream):
+        """Return unexpired hashes in the inventory for a particular stream"""
         t = int(time.time())
         try:
             return [x for x, value in self._inventory[stream].items() if value.expires > t]
@@ -209,9 +220,11 @@ class FilesystemInventory(InventoryStorage):
             return []
 
     def flush(self):
+        """Flush the inventory and create a new, empty one"""
         self._load()
 
     def clean(self):
+        """Clean out old items from the inventory"""
         minTime = int(time.time()) - (60 * 60 * 30)
         deletes = []
         for stream, streamDict in self._inventory.items():
