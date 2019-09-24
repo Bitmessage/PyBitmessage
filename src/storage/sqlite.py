@@ -10,9 +10,17 @@ from storage import InventoryStorage, InventoryItem
 class SqliteInventory(InventoryStorage):
     def __init__(self):
         super(self.__class__, self).__init__()
-        self._inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
-        self._objects = {} # cache for existing objects, used for quick lookups if we have an object. This is used for example whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it.
-        self.lock = RLock() # Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
+        # of objects (like msg payloads and pubkey payloads)
+        # Does not include protocol headers (the first 24 bytes of each packet).
+        self._inventory = {}
+        # cache for existing objects, used for quick lookups if we have an object.
+        # This is used for example whenever we receive an inv message from a peer
+        # to check to see what items are new to us.
+        # We don't delete things out of it; instead, the singleCleaner thread clears and refills it.
+        self._objects = {}
+        # Guarantees that two receiveDataThreads don't receive and process the same message concurrently
+        # (probably sent by a malicious individual)
+        self.lock = RLock()
 
     def __contains__(self, hash):
         with self.lock:

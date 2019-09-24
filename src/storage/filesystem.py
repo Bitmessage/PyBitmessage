@@ -3,10 +3,10 @@ from os import listdir, makedirs, path, remove, rmdir
 import string
 from threading import RLock
 import time
-import traceback
 
 from paths import lookupAppdataFolder
 from storage import InventoryStorage, InventoryItem
+
 
 class FilesystemInventory(InventoryStorage):
     topDir = "inventory"
@@ -23,7 +23,9 @@ class FilesystemInventory(InventoryStorage):
                     raise IOError("%s exists but it's not a directory" % (createDir))
             else:
                 makedirs(createDir)
-        self.lock = RLock() # Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
+        # Guarantees that two receiveDataThreads don't receive and process the same message
+        # concurrently (probably sent by a malicious individual)
+        self.lock = RLock()
         self._inventory = {}
         self._load()
 
@@ -53,9 +55,25 @@ class FilesystemInventory(InventoryStorage):
             except OSError:
                 pass
             try:
-                with open(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hash), FilesystemInventory.metadataFilename), 'w') as f:
+                with open(
+                    path.join(
+                        self.baseDir,
+                        FilesystemInventory.objectDir,
+                        hexlify(hash),
+                        FilesystemInventory.metadataFilename,
+                    ),
+                    "w",
+                ) as f:
                     f.write("%s,%s,%s,%s," % (value.type, value.stream, value.expires, hexlify(value.tag)))
-                with open(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hash), FilesystemInventory.dataFilename), 'w') as f:
+                with open(
+                    path.join(
+                        self.baseDir,
+                        FilesystemInventory.objectDir,
+                        hexlify(hash),
+                        FilesystemInventory.dataFilename,
+                    ),
+                    "w",
+                ) as f:
                     f.write(value.payload)
             except IOError:
                 raise KeyError
@@ -73,11 +91,21 @@ class FilesystemInventory(InventoryStorage):
                 pass
         with self.lock:
             try:
-                remove(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hash), FilesystemInventory.metadataFilename))
+                remove(
+                    path.join(
+                        self.baseDir,
+                        FilesystemInventory.objectDir,
+                        hexlify(hash),
+                        FilesystemInventory.metadataFilename))
             except IOError:
                 pass
             try:
-                remove(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hash), FilesystemInventory.dataFilename))
+                remove(
+                    path.join(
+                        self.baseDir,
+                        FilesystemInventory.objectDir,
+                        hexlify(hash),
+                        FilesystemInventory.dataFilename))
             except IOError:
                 pass
             try:
@@ -88,7 +116,7 @@ class FilesystemInventory(InventoryStorage):
     def __iter__(self):
         elems = []
         for streamDict in self._inventory.values():
-            elems.extend (streamDict.keys())
+            elems.extend(streamDict.keys())
         return elems.__iter__()
 
     def __len__(self):
@@ -103,10 +131,12 @@ class FilesystemInventory(InventoryStorage):
             try:
                 objectType, streamNumber, expiresTime, tag = self.getMetadata(hashId)
                 try:
-                    newInventory[streamNumber][hashId] = InventoryItem(objectType, streamNumber, None, expiresTime, tag)
+                    newInventory[streamNumber][hashId] = InventoryItem(
+                        objectType, streamNumber, None, expiresTime, tag)
                 except KeyError:
                     newInventory[streamNumber] = {}
-                    newInventory[streamNumber][hashId] = InventoryItem(objectType, streamNumber, None, expiresTime, tag)
+                    newInventory[streamNumber][hashId] = InventoryItem(
+                        objectType, streamNumber, None, expiresTime, tag)
             except KeyError:
                 print "error loading %s" % (hexlify(hashId))
                 pass
@@ -122,25 +152,42 @@ class FilesystemInventory(InventoryStorage):
 
     def getData(self, hashId):
         try:
-            with open(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashId), FilesystemInventory.dataFilename), 'r') as f:
+            with open(
+                path.join(
+                    self.baseDir,
+                    FilesystemInventory.objectDir,
+                    hexlify(hashId),
+                    FilesystemInventory.dataFilename,
+                ),
+                "r",
+            ) as f:
                 return f.read()
         except IOError:
             raise AttributeError
 
     def getMetadata(self, hashId):
         try:
-            with open(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashId), FilesystemInventory.metadataFilename), 'r') as f:
+            with open(
+                path.join(
+                    self.baseDir,
+                    FilesystemInventory.objectDir,
+                    hexlify(hashId),
+                    FilesystemInventory.metadataFilename,
+                ),
+                "r",
+            ) as f:
                 objectType, streamNumber, expiresTime, tag, undef = string.split(f.read(), ",", 4)
                 return [int(objectType), int(streamNumber), int(expiresTime), unhexlify(tag)]
         except IOError:
             raise KeyError
 
     def by_type_and_tag(self, objectType, tag):
+        """Get a list of objects filtered by object type and tag"""
         retval = []
         for stream, streamDict in self._inventory:
             for hashId, item in streamDict:
                 if item.type == objectType and item.tag == tag:
-                    try: 
+                    try:
                         if item.payload is None:
                             item.payload = self.getData(hashId)
                     except IOError:
