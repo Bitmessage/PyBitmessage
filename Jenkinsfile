@@ -74,6 +74,15 @@ pipeline {
         //     }
         // }
 
+        stage('changes in script check') {
+            steps {
+                sh '''
+                echo ${SHELL}
+                '''
+                // sudo /home/cis/.local/bin/nosetests --with-xunit tests
+            }
+        }
+
         stage('Test environment') {
             steps {
                 sh '''
