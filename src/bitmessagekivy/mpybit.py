@@ -1036,14 +1036,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         state.association = text
         self.root.ids.sc1.clear_widgets()
         self.root.ids.sc1.add_widget(Inbox())
-        # self.root.ids.sc4.clear_widgets()
-        # self.root.ids.sc5.clear_widgets()
-        # self.root.ids.sc16.clear_widgets()
-        # self.root.ids.sc17.clear_widgets()
-        # self.root.ids.sc4.add_widget(Sent())
-        # self.root.ids.sc5.add_widget(Trash())
-        # self.root.ids.sc16.add_widget(Draft())
-        # self.root.ids.sc17.add_widget(Allmails())
         self.root.ids.scr_mngr.current = 'inbox'
 
         msg_counter_objs = \
@@ -1091,7 +1083,12 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         if BMConfigParser().addresses():
             img = identiconGeneration.generate(BMConfigParser().addresses()[0])
             self.createFolder('./images/default_identicon/')
-            img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
+            if platform == 'android':
+                # android_path = os.path.expanduser("~/user/0/org.test.bitapp/files/app/")
+                android_path = os.path.join(os.environ['ANDROID_PRIVATE'] + '/app/')
+                img.texture.save('{1}/images/default_identicon/{0}.png'.format(BMConfigParser().addresses()[0], android_path))
+            else:
+                img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
@@ -1125,8 +1122,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
-                # if state.detailPageType in ['sent', 'inbox']:
-                #     self.add_search_bar()
                 self.back_press()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
@@ -1309,13 +1304,6 @@ class GrashofPopup(Popup):
     def __init__(self, **kwargs):
         """Grash of pop screen settings."""
         super(GrashofPopup, self).__init__(**kwargs)
-        print("sssssssssssssssssssiiiiiiiiiiiiiiizzzzzzzzzzeeeeee...............", state.screen_density)
-        if state.screen_density[0] <= 720:
-            self.size_hint_y = 0.4
-            self.size_hint_x = 0.9
-        else:
-            self.size_hint_y = 0.42
-            self.size_hint_x = 0.7
 
     def savecontact(self):
         """Method is used for Saving Contacts."""
@@ -1497,9 +1485,6 @@ class MailDetail(Screen):
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
                 received = {};".format(state.sentMailTime))
-            # msg_count_objs.inbox_cnt.badge_text = str(
-                # int(state.inbox_count) - 1)
-            # state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].clear_widgets()
             self.parent.screens[0].add_widget(Inbox())
         elif state.detailPageType == 'draft':
@@ -1574,12 +1559,6 @@ class MyaddDetailPopup(Popup):
     def __init__(self, **kwargs):
         """My Address Details screen setting."""
         super(MyaddDetailPopup, self).__init__(**kwargs)
-        if state.screen_density[0] <= 720:
-            self.size_hint_y = 0.32
-            self.size_hint_x = 0.9
-        else:
-            self.size_hint_y = 0.32
-            self.size_hint_x = 0.7
 
     def set_address(self, address, label):
         """Getting address for displaying details on popup."""
@@ -1612,12 +1591,6 @@ class AddbookDetailPopup(Popup):
     def __init__(self, **kwargs):
         """Method used set screen of address detail page."""
         super(AddbookDetailPopup, self).__init__(**kwargs)
-        if state.screen_density[0] <= 720:
-            self.size_hint_y = 0.35
-            self.size_hint_x = 0.95
-        else:
-            self.size_hint_y = 0.35
-            self.size_hint_x = 0.7
 
     def set_addbook_data(self, address, label):
         """Getting address book data for detial dipaly."""
@@ -1694,10 +1667,6 @@ class Draft(Screen):
             xAddress, account, "draft", where, what, False)
         if state.msg_counter_objs:
             state.msg_counter_objs.draft_cnt.badge_text = str(len(queryreturn))
-            # state.all_count = str(int(state.all_count) + 1)
-            # state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
-            # state.msg_counter_objs = None
-
         if queryreturn:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             src_mng_obj.draft_cnt.badge_text = str(len(queryreturn))
@@ -1772,13 +1741,7 @@ class Draft(Screen):
         if int(state.draft_count) > 0:
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
-            # msg_count_objs.allmail_cnt.badge_text = str(
-            #     int(state.all_count) - 1)
-            # msg_count_objs.trash_cnt.badge_text = str(
-            #     int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
-            # state.all_count = str(int(state.all_count) - 1)
-            # state.trash_count = str(int(state.trash_count) + 1)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
@@ -1840,8 +1803,6 @@ class CustomSpinner(Spinner):
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner."""
         super(CustomSpinner, self).__init__(*args, **kwargs)
-        # max_value = 2.8
-        # self.dropdown_cls.max_height = self.height / 2 * max_value + max_value * 4
         self.dropdown_cls.max_height = Window.size[1] / 3
 
 
