@@ -43,7 +43,6 @@ from kivymd.list import (
     ILeftBody,
     ILeftBodyTouch,
     IRightBodyTouch,
-    ThreeLineAvatarIconListItem,
     TwoLineAvatarIconListItem,
     TwoLineListItem)
 from kivymd.navigationdrawer import (
@@ -1084,7 +1083,8 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
             if platform == 'android':
                 # android_path = os.path.expanduser("~/user/0/org.test.bitapp/files/app/")
                 android_path = os.path.join(os.environ['ANDROID_PRIVATE'] + '/app/')
-                img.texture.save('{1}/images/default_identicon/{0}.png'.format(BMConfigParser().addresses()[0], android_path))
+                img.texture.save('{1}/images/default_identicon/{0}.png'.format(
+                    BMConfigParser().addresses()[0], android_path))
             else:
                 img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
@@ -1299,7 +1299,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """Grash of pop screen settings."""
         super(GrashofPopup, self).__init__(**kwargs)
 
@@ -1557,7 +1557,7 @@ class MyaddDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """My Address Details screen setting."""
         super(MyaddDetailPopup, self).__init__(**kwargs)
 
@@ -1589,7 +1589,7 @@ class AddbookDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """Method used set screen of address detail page."""
         super(AddbookDetailPopup, self).__init__(**kwargs)
 
