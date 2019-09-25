@@ -52,20 +52,27 @@ def lookupAppdataFolder():
                 sys.getfilesystemencoding(), 'ignore'), APPNAME
         ) + os.path.sep
     else:
-        try:
-            dataFolder = os.path.join(os.environ['XDG_CONFIG_HOME'], APPNAME)
-        except KeyError:
-            dataFolder = os.path.join(os.environ['HOME'], '.config', APPNAME)
+        homedir = os.environ.get('XDG_CONFIG_HOME')
+        if not homedir:
+            try:
+                homedir = os.path.join(os.environ['HOME'], '.config')
+            except KeyError:
+                # Nonstandard environment, try android vars
+                homedir = os.environ.get('ANDROID_PRIVATE')
+
+        dataFolder = os.path.join(homedir, APPNAME)
 
         # Migrate existing data to the proper location
         # if this is an existing install
         try:
-            move(os.path.join(os.environ['HOME'], '.%s' % APPNAME), dataFolder)
+            move(
+                os.path.join(os.environ.get('HOME', ''), '.%s' % APPNAME),
+                dataFolder)
             logger.info('Moving data folder to %s', dataFolder)
         except IOError:
             # Old directory may not exist.
             pass
-        dataFolder = dataFolder + os.path.sep
+        dataFolder += os.path.sep
     return dataFolder
 
 
