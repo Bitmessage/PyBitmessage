@@ -2,6 +2,7 @@
 src/bitmessagekivy/mpybit.py
 =================================
 """
+# pylint: disable=relative-import, unused-variable, import-error, no-name-in-module, too-many-lines
 import os
 import time
 from functools import partial
@@ -55,11 +56,8 @@ import queues
 from semaphores import kivyuisignaler
 import state
 from uikivysignaler import UIkivySignaler
-# pylint: disable=unused-argument, too-few-public-methods, import-error
 
-import identiconGeneration    
-import os
-from kivy.core.clipboard import Clipboard
+import identiconGeneration
 # pylint: disable=unused-argument, too-few-public-methods
 
 
@@ -1485,6 +1483,9 @@ class MailDetail(Screen):
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
                 received = {};".format(state.sentMailTime))
+            # msg_count_objs.inbox_cnt.badge_text = str(
+            # int(state.inbox_count) - 1)
+            # state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].clear_widgets()
             self.parent.screens[0].add_widget(Inbox())
         elif state.detailPageType == 'draft':
@@ -1986,6 +1987,7 @@ class Archieve(Screen):
     """Archieve Screen show widgets of page."""
 
     pass
+
 
 class Spam(Screen):
     """Spam Screen show widgets of page."""
