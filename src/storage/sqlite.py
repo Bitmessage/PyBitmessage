@@ -1,14 +1,19 @@
-from threading import RLock
+"""
+src/storage/sqlite.py
+=========================
+"""
 import sqlite3
 import time
+from threading import RLock
 
 from helper_sql import sqlQuery, SqlBulkExecute, sqlExecute
 from storage import InventoryStorage, InventoryItem
 
 
-class SqliteInventory(InventoryStorage):
+class SqliteInventory(InventoryStorage):    # pylint: disable=too-many-ancestors
+    """Inventory using SQLite"""
     def __init__(self):
-        super(self.__class__, self).__init__()
+        super(SqliteInventory, self).__init__()
         # of objects (like msg payloads and pubkey payloads)
         # Does not include protocol headers (the first 24 bytes of each packet).
         self._inventory = {}
@@ -21,34 +26,34 @@ class SqliteInventory(InventoryStorage):
         # (probably sent by a malicious individual)
         self.lock = RLock()
 
-    def __contains__(self, hash):
+    def __contains__(self, hash_):
         with self.lock:
-            if hash in self._objects:
+            if hash_ in self._objects:
                 return True
-            rows = sqlQuery('SELECT streamnumber FROM inventory WHERE hash=?', sqlite3.Binary(hash))
+            rows = sqlQuery('SELECT streamnumber FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
             if not rows:
                 return False
-            self._objects[hash] = rows[0][0]
+            self._objects[hash_] = rows[0][0]
             return True
 
-    def __getitem__(self, hash):
+    def __getitem__(self, hash_):
         with self.lock:
-            if hash in self._inventory:
-                return self._inventory[hash]
+            if hash_ in self._inventory:
+                return self._inventory[hash_]
             rows = sqlQuery(
                 'SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?',
-                sqlite3.Binary(hash))
+                sqlite3.Binary(hash_))
             if not rows:
-                raise KeyError(hash)
+                raise KeyError(hash_)
             return InventoryItem(*rows[0])
 
-    def __setitem__(self, hash, value):
+    def __setitem__(self, hash_, value):
         with self.lock:
             value = InventoryItem(*value)
-            self._inventory[hash] = value
-            self._objects[hash] = value.stream
+            self._inventory[hash_] = value
+            self._objects[hash_] = value.stream
 
-    def __delitem__(self, hash):
+    def __delitem__(self, hash_):
         raise NotImplementedError
 
     def __iter__(self):
