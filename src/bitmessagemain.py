@@ -252,7 +252,10 @@ class Main:
         if daemon:
             state.enableGUI = False  # run without a UI
 
-        if state.enableGUI and not state.curses and not depends.check_pyqt():
+        if (
+            state.enableGUI and not state.curses and not state.kivy
+            and not depends.check_pyqt()
+        ):
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
                 ' to run it as a daemon and interact with it'

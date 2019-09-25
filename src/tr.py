@@ -1,4 +1,4 @@
-import os
+import sys
 
 import state
 
@@ -21,13 +21,22 @@ def translateText(context, text, n = None):
         enableGUI = state.enableGUI
     except AttributeError:  # inside the plugin
         enableGUI = True
-    if enableGUI:
+    if enableGUI and not state.kivy:
         try:
             from PyQt4 import QtCore, QtGui
-        except Exception as err:
-            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
-            print 'Error message:', err
-            os._exit(0)
+        except ImportError:
+            sys.exit(
+                'PyBitmessage requires PyQt unless you want'
+                ' to run it as a daemon and interact with it'
+                ' using the API. You can download PyQt from '
+                'http://www.riverbankcomputing.com/software/pyqt/download'
+                ' or by searching Google for \'PyQt Download\'.'
+                ' If you want to run in daemon mode, see '
+                'https://bitmessage.org/wiki/Daemon\n'
+                'You can also run PyBitmessage with'
+                ' the new curses interface by providing'
+                ' \'-c\' as a commandline argument.'
+            )
         if n is None:
             return QtGui.QApplication.translate(context, text)
         else:
