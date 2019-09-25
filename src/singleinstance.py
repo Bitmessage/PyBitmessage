@@ -52,21 +52,18 @@ class singleinstance:
                     self.lockfile,
                     os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC
                 )
-            except OSError:
-                type, e, tb = sys.exc_info()
+            except OSError as e:
                 if e.errno == 13:
-                    print(
+                    sys.exit(
                         'Another instance of this application'
                         ' is already running'
                     )
-                    sys.exit(-1)
-                print(e.errno)
                 raise
             else:
                 pidLine = "%i\n" % self.lockPid
                 os.write(self.fd, pidLine)
         else:  # non Windows
-            self.fp = open(self.lockfile, 'a+')
+            self.fp = open(self.lockfile, 'wb+')
             try:
                 if self.daemon and self.lockPid != os.getpid():
                     # wait for parent to finish
@@ -75,11 +72,11 @@ class singleinstance:
                     fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 self.lockPid = os.getpid()
             except IOError:
-                print 'Another instance of this application is already running'
-                sys.exit(-1)
+                sys.exit(
+                    'Another instance of this application is already running')
             else:
                 pidLine = "%i\n" % self.lockPid
-                self.fp.truncate(0)
+                self.fp.truncate()
                 self.fp.write(pidLine)
                 self.fp.flush()
 
@@ -98,7 +95,7 @@ class singleinstance:
                 pass
 
             return
-        print "Cleaning up lockfile"
+        print('Cleaning up lockfile')
         try:
             if sys.platform == 'win32':
                 if hasattr(self, 'fd'):
