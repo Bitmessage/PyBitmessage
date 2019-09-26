@@ -781,6 +781,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.treeWidgetSubscriptions.keyPressEvent = self.treeWidgetKeyPressEvent
         self.ui.treeWidgetChans.keyPressEvent = self.treeWidgetKeyPressEvent
 
+        # Key press in addressbook
+        self.ui.tableWidgetAddressBook.keyPressEvent = self.addressbookKeyPressEvent
+
         # Key press in messagelist
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetKeyPressEvent
         self.ui.tableWidgetInboxSubscriptions.keyPressEvent = self.tableWidgetKeyPressEvent
@@ -1450,6 +1453,15 @@ class MyForm(settingsmixin.SMainWindow):
     def treeWidgetKeyPressEvent(self, event):
         return self.handleKeyPress(event, self.getCurrentTreeWidget())
 
+    # addressbook
+    def addressbookKeyPressEvent(self, event):
+        """Handle keypress event in addressbook widget"""
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_AddressBookDelete()
+        else:
+            return QtGui.QTableWidget.keyPressEvent(
+                self.ui.tableWidgetAddressBook, event)
+
     # inbox / sent
     def tableWidgetKeyPressEvent(self, event):
         return self.handleKeyPress(event, self.getCurrentMessagelist())
@@ -1458,11 +1470,12 @@ class MyForm(settingsmixin.SMainWindow):
     def textEditKeyPressEvent(self, event):
         return self.handleKeyPress(event, self.getCurrentMessageTextedit())
 
-    def handleKeyPress(self, event, focus = None):
+    def handleKeyPress(self, event, focus=None):
+        """This method handles keypress events for all widgets on MyForm"""
         messagelist = self.getCurrentMessagelist()
         folder = self.getCurrentFolder()
         if event.key() == QtCore.Qt.Key_Delete:
-            if isinstance (focus, MessageView) or isinstance(focus, QtGui.QTableWidget):
+            if isinstance(focus, MessageView) or isinstance(focus, QtGui.QTableWidget):
                 if folder == "sent":
                     self.on_action_SentTrash()
                 else:
@@ -1498,17 +1511,17 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.lineEditTo.setFocus()
                 event.ignore()
             elif event.key() == QtCore.Qt.Key_F:
-                searchline = self.getCurrentSearchLine(retObj = True)
+                searchline = self.getCurrentSearchLine(retObj=True)
                 if searchline:
                     searchline.setFocus()
                 event.ignore()
         if not event.isAccepted():
             return
-        if isinstance (focus, MessageView):
+        if isinstance(focus, MessageView):
             return MessageView.keyPressEvent(focus, event)
-        elif isinstance (focus, QtGui.QTableWidget):
+        elif isinstance(focus, QtGui.QTableWidget):
             return QtGui.QTableWidget.keyPressEvent(focus, event)
-        elif isinstance (focus, QtGui.QTreeWidget):
+        elif isinstance(focus, QtGui.QTreeWidget):
             return QtGui.QTreeWidget.keyPressEvent(focus, event)
 
     # menu button 'manage keys'
@@ -3191,8 +3204,7 @@ class MyForm(settingsmixin.SMainWindow):
                 0].row()
             item = self.ui.tableWidgetAddressBook.item(currentRow, 0)
             sqlExecute(
-                'DELETE FROM addressbook WHERE label=? AND address=?',
-                item.label, item.address)
+                'DELETE FROM addressbook WHERE address=?', item.address)
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()

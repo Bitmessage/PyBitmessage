@@ -70,7 +70,6 @@ if __name__ == "__main__":
         'pybitmessage.network',
         'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
-        'pybitmessage.socks',
         'pybitmessage.storage'
     ]
 

@@ -11,7 +11,6 @@ import time
 import state
 from bmconfigparser import BMConfigParser
 from debug import logger
-from helper_bootstrap import dns
 
 knownNodesLock = threading.Lock()
 knownNodes = {stream: {} for stream in range(1, 4)}
@@ -33,10 +32,6 @@ DEFAULT_NODES = (
     state.Peer('24.188.198.204', 8111),
     state.Peer('109.147.204.113', 1195),
     state.Peer('178.11.46.221', 8444)
-)
-
-DEFAULT_NODES_ONION = (
-    state.Peer('quzwelsuziwqgpt2.onion', 8444),
 )
 
 
@@ -67,8 +62,7 @@ def json_deserialize_knownnodes(source):
 
         if (
             not (knownNodesActual or info.get('self')) and
-            peer not in DEFAULT_NODES and
-            peer not in DEFAULT_NODES_ONION
+            peer not in DEFAULT_NODES
         ):
             knownNodesActual = True
 
@@ -103,9 +97,9 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     }
 
 
-def createDefaultKnownNodes(onion=False):
+def createDefaultKnownNodes():
     past = time.time() - 2418600  # 28 days - 10 min
-    for peer in DEFAULT_NODES_ONION if onion else DEFAULT_NODES:
+    for peer in DEFAULT_NODES:
         addKnownNode(1, peer, past)
     saveKnownNodes()
 
@@ -177,39 +171,37 @@ def trimKnownNodes(recAddrStream=1):
             del knownNodes[recAddrStream][oldest]
 
 
+def dns():
+    """Add DNS names to knownnodes"""
+    for port in [8080, 8444]:
+        addKnownNode(
+            1, state.Peer('bootstrap%s.bitmessage.org' % port, port))
+
+
 def cleanupKnownNodes():
     """
     Cleanup knownnodes: remove old nodes and nodes with low rating
     """
     now = int(time.time())
     needToWriteKnownNodesToDisk = False
-    dns_done = False
-    spawnConnections = not BMConfigParser().safeGetBoolean(
-        'bitmessagesettings', 'dontconnect'
-    ) and BMConfigParser().safeGetBoolean(
-        'bitmessagesettings', 'sendoutgoingconnections')
 
     with knownNodesLock:
         for stream in knownNodes:
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             keys = knownNodes[stream].keys()
-            if len(keys) <= 1:  # leave at least one node
-                if not dns_done and spawnConnections:
-                    dns()
-                    dns_done = True
-                continue
             for node in keys:
+                if len(knownNodes[stream]) <= 1:  # leave at least one node
+                    break
                 try:
-                    # scrap old nodes
-                    if (now - knownNodes[stream][node]["lastseen"] >
-                            2419200):  # 28 days
+                    age = now - knownNodes[stream][node]["lastseen"]
+                    # scrap old nodes (age > 28 days)
+                    if age > 2419200:
                         needToWriteKnownNodesToDisk = True
                         del knownNodes[stream][node]
                         continue
-                    # scrap old nodes with low rating
-                    if (now - knownNodes[stream][node]["lastseen"] > 10800 and
-                        knownNodes[stream][node]["rating"] <=
+                    # scrap old nodes (age > 3 hours) with low rating
+                    if (age > 10800 and knownNodes[stream][node]["rating"] <=
                             knownNodesForgetRating):
                         needToWriteKnownNodesToDisk = True
                         del knownNodes[stream][node]

@@ -8,7 +8,6 @@ import socket
 import time
 
 import asyncore_pollchoose as asyncore
-import helper_bootstrap
 import helper_random
 import knownnodes
 import protocol
@@ -19,7 +18,8 @@ from debug import logger
 from proxy import Proxy
 from singleton import Singleton
 from tcp import (
-    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection)
+    bootstrap, Socks4aBMConnection, Socks5BMConnection,
+    TCPConnection, TCPServer)
 from udp import UDPSocket
 
 
@@ -160,7 +160,35 @@ class BMConnectionPool(object):
                 udpSocket = UDPSocket(host=bind, announcing=True)
         self.udpSockets[udpSocket.listening.host] = udpSocket
 
-    def loop(self):     # pylint: disable=too-many-branches, too-many-statements
+    def startBootstrappers(self):
+        """Run the process of resolving bootstrap hostnames"""
+        proxy_type = BMConfigParser().safeGet(
+            'bitmessagesettings', 'socksproxytype')
+        # A plugins may be added here
+        hostname = None
+        if not proxy_type or proxy_type == 'none':
+            connection_base = TCPConnection
+        elif proxy_type == 'SOCKS5':
+            connection_base = Socks5BMConnection
+            hostname = helper_random.randomchoice([
+                'quzwelsuziwqgpt2.onion', None
+            ])
+        elif proxy_type == 'SOCKS4a':
+            connection_base = Socks4aBMConnection  # FIXME: I cannot test
+        else:
+            # This should never happen because socksproxytype setting
+            # is handled in bitmessagemain before starting the connectionpool
+            return
+
+        bootstrapper = bootstrap(connection_base)
+        if not hostname:
+            port = helper_random.randomchoice([8080, 8444])
+            hostname = 'bootstrap%s.bitmessage.org' % port
+        else:
+            port = 8444
+        self.addConnection(bootstrapper(hostname, port))
+
+    def loop(self):  # pylint: disable=too-many-branches,too-many-statements
         """Main Connectionpool's loop"""
         # defaults to empty loop if outbound connections are maxed
         spawnConnections = False
@@ -185,7 +213,8 @@ class BMConnectionPool(object):
         # pylint: disable=too-many-nested-blocks
         if spawnConnections:
             if not knownnodes.knownNodesActual:
-                helper_bootstrap.dns()
+                self.startBootstrappers()
+                knownnodes.knownNodesActual = True
             if not self.bootstrapped:
                 self.bootstrapped = True
                 Proxy.proxy = (

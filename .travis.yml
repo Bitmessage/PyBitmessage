@@ -6,6 +6,7 @@ addons:
     packages:
       - build-essential
       - libcap-dev
+      - tor
 install:
   - pip install -r requirements.txt
   - ln -s src pybitmessage  # tests environment
