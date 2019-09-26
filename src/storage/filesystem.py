@@ -9,7 +9,7 @@ from threading import RLock
 import time
 
 from paths import lookupAppdataFolder
-from storage import InventoryStorage, InventoryItem
+from storage.storage import InventoryStorage, InventoryItem
 
 
 class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ancestors, abstract-method
@@ -144,7 +144,7 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
                     newInventory[streamNumber][hashId] = InventoryItem(
                         objectType, streamNumber, None, expiresTime, tag)
             except KeyError:
-                print "error loading %s" % (hexlify(hashId))
+                print ("error loading {}".format((hexlify(hashId))))
         self._inventory = newInventory
 #        for i, v in self._inventory.items():
 #            print "loaded stream: %s, %i items" % (i, len(v))

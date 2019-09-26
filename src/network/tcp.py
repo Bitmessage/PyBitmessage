@@ -10,8 +10,8 @@ import socket
 import time
 
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
+import network.asyncore_pollchoose as asyncore
+import network.connectionpool
 import helper_random
 import knownnodes
 import protocol

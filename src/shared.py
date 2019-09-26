@@ -174,12 +174,11 @@ def reloadBroadcastSendersForWhichImWatching():
         # Now, for all addresses, even version 2 addresses,
         # we should create Cryptor objects in a dictionary which we will
         # use to attempt to decrypt encrypted broadcast messages.
-
+        # import pdb;pdb.set_trace()
         if addressVersionNumber <= 3:
-            privEncryptionKey = hashlib.sha512(
-                encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + hash
-            ).digest()[:32]
+            privEncryptionKey = hashlib.sha512((encodeVarint(addressVersionNumber) \
+                                                + encodeVarint(streamNumber) + hash)).digest()[:32]
+            # import pdb;pdb.set_trace()
             MyECSubscriptionCryptorObjects[hash] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:

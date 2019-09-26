@@ -21,7 +21,12 @@ if sys.version_info >= (2, 7, 13):
     # this means TLSv1 or higher
     # in the future change to
     # ssl.PROTOCOL_TLS1.2
-    sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
+    # Right now I am using the python3.5.2 and I faced the ssl for protocol due to this I 
+        # have used try and catch 
+    try:
+        sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
+    except AttributeError:
+        sslProtocolVersion = ssl.PROTOCOL_SSLv23
 elif sys.version_info >= (2, 7, 9):
     # this means any SSL/TLS. SSLv2 and 3 are excluded with an option after context is created
     sslProtocolVersion = ssl.PROTOCOL_SSLv23

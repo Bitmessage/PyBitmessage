@@ -51,8 +51,8 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','10')''')
-            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
+            self.cur.execute('''INSERT INTO settings VALUES('version','10')''')
+            self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
                 '''CREATE TABLE objectprocessorqueue (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
@@ -70,9 +70,11 @@ class sqlThread(threading.Thread):
         # If the settings version is equal to 2 or 3 then the
         # sqlThread will modify the pubkeys table and change
         # the settings version to 4.
-        settingsversion = BMConfigParser().getint(
-            'bitmessagesettings', 'settingsversion')
-
+        # settingsversion = BMConfigParser().getint('bitmessagesettings', 'settingsversion')
+        # In the Python3 I am below condition converting into int
+        # settingsversion = int(BMConfigParser().get('bitmessagesettings', 'settingsversion') \
+        #                       if BMConfigParser().get('bitmessagesettings', 'settingsversion') else 0)
+        settingsversion = BMConfigParser().safeGetInt('bitmessagesettings', 'settingsvesion')
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
         if settingsversion == 2:

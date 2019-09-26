@@ -7,7 +7,7 @@ from threading import RLock
 
 import network.connectionpool
 from network.dandelion import Dandelion
-from randomtrackingdict import RandomTrackingDict
+from network.randomtrackingdict import RandomTrackingDict
 
 haveBloom = False
 

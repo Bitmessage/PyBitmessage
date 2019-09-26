@@ -179,13 +179,13 @@ def signal_handler(signum, frame):
     if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
-        print '# Thread: %s(%d)' % (thread.name, thread.ident)
+        print ('# Thread: {}({})'.format(thread.name, thread.ident))
         for filename, lineno, name, line in traceback.extract_stack(frame):
-            print 'File: "%s", line %d, in %s' % (filename, lineno, name)
+            print ("File: '{}', line {}, in {}" .format(filename, lineno, name))
             if line:
-                print '  %s' % line.strip()
-        print 'Unfortunately you cannot use Ctrl+C when running the UI \
-        because the UI captures the signal.'
+                print ('  {}'.format(line.strip()))
+        print('Unfortunately you cannot use Ctrl+C when running the UI \
+        because the UI captures the signal.')
 
 
 class Main:     # pylint: disable=no-init, old-style-class
@@ -282,7 +282,7 @@ class Main:     # pylint: disable=no-init, old-style-class
 
         if daemon:
             with shared.printLock:
-                print 'Running as a daemon. Send TERM signal to end.'
+                print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
 
         self.setSignalHandler()
@@ -405,7 +405,7 @@ class Main:     # pylint: disable=no-init, old-style-class
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
-                print 'Running with curses'
+                print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
 
@@ -498,23 +498,22 @@ class Main:     # pylint: disable=no-init, old-style-class
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     @staticmethod
-    def usage():
-        """After passing argument, method displays the usages"""
-        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
-        print '''
-Options:
-  -h, --help            show this help message and exit
-  -c, --curses          use curses (text mode) interface
-  -d, --daemon          run in daemon (background) mode
-  -t, --test            dryrun, make testing
+    def usage(self):
+        print('Usage: ' + sys.argv[0] + ' [OPTIONS]')
+        print ('''
+                   Options:
+                  -h, --help            show this help message and exit
+                  -c, --curses          use curses (text mode) interface
+                  -d, --daemon          run in daemon (background) mode
+                  -t, --test            dryrun, make testing
 
-All parameters are optional.
-'''
+                    All parameters are optional.
+                ''')
 
     def stop(self):         # pylint: disable=no-self-use
         """Method helps to stop the Bitmessage Deamon"""
         with shared.printLock:
-            print 'Stopping Bitmessage Deamon.'
+            print('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 
     # ..todo: nice function but no one is using this

@@ -6,9 +6,9 @@ src/network/proxy.py
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
+import network.asyncore_pollchoose as asyncore
 import state
-from advanceddispatcher import AdvancedDispatcher
+from network.advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import BMConfigParser
 from debug import logger
 

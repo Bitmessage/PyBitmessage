@@ -11,7 +11,7 @@ from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
-from randomtrackingdict import RandomTrackingDict
+from network.randomtrackingdict import RandomTrackingDict
 
 
 class UploadThread(StoppableThread):

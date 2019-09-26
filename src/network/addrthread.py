@@ -1,4 +1,4 @@
-import Queue
+import queue as Queue
 
 from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool

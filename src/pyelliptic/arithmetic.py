@@ -39,7 +39,7 @@ def encode(val, base, minlen=0):
     code_string = get_code_string(base)
     result = ""
     while val > 0:
-        result = code_string[val % base] + result
+        result = code_string[round(val % base)] + result
         val /= base
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
@@ -53,7 +53,7 @@ def decode(string, base):
         string = string.lower()
     while string:
         result *= base
-        result += code_string.find(string[0])
+        result += code_string.find(string.decode()[0])
         string = string[1:]
     return result
 

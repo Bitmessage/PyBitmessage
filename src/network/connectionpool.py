@@ -7,20 +7,19 @@ import re
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
+import network.asyncore_pollchoose as asyncore
 import helper_random
 import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from connectionchooser import chooseConnection
+from network.connectionchooser import chooseConnection
 from debug import logger
-from proxy import Proxy
+from network.proxy import Proxy
 from singleton import Singleton
-from tcp import (
-    bootstrap, Socks4aBMConnection, Socks5BMConnection,
-    TCPConnection, TCPServer)
-from udp import UDPSocket
+from network.tcp import (
+    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection)
+from network.udp import UDPSocket
 
 
 @Singleton

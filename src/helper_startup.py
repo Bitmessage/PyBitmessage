@@ -7,7 +7,7 @@ Helper Start performs all the startup operations.
 # pylint: disable=too-many-branches,too-many-statements
 from __future__ import print_function
 
-import ConfigParser
+import configparser
 import os
 import platform
 import sys
@@ -27,7 +27,7 @@ StoreConfigFilesInSameDirectoryAsProgramByDefault = False
 def _loadTrustedPeer():
     try:
         trustedPeer = BMConfigParser().get('bitmessagesettings', 'trustedpeer')
-    except ConfigParser.Error:
+    except configparser.Error:
         # This probably means the trusted peer wasn't specified so we
         # can just leave it as None
         return
@@ -137,11 +137,12 @@ def loadConfig():
 
     _loadTrustedPeer()
 
-
 def updateConfig():
     """Save the config"""
     config = BMConfigParser()
-    settingsversion = config.getint('bitmessagesettings', 'settingsversion')
+    # Used python2.7
+    # settingsversion = int(BMConfigParser().get('bitmessagesettings', 'settingsversion') \
+    settingsversion = BMConfigParser().safeGetInt('bitmessagesettings', 'settingsvesion')
     if settingsversion == 1:
         config.set('bitmessagesettings', 'socksproxytype', 'none')
         config.set('bitmessagesettings', 'sockshostname', 'localhost')

@@ -1,7 +1,7 @@
 """Helper Sql performs sql operations."""
 
 import threading
-import Queue
+import queue as Queue
 
 sqlSubmitQueue = Queue.Queue()
 # SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks.

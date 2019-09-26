@@ -4,7 +4,7 @@ src/messagetypes/__init__.py
 """
 from importlib import import_module
 from os import path, listdir
-from string import lower
+
 try:
     from kivy.utils import platform
 except:

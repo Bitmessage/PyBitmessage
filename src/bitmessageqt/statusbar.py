@@ -1,5 +1,5 @@
 from PyQt4 import QtCore, QtGui
-from Queue import Queue
+from queue.Queue import Queue
 from time import time
 
 class BMStatusBar(QtGui.QStatusBar):

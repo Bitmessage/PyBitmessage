@@ -12,9 +12,9 @@ src/pyelliptic/ecc.py
 from hashlib import sha512
 from struct import pack, unpack
 
-from cipher import Cipher
-from hash import equals, hmac_sha256
-from openssl import OpenSSL
+from pyelliptic.cipher import Cipher
+from pyelliptic.hash import equals, hmac_sha256
+from pyelliptic.openssl import OpenSSL
 
 
 class ECC(object):
@@ -129,7 +129,8 @@ class ECC(object):
         ))
 
     @staticmethod
-    def _decode_pubkey(pubkey):
+    def _decode_pubkey( pubkey):
+        pubkey = pubkey.encode()
         i = 0
         curve = unpack('!H', pubkey[i:i + 2])[0]
         i += 2

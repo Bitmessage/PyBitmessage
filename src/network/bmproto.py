@@ -11,7 +11,7 @@ import time
 from binascii import hexlify
 
 import addresses
-import connectionpool
+import network.connectionpool
 import knownnodes
 import protocol
 import state
@@ -26,9 +26,9 @@ from network.bmobject import (
     BMObjectInvalidError, BMObjectAlreadyHaveError)
 from network.node import Node
 from network.proxy import ProxyError
-from objectracker import missingObjects, ObjectTracker
+from network.objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
-from randomtrackingdict import RandomTrackingDict
+from network.randomtrackingdict import RandomTrackingDict
 
 
 class BMProtoError(ProxyError):

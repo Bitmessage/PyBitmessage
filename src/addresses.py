@@ -180,7 +180,6 @@ def decodeAddress(address):
     data (almost certainly a ripe hash))
     """
     # pylint: disable=too-many-return-statements,too-many-statements,too-many-return-statements,too-many-branches
-
     address = str(address).strip()
 
     if address[:3] == 'BM-':
@@ -192,7 +191,8 @@ def decodeAddress(address):
         return status, 0, 0, ''
     # after converting to hex, the string will be prepended
     # with a 0x and appended with a L
-    hexdata = hex(integer)[2:-1]
+    # import pdb;pdb.set_trace()
+    hexdata = hex(integer)[2:]
 
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
@@ -248,7 +248,7 @@ def decodeAddress(address):
                 embeddedRipeData
         elif len(embeddedRipeData) == 18:
             return status, addressVersionNumber, streamNumber, \
-                '\x00\x00' + embeddedRipeData
+                '\x00\x00'.encode('utf-8') + embeddedRipeData
         elif len(embeddedRipeData) < 18:
             return 'ripetooshort', 0, 0, ''
         elif len(embeddedRipeData) > 20:

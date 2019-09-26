@@ -140,20 +140,20 @@ if __name__ == '__main__':
     k = RandomTrackingDict()
     d = {}
 
-    print "populating random tracking dict"
+    print ("populating random tracking dict")
     a.append(time())
     for i in range(50000):
         k[randString()] = True
     a.append(time())
-    print "done"
+    print ("done")
 
     while k:
         retval = k.randomKeys(1000)
         if not retval:
-            print "error getting random keys"
+            print ("error getting random keys")
         try:
             k.randomKeys(100)
-            print "bad"
+            print( "bad")
         except KeyError:
             pass
         for i in retval:
@@ -161,4 +161,4 @@ if __name__ == '__main__':
     a.append(time())
 
     for x in range(len(a) - 1):
-        print "%i: %.3f" % (x, a[x + 1] - a[x])
+        print("{}i: {}.3f".format(x, a[x + 1] - a[x]))
