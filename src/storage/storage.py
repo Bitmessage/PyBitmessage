@@ -1,3 +1,7 @@
+"""
+src/storage/storage.py
+======================
+"""
 import collections
 
 InventoryItem = collections.namedtuple('InventoryItem', 'type stream payload expires tag')
@@ -6,25 +10,24 @@ InventoryItem = collections.namedtuple('InventoryItem', 'type stream payload exp
 class Storage(object):
     """Base class for storing inventory (extendable for other items to store)"""
     pass
-#    def __init__(self):
-#        super(self.__class__, self).__init__()
 
 
 class InventoryStorage(Storage, collections.MutableMapping):
+    """Module used for inventory storage"""
     def __init__(self):
-        # super(self.__class__, self).__init__()
+        # pylint: disable=super-init-not-called
         self.numberOfInventoryLookupsPerformed = 0
 
-    def __contains__(self, hash):
+    def __contains__(self, _):
         raise NotImplementedError
 
-    def __getitem__(self, hash):
+    def __getitem__(self, _):
         raise NotImplementedError
 
-    def __setitem__(self, hash, value):
+    def __setitem__(self, _, value):
         raise NotImplementedError
 
-    def __delitem__(self, hash):
+    def __delitem__(self, _):
         raise NotImplementedError
 
     def __iter__(self):
@@ -50,7 +53,8 @@ class InventoryStorage(Storage, collections.MutableMapping):
         raise NotImplementedError
 
 
-class MailboxStorage(Storage, collections.MutableMapping):
+class MailboxStorage(Storage, collections.MutableMapping):    # pylint: disable=abstract-method
+    """Method for storing mails"""
     def __init__(self):
-        # super(self.__class__, self).__init__()
+        # pylint: disable=super-init-not-called
         pass
