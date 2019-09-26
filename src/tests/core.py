@@ -25,6 +25,7 @@ program = None
 
 
 def pickle_knownnodes():
+    """Generate old style pickled knownnodes.dat"""
     now = time.time()
     with open(knownnodes_file, 'wb') as dst:
         pickle.dump({
@@ -40,6 +41,7 @@ def pickle_knownnodes():
 
 
 def cleanup():
+    """Cleanup application files"""
     os.remove(knownnodes_file)
 
 
