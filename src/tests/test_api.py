@@ -31,7 +31,7 @@ class TestAPIShutdown(TestAPIProto, TestProcessShutdown):
     """Separate test case for API command 'shutdown'"""
     def test_shutdown(self):
         """Shutdown the pybitmessage"""
-        self.assertEquals(self.api.shutdown(), 'done')
+        self.assertEqual(self.api.shutdown(), 'done')
         for _ in range(5):
             if not self.process.is_running():
                 break
