@@ -17,11 +17,11 @@ resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
 resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 """
-
+# pylint: disable=relative-import, protected-access
 import gc
 import os
-import shared
 import time
+import shared
 
 import tr
 from bmconfigparser import BMConfigParser
@@ -36,11 +36,12 @@ import state
 
 
 class singleCleaner(StoppableThread):
+    """Base method that Cleanup knownnodes and handle possible severe exception"""
     name = "singleCleaner"
     cycleLength = 300
     expireDiscoveredPeers = 300
 
-    def run(self):
+    def run(self):    # pylint: disable=too-many-branches
         gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
@@ -73,7 +74,7 @@ class singleCleaner(StoppableThread):
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
-            # FIXME redundant?
+            # ..FIXME redundant?
             if shared.thisapp.daemon or not state.enableGUI:
                 queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < \
@@ -128,9 +129,10 @@ class singleCleaner(StoppableThread):
                              "MainWindow",
                              'Alert: Your disk or data storage volume'
                              ' is full. Bitmessage will now exit.'),
-                            True)
+                         True)
                     ))
-                    # FIXME redundant?
+                    # ..FIXME redundant?
+                    # pylint: disable=no-member
                     if shared.daemon or not state.enableGUI:
                         os._exit(1)
 
@@ -153,7 +155,7 @@ class singleCleaner(StoppableThread):
                     del state.discoveredPeers[k]
                 except KeyError:
                     pass
-            # TODO: cleanup pending upload / download
+            # ..TODO: cleanup pending upload / download
 
             gc.collect()
 
@@ -162,6 +164,7 @@ class singleCleaner(StoppableThread):
 
 
 def resendPubkeyRequest(address):
+    """After a long time, method send getpubkey request"""
     logger.debug(
         'It has been a long time and we haven\'t heard a response to our'
         ' getpubkey request. Sending again.'
@@ -186,6 +189,7 @@ def resendPubkeyRequest(address):
 
 
 def resendMsg(ackdata):
+    """After a long time, method send acknowledgement msg"""
     logger.debug(
         'It has been a long time and we haven\'t heard an acknowledgement'
         ' to our msg. Sending again.'

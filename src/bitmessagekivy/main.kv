@@ -72,9 +72,9 @@
             on_text:app.getCurrentAccountData(self.text)
             Image:
                 source: app.get_default_image()
-                x: self.width/4-2
-                y: self.parent.y + self.parent.height/2 - self.height + 14
-                size: 28, 28
+                x: self.width/6
+                y: self.parent.y + self.parent.height/4
+                size: self.parent.height/2, self.parent.height/2
             ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
@@ -821,11 +821,13 @@ NavigationLayout:
 
 <GrashofPopup>:
     id: popup
+    size_hint : (None,None)
+    height: 2*(label.height + address.height) + 10
+    width :app.window_size[0] - app.window_size[0]/10
     title: 'add contact\'s'
     background: './images/popup.jpeg'
     title_size: sp(20)
     title_color: 0.4, 0.3765, 0.3451, 1
-    size_hint: 1, 1
     auto_dismiss: False
     separator_color: 0.3529, 0.3922, 0.102, 0.7
     BoxLayout:
@@ -1050,19 +1052,23 @@ NavigationLayout:
 
 <MyaddDetailPopup>:
     id: myadd_popup
+    size_hint : (None,None)
+    height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
+    width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
-    separator_height: 0 
     auto_dismiss: False
+    separator_height: 0 
     BoxLayout:
+        id: myadd_popup_box
         size_hint_y: None
         spacing:dp(70)
-        id: myadd_popup_box
         orientation: 'vertical'
         BoxLayout:
             size_hint_y: None
             orientation: 'vertical'
             spacing:dp(25)
             MDLabel:
+                id: myaddr_label
                 font_style: 'Title'
                 theme_text_color: 'Primary'
                 text: "Label"
@@ -1087,6 +1093,7 @@ NavigationLayout:
                 font_size: '15sp'
                 halign: 'left'
         BoxLayout:
+            id: my_add_btn
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
@@ -1125,6 +1132,9 @@ NavigationLayout:
 
 <AddbookDetailPopup>:
     id: addbook_popup
+    size_hint : (None,None)
+    height: 4*(add_label.height)
+    width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
     separator_height: 0 
     auto_dismiss: False
@@ -1165,6 +1175,7 @@ NavigationLayout:
                 font_size: '15sp'
                 halign: 'left'
         BoxLayout:
+            id: addbook_btn
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
