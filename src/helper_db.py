@@ -74,6 +74,15 @@ def put_inbox(
                 "newBroadcast" if broadcast else "newMessage"])
 
 
+def put_trash(msgid, sent=False):
+    """Put inbox message (or sent if sent=True) into trash by msgid"""
+    sqlExecute(
+        "UPDATE %s SET folder='trash' WHERE msgid=?" %
+        ('sent' if sent else 'inbox'), msgid)
+    if not sent:
+        queues.UISignalQueue.put(('removeInboxRowByMsgid', msgid))
+
+
 def put_pubkey(address, address_version, data, used_personally=None):
     """Put pubkey into Pubkeys table"""
     if used_personally is None:

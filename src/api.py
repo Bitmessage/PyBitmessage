@@ -74,7 +74,6 @@ from struct import pack
 
 import defaults
 import helper_db
-import helper_inbox
 import network.stats
 import proofofwork
 import queues
@@ -1051,23 +1050,23 @@ class BMRPCDispatcher(object):
         """
         msgid = self._decode(msgid, "hex")
         # Trash if in inbox table
-        helper_inbox.trash(msgid)
+        helper_db.put_trash(msgid)
         # Trash if in sent table
-        sqlExecute("UPDATE sent SET folder='trash' WHERE msgid=?", msgid)
+        helper_db.put_trash(msgid, sent=True)
         return 'Trashed message (assuming message existed).'
 
     @command('trashInboxMessage')
     def HandleTrashInboxMessage(self, msgid):
         """Trash inbox message by msgid (encoded in hex)."""
         msgid = self._decode(msgid, "hex")
-        helper_inbox.trash(msgid)
+        helper_db.put_trash(msgid)
         return 'Trashed inbox message (assuming message existed).'
 
     @command('trashSentMessage')
     def HandleTrashSentMessage(self, msgid):
         """Trash sent message by msgid (encoded in hex)."""
         msgid = self._decode(msgid, "hex")
-        sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
+        helper_db.put_trash(msgid, sent=True)
         return 'Trashed sent message (assuming message existed).'
 
     @command('sendMessage')
