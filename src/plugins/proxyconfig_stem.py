@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-
+"""
+src/plugins/proxyconfig_stem.py
+===================================
+"""
 import os
 import logging
 import random  # noseq
@@ -29,14 +32,14 @@ class DebugLogger(object):
             # Plugin's debug or unexpected log line from tor
             self._logger.debug(line)
         else:
-            self._logger.log(self._levels.get(level, 10), '(tor)' + line)
+            self._logger.log(self._levels.get(level, 10), '(tor) %s', line)
 
 
 def connect_plugin(config):  # pylint: disable=too-many-branches
     """Run stem proxy configurator"""
     logwrite = DebugLogger()
     if config.safeGet('bitmessagesettings', 'sockshostname') not in (
-        'localhost', '127.0.0.1', ''
+            'localhost', '127.0.0.1', ''
     ):
         # remote proxy is choosen for outbound connections,
         # nothing to do here, but need to set socksproxytype to SOCKS5!

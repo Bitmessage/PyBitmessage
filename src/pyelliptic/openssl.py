@@ -10,16 +10,23 @@ OpenSSL = None
 
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+src/pyelliptic/openssl.py
+=====================
+"""
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
+# pylint: disable=protected-access
 
 
-class CipherName:       # pylint: disable=old-style-class
-    """Method helps to get pointers, name and blocksize"""
 
+
+class CipherName:
+    """Class returns cipher name, pointer and blocksize"""
+
+    # pylint: disable=old-style-class
     def __init__(self, name, pointer, blocksize):
         self._name = name
         self._pointer = pointer
@@ -35,11 +42,11 @@ class CipherName:       # pylint: disable=old-style-class
         return self._pointer()
 
     def get_name(self):
-        """Method returns the name"""
+        """This method returns cipher name"""
         return self._name
 
     def get_blocksize(self):
-        """Method returns the blocksize"""
+        """This method returns cipher blocksize"""
         return self._blocksize
 
 
@@ -75,9 +82,11 @@ def get_version(library):
     return (version, hexversion, cflags)
 
 
-class _OpenSSL:     # pylint: disable=too-many-instance-attributes, old-style-class, too-many-statements
-    """Wrapper for OpenSSL using ctypes"""
-
+class _OpenSSL:
+    """
+    Wrapper for OpenSSL using ctypes
+    """
+    # pylint: disable=too-many-statements, too-many-instance-attributes, old-style-class
     def __init__(self, library):
         """Build the wrapper"""
         self._lib = ctypes.CDLL(library)
@@ -645,8 +654,13 @@ class _OpenSSL:     # pylint: disable=too-many-instance-attributes, old-style-cl
 
 
 def loadOpenSSL():
+<<<<<<< HEAD
     """Method find and load the OpenSSL library"""
     # pylint: disable=global-statement, protected-access, too-many-branches
+=======
+    """This function finds and load the OpenSSL library"""
+    # pylint: disable=global-statement
+>>>>>>> fba2d6d8375fa6968dd1a0c01354e2f7b08ce490
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library
