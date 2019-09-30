@@ -5,7 +5,10 @@ src/messagetypes/__init__.py
 from importlib import import_module
 from os import path, listdir
 from string import lower
-
+try:
+    from kivy.utils import platform
+except:
+    platform = ''
 from debug import logger
 import messagetypes
 import paths
@@ -39,8 +42,7 @@ def constructObject(data):
     else:
         return returnObj
 
-
-if paths.frozen is not None:
+if paths.frozen is not None or platform == "android":
     import messagetypes.message
     import messagetypes.vote
 else:

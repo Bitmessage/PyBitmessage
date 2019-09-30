@@ -63,8 +63,6 @@ kivyapp = None
 
 navinstance = None
 
-totalSentMail = 0
-
 sentMailTime = 0
 
 myAddressObj = None
@@ -86,3 +84,21 @@ sent_count = 0
 inbox_count = 0
 
 trash_count = 0
+
+draft_count = 0
+
+all_count = 0
+
+searcing_text = ''
+
+search_screen = ''
+
+send_draft_mail = None
+
+is_allmail = False
+
+in_composer = False
+
+write_msg = {}
+
+availabe_credit = 0

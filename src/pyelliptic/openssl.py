@@ -1,4 +1,14 @@
-#!/usr/bin/env python
+"""
+src/pyelliptic/openssl.py
+=================================
+"""
+import sys
+import ctypes
+from kivy.utils import platform
+
+OpenSSL = None
+
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 src/pyelliptic/openssl.py
@@ -10,11 +20,8 @@ src/pyelliptic/openssl.py
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
 # pylint: disable=protected-access
 
-import sys
-import ctypes
 
-OpenSSL = None
-from kivy.utils import platform
+
 
 class CipherName:
     """Class returns cipher name, pointer and blocksize"""
@@ -31,7 +38,7 @@ class CipherName:
                " | Function pointer : " + str(self._pointer)
 
     def get_pointer(self):
-        """This method returns cipher pointer"""
+        """Method returns the pointer"""
         return self._pointer()
 
     def get_name(self):
@@ -44,7 +51,7 @@ class CipherName:
 
 
 def get_version(library):
-    """This function return version, hexversion and cflages"""
+    """Method returns the version of the OpenSSL Library"""
     version = None
     hexversion = None
     cflags = None
@@ -81,9 +88,7 @@ class _OpenSSL:
     """
     # pylint: disable=too-many-statements, too-many-instance-attributes, old-style-class
     def __init__(self, library):
-        """
-        Build the wrapper
-        """
+        """Build the wrapper"""
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
         self._libreSSL = self._version.startswith("LibreSSL")
@@ -649,8 +654,13 @@ class _OpenSSL:
 
 
 def loadOpenSSL():
+<<<<<<< HEAD
+    """Method find and load the OpenSSL library"""
+    # pylint: disable=global-statement, protected-access, too-many-branches
+=======
     """This function finds and load the OpenSSL library"""
     # pylint: disable=global-statement
+>>>>>>> fba2d6d8375fa6968dd1a0c01354e2f7b08ce490
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library
@@ -690,14 +700,18 @@ def loadOpenSSL():
     elif platform == "android":
         libdir.append('libcrypto1.0.2p.so')
         libdir.append('libssl1.0.2p.so')
-
+        libdir.append('libcrypto1.1.so')
+        libdir.append('libssl1.1.so')
     else:
         libdir.append('libcrypto.so')
         libdir.append('libssl.so')
         libdir.append('libcrypto.so.1.0.0')
         libdir.append('libssl.so.1.0.0')
     if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
-        libdir.append(find_library('ssl'))
+        try:
+            libdir.append(find_library('ssl'))
+        except OSError:
+            pass
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
     for library in libdir:

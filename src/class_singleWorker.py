@@ -71,7 +71,7 @@ class singleWorker(StoppableThread):
         # Initialize the neededPubkeys dictionary.
         queryreturn = sqlQuery(
             '''SELECT DISTINCT toaddress FROM sent'''
-            ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
+            ''' WHERE (status='awaitingpubkey' AND folder LIKE '%sent%')''')
         for row in queryreturn:
             toAddress, = row
             # toStatus
@@ -514,7 +514,7 @@ class singleWorker(StoppableThread):
         queryreturn = sqlQuery(
             '''SELECT fromaddress, subject, message, '''
             ''' ackdata, ttl, encodingtype FROM sent '''
-            ''' WHERE status=? and folder='sent' ''', 'broadcastqueued')
+            ''' WHERE status=? and folder LIKE '%sent%' ''', 'broadcastqueued')
 
         for row in queryreturn:
             fromaddress, subject, body, ackdata, TTL, encoding = row
@@ -684,7 +684,7 @@ class singleWorker(StoppableThread):
             '''SELECT toaddress, fromaddress, subject, message, '''
             ''' ackdata, status, ttl, retrynumber, encodingtype FROM '''
             ''' sent WHERE (status='msgqueued' or status='forcepow') '''
-            ''' and folder='sent' ''')
+            ''' and folder LIKE '%sent%' ''')
         # while we have a msg that needs some work
         for row in queryreturn:
             toaddress, fromaddress, subject, message, \
@@ -1213,6 +1213,7 @@ class singleWorker(StoppableThread):
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
+            print("nonce calculated value#############################", nonce)
             logger.info(
                 '(For msg message) Found proof of work %s Nonce: %s',
                 trialValue, nonce
