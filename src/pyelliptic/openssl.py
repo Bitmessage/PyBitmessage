@@ -657,6 +657,7 @@ class _OpenSSL:
 def loadOpenSSL():
     """Method find and load the OpenSSL library"""
     # pylint: disable=global-statement, protected-access, too-many-branches
+
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library

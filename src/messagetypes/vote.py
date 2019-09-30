@@ -7,28 +7,27 @@ from messagetypes import MsgBase
 # pylint: disable=attribute-defined-outside-init
 
 
+
 class Vote(MsgBase):
     """Base method, helps to decode, encode and process the message"""
-    def __init__(self):    # pylint: disable=super-init-not-called
-        return
 
     def decode(self, data):
-        """Method used for decoding the message"""
+        """decode a vote"""
+        # pylint: disable=attribute-defined-outside-init
         self.msgid = data["msgid"]
         self.vote = data["vote"]
 
     def encode(self, data):
-        """Method used for encoding the message"""
-        # pylint: disable=no-member
-        super(Vote, self).encode()
+        """Encode a vote"""
+        super(Vote, self).__init__()
         try:
             self.data["msgid"] = data["msgid"]
             self.data["vote"] = data["vote"]
         except KeyError as e:
-            logger.error("Missing key %s", e.name)
+            logger.error("Missing key %s", e)
         return self.data
 
     def process(self):
-        """Method used for process the message"""
+        """Encode a vote"""
         logger.debug("msgid: %s", self.msgid)
         logger.debug("vote: %s", self.vote)

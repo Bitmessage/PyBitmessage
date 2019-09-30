@@ -2,7 +2,6 @@
 src/messagetypes/__init__.py
 ============================
 """
-# pylint: disable=import-error
 from importlib import import_module
 from os import path, listdir
 from string import lower
@@ -22,7 +21,7 @@ class MsgBase(object):    # pylint: disable=too-few-public-methods
 
 
 def constructObject(data):
-    """Construct an object"""
+    """Constructing an object"""
     whitelist = ["message"]
     if data[""] not in whitelist:
         return None
