@@ -1,3 +1,7 @@
+"""
+src/messagetypes/__init__.py
+============================
+"""
 from importlib import import_module
 from os import path, listdir
 from string import lower
@@ -9,12 +13,15 @@ from debug import logger
 import messagetypes
 import paths
 
-class MsgBase(object):
-    def encode(self):
+
+class MsgBase(object):    # pylint: disable=too-few-public-methods
+    """Base class for message types"""
+    def __init__(self):
         self.data = {"": lower(type(self).__name__)}
 
 
 def constructObject(data):
+    """Constructing an object"""
     whitelist = ["message"]
     if data[""] not in whitelist:
         return None
