@@ -1,3 +1,4 @@
 python_prctl
 psutil
 pycrypto
+stem

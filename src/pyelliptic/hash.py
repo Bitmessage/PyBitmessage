@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+src/pyelliptic/hash.py
+=====================
+"""
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
@@ -27,10 +30,10 @@ def _equals_str(a, b):
 
 
 def equals(a, b):
+    """Compare two strings or bytearrays"""
     if isinstance(a, str):
         return _equals_str(a, b)
-    else:
-        return _equals_bytes(a, b)
+    return _equals_bytes(a, b)
 
 
 def hmac_sha256(k, m):
@@ -58,6 +61,7 @@ def hmac_sha512(k, m):
 
 
 def pbkdf2(password, salt=None, i=10000, keylen=64):
+    """Key derivation function using SHA256"""
     if salt is None:
         salt = OpenSSL.rand(8)
     p_password = OpenSSL.malloc(password, len(password))

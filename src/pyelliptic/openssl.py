@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+src/pyelliptic/openssl.py
+=====================
+"""
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
+# pylint: disable=protected-access
 
 import sys
 import ctypes
@@ -13,6 +17,9 @@ OpenSSL = None
 from kivy.utils import platform
 
 class CipherName:
+    """Class returns cipher name, pointer and blocksize"""
+
+    # pylint: disable=old-style-class
     def __init__(self, name, pointer, blocksize):
         self._name = name
         self._pointer = pointer
@@ -24,16 +31,20 @@ class CipherName:
                " | Function pointer : " + str(self._pointer)
 
     def get_pointer(self):
+        """This method returns cipher pointer"""
         return self._pointer()
 
     def get_name(self):
+        """This method returns cipher name"""
         return self._name
 
     def get_blocksize(self):
+        """This method returns cipher blocksize"""
         return self._blocksize
 
 
 def get_version(library):
+    """This function return version, hexversion and cflages"""
     version = None
     hexversion = None
     cflags = None
@@ -68,6 +79,7 @@ class _OpenSSL:
     """
     Wrapper for OpenSSL using ctypes
     """
+    # pylint: disable=too-many-statements, too-many-instance-attributes, old-style-class
     def __init__(self, library):
         """
         Build the wrapper
@@ -594,6 +606,7 @@ class _OpenSSL:
         """
         returns the name of a elliptic curve with his id
         """
+        # pylint: disable=redefined-builtin
         res = None
         for i in self.curves:
             if self.curves[i] == id:
@@ -607,6 +620,7 @@ class _OpenSSL:
         """
         OpenSSL random function
         """
+        # pylint: disable=redefined-builtin
         buffer = self.malloc(0, size)
         # This pyelliptic library, by default, didn't check the return value of RAND_bytes. It is
         # evidently possible that it returned an error and not-actually-random data. However, in
@@ -623,6 +637,7 @@ class _OpenSSL:
         """
         returns a create_string_buffer (ctypes)
         """
+        # pylint: disable=redefined-builtin
         buffer = None
         if data != 0:
             if sys.version_info.major == 3 and isinstance(data, type('')):
@@ -634,6 +649,8 @@ class _OpenSSL:
 
 
 def loadOpenSSL():
+    """This function finds and load the OpenSSL library"""
+    # pylint: disable=global-statement
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library
