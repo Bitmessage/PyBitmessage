@@ -22,8 +22,6 @@ src/pyelliptic/openssl.py
 # pylint: disable=protected-access
 
 
-
-
 class CipherName:
     """Class returns cipher name, pointer and blocksize"""
 

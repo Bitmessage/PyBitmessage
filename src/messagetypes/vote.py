@@ -7,8 +7,6 @@ from messagetypes import MsgBase
 # pylint: disable=attribute-defined-outside-init
 
 
-
-
 class Vote(MsgBase):
     """Module used to vote"""
 
