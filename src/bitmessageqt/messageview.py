@@ -5,6 +5,7 @@ src/bitmessageqt/messageview.py
 """
 
 from PyQt4 import QtCore, QtGui
+import re, base64
 
 from safehtmlparser import SafeHTMLParser
 
@@ -64,6 +65,9 @@ class MessageView(QtGui.QTextBrowser):
 
     def confirmURL(self, link):
         """Show a dialog requesting URL opening confirmation"""
+        link_str = link.toString()
+        datablob_re = r'^data:.*/.*;base64,.*'
+        datablob_match = re.match(datablob_re, link_str)
         if link.scheme() == "mailto":
             window = QtGui.QApplication.activeWindow()
             window.ui.lineEditTo.setText(link.path())
@@ -80,19 +84,29 @@ class MessageView(QtGui.QTextBrowser):
             )
             window.ui.textEditMessage.setFocus()
             return
-        reply = QtGui.QMessageBox.warning(
-            self,
-            QtGui.QApplication.translate(
-                "MessageView",
-                "Follow external link"),
-            QtGui.QApplication.translate(
-                "MessageView",
-                "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you"
-                " or download malicious data. Are you sure?").arg(unicode(link.toString())),
-            QtGui.QMessageBox.Yes,
-            QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
-            QtGui.QDesktopServices.openUrl(link)
+        if datablob_match:
+            name = QtGui.QFileDialog.getSaveFileName(self, 'Save File')
+            if name:
+                f = open(name, 'wb')
+                data_begin_pos = re.finditer(";base64,", link_str).next()
+                data_b64 = link_str[data_begin_pos.span()[1]:]
+                data = base64.b64decode(data_b64)
+                f.write(data)
+                f.close()
+        else:
+            reply = QtGui.QMessageBox.warning(
+                self,
+                QtGui.QApplication.translate(
+                    "MessageView",
+                    "Follow external link"),
+                QtGui.QApplication.translate(
+                    "MessageView",
+                    "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you"
+                    " or download malicious data. Are you sure?").arg(unicode(link.toString())),
+                QtGui.QMessageBox.Yes,
+                QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.Yes:
+                QtGui.QDesktopServices.openUrl(link)
 
     def loadResource(self, restype, name):
         """
