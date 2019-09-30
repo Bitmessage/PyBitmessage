@@ -49,7 +49,6 @@ from kivymd.navigationdrawer import (
     MDNavigationDrawer,
     NavigationDrawerHeaderBase)
 from kivymd.selectioncontrols import MDCheckbox
-from kivymd.textfields import MDTextField
 from kivymd.theming import ThemeManager
 import queues
 from semaphores import kivyuisignaler
@@ -1398,7 +1397,7 @@ class NavigationDrawerTwoLineListItem(
     def _update_specific_text_color(self, instance, value):
         pass
 
-    def _set_active(self, active, list):        # pylint: disable=redefined-builtin
+    def _set_active(self, active, list_):
         pass
 
 
