@@ -1,6 +1,6 @@
 """
 src/messagetypes/vote.py
-=================================
+========================
 """
 from debug import logger
 from messagetypes import MsgBase
@@ -8,8 +8,9 @@ from messagetypes import MsgBase
 
 
 
+
 class Vote(MsgBase):
-    """Base method, helps to decode, encode and process the message"""
+    """Module used to vote"""
 
     def decode(self, data):
         """decode a vote"""

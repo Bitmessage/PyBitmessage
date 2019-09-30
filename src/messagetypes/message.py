@@ -1,6 +1,6 @@
 """
 src/messagetypes/message.py
-=================================
+===========================
 """
 from debug import logger
 from messagetypes import MsgBase
@@ -8,7 +8,8 @@ from messagetypes import MsgBase
 
 
 class Message(MsgBase):
-    """Base method, helps to decode, encode and process the message"""
+    """Encapsulate a message"""
+    # pylint: disable=attribute-defined-outside-init
 
     def decode(self, data):
         """Decode a message"""
