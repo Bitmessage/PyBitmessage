@@ -200,6 +200,7 @@ class Main:     # pylint: disable=no-init, old-style-class
             from plugins.plugin import get_plugin
             try:
                 proxyconfig_start = time.time()
+                import pdb;pdb.set_trace
                 if not get_plugin('proxyconfig', name=proxy_type)(config):
                     raise TypeError
             except TypeError:
@@ -358,7 +359,7 @@ class Main:     # pylint: disable=no-init, old-style-class
         # Not needed if objproc disabled
         if state.enableObjProc:
             shared.reloadMyAddressHashes()
-            shared.reloadBroadcastSendersForWhichImWatching()
+            # shared.reloadBroadcastSendersForWhichImWatching()
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
@@ -373,7 +374,7 @@ class Main:     # pylint: disable=no-init, old-style-class
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
-            for i in range(config.getint('threads', 'receive')):
+            for i in range(config.safeGet('threads', 'receive')):
                 receiveQueueThread = ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()

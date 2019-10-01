@@ -4,7 +4,7 @@ src/network/stats.py
 """
 import time
 
-import asyncore_pollchoose as asyncore
+from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
 from network.objectracker import missingObjects
 
@@ -20,8 +20,9 @@ currentSentSpeed = 0
 def connectedHostsList():
     """List of all the connected hosts"""
     retval = []
-    for i in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+    # import pdb;pdb.set_trace()
+    for i in list(BMConnectionPool().inboundConnections.values()) + \
+            list(BMConnectionPool().outboundConnections.values()):
         if not i.fullyEstablished:
             continue
         try:

@@ -55,6 +55,7 @@ def json_deserialize_knownnodes(source):
     Read JSON from source and make knownnodes dict
     """
     global knownNodesActual  # pylint: disable=global-statement
+    # import pdb;pdb.set_trace()
     for node in json.load(source):
         peer = node['peer']
         info = node['info']
@@ -107,7 +108,7 @@ def createDefaultKnownNodes():
 
 def readKnownNodes():
     try:
-        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
+        with open(state.appdata + 'knownnodes.dat', 'r') as source:
             with knownNodesLock:
                 try:
                     json_deserialize_knownnodes(source)

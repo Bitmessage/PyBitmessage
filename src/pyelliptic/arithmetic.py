@@ -30,7 +30,9 @@ def get_code_string(base):
     elif base == 58:
         return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     elif base == 256:
-        return ''.join([chr(x) for x in range(256)])
+        '''raw_unicode_escape is used because in the python3 after range(161) its genreate the'
+         the speical character so avoiding that function we have used the raw_unicode method '''
+        return ''.join([chr(x) for x in range(256)]).encode('raw_unicode_escape')
     else:
         raise ValueError("Invalid base!")
 
@@ -38,9 +40,16 @@ def get_code_string(base):
 def encode(val, base, minlen=0):
     code_string = get_code_string(base)
     result = ""
+    result = str.encode(result)
+    count = 0
+    # import pdb;pdb.set_trace()
     while val > 0:
-        result = code_string[round(val % base)] + result
-        val /= base
+        count += 1
+        # import pdb;pdb.set_trace()
+        result = code_string[int(val) % base:int(val) % base + 1] + result
+        # print('the value of the result-{}'.format(result))
+        val = int(val / base)
+    # import pdb;pdb.set_trace()
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
@@ -48,10 +57,12 @@ def encode(val, base, minlen=0):
 
 def decode(string, base):
     code_string = get_code_string(base)
+    string.decode()
     result = 0
     if base == 16:
         string = string.lower()
     while string:
+        # import pdb;pdb.set_trace()
         result *= base
         result += code_string.find(string.decode()[0])
         string = string[1:]
@@ -59,6 +70,7 @@ def decode(string, base):
 
 
 def changebase(string, frm, to, minlen=0):
+    # import pdb;pdb.set_trace()
     return encode(decode(string, frm), to, minlen)
 
 

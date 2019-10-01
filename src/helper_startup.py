@@ -25,6 +25,7 @@ StoreConfigFilesInSameDirectoryAsProgramByDefault = False
 
 
 def _loadTrustedPeer():
+    trustedPeer = ''
     try:
         trustedPeer = BMConfigParser().get('bitmessagesettings', 'trustedpeer')
     except configparser.Error:
@@ -32,13 +33,15 @@ def _loadTrustedPeer():
         # can just leave it as None
         return
     try:
-        host, port = trustedPeer.split(':')
+        # import pdb;pdb.set_trace()
+        if trustedPeer != None:
+            host, port = trustedPeer.split(':')
+            state.trustedPeer = state.Peer(host, int(port))
     except ValueError:
         sys.exit(
             'Bad trustedpeer config setting! It should be set as'
             ' trustedpeer=<hostname>:<portnumber>'
         )
-    state.trustedPeer = state.Peer(host, int(port))
 
 
 def loadConfig():

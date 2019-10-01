@@ -274,10 +274,15 @@ class BMConnectionPool(object):
                             continue
 
                     self.lastSpawned = time.time()
+
+            print('++++++++++++++++++++++++++++++++++++++++++')
+            print('self.inboundConnections.values()-{}'.format(self.inboundConnections.values()))
+            print('self.outboundConnections.values() -{}'.format(self.outboundConnections.values()))
+            print('+++++++++++++++++++++++++++++++++++++++++++')
         else:
             for i in (
-                    self.inboundConnections.values() +
-                    self.outboundConnections.values()
+                    list(self.inboundConnections.values()) +
+                    list(self.outboundConnections.values())
             ):
                 # FIXME: rating will be increased after next connection
                 i.handle_close()

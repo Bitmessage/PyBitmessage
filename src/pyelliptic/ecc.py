@@ -74,11 +74,13 @@ class ECC(object):
                 if curve != curve2:
                     raise Exception("Bad ECC keys ...")
             self.curve = curve
+            import pdb;pdb.set_trace()
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
         else:
             self.privkey, self.pubkey_x, self.pubkey_y = self._generate()
 
     def _set_keys(self, pubkey_x, pubkey_y, privkey):
+        import pdb;pdb.set_trace()
         if self.raw_check_key(privkey, pubkey_x, pubkey_y) < 0:
             self.pubkey_x = None
             self.pubkey_y = None
@@ -114,7 +116,7 @@ class ECC(object):
             pack('!H', len(self.pubkey_x)),
             self.pubkey_x,
             pack('!H', len(self.pubkey_y)),
-            self.pubkey_y,
+            self.pubkey_y,  
         ))
 
     def get_privkey(self):
@@ -129,27 +131,37 @@ class ECC(object):
         ))
 
     @staticmethod
-    def _decode_pubkey( pubkey):
-        pubkey = pubkey.encode()
+    def _decode_pubkey(pubkey):
+        # pubkey = pubkey.encode()
+        import pdb;pdb.set_trace()
         i = 0
-        curve = unpack('!H', pubkey[i:i + 2])[0]
+        # curve = unpack('!H', pubkey[i:i + 2])[0]
+        curve = pack('!s', pubkey[i:i + 1])[0]
+
         i += 2
-        tmplen = unpack('!H', pubkey[i:i + 2])[0]
+        # tmplen = unpack('!H', pubkey[i:i + 2])[0]
+        tmplen = pack('!s', pubkey[i:i + 1])[0]
         i += 2
         pubkey_x = pubkey[i:i + tmplen]
-        i += tmplen
-        tmplen = unpack('!H', pubkey[i:i + 2])[0]
-        i += 2
+        # i += tmplen
+        i += int(tmplen / 3)
+        # tmplen = unpack('!H', pubkey[i:i + 2])[0]
+        tmplen = pack('!s', pubkey[i:i + 1])[0]
+        # i += 2
         pubkey_y = pubkey[i:i + tmplen]
-        i += tmplen
-        return curve, pubkey_x, pubkey_y, i
+        # i += tmplen
+        return curve, pubkey_x, pubkey_y, int(i)
 
     @staticmethod
     def _decode_privkey(privkey):
         i = 0
-        curve = unpack('!H', privkey[i:i + 2])[0]
+        # import pdb;pdb.set_trace()
+        # curve = unpack('!H', privkey[i:i + 2])[0]
+        curve = pack('!s', privkey[i:i + 1])[0]
+
         i += 2
-        tmplen = unpack('!H', privkey[i:i + 2])[0]
+        # tmplen = unpack('!H', privkey[i:i + 2])[0]
+        tmplen = pack('!s', privkey[i:i + 1])[0]
         i += 2
         privkey = privkey[i:i + tmplen]
         i += tmplen
@@ -276,6 +288,7 @@ class ECC(object):
         return self.raw_check_key(raw_privkey, pubkey_x, pubkey_y, curve)
 
     def raw_check_key(self, privkey, pubkey_x, pubkey_y, curve=None):
+        import pdb;pdb.set_trace()
         """Check key validity, key is supplied as binary data"""
         # pylint: disable=too-many-branches
         if curve is None:

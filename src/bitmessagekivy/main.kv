@@ -1,43 +1,38 @@
 
-#:import Toolbar kivymd.toolbar.Toolbar
+#:import MDToolbar kivymd.uix.toolbar.MDToolbar
 #:import ThemeManager kivymd.theming.ThemeManager
-#:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
-#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
-#:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
-#:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
-#:import NavigationDrawerSubheader kivymd.navigationdrawer.NavigationDrawerSubheader
-#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
-#:import MDSwitch kivymd.selectioncontrols.MDSwitch
-#:import MDList kivymd.list.MDList
-#:import OneLineListItem kivymd.list.OneLineListItem
-#:import TwoLineListItem kivymd.list.TwoLineListItem
-#:import ThreeLineListItem kivymd.list.ThreeLineListItem
-#:import OneLineAvatarListItem kivymd.list.OneLineAvatarListItem
-#:import OneLineIconListItem kivymd.list.OneLineIconListItem
-#:import OneLineAvatarIconListItem kivymd.list.OneLineAvatarIconListItem
-#:import MDTextField kivymd.textfields.MDTextField
-#:import MDSpinner kivymd.spinner.MDSpinner
-#:import MDCard kivymd.card.MDCard
-#:import MDSeparator kivymd.card.MDSeparator
-#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
+#:import MDNavigationDrawer kivymd.uix.navigationdrawer.MDNavigationDrawer
+#:import NavigationLayout kivymd.uix.navigationdrawer.NavigationLayout
+#:import NavigationDrawerDivider kivymd.uix.navigationdrawer.NavigationDrawerDivider
+#:import NavigationDrawerToolbar kivymd.uix.navigationdrawer.NavigationDrawerToolbar
+#:import NavigationDrawerSubheader kivymd.uix.navigationdrawer.NavigationDrawerSubheader
+#:import MDCheckbox kivymd.uix.selectioncontrol.MDCheckbox
+#:import MDSwitch kivymd.uix.selectioncontrol.MDSwitch
+#:import MDList kivymd.uix.list.MDList
+#:import OneLineListItem kivymd.uix.list.OneLineListItem
+#:import TwoLineListItem kivymd.uix.list.TwoLineListItem
+#:import ThreeLineListItem kivymd.uix.list.ThreeLineListItem
+#:import OneLineAvatarListItem kivymd.uix.list.OneLineAvatarListItem
+#:import OneLineIconListItem kivymd.uix.list.OneLineIconListItem
+#:import OneLineAvatarIconListItem kivymd.uix.list.OneLineAvatarIconListItem
+#:import MDTextField kivymd.uix.textfield.MDTextField
+#:import MDSpinner kivymd.uix.spinner.MDSpinner
+#:import MDCard kivymd.uix.card.MDCard
+#:import MDSeparator kivymd.uix.card.MDSeparator
+#:import MDDropdownMenu kivymd.uix.menu.MDDropdownMenu
 #:import get_color_from_hex kivy.utils.get_color_from_hex
 #:import colors kivymd.color_definitions.colors
-#:import SmartTile kivymd.grid.SmartTile
-#:import MDSlider kivymd.slider.MDSlider
-#:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
-#:import MDTab kivymd.tabs.MDTab
-#:import MDProgressBar kivymd.progressbar.MDProgressBar
-#:import MDAccordion kivymd.accordion.MDAccordion
-#:import MDAccordionItem kivymd.accordion.MDAccordionItem
-#:import MDAccordionSubItem kivymd.accordion.MDAccordionSubItem
-#:import MDThemePicker kivymd.theme_picker.MDThemePicker
-#:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
-#:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
-#:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
+#:import MDSlider kivymd.uix.slider.MDSlider
+#:import MDTabs kivymd.uix.tab.MDTabs
+#:import MDProgressBar kivymd.uix.progressbar.MDProgressBar
+#:import MDAccordion kivymd.uix.accordion.MDAccordion
+#:import MDAccordionItem kivymd.uix.accordion.MDAccordionItem
+#:import MDAccordionSubItem kivymd.uix.accordion.MDAccordionSubItem
+#:import MDFloatingActionButton kivymd.uix.button.MDFloatingActionButton
 #:import Factory kivy.factory.Factory
-#:import MDTextButton kivymd.button.MDTextButton
+#:import MDTextButton kivymd.uix.button.MDTextButton
 #:import FadeTransition kivy.uix.screenmanager.FadeTransition
-#:import MDScrollViewRefreshLayout kivymd.refreshlayout.MDScrollViewRefreshLayout
+#:import MDScrollViewRefreshLayout kivymd.uix.refreshlayout.MDScrollViewRefreshLayout
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -176,7 +171,7 @@ NavigationLayout:
     BoxLayout:
         id: box_layout
         orientation: 'vertical'
-        Toolbar:
+        MDToolbar:
             id: toolbar
             title: app.current_address_label()
             opacity: 1 if app.addressexist() else 0
@@ -342,7 +337,7 @@ NavigationLayout:
                         size_hint: .6, .35
                         height: dp(40)
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: root.available_credits
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -423,7 +418,7 @@ NavigationLayout:
                         height: dp(40)
                         on_press: root.reset_composer()
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: 'reset'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -521,7 +516,7 @@ NavigationLayout:
                         height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: 'proceed'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -566,7 +561,7 @@ NavigationLayout:
                         on_release: root.generateaddress(app)
                         opposite_colors: True
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: 'next'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -594,7 +589,7 @@ NavigationLayout:
                         size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: 'Server'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -607,7 +602,7 @@ NavigationLayout:
                         size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: 'Import or export data'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -620,7 +615,7 @@ NavigationLayout:
                         size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
-                            font_style: 'Title'
+                            font_style: 'H4'
                             text: 'Restart background service'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -698,20 +693,20 @@ NavigationLayout:
                         size: self.size
                 MDLabel:
                     size_hint_y: None
-                    font_style: 'Headline'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: 'Platinum'
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Subhead'
+                    font_style: 'H4'
                     theme_text_color: 'Primary'
                     text: 'We provide subscriptions for proof of work calculation for first month. '
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
                     id: free_pak
-                    font_style: 'Headline'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: '€ 50.0'
                     halign: 'center'
@@ -727,7 +722,7 @@ NavigationLayout:
                     height: dp(40)
                     on_press: root.get_available_credits(self)
                     MDLabel:
-                        font_style: 'Title'
+                        font_style: 'H4'
                         text: 'Get Free Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
@@ -744,19 +739,19 @@ NavigationLayout:
                         size: self.size
                 MDLabel:
                     size_hint_y: None
-                    font_style: 'Headline'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: 'Silver'
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Subhead'
+                    font_style: 'H4'
                     theme_text_color: 'Primary'
                     text: 'We provide for proof of work calculation for six month. '
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Headline'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: '€ 100.0'
                     halign: 'center'
@@ -771,7 +766,7 @@ NavigationLayout:
                     size_hint: 1, None
                     height: dp(40)
                     MDLabel:
-                        font_style: 'Title'
+                        font_style: 'H4'
                         text: 'Get Monthly Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
@@ -788,19 +783,19 @@ NavigationLayout:
                         size: self.size
                 MDLabel:
                     size_hint_y: None
-                    font_style: 'Headline'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: 'Gold'
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Subhead'
+                    font_style: 'H4'
                     theme_text_color: 'Primary'
                     text: 'We provide for proof of work calculation for 1years. '
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Headline'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: '€ 500.0'
                     halign: 'center'
@@ -815,7 +810,7 @@ NavigationLayout:
                     size_hint: 1, None
                     height: dp(40)
                     MDLabel:
-                        font_style: 'Title'
+                        font_style: 'H4'
                         text: 'Get Yearly Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
@@ -862,7 +857,7 @@ NavigationLayout:
                 on_release:                 
                     root.savecontact()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Save'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -873,7 +868,7 @@ NavigationLayout:
                 on_press: root.dismiss()
                 on_press: root.close_pop()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Cancel'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -882,7 +877,7 @@ NavigationLayout:
                 size_hint: 2, None
                 height: dp(40)
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Scan QR code'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -891,93 +886,8 @@ NavigationLayout:
 
 <NetworkStat>:
     name: 'networkstat'
-    MDTabbedPanel:
-        id: tab_panel
-        tab_display_mode:'text'
-
-        MDTab:
-            name: 'connections'
-            text: "Total connections"
-            ScrollView:
-                do_scroll_x: False
-                MDList:
-                    id: ml
-                    size_hint_y: None
-                    height: dp(200)
-                    OneLineListItem:
-                        text: "Total Connections"
-                    BoxLayout:
-                        AnchorLayout:
-                            MDRaisedButton:
-                                size_hint: .6, .35
-                                height: dp(40)
-                                MDLabel:
-                                    font_style: 'Title'
-                                    text: root.text_variable_1
-                                    font_size: '13sp'
-                                    color: (1,1,1,1)
-                                    halign: 'center'
-        MDTab:
-            name: 'processes'
-            text: 'Processes'
-            ScrollView:
-                do_scroll_x: False
-                MDList:
-                    id: ml
-                    size_hint_y: None
-                    height: dp(500)
-                    OneLineListItem:
-                        text: "person-to-person"
-                    BoxLayout:
-                        AnchorLayout:
-                            MDRaisedButton:
-                                size_hint: .7, .6
-                                height: dp(40)
-                                MDLabel:
-                                    font_style: 'Title'
-                                    text: root.text_variable_2
-                                    font_size: '13sp'
-                                    color: (1,1,1,1)
-                                    halign: 'center'
-                    OneLineListItem:
-                        text: "Brodcast"
-                    BoxLayout:
-                        AnchorLayout:
-                            MDRaisedButton:
-                                size_hint: .7, .6
-                                height: dp(40)
-                                MDLabel:
-                                    font_style: 'Title'
-                                    text: root.text_variable_3
-                                    font_size: '13sp'
-                                    color: (1,1,1,1)
-                                    halign: 'center'
-                    OneLineListItem:
-                        text: "publickeys"
-                    BoxLayout:
-                        AnchorLayout:
-                            MDRaisedButton:
-                                size_hint: .7, .6
-                                height: dp(40)
-                                MDLabel:
-                                    font_style: 'Title'
-                                    text: root.text_variable_4
-                                    font_size: '13sp'
-                                    color: (1,1,1,1)
-                                    halign: 'center'
-                    OneLineListItem:
-                        text: "objects"
-                    BoxLayout:
-                        AnchorLayout:
-                            MDRaisedButton:
-                                size_hint: .7, .6
-                                height: dp(40)
-                                MDLabel:
-                                    font_style: 'Title'
-                                    text: root.text_variable_5
-                                    font_size: '13sp'
-                                    color: (1,1,1,1)
-                                    halign: 'center'
+    Label: 
+        text:"surbhi"
 
 <MailDetail>:
     name: 'mailDetail'
@@ -989,31 +899,31 @@ NavigationLayout:
             height: dp(500) + self.minimum_height
             padding: dp(32)
             MDLabel:
-                font_style: 'Headline'
+                font_style: 'Subtitle1'
                 theme_text_color: 'Primary'
                 text: root.subject
                 halign: 'left'
                 font_size: '20sp'
                 CopyTextBtn:
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: "From: " + root.from_addr
                 halign: 'left'
                 CopyTextBtn:
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: "To: " + root.to_addr
                 halign: 'left'
                 CopyTextBtn:
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: root.status
                 halign: 'left'
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: root.message
                 halign: 'left'
@@ -1072,25 +982,25 @@ NavigationLayout:
             spacing:dp(25)
             MDLabel:
                 id: myaddr_label
-                font_style: 'Title'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: "Label"
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: root.address_label
                 font_size: '15sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'Title'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: "Address"
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: root.address
                 font_size: '15sp'
@@ -1104,7 +1014,7 @@ NavigationLayout:
                 height: dp(40)
                 on_press: root.send_message_from()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Send message from'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -1116,7 +1026,7 @@ NavigationLayout:
                 on_press: app.root.ids.scr_mngr.current = 'showqrcode'
                 on_press: app.root.ids.sc15.qrdisplay()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Show QR code'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -1127,7 +1037,7 @@ NavigationLayout:
                 on_press: root.dismiss()
                 on_press: root.close_pop()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Cancel'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -1151,14 +1061,14 @@ NavigationLayout:
             orientation: 'vertical'
             spacing:dp(20)
             MDLabel:
-                font_style: 'Title'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: "Label"
                 font_size: '17sp'
                 halign: 'left'
             MDTextField:
                 id: add_label
-                font_style: 'Subhead'
+                font_style: 'H4'
                 font_size: '15sp'
                 halign: 'left'
                 text: root.address_label
@@ -1166,13 +1076,13 @@ NavigationLayout:
                 required: True
                 helper_text_mode: "on_error"
             MDLabel:
-                font_style: 'Title'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: "Address"
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'Subhead'
+                font_style: 'H4'
                 theme_text_color: 'Primary'
                 text: root.address
                 font_size: '15sp'
@@ -1186,7 +1096,7 @@ NavigationLayout:
                 height: dp(40)
                 on_press: root.send_message_to()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Send message to'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -1197,7 +1107,7 @@ NavigationLayout:
                 font_size: '10sp'
                 on_press: root.update_addbook_label(root.address)
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Save'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -1208,7 +1118,7 @@ NavigationLayout:
                 on_press: root.dismiss()
                 on_press: root.close_pop()
                 MDLabel:
-                    font_style: 'Title'
+                    font_style: 'H4'
                     text: 'Cancel'
                     font_size: '13sp'
                     color: (1,1,1,1)
