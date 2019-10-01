@@ -2,6 +2,7 @@
 src/pyelliptic/openssl.py
 =================================
 """
+# pylint: disable=import-error
 import sys
 import ctypes
 from kivy.utils import platform
@@ -19,8 +20,6 @@ src/pyelliptic/openssl.py
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
 # pylint: disable=protected-access
-
-
 
 
 class CipherName:

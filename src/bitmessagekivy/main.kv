@@ -72,9 +72,9 @@
             on_text:app.getCurrentAccountData(self.text)
             Image:
                 source: app.get_default_image()
-                x: self.width/4-2
-                y: self.parent.y + self.parent.height/2 - self.height + 14
-                size: 28, 28
+                x: self.width/6
+                y: self.parent.y + self.parent.height/4
+                size: self.parent.height/2, self.parent.height/2
             ArrowImg:
     NavigationDrawerIconButton:
         id: inbox_cnt
@@ -82,52 +82,52 @@
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Starred"
         icon:'star'
         on_release: app.root.ids.scr_mngr.current = 'starred'
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         icon: 'archive'
         text: "Archieve"
         on_release: app.root.ids.scr_mngr.current = 'archieve'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         icon: 'email-open-outline'
         text: "Spam"
         on_release: app.root.ids.scr_mngr.current = 'spam'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: allmail_cnt
         text: "All Mails"
         icon:'contact-mail'
         on_release: app.root.ids.scr_mngr.current = 'allmails'
         badge_text: "0"
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
         text: "All labels"
@@ -135,37 +135,37 @@
         text: "Address Book"
         icon:'book-multiple'
         on_release: app.root.ids.scr_mngr.current = 'addressbook' 
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Settings"
         icon:'settings'
         on_release: app.root.ids.scr_mngr.current = 'set'
-        on_press: app.check_search_screen(self)                                   
+        on_press: app.refreshScreen(self)                                   
     NavigationDrawerIconButton: 
         text: "Subscriptions/Payment"
         icon:'wallet'
         on_release: app.root.ids.scr_mngr.current = 'payment'
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Credits"
         icon:'wallet'
         on_release: app.root.ids.scr_mngr.current = 'credits'
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "new address"
         icon:'account-plus'
         on_release: app.root.ids.scr_mngr.current = 'login'
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Network Status"
         icon:'server-network'
         on_release: app.root.ids.scr_mngr.current = 'networkstat'
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "My Addresses"
         icon:'account-multiple'
         on_release: app.root.ids.scr_mngr.current = 'myaddress'
-        on_press: app.check_search_screen(self)
+        on_press: app.refreshScreen(self)
 
 NavigationLayout:
     id: nav_layout
@@ -186,18 +186,6 @@ NavigationLayout:
             background_hue: '500'
             left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
             right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
-        BoxLayout:
-            id: search_bar
-            size_hint_y: None
-            height: self.minimum_height
-
-            MDIconButton:
-                icon: 'magnify'
-
-            MDTextField:
-                id: search_field
-                hint_text: 'Search'
-                on_text: app.searchQuery(self)
 
         ScreenManager:
             id: scr_mngr
@@ -246,21 +234,30 @@ NavigationLayout:
 
 <Inbox>:
     name: 'inbox'
-    FloatLayout:
-        MDScrollViewRefreshLayout:
-            id: refresh_layout
-            refresh_callback: root.refresh_callback
-            root_layout: root
-            MDList:
-                id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+        SearchBar:
+        FloatLayout:
+            MDScrollViewRefreshLayout:
+                id: refresh_layout
+                refresh_callback: root.refresh_callback
+                root_layout: root
+                MDList:
+                    id: ml
     ComposerButton:
 
 <Sent>:
     name: 'sent'
-    ScrollView:
-        do_scroll_x: False
-        MDList:
-            id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        SearchBar:
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
     ComposerButton:
 
 <Trash>:
@@ -654,23 +651,29 @@ NavigationLayout:
 
 <MyAddress>:
     name: 'myaddress'
-    FloatLayout:
-        MDScrollViewRefreshLayout:
-            id: refresh_layout
-            refresh_callback: root.refresh_callback
-            root_layout: root
-            MDList:
-                id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        SearchBar:
+        FloatLayout:
+            MDScrollViewRefreshLayout:
+                id: refresh_layout
+                refresh_callback: root.refresh_callback
+                root_layout: root
+                MDList:
+                    id: ml
     ComposerButton:
 
 <AddressBook>:
     name: 'addressbook'
     BoxLayout:
-        orientation:'vertical'
-        ScrollView:
-            do_scroll_x: False
-            MDList:
-                id: ml
+        orientation: 'vertical'
+        SearchBar:
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
     ComposerButton:
 
 <Payment>:
@@ -821,11 +824,13 @@ NavigationLayout:
 
 <GrashofPopup>:
     id: popup
+    size_hint : (None,None)
+    height: 2*(label.height + address.height) + 10
+    width :app.window_size[0] - app.window_size[0]/10
     title: 'add contact\'s'
     background: './images/popup.jpeg'
     title_size: sp(20)
     title_color: 0.4, 0.3765, 0.3451, 1
-    size_hint: 1, 1
     auto_dismiss: False
     separator_color: 0.3529, 0.3922, 0.102, 0.7
     BoxLayout:
@@ -1050,19 +1055,23 @@ NavigationLayout:
 
 <MyaddDetailPopup>:
     id: myadd_popup
+    size_hint : (None,None)
+    height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
+    width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
-    separator_height: 0 
     auto_dismiss: False
+    separator_height: 0 
     BoxLayout:
+        id: myadd_popup_box
         size_hint_y: None
         spacing:dp(70)
-        id: myadd_popup_box
         orientation: 'vertical'
         BoxLayout:
             size_hint_y: None
             orientation: 'vertical'
             spacing:dp(25)
             MDLabel:
+                id: myaddr_label
                 font_style: 'Title'
                 theme_text_color: 'Primary'
                 text: "Label"
@@ -1087,6 +1096,7 @@ NavigationLayout:
                 font_size: '15sp'
                 halign: 'left'
         BoxLayout:
+            id: my_add_btn
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
@@ -1125,6 +1135,9 @@ NavigationLayout:
 
 <AddbookDetailPopup>:
     id: addbook_popup
+    size_hint : (None,None)
+    height: 4*(add_label.height)
+    width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
     separator_height: 0 
     auto_dismiss: False
@@ -1165,6 +1178,7 @@ NavigationLayout:
                 font_size: '15sp'
                 halign: 'left'
         BoxLayout:
+            id: addbook_btn
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
@@ -1212,3 +1226,17 @@ NavigationLayout:
     size: 15, 15
     x: self.parent.x + self.parent.width - self.width - 5
     y: self.parent.y + self.parent.height/2 - self.height + 5
+
+
+<SearchBar@BoxLayout>:
+    id: search_bar
+    size_hint_y: None
+    height: self.minimum_height
+
+    MDIconButton:
+        icon: 'magnify'
+
+    MDTextField:
+        id: search_field
+        hint_text: 'Search'
+        on_text: app.searchQuery(self)

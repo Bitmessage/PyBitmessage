@@ -42,6 +42,7 @@ def constructObject(data):
     else:
         return returnObj
 
+
 if paths.frozen is not None or platform == "android":
     import messagetypes.message
     import messagetypes.vote

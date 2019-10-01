@@ -2,6 +2,7 @@
 src/bitmessagekivy/mpybit.py
 =================================
 """
+# pylint: disable=relative-import, unused-variable, import-error, no-name-in-module, too-many-lines
 import os
 import time
 from functools import partial
@@ -42,24 +43,19 @@ from kivymd.list import (
     ILeftBody,
     ILeftBodyTouch,
     IRightBodyTouch,
-    ThreeLineAvatarIconListItem,
     TwoLineAvatarIconListItem,
     TwoLineListItem)
 from kivymd.navigationdrawer import (
     MDNavigationDrawer,
     NavigationDrawerHeaderBase)
 from kivymd.selectioncontrols import MDCheckbox
-from kivymd.textfields import MDTextField
 from kivymd.theming import ThemeManager
 import queues
 from semaphores import kivyuisignaler
 import state
 from uikivysignaler import UIkivySignaler
-# pylint: disable=unused-argument, too-few-public-methods, import-error
 
-import identiconGeneration    
-import os
-from kivy.core.clipboard import Clipboard
+import identiconGeneration
 # pylint: disable=unused-argument, too-few-public-methods
 
 
@@ -81,8 +77,6 @@ class Navigatorss(MDNavigationDrawer):
 
 class Inbox(Screen):
     """Inbox Screen uses screen to show widgets of screens."""
-
-    data = ListProperty()
 
     def __init__(self, *args, **kwargs):
         """Method Parsing the address."""
@@ -171,7 +165,6 @@ class Inbox(Screen):
 
     def inbox_detail(self, receivedTime, *args):
         """Load inbox page details."""
-        remove_search_bar(self)
         state.detailPageType = 'inbox'
         state.sentMailTime = receivedTime
         if self.manager:
@@ -187,8 +180,12 @@ class Inbox(Screen):
         sqlExecute(
             "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
                 data_index))
-        msg_count_objs = \
-            self.parent.parent.parent.parent.parent.children[2].children[0].ids
+        try:
+            msg_count_objs = \
+                self.parent.parent.parent.parent.children[2].children[0].ids
+        except Exception as e:
+            msg_count_objs = \
+                self.parent.parent.parent.parent.parent.children[2].children[0].ids
         if int(state.inbox_count) > 0:
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
@@ -229,13 +226,10 @@ class Inbox(Screen):
         """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
+            state.searcing_text = ''
+            self.children[2].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
-            self.remove_widget(self.children[1])
-            try:
-                screens_obj = self.parent.screens[0]
-            except Exception:
-                screens_obj = self.parent.parent.screens[0]
-            screens_obj.add_widget(Inbox())
+            self.loadMessagelist(state.association)
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
 
@@ -287,12 +281,11 @@ class MyAddress(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
-            try:
-                self.manager.parent.parent\
-                    .parent.ids.search_bar.clear_widgets()
-                self.manager.current = 'login'
-            except Exception:
-                pass
+            if not state.searcing_text:
+                try:
+                    self.manager.current = 'login'
+                except Exception:
+                    pass
 
     @staticmethod
     def myadd_detail(fromaddress, label, *args):
@@ -306,13 +299,10 @@ class MyAddress(Screen):
         """Method updates the state of application, While the spinner remains on the screen."""
         def refresh_callback(interval):
             """Method used for loading the myaddress screen data."""
+            state.searcing_text = ''
+            self.children[2].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
-            self.remove_widget(self.children[1])
-            try:
-                screens_obj = self.parent.screens[9]
-            except Exception:
-                screens_obj = self.parent.parent.screens[9]
-            screens_obj.add_widget(MyAddress())
+            self.init_ui()
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
         Clock.schedule_once(refresh_callback, 1)
@@ -389,8 +379,8 @@ class AddressBook(Screen):
     @staticmethod
     def refreshs(*args):
         """Refresh the Widget."""
-        state.navinstance.ids.sc11.clear_widgets()
-        state.navinstance.ids.sc11.add_widget(AddressBook())
+        state.navinstance.ids.sc11.ids.ml.clear_widgets()
+        state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
 
     @staticmethod
     def addBook_detail(address, label, *args):
@@ -526,8 +516,8 @@ class DropDownWidget(BoxLayout):
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[0].children[2].children[0].ids
-                    self.parent.parent.screens[3].clear_widgets()
-                    self.parent.parent.screens[3].add_widget(Sent())
+                    self.parent.parent.screens[3].ids.ml.clear_widgets()
+                    self.parent.parent.screens[3].loadSent(state.association)
                     self.parent.parent.screens[16].clear_widgets()
                     self.parent.parent.screens[16].add_widget(Allmails())
                     toLabel = ''
@@ -704,9 +694,8 @@ class Random(Screen):
             self.ids.label.text = ''
             self.parent.parent.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
-            self.parent.parent.parent.parent.ids.sc10.clear_widgets()
-            self.parent.parent.parent.parent.ids.sc10.add_widget(MyAddress())
-            navApp.add_search_bar()
+            self.parent.parent.parent.parent.ids.sc10.ids.ml.clear_widgets()
+            self.parent.parent.parent.parent.ids.sc10.init_ui()
             toast('New address created')
 
 
@@ -718,9 +707,6 @@ class AddressSuccessful(Screen):
 
 class Sent(Screen):
     """Sent Screen uses screen to show widgets of screens."""
-
-    data = ListProperty()
-
     def __init__(self, *args, **kwargs):
         """Association with the screen."""
         super(Sent, self).__init__(*args, **kwargs)
@@ -745,6 +731,7 @@ class Sent(Screen):
             where = ['subject', 'message']
             what = state.searcing_text
         xAddress = 'fromaddress'
+        data = []
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "sent", where, what, False)
         if state.msg_counter_objs and state.association == \
@@ -760,13 +747,13 @@ class Sent(Screen):
             src_mng_obj.send_cnt.badge_text = str(len(queryreturn))
             state.sent_count = str(len(queryreturn))
             for mail in queryreturn:
-                self.data.append({
+                data.append({
                     'text': mail[1].strip(),
                     'secondary_text': mail[2][:50] + '........' if len(
                         mail[2]) >= 50 else (
                             mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'lastactiontime': mail[6]})
-            for item in self.data:
+            for item in data:
                 meny = TwoLineAvatarIconListItem(
                     text=item['text'],
                     secondary_text=item['secondary_text'],
@@ -811,7 +798,6 @@ class Sent(Screen):
 
     def sent_detail(self, lastsenttime, *args):
         """Load sent mail details."""
-        remove_search_bar(self)
         state.detailPageType = 'sent'
         state.sentMailTime = lastsenttime
         if self.manager:
@@ -1034,16 +1020,9 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
             BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
         state.association = text
-        self.root.ids.sc1.clear_widgets()
-        self.root.ids.sc1.add_widget(Inbox())
-        # self.root.ids.sc4.clear_widgets()
-        # self.root.ids.sc5.clear_widgets()
-        # self.root.ids.sc16.clear_widgets()
-        # self.root.ids.sc17.clear_widgets()
-        # self.root.ids.sc4.add_widget(Sent())
-        # self.root.ids.sc5.add_widget(Trash())
-        # self.root.ids.sc16.add_widget(Draft())
-        # self.root.ids.sc17.add_widget(Allmails())
+        state.searcing_text = ''
+        self.root.ids.sc1.ids.ml.clear_widgets()
+        self.root.ids.sc1.loadMessagelist(state.association)
         self.root.ids.scr_mngr.current = 'inbox'
 
         msg_counter_objs = \
@@ -1091,7 +1070,13 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         if BMConfigParser().addresses():
             img = identiconGeneration.generate(BMConfigParser().addresses()[0])
             self.createFolder('./images/default_identicon/')
-            img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
+            if platform == 'android':
+                # android_path = os.path.expanduser("~/user/0/org.test.bitapp/files/app/")
+                android_path = os.path.join(os.environ['ANDROID_PRIVATE'] + '/app/')
+                img.texture.save('{1}/images/default_identicon/{0}.png'.format(
+                    BMConfigParser().addresses()[0], android_path))
+            else:
+                img.texture.save('./images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
@@ -1125,8 +1110,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
-                # if state.detailPageType in ['sent', 'inbox']:
-                #     self.add_search_bar()
                 self.back_press()
             elif self.root.ids.scr_mngr.current == "create":
                 composer_objs = self.root
@@ -1142,7 +1125,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
                 self.root.ids.scr_mngr.current = 'login'
             else:
                 self.root.ids.scr_mngr.current = 'inbox'
-                self.add_search_bar()
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
@@ -1162,7 +1144,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
         self.set_navbar_for_composer()
-        self.root.ids.search_bar.clear_widgets()
+        # self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[0].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
@@ -1190,8 +1172,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
             state.is_allmail = False
-        else:
-            self.add_search_bar()
         state.detailPageType = ''
         state.in_composer = False
 
@@ -1218,65 +1198,59 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
             return label + address
         return ''
 
-    def searchQuery(self, instance, *args):
+    def searchQuery(self, instance):
         """Method used for showing searched mails."""
         state.search_screen = self.root.ids.scr_mngr.current
         state.searcing_text = str(instance.text).strip()
         if state.search_screen == 'inbox':
-            self.root.ids.sc1.clear_widgets()
-            self.root.ids.sc1.add_widget(Inbox())
+            self.root.ids.sc1.ids.ml.clear_widgets()
+            self.root.ids.sc1.loadMessagelist(state.association)
         elif state.search_screen == 'addressbook':
-            self.root.ids.sc11.clear_widgets()
-            self.root.ids.sc11.add_widget(AddressBook())
+            self.root.ids.sc11.ids.ml.clear_widgets()
+            self.root.ids.sc11.loadAddresslist(None, 'All', '')
         elif state.search_screen == 'myaddress':
-            self.root.ids.sc10.clear_widgets()
-            self.root.ids.sc10.add_widget(MyAddress())
+            self.root.ids.sc10.ids.ml.clear_widgets()
+            self.root.ids.sc10.init_ui()
         else:
-            self.root.ids.sc4.clear_widgets()
-            self.root.ids.sc4.add_widget(Sent())
+            self.root.ids.sc4.ids.ml.clear_widgets()
+            self.root.ids.sc4.loadSent(state.association)
         self.root.ids.scr_mngr.current = state.search_screen
 
-    def clearSreeen(self, text):
-        """Method is used for clear screen"""
-        if text == 'Sent':
-            self.root.ids.sc4.clear_widgets()
-            self.root.ids.sc4.add_widget(Sent())
-        elif text == 'Draft':
+    def refreshScreen(self, instance):
+        """Method show search button only on inbox or sent screen."""
+        state.searcing_text = ''
+        if instance.text == 'Sent':
+            self.root.ids.sc4.ids.ml.clear_widgets()
+            self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
+            self.root.ids.sc4.loadSent(state.association)
+        elif instance.text == 'Inbox':
+            self.root.ids.sc1.ids.ml.clear_widgets()
+            try:
+                self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
+            except Exception as e:
+                self.root.ids.sc1.children[1].children[1].ids.search_field.text = ''
+            self.root.ids.sc1.loadMessagelist(state.association)
+        elif instance.text == 'Draft':
             self.root.ids.sc16.clear_widgets()
             self.root.ids.sc16.add_widget(Draft())
-        elif text == 'Trash':
+        elif instance.text == 'Trash':
             self.root.ids.sc5.clear_widgets()
             self.root.ids.sc5.add_widget(Trash())
-        elif text == 'All Mails':
+        elif instance.text == 'All Mails':
             self.root.ids.sc17.clear_widgets()
             self.root.ids.sc17.add_widget(Allmails())
-
-    def check_search_screen(self, instance):
-        """Method show search button only on inbox or sent screen."""
-        if instance.text in ['Sent', 'Draft', 'Trash', 'All Mails']:
-            self.clearSreeen(instance.text)
-        if instance.text in ['Inbox', 'Sent', 'Address Book', 'My Addresses']:
-            if not self.root.ids.search_bar.children:
-                self.root.ids.search_bar.add_widget(
-                    MDIconButton(icon='magnify'))
-                text_field = MDTextField(
-                    id='search_field', hint_text='Search')
-                text_field.bind(text=self.searchQuery)
-                self.root.ids.search_bar.add_widget(text_field)
-            self.root.ids.search_bar.children[0].text = ''
-        else:
-            self.root.ids.search_bar.clear_widgets()
-        state.searcing_text = ''
+        elif instance.text == 'Address Book':
+            self.root.ids.sc11.ids.ml.clear_widgets()
+            self.root.ids.sc11.children[1].children[1].ids.search_field.text = ''
+            self.root.ids.sc11.loadAddresslist(None, 'All', '')
+        elif instance.text == 'My Addresses':
+            self.root.ids.sc10.ids.ml.clear_widgets()
+            try:
+                self.root.ids.sc10.children[1].children[1].ids.search_field.text = ''
+            except Exception as e:
+                self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
+            self.root.ids.sc10.init_ui()
         return
-
-    def add_search_bar(self):
-        """Method used for adding search function on screen"""
-        if not self.root.ids.search_bar.children:
-            self.root.ids.search_bar.add_widget(MDIconButton(icon='magnify'))
-            text_field = MDTextField(
-                id='search_field', hint_text='Search')
-            text_field.bind(text=self.searchQuery)
-            self.root.ids.search_bar.add_widget(text_field)
 
     def set_identicon(self, text):
         """This method is use for showing identicon in address spinner"""
@@ -1306,16 +1280,9 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """Grash of pop screen settings."""
         super(GrashofPopup, self).__init__(**kwargs)
-        print("sssssssssssssssssssiiiiiiiiiiiiiiizzzzzzzzzzeeeeee...............", state.screen_density)
-        if state.screen_density[0] <= 720:
-            self.size_hint_y = 0.4
-            self.size_hint_x = 0.9
-        else:
-            self.size_hint_y = 0.42
-            self.size_hint_x = 0.7
 
     def savecontact(self):
         """Method is used for Saving Contacts."""
@@ -1430,7 +1397,7 @@ class NavigationDrawerTwoLineListItem(
     def _update_specific_text_color(self, instance, value):
         pass
 
-    def _set_active(self, active, list):        # pylint: disable=redefined-builtin
+    def _set_active(self, active, list_):
         pass
 
 
@@ -1491,17 +1458,17 @@ class MailDetail(Screen):
                 lastactiontime = {};".format(state.sentMailTime))
             msg_count_objs.send_cnt.badge_text = str(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
-            self.parent.screens[3].clear_widgets()
-            self.parent.screens[3].add_widget(Sent())
+            self.parent.screens[3].ids.ml.clear_widgets()
+            self.parent.screens[3].loadSent(state.association)
         elif state.detailPageType == 'inbox':
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
                 received = {};".format(state.sentMailTime))
             # msg_count_objs.inbox_cnt.badge_text = str(
-                # int(state.inbox_count) - 1)
+            # int(state.inbox_count) - 1)
             # state.inbox_count = str(int(state.inbox_count) - 1)
-            self.parent.screens[0].clear_widgets()
-            self.parent.screens[0].add_widget(Inbox())
+            self.parent.screens[0].ids.ml.clear_widgets()
+            self.parent.screens[0].loadMessagelist(state.association)
         elif state.detailPageType == 'draft':
             sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
                 state.sentMailTime))
@@ -1533,6 +1500,7 @@ class MailDetail(Screen):
         composer_obj.btn.text = data[0][0]
         composer_obj.txt_input.text = data[0][1]
         composer_obj.subject.text = data[0][2]
+        composer_obj.body.text = ''
         state.kivyapp.root.ids.sc3.children[0].ids.rv.data = ''
         self.parent.current = 'create'
         state.kivyapp.set_navbar_for_composer()
@@ -1571,15 +1539,9 @@ class MyaddDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """My Address Details screen setting."""
         super(MyaddDetailPopup, self).__init__(**kwargs)
-        if state.screen_density[0] <= 720:
-            self.size_hint_y = 0.32
-            self.size_hint_x = 0.9
-        else:
-            self.size_hint_y = 0.32
-            self.size_hint_x = 0.7
 
     def set_address(self, address, label):
         """Getting address for displaying details on popup."""
@@ -1609,15 +1571,9 @@ class AddbookDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """Method used set screen of address detail page."""
         super(AddbookDetailPopup, self).__init__(**kwargs)
-        if state.screen_density[0] <= 720:
-            self.size_hint_y = 0.35
-            self.size_hint_x = 0.95
-        else:
-            self.size_hint_y = 0.35
-            self.size_hint_x = 0.7
 
     def set_addbook_data(self, address, label):
         """Getting address book data for detial dipaly."""
@@ -1629,8 +1585,8 @@ class AddbookDetailPopup(Popup):
         if str(self.ids.add_label.text):
             sqlExecute("UPDATE addressbook SET label = '{}' WHERE \
                 address = '{}';".format(str(self.ids.add_label.text), address))
-            self.parent.children[1].ids.sc11.clear_widgets()
-            self.parent.children[1].ids.sc11.add_widget(AddressBook())
+            self.parent.children[1].ids.sc11.ids.ml.clear_widgets()
+            self.parent.children[1].ids.sc11.loadAddresslist(None, 'All', '')
             self.dismiss()
             toast('Saved')
 
@@ -1656,7 +1612,7 @@ class ShowQRCode(Screen):
 
     def qrdisplay(self):
         """Method used for showing QR Code."""
-        self.manager.parent.parent.parent.ids.search_bar.clear_widgets()
+        # self.manager.parent.parent.parent.ids.search_bar.clear_widgets()
         self.ids.qr.clear_widgets()
         from kivy.garden.qrcode import QRCodeWidget
         self.ids.qr.add_widget(QRCodeWidget(
@@ -1685,19 +1641,15 @@ class Draft(Screen):
     def sentaccounts(self):
         """Load draft accounts."""
         account = state.association
-        self.loadSent(account, 'All', '')
+        self.loadDraft(account, 'All', '')
 
-    def loadSent(self, account, where="", what=""):
+    def loadDraft(self, account, where="", what=""):
         """Load draft list for Draft messages."""
         xAddress = 'fromaddress'
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "draft", where, what, False)
         if state.msg_counter_objs:
             state.msg_counter_objs.draft_cnt.badge_text = str(len(queryreturn))
-            # state.all_count = str(int(state.all_count) + 1)
-            # state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
-            # state.msg_counter_objs = None
-
         if queryreturn:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             src_mng_obj.draft_cnt.badge_text = str(len(queryreturn))
@@ -1772,13 +1724,7 @@ class Draft(Screen):
         if int(state.draft_count) > 0:
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
-            # msg_count_objs.allmail_cnt.badge_text = str(
-            #     int(state.all_count) - 1)
-            # msg_count_objs.trash_cnt.badge_text = str(
-            #     int(state.trash_count) + 1)
             state.draft_count = str(int(state.draft_count) - 1)
-            # state.all_count = str(int(state.all_count) - 1)
-            # state.trash_count = str(int(state.trash_count) + 1)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
@@ -1840,17 +1786,7 @@ class CustomSpinner(Spinner):
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner."""
         super(CustomSpinner, self).__init__(*args, **kwargs)
-        # max_value = 2.8
-        # self.dropdown_cls.max_height = self.height / 2 * max_value + max_value * 4
         self.dropdown_cls.max_height = Window.size[1] / 3
-
-
-def remove_search_bar(obj):
-    """Remove search bar."""
-    try:
-        obj.parent.parent.parent.parent.parent.ids.search_bar.clear_widgets()
-    except Exception:
-        obj.parent.parent.parent.parent.ids.search_bar.clear_widgets()
 
 
 class Allmails(Screen):
@@ -1932,7 +1868,6 @@ class Allmails(Screen):
 
     def mail_detail(self, unique_id, folder, *args):
         """Load sent and inbox mail details."""
-        remove_search_bar(self)
         state.detailPageType = folder
         state.is_allmail = True
         state.sentMailTime = unique_id
@@ -1967,14 +1902,14 @@ class Allmails(Screen):
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
-            nav_lay_obj.sc1.clear_widgets()
-            nav_lay_obj.sc1.add_widget(Inbox())
+            nav_lay_obj.sc1.ids.ml.clear_widgets()
+            nav_lay_obj.sc1.loadMessagelist(state.association)
         else:
             msg_count_objs.send_cnt.badge_text = str(
                 int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
-            nav_lay_obj.sc4.clear_widgets()
-            nav_lay_obj.sc4.add_widget(Sent())
+            nav_lay_obj.sc4.ids.ml.clear_widgets()
+            nav_lay_obj.sc4.loadSent(state.association)
         msg_count_objs.trash_cnt.badge_text = str(
             int(state.trash_count) + 1)
         msg_count_objs.allmail_cnt.badge_text = str(
@@ -2025,6 +1960,7 @@ class Archieve(Screen):
     """Archieve Screen show widgets of page."""
 
     pass
+
 
 class Spam(Screen):
     """Spam Screen show widgets of page."""

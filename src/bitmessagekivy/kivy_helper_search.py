@@ -1,7 +1,13 @@
-from helper_sql import *
+"""
+src/bitmessagekivy/kivy_helper_search.py
+=================================
+"""
+from helper_sql import sqlQuery
 
 
 def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
+    """Method helping for searching mails"""
+    # pylint: disable=too-many-arguments, too-many-branches
     if what is not None and what != "":
         what = "%" + what + "%"
     else:
@@ -9,7 +15,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
 
     if folder == "sent" or folder == "draft":
         sqlStatementBase = '''
-            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
+            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime
             FROM sent '''
     elif folder == "addressbook":
         sqlStatementBase = '''SELECT label, address From addressbook '''
@@ -27,7 +33,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         else:
             sqlStatementParts.append(xAddress + " = ? ")
             sqlArguments.append(account)
-    if folder is not "addressbook":
+    if folder != "addressbook":
         if folder is not None:
             if folder == "new":
                 folder = "inbox"
@@ -50,7 +56,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlStatementParts.append(filter_col)
     if unreadOnly:
         sqlStatementParts.append("read = 0")
-    if len(sqlStatementParts) > 0:
+    if sqlStatementParts:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
     if folder == "sent":
         sqlStatementBase += " ORDER BY lastactiontime DESC"
