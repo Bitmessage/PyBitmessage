@@ -191,7 +191,6 @@ def decodeAddress(address):
         return status, 0, 0, ''
     # after converting to hex, the string will be prepended
     # with a 0x and appended with a L
-    # import pdb;pdb.set_trace()
     hexdata = hex(integer)[2:]
 
     if len(hexdata) % 2 != 0:

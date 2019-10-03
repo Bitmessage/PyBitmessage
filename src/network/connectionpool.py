@@ -236,7 +236,7 @@ class BMConnectionPool(object):
                 except ValueError:
                     Proxy.onion_proxy = None
             established = sum(
-                1 for c in self.outboundConnections.values()
+                1 for c in list(self.outboundConnections.values())
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt(

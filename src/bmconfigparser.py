@@ -125,10 +125,12 @@ class BMConfigParser(configparser.ConfigParser):
                 try:
                     if not self.validate(
                         section, option,
-                        configparser.ConfigParser.get(self, section, option)
+                        self[section][option]
                     ):
                         try:
                             newVal = BMConfigDefaults[section][option]
+                        except configparser.NoSectionError:
+                            continue
                         except KeyError:
                             continue
                         configparser.ConfigParser.set(
@@ -159,7 +161,7 @@ class BMConfigParser(configparser.ConfigParser):
 
     def validate(self, section, option, value):
         try:
-            return getattr(self, 'validate_%s_%s' % (section, option))(value)
+            return getattr(self, 'validate_{}_{}'.format(section, option))(value)
         except AttributeError:
             return True
 

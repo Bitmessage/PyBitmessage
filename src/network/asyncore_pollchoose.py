@@ -767,7 +767,6 @@ class dispatcher:
     # references to the underlying socket object.
     def __getattr__(self, attr):
         try:
-            # import pdb;pdb.set_trace()
             retattr = getattr(self.socket, attr)
         except AttributeError:
             raise AttributeError("{} instance has no attribute {}"

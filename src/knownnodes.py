@@ -46,7 +46,6 @@ def json_serialize_knownnodes(output):
             _serialized.append({
                 'stream': stream, 'peer': peer._asdict(), 'info': info
             })
-    # import pdb;pdb.set_trace()
     json.dump(_serialized, output, indent=4)
 
 
@@ -55,7 +54,6 @@ def json_deserialize_knownnodes(source):
     Read JSON from source and make knownnodes dict
     """
     global knownNodesActual  # pylint: disable=global-statement
-    # import pdb;pdb.set_trace()
     for node in json.load(source):
         peer = node['peer']
         info = node['info']

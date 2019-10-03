@@ -200,7 +200,6 @@ class Main:     # pylint: disable=no-init, old-style-class
             from plugins.plugin import get_plugin
             try:
                 proxyconfig_start = time.time()
-                import pdb;pdb.set_trace
                 if not get_plugin('proxyconfig', name=proxy_type)(config):
                     raise TypeError
             except TypeError:

@@ -13,12 +13,10 @@ from pyelliptic import arithmetic as a
 
 def makeCryptor(privkey):
     """Return a private pyelliptic.ECC() instance"""
-    # import pdb;pdb.set_trace()
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
     privkey_bin = '\x02\xca\x00\x20'.encode('utf-8') + private_key
     pubkey_bin = '\x02\xca\x00\x20'.encode('utf-8') + public_key[1:-32] + '\x00\x20'.encode('utf-8') + public_key[-32:]
-    import pdb;pdb.set_trace()
     cryptor = pyelliptic.ECC(curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
     return cryptor
 

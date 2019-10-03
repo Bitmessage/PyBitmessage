@@ -20,7 +20,6 @@ currentSentSpeed = 0
 def connectedHostsList():
     """List of all the connected hosts"""
     retval = []
-    # import pdb;pdb.set_trace()
     for i in list(BMConnectionPool().inboundConnections.values()) + \
             list(BMConnectionPool().outboundConnections.values()):
         if not i.fullyEstablished:

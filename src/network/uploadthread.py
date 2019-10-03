@@ -26,8 +26,8 @@ class UploadThread(StoppableThread):
         while not self._stopped:
             uploaded = 0
             # Choose downloading peers randomly
-            connections = [x for x in BMConnectionPool().inboundConnections.values() +
-                           BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
+            connections = [x for x in list(BMConnectionPool().inboundConnections.values()) +
+                           list(BMConnectionPool().outboundConnections.values()) if x.fullyEstablished]
             helper_random.randomshuffle(connections)
             for i in connections:
                 now = time.time()

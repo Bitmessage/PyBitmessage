@@ -42,14 +42,10 @@ def encode(val, base, minlen=0):
     result = ""
     result = str.encode(result)
     count = 0
-    # import pdb;pdb.set_trace()
     while val > 0:
         count += 1
-        # import pdb;pdb.set_trace()
         result = code_string[int(val) % base:int(val) % base + 1] + result
-        # print('the value of the result-{}'.format(result))
         val = int(val / base)
-    # import pdb;pdb.set_trace()
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
@@ -62,7 +58,6 @@ def decode(string, base):
     if base == 16:
         string = string.lower()
     while string:
-        # import pdb;pdb.set_trace()
         result *= base
         result += code_string.find(string.decode()[0])
         string = string[1:]
@@ -70,7 +65,6 @@ def decode(string, base):
 
 
 def changebase(string, frm, to, minlen=0):
-    # import pdb;pdb.set_trace()
     return encode(decode(string, frm), to, minlen)
 
 

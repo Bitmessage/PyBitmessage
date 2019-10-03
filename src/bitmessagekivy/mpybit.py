@@ -93,7 +93,7 @@ class Inbox(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
-        print (dt)
+        print(dt)
 
     def inboxaccounts(self):
         """Load inbox accounts."""
@@ -309,6 +309,7 @@ class MyAddress(Screen):
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
+
         Clock.schedule_once(refresh_callback, 1)
 
     @staticmethod

@@ -33,7 +33,7 @@ def _loadTrustedPeer():
         # can just leave it as None
         return
     try:
-        # import pdb;pdb.set_trace()
+            
         if trustedPeer != None:
             host, port = trustedPeer.split(':')
             state.trustedPeer = state.Peer(host, int(port))
