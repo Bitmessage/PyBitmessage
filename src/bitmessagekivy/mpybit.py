@@ -178,7 +178,7 @@ class Inbox(Screen):
     def delete(self, data_index, instance, *args):
         """Delete inbox mail from inbox listing."""
         sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;",str(
+            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                 data_index))
         try:
             msg_count_objs = \
@@ -207,7 +207,7 @@ class Inbox(Screen):
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing."""
         sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;",str(
+            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                 data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
@@ -469,11 +469,11 @@ class DropDownWidget(BoxLayout):
                             , fromaddress = ? , subject = ?\
                             , message = ?, folder = 'sent'\
                             WHERE ackdata = ?;",
-                                toAddress,
-                                fromAddress,
-                                subject,
-                                message,
-                                str(state.send_draft_mail))
+                            toAddress,
+                            fromAddress,
+                            subject,
+                            message,
+                            str(state.send_draft_mail))
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
                         state.detailPageType = ''
@@ -828,7 +828,7 @@ class Sent(Screen):
             state.all_count = str(int(state.all_count) - 1)
         sqlExecute(
             "UPDATE sent SET folder = 'trash' \
-            WHERE ackdata = ?;",str(data_index))
+            WHERE ackdata = ?;", str(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
         self.update_trash()
@@ -837,7 +837,7 @@ class Sent(Screen):
         """Archive sent mail from sent mail listing."""
         sqlExecute(
             "UPDATE sent SET folder = 'trash' \
-            WHERE ackdata = ?;",str(data_index))
+            WHERE ackdata = ?;", str(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -1430,7 +1430,7 @@ class MailDetail(Screen):
         elif state.detailPageType == 'inbox':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message from inbox \
-                where msgid = ?;",str(state.mail_id))
+                where msgid = ?;", str(state.mail_id))
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
 
@@ -1462,11 +1462,11 @@ class MailDetail(Screen):
         elif state.detailPageType == 'inbox':
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
-                msgid = ?;",str(state.mail_id))
+                msgid = ?;", str(state.mail_id))
             self.parent.screens[0].ids.ml.clear_widgets()
             self.parent.screens[0].loadMessagelist(state.association)
         elif state.detailPageType == 'draft':
-            sqlExecute("DELETE FROM  sent WHERE ackdata = ?;",str(
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
                 state.mail_id))
             msg_count_objs.draft_cnt.badge_text = str(int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
@@ -1490,7 +1490,7 @@ class MailDetail(Screen):
         """Method used for replying inbox messages."""
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message from inbox where \
-            msgid = ?;",str(state.mail_id))
+            msgid = ?;", str(state.mail_id))
         composer_obj = self.parent.screens[2].children[0].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
@@ -1709,7 +1709,7 @@ class Draft(Screen):
 
     def delete_draft(self, data_index, instance, *args):
         """Method used to delete draft message permanently."""
-        sqlExecute("DELETE FROM  sent WHERE ackdata = ?;",str(
+        sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
             data_index))
         try:
             msg_count_objs = \
@@ -1724,7 +1724,6 @@ class Draft(Screen):
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
-    # pylint: disable=unused-variable
     @staticmethod
     def draft_msg(src_object):
         """Method used for saving draft mails."""
@@ -1879,11 +1878,11 @@ class Allmails(Screen):
         """Delete inbox mail from all mail listing listing."""
         if folder == 'inbox':
             sqlExecute(
-                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;",str(
+                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                     unique_id))
         else:
             sqlExecute(
-                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;",str(
+                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;", str(
                     unique_id))
         self.ids.ml.remove_widget(instance.parent.parent)
         try:
