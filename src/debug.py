@@ -138,6 +138,7 @@ def configureLogging():
 
 def resetLogging():
     """Reconfigure logging in runtime when state.appdata dir changed"""
+    # pylint: disable=global-statement, used-before-assignment
     global logger
     for i in logger.handlers:
         logger.removeHandler(i)
