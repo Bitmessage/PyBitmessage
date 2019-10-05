@@ -316,8 +316,8 @@ def check_curses():
     """Do curses dependency check.
 
     Here we are checking for curses if available or not with check
-    as interface requires the pythondialog\ package and the dialog
-    utility.
+    as interface requires the pythondialog <https://pypi.org/project/pythondialog>
+    package and the dialog utility.
     """
     if sys.hexversion < 0x20600F0:
         logger.error(

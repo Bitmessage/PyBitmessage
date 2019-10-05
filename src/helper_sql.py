@@ -80,6 +80,7 @@ def sqlExecuteChunked(sqlStatement, idCount, *args):
 
 
 def sqlExecute(sqlStatement, *args):
+    """Execute SQL statement (optionally with arguments)"""
     sqlLock.acquire()
     sqlSubmitQueue.put(sqlStatement)
 

@@ -4,22 +4,21 @@ sqlThread is defined here
 
 import threading
 from bmconfigparser import BMConfigParser
+
 import sqlite3
 import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
 from debug import logger
+
 import helper_sql
 import helper_startup
 import paths
 import queues
 import state
 import tr
-
-# This thread exists because SQLITE3 is so un-threadsafe that we must
-# submit queries to it and it puts results back in a different queue. They
-# won't let us just use locks.
+# pylint: disable=attribute-defined-outside-init,protected-access
 
 
 class sqlThread(threading.Thread):
@@ -28,7 +27,7 @@ class sqlThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
 
-    def run(self):
+    def run(self):    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str

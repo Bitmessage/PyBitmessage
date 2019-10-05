@@ -1,5 +1,4 @@
-#!/usr/bin/python2.7
-
+"""Additional SQL helper for searching messages"""
 from helper_sql import *
 
 try:
