@@ -1,3 +1,7 @@
+"""
+Insert operation into sent table
+"""
+
 from helper_sql import *
 
 def insert(t):
