@@ -1,4 +1,6 @@
-"""Convenience functions for random operations. Not suitable for security / cryptography operations."""
+"""
+Convenience functions for random operations. Not suitable for security / cryptography operations
+"""
 
 import os
 import random

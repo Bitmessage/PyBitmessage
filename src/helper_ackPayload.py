@@ -1,9 +1,11 @@
-"""This module is for generating ack payload."""
+"""
+This module is for generating ack payload
+"""
+from binascii import hexlify
+from struct import pack
 
 import highlevelcrypto
 import helper_random
-from binascii import hexlify
-from struct import pack
 from addresses import encodeVarint
 
 # This function generates payload objects for message acknowledgements

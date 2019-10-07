@@ -2,11 +2,9 @@
 SQL-related functions defined here are really pass the queries (or other SQL
 commands) to :class:`.threads.sqlThread` through `sqlSubmitQueue` queue and check
 or return the result got from `sqlReturnQueue`.
-
 This is done that way because :mod:`sqlite3` is so thread-unsafe that they
 won't even let you call it from different threads using your own locks.
 SQLite objects can only be used from one thread.
-
 .. note:: This actually only applies for certain deployments, and/or
    really old version of sqlite. I haven't actually seen it anywhere.
    Current versions do have support for threading and multiprocessing.
@@ -50,6 +48,7 @@ def sqlQuery(sqlStatement, *args):
 
 
 def sqlExecuteChunked(sqlStatement, idCount, *args):
+    """Execute chunked SQL statement to avoid argument limit"""
     # SQLITE_MAX_VARIABLE_NUMBER,
     # unfortunately getting/setting isn't exposed to python
     sqlExecuteChunked.chunkSize = 999

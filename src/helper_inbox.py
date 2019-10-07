@@ -1,11 +1,11 @@
-"""Helper Inbox performs inbox messages related operations."""
+"""Helper Inbox performs inbox messages related operations"""
 
 from helper_sql import sqlExecute, sqlQuery
 import queues
 
 
 def insert(t):
-	"""Perform an insert into the "inbox" table"""
+    """Perform an insert into the "inbox" table"""
     sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
     # shouldn't emit changedInboxUnread and displayNewInboxMessage
     # at the same time
