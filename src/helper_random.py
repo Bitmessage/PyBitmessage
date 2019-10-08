@@ -1,6 +1,4 @@
-"""
-Convenience functions for random operations. Not suitable for security / cryptography operations
-"""
+"""Convenience functions for random operations. Not suitable for security / cryptography operations."""
 
 import os
 import random
@@ -58,8 +56,7 @@ def randomrandrange(x, y=None):
     """
     if isinstance(y, NoneType):
         return random.randrange(x)  # nosec
-    else:
-        return random.randrange(x, y)  # nosec
+    return random.randrange(x, y)  # nosec
 
 
 def randomchoice(population):
