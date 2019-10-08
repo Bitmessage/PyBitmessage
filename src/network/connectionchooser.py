@@ -26,6 +26,8 @@ def getDiscoveredPeer():
 def chooseConnection(stream):
     haveOnion = BMConfigParser().safeGet(
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
+    onionOnly = BMConfigParser().safeGetBoolean(
+        "bitmessagesettings", "onionservicesonly")
     if state.trustedPeer:
         return state.trustedPeer
     try:
@@ -49,6 +51,9 @@ def chooseConnection(stream):
             logger.warning('Error in %s', peer)
             rating = 0
         if haveOnion:
+            # do not connect to raw IP addresses--keep all traffic within Tor overlay
+            if onionOnly and not peer.host.endswith('.onion'):
+                continue
             # onion addresses have a higher priority when SOCKS
             if peer.host.endswith('.onion') and rating > 0:
                 rating = 1
