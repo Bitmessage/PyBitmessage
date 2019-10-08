@@ -5,7 +5,8 @@ src/bitmessageqt/messageview.py
 """
 
 from PyQt4 import QtCore, QtGui
-import re, base64
+import re
+import base64
 
 from safehtmlparser import SafeHTMLParser
 

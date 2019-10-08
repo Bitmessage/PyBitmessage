@@ -1955,18 +1955,20 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
 
     def click_pushButtonAttach(self):
+        """Launch a file picker and append to the current message the base64-encoded contents of the chosen file."""
         filename = QtGui.QFileDialog.getOpenFileName(self, "Attach File")
         if filename:
             f = open(filename, 'rb')
             data = f.read()
             f.close()
             data_b64 = base64.b64encode(data)
-            html_data = '<a href="data:application/octet-stream;base64,' + data_b64 + '">' + os.path.basename(unicode(filename)) + '</a>'
+            html_data = '<a href="data:application/octet-stream;base64,' + data_b64 + '">' \
+                        + os.path.basename(unicode(filename)) + '</a>'
             if self.ui.tabWidgetSend.currentIndex() == self.ui.tabWidgetSend.indexOf(self.ui.sendDirect):
-                #send direct message
+                # send direct message
                 self.ui.textEditMessage.insertPlainText(html_data)
             else:
-                #send broadcast message
+                # send broadcast message
                 self.ui.textEditMessageBroadcast.insertPlainText(html_data)
 
     def click_pushButtonSend(self):
