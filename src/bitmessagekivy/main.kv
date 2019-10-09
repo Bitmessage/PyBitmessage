@@ -334,7 +334,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .6, .35
                         height: dp(40)
                         MDLabel:
                             font_style: 'H4'
@@ -383,7 +382,6 @@ NavigationLayout:
                 txt_input: txt_input
                 rv: rv
                 size : (890, 60)
-                size_hint: 1,1
                 MyTextInput:
                     id: txt_input
                     size_hint_y: None
@@ -414,7 +412,6 @@ NavigationLayout:
                 spacing:50
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: 1, None
                         height: dp(40)
                         on_press: root.reset_composer()
                         MDLabel:
@@ -512,7 +509,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .5, .35
                         height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
                         MDLabel:
@@ -556,7 +552,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .5, None
                         height: dp(40)
                         on_release: root.generateaddress(app)
                         opposite_colors: True
@@ -586,7 +581,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
                             font_style: 'H4'
@@ -599,7 +593,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
                             font_style: 'H4'
@@ -612,7 +605,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
                             font_style: 'H4'
@@ -633,7 +625,6 @@ NavigationLayout:
             BoxLayout:
                 MDCheckbox:
                     id:            chkbox
-                    size_hint:    None, None
                     size:        dp(48), dp(64)
                     active: True
                 MDLabel:
@@ -718,7 +709,6 @@ NavigationLayout:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size_hint: 1, None
                     height: dp(40)
                     on_press: root.get_available_credits(self)
                     MDLabel:
@@ -763,7 +753,6 @@ NavigationLayout:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size_hint: 1, None
                     height: dp(40)
                     MDLabel:
                         font_style: 'H4'
@@ -807,7 +796,6 @@ NavigationLayout:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size_hint: 1, None
                     height: dp(40)
                     MDLabel:
                         font_style: 'H4'
@@ -819,7 +807,6 @@ NavigationLayout:
 
 <GrashofPopup>:
     id: popup
-    size_hint : (None,None)
     height: 2*(label.height + address.height) + 10
     width :app.window_size[0] - app.window_size[0]/10
     title: 'add contact\'s'
@@ -852,7 +839,6 @@ NavigationLayout:
             orientation: 'horizontal'
             MDRaisedButton:
                 id: save_addr
-                size_hint: 1.5, None
                 height: dp(40)
                 on_release:                 
                     root.savecontact()
@@ -863,7 +849,6 @@ NavigationLayout:
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
-                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: root.close_pop()
@@ -874,7 +859,6 @@ NavigationLayout:
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
-                size_hint: 2, None
                 height: dp(40)
                 MDLabel:
                     font_style: 'H4'
@@ -965,7 +949,6 @@ NavigationLayout:
 
 <MyaddDetailPopup>:
     id: myadd_popup
-    size_hint : (None,None)
     height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
     width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
@@ -1010,7 +993,6 @@ NavigationLayout:
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
-                size_hint: 2, None
                 height: dp(40)
                 on_press: root.send_message_from()
                 MDLabel:
@@ -1020,7 +1002,6 @@ NavigationLayout:
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
-                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: app.root.ids.scr_mngr.current = 'showqrcode'
@@ -1032,7 +1013,6 @@ NavigationLayout:
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
-                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: root.close_pop()
@@ -1045,7 +1025,6 @@ NavigationLayout:
 
 <AddbookDetailPopup>:
     id: addbook_popup
-    size_hint : (None,None)
     height: 4*(add_label.height)
     width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
@@ -1092,7 +1071,6 @@ NavigationLayout:
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
-                size_hint: 2, None
                 height: dp(40)
                 on_press: root.send_message_to()
                 MDLabel:
@@ -1102,7 +1080,6 @@ NavigationLayout:
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
-                size_hint: 1.5, None
                 height: dp(40)
                 font_size: '10sp'
                 on_press: root.update_addbook_label(root.address)
@@ -1113,7 +1090,6 @@ NavigationLayout:
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
-                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: root.close_pop()

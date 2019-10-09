@@ -328,8 +328,8 @@ class BMConnectionPool(object):
 
         reaper = []
         for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values()
+                list(self.inboundConnections.values()) +
+                list(self.outboundConnections.values())
         ):
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -342,10 +342,10 @@ class BMConnectionPool(object):
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values() +
-                self.listeningSockets.values() +
-                self.udpSockets.values()
+                list(self.inboundConnections.values()) +
+                list(self.outboundConnections.values()) +
+                list(self.listeningSockets.values()) +
+                list(self.udpSockets.values())
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

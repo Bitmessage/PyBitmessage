@@ -158,7 +158,7 @@ def encodeAddress(version, stream, ripe):
             raise Exception(
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.')
-        ripe = ripe.lstrip('\x00')
+        ripe = ripe.lstrip('\x00'.encode('utf-8'))
 
     storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
 
@@ -264,7 +264,8 @@ def decodeAddress(address):
             return 'ripetoolong', 0, 0, ''
         elif len(embeddedRipeData) < 4:
             return 'ripetooshort', 0, 0, ''
-        x00string = '\x00' * (20 - len(embeddedRipeData))
+        x00string = '\x00'.encode('utf-8') * (20 - len(embeddedRipeData))
+
         return status, addressVersionNumber, streamNumber, \
             x00string + embeddedRipeData
 

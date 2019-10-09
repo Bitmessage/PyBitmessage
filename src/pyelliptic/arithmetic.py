@@ -39,11 +39,13 @@ def get_code_string(base):
 
 def encode(val, base, minlen=0):
     code_string = get_code_string(base)
-    result = ""
-    result = str.encode(result)
+    result = ''
+    # result = str.encode(result)
     count = 0
     while val > 0:
         count += 1
+        print(f'code_string[int(val) % base:int(val) % base + 1] -{code_string[int(val) % base:int(val) % base + 1]}')
+        print(f'result-{result}')
         result = code_string[int(val) % base:int(val) % base + 1] + result
         val = int(val / base)
     if len(result) < minlen:
@@ -53,13 +55,12 @@ def encode(val, base, minlen=0):
 
 def decode(string, base):
     code_string = get_code_string(base)
-    string.decode()
     result = 0
     if base == 16:
         string = string.lower()
     while string:
         result *= base
-        result += code_string.find(string.decode()[0])
+        result += code_string.find(string[0])
         string = string[1:]
     return result
 
