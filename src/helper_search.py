@@ -10,13 +10,15 @@ except ImportError:
 
 
 def search_translate(context, text):
+    """Translation wrapper"""
     if haveQt:
         return QtGui.QApplication.translate(context, text)
-    else:
-        return text.lower()
+    return text.lower()
 
 
 def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
+    """Perform a search in mailbox tables"""
+    # pylint: disable=too-many-arguments, too-many-branches
     if what is not None and what != "":
         what = "%" + what + "%"
         if where == search_translate("MainWindow", "To"):
@@ -64,7 +66,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlArguments.append(what)
     if unreadOnly:
         sqlStatementParts.append("read = 0")
-    if len(sqlStatementParts) > 0:
+    if sqlStatementParts:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
     if folder == "sent":
         sqlStatementBase += " ORDER BY lastactiontime"
@@ -72,6 +74,8 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
 
 
 def check_match(toAddress, fromAddress, subject, message, where=None, what=None):
+    """Check if a single message matches a filter (used when new messages are added to messagelists)"""
+    # pylint: disable=too-many-arguments
     if what is not None and what != "":
         if where in (search_translate("MainWindow", "To"), search_translate("MainWindow", "All")):
             if what.lower() not in toAddress.lower():
