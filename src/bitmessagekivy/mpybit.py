@@ -61,9 +61,8 @@ import identiconGeneration
 
 def toast(text):
     """Method will display the toast message."""
-    if platform == 'linux':
-        from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
-        toast(text)
+    from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
+    toast(text)
     return
 
 
@@ -379,8 +378,9 @@ class AddressBook(Screen):
     @staticmethod
     def refreshs(*args):
         """Refresh the Widget."""
-        state.navinstance.ids.sc11.ids.ml.clear_widgets()
-        state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
+        # state.navinstance.ids.sc11.ids.ml.clear_widgets()
+        # state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
+        pass
 
     @staticmethod
     def addBook_detail(address, label, *args):
@@ -1094,7 +1094,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         """Getting default image on address"""
         if BMConfigParser().addresses():
             return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
-        return ''
+        return './images/no_identicons.png'
 
     @staticmethod
     def addressexist():
@@ -1299,10 +1299,12 @@ class GrashofPopup(Popup):
         stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         if label and address and address not in stored_address:
-            state.navinstance = self.parent.children[1]
+            # state.navinstance = self.parent.children[1]
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
+            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
 
@@ -1809,16 +1811,12 @@ class Allmails(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
-        inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, msgid from\
-            inbox WHERE folder = 'inbox' and toaddress = '{}';".format(
-                account))
-        sent_and_draft = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, ackdata from sent \
-            WHERE folder = 'sent' and fromaddress = '{}';".format(
-                account))
-
-        all_mails = inbox + sent_and_draft
+        all_mails = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime) As actionTime \
+                FROM sent \
+                UNION \
+            SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As  actionTime \
+                FROM inbox ORDER BY actionTime DESC")
         if all_mails:
             state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
             state.all_count = str(len(all_mails))
