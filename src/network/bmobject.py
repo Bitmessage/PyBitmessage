@@ -1,7 +1,5 @@
 """
-src/network/bmobject.py
-======================
-
+BMObject and it's exceptions.
 """
 
 import time

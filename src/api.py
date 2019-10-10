@@ -1,18 +1,14 @@
 # pylint: disable=too-many-locals,too-many-lines,no-self-use,too-many-public-methods,too-many-branches
 # pylint: disable=too-many-statements
-"""
-src/api.py
-==========
 
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2019 The Bitmessage developers
 
+"""
 This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
-
-from __future__ import absolute_import
 
 import base64
 import errno

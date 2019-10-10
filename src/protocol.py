@@ -1,12 +1,7 @@
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements,too-many-locals,too-many-statements
 """
-protocol.py
-===========
-
 Low-level protocol-related functions.
 """
-
-from __future__ import absolute_import
 
 import base64
 import hashlib
@@ -205,12 +200,13 @@ def isProofOfWorkSufficient(data,
                             recvTime=0):
     """
     Validate an object's Proof of Work using method described in:
-        https://bitmessage.org/wiki/Proof_of_work
+    https://bitmessage.org/wiki/Proof_of_work
+
     Arguments:
         int nonceTrialsPerByte (default: from default.py)
         int payloadLengthExtraBytes (default: from default.py)
         float recvTime (optional) UNIX epoch time when object was
-          received from the network (default: current system time)
+        received from the network (default: current system time)
     Returns:
         True if PoW valid and sufficient, False in all other cases
     """

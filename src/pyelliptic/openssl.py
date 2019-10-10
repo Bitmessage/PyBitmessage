@@ -1,14 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-src/pyelliptic/openssl.py
-=====================
-"""
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
 # pylint: disable=protected-access
+"""
+This module loads openssl libs with ctypes and incapsulates
+needed openssl functionality in class _OpenSSL.
+"""
 
 import sys
 import ctypes
