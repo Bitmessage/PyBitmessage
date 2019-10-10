@@ -2,9 +2,11 @@
 SQL-related functions defined here are really pass the queries (or other SQL
 commands) to :class:`.threads.sqlThread` through `sqlSubmitQueue` queue and check
 or return the result got from `sqlReturnQueue`.
+
 This is done that way because :mod:`sqlite3` is so thread-unsafe that they
 won't even let you call it from different threads using your own locks.
 SQLite objects can only be used from one thread.
+
 .. note:: This actually only applies for certain deployments, and/or
    really old version of sqlite. I haven't actually seen it anywhere.
    Current versions do have support for threading and multiprocessing.
@@ -92,13 +94,15 @@ def sqlExecute(sqlStatement, *args):
     sqlLock.release()
     return rowcount
 
+
 def sqlStoredProcedure(procName):
+    """Schedule procName to be run"""
     sqlLock.acquire()
     sqlSubmitQueue.put(procName)
     sqlLock.release()
 
 
-class SqlBulkExecute:
+class SqlBulkExecute(object):
     """This is used when you have to execute the same statement in a cycle."""
 
     def __enter__(self):
