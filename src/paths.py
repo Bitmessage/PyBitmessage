@@ -46,7 +46,7 @@ def lookupAppdataFolder():
             dataFolder = os.path.join(
                 os.environ['HOME'],
                 'Library/Application Support/', APPNAME
-            ) + '/'  # FIXME: should also be os.path.sep
+            ) + '/'  # ..fixme:: should also be os.path.sep
         except KeyError:
             sys.exit(
                 'Could not find home folder, please report this message'
@@ -78,12 +78,12 @@ def lookupAppdataFolder():
 
 def codePath():
     """Returns path to the program sources"""
+    # pylint: disable=protected-access
     if not frozen:
         return os.path.dirname(__file__)
     return (
         os.environ.get('RESOURCEPATH')
         if frozen == "macosx_app" else sys._MEIPASS)
-
 
 
 def tail(f, lines=20):
