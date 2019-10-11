@@ -61,9 +61,8 @@ import identiconGeneration
 
 def toast(text):
     """Method will display the toast message."""
-    if platform == 'linux':
-        from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
-        toast(text)
+    from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
+    toast(text)
     return
 
 
@@ -119,7 +118,7 @@ class Inbox(Screen):
                     'secondary_text': mail[5][:50] + '........' if len(
                         mail[5]) >= 50 else (
                             mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
-                    'receivedTime': mail[6]})
+                    'msgid': mail[1]})
             for item in data:
                 meny = TwoLineAvatarIconListItem(
                     text=item['text'],
@@ -130,7 +129,7 @@ class Inbox(Screen):
                     source='./images/text_images/{}.png'.format(
                         avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
-                    self.inbox_detail, item['receivedTime']))
+                    self.inbox_detail, item['msgid']))
                 carousel = Carousel(direction='right')
                 carousel.height = meny.height
                 carousel.size_hint_y = None
@@ -141,13 +140,13 @@ class Inbox(Screen):
                 del_btn.background_normal = ''
                 del_btn.background_color = (1, 0, 0, 1)
                 del_btn.bind(on_press=partial(
-                    self.delete, item['receivedTime']))
+                    self.delete, item['msgid']))
                 carousel.add_widget(del_btn)
                 carousel.add_widget(meny)
                 ach_btn = Button(text='Achieve')
                 ach_btn.background_color = (0, 1, 0, 1)
                 ach_btn.bind(on_press=partial(
-                    self.archive, item['receivedTime']))
+                    self.archive, item['msgid']))
                 carousel.add_widget(ach_btn)
                 carousel.index = 1
                 self.ids.ml.add_widget(carousel)
@@ -163,10 +162,10 @@ class Inbox(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def inbox_detail(self, receivedTime, *args):
+    def inbox_detail(self, msg_id, *args):
         """Load inbox page details."""
         state.detailPageType = 'inbox'
-        state.sentMailTime = receivedTime
+        state.mail_id = msg_id
         if self.manager:
             src_mng_obj = self.manager
         else:
@@ -178,7 +177,7 @@ class Inbox(Screen):
     def delete(self, data_index, instance, *args):
         """Delete inbox mail from inbox listing."""
         sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
+            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                 data_index))
         try:
             msg_count_objs = \
@@ -207,7 +206,7 @@ class Inbox(Screen):
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing."""
         sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
+            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                 data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
@@ -379,8 +378,9 @@ class AddressBook(Screen):
     @staticmethod
     def refreshs(*args):
         """Refresh the Widget."""
-        state.navinstance.ids.sc11.ids.ml.clear_widgets()
-        state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
+        # state.navinstance.ids.sc11.ids.ml.clear_widgets()
+        # state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
+        pass
 
     @staticmethod
     def addBook_detail(address, label, *args):
@@ -465,15 +465,15 @@ class DropDownWidget(BoxLayout):
                 if status == 'success':
                     if state.detailPageType == 'draft' and state.send_draft_mail:
                         sqlExecute(
-                            "UPDATE sent SET toaddress = '{0}' \
-                            , fromaddress ='{1}' , subject = '{2}'\
-                            , message = '{3}', folder = 'sent'\
-                            WHERE lastactiontime = '{4}';".format(
-                                toAddress,
-                                fromAddress,
-                                subject,
-                                message,
-                                state.send_draft_mail))
+                            "UPDATE sent SET toaddress = ? \
+                            , fromaddress = ? , subject = ?\
+                            , message = ?, folder = 'sent'\
+                            WHERE ackdata = ?;",
+                            toAddress,
+                            fromAddress,
+                            subject,
+                            message,
+                            str(state.send_draft_mail))
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
                         state.detailPageType = ''
@@ -558,6 +558,7 @@ class DropDownWidget(BoxLayout):
         self.ids.txt_input.text = ''
         self.ids.subject.text = ''
         self.ids.body.text = ''
+        toast("Reset message")
 
     def auto_fill_fromaddr(self):
         """Mehtod used to fill the text automatically From Address."""
@@ -690,12 +691,13 @@ class Random(Screen):
                 label, 1, "", eighteenByteRipe,
                 nonceTrialsPerByte,
                 payloadLengthExtraBytes))
-            self.manager.current = 'myaddress'
             self.ids.label.text = ''
             self.parent.parent.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
             self.parent.parent.parent.parent.ids.sc10.ids.ml.clear_widgets()
+            self.manager.current = 'myaddress'
             self.parent.parent.parent.parent.ids.sc10.init_ui()
+            self.manager.current = 'myaddress'
             toast('New address created')
 
 
@@ -752,7 +754,7 @@ class Sent(Screen):
                     'secondary_text': mail[2][:50] + '........' if len(
                         mail[2]) >= 50 else (
                             mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
-                    'lastactiontime': mail[6]})
+                    'ackdata': mail[5]})
             for item in data:
                 meny = TwoLineAvatarIconListItem(
                     text=item['text'],
@@ -763,7 +765,7 @@ class Sent(Screen):
                     source='./images/text_images/{}.png'.format(
                         avatarImageFirstLetter(item['secondary_text'].strip()))))
                 meny.bind(on_press=partial(
-                    self.sent_detail, item['lastactiontime']))
+                    self.sent_detail, item['ackdata']))
                 carousel = Carousel(direction='right')
                 carousel.height = meny.height
                 carousel.size_hint_y = None
@@ -774,13 +776,13 @@ class Sent(Screen):
                 del_btn.background_normal = ''
                 del_btn.background_color = (1, 0, 0, 1)
                 del_btn.bind(on_press=partial(
-                    self.delete, item['lastactiontime']))
+                    self.delete, item['ackdata']))
                 carousel.add_widget(del_btn)
                 carousel.add_widget(meny)
                 ach_btn = Button(text='Achieve')
                 ach_btn.background_color = (0, 1, 0, 1)
                 ach_btn.bind(on_press=partial(
-                    self.archive, item['lastactiontime']))
+                    self.archive, item['ackdata']))
                 carousel.add_widget(ach_btn)
                 carousel.index = 1
                 self.ids.ml.add_widget(carousel)
@@ -796,10 +798,10 @@ class Sent(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def sent_detail(self, lastsenttime, *args):
+    def sent_detail(self, ackdata, *args):
         """Load sent mail details."""
         state.detailPageType = 'sent'
-        state.sentMailTime = lastsenttime
+        state.mail_id = ackdata
         if self.manager:
             src_mng_obj = self.manager
         else:
@@ -828,7 +830,7 @@ class Sent(Screen):
             state.all_count = str(int(state.all_count) - 1)
         sqlExecute(
             "UPDATE sent SET folder = 'trash' \
-            WHERE lastactiontime = {};".format(data_index))
+            WHERE ackdata = ?;", str(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
         self.update_trash()
@@ -837,7 +839,7 @@ class Sent(Screen):
         """Archive sent mail from sent mail listing."""
         sqlExecute(
             "UPDATE sent SET folder = 'trash' \
-            WHERE lastactiontime = {};".format(data_index))
+            WHERE ackdata = ?;", str(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -1094,7 +1096,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         """Getting default image on address"""
         if BMConfigParser().addresses():
             return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
-        return ''
+        return './images/no_identicons.png'
 
     @staticmethod
     def addressexist():
@@ -1158,6 +1160,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.toolbar.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
         self.root.ids.toolbar.right_action_items = [
+            ['refresh', lambda x: self.root.ids.sc3.children[0].reset_composer()],
             ['send', lambda x: self.root.ids.sc3.children[0].send(self)]]
 
     def back_press(self):
@@ -1167,7 +1170,9 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.toolbar.left_action_items = \
             [['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.scr_mngr.current = 'inbox' \
-            if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
+            if state.in_composer else 'allmails'\
+            if state.is_allmail else state.detailPageType\
+            if state.detailPageType else 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1299,10 +1304,12 @@ class GrashofPopup(Popup):
         stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         if label and address and address not in stored_address:
-            state.navinstance = self.parent.children[1]
+            # state.navinstance = self.parent.children[1]
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
+            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
 
@@ -1422,8 +1429,7 @@ class MailDetail(Screen):
         if state.detailPageType == 'sent' or state.detailPageType == 'draft':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message, status, \
-                ackdata from sent where lastactiontime = {};".format(
-                    state.sentMailTime))
+                ackdata from sent where ackdata = ?;", state.mail_id)
             state.status = self
             state.ackdata = data[0][5]
             self.assign_mail_details(data)
@@ -1431,7 +1437,7 @@ class MailDetail(Screen):
         elif state.detailPageType == 'inbox':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message from inbox \
-                where received = {};".format(state.sentMailTime))
+                where msgid = ?;", str(state.mail_id))
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
 
@@ -1455,7 +1461,7 @@ class MailDetail(Screen):
         if state.detailPageType == 'sent':
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE \
-                lastactiontime = {};".format(state.sentMailTime))
+                ackdata = ?;", str(state.mail_id))
             msg_count_objs.send_cnt.badge_text = str(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             self.parent.screens[3].ids.ml.clear_widgets()
@@ -1463,15 +1469,14 @@ class MailDetail(Screen):
         elif state.detailPageType == 'inbox':
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
-                received = {};".format(state.sentMailTime))
-            # msg_count_objs.inbox_cnt.badge_text = str(
-            # int(state.inbox_count) - 1)
-            # state.inbox_count = str(int(state.inbox_count) - 1)
+                msgid = ?;", str(state.mail_id))
+            msg_count_objs.inbox_cnt.badge_text = str(int(state.inbox_count) - 1)
+            state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
             self.parent.screens[0].loadMessagelist(state.association)
         elif state.detailPageType == 'draft':
-            sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
-                state.sentMailTime))
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
+                state.mail_id))
             msg_count_objs.draft_cnt.badge_text = str(int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
             self.parent.screens[15].clear_widgets()
@@ -1494,7 +1499,7 @@ class MailDetail(Screen):
         """Method used for replying inbox messages."""
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message from inbox where \
-            received = {};".format(state.sentMailTime))
+            msgid = ?;", str(state.mail_id))
         composer_obj = self.parent.screens[2].children[0].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
@@ -1511,7 +1516,7 @@ class MailDetail(Screen):
 
     def write_msg(self, navApp):
         """Method used to write on draft mail."""
-        state.send_draft_mail = state.sentMailTime
+        state.send_draft_mail = state.mail_id
         composer_ids = \
             self.parent.parent.parent.parent.ids.sc3.children[0].ids
         composer_ids.ti.text = state.write_msg['from_addr']
@@ -1595,7 +1600,7 @@ class AddbookDetailPopup(Popup):
         window_obj = self.parent.children[1].ids
         window_obj.sc3.children[0].ids.txt_input.text = self.address
         window_obj.sc3.children[0].ids.ti.text = ''
-        window_obj.sc3.children[0].ids.btn.text = ''
+        window_obj.sc3.children[0].ids.btn.text = 'Select'
         window_obj.sc3.children[0].ids.subject.text = ''
         window_obj.sc3.children[0].ids.body.text = ''
         window_obj.scr_mngr.current = 'create'
@@ -1662,7 +1667,7 @@ class Draft(Screen):
                         mail[2]) > 10 else mail[2] + '\n' + " " + (
                             third_text[:25] + '...!') if len(
                                 third_text) > 25 else third_text,
-                    'lastactiontime': mail[6]})
+                    'ackdata': mail[5]})
             for item in self.data:
                 meny = TwoLineAvatarIconListItem(
                     text='Draft',
@@ -1672,7 +1677,7 @@ class Draft(Screen):
                 meny.add_widget(AvatarSampleWidget(
                     source='./images/avatar.png'))
                 meny.bind(on_press=partial(
-                    self.draft_detail, item['lastactiontime']))
+                    self.draft_detail, item['ackdata']))
                 carousel = Carousel(direction='right')
                 carousel.height = meny.height
                 carousel.size_hint_y = None
@@ -1683,7 +1688,7 @@ class Draft(Screen):
                 del_btn.background_normal = ''
                 del_btn.background_color = (1, 0, 0, 1)
                 del_btn.bind(on_press=partial(
-                    self.delete_draft, item['lastactiontime']))
+                    self.delete_draft, item['ackdata']))
                 carousel.add_widget(del_btn)
                 carousel.add_widget(meny)
                 carousel.index = 1
@@ -1699,10 +1704,10 @@ class Draft(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def draft_detail(self, lastsenttime, *args):
+    def draft_detail(self, ackdata, *args):
         """Method used to show draft Details."""
         state.detailPageType = 'draft'
-        state.sentMailTime = lastsenttime
+        state.mail_id = ackdata
         if self.manager:
             src_mng_obj = self.manager
         else:
@@ -1713,7 +1718,7 @@ class Draft(Screen):
 
     def delete_draft(self, data_index, instance, *args):
         """Method used to delete draft message permanently."""
-        sqlExecute("DELETE FROM  sent WHERE lastactiontime = '{}';".format(
+        sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
             data_index))
         try:
             msg_count_objs = \
@@ -1728,7 +1733,6 @@ class Draft(Screen):
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
-    # pylint: disable=unused-variable
     @staticmethod
     def draft_msg(src_object):
         """Method used for saving draft mails."""
@@ -1814,16 +1818,11 @@ class Allmails(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
-        inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, received from\
-            inbox WHERE folder = 'inbox' and toaddress = '{}';".format(
-                account))
-        sent_and_draft = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, lastactiontime from sent \
-            WHERE folder = 'sent' and fromaddress = '{}';".format(
-                account))
-
-        all_mails = inbox + sent_and_draft
+        all_mails = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime)"
+            " As actionTime FROM sent WHERE folder = 'sent' UNION"
+            " SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As"
+            " actionTime FROM inbox WHERE folder = 'inbox' ORDER BY actionTime DESC")
         if all_mails:
             state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
             state.all_count = str(len(all_mails))
@@ -1870,7 +1869,7 @@ class Allmails(Screen):
         """Load sent and inbox mail details."""
         state.detailPageType = folder
         state.is_allmail = True
-        state.sentMailTime = unique_id
+        state.mail_id = unique_id
         if self.manager:
             src_mng_obj = self.manager
         else:
@@ -1883,11 +1882,11 @@ class Allmails(Screen):
         """Delete inbox mail from all mail listing listing."""
         if folder == 'inbox':
             sqlExecute(
-                "UPDATE inbox SET folder = 'trash' WHERE received = {};".format(
+                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                     unique_id))
         else:
             sqlExecute(
-                "UPDATE sent SET folder = 'trash' WHERE lastactiontime = {};".format(
+                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;", str(
                     unique_id))
         self.ids.ml.remove_widget(instance.parent.parent)
         try:

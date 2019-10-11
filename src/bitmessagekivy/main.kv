@@ -1,42 +1,18 @@
 
 #:import Toolbar kivymd.toolbar.Toolbar
-#:import ThemeManager kivymd.theming.ThemeManager
-#:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
 #:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
 #:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
-#:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
 #:import NavigationDrawerSubheader kivymd.navigationdrawer.NavigationDrawerSubheader
 #:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
-#:import MDSwitch kivymd.selectioncontrols.MDSwitch
 #:import MDList kivymd.list.MDList
 #:import OneLineListItem kivymd.list.OneLineListItem
-#:import TwoLineListItem kivymd.list.TwoLineListItem
-#:import ThreeLineListItem kivymd.list.ThreeLineListItem
-#:import OneLineAvatarListItem kivymd.list.OneLineAvatarListItem
-#:import OneLineIconListItem kivymd.list.OneLineIconListItem
-#:import OneLineAvatarIconListItem kivymd.list.OneLineAvatarIconListItem
 #:import MDTextField kivymd.textfields.MDTextField
-#:import MDSpinner kivymd.spinner.MDSpinner
-#:import MDCard kivymd.card.MDCard
-#:import MDSeparator kivymd.card.MDSeparator
-#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
 #:import get_color_from_hex kivy.utils.get_color_from_hex
 #:import colors kivymd.color_definitions.colors
-#:import SmartTile kivymd.grid.SmartTile
-#:import MDSlider kivymd.slider.MDSlider
 #:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
 #:import MDTab kivymd.tabs.MDTab
-#:import MDProgressBar kivymd.progressbar.MDProgressBar
-#:import MDAccordion kivymd.accordion.MDAccordion
-#:import MDAccordionItem kivymd.accordion.MDAccordionItem
-#:import MDAccordionSubItem kivymd.accordion.MDAccordionSubItem
-#:import MDThemePicker kivymd.theme_picker.MDThemePicker
-#:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
-#:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
 #:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
 #:import Factory kivy.factory.Factory
-#:import MDTextButton kivymd.button.MDTextButton
-#:import FadeTransition kivy.uix.screenmanager.FadeTransition
 #:import MDScrollViewRefreshLayout kivymd.refreshlayout.MDScrollViewRefreshLayout
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
@@ -55,8 +31,7 @@
 <ContentNavigationDrawer@Navigatorss>:
     drawer_logo: app.address_identicon()
     NavigationDrawerDivider:
-    
-    NavigationDrawerTwoLineListItem:
+    NavigationDrawerSubheader:
         text: "Accounts"
     NavigationDrawerIconButton:
         CustomSpinner:
@@ -143,7 +118,7 @@
         on_press: app.refreshScreen(self)                                   
     NavigationDrawerIconButton: 
         text: "Subscriptions/Payment"
-        icon:'wallet'
+        icon:'bell'
         on_release: app.root.ids.scr_mngr.current = 'payment'
         on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
@@ -417,17 +392,6 @@ NavigationLayout:
                 helper_text_mode: "on_error"
             BoxLayout:
                 spacing:50
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: 1, None
-                        height: dp(40)
-                        on_press: root.reset_composer()
-                        MDLabel:
-                            font_style: 'Title'
-                            text: 'reset'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
 
 <MyTextInput>:
     readonly: False

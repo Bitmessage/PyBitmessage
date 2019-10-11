@@ -67,7 +67,7 @@ kivyapp = None
 
 navinstance = None
 
-sentMailTime = 0
+mail_id = 0
 
 myAddressObj = None
 

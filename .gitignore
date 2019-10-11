@@ -20,3 +20,4 @@ docs/autodoc/
 pyan/
 .buildozer/
 bin/
+src/images/default_identicon/
