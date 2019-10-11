@@ -3,7 +3,6 @@ src/paths.py
 ============
 """
 # pylint: disable=import-error
-
 import logging
 import os
 import re
@@ -11,7 +10,6 @@ import sys
 from datetime import datetime
 from shutil import move
 from kivy.utils import platform
-
 
 logger = logging.getLogger('default')
 
@@ -54,8 +52,7 @@ def lookupAppdataFolder():
                 'Could not find home folder, please report this message'
                 ' and your OS X version to the BitMessage Github.')
     elif platform == 'android':
-        dataFolder = os.path.join(
-            os.environ['ANDROID_PRIVATE'] + '/', APPNAME) + '/'
+        dataFolder = os.path.join(os.environ['ANDROID_PRIVATE'] + '/', APPNAME) + '/'
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         dataFolder = os.path.join(
             os.environ['APPDATA'].decode(
@@ -88,6 +85,7 @@ def codePath():
         if frozen == "macosx_app" else sys._MEIPASS)
 
 
+
 def tail(f, lines=20):
     """Returns last lines in the f file object"""
     total_lines_wanted = lines
@@ -97,9 +95,9 @@ def tail(f, lines=20):
     block_end_byte = f.tell()
     lines_to_go = total_lines_wanted
     block_number = -1
+    blocks = []
     # blocks of size BLOCK_SIZE, in reverse order starting
     # from the end of the file
-    blocks = []
     while lines_to_go > 0 and block_end_byte > 0:
         if block_end_byte - BLOCK_SIZE > 0:
             # read the last block we haven't yet read
