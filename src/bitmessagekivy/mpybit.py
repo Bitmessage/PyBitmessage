@@ -1170,7 +1170,9 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.toolbar.left_action_items = \
             [['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.scr_mngr.current = 'inbox' \
-            if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType if state.detailPageType else 'inbox'
+            if state.in_composer else 'allmails'\
+            if state.is_allmail else state.detailPageType\
+            if state.detailPageType else 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1817,11 +1819,10 @@ class Allmails(Screen):
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
         all_mails = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime) As actionTime \
-                FROM sent WHERE folder = 'sent'\
-                UNION \
-            SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As  actionTime \
-                FROM inbox WHERE folder = 'inbox' ORDER BY actionTime DESC")
+            "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime)"
+            " As actionTime FROM sent WHERE folder = 'sent' UNION"
+            " SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As"
+            " actionTime FROM inbox WHERE folder = 'inbox' ORDER BY actionTime DESC")
         if all_mails:
             state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
             state.all_count = str(len(all_mails))
