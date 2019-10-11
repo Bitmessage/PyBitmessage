@@ -3,12 +3,16 @@ src/paths.py
 ============
 """
 # pylint: disable=import-error
-from os import environ, path
-import sys
-import re
+import logging
 import os
+import re
+import sys
 from datetime import datetime
+from shutil import move
 from kivy.utils import platform
+
+logger = logging.getLogger('default')
+
 # When using py2exe or py2app, the variable frozen is added to the sys
 # namespace.  This can be used to setup a different code path for
 # binary distributions vs source distributions.
@@ -16,86 +20,74 @@ frozen = getattr(sys, 'frozen', None)
 
 
 def lookupExeFolder():
-    """
-    Folder with PyBitmessage binary (.exe, .app, ...). If it is run from source, it returns the source root
-    directory
-    """
+    """Returns executable folder path"""
     if frozen:
-        if frozen == "macosx_app":
+        exeFolder = (
             # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
-            exeFolder = path.dirname(path.dirname(path.dirname(path.dirname(sys.executable)))) + path.sep
-        else:
-            exeFolder = path.dirname(sys.executable) + path.sep
+            os.path.dirname(sys.executable).split(os.path.sep)[0] + os.path.sep
+            if frozen == "macosx_app" else
+            os.path.dirname(sys.executable) + os.path.sep)
     elif __file__:
-        exeFolder = path.dirname(__file__) + path.sep
+        exeFolder = os.path.dirname(__file__) + os.path.sep
     else:
         exeFolder = ''
     return exeFolder
 
 
-def lookupAppdataFolder():    # pylint: disable=too-many-branches
-    """Folder with runtime data (like configuration, database, ...)"""
-    # flake8: noqa=F821
-    import traceback
-    print traceback.print_tb
+def lookupAppdataFolder():
+    """Returns path of the folder where application data is stored"""
     APPNAME = "PyBitmessage"
-    if "BITMESSAGE_HOME" in environ:
-        dataFolder = environ["BITMESSAGE_HOME"]
-        if dataFolder[-1] not in [path.sep, path.altsep]:
-            dataFolder += path.sep
+    dataFolder = os.environ.get('BITMESSAGE_HOME')
+    if dataFolder:
+        if dataFolder[-1] not in (os.path.sep, os.path.altsep):
+            dataFolder += os.path.sep
     elif sys.platform == 'darwin':
-        if "HOME" in environ:
-            dataFolder = path.join(environ["HOME"], "Library/Application Support/", APPNAME) + '/'
-        else:
-            stringToLog = (
+        try:
+            dataFolder = os.path.join(
+                os.environ['HOME'],
+                'Library/Application Support/', APPNAME
+            ) + '/'  # FIXME: should also be os.path.sep
+        except KeyError:
+            sys.exit(
                 'Could not find home folder, please report this message'
                 ' and your OS X version to the BitMessage Github.')
-            if 'logger' in globals():
-                logger.critical(stringToLog)    # pylint: disable=undefined-variable
-            else:
-                print stringToLog
-            sys.exit()
     elif platform == 'android':
-        dataFolder = path.join(os.environ['ANDROID_PRIVATE'] + '/', APPNAME) + '/'
-
+        dataFolder = os.path.join(os.environ['ANDROID_PRIVATE'] + '/', APPNAME) + '/'
     elif 'win32' in sys.platform or 'win64' in sys.platform:
-        dataFolder = path.join(environ['APPDATA'].decode(sys.getfilesystemencoding(), 'ignore'), APPNAME) + path.sep
+        dataFolder = os.path.join(
+            os.environ['APPDATA'].decode(
+                sys.getfilesystemencoding(), 'ignore'), APPNAME
+        ) + os.path.sep
     else:
-        from shutil import move
         try:
-            dataFolder = path.join(environ["XDG_CONFIG_HOME"], APPNAME)
+            dataFolder = os.path.join(os.environ['XDG_CONFIG_HOME'], APPNAME)
         except KeyError:
-            dataFolder = path.join(environ["HOME"], ".config", APPNAME)
+            dataFolder = os.path.join(os.environ['HOME'], '.config', APPNAME)
 
-        # Migrate existing data to the proper location if this is an existing install
+        # Migrate existing data to the proper location
+        # if this is an existing install
         try:
-            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
-            stringToLog = "Moving data folder to %s" % (dataFolder)
-            if 'logger' in globals():
-                logger.info(stringToLog)    # pylint: disable=undefined-variable
-            else:
-                print stringToLog
+            move(os.path.join(os.environ['HOME'], '.%s' % APPNAME), dataFolder)
+            logger.info('Moving data folder to %s', dataFolder)
         except IOError:
             # Old directory may not exist.
             pass
-        dataFolder = dataFolder + '/'
+        dataFolder = dataFolder + os.path.sep
     return dataFolder
 
 
 def codePath():
-    """Return the code path of the running instance"""
-    # pylint: disable=redefined-outer-name
-    if frozen == "macosx_app":
-        codePath = environ.get("RESOURCEPATH")
-    elif frozen:     # windows
-        codePath = sys._MEIPASS    # pylint: disable=no-member,protected-access
-    else:
-        codePath = path.dirname(__file__)
-    return codePath
+    """Returns path to the program sources"""
+    if not frozen:
+        return os.path.dirname(__file__)
+    return (
+        os.environ.get('RESOURCEPATH')
+        if frozen == "macosx_app" else sys._MEIPASS)
+
 
 
 def tail(f, lines=20):
-    """Read last lines of a file. Like tail(1)"""
+    """Returns last lines in the f file object"""
     total_lines_wanted = lines
 
     BLOCK_SIZE = 1024
@@ -125,10 +117,12 @@ def tail(f, lines=20):
 
 
 def lastCommit():
-    """Git commitish of the currently checked out repository"""
-    githeadfile = path.join(codePath(), '..', '.git', 'logs', 'HEAD')
+    """
+    Returns last commit information as dict with 'commit' and 'time' keys
+    """
+    githeadfile = os.path.join(codePath(), '..', '.git', 'logs', 'HEAD')
     result = {}
-    if path.isfile(githeadfile):
+    if os.path.isfile(githeadfile):
         try:
             with open(githeadfile, 'rt') as githead:
                 line = tail(githead, 1)
