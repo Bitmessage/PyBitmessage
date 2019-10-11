@@ -16,8 +16,9 @@ class UIkivySignaler(Thread):
                 if command == 'writeNewAddressToTable':
                     label, address, streamNumber = data
                     state.kivyapp.variable_1.append(address)
-                elif command == 'rerenderAddressBook':
-                    state.kivyapp.obj_1.refreshs()
+                # elif command == 'rerenderAddressBook':
+                #     state.kivyapp.obj_1.refreshs()
+                # Need to discuss this
                 elif command == 'updateSentItemStatusByAckdata':
                     state.kivyapp.status_dispatching(data)
 
