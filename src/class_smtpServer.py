@@ -21,6 +21,7 @@ from version import softwareVersion
 SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
 
+
 class smtpServerChannel(smtpd.SMTPChannel):
     def smtp_EHLO(self, arg):
         if not arg:
@@ -113,9 +114,9 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         try:
             sender, domain = p.sub(r'\1', mailfrom).split("@")
             if domain != SMTPDOMAIN:
-                raise Exception("Bad domain %s", domain)
+                raise Exception("Bad domain %s" % domain)
             if sender not in BMConfigParser().addresses():
-                raise Exception("Nonexisting user %s", sender)
+                raise Exception("Nonexisting user %s" % sender)
         except Exception as err:
             logger.debug("Bad envelope from %s: %s", mailfrom, repr(err))
             msg_from = self.decode_header("from")
@@ -123,9 +124,9 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 msg_from = p.sub(r'\1', self.decode_header("from")[0])
                 sender, domain = msg_from.split("@")
                 if domain != SMTPDOMAIN:
-                    raise Exception("Bad domain %s", domain)
+                    raise Exception("Bad domain %s" % domain)
                 if sender not in BMConfigParser().addresses():
-                    raise Exception("Nonexisting user %s", sender)
+                    raise Exception("Nonexisting user %s" % sender)
             except Exception as err:
                 logger.error("Bad headers from %s: %s", msg_from, repr(err))
                 return
@@ -145,7 +146,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             try:
                 rcpt, domain = p.sub(r'\1', to).split("@")
                 if domain != SMTPDOMAIN:
-                    raise Exception("Bad domain %s", domain)
+                    raise Exception("Bad domain %s" % domain)
                 logger.debug("Sending %s to %s about %s", sender, rcpt, msg_subject)
                 self.send(sender, rcpt, msg_subject, body)
                 logger.info("Relayed %s to %s", sender, rcpt)

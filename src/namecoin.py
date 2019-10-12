@@ -258,7 +258,7 @@ class namecoinConnection(object):
                 resp = self.con.getresponse()
                 result = resp.read()
                 if resp.status != 200:
-                    raise Exception("Namecoin returned status %i: %s" % resp.status, resp.reason)
+                    raise Exception("Namecoin returned status %i: %s" % (resp.status, resp.reason))
             except:
                 logger.info("HTTP receive error")
         except:
@@ -288,7 +288,7 @@ class namecoinConnection(object):
             return result
 
         except socket.error as exc:
-            raise Exception("Socket error in RPC connection: %s" % str(exc))
+            raise Exception("Socket error in RPC connection: %s" % exc)
 
 
 def lookupNamecoinFolder():
