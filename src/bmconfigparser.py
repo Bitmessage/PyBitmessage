@@ -43,8 +43,10 @@ BMConfigDefaults = {
 
 @Singleton
 class BMConfigParser(ConfigParser.SafeConfigParser):
-    """Singleton class inherited from ConfigParser.SafeConfigParser
-    with additional methods specific to bitmessage config."""
+    """
+    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    with additional methods specific to bitmessage config.
+    """
 
     _temp = {}
 
