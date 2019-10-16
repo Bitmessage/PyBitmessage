@@ -1,8 +1,13 @@
-#! /usr/bin/env python
+"""
+This is based upon the singleton class from
+`tendo <https://github.com/pycontribs/tendo>`_
+which is under the Python Software Foundation License version 2
+"""
 
 import atexit
 import os
 import sys
+
 import state
 
 try:
@@ -15,10 +20,6 @@ class singleinstance:
     """
     Implements a single instance application by creating a lock file
     at appdata.
-
-    This is based upon the singleton class from tendo
-    https://github.com/pycontribs/tendo
-    which is under the Python Software Foundation License version 2
     """
     def __init__(self, flavor_id="", daemon=False):
         self.initialized = False
