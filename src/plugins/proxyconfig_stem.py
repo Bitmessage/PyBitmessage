@@ -18,7 +18,7 @@ class DebugLogger(object):
     """Safe logger wrapper for tor and plugin's logs"""
     # pylint: disable=too-few-public-methods
     def __init__(self):
-        self._logger = logging.getLogger(__name__.split('.', 1)[0])
+        self._logger = logging.getLogger('default')
         self._levels = {
             'err': 40,
             'warn': 30,

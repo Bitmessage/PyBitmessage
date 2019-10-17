@@ -6,8 +6,7 @@ import time
 from bmconfigparser import BMConfigParser
 
 
-#logger = logging.getLogger(__name__)
-logger = logging.getLogger('file_only')
+logger = logging.getLogger('default')
 
 
 DEFAULT_ENCODING = 'ISO8859-1'
