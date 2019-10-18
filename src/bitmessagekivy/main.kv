@@ -33,6 +33,9 @@
 #:import MDTextButton kivymd.uix.button.MDTextButton
 #:import FadeTransition kivy.uix.screenmanager.FadeTransition
 #:import MDScrollViewRefreshLayout kivymd.uix.refreshlayout.MDScrollViewRefreshLayout
+#:import MDTabsBase kivymd.uix.tab.MDTabsBase
+<Tab@BoxLayout+MDTabsBase>
+
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -50,8 +53,7 @@
 <ContentNavigationDrawer@Navigatorss>:
     drawer_logo: app.address_identicon()
     NavigationDrawerDivider:
-    
-    NavigationDrawerTwoLineListItem:
+    NavigationDrawerSubheader:
         text: "Accounts"
     NavigationDrawerIconButton:
         CustomSpinner:
@@ -138,7 +140,7 @@
         on_press: app.refreshScreen(self)                                   
     NavigationDrawerIconButton: 
         text: "Subscriptions/Payment"
-        icon:'wallet'
+        icon:'bell'
         on_release: app.root.ids.scr_mngr.current = 'payment'
         on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
@@ -410,16 +412,6 @@ NavigationLayout:
                 helper_text_mode: "on_error"
             BoxLayout:
                 spacing:50
-                AnchorLayout:
-                    MDRaisedButton:
-                        height: dp(40)
-                        on_press: root.reset_composer()
-                        MDLabel:
-                            font_style: 'H4'
-                            text: 'reset'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
 
 <MyTextInput>:
     readonly: False
@@ -465,19 +457,17 @@ NavigationLayout:
             padding: dp(10)
             BoxLayout:
                 MDLabel:
-                    font_style: 'Body1'
+                    font_style: 'Subtitle2'
                     theme_text_color: 'Primary'
                     text: "You may generate addresses by using either random numbers or by using a passphrase If you use a passphrase, the address is called a deterministic; address The Random Number option is selected by default but deterministic addresses have several \n pros and cons:\n"
                     halign: 'center'
-                    bold: True
                     color:app.theme_cls.primary_dark
             BoxLayout:
                 MDLabel:
-                    font_style: 'Caption'
+                    font_style: 'Subtitle2'
                     theme_text_color: 'Primary'
                     text: "If talk about pros You can recreate your addresses on any computer from memory, You need-not worry about backing up your keys.dat file as long as you can remember your passphrase and aside talk about cons You must remember (or write down) your  You must remember the address version number and the stream number along with your passphrase If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you"
                     halign: 'center'
-                    bold: True
                     color:app.theme_cls.primary_dark
             MDCheckbox:
                 id:            grp_chkbox_1
@@ -485,12 +475,11 @@ NavigationLayout:
                 active: True
                 allow_no_selection: False
             MDLabel:
-                font_style: 'Caption'
+                font_style: 'Body2'
                 theme_text_color: 'Primary'
                 text: "use a random number generator to make an address"
                 halign: 'center'
                 size_hint_y: None
-                bold: True
                 height: self.texture_size[1] + dp(4)
                 color: [0.941, 0, 0,1]
             MDCheckbox:
@@ -498,12 +487,11 @@ NavigationLayout:
                 group:        'test'
                 allow_no_selection: False
             MDLabel:
-                font_style: 'Caption'
+                font_style: 'Body2'
                 theme_text_color: 'Primary'
                 text: "use a pseudo number generator to make an address"
                 halign: 'center'
                 size_hint_y: None
-                bold: True
                 color: [0.941, 0, 0,1]
                 height: self.texture_size[1] + dp(4)
             BoxLayout:
@@ -512,7 +500,7 @@ NavigationLayout:
                         height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
                         MDLabel:
-                            font_style: 'H4'
+                            font_style: 'H6'
                             text: 'proceed'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -528,19 +516,17 @@ NavigationLayout:
             padding: dp(20)
             spacing: 100
             MDLabel:
-                font_style: 'Body1'
+                font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: "Random Addresses"
                 halign: 'center'
-                bold: True
                 color:app.theme_cls.primary_dark
 
             MDLabel:
-                font_style: 'Body1'
+                font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: "Here you may generate as many addresses as you like, Indeed creating and abandoning addresses is encouraged"
                 halign: 'center'
-                bold: True
                 color:app.theme_cls.primary_dark
 
             MDTextField:
@@ -556,7 +542,7 @@ NavigationLayout:
                         on_release: root.generateaddress(app)
                         opposite_colors: True
                         MDLabel:
-                            font_style: 'H4'
+                            font_style: 'H6'
                             text: 'next'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -581,9 +567,10 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
+                        size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
-                            font_style: 'H4'
+                            font_style: 'H6'
                             text: 'Server'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -593,9 +580,10 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
+                        size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
-                            font_style: 'H4'
+                            font_style: 'H6'
                             text: 'Import or export data'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -605,9 +593,10 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
+                        size_hint: .6, .55
                         height: dp(40)
                         MDLabel:
-                            font_style: 'H4'
+                            font_style: 'H6'
                             text: 'Restart background service'
                             font_size: '13sp'
                             color: (1,1,1,1)
@@ -619,12 +608,12 @@ NavigationLayout:
                         theme_text_color: 'Primary'
                         text: "bitmessage is 11 seconds behind the network"
                         halign: 'center'
-                        bold: True
                         color: [0.941, 0, 0,1]
 
             BoxLayout:
                 MDCheckbox:
                     id:            chkbox
+                    size_hint:    None, None
                     size:        dp(48), dp(64)
                     active: True
                 MDLabel:
@@ -632,7 +621,6 @@ NavigationLayout:
                     theme_text_color: 'Primary'
                     text: "show settings (for advanced users only)"
                     halign: 'left'
-                    bold: True
                     color: app.theme_cls.primary_dark
 
 <MyAddress>:
@@ -684,20 +672,20 @@ NavigationLayout:
                         size: self.size
                 MDLabel:
                     size_hint_y: None
-                    font_style: 'Subtitle1'
+                    font_style: 'H5'
                     theme_text_color: 'Primary'
                     text: 'Platinum'
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: 'We provide subscriptions for proof of work calculation for first month. '
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
                     id: free_pak
-                    font_style: 'Subtitle1'
+                    font_style: 'H5'
                     theme_text_color: 'Primary'
                     text: '€ 50.0'
                     halign: 'center'
@@ -709,10 +697,11 @@ NavigationLayout:
                         Rectangle:
                             pos: self.pos
                             size: self.size
+                    size:  dp(app.window_size[0]) - 2*dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1) - 10 , 1
                     height: dp(40)
                     on_press: root.get_available_credits(self)
                     MDLabel:
-                        font_style: 'H4'
+                        font_style: 'H6'
                         text: 'Get Free Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
@@ -729,19 +718,19 @@ NavigationLayout:
                         size: self.size
                 MDLabel:
                     size_hint_y: None
-                    font_style: 'Subtitle1'
+                    font_style: 'H5'
                     theme_text_color: 'Primary'
                     text: 'Silver'
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: 'We provide for proof of work calculation for six month. '
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Subtitle1'
+                    font_style: 'H5'
                     theme_text_color: 'Primary'
                     text: '€ 100.0'
                     halign: 'center'
@@ -753,9 +742,10 @@ NavigationLayout:
                         Rectangle:
                             pos: self.pos
                             size: self.size
+                    size:  dp(app.window_size[0]) - 2*dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1) - 10 , 1
                     height: dp(40)
                     MDLabel:
-                        font_style: 'H4'
+                        font_style: 'H6'
                         text: 'Get Monthly Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
@@ -772,19 +762,19 @@ NavigationLayout:
                         size: self.size
                 MDLabel:
                     size_hint_y: None
-                    font_style: 'Subtitle1'
+                    font_style: 'H5'
                     theme_text_color: 'Primary'
                     text: 'Gold'
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'Subtitle1'
                     theme_text_color: 'Primary'
                     text: 'We provide for proof of work calculation for 1years. '
                     halign: 'center'
                     color: 1,1,1,1
                 MDLabel:
-                    font_style: 'Subtitle1'
+                    font_style: 'H5'
                     theme_text_color: 'Primary'
                     text: '€ 500.0'
                     halign: 'center'
@@ -796,9 +786,10 @@ NavigationLayout:
                         Rectangle:
                             pos: self.pos
                             size: self.size
+                    size:  dp(app.window_size[0]) - 2*dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1) - 10 , 1
                     height: dp(40)
                     MDLabel:
-                        font_style: 'H4'
+                        font_style: 'H6'
                         text: 'Get Yearly Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
@@ -807,6 +798,7 @@ NavigationLayout:
 
 <GrashofPopup>:
     id: popup
+    size_hint : (None,None)
     height: 2*(label.height + address.height) + 10
     width :app.window_size[0] - app.window_size[0]/10
     title: 'add contact\'s'
@@ -839,29 +831,32 @@ NavigationLayout:
             orientation: 'horizontal'
             MDRaisedButton:
                 id: save_addr
+                size_hint: 1.5, None
                 height: dp(40)
                 on_release:                 
                     root.savecontact()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Save'
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
+                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: root.close_pop()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Cancel'
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
+                size_hint: 2, None
                 height: dp(40)
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Scan QR code'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -870,8 +865,91 @@ NavigationLayout:
 
 <NetworkStat>:
     name: 'networkstat'
-    Label: 
-        text:"surbhi"
+    MDTabs:
+        id: tab_panel
+        tab_display_mode:'text'
+
+        Tab:
+            text: "Total connections"
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(200)
+                    OneLineListItem:
+                        text: "Total Connections"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .6, .3
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_1
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+        Tab:
+            text: 'Processes'
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(500)
+                    OneLineListItem:
+                        text: "person-to-person"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_2
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+                    OneLineListItem:
+                        text: "Brodcast"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_3
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+                    OneLineListItem:
+                        text: "publickeys"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_4
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+                    OneLineListItem:
+                        text: "objects"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_5
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
 
 <MailDetail>:
     name: 'mailDetail'
@@ -949,6 +1027,7 @@ NavigationLayout:
 
 <MyaddDetailPopup>:
     id: myadd_popup
+    size_hint : (None,None)
     height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
     width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
@@ -965,25 +1044,25 @@ NavigationLayout:
             spacing:dp(25)
             MDLabel:
                 id: myaddr_label
-                font_style: 'H4'
+                font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: "Label"
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'H4'
+                font_style: 'Body1'
                 theme_text_color: 'Primary'
                 text: root.address_label
                 font_size: '15sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'H4'
+                font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: "Address"
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'H4'
+                font_style: 'Body1'
                 theme_text_color: 'Primary'
                 text: root.address
                 font_size: '15sp'
@@ -993,31 +1072,34 @@ NavigationLayout:
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
+                size_hint: 2, None
                 height: dp(40)
                 on_press: root.send_message_from()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Send message from'
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
+                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: app.root.ids.scr_mngr.current = 'showqrcode'
                 on_press: app.root.ids.sc15.qrdisplay()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Show QR code'
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
+                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: root.close_pop()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Cancel'
                     font_size: '13sp'
                     color: (1,1,1,1)
@@ -1025,6 +1107,7 @@ NavigationLayout:
 
 <AddbookDetailPopup>:
     id: addbook_popup
+    size_hint : (None,None)
     height: 4*(add_label.height)
     width :app.window_size[0] - app.window_size[0]/10
     background: './images/popup.jpeg'
@@ -1040,14 +1123,14 @@ NavigationLayout:
             orientation: 'vertical'
             spacing:dp(20)
             MDLabel:
-                font_style: 'H4'
+                font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: "Label"
                 font_size: '17sp'
                 halign: 'left'
             MDTextField:
                 id: add_label
-                font_style: 'H4'
+                font_style: 'Body1'
                 font_size: '15sp'
                 halign: 'left'
                 text: root.address_label
@@ -1055,13 +1138,13 @@ NavigationLayout:
                 required: True
                 helper_text_mode: "on_error"
             MDLabel:
-                font_style: 'H4'
+                font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: "Address"
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
-                font_style: 'H4'
+                font_style: 'Body1'
                 theme_text_color: 'Primary'
                 text: root.address
                 font_size: '15sp'
@@ -1071,30 +1154,33 @@ NavigationLayout:
             spacing:5
             orientation: 'horizontal'
             MDRaisedButton:
+                size_hint: 2, None
                 height: dp(40)
                 on_press: root.send_message_to()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Send message to'
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
+                size_hint: 1.5, None
                 height: dp(40)
                 font_size: '10sp'
                 on_press: root.update_addbook_label(root.address)
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Save'
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
             MDRaisedButton:
+                size_hint: 1.5, None
                 height: dp(40)
                 on_press: root.dismiss()
                 on_press: root.close_pop()
                 MDLabel:
-                    font_style: 'H4'
+                    font_style: 'H6'
                     text: 'Cancel'
                     font_size: '13sp'
                     color: (1,1,1,1)

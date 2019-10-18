@@ -65,9 +65,8 @@ from kivy.core.clipboard import Clipboard
 
 def toast(text):
     """Method will display the toast message."""
-    if platform == 'linux':
-        from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
-        toast(text)
+    from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
+    toast(text)
     return
 
 
@@ -157,12 +156,11 @@ class Inbox(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No message found!" if state.searcing_text
                 else "yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -276,12 +274,11 @@ class MyAddress(Screen):
                 self.ids.ml.add_widget(meny)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No address found!" if state.searcing_text
                 else "yet no address is created by user!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -371,12 +368,11 @@ class AddressBook(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No contact found!" if state.searcing_text
                 else "No contact found yet...... ",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -384,8 +380,9 @@ class AddressBook(Screen):
     @staticmethod
     def refreshs(*args):
         """Refresh the Widget."""
-        state.navinstance.ids.sc11.ids.ml.clear_widgets()
-        state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
+        # state.navinstance.ids.sc11.ids.ml.clear_widgets()
+        # state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
+        pass
 
     @staticmethod
     def addBook_detail(address, label, *args):
@@ -563,6 +560,7 @@ class DropDownWidget(BoxLayout):
         self.ids.txt_input.text = ''
         self.ids.subject.text = ''
         self.ids.body.text = ''
+        toast("Reset message")
 
     def auto_fill_fromaddr(self):
         """Mehtod used to fill the text automatically From Address."""
@@ -699,6 +697,7 @@ class Random(Screen):
             self.parent.parent.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
             self.parent.parent.parent.parent.ids.sc10.ids.ml.clear_widgets()
+            self.manager.current = 'myaddress'
             self.parent.parent.parent.parent.ids.sc10.init_ui()
             self.manager.current = 'myaddress'
             toast('New address created')
@@ -791,12 +790,11 @@ class Sent(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No message found!" if state.searcing_text
                 else "yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -917,11 +915,10 @@ class Trash(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="yet no trashed message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -1100,7 +1097,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         """Getting default image on address"""
         if BMConfigParser().addresses():
             return './images/default_identicon/{}.png'.format(BMConfigParser().addresses()[0])
-        return ''
+        return './images/no_identicons.png'
 
     @staticmethod
     def addressexist():
@@ -1164,6 +1161,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.toolbar.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
         self.root.ids.toolbar.right_action_items = [
+            ['refresh', lambda x: self.root.ids.sc3.children[0].reset_composer()],
             ['send', lambda x: self.root.ids.sc3.children[0].send(self)]]
 
     def back_press(self):
@@ -1173,7 +1171,9 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
         self.root.ids.toolbar.left_action_items = \
             [['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.scr_mngr.current = 'inbox' \
-            if state.in_composer else 'allmails' if state.is_allmail else state.detailPageType
+            if state.in_composer else 'allmails'\
+            if state.is_allmail else state.detailPageType\
+            if state.detailPageType else 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1305,10 +1305,12 @@ class GrashofPopup(Popup):
         stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         if label and address and address not in stored_address:
-            state.navinstance = self.parent.children[1]
+            # state.navinstance = self.parent.children[1]
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
+            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
 
@@ -1469,6 +1471,8 @@ class MailDetail(Screen):
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE \
                 msgid = ?;", str(state.mail_id))
+            msg_count_objs.inbox_cnt.badge_text = str(int(state.inbox_count) - 1)
+            state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
             self.parent.screens[0].loadMessagelist(state.association)
         elif state.detailPageType == 'draft':
@@ -1597,7 +1601,7 @@ class AddbookDetailPopup(Popup):
         window_obj = self.parent.children[1].ids
         window_obj.sc3.children[0].ids.txt_input.text = self.address
         window_obj.sc3.children[0].ids.ti.text = ''
-        window_obj.sc3.children[0].ids.btn.text = ''
+        window_obj.sc3.children[0].ids.btn.text = 'Select'
         window_obj.sc3.children[0].ids.subject.text = ''
         window_obj.sc3.children[0].ids.body.text = ''
         window_obj.scr_mngr.current = 'create'
@@ -1692,11 +1696,10 @@ class Draft(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -1815,16 +1818,11 @@ class Allmails(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
-        inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, msgid from\
-            inbox WHERE folder = 'inbox' and toaddress = '{}';".format(
-                account))
-        sent_and_draft = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, ackdata from sent \
-            WHERE folder = 'sent' and fromaddress = '{}';".format(
-                account))
-
-        all_mails = inbox + sent_and_draft
+        all_mails = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime)"
+            " As actionTime FROM sent WHERE folder = 'sent' UNION"
+            " SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As"
+            " actionTime FROM inbox WHERE folder = 'inbox' ORDER BY actionTime DESC")
         if all_mails:
             state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
             state.all_count = str(len(all_mails))
@@ -1858,11 +1856,10 @@ class Allmails(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
