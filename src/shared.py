@@ -125,7 +125,7 @@ def reloadMyAddressHashes():
     keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
     hasEnabledKeys = False
     for addressInKeysFile in BMConfigParser().addresses():
-        isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
+        isEnabled = BMConfigParser().safeGet(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
             # status
@@ -174,12 +174,9 @@ def reloadBroadcastSendersForWhichImWatching():
         # Now, for all addresses, even version 2 addresses,
         # we should create Cryptor objects in a dictionary which we will
         # use to attempt to decrypt encrypted broadcast messages.
-
         if addressVersionNumber <= 3:
-            privEncryptionKey = hashlib.sha512(
-                encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + hash
-            ).digest()[:32]
+            privEncryptionKey = hashlib.sha512((encodeVarint(addressVersionNumber) \
+                                                + encodeVarint(streamNumber) + hash)).digest()[:32]
             MyECSubscriptionCryptorObjects[hash] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:

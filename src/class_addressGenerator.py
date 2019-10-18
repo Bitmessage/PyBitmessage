@@ -29,7 +29,6 @@ class addressGenerator(StoppableThread):
         super(addressGenerator, self).stopThread()
 
     def run(self):
-
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
@@ -134,7 +133,7 @@ class addressGenerator(StoppableThread):
                     ripe = RIPEMD160Hash(sha.digest()).digest()
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
-                        '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                            '\x00'.encode('utf-8') * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
                 logger.info(
@@ -151,19 +150,20 @@ class addressGenerator(StoppableThread):
                     # The user must have a pretty fast computer.
                     # time.time() - startTime equaled zero.
                     pass
+
                 address = encodeAddress(
                     addressVersionNumber, streamNumber, ripe)
 
                 # An excellent way for us to store our keys
                 # is in Wallet Import Format. Let us convert now.
                 # https://en.bitcoin.it/wiki/Wallet_import_format
-                privSigningKey = '\x80' + potentialPrivSigningKey
+                privSigningKey = '\x80'.encode('utf-8') + potentialPrivSigningKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privSigningKey).digest()).digest()[0:4]
                 privSigningKeyWIF = arithmetic.changebase(
                     privSigningKey + checksum, 256, 58)
 
-                privEncryptionKey = '\x80' + potentialPrivEncryptionKey
+                privEncryptionKey = '\x80'.encode('utf-8') + potentialPrivEncryptionKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privEncryptionKey).digest()).digest()[0:4]
                 privEncryptionKeyWIF = arithmetic.changebase(

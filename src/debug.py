@@ -23,7 +23,7 @@ Use: `from debug import logger` to import this facility into whatever module you
 
 """
 
-import ConfigParser
+import configparser
 import logging
 import logging.config
 import os
@@ -47,12 +47,13 @@ def configureLogging():
     fail_msg = ''
     try:
         logging_config = os.path.join(state.appdata, 'logging.dat')
-        logging.config.fileConfig(logging_config)
+        # right now I am commenting the logger
+        # logging.config.fileConfig(logging_config, disable_existing_loggers=False)
         return (
             False,
             'Loaded logger configuration from %s' % logging_config
         )
-    except (OSError, ConfigParser.NoSectionError):
+    except (OSError, configparser.NoSectionError):
         if os.path.isfile(logging_config):
             fail_msg = \
                 'Failed to load logger configuration from %s, using default' \

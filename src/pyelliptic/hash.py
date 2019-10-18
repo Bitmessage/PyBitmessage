@@ -7,7 +7,7 @@ src/pyelliptic/hash.py
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
-from openssl import OpenSSL
+from .openssl import OpenSSL
 
 
 # For python3

@@ -90,7 +90,7 @@ class _OpenSSL:
         """Build the wrapper"""
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
-        self._libreSSL = self._version.startswith("LibreSSL")
+        self._libreSSL = (self._version).decode("utf-8").startswith("OpenSSL")
 
         self.pointer = ctypes.pointer
         self.c_int = ctypes.c_int
@@ -674,6 +674,7 @@ def loadOpenSSL():
         elif 'win32' in sys.platform or 'win64' in sys.platform:
             libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
         else:
+
             libdir.extend([
                 path.join(sys._MEIPASS, 'libcrypto.so'),
                 path.join(sys._MEIPASS, 'libssl.so'),
@@ -709,7 +710,7 @@ def loadOpenSSL():
             pass
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
-    for library in libdir:
+    for library in libdir:  
         try:
             OpenSSL = _OpenSSL(library)
             return

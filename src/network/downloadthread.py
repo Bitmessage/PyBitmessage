@@ -7,12 +7,12 @@ import time
 import addresses
 import helper_random
 import protocol
-from dandelion import Dandelion
+from network.dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-from objectracker import missingObjects
+from network.objectracker import missingObjects
 
 
 class DownloadThread(StoppableThread):
@@ -32,7 +32,7 @@ class DownloadThread(StoppableThread):
         """Expire pending downloads eventually"""
         deadline = time.time() - DownloadThread.requestExpires
         try:
-            toDelete = [k for k, v in missingObjects.iteritems() if v < deadline]
+            toDelete = [k for k, v in iter(missingObjects.items()) if v < deadline]
         except RuntimeError:
             pass
         else:
@@ -46,7 +46,7 @@ class DownloadThread(StoppableThread):
             # Choose downloading peers randomly
             connections = [
                 x for x in
-                BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
+                list(BMConnectionPool().inboundConnections.values()) + list(BMConnectionPool().outboundConnections.values())
                 if x.fullyEstablished]
             helper_random.randomshuffle(connections)
             try:

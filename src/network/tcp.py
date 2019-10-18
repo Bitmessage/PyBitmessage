@@ -10,8 +10,8 @@ import socket
 import time
 
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
+import network.asyncore_pollchoose as asyncore
+import network.connectionpool
 import helper_random
 import knownnodes
 import protocol
@@ -362,7 +362,7 @@ class TCPServer(AdvancedDispatcher):
     """TCP connection server for Bitmessage protocol"""
 
     def __init__(self, host='127.0.0.1', port=8444):
-        if not hasattr(self, '_map'):
+        if not '_map' in dir(self):
             AdvancedDispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()

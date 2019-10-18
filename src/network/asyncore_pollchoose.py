@@ -769,8 +769,8 @@ class dispatcher:
         try:
             retattr = getattr(self.socket, attr)
         except AttributeError:
-            raise AttributeError("%s instance has no attribute '%s'"
-                                 % (self.__class__.__name__, attr))
+            raise AttributeError("{} instance has no attribute {}"
+                                 .format(self.__class__.__name__, attr))
         else:
             msg = "%(me)s.%(attr)s is deprecated; use %(me)s.socket.%(attr)s " \
                   "instead" % {'me': self.__class__.__name__, 'attr': attr}
@@ -788,7 +788,7 @@ class dispatcher:
     def log_info(self, message, log_type='info'):
         """Conditionally print a message"""
         if log_type not in self.ignore_log_types:
-            print '%s: %s' % (log_type, message)
+            print ('{}: {}'.format((log_type, message)))
 
     def handle_read_event(self):
         """Handle a read event"""

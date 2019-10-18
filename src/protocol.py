@@ -94,9 +94,9 @@ def isBitSetWithinBitfield(fourByteString, n):
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
     if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(host.split(".")[0], True)
+        return '\xfd\x87\xd8\x7e\xeb\x43'.encode('utf-8') + base64.b32decode(host.split(".")[0], True)
     elif host.find(':') == -1:
-        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('utf-8') + \
             socket.inet_aton(host)
     return socket.inet_pton(socket.AF_INET6, host)
 

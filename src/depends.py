@@ -419,11 +419,11 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage requires Python 2.7.4 or greater'
             ' (but not Python 3+)')
         has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required.')
-        has_all_dependencies = False
+    # if sys.hexversion >= 0x3000000:
+    #     logger.error(
+    #         'PyBitmessage does not support Python 3+. Python 2.7.4'
+    #         ' or greater is required.')
+    #     has_all_dependencies = False
 
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:

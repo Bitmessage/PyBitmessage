@@ -46,13 +46,13 @@ def generate_hash(string):
         # make input case insensitive
         string = str.lower(string)
         hash_object = hashlib.md5(str.encode(string))
-        print hash_object.hexdigest()
+        print(hash_object.hexdigest())
 
         # returned object is a hex string
         return hash_object.hexdigest()
 
     except IndexError:
-        print "Error: Please enter a string as an argument."
+        print("Error: Please enter a string as an argument.")
 
 
 def random_color(hash_string):

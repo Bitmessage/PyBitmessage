@@ -107,9 +107,10 @@ def do_opencl_pow(hash, target):
 #initCL()
 
 if __name__ == "__main__":
-    target = 54227212183L
+    #in python3 I have change this 54227212183L to 54227212183 
+    target = 54227212183
     initialHash = "3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3".decode("hex")
     nonce = do_opencl_pow(initialHash.encode("hex"), target)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-    print "{} - value {} < {}".format(nonce, trialValue, target)
+    print ("{} - value {} < {}".format(nonce, trialValue, target))
 

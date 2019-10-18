@@ -7,9 +7,9 @@ import socket
 
 import state
 import protocol
-from bmproto import BMProto
+from network.bmproto import BMProto
 from debug import logger
-from objectracker import ObjectTracker
+from network.objectracker import ObjectTracker
 from queues import receiveDataQueue
 
 

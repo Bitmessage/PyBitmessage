@@ -75,7 +75,7 @@ class singleinstance:
                     fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 self.lockPid = os.getpid()
             except IOError:
-                print 'Another instance of this application is already running'
+                print ('Another instance of this application is already running')
                 sys.exit(-1)
             else:
                 pidLine = "%i\n" % self.lockPid
@@ -94,11 +94,11 @@ class singleinstance:
                         os.close(self.fd)
                 else:
                     fcntl.lockf(self.fp, fcntl.LOCK_UN)
-            except Exception, e:
+            except Exception as e:
                 pass
 
             return
-        print "Cleaning up lockfile"
+        print ("Cleaning up lockfile")
         try:
             if sys.platform == 'win32':
                 if hasattr(self, 'fd'):

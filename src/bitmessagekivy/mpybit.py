@@ -19,8 +19,7 @@ from kivy.properties import (
     ListProperty,
     NumericProperty,
     ObjectProperty,
-    StringProperty
-)
+    StringProperty)
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -36,36 +35,37 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
-import kivy_helper_search
-from kivymd.button import MDIconButton
-from kivymd.dialog import MDDialog
-from kivymd.label import MDLabel
-from kivymd.list import (
+from bitmessagekivy import kivy_helper_search
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDIconButton
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import (
     ILeftBody,
     ILeftBodyTouch,
     IRightBodyTouch,
     TwoLineAvatarIconListItem,
-    TwoLineListItem
-)
-from kivymd.navigationdrawer import (
+    TwoLineListItem)
+from kivymd.uix.navigationdrawer import (
     MDNavigationDrawer,
-    NavigationDrawerHeaderBase
-)
-from kivymd.selectioncontrols import MDCheckbox
+    NavigationDrawerHeaderBase)
+from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.theming import ThemeManager
 import queues
 from semaphores import kivyuisignaler
 import state
-from uikivysignaler import UIkivySignaler
 
-import identiconGeneration
+from bitmessagekivy.uikivysignaler import UIkivySignaler
+# pylint: disable=unused-argument, too-few-public-methods, import-error
+
+from bitmessagekivy import identiconGeneration
+import os
+from kivy.core.clipboard import Clipboard
 # pylint: disable=unused-argument, too-few-public-methods
 
 
 def toast(text):
     """Method will display the toast message."""
-    # pylint: disable=redefined-outer-name
-    from kivymd.toast.kivytoast import toast
+    from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
     toast(text)
     return
 
@@ -92,7 +92,7 @@ class Inbox(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
-        print dt
+        print(dt)
 
     def inboxaccounts(self):
         """Load inbox accounts."""
@@ -156,12 +156,11 @@ class Inbox(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No message found!" if state.searcing_text
                 else "yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -184,9 +183,11 @@ class Inbox(Screen):
             "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
                 data_index))
         try:
-            msg_count_objs = self.parent.parent.parent.parent.children[2].children[0].ids
-        except Exception:
-            msg_count_objs = self.parent.parent.parent.parent.parent.children[2].children[0].ids
+            msg_count_objs = \
+                self.parent.parent.parent.parent.children[2].children[0].ids
+        except Exception as e:
+            msg_count_objs = \
+                self.parent.parent.parent.parent.parent.children[2].children[0].ids
         if int(state.inbox_count) > 0:
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
@@ -273,12 +274,11 @@ class MyAddress(Screen):
                 self.ids.ml.add_widget(meny)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No address found!" if state.searcing_text
                 else "yet no address is created by user!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -306,6 +306,7 @@ class MyAddress(Screen):
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
+
         Clock.schedule_once(refresh_callback, 1)
 
     @staticmethod
@@ -330,7 +331,7 @@ class AddressBook(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method AddressBook."""
         self.loadAddresslist(None, 'All', '')
-        print dt
+        print (dt)
 
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook."""
@@ -367,12 +368,11 @@ class AddressBook(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No contact found!" if state.searcing_text
                 else "No contact found yet...... ",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -430,7 +430,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         """Respond to the selection of items in the view."""
         self.selected = is_selected
         if is_selected:
-            print "selection changed to {0}".format(rv.data[index])
+            print("selection changed to {0}".format(rv.data[index]))
             rv.parent.txt_input.text = rv.parent.txt_input.text.replace(
                 rv.parent.txt_input.text, rv.data[index]['text'])
 
@@ -438,39 +438,39 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 class RV(RecycleView):
     """Recycling View."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
         """Recycling Method."""
-        # pylint: disable=useless-super-delegation
         super(RV, self).__init__(**kwargs)
 
 
 class DropDownWidget(BoxLayout):
     """Adding Dropdown Widget."""
-    # pylint: disable=too-many-statements, inconsistent-return-statements, too-many-locals
 
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
-    def send(self, navApp):
+    def send(self, navApp):     # pylint: disable=too-many-statements, inconsistent-return-statements
         """Send message from one address to another."""
+        # pylint: disable=too-many-locals
         fromAddress = str(self.ids.ti.text)
         toAddress = str(self.ids.txt_input.text)
         subject = self.ids.subject.text.encode('utf-8').strip()
         message = self.ids.body.text.encode('utf-8').strip()
         encoding = 3
-        print "message: ", self.ids.body.text
+        print ("message: ", self.ids.body.text)
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
                 from addresses import decodeAddress
-                status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
+                status, addressVersionNumber, streamNumber, ripe = \
+                    decodeAddress(toAddress)
                 if status == 'success':
                     if state.detailPageType == 'draft' and state.send_draft_mail:
                         sqlExecute(
-                            "UPDATE sent SET toaddress = ?"
-                            ", fromaddress = ? , subject = ?"
-                            ", message = ?, folder = 'sent'"
-                            " WHERE ackdata = ?;",
+                            "UPDATE sent SET toaddress = ? \
+                            , fromaddress = ? , subject = ?\
+                            , message = ?, folder = 'sent'\
+                            WHERE ackdata = ?;",
                             toAddress,
                             fromAddress,
                             subject,
@@ -485,12 +485,12 @@ class DropDownWidget(BoxLayout):
                         toAddress = addBMIfNotPresent(toAddress)
                         statusIconColor = 'red'
                         if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                            print "addressVersionNumber > 4 \
-                            or addressVersionNumber <= 1"
+                            print("addressVersionNumber > 4 \
+                            or addressVersionNumber <= 1")
                         if streamNumber > 1 or streamNumber == 0:
-                            print "streamNumber > 1 or streamNumber == 0"
+                            print("streamNumber > 1 or streamNumber == 0")
                         if statusIconColor == 'red':
-                            print "shared.statusIconColor == 'red'"
+                            print("shared.statusIconColor == 'red'")
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         from helper_ackPayload import genAckPayload
@@ -525,7 +525,7 @@ class DropDownWidget(BoxLayout):
                     toLabel = ''
 
                     queues.workerQueue.put(('sendmessage', toAddress))
-                    print "sqlExecute successfully #######################"
+                    print ("sqlExecute successfully #######################")
                     self.parent.parent.current = 'inbox'
                     state.in_composer = True
                     navApp.back_press()
@@ -577,9 +577,8 @@ class MyTextInput(TextInput):
     starting_no = NumericProperty(3)
     suggestion_text = ''
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
         """Getting Text Input."""
-        # pylint: disable=useless-super-delegation
         super(MyTextInput, self).__init__(**kwargs)
 
     def on_text(self, instance, value):
@@ -609,9 +608,8 @@ class MyTextInput(TextInput):
 class Payment(Screen):
     """Payment Method."""
 
-    def get_available_credits(self, instance):
+    def get_available_credits(self, instance):      # pylint: disable=no-self-use
         """Method helps to get the available credits"""
-        # pylint: disable=no-self-use
         state.availabe_credit = instance.parent.children[1].text
         existing_credits = state.kivyapp.root.ids.sc18.ids.ml.children[0].children[0].children[0].children[0].text
         if len(existing_credits.split(' ')) > 1:
@@ -724,7 +722,7 @@ class Sent(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method sent accounts."""
         self.sentaccounts()
-        print dt
+        print(dt)
 
     def sentaccounts(self):
         """Load sent accounts."""
@@ -740,7 +738,8 @@ class Sent(Screen):
         data = []
         queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "sent", where, what, False)
-        if state.msg_counter_objs and state.association == state.check_sent_acc:
+        if state.msg_counter_objs and state.association == \
+                state.check_sent_acc:
             state.msg_counter_objs.send_cnt.badge_text = str(len(queryreturn))
             state.sent_count = str(int(state.sent_count) + 1)
             state.all_count = str(int(state.all_count) + 1)
@@ -791,12 +790,11 @@ class Sent(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="No message found!" if state.searcing_text
                 else "yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -832,8 +830,8 @@ class Sent(Screen):
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
         sqlExecute(
-            "UPDATE sent SET folder = 'trash'"
-            " WHERE ackdata = ?;", str(data_index))
+            "UPDATE sent SET folder = 'trash' \
+            WHERE ackdata = ?;", str(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
         self.update_trash()
@@ -841,8 +839,8 @@ class Sent(Screen):
     def archive(self, data_index, instance, *args):
         """Archive sent mail from sent mail listing."""
         sqlExecute(
-            "UPDATE sent SET folder = 'trash'"
-            " WHERE ackdata = ?;", str(data_index))
+            "UPDATE sent SET folder = 'trash' \
+            WHERE ackdata = ?;", str(data_index))
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -873,13 +871,14 @@ class Trash(Screen):
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
+
         inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, received from"
-            " inbox WHERE folder = 'trash' and toaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder, received from \
+            inbox WHERE folder = 'trash' and toaddress = '{}';".format(
                 state.association))
         sent = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, lastactiontime from"
-            " sent WHERE folder = 'trash' and fromaddress = '{}';".format(
+            "SELECT toaddress, fromaddress, subject, message, folder, lastactiontime from \
+            sent WHERE folder = 'trash' and fromaddress = '{}';".format(
                 state.association))
         trash_data = inbox + sent
 
@@ -916,11 +915,10 @@ class Trash(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="yet no trashed message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -956,9 +954,8 @@ class Setting(Screen):
     pass
 
 
-class NavigateApp(App):
+class NavigateApp(App):     # pylint: disable=too-many-public-methods
     """Navigation Layout of class."""
-    # pylint: disable=too-many-public-methods
 
     theme_cls = ThemeManager()
     previous_date = ObjectProperty()
@@ -989,6 +986,7 @@ class NavigateApp(App):
 
     def build(self):
         """Method builds the widget."""
+        import os 
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
@@ -1029,24 +1027,25 @@ class NavigateApp(App):
         self.root.ids.sc1.ids.ml.clear_widgets()
         self.root.ids.sc1.loadMessagelist(state.association)
         self.root.ids.scr_mngr.current = 'inbox'
-        msg_counter_objs = self.root_window.children[1].children[2].children[0].ids
+
+        msg_counter_objs = \
+            self.root_window.children[1].children[2].children[0].ids
         state.sent_count = str(
             sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
-                " folder = 'sent' ;".format(state.association))[0][0])
+                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and \
+                folder = 'sent' ;".format(state.association))[0][0])
         state.inbox_count = str(
             sqlQuery(
-                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and"
-                " folder = 'inbox' ;".format(state.association))[0][0])
-        state.trash_count = str(sqlQuery(
-            "SELECT (SELECT count(*) FROM  sent"
-            " where fromaddress = '{0}' and  folder = 'trash' )"
-            "+(SELECT count(*) FROM inbox where toaddress = '{0}' and"
-            " folder = 'trash') AS SumCount".format(state.association))[0][0])
+                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and \
+                folder = 'inbox' ;".format(state.association))[0][0])
+        state.trash_count = str(sqlQuery("SELECT (SELECT count(*) FROM  sent \
+            where fromaddress = '{0}' and  folder = 'trash' ) \
+            +(SELECT count(*) FROM inbox where toaddress = '{0}' and  \
+            folder = 'trash') AS SumCount".format(state.association))[0][0])
         state.draft_count = str(
             sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
-                " folder = 'draft' ;".format(state.association))[0][0])
+                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and \
+                folder = 'draft' ;".format(state.association))[0][0])
         state.all_count = str(int(state.sent_count) + int(state.inbox_count))
 
         if msg_counter_objs:
@@ -1091,7 +1090,7 @@ class NavigateApp(App):
             if not os.path.exists(directory):
                 os.makedirs(directory)
         except OSError:
-            print 'Error: Creating directory. ' + directory
+            print('Error: Creating directory. ' + directory)
 
     @staticmethod
     def get_default_image():
@@ -1167,8 +1166,10 @@ class NavigateApp(App):
 
     def back_press(self):
         """Method used for going back from composer to previous page."""
-        self.root.ids.toolbar.right_action_items = [['account-plus', lambda x: self.addingtoaddressbook()]]
-        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.root.ids.toolbar.right_action_items = \
+            [['account-plus', lambda x: self.addingtoaddressbook()]]
+        self.root.ids.toolbar.left_action_items = \
+            [['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
@@ -1183,7 +1184,7 @@ class NavigateApp(App):
     @staticmethod
     def on_stop():
         """On stop methos is used for stoping the runing script."""
-        print "*******************EXITING FROM APPLICATION*******************"
+        print("*******************EXITING FROM APPLICATION*******************")
         import shutdown
         shutdown.doCleanShutdown()
 
@@ -1232,7 +1233,7 @@ class NavigateApp(App):
             self.root.ids.sc1.ids.ml.clear_widgets()
             try:
                 self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
-            except Exception:
+            except Exception as e:
                 self.root.ids.sc1.children[1].children[1].ids.search_field.text = ''
             self.root.ids.sc1.loadMessagelist(state.association)
         elif instance.text == 'Draft':
@@ -1252,7 +1253,7 @@ class NavigateApp(App):
             self.root.ids.sc10.ids.ml.clear_widgets()
             try:
                 self.root.ids.sc10.children[1].children[1].ids.search_field.text = ''
-            except Exception:
+            except Exception as e:
                 self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
             self.root.ids.sc10.init_ui()
         return
@@ -1285,9 +1286,8 @@ class NavigateApp(App):
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """Grash of pop screen settings."""
-        # pylint: disable=useless-super-delegation
         super(GrashofPopup, self).__init__(**kwargs)
 
     def savecontact(self):
@@ -1429,16 +1429,16 @@ class MailDetail(Screen):
         self.page_type = state.detailPageType if state.detailPageType else ''
         if state.detailPageType == 'sent' or state.detailPageType == 'draft':
             data = sqlQuery(
-                "select toaddress, fromaddress, subject, message, status,"
-                " ackdata from sent where ackdata = ?;", state.mail_id)
+                "select toaddress, fromaddress, subject, message, status, \
+                ackdata from sent where ackdata = ?;", state.mail_id)
             state.status = self
             state.ackdata = data[0][5]
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
         elif state.detailPageType == 'inbox':
             data = sqlQuery(
-                "select toaddress, fromaddress, subject, message from inbox"
-                " where msgid = ?;", str(state.mail_id))
+                "select toaddress, fromaddress, subject, message from inbox \
+                where msgid = ?;", str(state.mail_id))
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
 
@@ -1461,16 +1461,16 @@ class MailDetail(Screen):
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         if state.detailPageType == 'sent':
             sqlExecute(
-                "UPDATE sent SET folder = 'trash' WHERE"
-                " ackdata = ?;", str(state.mail_id))
+                "UPDATE sent SET folder = 'trash' WHERE \
+                ackdata = ?;", str(state.mail_id))
             msg_count_objs.send_cnt.badge_text = str(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             self.parent.screens[3].ids.ml.clear_widgets()
             self.parent.screens[3].loadSent(state.association)
         elif state.detailPageType == 'inbox':
             sqlExecute(
-                "UPDATE inbox SET folder = 'trash' WHERE"
-                " msgid = ?;", str(state.mail_id))
+                "UPDATE inbox SET folder = 'trash' WHERE \
+                msgid = ?;", str(state.mail_id))
             msg_count_objs.inbox_cnt.badge_text = str(int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
@@ -1499,8 +1499,8 @@ class MailDetail(Screen):
     def inbox_reply(self):
         """Method used for replying inbox messages."""
         data = sqlQuery(
-            "select toaddress, fromaddress, subject, message from inbox where"
-            " msgid = ?;", str(state.mail_id))
+            "select toaddress, fromaddress, subject, message from inbox where \
+            msgid = ?;", str(state.mail_id))
         composer_obj = self.parent.screens[2].children[0].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
@@ -1518,7 +1518,8 @@ class MailDetail(Screen):
     def write_msg(self, navApp):
         """Method used to write on draft mail."""
         state.send_draft_mail = state.mail_id
-        composer_ids = self.parent.parent.parent.parent.ids.sc3.children[0].ids
+        composer_ids = \
+            self.parent.parent.parent.parent.ids.sc3.children[0].ids
         composer_ids.ti.text = state.write_msg['from_addr']
         composer_ids.btn.text = state.write_msg['from_addr']
         composer_ids.txt_input.text = state.write_msg['to_addr']
@@ -1544,9 +1545,8 @@ class MyaddDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """My Address Details screen setting."""
-        # pylint: disable=useless-super-delegation
         super(MyaddDetailPopup, self).__init__(**kwargs)
 
     def set_address(self, address, label):
@@ -1577,9 +1577,8 @@ class AddbookDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):    # pylint: disable=useless-super-delegation
         """Method used set screen of address detail page."""
-        # pylint: disable=useless-super-delegation
         super(AddbookDetailPopup, self).__init__(**kwargs)
 
     def set_addbook_data(self, address, label):
@@ -1590,9 +1589,8 @@ class AddbookDetailPopup(Popup):
     def update_addbook_label(self, address):
         """Updating the label of address book address."""
         if str(self.ids.add_label.text):
-            sqlExecute(
-                "UPDATE addressbook SET label = '{}' WHERE"
-                " address = '{}';".format(str(self.ids.add_label.text), address))
+            sqlExecute("UPDATE addressbook SET label = '{}' WHERE \
+                address = '{}';".format(str(self.ids.add_label.text), address))
             self.parent.children[1].ids.sc11.ids.ml.clear_widgets()
             self.parent.children[1].ids.sc11.loadAddresslist(None, 'All', '')
             self.dismiss()
@@ -1644,7 +1642,7 @@ class Draft(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method draft accounts."""
         self.sentaccounts()
-        print dt
+        print (dt)
 
     def sentaccounts(self):
         """Load draft accounts."""
@@ -1698,11 +1696,10 @@ class Draft(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
@@ -1724,7 +1721,8 @@ class Draft(Screen):
         sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
             data_index))
         try:
-            msg_count_objs = self.parent.parent.parent.parent.children[2].children[0].ids
+            msg_count_objs = \
+                self.parent.parent.parent.parent.children[2].children[0].ids
         except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
@@ -1749,7 +1747,8 @@ class Draft(Screen):
         sendMessageToPeople = True
         if sendMessageToPeople:
             from addresses import decodeAddress
-            status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
+            status, addressVersionNumber, streamNumber, ripe = \
+                decodeAddress(toAddress)
             from addresses import addBMIfNotPresent
             toAddress = addBMIfNotPresent(toAddress)
             statusIconColor = 'red'
@@ -1810,7 +1809,7 @@ class Allmails(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method all mails."""
         self.mailaccounts()
-        print dt
+        print (dt)
 
     def mailaccounts(self):
         """Load all mails for account."""
@@ -1857,11 +1856,10 @@ class Allmails(Screen):
                 self.ids.ml.add_widget(carousel)
         else:
             content = MDLabel(
-                font_style='Body1',
+                font_style='Caption',
                 theme_text_color='Primary',
                 text="yet no message for this account!!!!!!!!!!!!!",
                 halign='center',
-                bold=True,
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
