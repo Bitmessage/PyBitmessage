@@ -12,9 +12,9 @@ src/pyelliptic/ecc.py
 from hashlib import sha512
 from struct import pack, unpack
 
-from cipher import Cipher
-from hash import equals, hmac_sha256
-from openssl import OpenSSL
+from pyelliptic.cipher import Cipher
+from pyelliptic.hash import equals, hmac_sha256
+from pyelliptic.openssl import OpenSSL
 
 
 class ECC(object):
@@ -114,7 +114,7 @@ class ECC(object):
             pack('!H', len(self.pubkey_x)),
             self.pubkey_x,
             pack('!H', len(self.pubkey_y)),
-            self.pubkey_y,
+            self.pubkey_y,  
         ))
 
     def get_privkey(self):
@@ -137,18 +137,19 @@ class ECC(object):
         i += 2
         pubkey_x = pubkey[i:i + tmplen]
         i += tmplen
+        i += int(tmplen / 3)
         tmplen = unpack('!H', pubkey[i:i + 2])[0]
         i += 2
         pubkey_y = pubkey[i:i + tmplen]
         i += tmplen
-        return curve, pubkey_x, pubkey_y, i
+        return curve, pubkey_x, pubkey_y, int(i)
 
     @staticmethod
     def _decode_privkey(privkey):
         i = 0
         curve = unpack('!H', privkey[i:i + 2])[0]
         i += 2
-        tmplen = unpack('!H', privkey[i:i + 2])[0]
+        tmplen = pack('!s', privkey[i:i + 1])[0]
         i += 2
         privkey = privkey[i:i + tmplen]
         i += tmplen

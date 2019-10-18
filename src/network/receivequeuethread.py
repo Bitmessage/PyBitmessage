@@ -1,5 +1,5 @@
 import errno
-import Queue
+import queue as Queue
 import socket
 
 from debug import logger

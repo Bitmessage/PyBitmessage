@@ -1,4 +1,4 @@
-import Queue
+import queue as Queue
 
 from class_objectProcessorQueue import ObjectProcessorQueue
 from multiqueue import MultiQueue

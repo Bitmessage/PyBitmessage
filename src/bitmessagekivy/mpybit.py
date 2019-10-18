@@ -35,27 +35,31 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
-import kivy_helper_search
-from kivymd.button import MDIconButton
-from kivymd.dialog import MDDialog
-from kivymd.label import MDLabel
-from kivymd.list import (
+from bitmessagekivy import kivy_helper_search
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDIconButton
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import (
     ILeftBody,
     ILeftBodyTouch,
     IRightBodyTouch,
     TwoLineAvatarIconListItem,
     TwoLineListItem)
-from kivymd.navigationdrawer import (
+from kivymd.uix.navigationdrawer import (
     MDNavigationDrawer,
     NavigationDrawerHeaderBase)
-from kivymd.selectioncontrols import MDCheckbox
+from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.theming import ThemeManager
 import queues
 from semaphores import kivyuisignaler
 import state
-from uikivysignaler import UIkivySignaler
 
-import identiconGeneration
+from bitmessagekivy.uikivysignaler import UIkivySignaler
+# pylint: disable=unused-argument, too-few-public-methods, import-error
+
+from bitmessagekivy import identiconGeneration
+import os
+from kivy.core.clipboard import Clipboard
 # pylint: disable=unused-argument, too-few-public-methods
 
 
@@ -89,7 +93,7 @@ class Inbox(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
         self.inboxaccounts()
-        print dt
+        print(dt)
 
     def inboxaccounts(self):
         """Load inbox accounts."""
@@ -305,6 +309,7 @@ class MyAddress(Screen):
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
+
         Clock.schedule_once(refresh_callback, 1)
 
     @staticmethod
@@ -329,7 +334,7 @@ class AddressBook(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method AddressBook."""
         self.loadAddresslist(None, 'All', '')
-        print dt
+        print (dt)
 
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook."""
@@ -428,7 +433,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         """Respond to the selection of items in the view."""
         self.selected = is_selected
         if is_selected:
-            print "selection changed to {0}".format(rv.data[index])
+            print("selection changed to {0}".format(rv.data[index]))
             rv.parent.txt_input.text = rv.parent.txt_input.text.replace(
                 rv.parent.txt_input.text, rv.data[index]['text'])
 
@@ -455,7 +460,7 @@ class DropDownWidget(BoxLayout):
         subject = self.ids.subject.text.encode('utf-8').strip()
         message = self.ids.body.text.encode('utf-8').strip()
         encoding = 3
-        print "message: ", self.ids.body.text
+        print ("message: ", self.ids.body.text)
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
@@ -483,12 +488,12 @@ class DropDownWidget(BoxLayout):
                         toAddress = addBMIfNotPresent(toAddress)
                         statusIconColor = 'red'
                         if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                            print "addressVersionNumber > 4 \
-                            or addressVersionNumber <= 1"
+                            print("addressVersionNumber > 4 \
+                            or addressVersionNumber <= 1")
                         if streamNumber > 1 or streamNumber == 0:
-                            print "streamNumber > 1 or streamNumber == 0"
+                            print("streamNumber > 1 or streamNumber == 0")
                         if statusIconColor == 'red':
-                            print "shared.statusIconColor == 'red'"
+                            print("shared.statusIconColor == 'red'")
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         from helper_ackPayload import genAckPayload
@@ -523,7 +528,7 @@ class DropDownWidget(BoxLayout):
                     toLabel = ''
 
                     queues.workerQueue.put(('sendmessage', toAddress))
-                    print "sqlExecute successfully #######################"
+                    print ("sqlExecute successfully #######################")
                     self.parent.parent.current = 'inbox'
                     state.in_composer = True
                     navApp.back_press()
@@ -718,7 +723,7 @@ class Sent(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method sent accounts."""
         self.sentaccounts()
-        print dt
+        print(dt)
 
     def sentaccounts(self):
         """Load sent accounts."""
@@ -984,6 +989,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
 
     def build(self):
         """Method builds the widget."""
+        import os 
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
@@ -1087,7 +1093,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
             if not os.path.exists(directory):
                 os.makedirs(directory)
         except OSError:
-            print 'Error: Creating directory. ' + directory
+            print('Error: Creating directory. ' + directory)
 
     @staticmethod
     def get_default_image():
@@ -1178,7 +1184,7 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
     @staticmethod
     def on_stop():
         """On stop methos is used for stoping the runing script."""
-        print "*******************EXITING FROM APPLICATION*******************"
+        print("*******************EXITING FROM APPLICATION*******************")
         import shutdown
         shutdown.doCleanShutdown()
 
@@ -1632,7 +1638,7 @@ class Draft(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method draft accounts."""
         self.sentaccounts()
-        print dt
+        print (dt)
 
     def sentaccounts(self):
         """Load draft accounts."""
@@ -1800,7 +1806,7 @@ class Allmails(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method all mails."""
         self.mailaccounts()
-        print dt
+        print (dt)
 
     def mailaccounts(self):
         """Load all mails for account."""

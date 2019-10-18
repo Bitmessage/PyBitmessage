@@ -3,7 +3,7 @@ src/multiqueue.py
 =================
 """
 
-import Queue
+import queue as Queue
 from collections import deque
 
 import helper_random

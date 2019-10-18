@@ -4,9 +4,9 @@ src/network/stats.py
 """
 import time
 
-import asyncore_pollchoose as asyncore
+from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
-from objectracker import missingObjects
+from network.objectracker import missingObjects
 
 
 lastReceivedTimestamp = time.time()
@@ -20,8 +20,8 @@ currentSentSpeed = 0
 def connectedHostsList():
     """List of all the connected hosts"""
     retval = []
-    for i in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+    for i in list(BMConnectionPool().inboundConnections.values()) + \
+            list(BMConnectionPool().outboundConnections.values()):
         if not i.fullyEstablished:
             continue
         try:

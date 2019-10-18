@@ -143,8 +143,8 @@ class singleCleaner(StoppableThread):
 
             # inv/object tracking
             for connection in \
-                    BMConnectionPool().inboundConnections.values() + \
-                    BMConnectionPool().outboundConnections.values():
+                    list(BMConnectionPool().inboundConnections.values()) + \
+                    list(BMConnectionPool().outboundConnections.values()):
                 connection.clean()
 
             # discovery tracking

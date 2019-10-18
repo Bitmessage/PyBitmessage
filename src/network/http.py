@@ -2,7 +2,7 @@ import socket
 
 from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
-from proxy import ProxyError
+from network.proxy import ProxyError
 from socks5 import Socks5Connection, Socks5Resolver
 from socks4a import Socks4aConnection, Socks4aResolver
 

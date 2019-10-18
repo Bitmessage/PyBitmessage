@@ -158,7 +158,7 @@ def encodeAddress(version, stream, ripe):
             raise Exception(
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.')
-        ripe = ripe.lstrip('\x00')
+        ripe = ripe.lstrip('\x00'.encode('utf-8'))
 
     storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
 
@@ -180,7 +180,6 @@ def decodeAddress(address):
     data (almost certainly a ripe hash))
     """
     # pylint: disable=too-many-return-statements,too-many-statements,too-many-return-statements,too-many-branches
-
     address = str(address).strip()
 
     if address[:3] == 'BM-':
@@ -192,7 +191,7 @@ def decodeAddress(address):
         return status, 0, 0, ''
     # after converting to hex, the string will be prepended
     # with a 0x and appended with a L
-    hexdata = hex(integer)[2:-1]
+    hexdata = hex(integer)[2:]
 
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
@@ -248,7 +247,7 @@ def decodeAddress(address):
                 embeddedRipeData
         elif len(embeddedRipeData) == 18:
             return status, addressVersionNumber, streamNumber, \
-                '\x00\x00' + embeddedRipeData
+                '\x00\x00'.encode('utf-8') + embeddedRipeData
         elif len(embeddedRipeData) < 18:
             return 'ripetooshort', 0, 0, ''
         elif len(embeddedRipeData) > 20:
@@ -265,7 +264,8 @@ def decodeAddress(address):
             return 'ripetoolong', 0, 0, ''
         elif len(embeddedRipeData) < 4:
             return 'ripetooshort', 0, 0, ''
-        x00string = '\x00' * (20 - len(embeddedRipeData))
+        x00string = '\x00'.encode('utf-8') * (20 - len(embeddedRipeData))
+
         return status, addressVersionNumber, streamNumber, \
             x00string + embeddedRipeData
 

@@ -2,7 +2,7 @@
 src/network/invthread.py
 ========================
 """
-import Queue
+import queue as Queue
 import random
 from time import time
 

@@ -11,7 +11,7 @@ import time
 from binascii import hexlify
 
 import addresses
-import connectionpool
+import network.connectionpool
 import knownnodes
 import protocol
 import state
@@ -26,9 +26,9 @@ from network.bmobject import (
     BMObjectInvalidError, BMObjectAlreadyHaveError)
 from network.node import Node
 from network.proxy import ProxyError
-from objectracker import missingObjects, ObjectTracker
+from network.objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
-from randomtrackingdict import RandomTrackingDict
+from network.randomtrackingdict import RandomTrackingDict
 
 
 class BMProtoError(ProxyError):
@@ -86,7 +86,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Process incoming header"""
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-        self.command = self.command.rstrip('\x00')
+        self.command = self.command.rstrip('\x00'.encode('utf-8'))
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
             self.set_state("bm_header", length=1)

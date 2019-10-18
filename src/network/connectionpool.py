@@ -7,20 +7,19 @@ import re
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
+import network.asyncore_pollchoose as asyncore
 import helper_random
 import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from connectionchooser import chooseConnection
+from network.connectionchooser import chooseConnection
 from debug import logger
-from proxy import Proxy
+from network.proxy import Proxy
 from singleton import Singleton
-from tcp import (
-    bootstrap, Socks4aBMConnection, Socks5BMConnection,
-    TCPConnection, TCPServer)
-from udp import UDPSocket
+from network.tcp import (
+    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection)
+from network.udp import UDPSocket
 
 
 @Singleton
@@ -237,7 +236,7 @@ class BMConnectionPool(object):
                 except ValueError:
                     Proxy.onion_proxy = None
             established = sum(
-                1 for c in self.outboundConnections.values()
+                1 for c in list(self.outboundConnections.values())
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt(
@@ -275,10 +274,15 @@ class BMConnectionPool(object):
                             continue
 
                     self.lastSpawned = time.time()
+
+            print('++++++++++++++++++++++++++++++++++++++++++')
+            print('self.inboundConnections.values()-{}'.format(self.inboundConnections.values()))
+            print('self.outboundConnections.values() -{}'.format(self.outboundConnections.values()))
+            print('+++++++++++++++++++++++++++++++++++++++++++')
         else:
             for i in (
-                    self.inboundConnections.values() +
-                    self.outboundConnections.values()
+                    list(self.inboundConnections.values()) +
+                    list(self.outboundConnections.values())
             ):
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
@@ -324,8 +328,8 @@ class BMConnectionPool(object):
 
         reaper = []
         for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values()
+                list(self.inboundConnections.values()) +
+                list(self.outboundConnections.values())
         ):
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -338,10 +342,10 @@ class BMConnectionPool(object):
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values() +
-                self.listeningSockets.values() +
-                self.udpSockets.values()
+                list(self.inboundConnections.values()) +
+                list(self.outboundConnections.values()) +
+                list(self.listeningSockets.values()) +
+                list(self.udpSockets.values())
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

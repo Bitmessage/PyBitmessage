@@ -30,17 +30,24 @@ def get_code_string(base):
     elif base == 58:
         return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     elif base == 256:
-        return ''.join([chr(x) for x in range(256)])
+        '''raw_unicode_escape is used because in the python3 after range(161) its genreate the'
+         the speical character so avoiding that function we have used the raw_unicode method '''
+        return ''.join([chr(x) for x in range(256)]).encode('raw_unicode_escape')
     else:
         raise ValueError("Invalid base!")
 
 
 def encode(val, base, minlen=0):
     code_string = get_code_string(base)
-    result = ""
+    result = ''
+    # result = str.encode(result)
+    count = 0
     while val > 0:
-        result = code_string[val % base] + result
-        val /= base
+        count += 1
+        print(f'code_string[int(val) % base:int(val) % base + 1] -{code_string[int(val) % base:int(val) % base + 1]}')
+        print(f'result-{result}')
+        result = code_string[int(val) % base:int(val) % base + 1] + result
+        val = int(val / base)
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
