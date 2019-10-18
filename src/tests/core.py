@@ -14,6 +14,7 @@ import unittest
 import knownnodes
 import state
 from bmconfigparser import BMConfigParser
+from helper_startup import start_proxyconfig
 from helper_msgcoding import MsgEncode, MsgDecode
 from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
@@ -21,8 +22,8 @@ from network.node import Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 
+
 knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
-program = None
 
 
 def pickle_knownnodes():
@@ -196,14 +197,12 @@ class TestCore(unittest.TestCase):
         self._check_bootstrap()
         self._initiate_bootstrap()
         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'stem')
-        program.start_proxyconfig(BMConfigParser())
+        start_proxyconfig()
         self._check_bootstrap()
 
 
-def run(prog):
+def run():
     """Starts all tests defined in this module"""
-    global program  # pylint: disable=global-statement
-    program = prog
     loader = unittest.TestLoader()
     loader.sortTestMethodsUsing = None
     suite = loader.loadTestsFromTestCase(TestCore)
