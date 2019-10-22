@@ -89,6 +89,7 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
     return False
 
+
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
@@ -171,8 +172,9 @@ def reloadBroadcastSendersForWhichImWatching():
         # we should create Cryptor objects in a dictionary which we will
         # use to attempt to decrypt encrypted broadcast messages.
         if addressVersionNumber <= 3:
-            privEncryptionKey = hashlib.sha512((encodeVarint(addressVersionNumber) \
-                                                + encodeVarint(streamNumber) + hash)).digest()[:32]
+            privEncryptionKey = hashlib.sha512((
+                encodeVarint(addressVersionNumber) +
+                encodeVarint(streamNumber) + hash)).digest()[:32]
             MyECSubscriptionCryptorObjects[hash] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
@@ -191,8 +193,8 @@ def fixPotentiallyInvalidUTF8Data(text):
         unicode(text, 'utf-8')
         return text
     except:
-        return 'Part of the message is corrupt. The message cannot be' \
-           ' displayed the normal way.\n\n' + repr(text)
+        return 'Part of the message is corrupt. The message cannot be'\
+            ' displayed the normal way.\n\n' + repr(text)
 
 
 # Checks sensitive file permissions for inappropriate umask

@@ -1,4 +1,4 @@
-0# pylint: disable=missing-docstring,too-many-function-args
+# pylint: disable=missing-docstring,too-many-function-args
 
 import hashlib
 import re
@@ -30,7 +30,7 @@ def get_code_string(base):
     elif base == 58:
         return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     elif base == 256:
-        '''raw_unicode_escape is used because in the python3 after range(161) its genreate the'
+        '''raw_unicode_escape is used because in the python3 after range(161) its genreate
          the speical character so avoiding that function we have used the raw_unicode method '''
         return bytes(range(0, 256))
     else:
@@ -39,13 +39,14 @@ def get_code_string(base):
 
 def encode(val, base, minlen=0):
     code_string = get_code_string(base)
-    result = str.encode('') if type(code_string) == bytes else ''
+    result = str.encode('') if type(code_string) is bytes else ''
     while val > 0:
         result = code_string[val % base:val % base + 1] + result
         val = val // base
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
+
 
 def decode(string, base):
     code_string = get_code_string(base)
