@@ -674,13 +674,12 @@ def loadOpenSSL():
         elif 'win32' in sys.platform or 'win64' in sys.platform:
             libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
         else:
-
             libdir.extend([
                 path.join(sys._MEIPASS, 'libcrypto.so'),
                 path.join(sys._MEIPASS, 'libssl.so'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.1.0'),
                 path.join(sys._MEIPASS, 'libssl.so.1.1.0'),
-                path.join(sys._MEIPASS, 'libcrypto.so.1.0.2'),
+                path.join(sys._MEIPASS,  'libcrypto.so.1.0.2'),
                 path.join(sys._MEIPASS, 'libssl.so.1.0.2'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.0.1'),
                 path.join(sys._MEIPASS, 'libssl.so.1.0.1'),
@@ -703,6 +702,7 @@ def loadOpenSSL():
         libdir.append('libssl.so')
         libdir.append('libcrypto.so.1.0.0')
         libdir.append('libssl.so.1.0.0')
+        libdir.append('libcrypto.so.1.0.2')
     if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
         try:
             libdir.append(find_library('ssl'))
@@ -710,7 +710,7 @@ def loadOpenSSL():
             pass
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
-    for library in libdir:  
+    for library in libdir:
         try:
             OpenSSL = _OpenSSL(library)
             return

@@ -89,27 +89,23 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
     return False
 
-
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
-    if fullString[-4:] != \
-       hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
+    if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
         logger.critical(
             'Major problem! When trying to decode one of your'
             ' private keys, the checksum failed. Here are the first'
-            ' 6 characters of the PRIVATE key: %s',
-            str(WIFstring)[:6]
+            ' 6 characters of the PRIVATE key: {}'.format(str(WIFstring)[:6])
         )
         os._exit(0)
-        # return ""
-    elif privkey[0] == '\x80':  # checksum passed
+    if privkey[0:1] == '\x80'.encode()[1:]:  # checksum passed
         return privkey[1:]
 
     logger.critical(
         'Major problem! When trying to decode one of your  private keys,'
         ' the checksum passed but the key doesn\'t begin with hex 80.'
-        ' Here is the PRIVATE key: %s', WIFstring
+        ' Here is the PRIVATE key: {}'.format(WIFstring)
     )
     os._exit(0)
 
