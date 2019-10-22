@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/proxyconfig_stem.py
-===================================
+Configure tor proxy and hidden service with
+`stem <https://stem.torproject.org/>`_ depending on *bitmessagesettings*:
+
+  * try to start own tor instance on *socksport* if *sockshostname*
+    is unset or set to localhost;
+  * if *socksport* is already in use that instance is used only for
+    hidden service (if *sockslisten* is also set True);
+  * create ephemeral hidden service v3 if there is already *onionhostname*;
+  * otherwise use stem's 'BEST' version and save onion keys to the new
+    section using *onionhostname* as name for future use.
 """
 import os
 import logging
@@ -36,10 +44,16 @@ class DebugLogger(object):
 
 
 def connect_plugin(config):  # pylint: disable=too-many-branches
-    """Run stem proxy configurator"""
+    """
+    Run stem proxy configurator
+
+    :param config: current configuration instance
+    :type config: :class:`pybitmessage.bmconfigparser.BMConfigParser`
+    :return: True if configuration was done successfully
+    """
     logwrite = DebugLogger()
-    if config.safeGet('bitmessagesettings', 'sockshostname') not in (
-            'localhost', '127.0.0.1', ''
+    if config.safeGet('bitmessagesettings', 'sockshostname', '') not in (
+        'localhost', '127.0.0.1', ''
     ):
         # remote proxy is choosen for outbound connections,
         # nothing to do here, but need to set socksproxytype to SOCKS5!
