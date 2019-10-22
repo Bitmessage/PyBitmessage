@@ -89,7 +89,6 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
     return False
 
-
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
