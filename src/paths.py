@@ -1,3 +1,6 @@
+"""
+Path related functions
+"""
 import logging
 import os
 import re
@@ -41,7 +44,8 @@ def lookupAppdataFolder():
             dataFolder = os.path.join(
                 os.environ['HOME'],
                 'Library/Application Support/', APPNAME
-            ) + '/'  # FIXME: should also be os.path.sep
+            ) + '/'
+
         except KeyError:
             sys.exit(
                 'Could not find home folder, please report this message'
@@ -75,6 +79,7 @@ def codePath():
         return os.path.dirname(__file__)
     return (
         os.environ.get('RESOURCEPATH')
+        # pylint: disable=protected-access
         if frozen == "macosx_app" else sys._MEIPASS)
 
 
@@ -91,7 +96,7 @@ def tail(f, lines=20):
     # from the end of the file
     blocks = []
     while lines_to_go > 0 and block_end_byte > 0:
-        if (block_end_byte - BLOCK_SIZE > 0):
+        if block_end_byte - BLOCK_SIZE > 0:
             # read the last block we haven't yet read
             f.seek(block_number * BLOCK_SIZE, 2)
             blocks.append(f.read(BLOCK_SIZE))
