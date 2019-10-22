@@ -82,6 +82,7 @@ def pickle_deserialize_old_knownnodes(source):
 
 
 def saveKnownNodes(dirName=None):
+    """Save knownnodes to filesystem"""
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
@@ -90,6 +91,7 @@ def saveKnownNodes(dirName=None):
 
 
 def addKnownNode(stream, peer, lastseen=None, is_self=False):
+    """Add a new node to the dict"""
     knownNodes[stream][peer] = {
         "lastseen": lastseen or time.time(),
         "rating": 1 if is_self else 0,
@@ -98,6 +100,7 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
 
 
 def createDefaultKnownNodes():
+    """Creating default Knownnodes"""
     past = time.time() - 2418600  # 28 days - 10 min
     for peer in DEFAULT_NODES:
         addKnownNode(1, peer, past)
@@ -105,6 +108,7 @@ def createDefaultKnownNodes():
 
 
 def readKnownNodes():
+    """Load knownnodes from filesystem"""
     try:
         with open(state.appdata + 'knownnodes.dat', 'rb') as source:
             with knownNodesLock:
@@ -131,6 +135,7 @@ def readKnownNodes():
 
 
 def increaseRating(peer):
+    """Increase rating of a peer node"""
     increaseAmount = 0.1
     maxRating = 1
     with knownNodesLock:
@@ -145,6 +150,7 @@ def increaseRating(peer):
 
 
 def decreaseRating(peer):
+    """Decrease rating of a peer node"""
     decreaseAmount = 0.1
     minRating = -1
     with knownNodesLock:
@@ -159,6 +165,7 @@ def decreaseRating(peer):
 
 
 def trimKnownNodes(recAddrStream=1):
+    """Triming Knownnodes"""
     if len(knownNodes[recAddrStream]) < \
             BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
         return
