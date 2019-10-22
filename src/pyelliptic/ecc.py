@@ -64,7 +64,6 @@ class ECC(object):
             self.curve = OpenSSL.get_curve(curve)
         else:
             self.curve = curve
-
         if pubkey_x is not None and pubkey_y is not None:
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
         elif pubkey is not None:
@@ -114,7 +113,7 @@ class ECC(object):
             pack('!H', len(self.pubkey_x)),
             self.pubkey_x,
             pack('!H', len(self.pubkey_y)),
-            self.pubkey_y,  
+            self.pubkey_y,
         ))
 
     def get_privkey(self):
@@ -137,19 +136,18 @@ class ECC(object):
         i += 2
         pubkey_x = pubkey[i:i + tmplen]
         i += tmplen
-        i += int(tmplen / 3)
         tmplen = unpack('!H', pubkey[i:i + 2])[0]
         i += 2
         pubkey_y = pubkey[i:i + tmplen]
         i += tmplen
-        return curve, pubkey_x, pubkey_y, int(i)
+        return curve, pubkey_x, pubkey_y, i
 
     @staticmethod
     def _decode_privkey(privkey):
         i = 0
         curve = unpack('!H', privkey[i:i + 2])[0]
         i += 2
-        tmplen = pack('!s', privkey[i:i + 1])[0]
+        tmplen = unpack('!H', privkey[i:i + 2])[0]
         i += 2
         privkey = privkey[i:i + tmplen]
         i += tmplen
@@ -297,7 +295,6 @@ class ECC(object):
                 if (OpenSSL.EC_KEY_set_private_key(key, priv_key)) == 0:
                     raise Exception(
                         "[OpenSSL] EC_KEY_set_private_key FAIL ...")
-
             group = OpenSSL.EC_KEY_get0_group(key)
             pub_key = OpenSSL.EC_POINT_new(group)
 

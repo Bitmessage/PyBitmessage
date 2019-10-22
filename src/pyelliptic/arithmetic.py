@@ -1,4 +1,4 @@
-# pylint: disable=missing-docstring,too-many-function-args
+0# pylint: disable=missing-docstring,too-many-function-args
 
 import hashlib
 import re
@@ -26,32 +26,26 @@ def get_code_string(base):
     elif base == 10:
         return '0123456789'
     elif base == 16:
-        return "0123456789abcdef"
+        return ("0123456789abcdef").encode()
     elif base == 58:
         return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     elif base == 256:
         '''raw_unicode_escape is used because in the python3 after range(161) its genreate the'
          the speical character so avoiding that function we have used the raw_unicode method '''
-        return ''.join([chr(x) for x in range(256)]).encode('raw_unicode_escape')
+        return bytes(range(0, 256))
     else:
         raise ValueError("Invalid base!")
 
 
 def encode(val, base, minlen=0):
     code_string = get_code_string(base)
-    result = ''
-    # result = str.encode(result)
-    count = 0
+    result = str.encode('') if type(code_string) == bytes else ''
     while val > 0:
-        count += 1
-        print(f'code_string[int(val) % base:int(val) % base + 1] -{code_string[int(val) % base:int(val) % base + 1]}')
-        print(f'result-{result}')
-        result = code_string[int(val) % base:int(val) % base + 1] + result
-        val = int(val / base)
+        result = code_string[val % base:val % base + 1] + result
+        val = val // base
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
-
 
 def decode(string, base):
     code_string = get_code_string(base)
@@ -60,7 +54,7 @@ def decode(string, base):
         string = string.lower()
     while string:
         result *= base
-        result += code_string.find(string[0])
+        result += code_string.find(string[0:1])
         string = string[1:]
     return result
 
