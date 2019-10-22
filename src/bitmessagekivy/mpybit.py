@@ -50,16 +50,14 @@ from kivymd.uix.navigationdrawer import (
     NavigationDrawerHeaderBase)
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.theming import ThemeManager
+
 import queues
 from semaphores import kivyuisignaler
+
 import state
 
 from bitmessagekivy.uikivysignaler import UIkivySignaler
-# pylint: disable=unused-argument, too-few-public-methods, import-error
-
 from bitmessagekivy import identiconGeneration
-import os
-from kivy.core.clipboard import Clipboard
 # pylint: disable=unused-argument, too-few-public-methods
 
 
@@ -986,7 +984,6 @@ class NavigateApp(App):     # pylint: disable=too-many-public-methods
 
     def build(self):
         """Method builds the widget."""
-        import os 
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
