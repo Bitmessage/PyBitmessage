@@ -173,6 +173,22 @@ class TestCore(unittest.TestCase):
             self.fail(
                 'Failed to connect during %s sec' % (time.time() - _started))
 
+    def test_onionservicesonly(self):
+        """test onionservicesonly networking mode"""
+        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', True)
+        self._initiate_bootstrap()
+        BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+        for _ in range(360):
+            time.sleep(1)
+            for n, peer in enumerate(BMConnectionPool().outboundConnections):
+                if n > 2:
+                    return
+                if not peer.host.endswith('.onion'):
+                    self.fail(
+                        'Found non onion hostname %s in outbound connections!'
+                        % peer.host)
+        self.fail('Failed to connect to at least 3 nodes within 360 sec')
+
     def test_bootstrap(self):
         """test bootstrapping"""
         self._initiate_bootstrap()
