@@ -31,8 +31,7 @@ import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlQuery, sqlExecute
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from network.threads import StoppableThread
+from network import BMConnectionPool, StoppableThread
 
 
 class singleCleaner(StoppableThread):

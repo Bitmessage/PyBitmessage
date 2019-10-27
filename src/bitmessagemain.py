@@ -41,30 +41,18 @@ import shared
 import knownnodes
 import state
 import shutdown
-from debug import logger  # this should go before any threads
-
-# Classes
-from class_sqlThread import sqlThread
-from class_singleCleaner import singleCleaner
-from class_objectProcessor import objectProcessor
-from class_singleWorker import singleWorker
-from class_addressGenerator import addressGenerator
 from bmconfigparser import BMConfigParser
-
+from debug import logger  # this should go before any threads
 from inventory import Inventory
-
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
-from network.networkthread import BMNetworkThread
-from network.receivequeuethread import ReceiveQueueThread
-from network.announcethread import AnnounceThread
-from network.invthread import InvThread
-from network.addrthread import AddrThread
-from network.downloadthread import DownloadThread
-from network.uploadthread import UploadThread
-
-# Helper Functions
-import helper_threading
+# Network objects and threads
+from network import (
+    BMConnectionPool, Dandelion,
+    AddrThread, AnnounceThread, BMNetworkThread, InvThread, ReceiveQueueThread,
+    DownloadThread, UploadThread)
+# Synchronous threads
+from threads import (
+    set_thread_name,
+    addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
 
 
 def connectToStream(streamNumber):
@@ -275,7 +263,7 @@ class Main:
 
         self.setSignalHandler()
 
-        helper_threading.set_thread_name("PyBitmessage")
+        set_thread_name("PyBitmessage")
 
         state.dandelion = config.safeGetInt('network', 'dandelion')
         # dandelion requires outbound connections, without them,

@@ -1,3 +1,7 @@
+"""
+sqlThread is defined here
+"""
+
 import threading
 from bmconfigparser import BMConfigParser
 import sqlite3
@@ -19,11 +23,13 @@ import tr
 
 
 class sqlThread(threading.Thread):
+    """A thread for all SQL operations"""
 
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
 
     def run(self):
+        """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()

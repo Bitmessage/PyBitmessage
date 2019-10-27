@@ -10,7 +10,7 @@ from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from knownnodes import saveKnownNodes
-from network.threads import StoppableThread
+from network import StoppableThread
 from queues import (
     addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)
 

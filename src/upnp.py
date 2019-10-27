@@ -21,8 +21,7 @@ import state
 import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
-from network.connectionpool import BMConnectionPool
-from network.threads import StoppableThread
+from network import BMConnectionPool, StoppableThread
 
 
 def createRequestXML(service, action, arguments=None):

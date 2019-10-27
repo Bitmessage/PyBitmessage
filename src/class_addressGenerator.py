@@ -14,7 +14,7 @@ import highlevelcrypto
 from bmconfigparser import BMConfigParser
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from fallback import RIPEMD160Hash
-from network.threads import StoppableThread
+from network import StoppableThread
 
 
 class addressGenerator(StoppableThread):
@@ -29,6 +29,10 @@ class addressGenerator(StoppableThread):
         super(addressGenerator, self).stopThread()
 
     def run(self):
+        """
+        Process the requests for addresses generation
+        from `.queues.addressGeneratorQueue`
+        """
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0

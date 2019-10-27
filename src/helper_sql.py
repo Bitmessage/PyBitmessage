@@ -1,17 +1,39 @@
-"""Helper Sql performs sql operations."""
+"""
+SQL-related functions defined here are really pass the queries (or other SQL
+commands) to :class:`.threads.sqlThread` through `sqlSubmitQueue` queue and check
+or return the result got from `sqlReturnQueue`.
+
+This is done that way because :mod:`sqlite3` is so thread-unsafe that they
+won't even let you call it from different threads using your own locks.
+SQLite objects can only be used from one thread.
+
+.. note:: This actually only applies for certain deployments, and/or
+   really old version of sqlite. I haven't actually seen it anywhere.
+   Current versions do have support for threading and multiprocessing.
+   I don't see an urgent reason to refactor this, but it should be noted
+   in the comment that the problem is mostly not valid. Sadly, last time
+   I checked, there is no reliable way to check whether the library is
+   or isn't thread-safe.
+"""
 
 import threading
 import Queue
 
 sqlSubmitQueue = Queue.Queue()
-# SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks.
-# SQL objects #can only be called from one thread.
+"""the queue for SQL"""
 sqlReturnQueue = Queue.Queue()
+"""the queue for results"""
 sqlLock = threading.Lock()
 
 
 def sqlQuery(sqlStatement, *args):
-    """SQLLITE execute statement and return query."""
+    """
+    Query sqlite and return results
+
+    :param str sqlStatement: SQL statement string
+    :param list args: SQL query parameters
+    :rtype: list
+    """
     sqlLock.acquire()
     sqlSubmitQueue.put(sqlStatement)
 

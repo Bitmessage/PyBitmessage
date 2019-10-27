@@ -57,6 +57,7 @@ class objectProcessor(threading.Thread):
         self.successfullyDecryptMessageTimings = []
 
     def run(self):
+        """Process the objects from `.queues.objectProcessorQueue`"""
         while True:
             objectType, data = queues.objectProcessorQueue.get()
 
@@ -1051,7 +1052,8 @@ class objectProcessor(threading.Thread):
         # for it.
         elif addressVersion >= 4:
             tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe
+                encodeVarint(addressVersion) + encodeVarint(streamNumber)
+                + ripe
             ).digest()).digest()[32:]
             if tag in state.neededPubkeys:
                 del state.neededPubkeys[tag]
@@ -1059,9 +1061,8 @@ class objectProcessor(threading.Thread):
 
     def sendMessages(self, address):
         """
-        This function is called by the possibleNewPubkey function when
-        that function sees that we now have the necessary pubkey
-        to send one or more messages.
+        This method is called by the `possibleNewPubkey` when it sees
+        that we now have the necessary pubkey to send one or more messages.
         """
         logger.info('We have been awaiting the arrival of this pubkey.')
         sqlExecute(
