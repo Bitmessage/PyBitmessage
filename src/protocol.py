@@ -1,7 +1,8 @@
-# pylint: disable=too-many-boolean-expressions,too-many-return-statements,too-many-locals,too-many-statements
 """
 Low-level protocol-related functions.
 """
+# pylint: disable=too-many-boolean-expressions,too-many-return-statements
+# pylint: disable=too-many-locals,too-many-statements
 
 import base64
 import hashlib
@@ -9,7 +10,6 @@ import random
 import socket
 import sys
 import time
-import traceback
 from binascii import hexlify
 from struct import pack, unpack, Struct
 
@@ -24,10 +24,18 @@ from fallback import RIPEMD160Hash
 from helper_sql import sqlExecute
 from version import softwareVersion
 
-
 # Service flags
+#: This is a normal network node
 NODE_NETWORK = 1
+#: This node supports SSL/TLS in the current connect (python < 2.7.9
+#: only supports an SSL client, so in that case it would only have this
+#: on when the connection is a client).
 NODE_SSL = 2
+# (Proposal) This node may do PoW on behalf of some its peers
+# (PoW offloading/delegating), but it doesn't have to. Clients may have
+# to meet additional requirements (e.g. TLS authentication)
+# NODE_POW = 4
+#: Node supports dandelion
 NODE_DANDELION = 8
 
 # Bitfield flags
@@ -89,7 +97,8 @@ def isBitSetWithinBitfield(fourByteString, n):
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
     if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(host.split(".")[0], True)
+        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+            host.split(".")[0], True)
     elif host.find(':') == -1:
         return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
             socket.inet_aton(host)
@@ -134,7 +143,10 @@ def network_group(host):
 
 
 def checkIPAddress(host, private=False):
-    """Returns hostStandardFormat if it is a valid IP address, otherwise returns False"""
+    """
+    Returns hostStandardFormat if it is a valid IP address,
+    otherwise returns False
+    """
     if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
         hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
         return checkIPv4Address(host[12:], hostStandardFormat, private)
@@ -150,35 +162,46 @@ def checkIPAddress(host, private=False):
         except ValueError:
             return False
         if hostStandardFormat == "":
-            # This can happen on Windows systems which are not 64-bit compatible
-            # so let us drop the IPv6 address.
+            # This can happen on Windows systems which are
+            # not 64-bit compatible so let us drop the IPv6 address.
             return False
         return checkIPv6Address(host, hostStandardFormat, private)
 
 
 def checkIPv4Address(host, hostStandardFormat, private=False):
-    """Returns hostStandardFormat if it is an IPv4 address, otherwise returns False"""
+    """
+    Returns hostStandardFormat if it is an IPv4 address,
+    otherwise returns False
+    """
     if host[0] == '\x7F':  # 127/8
         if not private:
-            logger.debug('Ignoring IP address in loopback range: %s', hostStandardFormat)
+            logger.debug(
+                'Ignoring IP address in loopback range: %s',
+                hostStandardFormat)
         return hostStandardFormat if private else False
     if host[0] == '\x0A':  # 10/8
         if not private:
-            logger.debug('Ignoring IP address in private range: %s', hostStandardFormat)
+            logger.debug(
+                'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
     if host[0:2] == '\xC0\xA8':  # 192.168/16
         if not private:
-            logger.debug('Ignoring IP address in private range: %s', hostStandardFormat)
+            logger.debug(
+                'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
     if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20':  # 172.16/12
         if not private:
-            logger.debug('Ignoring IP address in private range: %s', hostStandardFormat)
+            logger.debug(
+                'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
     return False if private else hostStandardFormat
 
 
 def checkIPv6Address(host, hostStandardFormat, private=False):
-    """Returns hostStandardFormat if it is an IPv6 address, otherwise returns False"""
+    """
+    Returns hostStandardFormat if it is an IPv6 address,
+    otherwise returns False
+    """
     if host == ('\x00' * 15) + '\x01':
         if not private:
             logger.debug('Ignoring loopback address: %s', hostStandardFormat)
@@ -189,7 +212,8 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
         return hostStandardFormat if private else False
     if (ord(host[0]) & 0xfe) == 0xfc:
         if not private:
-            logger.debug('Ignoring unique local address: %s', hostStandardFormat)
+            logger.debug(
+                'Ignoring unique local address: %s', hostStandardFormat)
         return hostStandardFormat if private else False
     return False if private else hostStandardFormat
 
@@ -210,31 +234,29 @@ def haveSSL(server=False):
 
 def checkSocksIP(host):
     """Predicate to check if we're using a SOCKS proxy"""
+    sockshostname = BMConfigParser().safeGet(
+        'bitmessagesettings', 'sockshostname')
     try:
-        if state.socksIP is None or not state.socksIP:
-            state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
-    # uninitialised
-    except NameError:
-        state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
-    # resolving failure
-    except socket.gaierror:
-        state.socksIP = BMConfigParser().get("bitmessagesettings", "sockshostname")
+        if not state.socksIP:
+            state.socksIP = socket.gethostbyname(sockshostname)
+    except NameError:  # uninitialised
+        state.socksIP = socket.gethostbyname(sockshostname)
+    except (TypeError, socket.gaierror):  # None, resolving failure
+        state.socksIP = sockshostname
     return state.socksIP == host
 
 
-def isProofOfWorkSufficient(data,
-                            nonceTrialsPerByte=0,
-                            payloadLengthExtraBytes=0,
-                            recvTime=0):
+def isProofOfWorkSufficient(
+        data, nonceTrialsPerByte=0, payloadLengthExtraBytes=0, recvTime=0):
     """
-    Validate an object's Proof of Work using method described in:
-    https://bitmessage.org/wiki/Proof_of_work
+    Validate an object's Proof of Work using method described
+    `here <https://bitmessage.org/wiki/Proof_of_work>`_
 
     Arguments:
-        int nonceTrialsPerByte (default: from default.py)
-        int payloadLengthExtraBytes (default: from default.py)
+        int nonceTrialsPerByte (default: from `.defaults`)
+        int payloadLengthExtraBytes (default: from `.defaults`)
         float recvTime (optional) UNIX epoch time when object was
-        received from the network (default: current system time)
+          received from the network (default: current system time)
     Returns:
         True if PoW valid and sufficient, False in all other cases
     """
@@ -246,18 +268,20 @@ def isProofOfWorkSufficient(data,
     TTL = endOfLifeTime - (int(recvTime) if recvTime else int(time.time()))
     if TTL < 300:
         TTL = 300
-    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
-        :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-    return POW <= 2 ** 64 / (nonceTrialsPerByte *
-                             (len(data) + payloadLengthExtraBytes +
-                              ((TTL * (len(data) + payloadLengthExtraBytes)) / (2 ** 16))))
+    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(
+        data[:8] + hashlib.sha512(data[8:]).digest()
+    ).digest()).digest()[0:8])
+    return POW <= 2 ** 64 / (
+        nonceTrialsPerByte * (
+            len(data) + payloadLengthExtraBytes +
+            ((TTL * (len(data) + payloadLengthExtraBytes)) / (2 ** 16))))
 
 
 # Packet creation
 
 
 def CreatePacket(command, payload=''):
-    """Construct and return a number of bytes from a payload"""
+    """Construct and return a packet"""
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
 
@@ -267,8 +291,13 @@ def CreatePacket(command, payload=''):
     return bytes(b)
 
 
-def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=False, nodeid=None):
-    """Construct the payload of a version message, return the resultng bytes of running CreatePacket() on it"""
+def assembleVersionMessage(
+    remoteHost, remotePort, participatingStreams, server=False, nodeid=None
+):
+    """
+    Construct the payload of a version message,
+    return the resulting bytes of running `CreatePacket` on it
+    """
     payload = ''
     payload += pack('>L', 3)  # protocol version.
     # bitflags of the services I offer.
@@ -280,9 +309,10 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     )
     payload += pack('>q', int(time.time()))
 
-    payload += pack(
-        '>q', 1)  # boolservices of remote connection; ignored by the remote host.
-    if checkSocksIP(remoteHost) and server:  # prevent leaking of tor outbound IP
+    # boolservices of remote connection; ignored by the remote host.
+    payload += pack('>q', 1)
+    if checkSocksIP(remoteHost) and server:
+        # prevent leaking of tor outbound IP
         payload += encodeHost('127.0.0.1')
         payload += pack('>H', 8444)
     else:
@@ -301,21 +331,25 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
         (NODE_SSL if haveSSL(server) else 0) |
         (NODE_DANDELION if state.dandelion else 0)
     )
-    # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack('>L', 2130706433)
+    # = 127.0.0.1. This will be ignored by the remote host.
+    # The actual remote connected IP will be used.
+    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
+        '>L', 2130706433)
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
     extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
     if (
         extport and ((server and not checkSocksIP(remoteHost)) or (
-            BMConfigParser().get('bitmessagesettings', 'socksproxytype') ==
-            'none' and not server))
+            BMConfigParser().get('bitmessagesettings', 'socksproxytype')
+            == 'none' and not server))
     ):
         payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
-        payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
+        payload += pack(
+            '>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
     else:  # no extport and not incoming over Tor
-        payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'port'))
+        payload += pack(
+            '>H', BMConfigParser().getint('bitmessagesettings', 'port'))
 
     if nodeid is not None:
         payload += nodeid[0:8]
@@ -339,7 +373,10 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
 
 
 def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
-    """Construct the payload of an error message, return the resultng bytes of running CreatePacket() on it"""
+    """
+    Construct the payload of an error message,
+    return the resulting bytes of running `CreatePacket` on it
+    """
     payload = encodeVarint(fatal)
     payload += encodeVarint(banTime)
     payload += encodeVarint(len(inventoryVector))
@@ -476,7 +513,7 @@ def decryptAndCheckPubkeyPayload(data, address):
     except Exception:
         logger.critical(
             'Pubkey decryption was UNsuccessful because of'
-            ' an unhandled exception! This is definitely a bug! \n%s',
-            traceback.format_exc()
+            ' an unhandled exception! This is definitely a bug!',
+            exc_info=True
         )
         return 'failed'
