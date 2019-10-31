@@ -1026,10 +1026,25 @@ class NavigateApp(App):
         self.root_window.children[1].ids.toolbar.title = address_label
         state.association = text
         state.searcing_text = ''
+        LoadingPopup().open()
         self.root.ids.sc1.ids.ml.clear_widgets()
         self.root.ids.sc1.loadMessagelist(state.association)
+
+        self.root.ids.sc4.ids.ml.clear_widgets()
+        self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
+        self.root.ids.sc4.loadSent(state.association)
+
+        self.root.ids.sc16.clear_widgets()
+        self.root.ids.sc16.add_widget(Draft())
+
+        self.root.ids.sc5.clear_widgets()
+        self.root.ids.sc5.add_widget(Trash())
+
+        self.root.ids.sc17.clear_widgets()
+        self.root.ids.sc17.add_widget(Allmails())
+
         self.root.ids.scr_mngr.current = 'inbox'
-        msg_counter_objs = self.root_window.children[1].children[2].children[0].ids
+        msg_counter_objs = self.root_window.children[2].children[2].children[0].ids
         state.sent_count = str(
             sqlQuery(
                 "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
@@ -1224,48 +1239,43 @@ class NavigateApp(App):
     def refreshScreen(self, instance):
         """Method show search button only on inbox or sent screen."""
         state.searcing_text = ''
-        if instance.text == 'Sent':
-            self.root.ids.sc4.ids.ml.clear_widgets()
-            self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
-            self.root.ids.sc4.loadSent(state.association)
-        elif instance.text == 'Inbox':
-            self.root.ids.sc1.ids.ml.clear_widgets()
-            try:
-                self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
-            except Exception:
-                self.root.ids.sc1.children[1].children[1].ids.search_field.text = ''
-            self.root.ids.sc1.loadMessagelist(state.association)
-        elif instance.text == 'Draft':
-            self.root.ids.sc16.clear_widgets()
-            self.root.ids.sc16.add_widget(Draft())
-        elif instance.text == 'Trash':
-            self.root.ids.sc5.clear_widgets()
-            self.root.ids.sc5.add_widget(Trash())
-        elif instance.text == 'All Mails':
-            self.root.ids.sc17.clear_widgets()
-            self.root.ids.sc17.add_widget(Allmails())
-        elif instance.text == 'Address Book':
-            self.root.ids.sc11.ids.ml.clear_widgets()
-            self.root.ids.sc11.children[1].children[1].ids.search_field.text = ''
-            self.root.ids.sc11.loadAddresslist(None, 'All', '')
-        elif instance.text == 'My Addresses':
-            self.root.ids.sc10.ids.ml.clear_widgets()
-            try:
-                self.root.ids.sc10.children[1].children[1].ids.search_field.text = ''
-            except Exception:
-                self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
-            self.root.ids.sc10.init_ui()
+        # if instance.text == 'Sent':
+        #     self.root.ids.sc4.ids.ml.clear_widgets()
+        #     self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
+        #     self.root.ids.sc4.loadSent(state.association)
+        # elif instance.text == 'Inbox':
+        #     self.root.ids.sc1.ids.ml.clear_widgets()
+        #     try:
+        #         self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
+        #     except Exception:
+        #         self.root.ids.sc1.children[1].children[1].ids.search_field.text = ''
+        #     self.root.ids.sc1.loadMessagelist(state.association)
+        # elif instance.text == 'Draft':
+        #     self.root.ids.sc16.clear_widgets()
+        #     self.root.ids.sc16.add_widget(Draft())
+        # elif instance.text == 'Trash':
+        #     self.root.ids.sc5.clear_widgets()
+        #     self.root.ids.sc5.add_widget(Trash())
+        # elif instance.text == 'All Mails':
+        #     self.root.ids.sc17.clear_widgets()
+        #     self.root.ids.sc17.add_widget(Allmails())
+        # elif instance.text == 'Address Book':
+        #     self.root.ids.sc11.ids.ml.clear_widgets()
+        #     self.root.ids.sc11.children[1].children[1].ids.search_field.text = ''
+        #     self.root.ids.sc11.loadAddresslist(None, 'All', '')
+        # elif instance.text == 'My Addresses':
+        #     self.root.ids.sc10.ids.ml.clear_widgets()
+        #     try:
+        #         self.root.ids.sc10.children[1].children[1].ids.search_field.text = ''
+        #     except Exception:
+        #         self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
+        #     self.root.ids.sc10.init_ui()
         return
 
     def set_identicon(self, text):
         """This method is use for showing identicon in address spinner"""
         img = identiconGeneration.generate(text)
         self.root.children[2].children[0].ids.btn.children[1].texture = img.texture
-
-    @staticmethod
-    def address_identicon():
-        """Address identicon"""
-        return './images/drawer_logo1.png'
 
     def set_mail_detail_header(self):
         """Method is used for setting the details of the page"""
@@ -1966,3 +1976,14 @@ class Spam(Screen):
     """Spam Screen show widgets of page."""
 
     pass
+
+
+class LoadingPopup(Popup):
+
+    def __init__(self, **kwargs):
+        super(LoadingPopup, self).__init__(**kwargs)
+        # call dismiss_popup in 2 seconds
+        Clock.schedule_once(self.dismiss_popup, 0.5)
+
+    def dismiss_popup(self, dt):
+        self.dismiss()
