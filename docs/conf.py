@@ -229,7 +229,7 @@ apidoc_excluded_paths = [
     'bitmessageqt/newaddresswizard.py',
     'class_objectProcessor.py', 'defaults.py', 'helper_startup.py',
     'kivymd', 'main.py', 'navigationdrawer', 'network/http*',
-    'pybitmessage', 'queues.py', 'tests', 'version.py'
+    'pybitmessage', 'tests', 'version.py'
 ]
 apidoc_module_first = True
 apidoc_separate_modules = True
