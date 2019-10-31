@@ -14,6 +14,7 @@
 #:import MDFloatingActionButton kivymd.button.MDFloatingActionButton
 #:import Factory kivy.factory.Factory
 #:import MDScrollViewRefreshLayout kivymd.refreshlayout.MDScrollViewRefreshLayout
+#:import MDSpinner kivymd.spinner.MDSpinner
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -29,7 +30,7 @@
     color: color_font
 
 <ContentNavigationDrawer@Navigatorss>:
-    drawer_logo: app.address_identicon()
+    drawer_logo: './images/drawer_logo1.png'
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
         text: "Accounts"
@@ -1204,3 +1205,17 @@ NavigationLayout:
         id: search_field
         hint_text: 'Search'
         on_text: app.searchQuery(self)
+
+
+<LoadingPopup>:
+    separator_color: 1, 1, 1, 1
+    background: "White.png"
+    Button:
+        id: btn
+        disabled: True
+        background_disabled_normal: "White.png"
+        Image:
+            source: './images/loader.zip'
+            anim_delay: 0
+            #mipmap: True
+            size: root.size
