@@ -9,6 +9,7 @@ import socket
 import state
 import protocol
 from bmproto import BMProto
+from node import Peer
 from objectracker import ObjectTracker
 from queues import receiveDataQueue
 
@@ -43,8 +44,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         else:
             self.socket = sock
             self.set_socket_reuse()
-        self.listening = state.Peer(*self.socket.getsockname())
-        self.destination = state.Peer(*self.socket.getsockname())
+        self.listening = Peer(*self.socket.getsockname())
+        self.destination = Peer(*self.socket.getsockname())
         ObjectTracker.__init__(self)
         self.connecting = False
         self.connected = True
@@ -96,7 +97,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             self.destination.host, self.destination.port, remoteport)
         if self.local:
             state.discoveredPeers[
-                state.Peer(self.destination.host, remoteport)
+                Peer(self.destination.host, remoteport)
             ] = time.time()
         return True
 
@@ -131,7 +132,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             logger.error("socket error: %s", e)
             return
 
-        self.destination = state.Peer(*addr)
+        self.destination = Peer(*addr)
         encodedAddr = protocol.encodeHost(addr[0])
         self.local = bool(protocol.checkIPAddress(encodedAddr, True))
         # overwrite the old buffer to avoid mixing data and so that

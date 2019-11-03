@@ -5,6 +5,7 @@ import errno
 import logging
 import re
 import socket
+import sys
 import time
 
 import asyncore_pollchoose as asyncore
@@ -14,6 +15,7 @@ import protocol
 import state
 from bmconfigparser import BMConfigParser
 from connectionchooser import chooseConnection
+from node import Peer
 from proxy import Proxy
 from singleton import Singleton
 from tcp import (
@@ -28,6 +30,19 @@ logger = logging.getLogger('default')
 class BMConnectionPool(object):
     """Pool of all existing connections"""
     # pylint: disable=too-many-instance-attributes
+
+    trustedPeer = None
+    """
+    If the trustedpeer option is specified in keys.dat then this will
+    contain a Peer which will be connected to instead of using the
+    addresses advertised by other peers.
+
+    The expected use case is where the user has a trusted server where
+    they run a Bitmessage daemon permanently. If they then run a second
+    instance of the client on a local machine periodically when they want
+    to check for messages it will sync with the network a lot faster
+    without compromising security.
+    """
 
     def __init__(self):
         asyncore.set_rates(
@@ -44,6 +59,18 @@ class BMConnectionPool(object):
         self._lastSpawned = 0
         self._spawnWait = 2
         self._bootstrapped = False
+
+        trustedPeer = BMConfigParser().safeGet(
+            'bitmessagesettings', 'trustedpeer')
+        try:
+            if trustedPeer:
+                host, port = trustedPeer.split(':')
+                self.trustedPeer = Peer(host, int(port))
+        except ValueError:
+            sys.exit(
+                'Bad trustedpeer config setting! It should be set as'
+                ' trustedpeer=<hostname>:<portnumber>'
+            )
 
     def connections(self):
         """
@@ -112,7 +139,7 @@ class BMConnectionPool(object):
         if isinstance(connection, UDPSocket):
             del self.udpSockets[connection.listening.host]
         elif isinstance(connection, TCPServer):
-            del self.listeningSockets[state.Peer(
+            del self.listeningSockets[Peer(
                 connection.destination.host, connection.destination.port)]
         elif connection.isOutbound:
             try:
@@ -259,7 +286,7 @@ class BMConnectionPool(object):
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
-                        chosen = chooseConnection(
+                        chosen = self.trustedPeer or chooseConnection(
                             helper_random.randomchoice(self.streams))
                     except ValueError:
                         continue

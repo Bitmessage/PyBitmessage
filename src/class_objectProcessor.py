@@ -21,6 +21,7 @@ import helper_sent
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from helper_ackPayload import genAckPayload
 from network import bmproto
+from network.node import Peer
 import protocol
 import queues
 import state
@@ -161,7 +162,7 @@ class objectProcessor(threading.Thread):
 
         if not host:
             return
-        peer = state.Peer(host, port)
+        peer = Peer(host, port)
         with knownnodes.knownNodesLock:
             knownnodes.addKnownNode(
                 stream, peer, is_self=state.ownAddresses.get(peer))

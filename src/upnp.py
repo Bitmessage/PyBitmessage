@@ -1,9 +1,6 @@
 ﻿# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
 """
-src/upnp.py
-===========
-
-A simple upnp module to forward port for BitMessage
+Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
 
@@ -22,6 +19,7 @@ import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
 from network import BMConnectionPool, StoppableThread
+from network.node import Peer
 
 
 def createRequestXML(service, action, arguments=None):
@@ -262,7 +260,7 @@ class uPnPThread(StoppableThread):
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
                         try:
-                            self_peer = state.Peer(
+                            self_peer = Peer(
                                 newRouter.GetExternalIPAddress(),
                                 self.extPort
                             )

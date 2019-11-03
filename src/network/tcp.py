@@ -28,6 +28,7 @@ from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
+from node import Peer
 from queues import UISignalQueue, invQueue, receiveDataQueue
 
 logger = logging.getLogger('default')
@@ -49,7 +50,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.connectedAt = 0
         self.skipUntil = 0
         if address is None and sock is not None:
-            self.destination = state.Peer(*sock.getpeername())
+            self.destination = Peer(*sock.getpeername())
             self.isOutbound = False
             TLSDispatcher.__init__(self, sock, server_side=True)
             self.connectedAt = time.time()
@@ -334,7 +335,7 @@ def bootstrap(connection_class):
         _connection_base = connection_class
 
         def __init__(self, host, port):
-            self._connection_base.__init__(self, state.Peer(host, port))
+            self._connection_base.__init__(self, Peer(host, port))
             self.close_reason = self._succeed = False
 
         def bm_command_addr(self):
@@ -384,7 +385,7 @@ class TCPServer(AdvancedDispatcher):
                         'bitmessagesettings', 'port', str(port))
                     BMConfigParser().save()
                 break
-        self.destination = state.Peer(host, port)
+        self.destination = Peer(host, port)
         self.bound = True
         self.listen(5)
 
@@ -402,7 +403,7 @@ class TCPServer(AdvancedDispatcher):
         except (TypeError, IndexError):
             return
 
-        state.ownAddresses[state.Peer(*sock.getsockname())] = True
+        state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
             len(connectionpool.BMConnectionPool().inboundConnections) +
             len(connectionpool.BMConnectionPool().outboundConnections) >

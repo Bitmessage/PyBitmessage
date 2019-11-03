@@ -10,6 +10,7 @@ from bmconfigparser import BMConfigParser
 from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
+from node import Peer
 from threads import StoppableThread
 
 
@@ -36,6 +37,8 @@ class AnnounceThread(StoppableThread):
             for stream in state.streamsInWhichIAmParticipating:
                 addr = (
                     stream,
-                    state.Peer('127.0.0.1', BMConfigParser().safeGetInt("bitmessagesettings", "port")),
+                    Peer(
+                        '127.0.0.1',
+                        BMConfigParser().safeGetInt('bitmessagesettings', 'port')),
                     time.time())
                 connection.append_write_buf(BMProto.assembleAddr([addr]))
