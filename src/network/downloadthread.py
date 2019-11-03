@@ -1,6 +1,5 @@
 """
-src/network/downloadthread.py
-=============================
+`DownloadThread` class definition
 """
 
 import time
@@ -29,7 +28,7 @@ class DownloadThread(StoppableThread):
 
     def cleanPending(self):
         """Expire pending downloads eventually"""
-        deadline = time.time() - DownloadThread.requestExpires
+        deadline = time.time() - self.requestExpires
         try:
             toDelete = [k for k, v in missingObjects.iteritems() if v < deadline]
         except RuntimeError:
@@ -43,15 +42,12 @@ class DownloadThread(StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = [
-                x for x in
-                BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
-                if x.fullyEstablished]
+            connections = BMConnectionPool().establishedConnections()
             helper_random.randomshuffle(connections)
-            try:
-                requestChunk = max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
-            except ZeroDivisionError:
-                requestChunk = 1
+            requestChunk = max(int(
+                min(self.maxRequestChunk, len(missingObjects))
+                / len(connections)), 1) if connections else 1
+
             for i in connections:
                 now = time.time()
                 # avoid unnecessary delay
@@ -81,7 +77,7 @@ class DownloadThread(StoppableThread):
                     '%s:%i Requesting %i objects',
                     i.destination.host, i.destination.port, chunkCount)
                 requested += chunkCount
-            if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
+            if time.time() >= self.lastCleaned + self.cleanInterval:
                 self.cleanPending()
             if not requested:
                 self.stop.wait(1)

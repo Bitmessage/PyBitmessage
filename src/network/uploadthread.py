@@ -1,5 +1,5 @@
 """
-src/network/uploadthread.py
+`UploadThread` class definition
 """
 import time
 
@@ -22,19 +22,19 @@ class UploadThread(StoppableThread):
     def run(self):
         while not self._stopped:
             uploaded = 0
-            # Choose downloading peers randomly
-            connections = [x for x in BMConnectionPool().inboundConnections.values() +
-                           BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
+            # Choose uploading peers randomly
+            connections = BMConnectionPool().establishedConnections()
             helper_random.randomshuffle(connections)
             for i in connections:
                 now = time.time()
                 # avoid unnecessary delay
                 if i.skipUntil >= now:
                     continue
-                if len(i.write_buf) > UploadThread.maxBufSize:
+                if len(i.write_buf) > self.maxBufSize:
                     continue
                 try:
-                    request = i.pendingUpload.randomKeys(RandomTrackingDict.maxPending)
+                    request = i.pendingUpload.randomKeys(
+                        RandomTrackingDict.maxPending)
                 except KeyError:
                     continue
                 payload = bytearray()
