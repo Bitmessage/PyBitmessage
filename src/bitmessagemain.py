@@ -7,8 +7,6 @@
 # Right now, PyBitmessage only support connecting to stream 1. It doesn't
 # yet contain logic to expand into further streams.
 
-# The software version variable is now held in shared.py
-
 import os
 import sys
 
@@ -31,24 +29,23 @@ import time
 import traceback
 from struct import pack
 
-from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
-)
-from singleinstance import singleinstance
-
 import defaults
 import shared
-import knownnodes
 import state
 import shutdown
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
+from helper_startup import (
+    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
+)
 from inventory import Inventory
+from knownnodes import readKnownNodes
 # Network objects and threads
 from network import (
     BMConnectionPool, Dandelion,
     AddrThread, AnnounceThread, BMNetworkThread, InvThread, ReceiveQueueThread,
     DownloadThread, UploadThread)
+from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
     set_thread_name,
@@ -71,14 +68,6 @@ def connectToStream(streamNumber):
             state.maximumNumberOfHalfOpenConnections = 4
     except:
         pass
-
-    with knownnodes.knownNodesLock:
-        if streamNumber not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber] = {}
-        if streamNumber * 2 not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber * 2] = {}
-        if streamNumber * 2 + 1 not in knownnodes.knownNodes:
-            knownnodes.knownNodes[streamNumber * 2 + 1] = {}
 
     BMConnectionPool().connectToStream(streamNumber)
 
@@ -279,7 +268,7 @@ class Main:
             defaults.networkDefaultPayloadLengthExtraBytes = int(
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
-        knownnodes.readKnownNodes()
+        readKnownNodes()
 
         # Not needed if objproc is disabled
         if state.enableObjProc:
