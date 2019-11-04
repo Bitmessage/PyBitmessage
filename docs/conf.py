@@ -49,6 +49,8 @@ extensions = [
     'm2r',
 ]
 
+default_role = 'obj'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -199,7 +201,6 @@ epub_exclude_files = ['search.html']
 autodoc_mock_imports = [
     'debug',
     'pybitmessage.bitmessagekivy',
-    'pybitmessage.bitmessagemain',
     'pybitmessage.bitmessageqt.addressvalidator',
     'pybitmessage.helper_startup',
     'pybitmessage.network.httpd',
@@ -219,15 +220,15 @@ autodoc_mock_imports = [
     'qrcode',
     'stem',
 ]
+autodoc_member_order = 'bysource'
 
 # Apidoc settings
 apidoc_module_dir = '../pybitmessage'
 apidoc_output_dir = 'autodoc'
 apidoc_excluded_paths = [
-    'bitmessagekivy', 'bitmessagemain.py', 'build_osx.py',
+    'bitmessagekivy', 'build_osx.py',
     'bitmessageqt/addressvalidator.py', 'bitmessageqt/migrationwizard.py',
-    'bitmessageqt/newaddresswizard.py',
-    'class_objectProcessor.py', 'defaults.py', 'helper_startup.py',
+    'bitmessageqt/newaddresswizard.py', 'helper_startup.py',
     'kivymd', 'main.py', 'navigationdrawer', 'network/http*',
     'pybitmessage', 'tests', 'version.py'
 ]
