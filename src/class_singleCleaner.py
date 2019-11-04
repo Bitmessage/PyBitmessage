@@ -21,11 +21,11 @@ It resends messages when there has been no response:
 
 import gc
 import os
-import shared
 import time
 
 import knownnodes
 import queues
+import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
@@ -35,11 +35,12 @@ from network import BMConnectionPool, StoppableThread
 
 
 class singleCleaner(StoppableThread):
+    """The singleCleaner thread class"""
     name = "singleCleaner"
     cycleLength = 300
     expireDiscoveredPeers = 300
 
-    def run(self):
+    def run(self):  # pylint: disable=too-many-branches
         gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
@@ -115,6 +116,7 @@ class singleCleaner(StoppableThread):
                 # while writing it to disk
                 knownnodes.cleanupKnownNodes()
             except Exception as err:
+                # pylint: disable=protected-access
                 if "Errno 28" in str(err):
                     self.logger.fatal(
                         '(while writing knownnodes to disk)'
@@ -127,16 +129,10 @@ class singleCleaner(StoppableThread):
                              "MainWindow",
                              'Alert: Your disk or data storage volume'
                              ' is full. Bitmessage will now exit.'),
-                            True)
+                         True)
                     ))
-                    # FIXME redundant?
-                    if shared.daemon or not state.enableGUI:
+                    if shared.thisapp.daemon or not state.enableGUI:
                         os._exit(1)
-
-#            # clear download queues
-#            for thread in threading.enumerate():
-#                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
-#                    thread.downloadQueue.clear()
 
             # inv/object tracking
             for connection in BMConnectionPool().connections():
@@ -150,7 +146,7 @@ class singleCleaner(StoppableThread):
                     del state.discoveredPeers[k]
                 except KeyError:
                     pass
-            # TODO: cleanup pending upload / download
+            # ..todo:: cleanup pending upload / download
 
             gc.collect()
 
