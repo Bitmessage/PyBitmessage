@@ -58,52 +58,44 @@
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
         text: "Sent"
         on_release: app.root.ids.scr_mngr.current = 'sent'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Starred"
         icon:'star'
         on_release: app.root.ids.scr_mngr.current = 'starred'
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         icon: 'archive'
         text: "Archieve"
         on_release: app.root.ids.scr_mngr.current = 'archieve'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         icon: 'email-open-outline'
         text: "Spam"
         on_release: app.root.ids.scr_mngr.current = 'spam'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton:
         id: allmail_cnt
         text: "All Mails"
         icon:'contact-mail'
         on_release: app.root.ids.scr_mngr.current = 'allmails'
         badge_text: "0"
-        on_press: app.refreshScreen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
         text: "All labels"
@@ -111,37 +103,30 @@
         text: "Address Book"
         icon:'book-multiple'
         on_release: app.root.ids.scr_mngr.current = 'addressbook' 
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Settings"
         icon:'settings'
         on_release: app.root.ids.scr_mngr.current = 'set'
-        on_press: app.refreshScreen(self)                                   
     NavigationDrawerIconButton: 
         text: "Subscriptions/Payment"
         icon:'bell'
         on_release: app.root.ids.scr_mngr.current = 'payment'
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Credits"
         icon:'wallet'
         on_release: app.root.ids.scr_mngr.current = 'credits'
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "new address"
         icon:'account-plus'
         on_release: app.root.ids.scr_mngr.current = 'login'
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "Network Status"
         icon:'server-network'
         on_release: app.root.ids.scr_mngr.current = 'networkstat'
-        on_press: app.refreshScreen(self)
     NavigationDrawerIconButton: 
         text: "My Addresses"
         icon:'account-multiple'
         on_release: app.root.ids.scr_mngr.current = 'myaddress'
-        on_press: app.refreshScreen(self)
 
 NavigationLayout:
     id: nav_layout
@@ -179,7 +164,7 @@ NavigationLayout:
                 id:sc6
             Random:
                 id:sc7
-            AddressSuccessful:
+            Spam:
                 id:sc8
             Setting:
                 id:sc9
@@ -205,8 +190,6 @@ NavigationLayout:
                 id:sc19
             Archieve:
                 id:sc20
-            Spam:
-                id:sc21
 
 <Inbox>:
     name: 'inbox'
@@ -221,6 +204,7 @@ NavigationLayout:
                 root_layout: root
                 MDList:
                     id: ml
+    Loader:
     ComposerButton:
 
 <Sent>:
@@ -626,6 +610,7 @@ NavigationLayout:
                 root_layout: root
                 MDList:
                     id: ml
+    Loader:
     ComposerButton:
 
 <AddressBook>:
@@ -1219,3 +1204,11 @@ NavigationLayout:
             anim_delay: 0
             #mipmap: True
             size: root.size
+
+
+<Loader@MDSpinner>:
+    id: spinner
+    size_hint: None, None
+    size: dp(46), dp(46)
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    active: False
