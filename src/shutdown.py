@@ -16,7 +16,9 @@ from queues import (
 
 
 def doCleanShutdown():
-    """Used to tell proof of work worker threads and the objectProcessorThread to exit."""
+    """
+    Used to tell all the treads to finish work and exit.
+    """
     state.shutdown = 1
 
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
@@ -52,9 +54,11 @@ def doCleanShutdown():
     time.sleep(.25)
 
     for thread in threading.enumerate():
-        if (thread is not threading.currentThread() and
-                isinstance(thread, StoppableThread) and
-                thread.name != 'SQL'):
+        if (
+            thread is not threading.currentThread()
+            and isinstance(thread, StoppableThread)
+            and thread.name != 'SQL'
+        ):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
 
