@@ -1,6 +1,5 @@
 """
-src/class_singleWorker.py
-=========================
+Thread for performing PoW
 """
 # pylint: disable=protected-access,too-many-branches,too-many-statements,no-self-use,too-many-lines,too-many-locals
 
@@ -468,8 +467,8 @@ class singleWorker(StoppableThread):
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
         if not peer:  # find own onionhostname
-            for peer in state.ownAddresses:
-                if peer.host.endswith('.onion'):
+            for peer_ in state.ownAddresses:
+                if peer_.host.endswith('.onion'):
                     break
             else:
                 return
