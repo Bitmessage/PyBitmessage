@@ -58,7 +58,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
+    def get(self, section, option, raw=False, variables=None):    # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return ConfigParser.ConfigParser.get(
@@ -86,6 +86,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             self._temp[section] = {option: value}
 
     def safeGetBoolean(self, section, field):
+        """Return value as boolean, False on exceptions"""
         try:
             return self.getboolean(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
@@ -93,6 +94,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             return False
 
     def safeGetInt(self, section, field, default=0):
+        """Return value as integer, default on exceptions, 0 if default missing"""
         try:
             return self.getint(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
@@ -100,18 +102,22 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             return default
 
     def safeGet(self, section, option, default=None):
+        """Return value as is, default on exceptions, None if default missing"""
         try:
             return self.get(section, option)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, variables=None):
+    def items(self, section, raw=False, variables=None):    # pylint: disable=arguments-differ
+        """Return section variables as parent, but override the "raw" argument to always True"""
         return ConfigParser.ConfigParser.items(self, section, True, variables)
 
-    def addresses(self):
-        return filter(
-            lambda x: x.startswith('BM-'), BMConfigParser().sections())
+    @staticmethod
+    def addresses():
+        """Return a list of local bitmessage addresses (from section labels)"""
+        return [
+            x for x in BMConfigParser().sections() if x.startswith('BM-')]
 
     def read(self, filenames):
         ConfigParser.ConfigParser.read(self, filenames)
@@ -132,6 +138,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                     continue
 
     def save(self):
+        """Save the runtime config onto the filesystem"""
         fileName = os.path.join(state.appdata, 'keys.dat')
         fileNameBak = '.'.join([
             fileName, datetime.now().strftime("%Y%j%H%M%S%f"), 'bak'])
@@ -153,12 +160,15 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             os.remove(fileNameBak)
 
     def validate(self, section, option, value):
+        """Input validator interface (using factory pattern)"""
         try:
             return getattr(self, 'validate_%s_%s' % (section, option))(value)
         except AttributeError:
             return True
 
-    def validate_bitmessagesettings_maxoutboundconnections(self, value):
+    @staticmethod
+    def validate_bitmessagesettings_maxoutboundconnections(value):
+        """Reject maxoutboundconnections that are too high or too low"""
         try:
             value = int(value)
         except ValueError:
