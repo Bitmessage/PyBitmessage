@@ -1,7 +1,5 @@
 """
-src/addresses.py
-================
-
+Operations with addresses
 """
 # pylint: disable=redefined-outer-name,inconsistent-return-statements
 
@@ -18,8 +16,9 @@ ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 def encodeBase58(num, alphabet=ALPHABET):
     """Encode a number in Base X
 
-    `num`: The number to encode
-    `alphabet`: The alphabet to use for encoding
+    Args:
+      num: The number to encode
+      alphabet: The alphabet to use for encoding
     """
     if num == 0:
         return alphabet[0]
@@ -27,7 +26,6 @@ def encodeBase58(num, alphabet=ALPHABET):
     base = len(alphabet)
     while num:
         rem = num % base
-        # print 'num is:', num
         num = num // base
         arr.append(alphabet[rem])
     arr.reverse()
@@ -37,9 +35,9 @@ def encodeBase58(num, alphabet=ALPHABET):
 def decodeBase58(string, alphabet=ALPHABET):
     """Decode a Base X encoded string into the number
 
-    Arguments:
-    - `string`: The encoded string
-    - `alphabet`: The alphabet to use for encoding
+    Args:
+      string: The encoded string
+      alphabet: The alphabet to use for encoding
     """
     base = len(alphabet)
     num = 0
