@@ -1,3 +1,6 @@
+"""
+SMTP server thread
+"""
 import asyncore
 import base64
 import email
@@ -22,10 +25,13 @@ SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
 
 logger = logging.getLogger('default')
+# pylint: disable=attribute-defined-outside-init
 
 
 class smtpServerChannel(smtpd.SMTPChannel):
+    """Asyncore channel for SMTP protocol (server)"""
     def smtp_EHLO(self, arg):
+        """Process an EHLO"""
         if not arg:
             self.push('501 Syntax: HELO hostname')
             return
@@ -33,14 +39,16 @@ class smtpServerChannel(smtpd.SMTPChannel):
         self.push('250 AUTH PLAIN')
 
     def smtp_AUTH(self, arg):
+        """Process AUTH"""
         if not arg or arg[0:5] not in ["PLAIN"]:
             self.push('501 Syntax: AUTH PLAIN')
             return
         authstring = arg[6:]
         try:
             decoded = base64.b64decode(authstring)
-            correctauth = "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdusername", "") + \
-                    "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
+            correctauth = "\x00" + BMConfigParser().safeGet(
+                "bitmessagesettings", "smtpdusername", "") + "\x00" + BMConfigParser().safeGet(
+                    "bitmessagesettings", "smtpdpassword", "")
             logger.debug('authstring: %s / %s', correctauth, decoded)
             if correctauth == decoded:
                 self.auth = True
@@ -51,6 +59,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
             self.push('501 Authentication fail')
 
     def smtp_DATA(self, arg):
+        """Process DATA"""
         if not hasattr(self, "auth") or not self.auth:
             self.push('530 Authentication required')
             return
@@ -58,15 +67,18 @@ class smtpServerChannel(smtpd.SMTPChannel):
 
 
 class smtpServerPyBitmessage(smtpd.SMTPServer):
+    """Asyncore SMTP server class"""
     def handle_accept(self):
+        """Accept a connection"""
         pair = self.accept()
         if pair is not None:
             conn, addr = pair
 #            print >> DEBUGSTREAM, 'Incoming connection from %s' % repr(addr)
             self.channel = smtpServerChannel(self, conn, addr)
 
-    def send(self, fromAddress, toAddress, subject, message):
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
+    def send(self, fromAddress, toAddress, subject, message):  # pylint: disable=arguments-differ
+        """Send a bitmessage"""
+        streamNumber, ripe = decodeAddress(toAddress)[2:]
         stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
@@ -78,19 +90,21 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             subject,
             message,
             ackdata,
-            int(time.time()), # sentTime (this will never change)
-            int(time.time()), # lastActionTime
-            0, # sleepTill time. This will get set when the POW gets done.
+            int(time.time()),  # sentTime (this will never change)
+            int(time.time()),  # lastActionTime
+            0,  # sleepTill time. This will get set when the POW gets done.
             'msgqueued',
-            0, # retryNumber
-            'sent', # folder
-            2, # encodingtype
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
+            0,  # retryNumber
+            'sent',  # folder
+            2,  # encodingtype
+            # not necessary to have a TTL higher than 2 days
+            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)
         )
 
         queues.workerQueue.put(('sendmessage', toAddress))
 
     def decode_header(self, hdr):
+        """Email header decoding"""
         ret = []
         for h in decode_header(self.msg_headers[hdr]):
             if h[1]:
@@ -100,7 +114,9 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
         return ret
 
-    def process_message(self, peer, mailfrom, rcpttos, data):
+    def process_message(self, peer, mailfrom, rcpttos, data):  # pylint: disable=too-many-locals, too-many-branches
+        """Process an email"""
+        # print 'Receiving message from:', peer
         p = re.compile(".*<([^>]+)>")
         if not hasattr(self.channel, "auth") or not self.channel.auth:
             logger.error('Missing or invalid auth')
@@ -158,7 +174,8 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
 
 class smtpServer(StoppableThread):
-    def __init__(self, parent=None):
+    """SMTP server thread"""
+    def __init__(self, _=None):
         super(smtpServer, self).__init__(name="smtpServerThread")
         self.server = smtpServerPyBitmessage(('127.0.0.1', LISTENPORT), None)
 
@@ -171,7 +188,8 @@ class smtpServer(StoppableThread):
         asyncore.loop(1)
 
 
-def signals(signal, frame):
+def signals(_, __):
+    """Signal handler"""
     logger.warning('Got signal, terminating')
     for thread in threading.enumerate():
         if thread.isAlive() and isinstance(thread, StoppableThread):
@@ -179,6 +197,7 @@ def signals(signal, frame):
 
 
 def runServer():
+    """Run SMTP server as a standalone python process"""
     logger.warning('Running SMTPd thread')
     smtpThread = smtpServer()
     smtpThread.start()
