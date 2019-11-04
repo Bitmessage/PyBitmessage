@@ -80,7 +80,9 @@ def isAddressInMySubscriptionsList(address):
 
 
 def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
-    """Am I subscribed to this address, is it in my addressbook or whitelist?"""
+    """
+    Am I subscribed to this address, is it in my addressbook or whitelist?
+    """
     if isAddressInMyAddressBook(address):
         return True
 
@@ -100,8 +102,12 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     return False
 
 
-def decodeWalletImportFormat(WIFstring):    # pylint: disable=inconsistent-return-statements
-    """Convert private key from base58 that's used in the config file to 8-bit binary string"""
+def decodeWalletImportFormat(WIFstring):
+    # pylint: disable=inconsistent-return-statements
+    """
+    Convert private key from base58 that's used in the config file to
+    8-bit binary string
+    """
     fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
     if fullString[-4:] != \
@@ -126,14 +132,15 @@ def decodeWalletImportFormat(WIFstring):    # pylint: disable=inconsistent-retur
 
 
 def reloadMyAddressHashes():
-    """Reinitialise runtime data (e.g. encryption objects, address hashes) from the config file"""
+    """Reload keys for user's addresses from the config file"""
     logger.debug('reloading keys from keys.dat file')
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     myAddressesByTag.clear()
     # myPrivateKeys.clear()
 
-    keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
+    keyfileSecure = checkSensitiveFilePermissions(os.path.join(
+        state.appdata, 'keys.dat'))
     hasEnabledKeys = False
     for addressInKeysFile in BMConfigParser().addresses():
         isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
@@ -162,11 +169,15 @@ def reloadMyAddressHashes():
                 )
 
     if not keyfileSecure:
-        fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)
+        fixSensitiveFilePermissions(os.path.join(
+            state.appdata, 'keys.dat'), hasEnabledKeys)
 
 
 def reloadBroadcastSendersForWhichImWatching():
-    """Reinitialise runtime data for the broadcasts I'm subscribed to from the config file"""
+    """
+    Reinitialize runtime data for the broadcasts I'm subscribed to
+    from the config file
+    """
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     queryreturn = sqlQuery('SELECT address FROM subscriptions where enabled=1')

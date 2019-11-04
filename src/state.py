@@ -16,8 +16,8 @@ appdata = ''
 
 shutdown = 0
 """
-    Set to 1 by the doCleanShutdown function.
-    Used to tell the proof of work worker threads to exit.
+Set to 1 by the `.shutdown.doCleanShutdown` function.
+Used to tell the threads to exit.
 """
 
 # Component control flags - set on startup, do not change during runtime
@@ -25,7 +25,7 @@ shutdown = 0
 enableNetwork = True
 """enable network threads"""
 enableObjProc = True
-"""enable object processing threads"""
+"""enable object processing thread"""
 enableAPI = True
 """enable API (if configured)"""
 enableGUI = True
@@ -35,7 +35,7 @@ enableSTDIO = False
 curses = False
 
 sqlReady = False
-"""set to true by sqlTread when ready for processing"""
+"""set to true by `.threads.sqlThread` when ready for processing"""
 
 maximumNumberOfHalfOpenConnections = 0
 
