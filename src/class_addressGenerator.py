@@ -1,4 +1,6 @@
-
+"""
+A thread for creating addresses
+"""
 import time
 import hashlib
 from binascii import hexlify
@@ -18,6 +20,7 @@ from network import StoppableThread
 
 
 class addressGenerator(StoppableThread):
+    """A thread for creating addresses"""
 
     name = "addressGenerator"
 
@@ -33,6 +36,7 @@ class addressGenerator(StoppableThread):
         Process the requests for addresses generation
         from `.queues.addressGeneratorQueue`
         """
+        # pylint: disable=too-many-locals, too-many-branches, protected-access, too-many-statements
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
@@ -212,7 +216,7 @@ class addressGenerator(StoppableThread):
             elif command == 'createDeterministicAddresses' \
                     or command == 'getDeterministicAddress' \
                     or command == 'createChan' or command == 'joinChan':
-                if len(deterministicPassphrase) == 0:
+                if not deterministicPassphrase:
                     self.logger.warning(
                         'You are creating deterministic'
                         ' address(es) using a blank passphrase.'
@@ -361,7 +365,7 @@ class addressGenerator(StoppableThread):
                                 address)
                             shared.myECCryptorObjects[ripe] = \
                                 highlevelcrypto.makeCryptor(
-                                hexlify(potentialPrivEncryptionKey))
+                                    hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe] = address
                             tag = hashlib.sha512(hashlib.sha512(
                                 encodeVarint(addressVersionNumber) +
