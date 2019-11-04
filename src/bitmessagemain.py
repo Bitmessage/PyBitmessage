@@ -1,4 +1,7 @@
 #!/usr/bin/python2.7
+"""
+The PyBitmessage startup script
+"""
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2019 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -53,6 +56,7 @@ from threads import (
 
 
 def connectToStream(streamNumber):
+    """Connect to a stream"""
     state.streamsInWhichIAmParticipating.append(streamNumber)
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
@@ -85,6 +89,7 @@ def _fixSocket():
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
 
         def inet_ntop(family, host):
+            """Converting an IP address in packed binary format to string format"""
             if family == socket.AF_INET:
                 if len(host) != 4:
                     raise ValueError("invalid IPv4 host")
@@ -106,6 +111,7 @@ def _fixSocket():
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
 
         def inet_pton(family, host):
+            """Converting an IP address in string format to a packed binary format"""
             buf = "\0" * 28
             lengthBuf = pack("I", len(buf))
             if stringToAddress(str(host),
@@ -160,7 +166,8 @@ def signal_handler(signum, frame):
               ' because the UI captures the signal.')
 
 
-class Main:
+class Main(object):
+    """Main PyBitmessage class"""
     @staticmethod
     def start_proxyconfig(config):
         """Check socksproxytype and start any proxy configuration plugin"""
@@ -183,14 +190,15 @@ class Main:
                     'Started proxy config plugin %s in %s sec',
                     proxy_type, time.time() - proxyconfig_start)
 
-    def start(self):
+    def start(self):    # pylint: disable=too-many-statements, too-many-branches, too-many-locals
+        """Start main application"""
         _fixSocket()
 
         config = BMConfigParser()
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
-            opts, args = getopt.getopt(
+            opts, _ = getopt.getopt(
                 sys.argv[1:], "hcdt",
                 ["help", "curses", "daemon", "test"])
 
@@ -198,7 +206,7 @@ class Main:
             self.usage()
             sys.exit(2)
 
-        for opt, arg in opts:
+        for opt, _ in opts:
             if opt in ("-h", "--help"):
                 self.usage()
                 sys.exit()
@@ -412,7 +420,9 @@ class Main:
                 else 0
             )
 
-    def daemonize(self):
+    @staticmethod
+    def daemonize():
+        """Running as a daemon. Send signal in end."""
         grandfatherPid = os.getpid()
         parentPid = None
         try:
@@ -422,7 +432,7 @@ class Main:
                 # wait until grandchild ready
                 while True:
                     time.sleep(1)
-                os._exit(0)
+                os._exit(0)    # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
@@ -443,7 +453,7 @@ class Main:
                 # wait until child ready
                 while True:
                     time.sleep(1)
-                os._exit(0)
+                os._exit(0)    # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
@@ -464,14 +474,18 @@ class Main:
             os.kill(parentPid, signal.SIGTERM)
             os.kill(grandfatherPid, signal.SIGTERM)
 
-    def setSignalHandler(self):
+    @staticmethod
+    def setSignalHandler():
+        """Setting the Signal Handler"""
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    def usage(self):
-        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
-        print '''
+    @staticmethod
+    def usage():
+        """Displaying the usages"""
+        print('Usage: ' + sys.argv[0] + ' [OPTIONS]')
+        print('''
 Options:
   -h, --help            show this help message and exit
   -c, --curses          use curses (text mode) interface
@@ -479,15 +493,19 @@ Options:
   -t, --test            dryrun, make testing
 
 All parameters are optional.
-'''
+''')
 
-    def stop(self):
+    @staticmethod
+    def stop():
+        """Stop main application"""
         with shared.printLock:
             print('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 
-    # TODO: nice function but no one is using this
-    def getApiAddress(self):
+    # .. todo:: nice function but no one is using this
+    @staticmethod
+    def getApiAddress():
+        """This function returns API address and port"""
         if not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'apienabled'):
             return None
@@ -497,6 +515,7 @@ All parameters are optional.
 
 
 def main():
+    """Triggers main module"""
     mainprogram = Main()
     mainprogram.start()
 
