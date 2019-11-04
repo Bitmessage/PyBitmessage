@@ -228,7 +228,7 @@ class Inbox(Screen):
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
             state.searcing_text = ''
-            self.children[2].children[1].ids.search_field.text = ''
+            self.children[3].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
             self.loadMessagelist(state.association)
             self.ids.refresh_layout.refresh_done()
@@ -301,7 +301,8 @@ class MyAddress(Screen):
         def refresh_callback(interval):
             """Method used for loading the myaddress screen data."""
             state.searcing_text = ''
-            self.children[2].children[1].ids.search_field.text = ''
+            state.kivyapp.root.ids.sc10.children[2].active = False
+            self.children[3].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
@@ -462,6 +463,7 @@ class DropDownWidget(BoxLayout):
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
+                # navApp.root.ids.sc1.children[1].active = True
                 from addresses import decodeAddress
                 status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
                 if status == 'success':
@@ -527,6 +529,7 @@ class DropDownWidget(BoxLayout):
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
                     self.parent.parent.current = 'inbox'
+                    # navApp.root.ids.sc1.children[1].active = False
                     state.in_composer = True
                     navApp.back_press()
                     toast('send')
@@ -689,6 +692,7 @@ class Random(Screen):
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
         if str(self.ids.label.text).strip():
+            toast('Address Creating...')
             queues.addressGeneratorQueue.put((
                 'createRandomAddress',
                 4, streamNumberForAddress,
@@ -699,16 +703,15 @@ class Random(Screen):
             self.parent.parent.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.parent.parent.ids.toolbar.disabled = False
             self.parent.parent.parent.parent.ids.sc10.ids.ml.clear_widgets()
+            self.parent.parent.parent.parent.ids.sc10.children[1].active = True
             self.manager.current = 'myaddress'
-            self.parent.parent.parent.parent.ids.sc10.init_ui()
-            self.manager.current = 'myaddress'
-            toast('New address created')
+            Clock.schedule_once(self.address_created_callback, 10)
 
-
-class AddressSuccessful(Screen):
-    """Getting Address Detail."""
-
-    pass
+    def address_created_callback(self, dt=0):
+        state.kivyapp.root.ids.sc10.children[1].active = False
+        state.kivyapp.root.ids.sc10.init_ui()
+        self.manager.current = 'myaddress'
+        toast('New address created')
 
 
 class Sent(Screen):
@@ -1147,6 +1150,20 @@ class NavigateApp(App):
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
+        elif key == 13 and platform == 'android':
+            if state.search_screen == 'inbox':
+                self.root.ids.sc1.ids.ml.clear_widgets()
+                self.root.ids.sc1.loadMessagelist(state.association)
+            elif state.search_screen == 'addressbook':
+                self.root.ids.sc11.ids.ml.clear_widgets()
+                self.root.ids.sc11.loadAddresslist(None, 'All', '')
+            elif state.search_screen == 'myaddress':
+                self.root.ids.sc10.ids.ml.clear_widgets()
+                self.root.ids.sc10.init_ui()
+            else:
+                self.root.ids.sc4.ids.ml.clear_widgets()
+                self.root.ids.sc4.loadSent(state.association)
+            self.root.ids.scr_mngr.current = state.search_screen
 
     def reset(self, *args):
         """Method used to set transition direction."""
@@ -1222,54 +1239,59 @@ class NavigateApp(App):
         """Method used for showing searched mails."""
         state.search_screen = self.root.ids.scr_mngr.current
         state.searcing_text = str(instance.text).strip()
+        if instance.focus and state.searcing_text:
+            toolbar_obj = self.root.ids.toolbar
+            toolbar_obj.left_action_items = [['close', lambda x: self.closeSearchScreen()]]
+            toolbar_obj.right_action_items = []
+            self.root.ids.toolbar.title = ''
+        if platform == 'linux':
+            if state.search_screen == 'inbox':
+                self.root.ids.sc1.ids.ml.clear_widgets()
+                self.root.ids.sc1.loadMessagelist(state.association)
+            elif state.search_screen == 'addressbook':
+                self.root.ids.sc11.ids.ml.clear_widgets()
+                self.root.ids.sc11.loadAddresslist(None, 'All', '')
+            elif state.search_screen == 'myaddress':
+                self.root.ids.sc10.ids.ml.clear_widgets()
+                self.root.ids.sc10.init_ui()
+            else:
+                self.root.ids.sc4.ids.ml.clear_widgets()
+                self.root.ids.sc4.loadSent(state.association)
+            self.root.ids.scr_mngr.current = state.search_screen
+
+    def closeSearchScreen(self):
+        self.root.ids.toolbar.right_action_items = [['account-plus', lambda x: self.addingtoaddressbook()]]
+        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        address_label = self.current_address_label(
+            BMConfigParser().get(state.association, 'label'), state.association)
+        self.root.ids.toolbar.title = address_label
+        self.refreshScreen()
+
+    def refreshScreen(self):
+        """Method show search button only on inbox or sent screen."""
+        state.searcing_text = ''
         if state.search_screen == 'inbox':
+            try:
+                self.root.ids.sc1.children[3].children[1].ids.search_field.text = ''
+            except Exception:
+                self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
             self.root.ids.sc1.ids.ml.clear_widgets()
             self.root.ids.sc1.loadMessagelist(state.association)
         elif state.search_screen == 'addressbook':
+            self.root.ids.sc11.children[1].children[1].ids.search_field.text = ''
             self.root.ids.sc11.ids.ml.clear_widgets()
             self.root.ids.sc11.loadAddresslist(None, 'All', '')
         elif state.search_screen == 'myaddress':
+            try:
+                self.root.ids.sc10.children[3].children[1].ids.search_field.text = ''
+            except Exception:
+                self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
             self.root.ids.sc10.ids.ml.clear_widgets()
             self.root.ids.sc10.init_ui()
         else:
+            self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
             self.root.ids.sc4.ids.ml.clear_widgets()
             self.root.ids.sc4.loadSent(state.association)
-        self.root.ids.scr_mngr.current = state.search_screen
-
-    def refreshScreen(self, instance):
-        """Method show search button only on inbox or sent screen."""
-        state.searcing_text = ''
-        # if instance.text == 'Sent':
-        #     self.root.ids.sc4.ids.ml.clear_widgets()
-        #     self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
-        #     self.root.ids.sc4.loadSent(state.association)
-        # elif instance.text == 'Inbox':
-        #     self.root.ids.sc1.ids.ml.clear_widgets()
-        #     try:
-        #         self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
-        #     except Exception:
-        #         self.root.ids.sc1.children[1].children[1].ids.search_field.text = ''
-        #     self.root.ids.sc1.loadMessagelist(state.association)
-        # elif instance.text == 'Draft':
-        #     self.root.ids.sc16.clear_widgets()
-        #     self.root.ids.sc16.add_widget(Draft())
-        # elif instance.text == 'Trash':
-        #     self.root.ids.sc5.clear_widgets()
-        #     self.root.ids.sc5.add_widget(Trash())
-        # elif instance.text == 'All Mails':
-        #     self.root.ids.sc17.clear_widgets()
-        #     self.root.ids.sc17.add_widget(Allmails())
-        # elif instance.text == 'Address Book':
-        #     self.root.ids.sc11.ids.ml.clear_widgets()
-        #     self.root.ids.sc11.children[1].children[1].ids.search_field.text = ''
-        #     self.root.ids.sc11.loadAddresslist(None, 'All', '')
-        # elif instance.text == 'My Addresses':
-        #     self.root.ids.sc10.ids.ml.clear_widgets()
-        #     try:
-        #         self.root.ids.sc10.children[1].children[1].ids.search_field.text = ''
-        #     except Exception:
-        #         self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
-        #     self.root.ids.sc10.init_ui()
         return
 
     def set_identicon(self, text):
