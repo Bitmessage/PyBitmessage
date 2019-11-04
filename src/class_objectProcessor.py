@@ -1,7 +1,9 @@
+"""
+The objectProcessor thread, of which there is only one, processes the network objects
+"""
 import hashlib
 import logging
 import random
-import shared
 import threading
 import time
 from binascii import hexlify
@@ -9,11 +11,13 @@ from subprocess import call  # nosec
 
 import highlevelcrypto
 import knownnodes
+import shared
 from addresses import (
     calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
     encodeVarint, varintDecodeError
 )
 from bmconfigparser import BMConfigParser
+
 import helper_bitcoin
 import helper_inbox
 import helper_msgcoding
@@ -22,12 +26,15 @@ from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from helper_ackPayload import genAckPayload
 from network import bmproto
 from network.node import Peer
+
 import protocol
 import queues
 import state
 import tr
 from fallback import RIPEMD160Hash
+
 import l10n
+# pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
 
 logger = logging.getLogger('default')
 
@@ -122,7 +129,10 @@ class objectProcessor(threading.Thread):
                 state.shutdown = 2
                 break
 
-    def checkackdata(self, data):
+    @staticmethod
+    def checkackdata(data):
+        """Checking Acknowledgement of message received or not?"""
+        # pylint: disable=protected-access
         # Let's check whether this is a message acknowledgement bound for us.
         if len(data) < 32:
             return
@@ -272,6 +282,7 @@ class objectProcessor(threading.Thread):
             queues.workerQueue.put(('sendOutOrStoreMyV4Pubkey', myAddress))
 
     def processpubkey(self, data):
+        """Process a pubkey object"""
         pubkeyProcessingStartTime = time.time()
         shared.numberOfPubkeysProcessed += 1
         queues.UISignalQueue.put((
@@ -444,6 +455,7 @@ class objectProcessor(threading.Thread):
             timeRequiredToProcessPubkey)
 
     def processmsg(self, data):
+        """Process a message object"""
         messageProcessingStartTime = time.time()
         shared.numberOfMessagesProcessed += 1
         queues.UISignalQueue.put((
@@ -739,7 +751,7 @@ class objectProcessor(threading.Thread):
                 # We really should have a discussion about how to
                 # set the TTL for mailing list broadcasts. This is obviously
                 # hard-coded.
-                TTL = 2*7*24*60*60  # 2 weeks
+                TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
                 t = ('',
                      toAddress,
                      ripe,
@@ -791,6 +803,7 @@ class objectProcessor(threading.Thread):
         )
 
     def processbroadcast(self, data):
+        """Process a broadcast object"""
         messageProcessingStartTime = time.time()
         shared.numberOfBroadcastsProcessed += 1
         queues.UISignalQueue.put((
@@ -975,7 +988,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        logger.info('fromAddress: %s' % fromAddress)
+        logger.info('fromAddress: %s', fromAddress)
 
         # Let's store the public key in case we want to reply to this person.
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
@@ -992,7 +1005,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        logger.debug('fromAddress: ' + fromAddress)
+        logger.debug('fromAddress: %s', fromAddress)
 
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
@@ -1060,7 +1073,8 @@ class objectProcessor(threading.Thread):
                 del state.neededPubkeys[tag]
                 self.sendMessages(address)
 
-    def sendMessages(self, address):
+    @staticmethod
+    def sendMessages(address):
         """
         This method is called by the `possibleNewPubkey` when it sees
         that we now have the necessary pubkey to send one or more messages.
@@ -1073,7 +1087,9 @@ class objectProcessor(threading.Thread):
             " AND folder='sent'", address)
         queues.workerQueue.put(('sendmessage', ''))
 
-    def ackDataHasAValidHeader(self, ackData):
+    @staticmethod
+    def ackDataHasAValidHeader(ackData):
+        """Checking ackData with valid Header, not sending ackData when false"""
         if len(ackData) < protocol.Header.size:
             logger.info(
                 'The length of ackData is unreasonably short. Not sending'
@@ -1108,11 +1124,12 @@ class objectProcessor(threading.Thread):
             return False
         return True
 
-    def addMailingListNameToSubject(self, subject, mailingListName):
+    @staticmethod
+    def addMailingListNameToSubject(subject, mailingListName):
+        """Adding mailingListName to subject"""
         subject = subject.strip()
         if subject[:3] == 'Re:' or subject[:3] == 'RE:':
             subject = subject[3:].strip()
         if '[' + mailingListName + ']' in subject:
             return subject
-        else:
-            return '[' + mailingListName + '] ' + subject
+        return '[' + mailingListName + '] ' + subject
