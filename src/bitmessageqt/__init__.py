@@ -7,6 +7,7 @@ import locale
 import os
 import random
 import string
+import subprocess
 import sys
 import textwrap
 import threading
@@ -48,7 +49,6 @@ import paths
 from proofofwork import getPowType
 import queues
 import shutdown
-import state
 from statusbar import BMStatusBar
 import sound
 # This is needed for tray icon
@@ -71,6 +71,15 @@ def powQueueSize():
         except Exception as err:
             logger.info('Thread error %s', err)
     return queue_len
+
+
+def openKeysFile():
+    """Open keys file with an external editor"""
+    keysfile = os.path.join(state.appdata, 'keys.dat')
+    if 'linux' in sys.platform:
+        subprocess.call(["xdg-open", keysfile])
+    elif sys.platform.startswith('win'):
+        os.startfile(keysfile)  # pylint: disable=no-member
 
 
 class MyForm(settingsmixin.SMainWindow):
@@ -1544,7 +1553,7 @@ class MyForm(settingsmixin.SMainWindow):
                 reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
                     "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(state.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
-                shared.openKeysFile()
+                openKeysFile()
 
     # menu button 'delete all treshed messages'
     def click_actionDeleteAllTrashedMessages(self):

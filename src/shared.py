@@ -253,11 +253,3 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
-
-
-def openKeysFile():
-    """Open keys file with an external editor"""
-    if 'linux' in sys.platform:
-        subprocess.call(["xdg-open", state.appdata + 'keys.dat'])
-    else:
-        os.startfile(state.appdata + 'keys.dat')
