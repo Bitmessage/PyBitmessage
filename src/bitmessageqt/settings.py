@@ -11,7 +11,6 @@ import namecoin
 import openclpow
 import paths
 import queues
-import shared
 import state
 import tempfile
 import widgets
@@ -338,7 +337,7 @@ class SettingsDialog(QtGui.QDialog):
 
         proxytype_index = self.comboBoxProxyType.currentIndex()
         if proxytype_index == 0:
-            if self._proxy_type and shared.statusIconColor != 'red':
+            if self._proxy_type and state.statusIconColor != 'red':
                 self.net_restart_needed = True
         elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
@@ -482,7 +481,7 @@ class SettingsDialog(QtGui.QDialog):
             # default behavior. The input is blank/blank
             self.config.set('bitmessagesettings', 'stopresendingafterxdays', '')
             self.config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
-            shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            state.maximumLengthOfTimeToBotherResendingMessages = float('inf')
             stopResendingDefaults = True
 
         try:
@@ -497,9 +496,9 @@ class SettingsDialog(QtGui.QDialog):
             months = 0.0
 
         if days >= 0 and months >= 0 and not stopResendingDefaults:
-            shared.maximumLengthOfTimeToBotherResendingMessages = \
+            state.maximumLengthOfTimeToBotherResendingMessages = \
                 days * 24 * 60 * 60 + months * 60 * 60 * 24 * 365 / 12
-            if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
+            if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
                 QtGui.QMessageBox.about(
@@ -516,7 +515,7 @@ class SettingsDialog(QtGui.QDialog):
                     'bitmessagesettings', 'stopresendingafterxdays', '0')
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxmonths', '0')
-                shared.maximumLengthOfTimeToBotherResendingMessages = 0.0
+                state.maximumLengthOfTimeToBotherResendingMessages = 0.0
             else:
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxdays', str(days))

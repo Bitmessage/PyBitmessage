@@ -27,6 +27,7 @@ import queues
 import shared
 import shutdown
 import state
+import threads
 from addresses import (
     addBMIfNotPresent,
     calculateInventoryHash,
@@ -1206,7 +1207,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8
             ) * requiredAverageProofOfWorkNonceTrialsPerByte
         )
-        with shared.printLock:
+        with threads.printLock:
             print(
                 '(For msg message via API) Doing proof of work.'
                 'Total required difficulty:',
@@ -1221,7 +1222,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        with shared.printLock:
+        with threads.printLock:
             print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
             try:
                 print(
@@ -1240,7 +1241,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, toStreamNumber, encryptedPayload,
             int(time.time()) + TTL, ''
         )
-        with shared.printLock:
+        with threads.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
         queues.invQueue.put((toStreamNumber, inventoryHash))
 
@@ -1294,7 +1295,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         Inventory()[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
-        with shared.printLock:
+        with threads.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
         queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
 
@@ -1347,15 +1348,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         connections_num = len(network.stats.connectedHostsList())
         if connections_num == 0:
             networkStatus = 'notConnected'
-        elif shared.clientHasReceivedIncomingConnections:
+        elif state.clientHasReceivedIncomingConnections:
             networkStatus = 'connectedAndReceivingIncomingConnections'
         else:
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         return json.dumps({
             'networkConnections': connections_num,
-            'numberOfMessagesProcessed': shared.numberOfMessagesProcessed,
-            'numberOfBroadcastsProcessed': shared.numberOfBroadcastsProcessed,
-            'numberOfPubkeysProcessed': shared.numberOfPubkeysProcessed,
+            'numberOfMessagesProcessed': state.numberOfMessagesProcessed,
+            'numberOfBroadcastsProcessed': state.numberOfBroadcastsProcessed,
+            'numberOfPubkeysProcessed': state.numberOfPubkeysProcessed,
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion

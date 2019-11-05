@@ -14,7 +14,6 @@ import connectionpool
 import helper_random
 import knownnodes
 import protocol
-import shared
 import state
 from bmconfigparser import BMConfigParser
 from helper_random import randomBytes
@@ -32,6 +31,9 @@ from node import Peer
 from queues import invQueue, receiveDataQueue, UISignalQueue
 
 logger = logging.getLogger('default')
+
+
+maximumAgeOfNodesThatIAdvertiseToOthers = 10800  #: Equals three hours
 
 
 class TCPConnection(BMProto, TLSDispatcher):
@@ -136,7 +138,7 @@ class TCPConnection(BMProto, TLSDispatcher):
     def set_connection_fully_established(self):
         """Initiate inventory synchronisation."""
         if not self.isOutbound and not self.local:
-            shared.clientHasReceivedIncomingConnections = True
+            state.clientHasReceivedIncomingConnections = True
             UISignalQueue.put(('setStatusIcon', 'green'))
         UISignalQueue.put(
             ('updateNetworkStatusTab', (
@@ -170,7 +172,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     filtered = [
                         (k, v) for k, v in nodes.iteritems()
                         if v["lastseen"] > int(time.time()) -
-                        shared.maximumAgeOfNodesThatIAdvertiseToOthers and
+                        maximumAgeOfNodesThatIAdvertiseToOthers and
                         v["rating"] >= 0 and len(k.host) <= 22
                     ]
                     # sent 250 only if the remote isn't interested in it

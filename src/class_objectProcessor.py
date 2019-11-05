@@ -140,9 +140,9 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in shared.ackdataForWhichImWatching:
+        if data[readPosition:] in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[readPosition:]]
+            del state.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
@@ -286,7 +286,7 @@ class objectProcessor(threading.Thread):
     def processpubkey(self, data):
         """Process a pubkey object"""
         pubkeyProcessingStartTime = time.time()
-        shared.numberOfPubkeysProcessed += 1
+        state.numberOfPubkeysProcessed += 1
         queues.UISignalQueue.put((
             'updateNumberOfPubkeysProcessed', 'no data'))
         readPosition = 20  # bypass the nonce, time, and object type
@@ -459,7 +459,7 @@ class objectProcessor(threading.Thread):
     def processmsg(self, data):
         """Process a message object"""
         messageProcessingStartTime = time.time()
-        shared.numberOfMessagesProcessed += 1
+        state.numberOfMessagesProcessed += 1
         queues.UISignalQueue.put((
             'updateNumberOfMessagesProcessed', 'no data'))
         readPosition = 20  # bypass the nonce, time, and object type
@@ -808,7 +808,7 @@ class objectProcessor(threading.Thread):
     def processbroadcast(self, data):
         """Process a broadcast object"""
         messageProcessingStartTime = time.time()
-        shared.numberOfBroadcastsProcessed += 1
+        state.numberOfBroadcastsProcessed += 1
         queues.UISignalQueue.put((
             'updateNumberOfBroadcastsProcessed', 'no data'))
         inventoryHash = calculateInventoryHash(data)

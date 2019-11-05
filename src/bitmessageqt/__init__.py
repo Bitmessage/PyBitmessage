@@ -17,10 +17,11 @@ from sqlite3 import register_adapter
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer
 
+import shared
+import state
 from debug import logger
 from tr import _translate
 from addresses import decodeAddress, addBMIfNotPresent
-import shared
 from bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
 import namecoin
@@ -730,9 +731,6 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonStatusIcon)
 
-        self.numberOfMessagesProcessed = 0
-        self.numberOfBroadcastsProcessed = 0
-        self.numberOfPubkeysProcessed = 0
         self.unreadCount = 0
 
         # Set the icon sizes for the identicons
@@ -1668,7 +1666,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'red':
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/redicon.png"))
-            shared.statusIconColor = 'red'
+            state.statusIconColor = 'red'
             # if the connection is lost then show a notification
             if self.connected and _notifications_enabled:
                 self.notifierShow(
@@ -1694,7 +1692,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.statusbar.clearMessage()
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/yellowicon.png"))
-            shared.statusIconColor = 'yellow'
+            state.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
             if not self.connected and _notifications_enabled:
                 self.notifierShow(
@@ -1712,7 +1710,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.statusbar.clearMessage()
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/greenicon.png"))
-            shared.statusIconColor = 'green'
+            state.statusIconColor = 'green'
             if not self.connected and _notifications_enabled:
                 self.notifierShow(
                     'Bitmessage',
@@ -2119,7 +2117,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
                             continue
                         self.statusbar.clearMessage()
-                        if shared.statusIconColor == 'red':
+                        if state.statusIconColor == 'red':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Warning: You are currently not connected."
@@ -2632,7 +2630,7 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
-        if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
+        if state.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
             reply = QtGui.QMessageBox.question(
                 self, _translate("MainWindow", "Not connected"),
@@ -2660,7 +2658,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForConnection:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for network connection..."))
-            while shared.statusIconColor == 'red':
+            while state.statusIconColor == 'red':
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000

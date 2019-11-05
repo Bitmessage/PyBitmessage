@@ -25,13 +25,19 @@ import time
 
 import knownnodes
 import queues
-import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import BMConnectionPool, StoppableThread
+
+
+#: Equals 4 weeks. You could make this longer if you want
+#: but making it shorter would not be advisable because
+#: there is a very small possibility that it could keep you
+#: from obtaining a needed pubkey for a period of time.
+lengthOfTimeToHoldOnToAllPubkeys = 2419200
 
 
 class singleCleaner(StoppableThread):
@@ -44,7 +50,7 @@ class singleCleaner(StoppableThread):
         gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
-            shared.maximumLengthOfTimeToBotherResendingMessages = (
+            state.maximumLengthOfTimeToBotherResendingMessages = (
                 float(BMConfigParser().get(
                     'bitmessagesettings', 'stopresendingafterxdays'))
                 * 24 * 60 * 60
@@ -56,7 +62,7 @@ class singleCleaner(StoppableThread):
             # Either the user hasn't set stopresendingafterxdays and
             # stopresendingafterxmonths yet or the options are missing
             # from the config file.
-            shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            state.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
         # initial wait
         if state.shutdown == 0:
@@ -74,7 +80,7 @@ class singleCleaner(StoppableThread):
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
             # FIXME redundant?
-            if shared.thisapp.daemon or not state.enableGUI:
+            if state.thisapp.daemon or not state.enableGUI:
                 queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < \
                     int(time.time()) - 7380:
@@ -84,7 +90,7 @@ class singleCleaner(StoppableThread):
                 # pubkeys
                 sqlExecute(
                     "DELETE FROM pubkeys WHERE time<? AND usedpersonally='no'",
-                    int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys)
+                    int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys)
 
                 # Let us resend getpubkey objects if we have not yet heard
                 # a pubkey, and also msg objects if we have not yet heard
@@ -94,7 +100,7 @@ class singleCleaner(StoppableThread):
                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
                     " AND folder='sent' AND sleeptill<? AND senttime>?)",
                     int(time.time()), int(time.time())
-                    - shared.maximumLengthOfTimeToBotherResendingMessages
+                    - state.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for row in queryreturn:
                     if len(row) < 2:
@@ -131,7 +137,8 @@ class singleCleaner(StoppableThread):
                              ' is full. Bitmessage will now exit.'),
                          True)
                     ))
-                    if shared.thisapp.daemon or not state.enableGUI:
+                    # FIXME redundant?
+                    if state.thisapp.daemon or not state.enableGUI:
                         os._exit(1)
 
             # inv/object tracking

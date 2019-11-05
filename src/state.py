@@ -39,6 +39,8 @@ sqlReady = False
 
 maximumNumberOfHalfOpenConnections = 0
 
+maximumLengthOfTimeToBotherResendingMessages = 0
+
 invThread = None
 addrThread = None
 downloadThread = None
@@ -55,3 +57,21 @@ testmode = False
 kivy = False
 
 association = ''
+
+clientHasReceivedIncomingConnections = False
+"""used by API command clientStatus"""
+
+numberOfMessagesProcessed = 0
+numberOfBroadcastsProcessed = 0
+numberOfPubkeysProcessed = 0
+
+statusIconColor = 'red'
+"""
+GUI status icon color
+.. note:: bad style, refactor it
+"""
+
+ackdataForWhichImWatching = {}
+
+thisapp = None
+"""Singleton instance"""

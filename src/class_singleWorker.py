@@ -94,25 +94,25 @@ class singleWorker(StoppableThread):
                         hexlify(privEncryptionKey))
                 )
 
-        # Initialize the shared.ackdataForWhichImWatching data structure
+        # Initialize the state.ackdataForWhichImWatching data structure
         queryreturn = sqlQuery(
             '''SELECT ackdata FROM sent WHERE status = 'msgsent' ''')
         for row in queryreturn:
             ackdata, = row
             self.logger.info('Watching for ackdata %s', hexlify(ackdata))
-            shared.ackdataForWhichImWatching[ackdata] = 0
+            state.ackdataForWhichImWatching[ackdata] = 0
 
         # Fix legacy (headerless) watched ackdata to include header
-        for oldack in shared.ackdataForWhichImWatching:
+        for oldack in state.ackdataForWhichImWatching:
             if len(oldack) == 32:
                 # attach legacy header, always constant (msg/1/1)
                 newack = '\x00\x00\x00\x02\x01\x01' + oldack
-                shared.ackdataForWhichImWatching[newack] = 0
+                state.ackdataForWhichImWatching[newack] = 0
                 sqlExecute(
                     'UPDATE sent SET ackdata=? WHERE ackdata=?',
                     newack, oldack
                 )
-                del shared.ackdataForWhichImWatching[oldack]
+                del state.ackdataForWhichImWatching[oldack]
 
         # give some time for the GUI to start
         # before we start on existing POW tasks.
@@ -864,7 +864,7 @@ class singleWorker(StoppableThread):
 
             # if we aren't sending this to ourselves or a chan
             if not BMConfigParser().has_section(toaddress):
-                shared.ackdataForWhichImWatching[ackdata] = 0
+                state.ackdataForWhichImWatching[ackdata] = 0
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata,

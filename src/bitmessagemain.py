@@ -51,9 +51,8 @@ from network import (
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
-    set_thread_name, addressGenerator, objectProcessor, singleCleaner,
-    singleWorker, sqlThread
-)
+    set_thread_name, printLock,
+    addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
 
 
 def connectToStream(streamNumber):
@@ -157,7 +156,7 @@ def signal_handler(signum, frame):
     logger.error("Got signal %i", signum)
     # there are possible non-UI variants to run bitmessage
     # which should shutdown especially test-mode
-    if shared.thisapp.daemon or not state.enableGUI:
+    if state.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
         print('# Thread: %s(%d)' % (thread.name, thread.ident))
@@ -233,10 +232,10 @@ class Main(object):
                 ' \'-c\' as a commandline argument.'
             )
         # is the application already running?  If yes then exit.
-        shared.thisapp = singleinstance("", daemon)
+        state.thisapp = singleinstance("", daemon)
 
         if daemon:
-            with shared.printLock:
+            with printLock:
                 print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
 
@@ -413,7 +412,7 @@ class Main(object):
         try:
             if os.fork():
                 # unlock
-                shared.thisapp.cleanup()
+                state.thisapp.cleanup()
                 # wait until grandchild ready
                 while True:
                     time.sleep(1)
@@ -423,7 +422,7 @@ class Main(object):
             pass
         else:
             parentPid = os.getpid()
-            shared.thisapp.lock()  # relock
+            state.thisapp.lock()  # relock
 
         os.umask(0)
         try:
@@ -434,7 +433,7 @@ class Main(object):
         try:
             if os.fork():
                 # unlock
-                shared.thisapp.cleanup()
+                state.thisapp.cleanup()
                 # wait until child ready
                 while True:
                     time.sleep(1)
@@ -443,8 +442,8 @@ class Main(object):
             # fork not implemented
             pass
         else:
-            shared.thisapp.lock()  # relock
-        shared.thisapp.lockPid = None  # indicate we're the final child
+            state.thisapp.lock()  # relock
+        state.thisapp.lockPid = None  # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
         if not sys.platform.startswith('win'):
@@ -483,7 +482,7 @@ All parameters are optional.
     @staticmethod
     def stop():
         """Stop main application"""
-        with shared.printLock:
+        with printLock:
             print('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 

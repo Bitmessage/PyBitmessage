@@ -11,7 +11,7 @@ from PyQt4 import QtCore, QtGui
 import knownnodes
 import l10n
 import network.stats
-import shared
+import state
 import widgets
 from inventory import Inventory
 from network import BMConnectionPool
@@ -108,7 +108,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Processed %n person-to-person message(s).",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                shared.numberOfMessagesProcessed))
+                state.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
         """Update the counter for the number of processed broadcasts"""
@@ -119,7 +119,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Processed %n broadcast message(s).",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                shared.numberOfBroadcastsProcessed))
+                state.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
         """Update the counter for the number of processed pubkeys"""
@@ -130,7 +130,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Processed %n public key(s).",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                shared.numberOfPubkeysProcessed))
+                state.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):
         """
@@ -225,9 +225,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         # FYI: The 'singlelistener' thread sets the icon color to green when it
         # receives an incoming connection, meaning that the user's firewall is
         # configured correctly.
-        if self.tableWidgetConnectionCount.rowCount() and shared.statusIconColor == 'red':
+        if self.tableWidgetConnectionCount.rowCount() and state.statusIconColor == 'red':
             self.window().setStatusIcon('yellow')
-        elif self.tableWidgetConnectionCount.rowCount() == 0 and shared.statusIconColor != "red":
+        elif self.tableWidgetConnectionCount.rowCount() == 0 and state.statusIconColor != "red":
             self.window().setStatusIcon('red')
 
     # timer driven
