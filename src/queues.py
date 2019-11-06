@@ -37,8 +37,8 @@ class ObjectProcessorQueue(Queue.Queue):
 workerQueue = Queue.Queue()
 UISignalQueue = Queue.Queue()
 addressGeneratorQueue = Queue.Queue()
-#: receiveDataThreads dump objects they hear on the network into this
-#: queue to be processed.
+#: `.network.ReceiveQueueThread` instances dump objects they hear
+#: on the network into this queue to be processed.
 objectProcessorQueue = ObjectProcessorQueue()
 invQueue = MultiQueue()
 addrQueue = MultiQueue()
