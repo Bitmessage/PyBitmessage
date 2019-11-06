@@ -36,6 +36,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
+
 import kivy_helper_search
 from kivymd.button import MDIconButton
 from kivymd.dialog import MDDialog
@@ -53,8 +54,10 @@ from kivymd.navigationdrawer import (
 )
 from kivymd.selectioncontrols import MDCheckbox
 from kivymd.theming import ThemeManager
+
 import queues
 from semaphores import kivyuisignaler
+
 import state
 from uikivysignaler import UIkivySignaler
 
@@ -708,6 +711,7 @@ class Random(Screen):
             Clock.schedule_once(self.address_created_callback, 10)
 
     def address_created_callback(self, dt=0):
+        """New address created"""
         state.kivyapp.root.ids.sc10.children[1].active = False
         state.kivyapp.root.ids.sc10.init_ui()
         self.manager.current = 'myaddress'
@@ -1260,6 +1264,7 @@ class NavigateApp(App):
             self.root.ids.scr_mngr.current = state.search_screen
 
     def closeSearchScreen(self):
+        """Function for  close search screen"""
         self.root.ids.toolbar.right_action_items = [['account-plus', lambda x: self.addingtoaddressbook()]]
         self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
         address_label = self.current_address_label(
@@ -2001,11 +2006,12 @@ class Spam(Screen):
 
 
 class LoadingPopup(Popup):
-
+    """Load Popup"""
     def __init__(self, **kwargs):
         super(LoadingPopup, self).__init__(**kwargs)
         # call dismiss_popup in 2 seconds
         Clock.schedule_once(self.dismiss_popup, 0.5)
 
     def dismiss_popup(self, dt):
+        """Dismissing popup"""
         self.dismiss()
