@@ -231,13 +231,16 @@ class Inbox(Screen):
         def refresh_callback(interval):
             """Method used for loading the inbox screen data."""
             state.searcing_text = ''
-            self.children[3].children[1].ids.search_field.text = ''
+            self.children[2].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
             self.loadMessagelist(state.association)
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
 
         Clock.schedule_once(refresh_callback, 1)
+
+    def set_root_layout(self):
+        return self.parent.parent.parent
 
 
 class MyAddress(Screen):
@@ -305,7 +308,7 @@ class MyAddress(Screen):
             """Method used for loading the myaddress screen data."""
             state.searcing_text = ''
             state.kivyapp.root.ids.sc10.children[2].active = False
-            self.children[3].children[1].ids.search_field.text = ''
+            self.children[2].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
@@ -321,6 +324,9 @@ class MyAddress(Screen):
                     address, 'label').lower(), address.lower()]):
             return True
         return False
+
+    def set_root_layout(self):
+        return self.manager.parent.parent
 
 
 class AddressBook(Screen):
@@ -466,10 +472,10 @@ class DropDownWidget(BoxLayout):
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
-                # navApp.root.ids.sc1.children[1].active = True
                 from addresses import decodeAddress
                 status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
                 if status == 'success':
+                    navApp.root.ids.sc3.children[0].active = True
                     if state.detailPageType == 'draft' and state.send_draft_mail:
                         sqlExecute(
                             "UPDATE sent SET toaddress = ?"
@@ -521,22 +527,23 @@ class DropDownWidget(BoxLayout):
                             BMConfigParser().getint(
                                 'bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
+                    # state.msg_counter_objs = self.parent.parent.parent.parent\
+                    #     .parent.parent.children[0].children[2].children[0].ids
                     state.msg_counter_objs = self.parent.parent.parent.parent\
-                        .parent.parent.children[0].children[2].children[0].ids
+                        .parent.parent.children[2].children[0].ids
+                    self.parent.parent.screens[0].ids.ml.clear_widgets()
+                    self.parent.parent.screens[0].loadMessagelist(state.association)
                     self.parent.parent.screens[3].ids.ml.clear_widgets()
                     self.parent.parent.screens[3].loadSent(state.association)
                     self.parent.parent.screens[16].clear_widgets()
                     self.parent.parent.screens[16].add_widget(Allmails())
+                    toast('sending...')
+                    Clock.schedule_once(self.callback_for_msgsend, 6)
                     toLabel = ''
-
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
-                    self.parent.parent.current = 'inbox'
-                    # navApp.root.ids.sc1.children[1].active = False
                     state.in_composer = True
-                    navApp.back_press()
-                    toast('send')
-                    return None
+                    return
                 else:
                     msg = 'Enter a valid recipients address'
             elif not toAddress:
@@ -544,6 +551,12 @@ class DropDownWidget(BoxLayout):
             else:
                 msg = 'Please fill the form'
             self.address_error_message(msg)
+
+    def callback_for_msgsend(self, dt=0):
+        state.kivyapp.root.ids.sc3.children[0].active = False
+        state.in_sent_method = True
+        state.kivyapp.back_press()
+        toast('sent')
 
     # pylint: disable=attribute-defined-outside-init
     def address_error_message(self, msg):
@@ -703,16 +716,16 @@ class Random(Screen):
                 nonceTrialsPerByte,
                 payloadLengthExtraBytes))
             self.ids.label.text = ''
-            self.parent.parent.parent.parent.ids.toolbar.opacity = 1
-            self.parent.parent.parent.parent.ids.toolbar.disabled = False
-            self.parent.parent.parent.parent.ids.sc10.ids.ml.clear_widgets()
-            self.parent.parent.parent.parent.ids.sc10.children[1].active = True
+            self.parent.parent.children[1].opacity = 1
+            self.parent.parent.children[1].disabled = False
+            state.kivyapp.root.ids.sc10.children[1].active = True
             self.manager.current = 'myaddress'
-            Clock.schedule_once(self.address_created_callback, 10)
+            Clock.schedule_once(self.address_created_callback, 6)
 
     def address_created_callback(self, dt=0):
         """New address created"""
         state.kivyapp.root.ids.sc10.children[1].active = False
+        state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
         state.kivyapp.root.ids.sc10.init_ui()
         self.manager.current = 'myaddress'
         toast('New address created')
@@ -1138,13 +1151,10 @@ class NavigateApp(App):
                     if state.detailPageType == 'inbox' else 'draft'
                 self.back_press()
             elif self.root.ids.scr_mngr.current == "create":
-                composer_objs = self.root
-                from_addr = str(self.root.ids.sc3.children[0].ids.ti.text)
-                to_addr = str(self.root.ids.sc3.children[0].ids.txt_input.text)
-                if from_addr and to_addr and state.detailPageType != 'draft':
-                    Draft().draft_msg(composer_objs)
+                self.save_draft()
+                self.set_common_header()
+                state.in_composer = False
                 self.root.ids.scr_mngr.current = 'inbox'
-                self.back_press()
             elif self.root.ids.scr_mngr.current == "showqrcode":
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
@@ -1169,6 +1179,14 @@ class NavigateApp(App):
                 self.root.ids.sc4.loadSent(state.association)
             self.root.ids.scr_mngr.current = state.search_screen
 
+    def save_draft(self):
+        composer_objs = self.root
+        from_addr = str(self.root.ids.sc3.children[1].ids.ti.text)
+        to_addr = str(self.root.ids.sc3.children[1].ids.txt_input.text)
+        if from_addr and to_addr and state.detailPageType != 'draft' and not state.in_sent_method:
+            Draft().draft_msg(composer_objs)
+        return
+
     def reset(self, *args):
         """Method used to set transition direction."""
         self.root.ids.scr_mngr.transition.direction = 'left'
@@ -1185,26 +1203,32 @@ class NavigateApp(App):
         """If slow down the nwe will make new composer edit screen."""
         self.set_navbar_for_composer()
         # self.root.ids.search_bar.clear_widgets()
-        composer_obj = self.root.ids.sc3.children[0].ids
+        composer_obj = self.root.ids.sc3.children[1].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
         composer_obj.txt_input.text = ''
         composer_obj.subject.text = ''
         composer_obj.body.text = ''
         state.in_composer = True
+        state.in_sent_method = False
 
     def set_navbar_for_composer(self):
         """This method is used for clearing toolbar data when composer open"""
         self.root.ids.toolbar.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
         self.root.ids.toolbar.right_action_items = [
-            ['refresh', lambda x: self.root.ids.sc3.children[0].reset_composer()],
-            ['send', lambda x: self.root.ids.sc3.children[0].send(self)]]
+            ['refresh', lambda x: self.root.ids.sc3.children[1].reset_composer()],
+            ['send', lambda x: self.root.ids.sc3.children[1].send(self)]]
+
+    def set_common_header(self):
+        self.root.ids.toolbar.right_action_items = [['account-plus', lambda x: self.addingtoaddressbook()]]
+        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        return
 
     def back_press(self):
         """Method used for going back from composer to previous page."""
-        self.root.ids.toolbar.right_action_items = [['account-plus', lambda x: self.addingtoaddressbook()]]
-        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.save_draft()
+        self.set_common_header()
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
@@ -1265,8 +1289,7 @@ class NavigateApp(App):
 
     def closeSearchScreen(self):
         """Function for  close search screen"""
-        self.root.ids.toolbar.right_action_items = [['account-plus', lambda x: self.addingtoaddressbook()]]
-        self.root.ids.toolbar.left_action_items = [['menu', lambda x: self.root.toggle_nav_drawer()]]
+        self.set_common_header()
         address_label = self.current_address_label(
             BMConfigParser().get(state.association, 'label'), state.association)
         self.root.ids.toolbar.title = address_label
@@ -1538,13 +1561,13 @@ class MailDetail(Screen):
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message from inbox where"
             " msgid = ?;", str(state.mail_id))
-        composer_obj = self.parent.screens[2].children[0].ids
+        composer_obj = self.parent.screens[2].children[1].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
         composer_obj.txt_input.text = data[0][1]
         composer_obj.subject.text = data[0][2]
         composer_obj.body.text = ''
-        state.kivyapp.root.ids.sc3.children[0].ids.rv.data = ''
+        state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
         self.parent.current = 'create'
         state.kivyapp.set_navbar_for_composer()
 
@@ -1555,11 +1578,11 @@ class MailDetail(Screen):
     def write_msg(self, navApp):
         """Method used to write on draft mail."""
         state.send_draft_mail = state.mail_id
-        composer_ids = self.parent.parent.parent.parent.ids.sc3.children[0].ids
+        composer_ids = self.parent.parent.parent.parent.parent.ids.sc3.children[1].ids
         composer_ids.ti.text = state.write_msg['from_addr']
         composer_ids.btn.text = state.write_msg['from_addr']
         composer_ids.txt_input.text = state.write_msg['to_addr']
-        composer_ids.subject.text = state.write_msg['subject']
+        composer_ids.subject.text = state.write_msg['subject'] if state.write_msg['subject'] != '(no subject)' else ''
         composer_ids.body.text = state.write_msg['message']
         self.parent.current = 'create'
         navApp.set_navbar_for_composer()
@@ -1593,12 +1616,13 @@ class MyaddDetailPopup(Popup):
 
     def send_message_from(self):
         """Method used to fill from address of composer autofield."""
+        state.kivyapp.set_navbar_for_composer()
         window_obj = self.parent.children[1].ids
-        window_obj.sc3.children[0].ids.ti.text = self.address
-        window_obj.sc3.children[0].ids.btn.text = self.address
-        window_obj.sc3.children[0].ids.txt_input.text = ''
-        window_obj.sc3.children[0].ids.subject.text = ''
-        window_obj.sc3.children[0].ids.body.text = ''
+        window_obj.sc3.children[1].ids.ti.text = self.address
+        window_obj.sc3.children[1].ids.btn.text = self.address
+        window_obj.sc3.children[1].ids.txt_input.text = ''
+        window_obj.sc3.children[1].ids.subject.text = ''
+        window_obj.sc3.children[1].ids.body.text = ''
         window_obj.scr_mngr.current = 'create'
         self.dismiss()
 
@@ -1637,12 +1661,13 @@ class AddbookDetailPopup(Popup):
 
     def send_message_to(self):
         """Method used to fill to_address of composer autofield."""
+        state.kivyapp.set_navbar_for_composer()
         window_obj = self.parent.children[1].ids
-        window_obj.sc3.children[0].ids.txt_input.text = self.address
-        window_obj.sc3.children[0].ids.ti.text = ''
-        window_obj.sc3.children[0].ids.btn.text = 'Select'
-        window_obj.sc3.children[0].ids.subject.text = ''
-        window_obj.sc3.children[0].ids.body.text = ''
+        window_obj.sc3.children[1].ids.txt_input.text = self.address
+        window_obj.sc3.children[1].ids.ti.text = ''
+        window_obj.sc3.children[1].ids.btn.text = 'Select'
+        window_obj.sc3.children[1].ids.subject.text = ''
+        window_obj.sc3.children[1].ids.body.text = ''
         window_obj.scr_mngr.current = 'create'
         self.dismiss()
 
@@ -1776,8 +1801,7 @@ class Draft(Screen):
     def draft_msg(src_object):
         """Method used for saving draft mails."""
         # pylint: disable=too-many-locals
-        composer_object = src_object.children[1].children[0].children[
-            0].children[0].children[0].ids
+        composer_object = state.kivyapp.root.ids.sc3.children[1].ids
         fromAddress = str(composer_object.ti.text)
         toAddress = str(composer_object.txt_input.text)
         subject = str(composer_object.subject.text)
@@ -1973,6 +1997,12 @@ class Allmails(Screen):
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
         Clock.schedule_once(refresh_callback, 1)
+
+    def set_root_layout(self):
+        try:
+            return self.manager.parent.parent
+        except Exception as e:
+            return state.kivyapp.root.ids.float_box
 
 
 def avatarImageFirstLetter(letter_string):
