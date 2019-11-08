@@ -134,62 +134,64 @@ NavigationLayout:
     ContentNavigationDrawer:
         id: nav_drawer
 
-    BoxLayout:
-        id: box_layout
-        orientation: 'vertical'
-        Toolbar:
-            id: toolbar
-            title: app.current_address_label()
-            opacity: 1 if app.addressexist() else 0
-            disabled: False if app.addressexist() else True
-            md_bg_color: app.theme_cls.primary_color
-            background_palette: 'Primary'
-            background_hue: '500'
-            left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
-            right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
+    FloatLayout:
+        id: float_box
+        BoxLayout:
+            id: box_layout
+            orientation: 'vertical'
+            Toolbar:
+                id: toolbar
+                title: app.current_address_label()
+                opacity: 1 if app.addressexist() else 0
+                disabled: False if app.addressexist() else True
+                md_bg_color: app.theme_cls.primary_color
+                background_palette: 'Primary'
+                background_hue: '500'
+                left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
+                right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
 
-        ScreenManager:
-            id: scr_mngr
-            Inbox:
-                id:sc1
-            Page:
-                id:sc2
-            Create:
-                id:sc3
-            Sent:
-                id:sc4
-            Trash:
-                id:sc5
-            Login:
-                id:sc6
-            Random:
-                id:sc7
-            Spam:
-                id:sc8
-            Setting:
-                id:sc9
-            MyAddress:
-                id:sc10
-            AddressBook:
-                id:sc11
-            Payment:
-                id:sc12
-            NetworkStat:
-                id:sc13
-            MailDetail:
-                id:sc14
-            ShowQRCode:
-                id:sc15
-            Draft:
-                id:sc16
-            Allmails:
-                id:sc17
-            Credits:
-                id:sc18
-            Starred:
-                id:sc19
-            Archieve:
-                id:sc20
+            ScreenManager:
+                id: scr_mngr
+                Inbox:
+                    id:sc1
+                Page:
+                    id:sc2
+                Create:
+                    id:sc3
+                Sent:
+                    id:sc4
+                Trash:
+                    id:sc5
+                Login:
+                    id:sc6
+                Random:
+                    id:sc7
+                Spam:
+                    id:sc8
+                Setting:
+                    id:sc9
+                MyAddress:
+                    id:sc10
+                AddressBook:
+                    id:sc11
+                Payment:
+                    id:sc12
+                NetworkStat:
+                    id:sc13
+                MailDetail:
+                    id:sc14
+                ShowQRCode:
+                    id:sc15
+                Draft:
+                    id:sc16
+                Allmails:
+                    id:sc17
+                Credits:
+                    id:sc18
+                Starred:
+                    id:sc19
+                Archieve:
+                    id:sc20
 
 <Inbox>:
     name: 'inbox'
@@ -201,7 +203,7 @@ NavigationLayout:
             MDScrollViewRefreshLayout:
                 id: refresh_layout
                 refresh_callback: root.refresh_callback
-                root_layout: root
+                root_layout: root.set_root_layout()
                 MDList:
                     id: ml
     Loader:
@@ -266,7 +268,7 @@ NavigationLayout:
         MDScrollViewRefreshLayout:
             id: refresh_layout
             refresh_callback: root.refresh_callback
-            root_layout: root
+            root_layout: root.set_root_layout()
             MDList:
                 id: ml
     ComposerButton:
@@ -285,6 +287,7 @@ NavigationLayout:
 
 <Create>:
     name: 'create'
+    Loader:
 
 <Credits>:
     name: 'credits'
@@ -607,7 +610,7 @@ NavigationLayout:
             MDScrollViewRefreshLayout:
                 id: refresh_layout
                 refresh_callback: root.refresh_callback
-                root_layout: root
+                root_layout: root.set_root_layout()
                 MDList:
                     id: ml
     Loader:

@@ -58,7 +58,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlStatementParts.append("read = 0")
     if sqlStatementParts:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
-    if folder == "sent":
+    if folder == "sent" or folder == "draft":
         sqlStatementBase += " ORDER BY lastactiontime DESC"
     elif folder == "inbox":
         sqlStatementBase += " ORDER BY received DESC"
