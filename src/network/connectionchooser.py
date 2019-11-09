@@ -1,16 +1,19 @@
-from queues import Queue
-import random
+# pylint: disable=too-many-branches
+import logging
+import random  # nosec
 
-from bmconfigparser import BMConfigParser
 import knownnodes
 import protocol
-from queues import portCheckerQueue
 import state
-import helper_random
+from bmconfigparser import BMConfigParser
+from queues import Queue, portCheckerQueue
+
+logger = logging.getLogger('default')
+
 
 def getDiscoveredPeer():
     try:
-        peer = helper_random.randomchoice(state.discoveredPeers.keys())
+        peer = random.choice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -19,8 +22,12 @@ def getDiscoveredPeer():
         pass
     return peer
 
+
 def chooseConnection(stream):
-    haveOnion = BMConfigParser().safeGet("bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
+    haveOnion = BMConfigParser().safeGet(
+        "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
+    onionOnly = BMConfigParser().safeGetBoolean(
+        "bitmessagesettings", "onionservicesonly")
     if state.trustedPeer:
         return state.trustedPeer
     try:
@@ -30,21 +37,28 @@ def chooseConnection(stream):
     except Queue.Empty:
         pass
     # with a probability of 0.5, connect to a discovered peer
-    if helper_random.randomchoice((False, True)) and not haveOnion:
+    if random.choice((False, True)) and not haveOnion:
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = helper_random.randomchoice(knownnodes.knownNodes[stream].keys())
+        peer = random.choice(knownnodes.knownNodes[stream].keys())
         try:
-            rating = knownnodes.knownNodes[stream][peer]["rating"]
+            peer_info = knownnodes.knownNodes[stream][peer]
+            if peer_info.get('self'):
+                continue
+            rating = peer_info["rating"]
         except TypeError:
-            print "Error in %s" % (peer)
+            logger.warning('Error in %s', peer)
             rating = 0
         if haveOnion:
+            # do not connect to raw IP addresses--keep all traffic within Tor overlay
+            if onionOnly and not peer.host.endswith('.onion'):
+                continue
             # onion addresses have a higher priority when SOCKS
             if peer.host.endswith('.onion') and rating > 0:
                 rating = 1
-            else:
+            # TODO: need better check
+            elif not peer.host.startswith('bootstrap'):
                 encodedAddr = protocol.encodeHost(peer.host)
                 # don't connect to local IPs when using SOCKS
                 if not protocol.checkIPAddress(encodedAddr, False):
@@ -52,7 +66,7 @@ def chooseConnection(stream):
         if rating > 1:
             rating = 1
         try:
-            if 0.05/(1.0-rating) > random.random():
+            if 0.05 / (1.0 - rating) > random.random():
                 return peer
         except ZeroDivisionError:
             return peer

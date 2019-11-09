@@ -1,18 +1,14 @@
 # pylint: disable=too-many-locals,too-many-lines,no-self-use,too-many-public-methods,too-many-branches
 # pylint: disable=too-many-statements
-"""
-src/api.py
-==========
 
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2019 The Bitmessage developers
 
+"""
 This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
-
-from __future__ import absolute_import
 
 import base64
 import errno
@@ -21,7 +17,6 @@ import json
 import random  # nosec
 import socket
 import subprocess
-import threading
 import time
 from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
@@ -32,7 +27,6 @@ from version import softwareVersion
 import defaults
 import helper_inbox
 import helper_sent
-import helper_threading
 import network.stats
 import proofofwork
 import queues
@@ -45,6 +39,7 @@ from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
+from network.threads import StoppableThread
 
 str_chan = '[chan]'
 
@@ -73,11 +68,10 @@ class StoppableXMLRPCServer(SimpleXMLRPCServer):
 
 
 # This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, helper_threading.StoppableThread):
+class singleAPI(StoppableThread):
     """API thread"""
-    def __init__(self):
-        threading.Thread.__init__(self, name="singleAPI")
-        self.initStop()
+
+    name = "singleAPI"
 
     def stopThread(self):
         super(singleAPI, self).stopThread()
@@ -101,6 +95,8 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
         for attempt in range(50):
             try:
                 if attempt > 0:
+                    logger.warning(
+                        'Failed to start API listener on port %s', port)
                     port = random.randint(32767, 65535)
                 se = StoppableXMLRPCServer(
                     (BMConfigParser().get(
@@ -112,8 +108,9 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
                     continue
             else:
                 if attempt > 0:
+                    logger.warning('Setting apiport to %s', port)
                     BMConfigParser().set(
-                        "bitmessagesettings", "apiport", str(port))
+                        'bitmessagesettings', 'apiport', str(port))
                     BMConfigParser().save()
                 break
         se.register_introspection_functions()
@@ -203,6 +200,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # shut down the connection
             self.wfile.flush()
             self.connection.shutdown(1)
+
+            # actually handle shutdown command after sending response
+            if state.shutdown is False:
+                shutdown.doCleanShutdown()
 
     def APIAuthenticateClient(self):
         """Predicate to check for valid API credentials in the request header"""
@@ -1386,10 +1387,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return None
 
     def HandleShutdown(self, params):
-        """Handle a request to huutdown the client"""
+        """Handle a request to shutdown the node"""
 
         if not params:
-            shutdown.doCleanShutdown()
+            # backward compatible trick because False == 0 is True
+            state.shutdown = False
             return 'done'
         return None
 

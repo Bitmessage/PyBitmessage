@@ -1,27 +1,37 @@
+"""
+src/network/proxy.py
+====================
+"""
+# pylint: disable=protected-access
+import logging
 import socket
 import time
 
-from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
-from bmconfigparser import BMConfigParser
-from debug import logger
-import network.connectionpool
 import state
+from advanceddispatcher import AdvancedDispatcher
+from bmconfigparser import BMConfigParser
+
+logger = logging.getLogger('default')
+
 
 class ProxyError(Exception):
-    errorCodes = ("UnknownError")
+    """Base proxy exception class"""
+    errorCodes = ("Unknown error",)
 
     def __init__(self, code=-1):
         self.code = code
         try:
-            self.message = self.__class__.errorCodes[self.code]
+            self.message = self.errorCodes[code]
         except IndexError:
-            self.message = self.__class__.errorCodes[-1]
+            self.message = self.errorCodes[-1]
         super(ProxyError, self).__init__(self.message)
 
 
 class GeneralProxyError(ProxyError):
-    errorCodes = ("Success",
+    """General proxy error class (not specfic to an implementation)"""
+    errorCodes = (
+        "Success",
         "Invalid data",
         "Not connected",
         "Not available",
@@ -30,12 +40,14 @@ class GeneralProxyError(ProxyError):
         "Timed out",
         "Network unreachable",
         "Connection refused",
-        "Host unreachable")
+        "Host unreachable"
+    )
 
 
 class Proxy(AdvancedDispatcher):
-    # these are global, and if you change config during runtime, all active/new
-    # instances should change too
+    """Base proxy class"""
+    # these are global, and if you change config during runtime,
+    # all active/new instances should change too
     _proxy = ("127.0.0.1", 9050)
     _auth = None
     _onion_proxy = None
@@ -44,40 +56,54 @@ class Proxy(AdvancedDispatcher):
 
     @property
     def proxy(self):
+        """Return proxy IP and port"""
         return self.__class__._proxy
 
     @proxy.setter
     def proxy(self, address):
-        if not isinstance(address, tuple) or (len(address) < 2) or \
-                (not isinstance(address[0], str) or not isinstance(address[1], int)):
+        """Set proxy IP and port"""
+        if (not isinstance(address, tuple) or len(address) < 2 or
+                not isinstance(address[0], str) or
+                not isinstance(address[1], int)):
             raise ValueError
         self.__class__._proxy = address
 
     @property
     def auth(self):
+        """Return proxy authentication settings"""
         return self.__class__._auth
 
     @auth.setter
     def auth(self, authTuple):
+        """Set proxy authentication (username and password)"""
         self.__class__._auth = authTuple
 
     @property
     def onion_proxy(self):
+        """
+        Return separate proxy IP and port for use only with onion
+        addresses. Untested.
+        """
         return self.__class__._onion_proxy
 
     @onion_proxy.setter
     def onion_proxy(self, address):
-        if address is not None and (not isinstance(address, tuple) or (len(address) < 2) or \
-                (not isinstance(address[0], str) or not isinstance(address[1], int))):
+        """Set onion proxy address"""
+        if address is not None and (
+                not isinstance(address, tuple) or len(address) < 2 or
+                not isinstance(address[0], str) or
+                not isinstance(address[1], int)):
             raise ValueError
         self.__class__._onion_proxy = address
 
     @property
     def onion_auth(self):
+        """Return proxy authentication settings for onion hosts only"""
         return self.__class__._onion_auth
 
     @onion_auth.setter
     def onion_auth(self, authTuple):
+        """Set proxy authentication for onion hosts only. Untested."""
         self.__class__._onion_auth = authTuple
 
     def __init__(self, address):
@@ -87,27 +113,39 @@ class Proxy(AdvancedDispatcher):
         self.destination = address
         self.isOutbound = True
         self.fullyEstablished = False
+        self.connectedAt = 0
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        if BMConfigParser().safeGetBoolean("bitmessagesettings", "socksauthentication"):
-            self.auth = (BMConfigParser().safeGet("bitmessagesettings", "socksusername"),
-                    BMConfigParser().safeGet("bitmessagesettings", "sockspassword"))
+        if BMConfigParser().safeGetBoolean(
+                "bitmessagesettings", "socksauthentication"):
+            self.auth = (
+                BMConfigParser().safeGet(
+                    "bitmessagesettings", "socksusername"),
+                BMConfigParser().safeGet(
+                    "bitmessagesettings", "sockspassword")
+            )
         else:
             self.auth = None
-        if address.host.endswith(".onion") and self.onion_proxy is not None:
-            self.connect(self.onion_proxy)
-        else:
-            self.connect(self.proxy)
+        self.connect(
+            self.onion_proxy
+            if address.host.endswith(".onion") and self.onion_proxy else
+            self.proxy
+        )
 
     def handle_connect(self):
+        """Handle connection event (to the proxy)"""
         self.set_state("init")
         try:
             AdvancedDispatcher.handle_connect(self)
         except socket.error as e:
             if e.errno in asyncore._DISCONNECTED:
-                logger.debug("%s:%i: Connection failed: %s", self.destination.host, self.destination.port, str(e))
+                logger.debug(
+                    "%s:%i: Connection failed: %s",
+                    self.destination.host, self.destination.port, e)
                 return
         self.state_init()
 
     def state_proxy_handshake_done(self):
+        """Handshake is complete at this point"""
+        # pylint: disable=attribute-defined-outside-init
         self.connectedAt = time.time()
         return False

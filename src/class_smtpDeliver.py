@@ -5,8 +5,6 @@ src/class_smtpDeliver.py
 # pylint: disable=unused-variable
 
 import smtplib
-import sys
-import threading
 import urlparse
 from email.header import Header
 from email.mime.text import MIMEText
@@ -14,19 +12,15 @@ from email.mime.text import MIMEText
 import queues
 import state
 from bmconfigparser import BMConfigParser
-from debug import logger
-from helper_threading import StoppableThread
+from network.threads import StoppableThread
 
 SMTPDOMAIN = "bmaddr.lan"
 
 
-class smtpDeliver(threading.Thread, StoppableThread):
+class smtpDeliver(StoppableThread):
     """SMTP client thread for delivery"""
+    name = "smtpDeliver"
     _instance = None
-
-    def __init__(self):
-        threading.Thread.__init__(self, name="smtpDeliver")
-        self.initStop()
 
     def stopThread(self):
         try:
@@ -79,10 +73,12 @@ class smtpDeliver(threading.Thread, StoppableThread):
                     client.starttls()
                     client.ehlo()
                     client.sendmail(msg['From'], [to], msg.as_string())
-                    logger.info("Delivered via SMTP to %s through %s:%i ...", to, u.hostname, u.port)
+                    self.logger.info(
+                        'Delivered via SMTP to %s through %s:%i ...',
+                        to, u.hostname, u.port)
                     client.quit()
                 except:
-                    logger.error("smtp delivery error", exc_info=True)
+                    self.logger.error('smtp delivery error', exc_info=True)
             elif command == 'displayNewSentMessage':
                 toAddress, fromLabel, fromAddress, subject, message, ackdata = data
             elif command == 'updateNetworkStatusTab':
@@ -116,5 +112,5 @@ class smtpDeliver(threading.Thread, StoppableThread):
             elif command == 'stopThread':
                 break
             else:
-                sys.stderr.write(
-                    'Command sent to smtpDeliver not recognized: %s\n' % command)
+                self.logger.warning(
+                    'Command sent to smtpDeliver not recognized: %s', command)

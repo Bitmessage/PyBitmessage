@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+src/plugins/indicator_libmessaging.py
+=====================================
+"""
 
 import gi
 gi.require_version('MessagingMenu', '1.0')  # noqa:E402
@@ -9,6 +13,7 @@ from pybitmessage.tr import _translate
 
 
 class IndicatorLibmessaging(object):
+    """Plugin for libmessage indicator"""
     def __init__(self, form):
         try:
             self.app = MessagingMenu.App(desktop_id='pybitmessage.desktop')
@@ -32,15 +37,18 @@ class IndicatorLibmessaging(object):
         if self.app:
             self.app.unregister()
 
-    def activate(self, app, source):
+    def activate(self, app, source):                # pylint: disable=unused-argument
+        """Activate the libmessaging indicator plugin"""
         self.form.appIndicatorInbox(
             self.new_message_item if source == 'messages'
             else self.new_broadcast_item
         )
 
-    # show the number of unread messages and subscriptions
-    # on the messaging menu
     def show_unread(self, draw_attention=False):
+        """
+        show the number of unread messages and subscriptions
+        on the messaging menu
+        """
         for source, count in zip(
                 ('messages', 'subscriptions'),
                 self.form.getUnread()

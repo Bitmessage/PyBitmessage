@@ -100,9 +100,9 @@ def pointMult(secret):
 
     Evidently, this type of error can occur very rarely:
 
-        File "highlevelcrypto.py", line 54, in pointMult
-          group = OpenSSL.EC_KEY_get0_group(k)
-        WindowsError: exception: access violation reading 0x0000000000000008
+    >>> File "highlevelcrypto.py", line 54, in pointMult
+    >>>  group = OpenSSL.EC_KEY_get0_group(k)
+    >>> WindowsError: exception: access violation reading 0x0000000000000008
     """
     while True:
         try:

@@ -1,0 +1,4 @@
+/* Hide "On GitHub" section from versions menu */
+li.wy-breadcrumbs-aside > a.fa {
+    display: none;
+}

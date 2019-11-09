@@ -1,22 +1,42 @@
 import ctypes
 import os
 import time
+import sys
 
-srcPath = "C:\\src\\PyBitmessage\\src\\"
-qtPath = "C:\\Qt-4.8.7\\"
-openSSLPath = "C:\\OpenSSL-1.0.2j\\bin\\"
-outPath = "C:\\src\\PyInstaller-3.2.1\\bitmessagemain"
+if ctypes.sizeof(ctypes.c_voidp) == 4:
+  arch=32
+else:
+  arch=64
+  
+sslName = 'OpenSSL-Win%s' % ("32" if arch == 32 else "64")
+site_root = os.path.abspath(HOMEPATH)
+spec_root = os.path.abspath(SPECPATH)
+cdrivePath= site_root[0:3]
+srcPath = spec_root[:-20]+"src\\"
+qtPath = site_root+"\\PyQt4\\"
+openSSLPath = cdrivePath+sslName+"\\" 
+msvcrDllPath = cdrivePath+"windows\\system32\\"
+pythonDllPath = cdrivePath+"Python27\\"
+outPath = spec_root+"\\bitmessagemain"
+
+importPath = srcPath 
+sys.path.insert(0,importPath)
+os.chdir(sys.path[0])
+from version import softwareVersion
+
 today = time.strftime("%Y%m%d")
 snapshot = False
 
 os.rename(os.path.join(srcPath, '__init__.py'), os.path.join(srcPath, '__init__.py.backup'))
 
 # -*- mode: python -*-
-a = Analysis([srcPath + 'bitmessagemain.py'],
+a = Analysis(
+             [srcPath + 'bitmessagemain.py'],
              pathex=[outPath],
-             hiddenimports=[],
+             hiddenimports=['pyopencl','numpy', 'win32com' , 'setuptools.msvc' ,'_cffi_backend'],
              hookspath=None,
-             runtime_hooks=None)
+             runtime_hooks=None
+             )
 
 os.rename(os.path.join(srcPath, '__init__.py.backup'), os.path.join(srcPath, '__init__.py'))
 
@@ -46,20 +66,17 @@ def addUIs():
 a.datas += addTranslations()
 a.datas += addUIs()
 
-if ctypes.sizeof(ctypes.c_voidp) == 4:
-	arch=32
-else:
-	arch=64
+
 
 a.binaries += [('libeay32.dll', openSSLPath + 'libeay32.dll', 'BINARY'),
-	(os.path.join('bitmsghash', 'bitmsghash%i.dll' % (arch)), os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % (arch)), 'BINARY'),
-	(os.path.join('bitmsghash', 'bitmsghash.cl'), os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
-	(os.path.join('sslkeys', 'cert.pem'), os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
-	(os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
-	]
+         ('python27.dll', pythonDllPath + 'python27.dll', 'BINARY'),
+         ('msvcr120.dll', msvcrDllPath + 'msvcr120.dll','BINARY'),
+         (os.path.join('bitmsghash', 'bitmsghash%i.dll' % (arch)), os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % (arch)), 'BINARY'),
+         (os.path.join('bitmsghash', 'bitmsghash.cl'), os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
+         (os.path.join('sslkeys', 'cert.pem'), os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
+         (os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
+         ]
 
-with open(os.path.join(srcPath, 'version.py'), 'rt') as f:
-    softwareVersion = f.readline().split('\'')[1]
     
 fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareVersion)
 if snapshot:
@@ -72,8 +89,18 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           a.binaries,
+          [],
           name=fname,
           debug=False,
           strip=None,
-          upx=False,
-          console=False, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
+          upx=True,
+          console=True, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
+
+coll = COLLECT(exe,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=False,
+               upx=True,
+               name='main')
+

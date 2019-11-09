@@ -1,23 +1,31 @@
+"""
+src/network/udp.py
+==================
+"""
+import logging
 import time
 import socket
 
 import state
 import protocol
 from bmproto import BMProto
-from debug import logger
 from objectracker import ObjectTracker
 from queues import receiveDataQueue
 
+logger = logging.getLogger('default')
 
-class UDPSocket(BMProto):
+
+class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
+    """Bitmessage protocol over UDP (class)"""
     port = 8444
     announceInterval = 60
 
     def __init__(self, host=None, sock=None, announcing=False):
+        # pylint: disable=bad-super-call
         super(BMProto, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
-        # TODO sort out streams
+        # .. todo:: sort out streams
         self.streams = [1]
         self.fullyEstablished = True
         self.connectedAt = 0
@@ -44,6 +52,7 @@ class UDPSocket(BMProto):
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def set_socket_reuse(self):
+        """Set socket reuse option"""
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
@@ -73,8 +82,8 @@ class UDPSocket(BMProto):
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if (seenTime < time.time() - self.maxTimeOffset or
-                    seenTime > time.time() + self.maxTimeOffset):
+            if (seenTime < time.time() - self.maxTimeOffset
+                    or seenTime > time.time() + self.maxTimeOffset):
                 continue
             if decodedIP is False:
                 # if the address isn't local, interpret it as
@@ -124,10 +133,7 @@ class UDPSocket(BMProto):
 
         self.destination = state.Peer(*addr)
         encodedAddr = protocol.encodeHost(addr[0])
-        if protocol.checkIPAddress(encodedAddr, True):
-            self.local = True
-        else:
-            self.local = False
+        self.local = bool(protocol.checkIPAddress(encodedAddr, True))
         # overwrite the old buffer to avoid mixing data and so that
         # self.local works correctly
         self.read_buf[0:] = recdata

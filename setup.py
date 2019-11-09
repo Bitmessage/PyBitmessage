@@ -16,13 +16,8 @@ EXTRAS_REQUIRE = {
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
-    'docs': [
-        'sphinx',  # fab build_docs
-        'graphviz',  # fab build_docs
-        'curses',  # src/depends.py
-        'python2-pythondialog',  # src/depends.py
-        'm2r',  # fab build_docs
-    ]
+    'tor': ['stem'],
+    'docs': ['sphinx', 'sphinxcontrib-apidoc', 'm2r']
 }
 
 
@@ -69,7 +64,6 @@ if __name__ == "__main__":
         'pybitmessage.network',
         'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
-        'pybitmessage.socks',
         'pybitmessage.storage'
     ]
 
@@ -147,10 +141,17 @@ if __name__ == "__main__":
                 'libmessaging ='
                 'pybitmessage.plugins.indicator_libmessaging [gir]'
             ],
+            'bitmessage.proxyconfig': [
+                'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
+            ],
             # 'console_scripts': [
             #        'pybitmessage = pybitmessage.bitmessagemain:main'
             # ]
         },
         scripts=['src/pybitmessage'],
-        cmdclass={'install': InstallCmd}
+        cmdclass={'install': InstallCmd},
+        command_options={
+            'build_sphinx': {
+                'source_dir': ('setup.py', 'docs')}
+        }
     )

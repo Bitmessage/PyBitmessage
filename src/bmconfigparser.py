@@ -43,8 +43,12 @@ BMConfigDefaults = {
 
 @Singleton
 class BMConfigParser(ConfigParser.SafeConfigParser):
-    """Singleton class inherited from ConfigParser.SafeConfigParser
-    with additional methods specific to bitmessage config."""
+    """
+    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    with additional methods specific to bitmessage config.
+    """
+
+    _temp = {}
 
     def set(self, section, option, value=None):
         if self._optcre is self.OPTCRE or value:
@@ -59,6 +63,10 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             if section == "bitmessagesettings" and option == "timeformat":
                 return ConfigParser.ConfigParser.get(
                     self, section, option, raw, variables)
+            try:
+                return self._temp[section][option]
+            except KeyError:
+                pass
             return ConfigParser.ConfigParser.get(
                 self, section, option, True, variables)
         except ConfigParser.InterpolationError:
@@ -69,6 +77,13 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 return BMConfigDefaults[section][option]
             except (KeyError, ValueError, AttributeError):
                 raise e
+
+    def setTemp(self, section, option, value=None):
+        """Temporary set option to value, not saving."""
+        try:
+            self._temp[section][option] = value
+        except KeyError:
+            self._temp[section] = {option: value}
 
     def safeGetBoolean(self, section, field):
         try:

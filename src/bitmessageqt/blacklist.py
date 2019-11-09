@@ -1,14 +1,15 @@
 from PyQt4 import QtCore, QtGui
-from tr import _translate
-import l10n
+
 import widgets
 from addresses import addBMIfNotPresent
 from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
+from queues import UISignalQueue
 from retranslateui import RetranslateMixin
-from utils import avatarize
+from tr import _translate
 from uisignaler import UISignaler
+from utils import avatarize
 
 
 class Blacklist(QtGui.QWidget, RetranslateMixin):
@@ -88,11 +89,21 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                         sql = '''INSERT INTO whitelist VALUES (?,?,?)'''
                     sqlExecute(sql, *t)
                 else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want."))
+                    UISignalQueue.put((
+                        'updateStatusBar',
+                        _translate(
+                            "MainWindow",
+                            "Error: You cannot add the same address to your"
+                            " list twice. Perhaps rename the existing one"
+                            " if you want.")
+                    ))
             else:
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "The address you entered was invalid. Ignoring it."))
+                UISignalQueue.put((
+                    'updateStatusBar',
+                    _translate(
+                        "MainWindow",
+                        "The address you entered was invalid. Ignoring it.")
+                ))
 
     def tableWidgetBlacklistItemChanged(self, item):
         if item.column() == 0:
@@ -239,4 +250,3 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
 
     def on_action_BlacklistSetAvatar(self):
         self.window().on_action_SetAvatar(self.tableWidgetBlacklist)
-

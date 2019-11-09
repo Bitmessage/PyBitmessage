@@ -1,22 +1,18 @@
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
 # pylint: disable=too-many-locals,too-many-arguments,too-many-function-args
 """
-= usage =
+Usage
+-----
 
-== python ==
 >>> import qtidenticon
 >>> qtidenticon.render_identicon(code, size)
 
 Return a PIL Image class instance which have generated identicon image.
-```size``` specifies `patch size`. Generated image size is 3 * ```size```.
+``size`` specifies `patch size`. Generated image size is 3 * ``size``.
 """
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import QSize, QPointF, Qt
 from PyQt4.QtGui import QPixmap, QPainter, QPolygonF
-
-__all__ = ['render_identicon', 'IdenticonRendererBase']
 
 
 class IdenticonRendererBase(object):
@@ -26,7 +22,7 @@ class IdenticonRendererBase(object):
 
     def __init__(self, code):
         """
-        @param code code for icon
+        :param code: code for icon
         """
         if not isinstance(code, int):
             code = int(code)
@@ -36,8 +32,8 @@ class IdenticonRendererBase(object):
         """
         render identicon to QPicture
 
-        @param size identicon patchsize. (image size is 3 * [size])
-        @return QPicture
+        :param size: identicon patchsize. (image size is 3 * [size])
+        :returns: :class:`QPicture`
         """
 
         # decode the code
@@ -79,7 +75,7 @@ class IdenticonRendererBase(object):
     def drawPatchQt(self, pos, turn, invert, patch_type, image, size, foreColor,
                     backColor, penwidth):  # pylint: disable=unused-argument
         """
-        @param size patch size
+        :param size: patch size
         """
         path = self.PATH_SET[patch_type]
         if not path:
@@ -134,7 +130,7 @@ class IdenticonRendererBase(object):
 class DonRenderer(IdenticonRendererBase):
     """
     Don Park's implementation of identicon
-    see : http://www.docuverse.com/blog/donpark/2007/01/19/identicon-updated-and-source-released
+    see: http://www.docuverse.com/blog/donpark/2007/01/19/identicon-updated-and-source-released
     """
 
     PATH_SET = [

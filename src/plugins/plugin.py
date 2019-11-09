@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-
+"""
+src/plugins/plugin.py
+===================================
+"""
 import pkg_resources
 
 

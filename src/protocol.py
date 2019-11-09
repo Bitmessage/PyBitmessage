@@ -1,12 +1,7 @@
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements,too-many-locals,too-many-statements
 """
-protocol.py
-===========
-
 Low-level protocol-related functions.
 """
-
-from __future__ import absolute_import
 
 import base64
 import hashlib
@@ -205,12 +200,13 @@ def isProofOfWorkSufficient(data,
                             recvTime=0):
     """
     Validate an object's Proof of Work using method described in:
-        https://bitmessage.org/wiki/Proof_of_work
+    https://bitmessage.org/wiki/Proof_of_work
+
     Arguments:
         int nonceTrialsPerByte (default: from default.py)
         int payloadLengthExtraBytes (default: from default.py)
         float recvTime (optional) UNIX epoch time when object was
-          received from the network (default: current system time)
+        received from the network (default: current system time)
     Returns:
         True if PoW valid and sufficient, False in all other cases
     """
@@ -264,7 +260,10 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     else:
         # use first 16 bytes if host data is longer
         # for example in case of onion v3 service
-        payload += encodeHost(remoteHost)[:16]
+        try:
+            payload += encodeHost(remoteHost)[:16]
+        except socket.error:
+            payload += encodeHost('127.0.0.1')
         payload += pack('>H', remotePort)  # remote IPv6 and port
 
     # bitflags of the services I offer.
@@ -276,17 +275,20 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     )
     # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack('>L', 2130706433)
-    # we have a separate extPort and incoming over clearnet or outgoing through clearnet
-    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and state.extPort \
-        and ((server and not checkSocksIP(remoteHost)) or
-             (BMConfigParser().get("bitmessagesettings", "socksproxytype") == "none" and not server)):
-        payload += pack('>H', state.extPort)
+    # we have a separate extPort and incoming over clearnet
+    # or outgoing through clearnet
+    extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
+    if (
+        extport and ((server and not checkSocksIP(remoteHost)) or (
+            BMConfigParser().get('bitmessagesettings', 'socksproxytype') ==
+            'none' and not server))
+    ):
+        payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
-    else:  # no extPort and not incoming over Tor
+    else:  # no extport and not incoming over Tor
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'port'))
 
-    random.seed()
     if nodeid is not None:
         payload += nodeid[0:8]
     else:

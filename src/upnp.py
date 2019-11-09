@@ -9,21 +9,20 @@ Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-por
 
 import httplib
 import socket
-import threading
 import time
 import urllib2
 from random import randint
 from urlparse import urlparse
 from xml.dom.minidom import Document, parseString
 
+import knownnodes
 import queues
-import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
-from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool
+from network.threads import StoppableThread
 
 
 def createRequestXML(service, action, arguments=None):
@@ -167,9 +166,11 @@ class Router:  # pylint: disable=old-style-class
     def GetExternalIPAddress(self):
         """Get the external address"""
 
-        resp = self.soapRequest(self.upnp_schema + ':1', 'GetExternalIPAddress')
-        dom = parseString(resp)
-        return dom.getElementsByTagName('NewExternalIPAddress')[0].childNodes[0].data
+        resp = self.soapRequest(
+            self.upnp_schema + ':1', 'GetExternalIPAddress')
+        dom = parseString(resp.read())
+        return dom.getElementsByTagName(
+            'NewExternalIPAddress')[0].childNodes[0].data
 
     def soapRequest(self, service, action, arguments=None):
         """Make a request to a router"""
@@ -199,7 +200,7 @@ class Router:  # pylint: disable=old-style-class
         return resp
 
 
-class uPnPThread(threading.Thread, StoppableThread):
+class uPnPThread(StoppableThread):
     """Start a thread to handle UPnP activity"""
 
     SSDP_ADDR = "239.255.255.250"
@@ -209,7 +210,7 @@ class uPnPThread(threading.Thread, StoppableThread):
     SSDP_ST = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
 
     def __init__(self):
-        threading.Thread.__init__(self, name="uPnPThread")
+        super(uPnPThread, self).__init__(name="uPnPThread")
         try:
             self.extPort = BMConfigParser().getint('bitmessagesettings', 'extport')
         except:
@@ -221,7 +222,6 @@ class uPnPThread(threading.Thread, StoppableThread):
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
         self.sock.settimeout(5)
         self.sendSleep = 60
-        self.initStop()
 
     def run(self):
         """Start the thread to manage UPnP activity"""
@@ -262,6 +262,17 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
+                        try:
+                            self_peer = state.Peer(
+                                newRouter.GetExternalIPAddress(),
+                                self.extPort
+                            )
+                        except:
+                            logger.debug('Failed to get external IP')
+                        else:
+                            with knownnodes.knownNodesLock:
+                                knownnodes.addKnownNode(
+                                    1, self_peer, is_self=True)
                         queues.UISignalQueue.put(('updateStatusBar', tr._translate(
                             "MainWindow", 'UPnP port mapping established on port %1'
                         ).arg(str(self.extPort))))
@@ -286,7 +297,6 @@ class uPnPThread(threading.Thread, StoppableThread):
             if router.extPort is not None:
                 deleted = True
                 self.deletePortMapping(router)
-        shared.extPort = None
         if deleted:
             queues.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", 'UPnP port mapping removed')))
         logger.debug("UPnP thread done")
@@ -333,7 +343,6 @@ class uPnPThread(threading.Thread, StoppableThread):
                     self.localPort,
                     extPort)
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
-                shared.extPort = extPort
                 self.extPort = extPort
                 BMConfigParser().set('bitmessagesettings', 'extport', str(extPort))
                 BMConfigParser().save()
