@@ -8,12 +8,14 @@ src/.project
 src/.pydevproject
 src/.settings/
 src/**/.dll
-src/**/*.o  
+src/**/*.o
 src/**/*.so
+src/**/a.out
 build/lib.*
 build/temp.*
 dist
 *.egg-info
 docs/_*/*
 docs/autodoc/
+build/sphinx/
 pyan/
