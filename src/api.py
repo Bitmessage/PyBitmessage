@@ -109,8 +109,73 @@ str_chan = '[chan]'
 str_broadcast_subscribers = '[Broadcast subscribers]'
 
 
+class ErrorCodes(type):
+    """Metaclass for :class:`APIError` documenting error codes."""
+    _CODES = {
+        0: 'Invalid command parameters number',
+        1: 'The specified passphrase is blank.',
+        2: 'The address version number currently must be 3, 4, or 0'
+        ' (which means auto-select).',
+        3: 'The stream number must be 1 (or 0 which means'
+        ' auto-select). Others aren\'t supported.',
+        4: 'Why would you ask me to generate 0 addresses for you?',
+        5: 'You have (accidentally?) specified too many addresses to'
+        ' make. Maximum 999. This check only exists to prevent'
+        ' mischief; if you really want to create more addresses than'
+        ' this, contact the Bitmessage developers and we can modify'
+        ' the check or you can do it yourself by searching the source'
+        ' code for this message.',
+        6: 'The encoding type must be 2 or 3.',
+        7: 'Could not decode address',
+        8: 'Checksum failed for address',
+        9: 'Invalid characters in address',
+        10: 'Address version number too high (or zero)',
+        11: 'The address version number currently must be 2, 3 or 4.'
+        ' Others aren\'t supported. Check the address.',
+        12: 'The stream number must be 1. Others aren\'t supported.'
+        ' Check the address.',
+        13: 'Could not find this address in your keys.dat file.',
+        14: 'Your fromAddress is disabled. Cannot send.',
+        15: 'Invalid ackData object size.',
+        16: 'You are already subscribed to that address.',
+        17: 'Label is not valid UTF-8 data.',
+        18: 'Chan name does not match address.',
+        19: 'The length of hash should be 32 bytes (encoded in hex'
+        ' thus 64 characters).',
+        20: 'Invalid method:',
+        21: 'Unexpected API Failure',
+        22: 'Decode error',
+        23: 'Bool expected in eighteenByteRipe',
+        24: 'Chan address is already present.',
+        25: 'Specified address is not a chan address.'
+        ' Use deleteAddress API call instead.',
+        26: 'Malformed varint in address: ',
+        27: 'Message is too long.'
+    }
+
+    def __new__(mcs, name, bases, namespace):
+        result = super(ErrorCodes, mcs).__new__(mcs, name, bases, namespace)
+        for code in mcs._CODES.iteritems():
+            # beware: the formatting is adjusted for list-table
+            result.__doc__ += """   * - %04i
+         - %s
+    """ % code
+        return result
+
+
 class APIError(xmlrpclib.Fault):
-    """APIError exception class"""
+    """
+    APIError exception class
+
+    .. list-table:: Possible error values
+       :header-rows: 1
+       :widths: auto
+
+       * - Error Number
+         - Message
+    """
+    __metaclass__ = ErrorCodes
+
     def __str__(self):
         return "API Error %04i: %s" % (self.faultCode, self.faultString)
 
@@ -1417,7 +1482,7 @@ class BMRPCDispatcher(object):
         except TypeError as e:
             msg = 'Unexpected API Failure - %s' % e
             if 'argument' not in str(e):
-                raise APIError(0, msg)
+                raise APIError(21, msg)
             argcount = len(params)
             maxcount = func.func_code.co_argcount
             if argcount > maxcount:
