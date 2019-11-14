@@ -66,6 +66,21 @@ PACKAGES = {
         "However, you would have to install it manually"
         " because setuptools does not support PyQt."
     },
+    "PyQt4 tray": {
+        "OpenBSD": "",
+        "FreeBSD": "",
+        "Debian": "sni-qt",
+        "Ubuntu": "sni-qt",
+        "Ubuntu 12": "sni-qt",
+        "openSUSE": "",
+        "Fedora": "",
+        "Guix": "",
+        "Gentoo": "",
+        "optional": True,
+        "description":
+        "You need sni-qt to show system tray icon on Ubuntu"
+        " and maybe some other distros."
+    },
     "msgpack": {
         "OpenBSD": "py-msgpack",
         "FreeBSD": "py27-msgpack-python",
@@ -383,6 +398,20 @@ def check_pyqt():
     return passed
 
 
+def check_pyqt_tray():
+    """
+    Check if QSystemTrayIcon is functional in current installation.
+    """
+    if not check_pyqt():
+        return False
+
+    QtGui = import_module('PyQt4.QtGui')
+
+    app = QtGui.QApplication([])
+    tray = QtGui.QSystemTrayIcon(app)
+    return tray.isSystemTrayAvailable()
+
+
 def check_msgpack():
     """Do sgpack module check.
 
@@ -424,7 +453,7 @@ def check_dependencies(verbose=False, optional=False):
 
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:
-        check_functions.extend([check_msgpack, check_pyqt, check_curses])
+        check_functions.extend([check_msgpack, check_pyqt, check_pyqt_tray, check_curses])
 
     # Unexpected exceptions are handled here
     for check in check_functions:

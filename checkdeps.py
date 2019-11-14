@@ -44,9 +44,9 @@ EXTRAS_REQUIRE_DEPS = {
         # The packages needed for this requirement, by OS
         "OpenBSD": [""],
         "FreeBSD": [""],
-        "Debian": ["libcap-dev python-prctl"],
-        "Ubuntu": ["libcap-dev python-prctl"],
-        "Ubuntu 12": ["libcap-dev python-prctl"],
+        "Debian": ["libcap-dev"],
+        "Ubuntu": ["libcap-dev"],
+        "Ubuntu 12": ["libcap-dev"],
         "openSUSE": [""],
         "Fedora": ["prctl"],
         "Guix": [""],
@@ -127,9 +127,9 @@ if prereqs:
     mandatory = [x for x in prereqs if not PACKAGES[x].get("optional")]
     optional = [x for x in prereqs if PACKAGES[x].get("optional")]
     if mandatory:
-        print("Missing mandatory dependencies: %s" % " ".join(mandatory))
+        print("Missing mandatory dependencies: %s" % ", ".join(mandatory))
     if optional:
-        print("Missing optional dependencies: %s" % " ".join(optional))
+        print("Missing optional dependencies: %s" % ", ".join(optional))
         for package in optional:
             print(PACKAGES[package].get('description'))
 
