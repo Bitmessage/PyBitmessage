@@ -176,7 +176,7 @@ class TestCore(unittest.TestCase):
 
     def test_onionservicesonly(self):
         """test onionservicesonly networking mode"""
-        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', True)
+        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
         self._initiate_bootstrap()
         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
         for _ in range(360):
