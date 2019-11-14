@@ -32,14 +32,12 @@ class ReceiveQueueThread(StoppableThread):
 
             try:
                 connection = BMConnectionPool().getConnectionByAddr(dest)
-            # KeyError = connection object not found
-            except KeyError:
+            except KeyError:  # connection object not found
                 receiveDataQueue.task_done()
                 continue
             try:
                 connection.process()
-            # UnknownStateError = state isn't implemented
-            except UnknownStateError:
+            except UnknownStateError:  # state isn't implemented
                 pass
             except socket.error as err:
                 if err.errno == errno.EBADF:

@@ -24,8 +24,8 @@ from network.bmobject import (
     BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError,
     BMObjectExpiredError, BMObjectUnwantedStreamError,
     BMObjectInvalidError, BMObjectAlreadyHaveError)
-from network.node import Node
 from network.proxy import ProxyError
+from node import Node, Peer
 from objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from randomtrackingdict import RandomTrackingDict
@@ -443,7 +443,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     seenTime > time.time() - BMProto.addressAlive and
                     port > 0
             ):
-                peer = state.Peer(decodedIP, port)
+                peer = Peer(decodedIP, port)
                 try:
                     if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
                         continue
@@ -464,7 +464,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_portcheck(self):
         """Incoming port check request, queue it."""
-        portCheckerQueue.put(state.Peer(self.destination, self.peerNode.port))
+        portCheckerQueue.put(Peer(self.destination, self.peerNode.port))
         return True
 
     def bm_command_ping(self):
@@ -594,12 +594,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # incoming from a peer we're connected to as outbound,
             # or server full report the same error to counter deanonymisation
             if (
-                    state.Peer(self.destination.host, self.peerNode.port) in
-                    connectionpool.BMConnectionPool().inboundConnections or
-                    len(connectionpool.BMConnectionPool().inboundConnections) +
-                    len(connectionpool.BMConnectionPool().outboundConnections) >
-                    BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") +
-                    BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections")
+                Peer(self.destination.host, self.peerNode.port)
+                in connectionpool.BMConnectionPool().inboundConnections
+                or len(connectionpool.BMConnectionPool().inboundConnections)
+                + len(connectionpool.BMConnectionPool().outboundConnections)
+                > BMConfigParser().safeGetInt(
+                    'bitmessagesettings', 'maxtotalconnections')
+                + BMConfigParser().safeGetInt(
+                    'bitmessagesettings', 'maxbootstrapconnections')
             ):
                 self.append_write_buf(protocol.assembleErrorMessage(
                     errorText="Server full, please try again later.", fatal=2))
@@ -622,7 +624,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     @staticmethod
     def assembleAddr(peerList):
         """Build up a packed address"""
-        if isinstance(peerList, state.Peer):
+        if isinstance(peerList, Peer):
             peerList = (peerList)
         if not peerList:
             return b''
@@ -645,10 +647,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):
         """Stop downloading an object"""
-        for connection in (
-                connectionpool.BMConnectionPool().inboundConnections.values() +
-                connectionpool.BMConnectionPool().outboundConnections.values()
-        ):
+        for connection in connectionpool.BMConnectionPool().connections():
             try:
                 del connection.objectsNewToMe[hashId]
             except KeyError:
@@ -689,7 +688,7 @@ class BMStringParser(BMProto):
     """
     def __init__(self):
         super(BMStringParser, self).__init__()
-        self.destination = state.Peer('127.0.0.1', 8444)
+        self.destination = Peer('127.0.0.1', 8444)
         self.payload = None
         ObjectTracker.__init__(self)
 

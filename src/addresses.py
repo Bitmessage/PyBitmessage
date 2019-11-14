@@ -54,11 +54,20 @@ def decodeBase58(string, alphabet=ALPHABET):
     return num
 
 
+class varintEncodeError(Exception):
+    """Exception class for encoding varint"""
+    pass
+
+
+class varintDecodeError(Exception):
+    """Exception class for decoding varint data"""
+    pass
+
+
 def encodeVarint(integer):
     """Convert integer into varint bytes"""
     if integer < 0:
-        logger.error('varint cannot be < 0')
-        raise SystemExit
+        raise varintEncodeError('varint cannot be < 0')
     if integer < 253:
         return pack('>B', integer)
     if integer >= 253 and integer < 65536:
@@ -68,13 +77,7 @@ def encodeVarint(integer):
     if integer >= 4294967296 and integer < 18446744073709551616:
         return pack('>B', 255) + pack('>Q', integer)
     if integer >= 18446744073709551616:
-        logger.error('varint cannot be >= 18446744073709551616')
-        raise SystemExit
-
-
-class varintDecodeError(Exception):
-    """Exception class for decoding varint data"""
-    pass
+        raise varintEncodeError('varint cannot be >= 18446744073709551616')
 
 
 def decodeVarint(data):

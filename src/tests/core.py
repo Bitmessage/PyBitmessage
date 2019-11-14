@@ -17,6 +17,7 @@ from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
+from network.node import Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 
@@ -30,7 +31,7 @@ def pickle_knownnodes():
     with open(knownnodes_file, 'wb') as dst:
         pickle.dump({
             stream: {
-                state.Peer(
+                Peer(
                     '%i.%i.%i.%i' % tuple([
                         random.randint(1, 255) for i in range(4)]),
                     8444): {'lastseen': now, 'rating': 0.1}
@@ -90,7 +91,7 @@ class TestCore(unittest.TestCase):
         """initial fill script from network.tcp"""
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         try:
-            for peer in (state.Peer("127.0.0.1", 8448),):
+            for peer in (Peer("127.0.0.1", 8448),):
                 direct = TCPConnection(peer)
                 while asyncore.socket_map:
                     print("loop, state = %s" % direct.state)
@@ -147,7 +148,7 @@ class TestCore(unittest.TestCase):
     def _initiate_bootstrap(self):
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         self._outdate_knownnodes()
-        knownnodes.addKnownNode(1, state.Peer('127.0.0.1', 8444), is_self=True)
+        knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
         knownnodes.cleanupKnownNodes()
         time.sleep(2)
 

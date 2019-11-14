@@ -28,7 +28,7 @@ from addresses import calculateInventoryHash, decodeAddress, decodeVarint, encod
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
-from network.threads import StoppableThread
+from network import StoppableThread
 
 
 def sizeof_fmt(num, suffix='h/s'):

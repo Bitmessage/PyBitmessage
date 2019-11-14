@@ -20,9 +20,7 @@ def handleExpiredDandelion(expired):
        the object"""
     if not expired:
         return
-    for i in \
-        BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+    for i in BMConnectionPool().connections():
         if not i.fullyEstablished:
             continue
         for x in expired:
@@ -44,9 +42,7 @@ class InvThread(StoppableThread):
     def handleLocallyGenerated(stream, hashId):
         """Locally generated inventory items require special handling"""
         Dandelion().addHash(hashId, stream=stream)
-        for connection in \
-            BMConnectionPool().inboundConnections.values() + \
-                BMConnectionPool().outboundConnections.values():
+        for connection in BMConnectionPool().connections():
             if state.dandelion and connection != Dandelion().objectChildStem(hashId):
                 continue
             connection.objectsNewToThem[hashId] = time()
@@ -67,8 +63,7 @@ class InvThread(StoppableThread):
                     break
 
             if chunk:
-                for connection in BMConnectionPool().inboundConnections.values() + \
-                        BMConnectionPool().outboundConnections.values():
+                for connection in BMConnectionPool().connections():
                     fluffs = []
                     stems = []
                     for inv in chunk:
@@ -96,13 +91,13 @@ class InvThread(StoppableThread):
                     if fluffs:
                         random.shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket(
-                            'inv', addresses.encodeVarint(len(fluffs)) +
-                            "".join(fluffs)))
+                            'inv',
+                            addresses.encodeVarint(len(fluffs)) + ''.join(fluffs)))
                     if stems:
                         random.shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket(
-                            'dinv', addresses.encodeVarint(len(stems)) +
-                            "".join(stems)))
+                            'dinv',
+                            addresses.encodeVarint(len(stems)) + ''.join(stems)))
 
             invQueue.iterate()
             for i in range(len(chunk)):

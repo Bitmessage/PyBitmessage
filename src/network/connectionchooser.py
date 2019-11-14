@@ -28,8 +28,6 @@ def chooseConnection(stream):
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
     onionOnly = BMConfigParser().safeGetBoolean(
         "bitmessagesettings", "onionservicesonly")
-    if state.trustedPeer:
-        return state.trustedPeer
     try:
         retval = portCheckerQueue.get(False)
         portCheckerQueue.task_done()

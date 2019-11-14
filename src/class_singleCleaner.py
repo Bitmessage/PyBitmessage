@@ -1,5 +1,5 @@
 """
-The singleCleaner class is a timer-driven thread that cleans data structures
+The `singleCleaner` class is a timer-driven thread that cleans data structures
 to free memory, resends messages when a remote node doesn't respond, and
 sends pong messages to keep connections alive if the network isn't busy.
 
@@ -31,8 +31,7 @@ import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlQuery, sqlExecute
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from network.threads import StoppableThread
+from network import BMConnectionPool, StoppableThread
 
 
 class singleCleaner(StoppableThread):
@@ -46,12 +45,12 @@ class singleCleaner(StoppableThread):
         try:
             shared.maximumLengthOfTimeToBotherResendingMessages = (
                 float(BMConfigParser().get(
-                    'bitmessagesettings', 'stopresendingafterxdays')) *
-                24 * 60 * 60
+                    'bitmessagesettings', 'stopresendingafterxdays'))
+                * 24 * 60 * 60
             ) + (
                 float(BMConfigParser().get(
-                    'bitmessagesettings', 'stopresendingafterxmonths')) *
-                (60 * 60 * 24 * 365) / 12)
+                    'bitmessagesettings', 'stopresendingafterxmonths'))
+                * (60 * 60 * 24 * 365) / 12)
         except:
             # Either the user hasn't set stopresendingafterxdays and
             # stopresendingafterxmonths yet or the options are missing
@@ -93,8 +92,8 @@ class singleCleaner(StoppableThread):
                     "SELECT toaddress, ackdata, status FROM sent"
                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
                     " AND folder='sent' AND sleeptill<? AND senttime>?)",
-                    int(time.time()), int(time.time()) -
-                    shared.maximumLengthOfTimeToBotherResendingMessages
+                    int(time.time()), int(time.time())
+                    - shared.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for row in queryreturn:
                     if len(row) < 2:
@@ -140,9 +139,7 @@ class singleCleaner(StoppableThread):
 #                    thread.downloadQueue.clear()
 
             # inv/object tracking
-            for connection in \
-                    BMConnectionPool().inboundConnections.values() + \
-                    BMConnectionPool().outboundConnections.values():
+            for connection in BMConnectionPool().connections():
                 connection.clean()
 
             # discovery tracking
