@@ -358,7 +358,7 @@ class Main:     # pylint: disable=no-init, old-style-class
         # Not needed if objproc disabled
         if state.enableObjProc:
             shared.reloadMyAddressHashes()
-            # shared.reloadBroadcastSendersForWhichImWatching()
+            shared.reloadBroadcastSendersForWhichImWatching()
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import

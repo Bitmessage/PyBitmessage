@@ -134,7 +134,7 @@ def increaseRating(peer):
     increaseAmount = 0.1
     maxRating = 1
     with knownNodesLock:
-        for stream in knownNodes.keys():
+        for stream in [key for key in knownNodes.keys()]:
             try:
                 knownNodes[stream][peer]["rating"] = min(
                     knownNodes[stream][peer]["rating"] + increaseAmount,
@@ -160,7 +160,7 @@ def decreaseRating(peer):
 
 def trimKnownNodes(recAddrStream=1):
     if len(knownNodes[recAddrStream]) < \
-            BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
+            int(BMConfigParser().safeGet("knownnodes", "maxnodes")):
         return
     with knownNodesLock:
         oldestList = sorted(

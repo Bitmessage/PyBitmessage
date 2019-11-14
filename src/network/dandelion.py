@@ -101,13 +101,27 @@ class Dandelion():      # pylint: disable=old-style-class
                 self.stem.append(connection)
                 for k in (k for k, v in iter(self.nodeMap.items()) if v is None):
                     self.nodeMap[k] = connection
+                #The Purpose of adding this condition that if self
+                #hashMap is has any value
+            # if not [hasmap for hasmap in  self.hashMap.items()] ==[]:
+            try:
                 for k, v in iter({
-                        k: v for k, v in iter(self.hashMap.items())
+                        k: v for k, v in  iter([hasmap for hasamp in  self.hashMap.items()])
                         if v.child is None
                 }).items():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
+            except AttributeError:
+                pass
+
+            # for k, v in iter({
+            #         k: v for k, v in  iter([hasmap for hasamp in  self.hashMap.items()])
+            #         if v.child is None
+            # }).items():
+            #     self.hashMap[k] = Stem(
+            #         connection, v.stream, self.poissonTimeout())
+            #     invQueue.put((v.stream, k, v.child))
 
     def maybeRemoveStem(self, connection):
         """
