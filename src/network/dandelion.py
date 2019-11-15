@@ -105,13 +105,14 @@ class Dandelion():      # pylint: disable=old-style-class
                 #hashMap is has any value
             # if not [hasmap for hasmap in  self.hashMap.items()] ==[]:
             try:
-                for k, v in iter({
-                        k: v for k, v in  iter([hasmap for hasamp in  self.hashMap.items()])
-                        if v.child is None
-                }).items():
-                    self.hashMap[k] = Stem(
-                        connection, v.stream, self.poissonTimeout())
-                    invQueue.put((v.stream, k, v.child))
+                if self.hashMap:
+                    for k, v in iter({
+                            k: v for k, v in  iter([hasmap for hasmap in  self.hashMap.items()])
+                            if v.child is None
+                    }).items():
+                        self.hashMap[k] = Stem(
+                            connection, v.stream, self.poissonTimeout())
+                        invQueue.put((v.stream, k, v.child))
             except AttributeError:
                 pass
 
@@ -133,12 +134,13 @@ class Dandelion():      # pylint: disable=old-style-class
             if connection in self.stem:
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
+
                 for k in (
                         k for k, v in iter(self.nodeMap.items()) if v == connection
                 ):
                     self.nodeMap[k] = None
                 for k, v in iter({
-                        k: v for k, v in iter(self.hashMap.items())
+                        k: v for k, v in iter(iter([hasmap for hasmap in  self.hashMap.items()]))
                         if v.child == connection
                 }).items():
                     self.hashMap[k] = Stem(

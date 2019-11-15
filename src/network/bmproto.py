@@ -543,10 +543,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.isSSL = True
         if not self.verackReceived:
             return True
-        print('inside the bmproto line 546')
+        print('inside the bmproto line')
+        print('before the value of state are :-{}'.format(self.state))
         self.set_state(
             "tls_init" if self.isSSL else "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
+        print('After the value of state are :-{}'.format(self.state))
         return False
 
     def peerValidityChecks(self):   # pylint: disable=too-many-return-statements
