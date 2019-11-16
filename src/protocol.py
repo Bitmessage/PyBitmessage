@@ -105,6 +105,34 @@ def networkType(host):
     return 'IPv6'
 
 
+def network_group(host):
+    """Canonical identifier of network group
+       simplified, borrowed from
+       GetGroup() in src/netaddresses.cpp in bitcoin core"""
+    if not isinstance(host, str):
+        return None
+    network_type = networkType(host)
+    try:
+        raw_host = encodeHost(host)
+    except socket.error:
+        return host
+    if network_type == 'IPv4':
+        decoded_host = checkIPv4Address(raw_host[12:], True)
+        if decoded_host:
+            # /16 subnet
+            return raw_host[12:14]
+    elif network_type == 'IPv6':
+        decoded_host = checkIPv6Address(raw_host, True)
+        if decoded_host:
+            # /32 subnet
+            return raw_host[0:12]
+    else:
+        # just host, e.g. for tor
+        return host
+    # global network type group for local, private, unroutable
+    return network_type
+
+
 def checkIPAddress(host, private=False):
     """Returns hostStandardFormat if it is a valid IP address, otherwise returns False"""
     if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
