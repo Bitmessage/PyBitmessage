@@ -7,6 +7,8 @@ import os
 import tempfile
 import unittest
 
+import pybitmessage.state
+
 
 class TestLogger(unittest.TestCase):
     """A test case for bmconfigparser"""
@@ -38,6 +40,7 @@ handlers=default
     def test_fileConfig(self):
         """Put logging.dat with special pattern and check it was used"""
         tmp = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
+        pybitmessage.state.appdata = tmp
         log_config = os.path.join(tmp, 'logging.dat')
         log_file = os.path.join(tmp, 'debug.log')
 
@@ -65,5 +68,6 @@ handlers=default
         self.assertEqual(logger, logger_)
 
         logger_.info('Testing the logger...')
+        logger_.handlers[0].flush()
 
         self.assertRegexpMatches(open(log_file).read(), pattern)
