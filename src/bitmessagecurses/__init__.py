@@ -1,3 +1,6 @@
+#!/usr/bin/env python2
+# -*- coding: UTF-8 -*-
+#kate: syntax Python ;
 """
 src/bitmessagecurses/__init__.py
 ================================
@@ -253,19 +256,20 @@ def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statem
             stdscr.addstr(6, 18, "Connections", curses.A_BOLD)
             stdscr.hline(7, 6, '-', 23)
             streamcount = []
-            for host, stream in connected_hosts:
+            try:
+              for host, stream in connected_hosts:
                 if stream >= len(streamcount):
                     streamcount.append(1)
                 else:
                     streamcount[stream] += 1
-            for i, item in enumerate(streamcount):
+              for i, item in enumerate(streamcount):
                 if i < 4:
                     if i == 0:
                         stdscr.addstr(8 + i, 6, "?")
                     else:
                         stdscr.addstr(8 + i, 6, str(i))
                     stdscr.addstr(8 + i, 18, str(item).ljust(2))
-
+              except: pass
             # Uptime and processing data
             stdscr.addstr(6, 35, "Since startup on " + l10n.formatTimestamp(startuptime, False))
             stdscr.addstr(7, 40, "Processed " + str(
@@ -1202,8 +1206,12 @@ def runwrapper():
     curses.curs_set(0)
     stdscr.timeout(1000)
 
-    curses.wrapper(run)
-    doShutdown()
+    try:
+        curses.wrapper(run)
+    except:
+        pass
+    finally:
+        doShutdown()
 
 
 def run(stdscr):
@@ -1259,5 +1267,5 @@ def doShutdown():
     shutdown.doCleanShutdown()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
-
+    curses.endwin()
     os._exit(0)         # pylint: disable=protected-access
