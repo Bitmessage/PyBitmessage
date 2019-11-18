@@ -263,12 +263,12 @@ def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statem
                   else:
                       streamcount[stream] += 1
                 for i, item in enumerate(streamcount):
-                  if i < 4:
-                      if i == 0:
-                          stdscr.addstr(8 + i, 6, "?")
-                      else:
-                          stdscr.addstr(8 + i, 6, str(i))
-                      stdscr.addstr(8 + i, 18, str(item).ljust(2))
+                    if i < 4:
+                        if i == 0:
+                            stdscr.addstr(8 + i, 6, "?")
+                        else:
+                            stdscr.addstr(8 + i, 6, str(i))
+                        stdscr.addstr(8 + i, 18, str(item).ljust(2))
               except: 
                   pass
             # Uptime and processing data
