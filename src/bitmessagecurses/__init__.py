@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-#kate: syntax Python ;
+# kate: syntax Python ;
 """
 src/bitmessagecurses/__init__.py
 ================================
@@ -257,19 +257,20 @@ def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statem
             stdscr.hline(7, 6, '-', 23)
             streamcount = []
             try:
-              for host, stream in connected_hosts:
-                if stream >= len(streamcount):
-                    streamcount.append(1)
-                else:
-                    streamcount[stream] += 1
-              for i, item in enumerate(streamcount):
-                if i < 4:
-                    if i == 0:
-                        stdscr.addstr(8 + i, 6, "?")
-                    else:
-                        stdscr.addstr(8 + i, 6, str(i))
-                    stdscr.addstr(8 + i, 18, str(item).ljust(2))
-              except: pass
+                for host, stream in connected_hosts:
+                  if stream >= len(streamcount):
+                      streamcount.append(1)
+                  else:
+                      streamcount[stream] += 1
+                for i, item in enumerate(streamcount):
+                  if i < 4:
+                      if i == 0:
+                          stdscr.addstr(8 + i, 6, "?")
+                      else:
+                          stdscr.addstr(8 + i, 6, str(i))
+                      stdscr.addstr(8 + i, 18, str(item).ljust(2))
+              except: 
+                  pass
             # Uptime and processing data
             stdscr.addstr(6, 35, "Since startup on " + l10n.formatTimestamp(startuptime, False))
             stdscr.addstr(7, 40, "Processed " + str(
