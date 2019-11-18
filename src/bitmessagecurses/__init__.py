@@ -268,8 +268,8 @@ def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statem
                         else:
                             stdscr.addstr(8 + i, 6, str(i))
                         stdscr.addstr(8 + i, 18, str(item).ljust(2))
-              except: 
-                  pass
+            except: 
+                pass
             # Uptime and processing data
             stdscr.addstr(6, 35, "Since startup on " + l10n.formatTimestamp(startuptime, False))
             stdscr.addstr(7, 40, "Processed " + str(
