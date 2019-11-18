@@ -2,8 +2,8 @@
 High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
 
 .. note::
-  Upstream pyelliptic was upgraded from SHA1 to SHA256 for signing.
-  We must upgrade PyBitmessage gracefully.
+  Upstream pyelliptic was upgraded from SHA1 to SHA256 for signing. We must
+  `upgrade PyBitmessage gracefully. <https://github.com/Bitmessage/PyBitmessage/issues/953>`_
   `More discussion. <https://github.com/yann2192/pyelliptic/issues/32>`_
 """
 
@@ -68,7 +68,7 @@ def sign(msg, hexPrivkey):
     "digestalg" setting
     """
     digestAlg = BMConfigParser().safeGet(
-        'bitmessagesettings', 'digestalg', 'sha1')
+        'bitmessagesettings', 'digestalg', 'sha256')
     if digestAlg == "sha1":
         # SHA1, this will eventually be deprecated
         return makeCryptor(hexPrivkey).sign(
