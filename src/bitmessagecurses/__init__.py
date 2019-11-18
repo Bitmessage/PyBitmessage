@@ -1,10 +1,9 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # kate: syntax Python ;
-"""
+'''
 src/bitmessagecurses/__init__.py
 ================================
-"""
+'''
 
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
@@ -258,10 +257,10 @@ def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statem
             streamcount = []
             try:
                 for host, stream in connected_hosts:
-                  if stream >= len(streamcount):
-                      streamcount.append(1)
-                  else:
-                      streamcount[stream] += 1
+                    if stream >= len(streamcount):
+                        streamcount.append(1)
+                    else:
+                        streamcount[stream] += 1
                 for i, item in enumerate(streamcount):
                     if i < 4:
                         if i == 0:
