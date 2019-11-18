@@ -146,9 +146,9 @@ def resetlookups():
     Timer(1, resetlookups, ()).start()
 
 
-def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statements
-    """Method for drawing different tabs"""
-    if menutab in range(1, len(menu) + 1):
+def drawtab(stdscr):                         # pylint: disable=too-many-branches, too-many-statements
+    '''Method for drawing different tabs'''
+    if menutab in range(1, len(menu) + 1):   # pylint: disable=too-many-nested-blocks
         if menutab == 1:		# Inbox
             stdscr.addstr(3, 5, "To", curses.A_BOLD)
             stdscr.addstr(3, 40, "From", curses.A_BOLD)
