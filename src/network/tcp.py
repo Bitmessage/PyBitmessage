@@ -84,6 +84,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             )
         except socket.error:
             pass  # it's probably a hostname
+        self.network_group = protocol.network_group(self.destination.host)
         ObjectTracker.__init__(self)  # pylint: disable=non-parent-init-called
         self.bm_proto_reset()
         self.set_state("bm_header", expectBytes=protocol.Header.size)

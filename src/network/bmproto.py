@@ -71,6 +71,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # packet/connection from a local IP
         self.local = False
         self.pendingUpload = RandomTrackingDict()
+        # canonical identifier of network group
+        self.network_group = None
 
     def bm_proto_reset(self):
         """Reset the bitmessage object parser"""

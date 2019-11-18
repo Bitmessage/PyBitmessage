@@ -229,6 +229,7 @@ class BMConnectionPool(object):
 
     def loop(self):  # pylint: disable=too-many-branches,too-many-statements
         """Main Connectionpool's loop"""
+        # pylint: disable=too-many-locals
         # defaults to empty loop if outbound connections are maxed
         spawnConnections = False
         acceptConnections = True
@@ -296,6 +297,19 @@ class BMConnectionPool(object):
                         continue
                     # don't connect to self
                     if chosen in state.ownAddresses:
+                        continue
+                    # don't connect to the hosts from the same
+                    # network group, defense against sibyl attacks
+                    host_network_group = protocol.network_group(
+                        chosen.host)
+                    same_group = False
+                    for j in self.outboundConnections.values():
+                        if host_network_group == j.network_group:
+                            same_group = True
+                            if chosen.host == j.destination.host:
+                                knownnodes.decreaseRating(chosen)
+                            break
+                    if same_group:
                         continue
 
                     try:
