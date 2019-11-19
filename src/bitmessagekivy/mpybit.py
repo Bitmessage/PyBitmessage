@@ -83,6 +83,8 @@ class Navigatorss(MDNavigationDrawer):
 
 class Inbox(Screen):
     """Inbox Screen uses screen to show widgets of screens."""
+    queryreturn = ListProperty()
+    has_refreshed = True
 
     def __init__(self, *args, **kwargs):
         """Method Parsing the address."""
@@ -110,15 +112,13 @@ class Inbox(Screen):
             what = state.searcing_text
         xAddress = 'toaddress'
         data = []
-        queryreturn = kivy_helper_search.search_sql(
+        self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "inbox", where, what, False)
-        if queryreturn:
+        if self.queryreturn:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.inbox_cnt.badge_text = str(len(queryreturn))
-            state.inbox_count = str(len(queryreturn))
-            state.kivyapp.root.ids.sc17.clear_widgets()
-            state.kivyapp.root.ids.sc17.add_widget(Allmails())
-            for mail in queryreturn:
+            src_mng_obj.inbox_cnt.badge_text = str(len(self.queryreturn))
+            state.inbox_count = str(len(self.queryreturn))
+            for mail in self.queryreturn[:20]:
                 third_text = mail[3].replace('\n', ' ')
                 data.append({
                     'text': mail[4].strip(),
@@ -126,37 +126,9 @@ class Inbox(Screen):
                         mail[5]) >= 50 else (
                             mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'msgid': mail[1]})
-            for item in data:
-                meny = TwoLineAvatarIconListItem(
-                    text=item['text'],
-                    secondary_text=item['secondary_text'],
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        avatarImageFirstLetter(item['secondary_text'].strip()))))
-                meny.bind(on_press=partial(
-                    self.inbox_detail, item['msgid']))
-                carousel = Carousel(direction='right')
-                carousel.height = meny.height
-                carousel.size_hint_y = None
-                carousel.ignore_perpendicular_swipes = True
-                carousel.data_index = 0
-                carousel.min_move = 0.2
-                del_btn = Button(text='Delete')
-                del_btn.background_normal = ''
-                del_btn.background_color = (1, 0, 0, 1)
-                del_btn.bind(on_press=partial(
-                    self.delete, item['msgid']))
-                carousel.add_widget(del_btn)
-                carousel.add_widget(meny)
-                ach_btn = Button(text='Achieve')
-                ach_btn.background_color = (0, 1, 0, 1)
-                ach_btn.bind(on_press=partial(
-                    self.archive, item['msgid']))
-                carousel.add_widget(ach_btn)
-                carousel.index = 1
-                self.ids.ml.add_widget(carousel)
+            self.has_refreshed = True
+            self.set_mdList(data)
+            self.children[2].children[0].children[0].bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -168,6 +140,64 @@ class Inbox(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def set_mdList(self, data):
+        """This method is used to create the mdList"""
+        for item in data:
+            meny = TwoLineAvatarIconListItem(
+                text=item['text'],
+                secondary_text=item['secondary_text'],
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item['secondary_text'].strip()))))
+            meny.bind(on_press=partial(
+                self.inbox_detail, item['msgid']))
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Delete')
+            del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1)
+            del_btn.bind(on_press=partial(
+                self.delete, item['msgid']))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            ach_btn = Button(text='Achieve')
+            ach_btn.background_color = (0, 1, 0, 1)
+            ach_btn.bind(on_press=partial(
+                self.archive, item['msgid']))
+            carousel.add_widget(ach_btn)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used to load data on scroll"""
+        if self.children[2].children[0].children[0].scroll_y <= -0.0 and self.has_refreshed:
+            self.children[2].children[0].children[0].scroll_y = 0.06
+            total_message = len(self.ids.ml.children)
+            if total_message != len(self.queryreturn):
+                self.update_inbox_screen_on_scroll(total_message)
+            self.has_refreshed = True if total_message != len(self.queryreturn) else False
+        else:
+            pass
+
+    def update_inbox_screen_on_scroll(self, total_message):
+        """This method is used to load more data on scroll down"""
+        data = []
+        for mail in self.queryreturn[total_message:total_message + 5]:
+            third_text = mail[3].replace('\n', ' ')
+            data.append({
+                'text': mail[4].strip(),
+                'secondary_text': mail[5][:50] + '........' if len(
+                    mail[5]) >= 50 else (
+                        mail[5] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                'msgid': mail[1]})
+        self.set_mdList(data)
 
     def inbox_detail(self, msg_id, *args):
         """Load inbox page details."""
@@ -234,6 +264,7 @@ class Inbox(Screen):
             self.children[2].children[1].ids.search_field.text = ''
             self.ids.ml.clear_widgets()
             self.loadMessagelist(state.association)
+            self.has_refreshed = True
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
 
@@ -245,6 +276,8 @@ class Inbox(Screen):
 
 class MyAddress(Screen):
     """MyAddress Screen uses screen to show widgets of screens."""
+    addresses_list = ListProperty()
+    has_refreshed = True
 
     def __init__(self, *args, **kwargs):
         """Clock Schdule for method inbox accounts."""
@@ -254,29 +287,17 @@ class MyAddress(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method inbox accounts."""
         # pylint: disable=unnecessary-lambda, deprecated-lambda
-        addresses_list = state.kivyapp.variable_1
+        self.addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
             filtered_list = filter(
                 lambda addr: self.filter_address(
                     addr), BMConfigParser().addresses())
-            addresses_list = filtered_list
-        if addresses_list:
-            data = []
-            for address in addresses_list:
-                data.append({
-                    'text': BMConfigParser().get(address, 'label'),
-                    'secondary_text': address})
-            for item in data:
-                meny = TwoLineAvatarIconListItem(
-                    text=item['text'],
-                    secondary_text=item['secondary_text'],
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['text'].strip()))))
-                meny.bind(on_press=partial(
-                    self.myadd_detail, item['secondary_text'], item['text']))
-                self.ids.ml.add_widget(meny)
+            self.addresses_list = filtered_list
+        self.addresses_list = [obj for obj in reversed(self.addresses_list)]
+        if self.addresses_list:
+            self.has_refreshed = True
+            self.set_mdList(0, 15)
+            self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -294,6 +315,40 @@ class MyAddress(Screen):
                 except Exception:
                     pass
 
+    def set_mdList(self, first_index, last_index):
+        """This method is used to create the mdlist"""
+        data = []
+        for address in self.addresses_list[first_index:last_index]:
+            data.append({
+                'text': BMConfigParser().get(address, 'label'),
+                'secondary_text': address})
+        for item in data:
+            meny = TwoLineAvatarIconListItem(
+                text=item['text'],
+                secondary_text=item['secondary_text'],
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item['text'].strip()))))
+            meny.bind(on_press=partial(
+                self.myadd_detail, item['secondary_text'], item['text']))
+            self.ids.ml.add_widget(meny)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used to load data on scroll"""
+        if self.ids.refresh_layout.scroll_y <= -0.0 and self.has_refreshed:
+            self.ids.refresh_layout.scroll_y = 0.06
+            my_addresses = len(self.ids.ml.children)
+            if my_addresses != len(self.addresses_list):
+                self.update_addressBook_on_scroll(my_addresses)
+            self.has_refreshed = True if my_addresses != len(self.addresses_list) else False
+        else:
+            pass
+
+    def update_addressBook_on_scroll(self, my_addresses):
+        """This method is used to load more data on scroll down"""
+        self.set_mdList(my_addresses,my_addresses + 20)
+
     @staticmethod
     def myadd_detail(fromaddress, label, *args):
         """Myaddress Details."""
@@ -309,6 +364,7 @@ class MyAddress(Screen):
             state.searcing_text = ''
             state.kivyapp.root.ids.sc10.children[2].active = False
             self.children[2].children[1].ids.search_field.text = ''
+            self.has_refreshed = True
             self.ids.ml.clear_widgets()
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
@@ -331,6 +387,8 @@ class MyAddress(Screen):
 
 class AddressBook(Screen):
     """AddressBook Screen uses screen to show widgets of screens."""
+    queryreturn = ListProperty()
+    has_refreshed = True
 
     def __init__(self, *args, **kwargs):
         """Getting AddressBook Details."""
@@ -348,33 +406,13 @@ class AddressBook(Screen):
             where = ['label', 'address']
             what = state.searcing_text
         xAddress = ''
-        queryreturn = kivy_helper_search.search_sql(
+        self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "addressbook", where, what, False)
-        if queryreturn:
-            for item in queryreturn:
-                meny = TwoLineAvatarIconListItem(
-                    text=item[0],
-                    secondary_text=item[1],
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item[0].strip()))))
-                meny.bind(on_press=partial(
-                    self.addBook_detail, item[1], item[0]))
-                carousel = Carousel(direction='right')
-                carousel.height = meny.height
-                carousel.size_hint_y = None
-                carousel.ignore_perpendicular_swipes = True
-                carousel.data_index = 0
-                carousel.min_move = 0.2
-                del_btn = Button(text='Delete')
-                del_btn.background_normal = ''
-                del_btn.background_color = (1, 0, 0, 1)
-                del_btn.bind(on_press=partial(self.delete_address, item[1]))
-                carousel.add_widget(del_btn)
-                carousel.add_widget(meny)
-                carousel.index = 1
-                self.ids.ml.add_widget(carousel)
+        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        if self.queryreturn:
+            self.has_refreshed = True
+            self.set_mdList(0,20)
+            self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -386,6 +424,48 @@ class AddressBook(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def set_mdList(self, start_index, end_index):
+        """This method is used to create the mdList"""
+        for item in self.queryreturn[start_index:end_index]:
+            meny = TwoLineAvatarIconListItem(
+                text=item[0],
+                secondary_text=item[1],
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(avatarImageFirstLetter(item[0].strip()))))
+            meny.bind(on_press=partial(
+                self.addBook_detail, item[1], item[0]))
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Delete')
+            del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1)
+            del_btn.bind(on_press=partial(self.delete_address, item[1]))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used to load data on scroll"""
+        if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
+            self.ids.scroll_y.scroll_y = 0.06
+            exist_addresses = len(self.ids.ml.children)
+            if exist_addresses != len(self.queryreturn):
+                self.update_addressBook_on_scroll(exist_addresses)
+            self.has_refreshed = True if exist_addresses != len(self.queryreturn) else False
+        else:
+            pass
+
+    def update_addressBook_on_scroll(self, exist_addresses):
+        """This method is used to load more data on scroll down"""
+        self.set_mdList(exist_addresses,exist_addresses + 20)
 
     @staticmethod
     def refreshs(*args):
@@ -531,14 +611,13 @@ class DropDownWidget(BoxLayout):
                     #     .parent.parent.children[0].children[2].children[0].ids
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[2].children[0].ids
-                    self.parent.parent.screens[0].ids.ml.clear_widgets()
-                    self.parent.parent.screens[0].loadMessagelist(state.association)
-                    self.parent.parent.screens[3].ids.ml.clear_widgets()
-                    self.parent.parent.screens[3].loadSent(state.association)
+                    # self.parent.parent.screens[0].ids.ml.clear_widgets()
+                    # self.parent.parent.screens[0].loadMessagelist(state.association)
+                    self.parent.parent.screens[3].update_sent_messagelist()
                     self.parent.parent.screens[16].clear_widgets()
                     self.parent.parent.screens[16].add_widget(Allmails())
-                    toast('sending...')
-                    Clock.schedule_once(self.callback_for_msgsend, 6)
+                    # toast('sending...')
+                    Clock.schedule_once(self.callback_for_msgsend, 3)
                     toLabel = ''
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
@@ -702,12 +781,14 @@ class Random(Screen):
 
     def generateaddress(self, navApp):
         """Method for Address Generator."""
+        entered_label = str(self.ids.label.text).strip()
         streamNumberForAddress = 1
         label = self.ids.label.text
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
-        if str(self.ids.label.text).strip():
+        lables = [BMConfigParser().get(obj, 'label') for obj in BMConfigParser().addresses()]
+        if entered_label and entered_label not in lables:
             toast('Address Creating...')
             queues.addressGeneratorQueue.put((
                 'createRandomAddress',
@@ -730,9 +811,25 @@ class Random(Screen):
         self.manager.current = 'myaddress'
         toast('New address created')
 
+    def add_validation(self, instance):
+        """Checking validation at address creation time."""
+        entered_label = str(instance.text.strip())
+        lables = [BMConfigParser().get(obj, 'label') for obj in BMConfigParser().addresses()]
+        if entered_label in lables:
+            self.ids.label.error = True
+            self.ids.label.helper_text = 'Label name is already exist'
+        elif entered_label:
+            self.ids.label.error = False
+        else:
+            self.ids.label.error = False
+            self.ids.label.helper_text = 'This field is required'
+
 
 class Sent(Screen):
     """Sent Screen uses screen to show widgets of screens."""
+    queryreturn = ListProperty()
+    has_refreshed = True
+
     def __init__(self, *args, **kwargs):
         """Association with the screen."""
         super(Sent, self).__init__(*args, **kwargs)
@@ -758,57 +855,27 @@ class Sent(Screen):
             what = state.searcing_text
         xAddress = 'fromaddress'
         data = []
-        queryreturn = kivy_helper_search.search_sql(
+        self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "sent", where, what, False)
         if state.msg_counter_objs and state.association == state.check_sent_acc:
-            state.msg_counter_objs.send_cnt.badge_text = str(len(queryreturn))
+            state.msg_counter_objs.send_cnt.badge_text = str(len(self.queryreturn))
             state.sent_count = str(int(state.sent_count) + 1)
             state.all_count = str(int(state.all_count) + 1)
             state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
             state.check_sent_acc = None
 
-        if queryreturn:
-            src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.send_cnt.badge_text = str(len(queryreturn))
-            state.sent_count = str(len(queryreturn))
-            for mail in queryreturn:
+        if self.queryreturn:
+            self.set_sentCount(len(self.queryreturn))
+            for mail in self.queryreturn[0:20]:
                 data.append({
                     'text': mail[1].strip(),
                     'secondary_text': mail[2][:50] + '........' if len(
                         mail[2]) >= 50 else (
                             mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
                     'ackdata': mail[5]})
-            for item in data:
-                meny = TwoLineAvatarIconListItem(
-                    text=item['text'],
-                    secondary_text=item['secondary_text'],
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        avatarImageFirstLetter(item['secondary_text'].strip()))))
-                meny.bind(on_press=partial(
-                    self.sent_detail, item['ackdata']))
-                carousel = Carousel(direction='right')
-                carousel.height = meny.height
-                carousel.size_hint_y = None
-                carousel.ignore_perpendicular_swipes = True
-                carousel.data_index = 0
-                carousel.min_move = 0.2
-                del_btn = Button(text='Delete')
-                del_btn.background_normal = ''
-                del_btn.background_color = (1, 0, 0, 1)
-                del_btn.bind(on_press=partial(
-                    self.delete, item['ackdata']))
-                carousel.add_widget(del_btn)
-                carousel.add_widget(meny)
-                ach_btn = Button(text='Achieve')
-                ach_btn.background_color = (0, 1, 0, 1)
-                ach_btn.bind(on_press=partial(
-                    self.archive, item['ackdata']))
-                carousel.add_widget(ach_btn)
-                carousel.index = 1
-                self.ids.ml.add_widget(carousel)
+            self.set_mdlist(data, 0)
+            self.has_refreshed = True
+            self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -820,6 +887,90 @@ class Sent(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def set_mdlist(self, data, set_index):
+        """This method is used to create the mdList"""
+        for item in data:
+            meny = TwoLineAvatarIconListItem(
+                text=item['text'],
+                secondary_text=item['secondary_text'],
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item['secondary_text'].strip()))))
+            meny.bind(on_press=partial(
+                self.sent_detail, item['ackdata']))
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Delete')
+            del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1)
+            del_btn.bind(on_press=partial(
+                self.delete, item['ackdata']))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            ach_btn = Button(text='Achieve')
+            ach_btn.background_color = (0, 1, 0, 1)
+            ach_btn.bind(on_press=partial(
+                self.archive, item['ackdata']))
+            carousel.add_widget(ach_btn)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel, index=set_index)
+
+    def update_sent_messagelist(self):
+        """This method is used to update screen when new mail is sent"""
+        if len(self.ids.ml.children) <3:
+            self.ids.ml.clear_widgets()
+            self.loadSent(state.association)
+        else:
+            account = state.association
+            data = []
+            self.queryreturn = kivy_helper_search.search_sql(
+                'fromaddress', account, "sent", '', '', False)
+            total_sent = len(self.queryreturn)
+            self.set_sentCount(total_sent)
+            for mail in self.queryreturn[:1]:
+                data.append({
+                    'text': mail[1].strip(),
+                    'secondary_text': mail[2][:50] + '........' if len(
+                        mail[2]) >= 50 else (
+                            mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                    'ackdata': mail[5]})
+            self.set_mdlist(data, total_sent-1)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used to load data on scroll"""
+        if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
+            self.ids.scroll_y.scroll_y = 0.06
+            total_sent_msg = len(self.ids.ml.children)
+            if total_sent_msg != len(self.queryreturn):
+                self.update_sent_screen_on_scroll(total_sent_msg)
+            self.has_refreshed = True if total_sent_msg != len(self.queryreturn) else False
+        else:
+            pass
+
+    def update_sent_screen_on_scroll(self, total_sent_msg):
+        """This method is used to load more data on scroll down"""
+        data = []
+        for mail in self.queryreturn[total_sent_msg:total_sent_msg + 5]:
+            data.append({
+                'text': mail[1].strip(),
+                'secondary_text': mail[2][:50] + '........' if len(
+                    mail[2]) >= 50 else (
+                        mail[2] + ',' + mail[3].replace('\n', ''))[0:50] + '........',
+                'ackdata': mail[5]})
+        self.set_mdlist(data, 0)
+
+    def set_sentCount(self, total_sent):
+        """Set the total no. of sent message count"""
+        src_mng_obj = state.kivyapp.root.children[2].children[0].ids
+        src_mng_obj.send_cnt.badge_text = str(total_sent)
+        state.sent_count = str(total_sent)
 
     def sent_detail(self, ackdata, *args):
         """Load sent mail details."""
@@ -882,6 +1033,8 @@ class Sent(Screen):
 
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
+    trash_messages = ListProperty()
+    has_refreshed = True
 
     def __init__(self, *args, **kwargs):
         """Trash method, delete sent message and add in Trash."""
@@ -893,47 +1046,17 @@ class Trash(Screen):
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
-        inbox = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, received from"
-            " inbox WHERE folder = 'trash' and toaddress = '{}';".format(
-                state.association))
-        sent = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, lastactiontime from"
-            " sent WHERE folder = 'trash' and fromaddress = '{}';".format(
-                state.association))
-        trash_data = inbox + sent
-
-        if trash_data:
+        self.trash_messages = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime)"
+            " As actionTime FROM sent WHERE folder = 'trash' UNION"
+            " SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As"
+            " actionTime FROM inbox WHERE folder = 'trash' ORDER BY actionTime DESC")
+        if self.trash_messages:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.trash_cnt.badge_text = str(len(trash_data))
-            state.trash_count = str(len(trash_data))
-            for item in trash_data:
-                meny = TwoLineAvatarIconListItem(
-                    text=item[1],
-                    secondary_text=item[2][:50] + '........' if len(
-                        item[2]) >= 50 else (
-                            item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                img_latter = './images/text_images/{}.png'.format(
-                    item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                        2][0].upper() <= 'Z') else '!')
-                meny.add_widget(AvatarSampleWidget(source=img_latter))
-                carousel = Carousel(direction='right')
-                carousel.height = meny.height
-                carousel.size_hint_y = None
-                carousel.ignore_perpendicular_swipes = True
-                carousel.data_index = 0
-                carousel.min_move = 0.2
-                del_btn = Button(text='Delete')
-                del_btn.background_normal = ''
-                del_btn.background_color = (1, 0, 0, 1)
-                del_btn.bind(on_press=partial(
-                    self.delete_permanently, item[5]))
-                carousel.add_widget(del_btn)
-                carousel.add_widget(meny)
-                carousel.index = 1
-                self.ids.ml.add_widget(carousel)
+            src_mng_obj.trash_cnt.badge_text = str(len(self.trash_messages))
+            state.trash_count = str(len(self.trash_messages))
+            self.set_mdList(0,20)
+            self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -944,6 +1067,51 @@ class Trash(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def set_mdList(self, first_index, last_index):
+        """This method is used to create the mdlist"""
+        for item in self.trash_messages[first_index:last_index]:
+            meny = TwoLineAvatarIconListItem(
+                text=item[1],
+                secondary_text=item[2][:50] + '........' if len(
+                    item[2]) >= 50 else (
+                        item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            img_latter = './images/text_images/{}.png'.format(
+                item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
+                    2][0].upper() <= 'Z') else '!')
+            meny.add_widget(AvatarSampleWidget(source=img_latter))
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Delete')
+            del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1)
+            del_btn.bind(on_press=partial(
+                self.delete_permanently, item[5]))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used to load data on scroll"""
+        if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
+            self.ids.scroll_y.scroll_y = 0.06
+            total_trash_msg = len(self.ids.ml.children)
+            if total_trash_msg != len(self.trash_messages):
+                self.update_trash_screen_on_scroll(total_trash_msg)
+            self.has_refreshed = True if total_trash_msg != len(self.trash_messages) else False
+        else:
+            pass
+
+    def update_trash_screen_on_scroll(self, total_trash_msg):
+        """This method is used to load more data on scroll down"""
+        self.set_mdList(total_trash_msg,total_trash_msg+5)
 
     def delete_permanently(self, data_index, instance, *args):
         """Deleting trash mail permanently."""
@@ -1051,7 +1219,7 @@ class NavigateApp(App):
         self.root.ids.sc1.loadMessagelist(state.association)
 
         self.root.ids.sc4.ids.ml.clear_widgets()
-        self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
+        self.root.ids.sc4.children[2].children[1].ids.search_field.text = ''
         self.root.ids.sc4.loadSent(state.association)
 
         self.root.ids.sc16.clear_widgets()
@@ -1145,7 +1313,9 @@ class NavigateApp(App):
     def on_key(self, window, key, *args):
         """Method is used for going on previous screen."""
         if key == 27:
-            if self.root.ids.scr_mngr.current == "mailDetail":
+            if state.in_search_mode and self.root.ids.scr_mngr.current != "mailDetail":
+                self.closeSearchScreen()
+            elif self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
@@ -1164,20 +1334,39 @@ class NavigateApp(App):
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
-        elif key == 13 and platform == 'android':
-            if state.search_screen == 'inbox':
-                self.root.ids.sc1.ids.ml.clear_widgets()
-                self.root.ids.sc1.loadMessagelist(state.association)
+        elif key == 13:
+            if state.search_screen == 'inbox' and state.searcing_text:
+                self.root.ids.sc1.children[1].active = True
+                Clock.schedule_once(self.search_callback, 0.5)
             elif state.search_screen == 'addressbook':
-                self.root.ids.sc11.ids.ml.clear_widgets()
-                self.root.ids.sc11.loadAddresslist(None, 'All', '')
+                self.root.ids.sc11.children[1].active = True
+                Clock.schedule_once(self.search_callback, 0.5)
             elif state.search_screen == 'myaddress':
-                self.root.ids.sc10.ids.ml.clear_widgets()
-                self.root.ids.sc10.init_ui()
-            else:
-                self.root.ids.sc4.ids.ml.clear_widgets()
-                self.root.ids.sc4.loadSent(state.association)
-            self.root.ids.scr_mngr.current = state.search_screen
+                self.root.ids.sc10.children[1].active = True
+                Clock.schedule_once(self.search_callback, 0.5)
+            elif state.search_screen == 'sent':
+                self.root.ids.sc4.children[1].active = True
+                Clock.schedule_once(self.search_callback, 0.5)
+
+    def search_callback(self, dt=0):
+        """This method is used to show data after loader is loaded"""
+        if state.search_screen == 'inbox':
+            self.root.ids.sc1.ids.ml.clear_widgets()
+            self.root.ids.sc1.loadMessagelist(state.association)
+            self.root.ids.sc1.children[1].active = False
+        elif state.search_screen == 'addressbook':
+            self.root.ids.sc11.ids.ml.clear_widgets()
+            self.root.ids.sc11.loadAddresslist(None, 'All', '')
+            self.root.ids.sc11.children[1].active = False
+        elif state.search_screen == 'myaddress':
+            self.root.ids.sc10.ids.ml.clear_widgets()
+            self.root.ids.sc10.init_ui()
+            self.root.ids.sc10.children[1].active = False
+        else:
+            self.root.ids.sc4.ids.ml.clear_widgets()
+            self.root.ids.sc4.loadSent(state.association)
+            self.root.ids.sc4.children[1].active = False
+        self.root.ids.scr_mngr.current = state.search_screen
 
     def save_draft(self):
         composer_objs = self.root
@@ -1202,7 +1391,6 @@ class NavigateApp(App):
     def clear_composer(self):
         """If slow down the nwe will make new composer edit screen."""
         self.set_navbar_for_composer()
-        # self.root.ids.search_bar.clear_widgets()
         composer_obj = self.root.ids.sc3.children[1].ids
         composer_obj.ti.text = ''
         composer_obj.btn.text = 'Select'
@@ -1228,7 +1416,13 @@ class NavigateApp(App):
     def back_press(self):
         """Method used for going back from composer to previous page."""
         self.save_draft()
-        self.set_common_header()
+        if self.root.ids.scr_mngr.current == 'mailDetail' and state.in_search_mode:
+            toolbar_obj = self.root.ids.toolbar
+            toolbar_obj.left_action_items = [['arrow-left', lambda x: self.closeSearchScreen()]]
+            toolbar_obj.right_action_items = []
+            self.root.ids.toolbar.title = ''
+        else:
+            self.set_common_header()
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
@@ -1269,23 +1463,10 @@ class NavigateApp(App):
         state.searcing_text = str(instance.text).strip()
         if instance.focus and state.searcing_text:
             toolbar_obj = self.root.ids.toolbar
-            toolbar_obj.left_action_items = [['close', lambda x: self.closeSearchScreen()]]
+            toolbar_obj.left_action_items = [['arrow-left', lambda x: self.closeSearchScreen()]]
             toolbar_obj.right_action_items = []
             self.root.ids.toolbar.title = ''
-        if platform == 'linux':
-            if state.search_screen == 'inbox':
-                self.root.ids.sc1.ids.ml.clear_widgets()
-                self.root.ids.sc1.loadMessagelist(state.association)
-            elif state.search_screen == 'addressbook':
-                self.root.ids.sc11.ids.ml.clear_widgets()
-                self.root.ids.sc11.loadAddresslist(None, 'All', '')
-            elif state.search_screen == 'myaddress':
-                self.root.ids.sc10.ids.ml.clear_widgets()
-                self.root.ids.sc10.init_ui()
-            else:
-                self.root.ids.sc4.ids.ml.clear_widgets()
-                self.root.ids.sc4.loadSent(state.association)
-            self.root.ids.scr_mngr.current = state.search_screen
+            state.in_search_mode = True
 
     def closeSearchScreen(self):
         """Function for  close search screen"""
@@ -1293,7 +1474,9 @@ class NavigateApp(App):
         address_label = self.current_address_label(
             BMConfigParser().get(state.association, 'label'), state.association)
         self.root.ids.toolbar.title = address_label
+        state.searcing_text = ''
         self.refreshScreen()
+        state.in_search_mode = False
 
     def refreshScreen(self):
         """Method show search button only on inbox or sent screen."""
@@ -1303,23 +1486,23 @@ class NavigateApp(App):
                 self.root.ids.sc1.children[3].children[1].ids.search_field.text = ''
             except Exception:
                 self.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
-            self.root.ids.sc1.ids.ml.clear_widgets()
-            self.root.ids.sc1.loadMessagelist(state.association)
+            self.root.ids.sc1.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
         elif state.search_screen == 'addressbook':
-            self.root.ids.sc11.children[1].children[1].ids.search_field.text = ''
-            self.root.ids.sc11.ids.ml.clear_widgets()
-            self.root.ids.sc11.loadAddresslist(None, 'All', '')
+            self.root.ids.sc11.children[2].children[1].ids.search_field.text = ''
+            self.root.ids.sc11.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
         elif state.search_screen == 'myaddress':
             try:
                 self.root.ids.sc10.children[3].children[1].ids.search_field.text = ''
             except Exception:
                 self.root.ids.sc10.children[2].children[1].ids.search_field.text = ''
-            self.root.ids.sc10.ids.ml.clear_widgets()
-            self.root.ids.sc10.init_ui()
+            self.root.ids.sc10.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
         else:
-            self.root.ids.sc4.children[1].children[1].ids.search_field.text = ''
-            self.root.ids.sc4.ids.ml.clear_widgets()
-            self.root.ids.sc4.loadSent(state.association)
+            self.root.ids.sc4.children[2].children[1].ids.search_field.text = ''
+            self.root.ids.sc4.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
         return
 
     def set_identicon(self, text):
@@ -1364,13 +1547,15 @@ class GrashofPopup(Popup):
 
         stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
-        if label and address and address not in stored_address:
+        stored_labels = [labels[0] for labels in kivy_helper_search.search_sql(
+            folder="addressbook")]
+        if label and address and address not in stored_address and label not in stored_labels:
             # state.navinstance = self.parent.children[1]
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
-            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
+            self.parent.children[1].ids.sc11.ids.ml.clear_widgets()
+            self.parent.children[1].ids.sc11.loadAddresslist(None, 'All', '')
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
 
@@ -1400,7 +1585,7 @@ class GrashofPopup(Popup):
         toast('Canceled')
 
     def checkAddress_valid(self, instance):
-        """Checking is address is valid or not"""
+        """Checking address is valid or not"""
         my_addresses = self.parent.children[1].children[2].children[0].ids.btn.values
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
@@ -1411,18 +1596,26 @@ class GrashofPopup(Popup):
             text = 'You can not save your own address.'
 
         if entered_text in my_addresses or entered_text in add_book:
-            if len(self.ids.popup_box.children) <= 2:
-                err_msg = MDLabel(
-                    id='erro_msg',
-                    font_style='Body2',
-                    text=text,
-                    font_size=5)
-                err_msg.color = 1, 0, 0, 1
-                self.ids.popup_box.add_widget(err_msg)
-                self.ids.save_addr.disabled = True
-        elif len(self.ids.popup_box.children) > 2:
-            self.ids.popup_box.remove_widget(self.ids.popup_box.children[0])
-            self.ids.save_addr.disabled = False
+            self.ids.address.error = True
+            self.ids.address.helper_text = text
+        elif entered_text:
+            self.ids.address.error = False
+        else:
+            self.ids.address.error = False
+            self.ids.address.helper_text = 'This field is required'
+
+    def checkLabel_valid(self, instance):
+        """Checking address label is unique of not"""
+        entered_label = instance.text.strip()
+        addr_labels = [labels[0] for labels in kivy_helper_search.search_sql(folder="addressbook")]
+        if entered_label in addr_labels:
+            self.ids.label.error = True
+            self.ids.label.helper_text = 'label name already exists.'
+        elif entered_label:
+            self.ids.label.error = False
+        else:
+            self.ids.label.error = False
+            self.ids.label.helper_text = 'This field is required'
 
 
 class AvatarSampleWidget(ILeftBody, Image):
@@ -1519,6 +1712,7 @@ class MailDetail(Screen):
     def delete_mail(self):
         """Method for mail delete."""
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
+        state.searcing_text = ''
         if state.detailPageType == 'sent':
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE"
@@ -1650,7 +1844,13 @@ class AddbookDetailPopup(Popup):
 
     def update_addbook_label(self, address):
         """Updating the label of address book address."""
-        if str(self.ids.add_label.text):
+        address_list = kivy_helper_search.search_sql(folder="addressbook")
+        stored_labels = [labels[0] for labels in address_list]
+        add_dict = dict(address_list)
+        label = str(self.ids.add_label.text)
+        if label in stored_labels and self.address == add_dict[label]:
+            stored_labels.remove(label)
+        if label and label not in stored_labels:
             sqlExecute(
                 "UPDATE addressbook SET label = '{}' WHERE"
                 " address = '{}';".format(str(self.ids.add_label.text), address))
@@ -1676,6 +1876,21 @@ class AddbookDetailPopup(Popup):
         """Pop is Canceled."""
         toast('Canceled')
 
+    def checkLabel_valid(self, instance):
+        """Checking address label is unique of not"""
+        entered_label = str(instance.text.strip())
+        address_list = kivy_helper_search.search_sql(folder="addressbook")
+        addr_labels = [labels[0] for labels in address_list]
+        add_dict = dict(address_list)
+        if self.address and entered_label in addr_labels and self.address != add_dict[entered_label]:
+            self.ids.add_label.error = True
+            self.ids.add_label.helper_text = 'label name already exists.'
+        elif entered_label:
+            self.ids.add_label.error = False
+        else:
+            self.ids.add_label.error = False
+            self.ids.add_label.helper_text = 'This field is required'
+
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails."""
@@ -1694,6 +1909,8 @@ class Draft(Screen):
     """Draft screen is used to show the list of draft messages."""
 
     data = ListProperty()
+    queryreturn = ListProperty()
+    has_refreshed = True
 
     def __init__(self, *args, **kwargs):
         """Method used for storing draft messages."""
@@ -1716,48 +1933,16 @@ class Draft(Screen):
     def loadDraft(self, account, where="", what=""):
         """Load draft list for Draft messages."""
         xAddress = 'fromaddress'
-        queryreturn = kivy_helper_search.search_sql(
+        self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "draft", where, what, False)
         if state.msg_counter_objs:
-            state.msg_counter_objs.draft_cnt.badge_text = str(len(queryreturn))
-        if queryreturn:
+            state.msg_counter_objs.draft_cnt.badge_text = str(len(self.queryreturn))
+        if self.queryreturn:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.draft_cnt.badge_text = str(len(queryreturn))
-            state.draft_count = str(len(queryreturn))
-            for mail in queryreturn:
-                third_text = mail[3].replace('\n', ' ')
-                self.data.append({
-                    'text': mail[1].strip(),
-                    'secondary_text': mail[2][:10] + '...........' if len(
-                        mail[2]) > 10 else mail[2] + '\n' + " " + (
-                            third_text[:25] + '...!') if len(
-                                third_text) > 25 else third_text,
-                    'ackdata': mail[5]})
-            for item in self.data:
-                meny = TwoLineAvatarIconListItem(
-                    text='Draft',
-                    secondary_text=item['text'],
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(
-                    source='./images/avatar.png'))
-                meny.bind(on_press=partial(
-                    self.draft_detail, item['ackdata']))
-                carousel = Carousel(direction='right')
-                carousel.height = meny.height
-                carousel.size_hint_y = None
-                carousel.ignore_perpendicular_swipes = True
-                carousel.data_index = 0
-                carousel.min_move = 0.2
-                del_btn = Button(text='Delete')
-                del_btn.background_normal = ''
-                del_btn.background_color = (1, 0, 0, 1)
-                del_btn.bind(on_press=partial(
-                    self.delete_draft, item['ackdata']))
-                carousel.add_widget(del_btn)
-                carousel.add_widget(meny)
-                carousel.index = 1
-                self.ids.ml.add_widget(carousel)
+            src_mng_obj.draft_cnt.badge_text = str(len(self.queryreturn))
+            state.draft_count = str(len(self.queryreturn))
+            self.set_mdList(0,20)
+            self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -1768,6 +1953,59 @@ class Draft(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def set_mdList(self, first_index, last_index):
+        """This method is used to create mdlist"""
+        data = []
+        for mail in self.queryreturn[first_index:last_index]:
+            third_text = mail[3].replace('\n', ' ')
+            data.append({
+                'text': mail[1].strip(),
+                'secondary_text': mail[2][:10] + '...........' if len(
+                    mail[2]) > 10 else mail[2] + '\n' + " " + (
+                        third_text[:25] + '...!') if len(
+                            third_text) > 25 else third_text,
+                'ackdata': mail[5]})
+        for item in data:
+            meny = TwoLineAvatarIconListItem(
+                text='Draft',
+                secondary_text=item['text'],
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/avatar.png'))
+            meny.bind(on_press=partial(
+                self.draft_detail, item['ackdata']))
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Delete')
+            del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1)
+            del_btn.bind(on_press=partial(
+                self.delete_draft, item['ackdata']))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used to load data on scroll"""
+        if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
+            self.ids.scroll_y.scroll_y = 0.06
+            total_draft_msg = len(self.ids.ml.children)
+            if total_draft_msg != len(self.queryreturn):
+                self.update_draft_screen_on_scroll(total_draft_msg)
+            self.has_refreshed = True if total_draft_msg != len(self.queryreturn) else False
+        else:
+            pass
+
+    def update_draft_screen_on_scroll(self, total_draft_msg):
+        """This method is used to load more data on scroll down"""
+        self.set_mdList(total_draft_msg,total_draft_msg+5)
 
     def draft_detail(self, ackdata, *args):
         """Method used to show draft Details."""
@@ -1859,6 +2097,8 @@ class Allmails(Screen):
     """all mails Screen uses screen to show widgets of screens."""
 
     data = ListProperty()
+    has_refreshed = True
+    all_mails = ListProperty()
 
     def __init__(self, *args, **kwargs):
         """Method Parsing the address."""
@@ -1880,42 +2120,16 @@ class Allmails(Screen):
 
     def loadMessagelist(self, account, where="", what=""):
         """Load Inbox, Sent anf Draft list of messages."""
-        all_mails = sqlQuery(
+        self.all_mails = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message, folder, ackdata As id, DATE(lastactiontime)"
             " As actionTime FROM sent WHERE folder = 'sent' UNION"
             " SELECT toaddress, fromaddress, subject, message, folder, msgid As id, DATE(received) As"
             " actionTime FROM inbox WHERE folder = 'inbox' ORDER BY actionTime DESC")
-        if all_mails:
-            state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(all_mails))
-            state.all_count = str(len(all_mails))
-            for item in all_mails:
-                meny = TwoLineAvatarIconListItem(
-                    text=item[1],
-                    secondary_text=item[2][:50] + '........' if len(
-                        item[2]) >= 50 else (
-                            item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
-                    theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color)
-                meny.add_widget(AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        avatarImageFirstLetter(item[2].strip()))))
-                meny.bind(on_press=partial(
-                    self.mail_detail, item[5], item[4]))
-                carousel = Carousel(direction='right')
-                carousel.height = meny.height
-                carousel.size_hint_y = None
-                carousel.ignore_perpendicular_swipes = True
-                carousel.data_index = 0
-                carousel.min_move = 0.2
-                del_btn = Button(text='Delete')
-                del_btn.background_normal = ''
-                del_btn.background_color = (1, 0, 0, 1)
-                del_btn.bind(on_press=partial(
-                    self.swipe_delete, item[5], item[4]))
-                carousel.add_widget(del_btn)
-                carousel.add_widget(meny)
-                carousel.index = 1
-                self.ids.ml.add_widget(carousel)
+        if self.all_mails:
+            state.kivyapp.root.children[2].children[0].ids.allmail_cnt.badge_text = str(len(self.all_mails))
+            state.all_count = str(len(self.all_mails))
+            self.set_mdlist(0, 20)
+            self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -1926,6 +2140,52 @@ class Allmails(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
+
+    def set_mdlist(self, start_pnt, end_pnt):
+        """This method is used to create mdList for allmaills"""
+        for item in self.all_mails[start_pnt:end_pnt]:
+            meny = TwoLineAvatarIconListItem(
+                text=item[1],
+                secondary_text=item[2][:50] + '........' if len(
+                    item[2]) >= 50 else (
+                        item[2] + ',' + item[3].replace('\n', ''))[0:50] + '........',
+                theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item[2].strip()))))
+            meny.bind(on_press=partial(
+                self.mail_detail, item[5], item[4]))
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Delete')
+            del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1)
+            del_btn.bind(on_press=partial(
+                self.swipe_delete, item[5], item[4]))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """This method is used for scrolling on fixing length"""
+        if self.ids.refresh_layout.scroll_y <= -0.00 and self.has_refreshed:
+            self.ids.refresh_layout.scroll_y = .06
+            load_more = len(self.ids.ml.children)
+            self.updating_allmail(load_more)
+        pass
+
+    def updating_allmail(self, load_more):
+        """This method is used to update the all mail listing value on the scroll of screen"""
+        if self.all_mails and load_more != len(self.all_mails):
+            state.all_count = str(len(self.all_mails))
+            self.set_mdlist(load_more, load_more+5)
+        self.has_refreshed = True if load_more != len(self.all_mails) else False
 
     def mail_detail(self, unique_id, folder, *args):
         """Load sent and inbox mail details."""
