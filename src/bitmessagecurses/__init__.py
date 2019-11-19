@@ -11,7 +11,7 @@ src/bitmessagecurses/__init__.py
 # This has only been tested on Arch Linux and Linux Mint
 # Dependencies:
 #  * from python2-pip
-#     * python2-pythondialog
+#  * python2-pythondialog
 #  * dialog
 
 import ConfigParser
