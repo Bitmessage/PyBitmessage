@@ -1208,7 +1208,7 @@ def runwrapper():
 
     try:
         curses.wrapper(run)
-    except:
+    except BaseException:  
         pass
     finally:
         doShutdown()
