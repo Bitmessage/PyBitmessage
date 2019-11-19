@@ -217,14 +217,17 @@ NavigationLayout:
         BoxLayout:
             orientation:'vertical'
             ScrollView:
+                id: scroll_y
                 do_scroll_x: False
                 MDList:
                     id: ml
+    Loader:
     ComposerButton:
 
 <Trash>:
     name: 'trash'
     ScrollView:
+        id: scroll_y
         do_scroll_x: False
         MDList:
             id: ml
@@ -233,6 +236,7 @@ NavigationLayout:
 <Draft>:
     name: 'draft'
     ScrollView:
+        id: scroll_y
         do_scroll_x: False
         MDList:
             id: ml
@@ -510,6 +514,7 @@ NavigationLayout:
                 hint_text: "Label"
                 required: True
                 helper_text_mode: "on_error"
+                on_text: root.add_validation(self)
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
@@ -624,9 +629,11 @@ NavigationLayout:
         BoxLayout:
             orientation:'vertical'
             ScrollView:
+                id: scroll_y
                 do_scroll_x: False
                 MDList:
                     id: ml
+    Loader:
     ComposerButton:
 
 <Payment>:
@@ -799,6 +806,7 @@ NavigationLayout:
                 hint_text: "Label"
                 required: True
                 helper_text_mode: "on_error"
+                on_text: root.checkLabel_valid(self)
             MDTextField:
                 id: address
                 hint_text: "Address"
@@ -1118,6 +1126,7 @@ NavigationLayout:
                 theme_text_color: 'Primary'
                 required: True
                 helper_text_mode: "on_error"
+                on_text: root.checkLabel_valid(self)
             MDLabel:
                 font_style: 'Title'
                 theme_text_color: 'Primary'
@@ -1125,6 +1134,7 @@ NavigationLayout:
                 font_size: '17sp'
                 halign: 'left'
             MDLabel:
+                id: address
                 font_style: 'Subhead'
                 theme_text_color: 'Primary'
                 text: root.address
