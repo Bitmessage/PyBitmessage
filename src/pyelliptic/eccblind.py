@@ -159,13 +159,13 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         OpenSSL.BN_mod_add(self.m_, self.m_, self.a, self.n, self.ctx)
         return self.m_
 
-    def blind_sign(self, m_):
+    def blind_sign(self,keypair, m_):
         """
         Signer blind-signs the request
         """
         self.m_ = m_
         self.s_ = OpenSSL.BN_new()
-        OpenSSL.BN_mod_mul(self.s_, self.keypair[0], self.m_, self.n, self.ctx)
+        OpenSSL.BN_mod_mul(self.s_, keypair, self.m_, self.n, self.ctx)
         OpenSSL.BN_mod_add(self.s_, self.s_, self.k, self.n, self.ctx)
         return self.s_
 
@@ -208,3 +208,4 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
             return retval == 0
+
