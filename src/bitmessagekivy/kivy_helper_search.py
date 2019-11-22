@@ -1,6 +1,5 @@
 """
-src/bitmessagekivy/kivy_helper_search.py
-=================================
+Sql queries for bitmessagekivy
 """
 from helper_sql import sqlQuery
 
@@ -14,14 +13,15 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         what = None
 
     if folder == "sent" or folder == "draft":
-        sqlStatementBase = '''
-            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime
-            FROM sent '''
+        sqlStatementBase = (
+            '''SELECT toaddress, fromaddress, subject, message, status, ackdata,'''
+            ''' lastactiontime FROM sent ''')
     elif folder == "addressbook":
         sqlStatementBase = '''SELECT label, address From addressbook '''
     else:
-        sqlStatementBase = '''SELECT folder, msgid, toaddress, message, fromaddress, subject, received, read
-            FROM inbox '''
+        sqlStatementBase = (
+            '''SELECT folder, msgid, toaddress, message, fromaddress, subject,'''
+            ''' received, read FROM inbox ''')
 
     sqlStatementParts = []
     sqlArguments = []
