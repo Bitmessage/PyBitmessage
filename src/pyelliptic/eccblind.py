@@ -10,7 +10,7 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # to PEP8
 # pylint: disable=invalid-name
 
-from .openssl import OpenSSL
+from openssl import OpenSSL
 
 
 class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
@@ -159,13 +159,13 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         OpenSSL.BN_mod_add(self.m_, self.m_, self.a, self.n, self.ctx)
         return self.m_
 
-    def blind_sign(self,keypair, m_):
+    def blind_sign(self, m_):
         """
         Signer blind-signs the request
         """
         self.m_ = m_
         self.s_ = OpenSSL.BN_new()
-        OpenSSL.BN_mod_mul(self.s_, keypair, self.m_, self.n, self.ctx)
+        OpenSSL.BN_mod_mul(self.s_, self.keypair[0], self.m_, self.n, self.ctx)
         OpenSSL.BN_mod_add(self.s_, self.s_, self.k, self.n, self.ctx)
         return self.s_
 
