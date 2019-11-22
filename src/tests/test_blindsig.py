@@ -33,6 +33,7 @@ class TestBlindSig(unittest.TestCase):
             OpenSSL.BN_bn2bin(msg_blinded, msg_blinded_str)
 
             signature_blinded = signer_obj.blind_sign(msg_blinded)
+
             signature = requester_obj.unblind(signature_blinded)
 
             signature_blinded_str = OpenSSL.malloc(0,
