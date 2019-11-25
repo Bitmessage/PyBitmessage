@@ -16,7 +16,6 @@ logger = logging.getLogger('default')
 
 _DISCONNECTED_SSL = frozenset((ssl.SSL_ERROR_EOF,))
 
-# sslProtocolVersion
 if sys.version_info >= (2, 7, 13):
     # this means TLSv1 or higher
     # in the future change to
@@ -27,14 +26,16 @@ elif sys.version_info >= (2, 7, 9):
     # SSLv2 and 3 are excluded with an option after context is created
     sslProtocolVersion = ssl.PROTOCOL_SSLv23
 else:
-    # this means TLSv1, there is no way to set "TLSv1 or higher" or
-    # "TLSv1.2" in < 2.7.9
+    # this means TLSv1, there is no way to set "TLSv1 or higher"
+    # or "TLSv1.2" in < 2.7.9
     sslProtocolVersion = ssl.PROTOCOL_TLSv1
 
 
 # ciphers
-if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000 and not \
-        ssl.OPENSSL_VERSION.startswith("LibreSSL"):
+if (
+    ssl.OPENSSL_VERSION_NUMBER >= 0x10100000
+    and not ssl.OPENSSL_VERSION.startswith(b"LibreSSL")
+):
     sslProtocolCiphers = "AECDH-AES256-SHA@SECLEVEL=0"
 else:
     sslProtocolCiphers = "AECDH-AES256-SHA"
@@ -47,16 +48,10 @@ class TLSDispatcher(AdvancedDispatcher):
     def __init__(self, _=None, sock=None, certfile=None, keyfile=None,
                  server_side=False, ciphers=sslProtocolCiphers):
         self.want_read = self.want_write = True
-        if certfile is None:
-            self.certfile = os.path.join(
-                paths.codePath(), 'sslkeys', 'cert.pem')
-        else:
-            self.certfile = certfile
-        if keyfile is None:
-            self.keyfile = os.path.join(
-                paths.codePath(), 'sslkeys', 'key.pem')
-        else:
-            self.keyfile = keyfile
+        self.certfile = certfile or os.path.join(
+            paths.codePath(), 'sslkeys', 'cert.pem')
+        self.keyfile = keyfile or os.path.join(
+            paths.codePath(), 'sslkeys', 'key.pem')
         self.server_side = server_side
         self.ciphers = ciphers
         self.tlsStarted = False
@@ -66,7 +61,6 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def state_tls_init(self):
         """Prepare sockets for TLS handshake"""
-        # pylint: disable=attribute-defined-outside-init
         self.isSSL = True
         self.tlsStarted = True
         # Once the connection has been established,
@@ -96,8 +90,6 @@ class TLSDispatcher(AdvancedDispatcher):
         self.want_read = self.want_write = True
         self.set_state("tls_handshake")
         return False
-#        if hasattr(self.socket, "context"):
-#            self.socket.context.set_ecdh_curve("secp256k1")
 
     @staticmethod
     def state_tls_handshake():
@@ -112,9 +104,9 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 return self.want_write
-            return AdvancedDispatcher.writable(self)
         except AttributeError:
-            return AdvancedDispatcher.writable(self)
+            pass
+        return AdvancedDispatcher.writable(self)
 
     def readable(self):
         """Handle readable check for TLS-enabled sockets"""
@@ -126,14 +118,14 @@ class TLSDispatcher(AdvancedDispatcher):
                 return self.want_read
             # prior to TLS handshake,
             # receiveDataThread should emulate synchronous behaviour
-            elif not self.fullyEstablished and (
+            if not self.fullyEstablished and (
                     self.expectBytes == 0 or not self.write_buf_empty()):
                 return False
-            return AdvancedDispatcher.readable(self)
         except AttributeError:
-            return AdvancedDispatcher.readable(self)
+            pass
+        return AdvancedDispatcher.readable(self)
 
-    def handle_read(self):  # pylint: disable=inconsistent-return-statements
+    def handle_read(self):
         """
         Handle reads for sockets during TLS handshake. Requires special
         treatment as during the handshake, buffers must remain empty
@@ -142,29 +134,20 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                # logger.debug(
-                #    "%s:%i TLS handshaking (read)", self.destination.host,
-                #        self.destination.port)
                 self.tls_handshake()
             else:
-                # logger.debug(
-                #    "%s:%i Not TLS handshaking (read)", self.destination.host,
-                #        self.destination.port)
-                return AdvancedDispatcher.handle_read(self)
+                AdvancedDispatcher.handle_read(self)
         except AttributeError:
-            return AdvancedDispatcher.handle_read(self)
+            AdvancedDispatcher.handle_read(self)
         except ssl.SSLError as err:
-            self.close_reason = "SSL Error in handle_read"
             if err.errno == ssl.SSL_ERROR_WANT_READ:
                 return
-            elif err.errno in _DISCONNECTED_SSL:
-                self.handle_close()
-                return
-            logger.info("SSL Error: %s", err)
+            if err.errno not in _DISCONNECTED_SSL:
+                logger.info("SSL Error: %s", err)
+            self.close_reason = "SSL Error in handle_read"
             self.handle_close()
-            return
 
-    def handle_write(self):  # pylint: disable=inconsistent-return-statements
+    def handle_write(self):
         """
         Handle writes for sockets during TLS handshake. Requires special
         treatment as during the handshake, buffers must remain empty
@@ -173,27 +156,18 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                # logger.debug(
-                #    "%s:%i TLS handshaking (write)", self.destination.host,
-                #        self.destination.port)
                 self.tls_handshake()
             else:
-                # logger.debug(
-                #    "%s:%i Not TLS handshaking (write)", self.destination.host,
-                #        self.destination.port)
-                return AdvancedDispatcher.handle_write(self)
+                AdvancedDispatcher.handle_write(self)
         except AttributeError:
-            return AdvancedDispatcher.handle_write(self)
+            AdvancedDispatcher.handle_write(self)
         except ssl.SSLError as err:
-            self.close_reason = "SSL Error in handle_write"
             if err.errno == ssl.SSL_ERROR_WANT_WRITE:
-                return 0
-            elif err.errno in _DISCONNECTED_SSL:
-                self.handle_close()
-                return 0
-            logger.info("SSL Error: %s", err)
+                return
+            if err.errno not in _DISCONNECTED_SSL:
+                logger.info("SSL Error: %s", err)
+            self.close_reason = "SSL Error in handle_write"
             self.handle_close()
-            return
 
     def tls_handshake(self):
         """Perform TLS handshake and handle its stages"""
