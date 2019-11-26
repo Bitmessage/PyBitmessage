@@ -74,6 +74,7 @@
         text: "Starred"
         icon:'star'
         on_release: app.root.ids.scr_mngr.current = 'starred'
+        badge_text: "0"
     NavigationDrawerIconButton:
         icon: 'archive'
         text: "Archieve"
@@ -231,6 +232,7 @@ NavigationLayout:
         do_scroll_x: False
         MDList:
             id: ml
+    Loader:
     ComposerButton:
     
 <Draft>:
@@ -984,6 +986,7 @@ NavigationLayout:
                 orientation: 'vertical'
                 size_hint_y: None
                 height: dp(100) + self.minimum_height
+    Loader:
 
 <CopyTextBtn@Button>:
     id: cpyButton

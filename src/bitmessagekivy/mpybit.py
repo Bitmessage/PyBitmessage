@@ -106,6 +106,7 @@ class Inbox(Screen):
         """Load Inbox list for Inbox messages."""
         # pylint: disable=too-many-locals
         if state.searcing_text:
+            self.children[2].children[0].children[0].scroll_y = 1.0
             where = ['subject', 'message']
             what = state.searcing_text
         xAddress = 'toaddress'
@@ -295,6 +296,7 @@ class MyAddress(Screen):
         # pylint: disable=unnecessary-lambda, deprecated-lambda
         self.addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
+            self.ids.refresh_layout.scroll_y = 1.0
             filtered_list = filter(
                 lambda addr: self.filter_address(
                     addr), BMConfigParser().addresses())
@@ -413,6 +415,7 @@ class AddressBook(Screen):
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook."""
         if state.searcing_text:
+            self.ids.scroll_y.scroll_y = 1.0
             where = ['label', 'address']
             what = state.searcing_text
         xAddress = ''
@@ -477,7 +480,7 @@ class AddressBook(Screen):
 
     def update_addressBook_on_scroll(self, exist_addresses):
         """This method is used to load more data on scroll down"""
-        self.set_mdList(exist_addresses, exist_addresses + 20)
+        self.set_mdList(exist_addresses,exist_addresses + 5)
 
     @staticmethod
     def refreshs(*args):
@@ -622,8 +625,6 @@ class DropDownWidget(BoxLayout):
                             BMConfigParser().getint(
                                 'bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
-                    # state.msg_counter_objs = self.parent.parent.parent.parent\
-                    #     .parent.parent.children[0].children[2].children[0].ids
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[2].children[0].ids
                     # self.parent.parent.screens[0].ids.ml.clear_widgets()
@@ -631,9 +632,7 @@ class DropDownWidget(BoxLayout):
                     self.parent.parent.screens[3].update_sent_messagelist()
                     self.parent.parent.screens[16].clear_widgets()
                     self.parent.parent.screens[16].add_widget(Allmails())
-                    # toast('sending...')
                     Clock.schedule_once(self.callback_for_msgsend, 3)
-                    # toLabel = ''
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
                     state.in_composer = True
@@ -869,6 +868,7 @@ class Sent(Screen):
     def loadSent(self, account, where="", what=""):
         """Load Sent list for Sent messages."""
         if state.searcing_text:
+            self.ids.scroll_y.scroll_y = 1.0
             where = ['subject', 'message']
             what = state.searcing_text
         xAddress = 'fromaddress'
@@ -1057,6 +1057,8 @@ class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens."""
     trash_messages = ListProperty()
     has_refreshed = True
+    delete_index = StringProperty()
+    table_name = StringProperty()
 
     def __init__(self, *args, **kwargs):
         """Trash method, delete sent message and add in Trash."""
@@ -1069,11 +1071,10 @@ class Trash(Screen):
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
         self.trash_messages = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
-            " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
-            " folder = 'trash' UNION SELECT toaddress, fromaddress, subject,"
-            " message, folder, msgid As id, DATE(received) As actionTime FROM"
-            " inbox WHERE folder = 'trash' ORDER BY actionTime DESC")
+            "SELECT toaddress, fromaddress, subject, message, folder ||',' || 'sent' as  folder, ackdata As id, DATE(lastactiontime)"
+            " As actionTime FROM sent WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
+            " SELECT toaddress, fromaddress, subject, message, folder ||',' || 'inbox' as  folder, msgid As id, DATE(received) As"
+            " actionTime FROM inbox WHERE folder = 'trash' and toaddress = '{0}' ORDER BY actionTime DESC".format(state.association))
         if self.trash_messages:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             src_mng_obj.trash_cnt.badge_text = str(len(self.trash_messages))
@@ -1115,7 +1116,7 @@ class Trash(Screen):
             del_btn.background_normal = ''
             del_btn.background_color = (1, 0, 0, 1)
             del_btn.bind(on_press=partial(
-                self.delete_permanently, item[5]))
+                self.delete_permanently, item[5], item[4]))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
             carousel.index = 1
@@ -1137,9 +1138,49 @@ class Trash(Screen):
         """This method is used to load more data on scroll down"""
         self.set_mdList(total_trash_msg, total_trash_msg + 5)
 
-    def delete_permanently(self, data_index, instance, *args):
+    def delete_permanently(self, data_index, folder, instance, *args):
         """Deleting trash mail permanently."""
-        pass
+        self.table_name = folder.split(',')[1]
+        self.delete_index = data_index
+        self.delete_confirmation()
+
+    def callback_for_screen_load(self, dt=0):
+        """This methos is for loading screen"""
+        self.ids.ml.clear_widgets()
+        self.init_ui(0)
+        self.children[1].active = False
+        toast('Message is permanently deleted')
+
+    def delete_confirmation(self):
+        """This method is used to show delete confirmation popup"""
+        delete_msg_dialog = MDDialog(
+            text='Are you sure you want to delete this message permanently from trash?',
+            title='', size_hint=(.8, .25), text_button_ok='Yes',
+            text_button_cancel='No', events_callback=self.callback_for_delete_msg)
+        delete_msg_dialog.open()
+
+    def callback_for_delete_msg(self, text_item):
+        """Method is used for getting the callback of alert box"""
+        if text_item == 'Yes':
+            self.delete_message_from_trash()
+        else:
+            toast(text_item)
+
+    def delete_message_from_trash(self):
+        """This method is used to delete """
+        self.children[1].active = True
+        if self.table_name == 'inbox':
+            sqlExecute("DELETE FROM inbox WHERE msgid = ?;", str(
+                self.delete_index))
+        elif self.table_name == 'sent':
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
+                self.delete_index))
+        msg_count_objs = state.kivyapp.root.children[2].children[0].ids
+        if int(state.trash_count) > 0:
+            msg_count_objs.trash_cnt.badge_text = str(
+                    int(state.trash_count) - 1)
+            state.trash_count = str(int(state.trash_count) - 1)
+            Clock.schedule_once(self.callback_for_screen_load, 1)
 
 
 class Page(Screen):
@@ -1520,39 +1561,39 @@ class NavigateApp(App):
         self.refreshScreen()
         state.in_search_mode = False
 
-        def refreshScreen(self):  # pylint: disable=unused-variable
-            """Method show search button only on inbox or sent screen."""
-            state.searcing_text = ''
-            if state.search_screen == 'inbox':
-                try:
-                    self.root.ids.sc1.children[
-                        3].children[1].ids.search_field.text = ''
-                except Exception:
-                    self.root.ids.sc1.children[
-                        2].children[1].ids.search_field.text = ''
-                self.root.ids.sc1.children[1].active = True
-                Clock.schedule_once(self.search_callback, 0.5)
-            elif state.search_screen == 'addressbook':
-                self.root.ids.sc11.children[
+    def refreshScreen(self):  # pylint: disable=unused-variable
+        """Method show search button only on inbox or sent screen."""
+        state.searcing_text = ''
+        if state.search_screen == 'inbox':
+            try:
+                self.root.ids.sc1.children[
+                    3].children[1].ids.search_field.text = ''
+            except Exception:
+                self.root.ids.sc1.children[
                     2].children[1].ids.search_field.text = ''
-                self.root.ids.sc11.children[
-                    1].active = True
-                Clock.schedule_once(self.search_callback, 0.5)
-            elif state.search_screen == 'myaddress':
-                try:
-                    self.root.ids.sc10.children[
-                        3].children[1].ids.search_field.text = ''
-                except Exception:
-                    self.root.ids.sc10.children[
-                        2].children[1].ids.search_field.text = ''
-                self.root.ids.sc10.children[1].active = True
-                Clock.schedule_once(self.search_callback, 0.5)
-            else:
-                self.root.ids.sc4.children[
+            self.root.ids.sc1.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
+        elif state.search_screen == 'addressbook':
+            self.root.ids.sc11.children[
+                2].children[1].ids.search_field.text = ''
+            self.root.ids.sc11.children[
+                1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
+        elif state.search_screen == 'myaddress':
+            try:
+                self.root.ids.sc10.children[
+                    3].children[1].ids.search_field.text = ''
+            except Exception:
+                self.root.ids.sc10.children[
                     2].children[1].ids.search_field.text = ''
-                self.root.ids.sc4.children[1].active = True
-                Clock.schedule_once(self.search_callback, 0.5)
-            return
+            self.root.ids.sc10.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
+        else:
+            self.root.ids.sc4.children[
+                2].children[1].ids.search_field.text = ''
+            self.root.ids.sc4.children[1].active = True
+            Clock.schedule_once(self.search_callback, 0.5)
+        return
 
     def set_identicon(self, text):
         """This method is use for showing identicon in address spinner"""
@@ -1768,6 +1809,7 @@ class MailDetail(Screen):
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         state.searcing_text = ''
         if state.detailPageType == 'sent':
+            state.kivyapp.root.ids.sc4.children[2].children[1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE"
                 " ackdata = ?;", str(state.mail_id))
@@ -1776,6 +1818,8 @@ class MailDetail(Screen):
             self.parent.screens[3].ids.ml.clear_widgets()
             self.parent.screens[3].loadSent(state.association)
         elif state.detailPageType == 'inbox':
+            state.kivyapp.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
+            self.parent.screens[0].children[2].children[1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE"
                 " msgid = ?;", str(state.mail_id))
@@ -1784,6 +1828,7 @@ class MailDetail(Screen):
             state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
             self.parent.screens[0].loadMessagelist(state.association)
+            
         elif state.detailPageType == 'draft':
             sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
                 state.mail_id))
@@ -1793,8 +1838,8 @@ class MailDetail(Screen):
             self.parent.screens[15].clear_widgets()
             self.parent.screens[15].add_widget(Draft())
 
-        self.parent.current = 'allmails' \
-            if state.is_allmail else state.detailPageType
+        # self.parent.current = 'allmails' \
+        #     if state.is_allmail else state.detailPageType
         if state.detailPageType != 'draft':
             msg_count_objs.trash_cnt.badge_text = str(
                 int(state.trash_count) + 1)
@@ -1806,7 +1851,15 @@ class MailDetail(Screen):
             self.parent.screens[4].add_widget(Trash())
             self.parent.screens[16].clear_widgets()
             self.parent.screens[16].add_widget(Allmails())
-        state.kivyapp.back_press()
+        self.children[0].children[0].active = True
+        Clock.schedule_once(self.callback_for_delete, 3)
+
+    def callback_for_delete(self, dt=0):
+        self.children[0].children[0].active = False
+        state.kivyapp.set_common_header()
+        self.parent.current = 'allmails' \
+            if state.is_allmail else state.detailPageType
+        state.detailPageType = ''
         toast('Deleted')
 
     def inbox_reply(self):
@@ -1823,10 +1876,6 @@ class MailDetail(Screen):
         state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
         self.parent.current = 'create'
         state.kivyapp.set_navbar_for_composer()
-
-    def copy_sent_mail(self):
-        """Method used for copying sent mail to the composer."""
-        pass
 
     def write_msg(self, navApp):
         """Method used to write on draft mail."""
@@ -2111,17 +2160,13 @@ class Draft(Screen):
         sendMessageToPeople = True
         if sendMessageToPeople:
             from addresses import decodeAddress
-            # status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-            #     toAddress)
             streamNumber, ripe = decodeAddress(toAddress)[2:]
             from addresses import addBMIfNotPresent
             toAddress = addBMIfNotPresent(toAddress)
-            # statusIconColor = 'red'
             stealthLevel = BMConfigParser().safeGetInt(
                 'bitmessagesettings', 'ackstealthlevel')
             from helper_ackPayload import genAckPayload
             ackdata = genAckPayload(streamNumber, stealthLevel)
-            # t = ()
             sqlExecute(
                 '''INSERT INTO sent VALUES
                 (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -2187,9 +2232,9 @@ class Allmails(Screen):
         self.all_mails = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
             " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
-            " folder = 'sent' UNION SELECT toaddress, fromaddress, subject,"
+            " folder = 'sent' and fromaddress = '{0}' UNION SELECT toaddress, fromaddress, subject,"
             " message, folder, msgid As id, DATE(received) As actionTime"
-            " FROM inbox WHERE folder = 'inbox' ORDER BY actionTime DESC")
+            " FROM inbox WHERE folder = 'inbox' and toaddress = '{0}' ORDER BY actionTime DESC".format(account))
         if self.all_mails:
             state.kivyapp.root.children[2].children[
                 0].ids.allmail_cnt.badge_text = str(
