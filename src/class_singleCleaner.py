@@ -30,10 +30,10 @@ from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from debug import logger
+from datetime import datetime, timedelta
 import knownnodes
 import queues
 import state
-
 
 class singleCleaner(StoppableThread):
     """Base method that Cleanup knownnodes and handle possible severe exception"""
@@ -111,7 +111,7 @@ class singleCleaner(StoppableThread):
                         resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
                         resendMsg(ackData)
-
+            deleteTrashMsgPermonantly()
             try:
                 # Cleanup knownnodes and handle possible severe exception
                 # while writing it to disk
@@ -202,3 +202,12 @@ def resendMsg(ackdata):
         'updateStatusBar',
         'Doing work necessary to again attempt to deliver a message...'
     ))
+
+
+def deleteTrashMsgPermonantly():
+    """This method is used to delete old messages"""
+    ndays_before_time = datetime.now() - timedelta(days=30)
+    old_messages = time.mktime(ndays_before_time.timetuple())
+    sqlExecute("delete from sent where folder = 'trash' and lastactiontime <= ?;", int(old_messages))
+    sqlExecute("delete from inbox where folder = 'trash' and received <= ?;", int(old_messages))
+    return
