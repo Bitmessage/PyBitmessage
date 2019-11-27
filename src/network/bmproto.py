@@ -1,7 +1,7 @@
 """
-Bitmessage Protocol
+Class BMProto defines bitmessage's network protocol workflow.
 """
-# pylint: disable=attribute-defined-outside-init, too-few-public-methods
+
 import base64
 import hashlib
 import logging
@@ -66,6 +66,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.pendingUpload = RandomTrackingDict()
         # canonical identifier of network group
         self.network_group = None
+        # userAgent initialization
+        self.userAgent = ''
 
     def bm_proto_reset(self):
         """Reset the bitmessage object parser"""
@@ -100,7 +102,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             length=protocol.Header.size, expectBytes=self.payloadLength)
         return True
 
-    def state_bm_command(self):     # pylint: disable=too-many-branches
+    def state_bm_command(self):   # pylint: disable=too-many-branches
         """Process incoming command"""
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
@@ -185,7 +187,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         return Node(services, host, port)
 
-    # pylint: disable=too-many-branches, too-many-statements
+    # pylint: disable=too-many-branches,too-many-statements
     def decode_payload_content(self, pattern="v"):
         """
         Decode the payload depending on pattern:
@@ -202,7 +204,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         , = end of array
         """
 
-        # pylint: disable=inconsistent-return-statements
         def decode_simple(self, char="v"):
             """Decode the payload using one char pattern"""
             if char == "v":
@@ -221,6 +222,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.payloadOffset += 8
                 return struct.unpack(">Q", self.payload[
                     self.payloadOffset - 8:self.payloadOffset])[0]
+            return None
 
         size = None
         isArray = False
@@ -254,10 +256,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     ])
                     parserStack[-2][4] = len(parserStack[-2][3])
                 else:
-                    for j in range(parserStack[-1][4], len(parserStack[-1][3])):
+                    j = 0
+                    for j in range(
+                            parserStack[-1][4], len(parserStack[-1][3])):
                         if parserStack[-1][3][j] not in "lL0123456789":
                             break
-                    # pylint: disable=undefined-loop-variable
                     parserStack.append([
                         size, size, isArray,
                         parserStack[-1][3][parserStack[-1][4]:j + 1], 0, []
@@ -268,7 +271,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             elif i == "s":
                 # if parserStack[-2][2]:
                 #    parserStack[-1][5].append(self.payload[
-                #        self.payloadOffset:self.payloadOffset + parserStack[-1][0]])
+                #        self.payloadOffset:self.payloadOffset
+                #        + parserStack[-1][0]])
                 # else:
                 parserStack[-1][5] = self.payload[
                     self.payloadOffset:self.payloadOffset + parserStack[-1][0]]
@@ -339,6 +343,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def _command_inv(self, dandelion=False):
+        """
+        Common inv announce implementation:
+        both inv and dinv depending on *dandelion* kwarg
+        """
         items = self.decode_payload_content("l32s")
 
         if len(items) > MAX_OBJECT_COUNT:
@@ -376,10 +384,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             nonce, expiresTime, objectType, version, streamNumber,
             self.payload, self.payloadOffset)
 
-        if len(self.payload) - self.payloadOffset > MAX_OBJECT_PAYLOAD_SIZE:
+        payload_len = len(self.payload) - self.payloadOffset
+        if payload_len > MAX_OBJECT_PAYLOAD_SIZE:
             logger.info(
-                'The payload length of this object is too large (%d bytes).'
-                ' Ignoring it.', len(self.payload) - self.payloadOffset)
+                'The payload length of this object is too large'
+                ' (%d bytes). Ignoring it.', payload_len)
             raise BMProtoExcessiveDataError()
 
         try:
@@ -434,9 +443,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_addr(self):
         """Incoming addresses, process them"""
-        # pylint: disable=redefined-outer-name
-        addresses = self._decode_addr()
-        for seenTime, stream, _, ip, port in addresses:
+        # not using services
+        for seenTime, stream, _, ip, port in self._decode_addr():
             ip = str(ip)
             if (
                 stream not in state.streamsInWhichIAmParticipating
@@ -446,8 +454,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 continue
             decodedIP = protocol.checkIPAddress(ip)
             if (
-                decodedIP
-                and time.time() - seenTime > 0
+                decodedIP and time.time() - seenTime > 0
                 and seenTime > time.time() - ADDRESS_ALIVE
                 and port > 0
             ):
@@ -475,7 +482,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.append_write_buf(protocol.CreatePacket('pong'))
         return True
 
-    def bm_command_pong(self):  # pylint: disable=no-self-use
+    @staticmethod
+    def bm_command_pong():
         """
         Incoming pong.
         Ignore it. PyBitmessage pings connections after about 5 minutes
@@ -562,7 +570,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 " compared to mine. Closing connection.", fatal=2))
             logger.info(
                 "%s's time is too far in the future (%s seconds)."
-                " Closing connection to it.", self.destination, self.timeOffset)
+                " Closing connection to it.",
+                self.destination, self.timeOffset)
             BMProto.timeOffsetWrongCount += 1
             return False
         elif self.timeOffset < -MAX_TIME_OFFSET:
@@ -570,8 +579,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 errorText="Your time is too far in the past compared to mine."
                 " Closing connection.", fatal=2))
             logger.info(
-                "%s's time is too far in the past (timeOffset %s seconds)."
-                " Closing connection to it.", self.destination, self.timeOffset)
+                "%s's time is too far in the past"
+                " (timeOffset %s seconds). Closing connection to it.",
+                self.destination, self.timeOffset)
             BMProto.timeOffsetWrongCount += 1
             return False
         else:
@@ -584,7 +594,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closed connection to %s because there is no overlapping'
                 ' interest in streams.', self.destination)
             return False
-        if self.destination in connectionpool.BMConnectionPool().inboundConnections:
+        if connectionpool.BMConnectionPool().inboundConnections.get(
+                self.destination):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
@@ -594,7 +605,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         'Closed connection to %s because we are already'
                         ' connected to that IP.', self.destination)
                     return False
-            except Exception:
+            except Exception:  # TODO: exception types
                 pass
         if not self.isOutbound:
             # incoming from a peer we're connected to as outbound,
@@ -614,8 +625,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     'Closed connection to %s due to server full'
                     ' or duplicate inbound/outbound.', self.destination)
                 return False
-        if connectionpool.BMConnectionPool().isAlreadyConnected(
-                self.nonce):
+        if connectionpool.BMConnectionPool().isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="I'm connected to myself. Closing connection.",
                 fatal=2))
@@ -628,7 +638,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):
-        """Stop downloading an object"""
+        """Stop downloading object *hashId*"""
         for connection in connectionpool.BMConnectionPool().connections():
             try:
                 del connection.objectsNewToMe[hashId]
@@ -658,7 +668,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         except AttributeError:
             try:
                 logger.debug(
-                    '%(host)s:%(port)i: closing', self.destination._asdict())
+                    '%s:%i: closing',
+                    self.destination.host, self.destination.port)
             except AttributeError:
                 logger.debug('Disconnected socket closing')
         AdvancedDispatcher.handle_close(self)
