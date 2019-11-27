@@ -6,8 +6,9 @@ src/network/announcethread.py
 import time
 
 import state
+
 from bmconfigparser import BMConfigParser
-from network.bmproto import BMProto
+from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
 from node import Peer
@@ -41,4 +42,4 @@ class AnnounceThread(StoppableThread):
                         '127.0.0.1',
                         BMConfigParser().safeGetInt('bitmessagesettings', 'port')),
                     time.time())
-                connection.append_write_buf(BMProto.assembleAddr([addr]))
+                connection.append_write_buf(assemble_addr([addr]))

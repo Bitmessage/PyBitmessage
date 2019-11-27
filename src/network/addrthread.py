@@ -1,6 +1,11 @@
+"""
+Announce addresses as they are received from other hosts
+"""
 import Queue
 
 import state
+from helper_random import randomshuffle
+from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
 from queues import addrQueue
 from threads import StoppableThread
@@ -15,15 +20,26 @@ class AddrThread(StoppableThread):
             while True:
                 try:
                     data = addrQueue.get(False)
-                    chunk.append((data[0], data[1]))
-                    if len(data) > 2:
-                        source = BMConnectionPool().getConnectionByAddr(data[2])
+                    chunk.append(data)
                 except Queue.Empty:
                     break
-                except KeyError:
-                    continue
 
-            # finish
+            if chunk:
+                # Choose peers randomly
+                connections = BMConnectionPool().establishedConnections()
+                randomshuffle(connections)
+                for i in connections:
+                    randomshuffle(chunk)
+                    filtered = []
+                    for stream, peer, seen, destination in chunk:
+                        # peer's own address or address received from peer
+                        if i.destination in (peer, destination):
+                            continue
+                        if stream not in i.streams:
+                            continue
+                        filtered.append((stream, peer, seen))
+                    if filtered:
+                        i.append_write_buf(assemble_addr(filtered))
 
             addrQueue.iterate()
             for i in range(len(chunk)):
