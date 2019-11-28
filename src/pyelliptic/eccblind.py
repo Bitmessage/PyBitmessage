@@ -11,9 +11,21 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # pylint: disable=invalid-name
 
 from openssl import OpenSSL
+from struct import pack, unpack
+import hash as Hash
+import msgpack
+from datetime import datetime
+from datetime import timedelta
+import timedelta
+cur = datetime.now()
+exp = datetime.now()+(timedelta.Timedelta(days = 365))
+def encode_datetime(obj):
+        return {'Time': int(exp.strftime("%s"))}
+key_m = ''
 
 
 class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
+    keymetadata = {"PubKey_expiry_Date": "", "Value" : "",}
     """
     Class for ECC blind signature functionality
     """
@@ -76,7 +88,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
                                                     ctx)
         return x0
 
-    def __init__(self, curve="secp256k1", pubkey=None):
+    def __init__(self, curve="secp256k1", pubkey=None ):
         self.ctx = OpenSSL.BN_CTX_new()
 
         if pubkey:
@@ -92,7 +104,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
             # new keypair
             self.keypair = ECCBlind.ec_gen_keypair(self.group, self.ctx)
-
+            key_m = self.keypair
             self.Q = self.keypair[1]
 
         self.pubkey = (self.group, self.G, self.n, self.Q)
@@ -114,7 +126,8 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         return self.R
 
-    def create_signing_request(self, R, msg):
+    def create_signing_request(self, R, msg,val,level):
+        print("Value of msg in create sign API",msg)
         """
         Requester creates a new signing request
         """
@@ -151,6 +164,13 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
+        msg = {"Public_key":msg}
+        if level is 1:
+            keymetadata = {"PubKey_expiry_Date": exp, "Value" : val,}
+            msg = msgpack.packb([msg,keymetadata], default=encode_datetime, use_bin_type=True)
+        else:
+            msg = msgpack.packb([msg,self.keymetadata], default=encode_datetime, use_bin_type=True)
+        msg = Hash.hmac_sha256(msg, msg)# Here key is only the msg as we are passing pubkeys in msg
         OpenSSL.BN_bin2bn(msg, len(msg), self.m)
 
         self.m_ = OpenSSL.BN_new()
@@ -180,14 +200,20 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         self.signature = (s, self.F)
         return self.signature
 
-    def verify(self, msg, signature):
+    def verify(self, msg, signature,val , level):
         """
         Verify signature with certifier's pubkey
         """
-
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        msg = {"Public_key":msg}
+        if level is 1:
+            keymetadata = {"PubKey_expiry_Date": exp, "Value" : val,}
+            msg = msgpack.packb([msg,keymetadata], default=encode_datetime, use_bin_type=True)
+        else:
+            msg = msgpack.packb([msg,self.keymetadata], default=encode_datetime, use_bin_type=True)
+        msg_hash = Hash.hmac_sha256(msg, msg)
+        OpenSSL.BN_bin2bn(msg_hash, len(msg_hash), self.m)
 
         # init
         s, self.F = signature
@@ -207,5 +233,4 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         if retval == -1:
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
-            return retval == 0
-
+            return retval == 0 , msg
