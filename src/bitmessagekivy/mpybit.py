@@ -480,7 +480,7 @@ class AddressBook(Screen):
 
     def update_addressBook_on_scroll(self, exist_addresses):
         """This method is used to load more data on scroll down"""
-        self.set_mdList(exist_addresses,exist_addresses + 5)
+        self.set_mdList(exist_addresses, exist_addresses + 5)
 
     @staticmethod
     def refreshs(*args):
@@ -1074,10 +1074,15 @@ class Trash(Screen):
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
         self.trash_messages = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder ||',' || 'sent' as  folder, ackdata As id, DATE(lastactiontime)"
-            " As actionTime FROM sent WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
-            " SELECT toaddress, fromaddress, subject, message, folder ||',' || 'inbox' as  folder, msgid As id, DATE(received) As"
-            " actionTime FROM inbox WHERE folder = 'trash' and toaddress = '{0}' ORDER BY actionTime DESC".format(state.association))
+            "SELECT toaddress, fromaddress, subject, message,"
+            " folder ||',' || 'sent' as  folder, ackdata As id,"
+            " DATE(lastactiontime) As actionTime FROM sent"
+            " WHERE folder = 'trash' and fromaddress = '{0}' UNION"
+            " SELECT toaddress, fromaddress, subject, message,"
+            " folder ||',' || 'inbox' as  folder, msgid As id,"
+            " DATE(received) As actionTime FROM inbox WHERE"
+            " folder = 'trash' and toaddress = '{0}'"
+            " ORDER BY actionTime DESC".format(state.association))
         if self.trash_messages:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             src_mng_obj.trash_cnt.badge_text = str(len(self.trash_messages))
@@ -1157,9 +1162,13 @@ class Trash(Screen):
     def delete_confirmation(self):
         """This method is used to show delete confirmation popup"""
         delete_msg_dialog = MDDialog(
-            text='Are you sure you want to delete this message permanently from trash?',
-            title='', size_hint=(.8, .25), text_button_ok='Yes',
-            text_button_cancel='No', events_callback=self.callback_for_delete_msg)
+            text='Are you sure you want to delete this' /
+            ' message permanently from trash?',
+            title='',
+            size_hint=(.8, .25),
+            text_button_ok='Yes',
+            text_button_cancel='No',
+            events_callback=self.callback_for_delete_msg)
         delete_msg_dialog.open()
 
     def callback_for_delete_msg(self, text_item):
@@ -1181,7 +1190,7 @@ class Trash(Screen):
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         if int(state.trash_count) > 0:
             msg_count_objs.trash_cnt.badge_text = str(
-                    int(state.trash_count) - 1)
+                int(state.trash_count) - 1)
             state.trash_count = str(int(state.trash_count) - 1)
             Clock.schedule_once(self.callback_for_screen_load, 1)
 
@@ -1827,7 +1836,8 @@ class MailDetail(Screen):
         state.searcing_text = ''
         self.children[0].children[0].active = True
         if state.detailPageType == 'sent':
-            state.kivyapp.root.ids.sc4.children[2].children[1].ids.search_field.text = ''
+            state.kivyapp.root.ids.sc4.children[
+                2].children[1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE"
                 " ackdata = ?;", str(state.mail_id))
@@ -1836,8 +1846,10 @@ class MailDetail(Screen):
             self.parent.screens[3].ids.ml.clear_widgets()
             self.parent.screens[3].loadSent(state.association)
         elif state.detailPageType == 'inbox':
-            state.kivyapp.root.ids.sc1.children[2].children[1].ids.search_field.text = ''
-            self.parent.screens[0].children[2].children[1].ids.search_field.text = ''
+            state.kivyapp.root.ids.sc1.children[
+                2].children[1].ids.search_field.text = ''
+            self.parent.screens[0].children[2].children[
+                1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE"
                 " msgid = ?;", str(state.mail_id))
@@ -1846,7 +1858,7 @@ class MailDetail(Screen):
             state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
             self.parent.screens[0].loadMessagelist(state.association)
-            
+
         elif state.detailPageType == 'draft':
             sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
                 state.mail_id))
@@ -1872,6 +1884,7 @@ class MailDetail(Screen):
         Clock.schedule_once(self.callback_for_delete, 4)
 
     def callback_for_delete(self, dt=0):
+        """Delete method from allmails"""
         self.children[0].children[0].active = False
         state.kivyapp.set_common_header()
         self.parent.current = 'allmails' \
@@ -2249,9 +2262,11 @@ class Allmails(Screen):
         self.all_mails = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
             " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
-            " folder = 'sent' and fromaddress = '{0}' UNION SELECT toaddress, fromaddress, subject,"
-            " message, folder, msgid As id, DATE(received) As actionTime"
-            " FROM inbox WHERE folder = 'inbox' and toaddress = '{0}' ORDER BY actionTime DESC".format(account))
+            " folder = 'sent' and fromaddress = '{0}' UNION SELECT toaddress,"
+            " fromaddress, subject, message, folder, msgid As id,"
+            " DATE(received) As actionTime FROM inbox WHERE"
+            " folder = 'inbox' and toaddress = '{0}'"
+            " ORDER BY actionTime DESC".format(account))
         if self.all_mails:
             state.kivyapp.root.children[2].children[
                 0].ids.allmail_cnt.badge_text = str(
