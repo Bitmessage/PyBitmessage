@@ -834,12 +834,15 @@ class Random(Screen):
                   for obj in BMConfigParser().addresses()]
         if entered_label in lables:
             self.ids.label.error = True
-            self.ids.label.helper_text = 'Label name is already exist'
+            self.ids.label.helper_text = 'Label name is already exist you can try this Ex. ( {0}_1, {0}_2 )'.format(entered_label)
         elif entered_label:
             self.ids.label.error = False
         else:
             self.ids.label.error = False
             self.ids.label.helper_text = 'This field is required'
+
+    def reset_address_label(self):
+        self.ids.label.text = ''
 
 
 class Sent(Screen):
@@ -1621,6 +1624,20 @@ class NavigateApp(App):
                 delete_btn]
         toolbar_obj.right_action_items = dynamic_list
 
+    def load_screen(self, instance):
+        """This method is used for loading screen on every click"""
+        if instance.text == 'Inbox':
+            self.root.ids.scr_mngr.current = 'inbox'
+            self.root.ids.sc1.children[1].active = True
+            self.root.ids.sc1.ids.ml.clear_widgets()
+        Clock.schedule_once(partial(self.load_screen_callback, instance), 0.5)
+
+    def load_screen_callback(self, instance, dt=0):
+        """This method is rotating loader for few seconds"""
+        if instance.text == 'Inbox':
+            self.root.ids.sc1.loadMessagelist(state.association)
+            self.root.ids.sc1.children[1].active = False
+
 
 class GrashofPopup(Popup):
     """Methods for saving contacts, error messages."""
@@ -1808,6 +1825,7 @@ class MailDetail(Screen):
         """Method for mail delete."""
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         state.searcing_text = ''
+        self.children[0].children[0].active = True
         if state.detailPageType == 'sent':
             state.kivyapp.root.ids.sc4.children[2].children[1].ids.search_field.text = ''
             sqlExecute(
@@ -1847,12 +1865,11 @@ class MailDetail(Screen):
                 int(state.all_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
-            self.parent.screens[4].clear_widgets()
-            self.parent.screens[4].add_widget(Trash())
-            self.parent.screens[16].clear_widgets()
-            self.parent.screens[16].add_widget(Allmails())
-        self.children[0].children[0].active = True
-        Clock.schedule_once(self.callback_for_delete, 3)
+            self.parent.screens[4].ids.ml.clear_widgets()
+            self.parent.screens[4].init_ui(dt=0)
+            self.parent.screens[16].ids.ml.clear_widgets()
+            self.parent.screens[16].init_ui(dt=0)
+        Clock.schedule_once(self.callback_for_delete, 4)
 
     def callback_for_delete(self, dt=0):
         self.children[0].children[0].active = False
