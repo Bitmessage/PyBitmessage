@@ -834,7 +834,9 @@ class Random(Screen):
                   for obj in BMConfigParser().addresses()]
         if entered_label in lables:
             self.ids.label.error = True
-            self.ids.label.helper_text = 'Label name is already exist you can try this Ex. ( {0}_1, {0}_2 )'.format(entered_label)
+            self.ids.label.helper_text = 'Label name is already exist you'\
+                ' can try this Ex. ( {0}_1, {0}_2 )'.format(
+                    entered_label)
         elif entered_label:
             self.ids.label.error = False
         else:
@@ -842,6 +844,7 @@ class Random(Screen):
             self.ids.label.helper_text = 'This field is required'
 
     def reset_address_label(self):
+        """Resetting address labels"""
         self.ids.label.text = ''
 
 
@@ -1162,7 +1165,7 @@ class Trash(Screen):
     def delete_confirmation(self):
         """Show confirmation delete popup"""
         delete_msg_dialog = MDDialog(
-            text='Are you sure you want to delete this' /
+            text='Are you sure you want to delete this'
             ' message permanently from trash?',
             title='',
             size_hint=(.8, .25),
