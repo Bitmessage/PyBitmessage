@@ -15,6 +15,7 @@
 #:import Factory kivy.factory.Factory
 #:import MDScrollViewRefreshLayout kivymd.refreshlayout.MDScrollViewRefreshLayout
 #:import MDSpinner kivymd.spinner.MDSpinner
+#:import NoTransition kivy.uix.screenmanager.NoTransition
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -58,6 +59,7 @@
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "0"
+        on_press: app.load_screen(self)
     NavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
@@ -70,21 +72,21 @@
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
         badge_text: "0"
-    NavigationDrawerIconButton: 
-        text: "Starred"
-        icon:'star'
-        on_release: app.root.ids.scr_mngr.current = 'starred'
-        badge_text: "0"
-    NavigationDrawerIconButton:
-        icon: 'archive'
-        text: "Archieve"
-        on_release: app.root.ids.scr_mngr.current = 'archieve'
-        badge_text: "0"
-    NavigationDrawerIconButton:
-        icon: 'email-open-outline'
-        text: "Spam"
-        on_release: app.root.ids.scr_mngr.current = 'spam'
-        badge_text: "0"
+    #NavigationDrawerIconButton:
+        #text: "Starred"
+        #icon:'star'
+        #on_release: app.root.ids.scr_mngr.current = 'starred'
+        #badge_text: "0"
+    #NavigationDrawerIconButton:
+        #icon: 'archive'
+        #text: "Archieve"
+        #on_release: app.root.ids.scr_mngr.current = 'archieve'
+        #badge_text: "0"
+    #NavigationDrawerIconButton:
+        #icon: 'email-open-outline'
+        #text: "Spam"
+        #on_release: app.root.ids.scr_mngr.current = 'spam'
+        #badge_text: "0"
     NavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
@@ -196,6 +198,7 @@ NavigationLayout:
 
 <Inbox>:
     name: 'inbox'
+    transition: NoTransition()
     BoxLayout:
         orientation: 'vertical'
         spacing: dp(10)
@@ -478,6 +481,7 @@ NavigationLayout:
                         size_hint: .5, .35
                         height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
+                        on_press: app.root.ids.sc7.reset_address_label()
                         MDLabel:
                             font_style: 'Title'
                             text: 'proceed'
