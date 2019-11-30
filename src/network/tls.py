@@ -67,7 +67,7 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
         self.isSSL = False
 
     def state_tls_init(self):
-        print()
+        # print()
         """Prepare sockets for TLS handshake"""
         # pylint: disable=attribute-defined-outside-init
         self.isSSL = True
@@ -95,16 +95,16 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
                 ciphers=self.ciphers, do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
-        print('before tls file python 98 state are :- {}'.format(self.state))
+        # print('before tls file python 98 state are :- {}'.format(self.state))
         self.set_state("tls_handshake")
-        print('after tls file python 100 state are :- {}'.format(self.state))
+        # print('after tls file python 100 state are :- {}'.format(self.state))
         return False
 #        if hasattr(self.socket, "context"):
 #            self.socket.context.set_ecdh_curve("secp256k1")
 
     @staticmethod
     def state_tls_handshake():
-        print("tls's state_tls_handshake method in line 107")
+        # print("tls's state_tls_handshake method in line 107")
         """Do nothing while TLS handshake is pending, as during this phase we need to react to callbacks instead"""
         return False
 
@@ -182,7 +182,7 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
             return
 
     def tls_handshake(self):
-        print('inside the tls_handshake')
+        # print('inside the tls_handshake')
         """Perform TLS handshake and handle its stages"""
         # wait for flush
         if self.write_buf:

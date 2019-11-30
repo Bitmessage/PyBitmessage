@@ -18,7 +18,7 @@ from debug import logger
 from network.proxy import Proxy
 from singleton import Singleton
 from network.tcp import (
-    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection,bootstrap)
+        TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection,bootstrap)
 from network.udp import UDPSocket
 
 
@@ -147,6 +147,7 @@ class BMConnectionPool(object):
         port = int(BMConfigParser().safeGet("bitmessagesettings", "port"))
         # correct port even if it changed
         ls = TCPServer(host=bind, port=port)
+        print('inside the startListening method')
         self.listeningSockets[ls.destination] = ls
 
     def startUDPSocket(self, bind=None):
@@ -219,6 +220,7 @@ class BMConnectionPool(object):
                 self.startBootstrappers()
                 knownnodes.knownNodesActual = True
             if not self.bootstrapped:
+
                 self.bootstrapped = True
                 Proxy.proxy = (
                     BMConfigParser().safeGet(
@@ -295,6 +297,7 @@ class BMConnectionPool(object):
             ):
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
+
         if acceptConnections:
             if not self.listeningSockets:
                 if BMConfigParser().safeGet('network', 'bind') == '':
@@ -306,7 +309,7 @@ class BMConnectionPool(object):
                     ).split():
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
-            if not self.udpSockets:
+            if False:
                 # self.udpSockets :- {'0.0.0.0': <network.udp.UDPSocket connected at 0x7f95cce7d7b8>}
                 if BMConfigParser().safeGet('network', 'bind') == '':
                     self.startUDPSocket()

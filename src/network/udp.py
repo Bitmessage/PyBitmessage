@@ -72,11 +72,14 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
         addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid
         # attacks from random IPs on the internet
-        if not self.local:
-            return True
+        # if not self.local:
+        #     return True
+        self.local = True
         remoteport = False
         for seenTime, stream, services, ip, port in addresses:
-            decodedIP = protocol.checkIPAddress(str(ip))
+            # decodedIP = bool(protocol.checkIPAddress(ip))
+            decodedIP = False
+
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if (seenTime < time.time() - self.maxTimeOffset or seenTime > time.time() + self.maxTimeOffset):
@@ -88,7 +91,7 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
         if remoteport is False:
             return True
         logger.debug(
-            "received peer discovery from %s:%i (port %i):",
+            "received peer discovery from {}:{} (port {}):",
             self.destination.host, self.destination.port, remoteport)
         if self.local:
             state.discoveredPeers[

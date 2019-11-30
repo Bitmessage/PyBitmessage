@@ -367,8 +367,10 @@ class TCPServer(AdvancedDispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         for attempt in range(50):
+            print('inside the attempt of line 371')
             try:
                 if attempt > 0:
+                    print('inside the if condition attempt in 373')
                     port = random.randint(32767, 65535)
                 self.bind((host, port))
             except socket.error as e:
@@ -376,6 +378,7 @@ class TCPServer(AdvancedDispatcher):
                     continue
             else:
                 if attempt > 0:
+                    print('inside the if condition attempt in 381')
                     BMConfigParser().set(
                         'bitmessagesettings', 'port', str(port))
                     BMConfigParser().save()

@@ -32,7 +32,7 @@ def connectedHostsList():
             retval.append(i)
         except AttributeError:
             pass
-    print('#################### retval -{}'.format(retval))
+    # print('#################### retval -{}'.format(retval))
     return retval
 
 

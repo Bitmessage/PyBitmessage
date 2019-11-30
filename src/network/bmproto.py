@@ -30,6 +30,19 @@ from network.objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from network.randomtrackingdict import RandomTrackingDict
 
+global addr_count
+addr_count = 0
+
+global addr_verack
+addr_verack = 0
+
+global addr_version
+addr_version = 0
+
+# global addr_count
+# addr_count = 0
+
+count = 0
 
 class BMProtoError(ProxyError):
     """A Bitmessage Protocol Base Error"""
@@ -89,6 +102,24 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
         #its shoule be in string
         self.command = self.command.rstrip('\x00'.encode('utf-8'))
+        global count,addr_version,addr_count,addr_verack
+        count+=1
+        if self.command == 'verack'.encode():
+            addr_verack+=1
+            print('the addr_verack count are -{}'.format(addr_verack))
+
+        if self.command == 'version'.encode():
+            addr_version+=1
+            print('the addr_version count are -{}'.format(addr_version))
+
+        if self.command == 'addr'.encode():
+            addr_count+=1
+            print('the addr_count count are -{}'.format(addr_count))
+
+        # print('The count of the excaution are -{}'.format(count))
+        # print('-----------count---------------{}'.format(count))
+        # print('------self command-----------{}'.format(self.command))
+        # print('----------self---------------{}'.format(self))
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
             #in the advancedispatched and length commend's
@@ -158,7 +189,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.set_state("close")
             return False
         if retval:
-            print('if retval is true and inside the if ')
+            # print('if retval is true and inside the if ')
             self.set_state("bm_header", length=self.payloadLength)
             self.bm_proto_reset()
         # else assume the command requires a different state to follow
@@ -437,8 +468,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return self.decode_payload_content("LQIQ16sH")
 
     def bm_command_addr(self):
-        print('+++++++++++++++++++++++++++\
-            bm_command_addr bm_command_addr bm_command_addr ++++++++++++++++')
+        # print('+++++++++++++++++++++++++++\
+            # bm_command_addr bm_command_addr bm_command_addr ++++++++++++++++')
         """Incoming addresses, process them"""
         addresses = self._decode_addr()      # pylint: disable=redefined-outer-name
         for i in addresses:
@@ -506,7 +537,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             length=self.payloadLength, expectBytes=0)
         return False
     def bm_command_version(self):
-        print('inside the bmproto ')
+        # print('inside the bmproto ')
         """
         Incoming version.
         Parse and log, remember important things, like streams, bitfields, etc.
@@ -543,12 +574,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.isSSL = True
         if not self.verackReceived:
             return True
-        print('inside the bmproto line')
-        print('before the value of state are :-{}'.format(self.state))
+        # print('inside the bmproto line')
+        # print('before the value of state are :-{}'.format(self.state))
         self.set_state(
             "tls_init" if self.isSSL else "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
-        print('After the value of state are :-{}'.format(self.state))
+        # print('After the value of state are :-{}'.format(self.state))
         return False
 
     def peerValidityChecks(self):   # pylint: disable=too-many-return-statements
@@ -591,9 +622,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         if self.destination in connectionpool.BMConnectionPool().inboundConnections:
             try:
-                print('+++++++++++++++++++++++++++')
-                print('self destination host -{}'.format(self.destination.host))
-                print('++++++++++++++++++++++++++++++')
+                # print('+++++++++++++++++++++++++++')
+                # print('self destination host -{}'.format(self.destination.host))
+                # print('++++++++++++++++++++++++++++++')
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
                         errorText="Too many connections from your IP."
