@@ -456,15 +456,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 if len(knownnodes.knownNodes[stream]) < \
                         BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
                     with knownnodes.knownNodesLock:
-                        try:
-                            knownnodes.knownNodes[stream][peer]["lastseen"] = \
-                                seenTime
-                        except (TypeError, KeyError):
-                            knownnodes.knownNodes[stream][peer] = {
-                                "lastseen": seenTime,
-                                "rating": 0,
-                                "self": False,
-                            }
+                        knownnodes.addKnownNode(stream, peer, seenTime)
+
                     # since we don't track peers outside of knownnodes,
                     # only spread if in knownnodes to prevent flood
                     # DISABLED TO WORKAROUND FLOOD/LEAK

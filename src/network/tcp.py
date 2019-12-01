@@ -256,12 +256,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         TLSDispatcher.handle_read(self)
         if self.isOutbound and self.fullyEstablished:
             for s in self.streams:
-                try:
-                    with knownnodes.knownNodesLock:
-                        knownnodes.knownNodes[s][self.destination][
-                            "lastseen"] = time.time()
-                except KeyError:
-                    pass
+                with knownnodes.knownNodesLock:
+                    knownnodes.addKnownNode(s, self.destination, time.time())
         receiveDataQueue.put(self.destination)
 
     def handle_write(self):

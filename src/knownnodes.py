@@ -65,7 +65,6 @@ def json_deserialize_knownnodes(source):
         info = node['info']
         peer = Peer(str(peer['host']), peer.get('port', 8444))
         knownNodes[node['stream']][peer] = info
-
         if not (knownNodesActual
                 or info.get('self')) and peer not in DEFAULT_NODES:
             knownNodesActual = True
@@ -95,11 +94,27 @@ def saveKnownNodes(dirName=None):
 
 
 def addKnownNode(stream, peer, lastseen=None, is_self=False):
-    """Add a new node to the dict"""
+    """
+    Add a new node to the dict or update lastseen if it already exists
+    """
+    # pylint: disable=too-many-branches
+    rating = 0.0
+    if not lastseen:
+        # FIXME: maybe about 28 days?
+        lastseen = int(time.time())
+    else:
+        lastseen = int(lastseen)
+        try:
+            knownNodes[stream][peer]['lastseen'] = lastseen
+        except KeyError:
+            pass
+        else:
+            return
+
     knownNodes[stream][peer] = {
-        "lastseen": lastseen or time.time(),
-        "rating": 1 if is_self else 0,
-        "self": is_self,
+        'lastseen': lastseen,
+        'rating': rating or 1 if is_self else 0,
+        'self': is_self,
     }
 
 
