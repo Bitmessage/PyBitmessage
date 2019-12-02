@@ -2,28 +2,27 @@ import os
 import unittest
 from ctypes import cast, c_char_p
 import sys
-sys.path.insert(1, '/home/cis/Peter_DebPackage/blindsig_Task/PyBitmessage/src/pyelliptic')
+sys.path.insert(1, '/home/cis/ektarepo/PyBitmessage/src/pyelliptic')
 from eccblind import ECCBlind
 from openssl import OpenSSL
 import msgpack
+from datetime import datetime
+from datetime import timedelta
+import timedelta
+cur = datetime.now()
+exp = datetime.now()+(timedelta.Timedelta(days = 365))
+def encode_datetime(obj):
+        return {'Time': int(exp.strftime("%s"))}
 signer_obj_list = []
 msgPubKey = []
 msg_list = []
 signature_list = []
-verify_msg = []
+msg_Chain = []
+test_sign = []
 
 class TestBlindSig(unittest.TestCase):
-    def verifySerialize(self,level):
-        i = level
-        while i >= 0:
-            if i is 0:
-                verifier_obj = ECCBlind(pubkey=signer_obj_list[0].pubkey)
-            else:
-                verifier_obj = ECCBlind(pubkey=signer_obj_list[i - 1].pubkey)
-            self.assertTrue(verifier_obj.verify(verify_msg[i], signature_list[i],20,i))
-            i = i - 1
+    keymetadata = {"PubKey_expiry_Date": "", "Value" : "",}
     def test_blind_sig(self):
-        msgChain = ""
         level = 0
         while level <= 4:
             signer_obj = ECCBlind()
@@ -34,12 +33,17 @@ class TestBlindSig(unittest.TestCase):
                 signer_obj = signer_obj_list[level - 1]               
 
             point_r = signer_obj.signer_init()
-            msgPubKey.append(signer_obj.pubkey)
-            msgChain = msgpack.packb([msgChain,msgPubKey])
-            verify_msg.append(msgChain)
-
+            PubKey = {"Public_Key":signer_obj.pubkey }
+                        
+            if level is 1:
+                keymetadata = {"PubKey_expiry_Date": exp, "Value" : 20,}
+                msg = msgpack.packb([PubKey,keymetadata], default=encode_datetime, use_bin_type=True)
+            else:
+                msg = msgpack.packb([PubKey,self.keymetadata], default=encode_datetime, use_bin_type=True)         
+            msg_Chain.append(msg)
+            
             requester_obj = ECCBlind(pubkey=signer_obj.pubkey)
-            msg_blinded = requester_obj.create_signing_request(point_r, msgChain,20,level)
+            msg_blinded = requester_obj.create_signing_request(point_r, msg)
             msg_blinded_str = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(msg_blinded))
             OpenSSL.BN_bn2bin(msg_blinded, msg_blinded_str)
 
@@ -57,7 +61,10 @@ class TestBlindSig(unittest.TestCase):
                                         cast(signature_blinded_str, c_char_p).value)
             level = level + 1
         level = level - 1
-        self.verifySerialize(level)
+        callChain = ECCBlind()
+        print("Verify msg before calling verifying chain ",msg_Chain)
+        callChain.verify_Chain(msg_Chain,signature_list,signer_obj_list)
 
 obj = TestBlindSig('test_blind_sig')
+
 obj.test_blind_sig()

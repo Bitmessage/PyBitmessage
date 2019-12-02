@@ -126,8 +126,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         return self.R
 
-    def create_signing_request(self, R, msg,val,level):
-        print("Value of msg in create sign API",msg)
+    def create_signing_request(self, R, msg):
         """
         Requester creates a new signing request
         """
@@ -164,12 +163,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
-        msg = {"Public_key":msg}
-        if level is 1:
-            keymetadata = {"PubKey_expiry_Date": exp, "Value" : val,}
-            msg = msgpack.packb([msg,keymetadata], default=encode_datetime, use_bin_type=True)
-        else:
-            msg = msgpack.packb([msg,self.keymetadata], default=encode_datetime, use_bin_type=True)
+       
         msg = Hash.hmac_sha256(msg, msg)# Here key is only the msg as we are passing pubkeys in msg
         OpenSSL.BN_bin2bn(msg, len(msg), self.m)
 
@@ -200,20 +194,15 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         self.signature = (s, self.F)
         return self.signature
 
-    def verify(self, msg, signature,val , level):
+    def verify(self, msg, signature):
         """
         Verify signature with certifier's pubkey
         """
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        msg = {"Public_key":msg}
-        if level is 1:
-            keymetadata = {"PubKey_expiry_Date": exp, "Value" : val,}
-            msg = msgpack.packb([msg,keymetadata], default=encode_datetime, use_bin_type=True)
-        else:
-            msg = msgpack.packb([msg,self.keymetadata], default=encode_datetime, use_bin_type=True)
+        msg = msgpack.packb(msg)
         msg_hash = Hash.hmac_sha256(msg, msg)
-        OpenSSL.BN_bin2bn(msg_hash, len(msg_hash), self.m)
+        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
 
         # init
         s, self.F = signature
@@ -233,4 +222,18 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         if retval == -1:
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
-            return retval == 0 , msg
+            return retval == 0 
+
+    def verify_Chain(self,verify_msg,signature_list,signer_obj_list):
+        i = len(verify_msg) - 1
+        verifier_obj = ECCBlind() 
+        print("Length of chain is ",i)
+        while i >= 0:            
+            msg = msgpack.unpackb(verify_msg[i])
+            ret = verifier_obj.verify(verify_msg[i]  , signature_list[i])
+            if ret is True:
+                print("Verify successfully")
+            else:
+                print("Verify Fails")
+            i = i - 1
+
