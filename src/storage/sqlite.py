@@ -70,15 +70,23 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
             return len(self._inventory) + sqlQuery(
                 'SELECT count(*) FROM inventory')[0][0]
 
-    def by_type_and_tag(self, objectType, tag):
-        """Return objects filtered by object type and tag"""
+    def by_type_and_tag(self, objectType, tag=None):
+        """
+        Get all inventory items of certain *objectType*
+        with *tag* if given.
+        """
+        query = [
+            'SELECT objecttype, streamnumber, payload, expirestime, tag'
+            ' FROM inventory WHERE objecttype=?', objectType]
+        if tag:
+            query[0] += ' AND tag=?'
+            query.append(sqlite3.Binary(tag))
         with self.lock:
-            values = [value for value in self._inventory.values()
-                      if value.type == objectType and value.tag == tag]
-            values += (InventoryItem(*value) for value in sqlQuery(
-                'SELECT objecttype, streamnumber, payload, expirestime, tag'
-                ' FROM inventory WHERE objecttype=? AND tag=?',
-                objectType, sqlite3.Binary(tag)))
+            values = [
+                value for value in self._inventory.values()
+                if value.type == objectType
+                and tag is None or value.tag == tag
+            ] + [InventoryItem(*value) for value in sqlQuery(*query)]
             return values
 
     def unexpired_hashes_by_stream(self, stream):

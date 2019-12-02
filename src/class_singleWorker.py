@@ -17,6 +17,7 @@ import helper_inbox
 import helper_msgcoding
 import helper_random
 import highlevelcrypto
+import knownnodes
 import l10n
 import proofofwork
 import protocol
@@ -113,6 +114,15 @@ class singleWorker(StoppableThread):
                     newack, oldack
                 )
                 del state.ackdataForWhichImWatching[oldack]
+
+        # For the case if user deleted knownnodes
+        # but is still having onionpeer objects in inventory
+        if not knownnodes.knownNodesActual:
+            for item in Inventory().by_type_and_tag(protocol.OBJECT_ONIONPEER):
+                queues.objectProcessorQueue.put((
+                    protocol.OBJECT_ONIONPEER, item.payload
+                ))
+                # FIXME: should also delete from inventory
 
         # give some time for the GUI to start
         # before we start on existing POW tasks.

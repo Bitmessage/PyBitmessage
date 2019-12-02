@@ -176,6 +176,7 @@ class objectProcessor(threading.Thread):
             return
         peer = Peer(host, port)
         with knownnodes.knownNodesLock:
+            # FIXME: adjust expirestime
             knownnodes.addKnownNode(
                 stream, peer, is_self=state.ownAddresses.get(peer))
 
