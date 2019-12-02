@@ -34,6 +34,9 @@ knownNodesForgetRating = -0.5
 
 knownNodesActual = False
 
+outages = {}
+"""a dict with all hosts"""
+
 logger = logging.getLogger('default')
 
 DEFAULT_NODES = (
@@ -71,7 +74,13 @@ def json_deserialize_knownnodes(source):
     for node in json.load(source):
         peer = node['peer']
         info = node['info']
-        peer = Peer(str(peer['host']), peer.get('port', 8444))
+        port = peer.get('port', 8444)
+        peer = Peer(str(peer['host']), port)
+        outages[peer.host] = {
+            'lastseen': info.get('lastseen', time.time()),
+            'port': port,
+            'stream': info.get('stream', 1)
+        }
         knownNodes[node['stream']][peer] = info
         if not (knownNodesActual
                 or info.get('self')) and peer not in DEFAULT_NODES:
@@ -121,11 +130,15 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     else:
         lastseen = int(lastseen)
         try:
+            prev = outages[peer.host]
+            if peer.port == prev['port']:
+                outages[peer.host]['lastseen'] = lastseen
             info = knownNodes[stream].get(peer)
-            if lastseen > info['lastseen']:
-                info['lastseen'] = lastseen
-        except (KeyError, TypeError):
+            info['lastseen'] = lastseen
+        except KeyError:
             pass
+        except TypeError:
+            rating = -0.2
         else:
             return
 
@@ -133,6 +146,22 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
         if len(knownNodes[stream]) > BMConfigParser().safeGetInt(
                 "knownnodes", "maxnodes"):
             return
+        try:
+            prev = outages[peer.host]
+        except KeyError:
+            outages[peer.host] = {
+                'stream': stream,
+                'port': peer.port,
+                'lastseen': lastseen
+            }
+        else:
+            if stream == prev['stream']:
+                if lastseen - prev['lastseen'] > 3600 * 24:
+                    # more than a day ago, this should be port change
+                    del knownNodes[stream][Peer(peer.host, prev['port'])]
+                    outages[peer.host]['port'] = peer.port
+                else:
+                    rating = -0.2
 
     knownNodes[stream][peer] = {
         'lastseen': lastseen,
