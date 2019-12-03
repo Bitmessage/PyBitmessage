@@ -14,11 +14,8 @@ exp = datetime.now()+(timedelta.Timedelta(days = 365))
 def encode_datetime(obj):
         return {'Time': int(exp.strftime("%s"))}
 signer_obj_list = []
-msgPubKey = []
-msg_list = []
 signature_list = []
 msg_Chain = []
-test_sign = []
 
 class TestBlindSig(unittest.TestCase):
     keymetadata = {"PubKey_expiry_Date": "", "Value" : "",}
@@ -39,7 +36,7 @@ class TestBlindSig(unittest.TestCase):
                 keymetadata = {"PubKey_expiry_Date": exp, "Value" : 20,}
                 msg = msgpack.packb([PubKey,keymetadata], default=encode_datetime, use_bin_type=True)
             else:
-                msg = msgpack.packb([PubKey,self.keymetadata], default=encode_datetime, use_bin_type=True)         
+                msg = msgpack.packb([PubKey,self.keymetadata], default=encode_datetime, use_bin_type=True)  
             msg_Chain.append(msg)
             
             requester_obj = ECCBlind(pubkey=signer_obj.pubkey)
@@ -62,7 +59,6 @@ class TestBlindSig(unittest.TestCase):
             level = level + 1
         level = level - 1
         callChain = ECCBlind()
-        print("Verify msg before calling verifying chain ",msg_Chain)
         callChain.verify_Chain(msg_Chain,signature_list,signer_obj_list)
 
 obj = TestBlindSig('test_blind_sig')

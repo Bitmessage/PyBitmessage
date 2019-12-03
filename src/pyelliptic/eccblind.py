@@ -200,9 +200,8 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         """
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        msg = msgpack.packb(msg)
         msg_hash = Hash.hmac_sha256(msg, msg)
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        OpenSSL.BN_bin2bn(msg_hash, len(msg_hash), self.m)
 
         # init
         s, self.F = signature
@@ -220,20 +219,24 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         retval = OpenSSL.EC_POINT_cmp(self.group, lhs, rhs, self.ctx)
         if retval == -1:
+            print("Not Verified")
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
             return retval == 0 
 
     def verify_Chain(self,verify_msg,signature_list,signer_obj_list):
-        i = len(verify_msg) - 1
-        verifier_obj = ECCBlind() 
-        print("Length of chain is ",i)
-        while i >= 0:            
-            msg = msgpack.unpackb(verify_msg[i])
-            ret = verifier_obj.verify(verify_msg[i]  , signature_list[i])
+        chainLength = len(verify_msg) - 1
+        while chainLength >=0:
+            # if chainLength is 1:
+            #      verify_msg[chainLength] = msgpack.packb([verify_msg[chainLength],self.keymetadata], default=encode_datetime, use_bin_type=True)
+            if chainLength is 0:
+                verifier_obj = ECCBlind(pubkey=signer_obj_list[0].pubkey)
+            else:
+                verifier_obj = ECCBlind(pubkey=signer_obj_list[chainLength-1].pubkey)
+            ret = verifier_obj.verify(verify_msg[chainLength]  , signature_list[chainLength])
             if ret is True:
                 print("Verify successfully")
             else:
                 print("Verify Fails")
-            i = i - 1
+            chainLength = chainLength - 1
 
