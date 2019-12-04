@@ -138,6 +138,9 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
         except KeyError:
             pass
         except TypeError:
+            # don't update expired node if have enough nodes in that stream
+            if len(knownNodes[stream]) > 64:
+                return
             rating = -0.2
         else:
             return
