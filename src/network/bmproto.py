@@ -447,22 +447,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 and port > 0
             ):
                 peer = Peer(decodedIP, port)
-                try:
-                    if knownnodes.knownNodes[stream][peer]["lastseen"] > \
-                            seenTime:
-                        continue
-                except KeyError:
-                    pass
-                if len(knownnodes.knownNodes[stream]) < \
-                        BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
-                    with knownnodes.knownNodesLock:
-                        knownnodes.addKnownNode(stream, peer, seenTime)
 
-                    # since we don't track peers outside of knownnodes,
-                    # only spread if in knownnodes to prevent flood
-                    # DISABLED TO WORKAROUND FLOOD/LEAK
-                    # addrQueue.put((stream, peer, seenTime,
-                    #               self.destination))
+                with knownnodes.knownNodesLock:
+                    # isnew =
+                    knownnodes.addKnownNode(stream, peer, seenTime)
+
+                # since we don't track peers outside of knownnodes,
+                # only spread if in knownnodes to prevent flood
+                # DISABLED TO WORKAROUND FLOOD/LEAK
+                # if isnew:
+                #     addrQueue.put((
+                #         stream, peer, seenTime, self.destination))
         return True
 
     def bm_command_portcheck(self):

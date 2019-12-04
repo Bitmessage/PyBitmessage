@@ -105,10 +105,17 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     else:
         lastseen = int(lastseen)
         try:
-            knownNodes[stream][peer]['lastseen'] = lastseen
-        except KeyError:
+            info = knownNodes[stream].get(peer)
+            if lastseen > info['lastseen']:
+                info['lastseen'] = lastseen
+        except (KeyError, TypeError):
             pass
         else:
+            return
+
+    if not is_self:
+        if len(knownNodes[stream]) > BMConfigParser().safeGetInt(
+                "knownnodes", "maxnodes"):
             return
 
     knownNodes[stream][peer] = {
@@ -116,6 +123,7 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
         'rating': rating or 1 if is_self else 0,
         'self': is_self,
     }
+    return True
 
 
 def createDefaultKnownNodes():
