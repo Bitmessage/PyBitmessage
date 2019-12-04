@@ -4,7 +4,7 @@ Sql queries for bitmessagekivy
 from helper_sql import sqlQuery
 
 
-def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
+def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False, start_indx=0, end_indx=20):
     """Method helping for searching mails"""
     # pylint: disable=too-many-arguments, too-many-branches
     if what is not None and what != "":
@@ -59,7 +59,9 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
     if sqlStatementParts:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
     if folder == "sent" or folder == "draft":
-        sqlStatementBase += " ORDER BY lastactiontime DESC"
+        sqlStatementBase += " ORDER BY lastactiontime DESC limit {0}, {1}".format(start_indx, end_indx)
     elif folder == "inbox":
-        sqlStatementBase += " ORDER BY received DESC"
+        sqlStatementBase += " ORDER BY received DESC limit {0}, {1}".format(start_indx, end_indx)
+    elif folder == "addressbook":
+        sqlStatementBase += " limit {0}, {1}".format(start_indx, end_indx)
     return sqlQuery(sqlStatementBase, sqlArguments)

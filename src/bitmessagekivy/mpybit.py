@@ -80,44 +80,43 @@ class Navigatorss(MDNavigationDrawer):
 
 
 class Inbox(Screen):
-    """Inbox Screen uses screen to show widgets of screens"""
+    """Inbox Screen uses screen to show widgets of screens."""
     queryreturn = ListProperty()
     has_refreshed = True
+    account = StringProperty()
 
     def __init__(self, *args, **kwargs):
-        """Method Parsing the address"""
+        """Method Parsing the address."""
         super(Inbox, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def set_defaultAddress(self):
+        """This method set default address"""
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
-        Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock schdule for method inbox accounts"""
-        self.inboxaccounts()
-        print dt
+        """Clock schdule for method inbox accounts."""
+        self.loadMessagelist()
 
-    def inboxaccounts(self):
-        """Load all inbox accounts"""
-        account = state.association
-        self.loadMessagelist(account, 'All', '')
-
-    def loadMessagelist(self, account, where="", what=""):
-        """Load inbox list for inbox messages"""
+    def loadMessagelist(self, where="", what=""):
+        """Load Inbox list for Inbox messages."""
         # pylint: disable=too-many-locals
+        self.set_defaultAddress()
+        self.account = state.association
         if state.searcing_text:
             self.children[2].children[0].children[0].scroll_y = 1.0
             where = ['subject', 'message']
             what = state.searcing_text
         xAddress = 'toaddress'
         data = []
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, "inbox", where, what, False)
+        self.inboxDataQuery(xAddress, where, what)
         if self.queryreturn:
+            state.kivyapp.get_inbox_count()
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.inbox_cnt.badge_text = str(len(self.queryreturn))
-            state.inbox_count = str(len(self.queryreturn))
-            for mail in self.queryreturn[:20]:
+            src_mng_obj.inbox_cnt.badge_text = state.inbox_count
+            for mail in self.queryreturn:
                 # third_text = mail[3].replace('\n', ' ')
                 data.append({
                     'text': mail[4].strip(),
@@ -141,8 +140,14 @@ class Inbox(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
+    def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
+        """This method used for retrieving inbox data"""
+        self.queryreturn = kivy_helper_search.search_sql(
+            xAddress, self.account, "inbox", where, what, False, start_indx, end_indx)
+
     def set_mdList(self, data):
         """This method is used to create the mdList"""
+        total_message = len(self.ids.ml.children)
         for item in data:
             meny = TwoLineAvatarIconListItem(
                 text=item['text'],
@@ -179,6 +184,8 @@ class Inbox(Screen):
             carousel.add_widget(ach_btn)
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
+        update_message = len(self.ids.ml.children)
+        self.has_refreshed = True if total_message != update_message else False
 
     def check_scroll_y(self, instance, somethingelse):
         """This method is used to load data on scroll"""
@@ -186,17 +193,19 @@ class Inbox(Screen):
                 0].scroll_y <= -0.0 and self.has_refreshed:
             self.children[2].children[0].children[0].scroll_y = 0.06
             total_message = len(self.ids.ml.children)
-            if total_message != len(self.queryreturn):
-                self.update_inbox_screen_on_scroll(total_message)
-            self.has_refreshed = True if total_message != len(
-                self.queryreturn) else False
+            self.update_inbox_screen_on_scroll(total_message)
         else:
             pass
 
-    def update_inbox_screen_on_scroll(self, total_message):
+    def update_inbox_screen_on_scroll(self, total_message, where="", what=""):
         """This method is used to load more data on scroll down"""
         data = []
-        for mail in self.queryreturn[total_message:total_message + 5]:
+        if state.searcing_text:
+            where = ['subject', 'message']
+            what = state.searcing_text
+        self.inboxDataQuery('toaddress', where, what, total_message, 5)
+        for mail in self.queryreturn:
+            # third_text = mail[3].replace('\n', ' ')
             data.append({
                 'text': mail[4].strip(),
                 'secondary_text': mail[5][:50] + '........' if len(
@@ -286,17 +295,18 @@ class Inbox(Screen):
 
 
 class MyAddress(Screen):
-    """MyAddress screen uses screen to show widgets of screens"""
+    """MyAddress screen uses screen to show widgets of screens."""
     addresses_list = ListProperty()
     has_refreshed = True
+    is_add_created = False
 
     def __init__(self, *args, **kwargs):
-        """Clock schdule for method inbox accounts"""
+        """Clock schdule for method Myaddress accounts."""
         super(MyAddress, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock schdule for method inbox accounts"""
+        """Clock schdule for method Myaddress accounts"""
         # pylint: disable=unnecessary-lambda, deprecated-lambda
         self.addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
@@ -321,7 +331,7 @@ class MyAddress(Screen):
                 size_hint_y=None,
                 valign='top')
             self.ids.ml.add_widget(content)
-            if not state.searcing_text:
+            if not state.searcing_text and not self.is_add_created:
                 try:
                     self.manager.current = 'login'
                 except Exception:
@@ -768,7 +778,7 @@ class NetworkStat(Screen):
         Clock.schedule_interval(self.init_ui, 1)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method inbox accounts"""
+        """Clock Schdule for method networkstat screen"""
         import network.stats
         import shared
         from network import objectracker
@@ -823,8 +833,8 @@ class Random(Screen):
         """New address created"""
         state.kivyapp.root.ids.sc10.children[1].active = False
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
+        state.kivyapp.root.ids.sc10.is_add_created = True
         state.kivyapp.root.ids.sc10.init_ui()
-        self.manager.current = 'myaddress'
         toast('New address created')
 
     def add_validation(self, instance):
@@ -852,9 +862,10 @@ class Sent(Screen):
     """Sent Screen uses screen to show widgets of screens"""
     queryreturn = ListProperty()
     has_refreshed = True
+    account = StringProperty()
 
     def __init__(self, *args, **kwargs):
-        """Association with the screen"""
+        """Association with the screen."""
         super(Sent, self).__init__(*args, **kwargs)
         if state.association == '':
             if BMConfigParser().addresses():
@@ -867,32 +878,22 @@ class Sent(Screen):
         print dt
 
     def sentaccounts(self):
-        """Load sent accounts"""
-        account = state.association
-        self.loadSent(account, 'All', '')
+        """Load sent accounts."""
+        self.account = state.association
+        self.loadSent()
 
-    def loadSent(self, account, where="", what=""):
-        """Load Sent list for Sent messages"""
+    def loadSent(self, where="", what=""):
+        """Load Sent list for Sent messages."""
         if state.searcing_text:
             self.ids.scroll_y.scroll_y = 1.0
             where = ['subject', 'message']
             what = state.searcing_text
         xAddress = 'fromaddress'
         data = []
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, "sent", where, what, False)
-        if state.msg_counter_objs and state.association == (
-                state.check_sent_acc):
-            state.msg_counter_objs.send_cnt.badge_text = str(
-                len(self.queryreturn))
-            state.sent_count = str(int(state.sent_count) + 1)
-            state.all_count = str(int(state.all_count) + 1)
-            state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
-            state.check_sent_acc = None
-
+        self.sentDataQuery(xAddress, where, what)
         if self.queryreturn:
-            self.set_sentCount(len(self.queryreturn))
-            for mail in self.queryreturn[0:20]:
+            self.set_sentCount(state.sent_count)
+            for mail in self.queryreturn:
                 data.append({
                     'text': mail[1].strip(),
                     'secondary_text': mail[2][:50] + '........' if len(
@@ -914,8 +915,14 @@ class Sent(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def set_mdlist(self, data, set_index):
+    def sentDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
+        """This method is used to retrieving data from sent table"""
+        self.queryreturn = kivy_helper_search.search_sql(
+            xAddress, self.account, "sent", where, what, False, start_indx, end_indx)
+
+    def set_mdlist(self, data, set_index=0):
         """This method is used to create the mdList"""
+        total_sent_msg = len(self.ids.ml.children)
         for item in data:
             meny = TwoLineAvatarIconListItem(
                 text=item['text'],
@@ -947,20 +954,24 @@ class Sent(Screen):
             carousel.add_widget(ach_btn)
             carousel.index = 1
             self.ids.ml.add_widget(carousel, index=set_index)
+        updated_msgs = len(self.ids.ml.children)
+        self.has_refreshed = True if total_sent_msg != updated_msgs else False
 
     def update_sent_messagelist(self):
         """This method is used to update screen when new mail is sent"""
         if len(self.ids.ml.children) < 3:
+            self.account = state.association
             self.ids.ml.clear_widgets()
-            self.loadSent(state.association)
+            self.loadSent()
+            total_sent = int(state.sent_count) + 1
+            self.set_sentCount(total_sent)
         else:
             account = state.association
             data = []
-            self.queryreturn = kivy_helper_search.search_sql(
-                'fromaddress', account, "sent", '', '', False)
-            total_sent = len(self.queryreturn)
+            self.sentDataQuery('fromaddress', '', '', 0, 1)
+            total_sent = int(state.sent_count) + 1
             self.set_sentCount(total_sent)
-            for mail in self.queryreturn[:1]:
+            for mail in self.queryreturn:
                 data.append({
                     'text': mail[1].strip(),
                     'secondary_text': mail[2][:50] + '........' if len(
@@ -968,23 +979,29 @@ class Sent(Screen):
                             '\n', ''))[0:50] + '........',
                     'ackdata': mail[5]})
             self.set_mdlist(data, total_sent - 1)
+        if state.msg_counter_objs and state.association == (
+                state.check_sent_acc):
+            state.all_count = str(int(state.all_count) + 1)
+            state.msg_counter_objs.allmail_cnt.badge_text = state.all_count
+            state.check_sent_acc = None
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll down"""
         if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
             self.ids.scroll_y.scroll_y = 0.06
             total_sent_msg = len(self.ids.ml.children)
-            if total_sent_msg != len(self.queryreturn):
-                self.update_sent_screen_on_scroll(total_sent_msg)
-            self.has_refreshed = True if total_sent_msg != len(
-                self.queryreturn) else False
+            self.update_sent_screen_on_scroll(total_sent_msg)
         else:
             pass
 
-    def update_sent_screen_on_scroll(self, total_sent_msg):
-        """Load more data on scroll down"""
+    def update_sent_screen_on_scroll(self, total_sent_msg, where="", what=""):
+        """This method is used to load more data on scroll down"""
+        if state.searcing_text:
+            where = ['subject', 'message']
+            what = state.searcing_text
+        self.sentDataQuery('fromaddress', where, what, total_sent_msg, 5)
         data = []
-        for mail in self.queryreturn[total_sent_msg:total_sent_msg + 5]:
+        for mail in self.queryreturn:
             data.append({
                 'text': mail[1].strip(),
                 'secondary_text': mail[2][:50] + '........' if len(
@@ -1072,25 +1089,15 @@ class Trash(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method inbox accounts"""
+        """Clock Schdule for method trash screen."""
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
-        self.trash_messages = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message,"
-            " folder ||',' || 'sent' as  folder, ackdata As id,"
-            " DATE(lastactiontime) As actionTime FROM sent"
-            " WHERE folder = 'trash' and fromaddress = '{0}' UNION"
-            " SELECT toaddress, fromaddress, subject, message,"
-            " folder ||',' || 'inbox' as  folder, msgid As id,"
-            " DATE(received) As actionTime FROM inbox WHERE"
-            " folder = 'trash' and toaddress = '{0}'"
-            " ORDER BY actionTime DESC".format(state.association))
+        self.trashDataQuery(0, 20)
         if self.trash_messages:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.trash_cnt.badge_text = str(len(self.trash_messages))
-            state.trash_count = str(len(self.trash_messages))
-            self.set_mdList(0, 20)
+            src_mng_obj.trash_cnt.badge_text = state.trash_count
+            self.set_mdList()
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
@@ -1103,9 +1110,17 @@ class Trash(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def set_mdList(self, first_index, last_index):
-        """Creating the mdlist"""
-        for item in self.trash_messages[first_index:last_index]:
+    def trashDataQuery(self, start_indx, end_indx):
+        self.trash_messages = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder ||',' || 'sent' as  folder, ackdata As id, DATE(lastactiontime)"
+            " As actionTime FROM sent WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
+            " SELECT toaddress, fromaddress, subject, message, folder ||',' || 'inbox' as  folder, msgid As id, DATE(received) As"
+            " actionTime FROM inbox WHERE folder = 'trash' and toaddress = '{0}' ORDER BY actionTime DESC limit {1}, {2}".format(state.association, start_indx, end_indx))
+
+    def set_mdList(self):
+        """This method is used to create the mdlist"""
+        total_trash_msg = len(self.ids.ml.children)
+        for item in self.trash_messages:
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
                 secondary_text=item[2][:50] + '........' if len(
@@ -1132,22 +1147,22 @@ class Trash(Screen):
             carousel.add_widget(meny)
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
+        self.has_refreshed = True if total_trash_msg != len(
+                self.ids.ml.children) else False
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll"""
         if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
             self.ids.scroll_y.scroll_y = 0.06
             total_trash_msg = len(self.ids.ml.children)
-            if total_trash_msg != len(self.trash_messages):
-                self.update_trash_screen_on_scroll(total_trash_msg)
-            self.has_refreshed = True if total_trash_msg != len(
-                self.trash_messages) else False
+            self.update_trash_screen_on_scroll(total_trash_msg)
         else:
             pass
 
     def update_trash_screen_on_scroll(self, total_trash_msg):
         """Load more data on scroll down"""
-        self.set_mdList(total_trash_msg, total_trash_msg + 5)
+        self.trashDataQuery(total_trash_msg, 5)
+        self.set_mdList()
 
     def delete_permanently(self, data_index, folder, instance, *args):
         """Deleting trash mail permanently"""
@@ -1307,33 +1322,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         self.root.ids.sc17.add_widget(Allmails())
 
         self.root.ids.scr_mngr.current = 'inbox'
-        msg_counter_objs = (
-            self.root_window.children[2].children[2].children[0].ids)
-        state.sent_count = str(
-            sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
-                " folder = 'sent' ;".format(state.association))[0][0])
-        state.inbox_count = str(
-            sqlQuery(
-                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and"
-                " folder = 'inbox' ;".format(state.association))[0][0])
-        state.trash_count = str(sqlQuery(
-            "SELECT (SELECT count(*) FROM  sent"
-            " where fromaddress = '{0}' and  folder = 'trash' )"
-            "+(SELECT count(*) FROM inbox where toaddress = '{0}' and"
-            " folder = 'trash') AS SumCount".format(state.association))[0][0])
-        state.draft_count = str(
-            sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
-                " folder = 'draft' ;".format(state.association))[0][0])
-        state.all_count = str(int(state.sent_count) + int(state.inbox_count))
-
-        if msg_counter_objs:
-            msg_counter_objs.send_cnt.badge_text = state.sent_count
-            msg_counter_objs.inbox_cnt.badge_text = state.inbox_count
-            msg_counter_objs.trash_cnt.badge_text = state.trash_count
-            msg_counter_objs.draft_cnt.badge_text = state.draft_count
-            msg_counter_objs.allmail_cnt.badge_text = state.all_count
+        self.set_message_count()
 
     @staticmethod
     def getCurrentAccount():
@@ -1524,6 +1513,48 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             state.is_allmail = False
         state.detailPageType = ''
         state.in_composer = False
+
+    def get_inbox_count(self):
+        state.inbox_count = str(
+            sqlQuery(
+                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and"
+                " folder = 'inbox' ;".format(state.association))[0][0])
+
+    def get_sent_count(self):
+        state.sent_count = str(
+            sqlQuery(
+                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
+                " folder = 'sent' ;".format(state.association))[0][0])
+
+    def set_message_count(self):
+        try:
+            msg_counter_objs = (
+                self.root_window.children[0].children[2].children[0].ids)
+        except Exception as e:
+            msg_counter_objs = (
+                self.root_window.children[2].children[2].children[0].ids)
+        self.get_inbox_count()
+        self.get_sent_count()
+        state.trash_count = str(sqlQuery(
+            "SELECT (SELECT count(*) FROM  sent"
+            " where fromaddress = '{0}' and  folder = 'trash' )"
+            "+(SELECT count(*) FROM inbox where toaddress = '{0}' and"
+            " folder = 'trash') AS SumCount".format(state.association))[0][0])
+        state.draft_count = str(
+            sqlQuery(
+                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
+                " folder = 'draft' ;".format(state.association))[0][0])
+        state.all_count = str(int(state.sent_count) + int(state.inbox_count))
+
+        if msg_counter_objs:
+            msg_counter_objs.send_cnt.badge_text = state.sent_count
+            msg_counter_objs.inbox_cnt.badge_text = state.inbox_count
+            msg_counter_objs.trash_cnt.badge_text = state.trash_count
+            msg_counter_objs.draft_cnt.badge_text = state.draft_count
+            msg_counter_objs.allmail_cnt.badge_text = state.all_count
+
+    def on_start(self):
+        self.set_message_count()
 
     @staticmethod
     def on_stop():
@@ -2045,6 +2076,7 @@ class ShowQRCode(Screen):
 class Draft(Screen):
     """Draft screen is used to show the list of draft messages"""
     data = ListProperty()
+    account = StringProperty()
     queryreturn = ListProperty()
     has_refreshed = True
 
@@ -2062,23 +2094,21 @@ class Draft(Screen):
         print dt
 
     def sentaccounts(self):
-        """Load draft accounts"""
-        account = state.association
-        self.loadDraft(account, 'All', '')
+        """Load draft accounts."""
+        self.account = state.association
+        self.loadDraft()
 
-    def loadDraft(self, account, where="", what=""):
-        """Load draft list for Draft messages"""
+    def loadDraft(self, where="", what=""):
+        """Load draft list for Draft messages."""
         xAddress = 'fromaddress'
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, "draft", where, what, False)
+        self.draftDataQuery(xAddress, where, what)
         if state.msg_counter_objs:
             state.msg_counter_objs.draft_cnt.badge_text = str(
                 len(self.queryreturn))
         if self.queryreturn:
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
-            src_mng_obj.draft_cnt.badge_text = str(len(self.queryreturn))
-            state.draft_count = str(len(self.queryreturn))
-            self.set_mdList(0, 20)
+            src_mng_obj.draft_cnt.badge_text = state.draft_count
+            self.set_mdList()
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
@@ -2091,10 +2121,16 @@ class Draft(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def set_mdList(self, first_index, last_index):
-        """Create mdlist"""
+    def draftDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
+        """This methosd is for retrieving draft messages"""
+        self.queryreturn = kivy_helper_search.search_sql(
+            xAddress, self.account, "draft", where, what, False, start_indx, end_indx)
+
+    def set_mdList(self):
+        """This method is used to create mdlist"""
         data = []
-        for mail in self.queryreturn[first_index:last_index]:
+        total_draft_msg = len(self.ids.ml.children)
+        for mail in self.queryreturn:
             third_text = mail[3].replace('\n', ' ')
             data.append({
                 'text': mail[1].strip(),
@@ -2128,22 +2164,22 @@ class Draft(Screen):
             carousel.add_widget(meny)
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
+        updated_msg = len(self.ids.ml.children)
+        self.has_refreshed = True if total_draft_msg != updated_msg else False
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll"""
         if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
             self.ids.scroll_y.scroll_y = 0.06
             total_draft_msg = len(self.ids.ml.children)
-            if total_draft_msg != len(self.queryreturn):
-                self.update_draft_screen_on_scroll(total_draft_msg)
-            self.has_refreshed = True if total_draft_msg != len(
-                self.queryreturn) else False
+            self.update_draft_screen_on_scroll(total_draft_msg)
         else:
             pass
 
-    def update_draft_screen_on_scroll(self, total_draft_msg):
+    def update_draft_screen_on_scroll(self, total_draft_msg, where='', what=''):
         """Load more data on scroll down"""
-        self.set_mdList(total_draft_msg, total_draft_msg + 5)
+        self.draftDataQuery('fromaddress', where, what, total_draft_msg, 5)
+        self.set_mdList()
 
     def draft_detail(self, ackdata, *args):
         """Show draft Details"""
@@ -2234,9 +2270,10 @@ class Allmails(Screen):
     data = ListProperty()
     has_refreshed = True
     all_mails = ListProperty()
+    account = StringProperty()
 
     def __init__(self, *args, **kwargs):
-        """Method Parsing the address"""
+        """Method Parsing the address."""
         super(Allmails, self).__init__(*args, **kwargs)
         if state.association == '':
             if BMConfigParser().addresses():
@@ -2249,26 +2286,20 @@ class Allmails(Screen):
         print dt
 
     def mailaccounts(self):
-        """Load all mails for account"""
-        account = state.association
-        self.loadMessagelist(account, 'All', '')
+        """Load all mails for account."""
+        self.account = state.association
+        self.loadMessagelist()
 
-    def loadMessagelist(self, account, where="", what=""):
-        """Load Inbox, Sent anf Draft list of messages"""
-        self.all_mails = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
-            " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
-            " folder = 'sent' and fromaddress = '{0}' UNION SELECT toaddress,"
-            " fromaddress, subject, message, folder, msgid As id,"
-            " DATE(received) As actionTime FROM inbox WHERE"
-            " folder = 'inbox' and toaddress = '{0}'"
-            " ORDER BY actionTime DESC".format(account))
+    def loadMessagelist(self):
+        """Load Inbox, Sent anf Draft list of messages."""
+        self.allMessageQuery(0, 20)
         if self.all_mails:
+            state.kivyapp.get_inbox_count()
+            state.kivyapp.get_sent_count()
+            state.all_count = str(int(state.sent_count) + int(state.inbox_count))
             state.kivyapp.root.children[2].children[
-                0].ids.allmail_cnt.badge_text = str(
-                    len(self.all_mails))
-            state.all_count = str(len(self.all_mails))
-            self.set_mdlist(0, 20)
+                0].ids.allmail_cnt.badge_text = state.all_count
+            self.set_mdlist()
             self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
@@ -2281,9 +2312,19 @@ class Allmails(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def set_mdlist(self, start_pnt, end_pnt):
-        """Create mdList for allmaills"""
-        for item in self.all_mails[start_pnt:end_pnt]:
+    def allMessageQuery(self, start_indx, end_indx):
+        """This method is used for retrieving data from inbox or sent both tables"""
+        self.all_mails = sqlQuery(
+            "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
+            " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
+            " folder = 'sent' and fromaddress = '{0}' UNION SELECT toaddress, fromaddress, subject,"
+            " message, folder, msgid As id, DATE(received) As actionTime"
+            " FROM inbox WHERE folder = 'inbox' and toaddress = '{0}' ORDER BY actionTime DESC limit {1}, {2}".format(self.account, start_indx, end_indx))
+
+    def set_mdlist(self):
+        """This method is used to create mdList for allmaills"""
+        data_exist = len(self.ids.ml.children)
+        for item in self.all_mails:
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
                 secondary_text=item[2][:50] + '........' if len(
@@ -2312,6 +2353,8 @@ class Allmails(Screen):
             carousel.add_widget(meny)
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
+        updated_data = len(self.ids.ml.children)
+        self.has_refreshed = True if data_exist != updated_data else False
 
     def check_scroll_y(self, instance, somethingelse):
         """Scroll fixed length"""
@@ -2323,12 +2366,10 @@ class Allmails(Screen):
             pass
 
     def updating_allmail(self, load_more):
-        """Update the all mail listing value on the scroll of screen"""
-        if self.all_mails and load_more != len(self.all_mails):
-            state.all_count = str(len(self.all_mails))
-            self.set_mdlist(load_more, load_more + 5)
-        self.has_refreshed = True if load_more != len(
-            self.all_mails) else False
+        """This method is used to update the all mail
+        listing value on the scroll of screen"""
+        self.allMessageQuery(load_more, 5)
+        self.set_mdlist()
 
     def mail_detail(self, unique_id, folder, *args):
         """Load sent and inbox mail details"""
