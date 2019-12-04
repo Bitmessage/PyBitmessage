@@ -224,19 +224,42 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         else:
             return retval == 0 
 
-    def verify_Chain(self,verify_msg,signature_list,signer_obj_list):
-        chainLength = len(verify_msg) - 1
-        while chainLength >=0:
-            # if chainLength is 1:
-            #      verify_msg[chainLength] = msgpack.packb([verify_msg[chainLength],self.keymetadata], default=encode_datetime, use_bin_type=True)
-            if chainLength is 0:
-                verifier_obj = ECCBlind(pubkey=signer_obj_list[0].pubkey)
-            else:
-                verifier_obj = ECCBlind(pubkey=signer_obj_list[chainLength-1].pubkey)
-            ret = verifier_obj.verify(verify_msg[chainLength]  , signature_list[chainLength])
-            if ret is True:
-                print("Verify successfully")
-            else:
-                print("Verify Fails")
-            chainLength = chainLength - 1
+    # def verify_Chain(self,verify_msg,signature_list,signer_obj_list):
+    #     chainLength = len(verify_msg) - 1
+    #     while chainLength >=0:
+    #         # if chainLength is 1:
+    #         #      verify_msg[chainLength] = msgpack.packb([verify_msg[chainLength],self.keymetadata], default=encode_datetime, use_bin_type=True)
+    #         if chainLength is 0:
+    #             verifier_obj = ECCBlind(pubkey=signer_obj_list[0].pubkey)
+    #         else:
+    #             verifier_obj = ECCBlind(pubkey=signer_obj_list[chainLength-1].pubkey)
+    #         ret = verifier_obj.verify(verify_msg[chainLength]  , signature_list[chainLength])
+    #         if ret is True:
+    #             print("Verify successfully")
+    #             abc = msgpack.unpackb(verify_msg[chainLength])
+    #             print("Pubkey in the data is ",abc[0])
+    #         else:
+    #             print("Verify Fails")
+    #         chainLength = chainLength - 1
 
+    def verify_Chain(self,msg):
+        i = len(msg) - 1
+        while i >= 0:
+            actual_msg = msgpack.unpackb(msg[i])
+            unpack_msg = msgpack.unpackb(actual_msg[0])
+            pub_key = msgpack.unpackb(actual_msg[0])
+            signer_pubkey = pub_key[0]['Public_Key']
+            signature = actual_msg[1]['Signature']
+            print("Unpacked msg is ",unpack_msg)
+            print("Msg at line 249 is *****************",actual_msg[0])
+            print("Whole unpacked data is ",pub_key[0]['Public_Key'])
+            print("Signature is",actual_msg[1]['Signature'])
+            verifier_obj = ECCBlind(pubkey=signer_pubkey)
+            print("Verifier object at line 252 is *************",verifier_obj.pubkey)
+            ret = verifier_obj.verify(actual_msg[0]  , signature)
+            if ret is True:
+                print("Message verified successfully")
+            else:
+                print("Message verification fails")
+            i = i - 1
+           

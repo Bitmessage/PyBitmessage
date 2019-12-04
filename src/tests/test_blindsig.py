@@ -37,7 +37,7 @@ class TestBlindSig(unittest.TestCase):
                 msg = msgpack.packb([PubKey,keymetadata], default=encode_datetime, use_bin_type=True)
             else:
                 msg = msgpack.packb([PubKey,self.keymetadata], default=encode_datetime, use_bin_type=True)  
-            msg_Chain.append(msg)
+            
             
             requester_obj = ECCBlind(pubkey=signer_obj.pubkey)
             msg_blinded = requester_obj.create_signing_request(point_r, msg)
@@ -46,6 +46,9 @@ class TestBlindSig(unittest.TestCase):
 
             signature_blinded = signer_obj.blind_sign(msg_blinded)
             signature = requester_obj.unblind(signature_blinded)
+            Sign = {"Signature":signature}
+            msg = msgpack.packb([msg,Sign]) # packed the signature also in the msg
+            msg_Chain.append(msg) # Whole chain of msg
             signature_list.append(signature)
 
             signature_blinded_str = OpenSSL.malloc(0,
@@ -59,7 +62,8 @@ class TestBlindSig(unittest.TestCase):
             level = level + 1
         level = level - 1
         callChain = ECCBlind()
-        callChain.verify_Chain(msg_Chain,signature_list,signer_obj_list)
+        #callChain.verify_Chain(msg_Chain,signature_list,signer_obj_list)
+        callChain.verify_Chain(msg_Chain)
 
 obj = TestBlindSig('test_blind_sig')
 
