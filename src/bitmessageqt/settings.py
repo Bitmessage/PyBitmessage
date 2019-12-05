@@ -47,20 +47,33 @@ class SettingsDialog(QtGui.QDialog):
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
         # pylint: disable=too-many-branches,too-many-statements
-        self.checkBoxStartOnLogon.setChecked(
-            config.getboolean('bitmessagesettings', 'startonlogon'))
-        self.checkBoxMinimizeToTray.setChecked(
-            config.getboolean('bitmessagesettings', 'minimizetotray'))
-        self.checkBoxTrayOnClose.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'trayonclose'))
+        if not self.parent.tray.isSystemTrayAvailable():
+            self.groupBoxTray.setEnabled(False)
+            self.groupBoxTray.setTitle(_translate(
+                "MainWindow", "Tray (not available in your system)"))
+            for setting in (
+                    'minimizetotray', 'trayonclose', 'startintray'):
+                config.set('bitmessagesettings', setting, 'false')
+        else:
+            self.checkBoxMinimizeToTray.setChecked(
+                config.getboolean('bitmessagesettings', 'minimizetotray'))
+            self.checkBoxTrayOnClose.setChecked(
+                config.safeGetBoolean('bitmessagesettings', 'trayonclose'))
+            self.checkBoxStartInTray.setChecked(
+                config.getboolean('bitmessagesettings', 'startintray'))
+
         self.checkBoxHideTrayConnectionNotifications.setChecked(
-            config.getboolean("bitmessagesettings", "hidetrayconnectionnotifications"))
+            config.getboolean(
+                'bitmessagesettings', 'hidetrayconnectionnotifications'))
         self.checkBoxShowTrayNotifications.setChecked(
             config.getboolean('bitmessagesettings', 'showtraynotifications'))
-        self.checkBoxStartInTray.setChecked(
-            config.getboolean('bitmessagesettings', 'startintray'))
+
+        self.checkBoxStartOnLogon.setChecked(
+            config.getboolean('bitmessagesettings', 'startonlogon'))
+
         self.checkBoxWillinglySendToMobile.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
+            config.safeGetBoolean(
+                'bitmessagesettings', 'willinglysendtomobile'))
         self.checkBoxUseIdenticons.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'useidenticons'))
         self.checkBoxReplyBelow.setChecked(
@@ -82,10 +95,12 @@ class SettingsDialog(QtGui.QDialog):
                 "MainWindow", "Start-on-login not yet supported on your OS."))
             self.checkBoxMinimizeToTray.setDisabled(True)
             self.checkBoxMinimizeToTray.setText(_translate(
-                "MainWindow", "Minimize-to-tray not yet supported on your OS."))
+                "MainWindow",
+                "Minimize-to-tray not yet supported on your OS."))
             self.checkBoxShowTrayNotifications.setDisabled(True)
             self.checkBoxShowTrayNotifications.setText(_translate(
-                "MainWindow", "Tray notifications not yet supported on your OS."))
+                "MainWindow",
+                "Tray notifications not yet supported on your OS."))
         elif 'linux' in sys.platform:
             self.checkBoxStartOnLogon.setDisabled(True)
             self.checkBoxStartOnLogon.setText(_translate(
