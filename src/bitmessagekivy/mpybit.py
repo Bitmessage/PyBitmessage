@@ -90,7 +90,8 @@ class Inbox(Screen):
         super(Inbox, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
-    def set_defaultAddress(self):
+    @staticmethod
+    def set_defaultAddress():
         """This method set default address"""
         if state.association == '':
             if BMConfigParser().addresses():
@@ -140,10 +141,18 @@ class Inbox(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
+    # pylint: disable=too-many-arguments
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method used for retrieving inbox data"""
         self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, self.account, "inbox", where, what, False, start_indx, end_indx)
+            xAddress,
+            self.account,
+            "inbox",
+            where,
+            what,
+            False,
+            start_indx,
+            end_indx)
 
     def set_mdList(self, data):
         """This method is used to create the mdList"""
@@ -402,7 +411,8 @@ class MyAddress(Screen):
         # if filter(lambda x: (state.searcing_text).lower() in x, [
         #         BMConfigParser().get(
         #             address, 'label').lower(), address.lower()]):
-        if [x for x in [BMConfigParser().get(address, 'label').lower(), address.lower()]]:
+        if [x for x in [BMConfigParser().get(
+                address, 'label').lower(), address.lower()]]:
             return True
         return False
 
@@ -829,7 +839,8 @@ class Random(Screen):
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
 
-    def address_created_callback(self, dt=0):
+    @staticmethod
+    def address_created_callback(dt=0):
         """New address created"""
         state.kivyapp.root.ids.sc10.children[1].active = False
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
@@ -915,10 +926,18 @@ class Sent(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
+    # pylint: disable=too-many-arguments
     def sentDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used to retrieving data from sent table"""
         self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, self.account, "sent", where, what, False, start_indx, end_indx)
+            xAddress,
+            self.account,
+            "sent",
+            where,
+            what,
+            False,
+            start_indx,
+            end_indx)
 
     def set_mdlist(self, data, set_index=0):
         """This method is used to create the mdList"""
@@ -959,14 +978,13 @@ class Sent(Screen):
 
     def update_sent_messagelist(self):
         """This method is used to update screen when new mail is sent"""
+        self.account = state.association
         if len(self.ids.ml.children) < 3:
-            self.account = state.association
             self.ids.ml.clear_widgets()
             self.loadSent()
             total_sent = int(state.sent_count) + 1
             self.set_sentCount(total_sent)
         else:
-            account = state.association
             data = []
             self.sentDataQuery('fromaddress', '', '', 0, 1)
             total_sent = int(state.sent_count) + 1
@@ -1111,11 +1129,18 @@ class Trash(Screen):
             self.ids.ml.add_widget(content)
 
     def trashDataQuery(self, start_indx, end_indx):
+        """Trash message query"""
         self.trash_messages = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder ||',' || 'sent' as  folder, ackdata As id, DATE(lastactiontime)"
-            " As actionTime FROM sent WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
-            " SELECT toaddress, fromaddress, subject, message, folder ||',' || 'inbox' as  folder, msgid As id, DATE(received) As"
-            " actionTime FROM inbox WHERE folder = 'trash' and toaddress = '{0}' ORDER BY actionTime DESC limit {1}, {2}".format(state.association, start_indx, end_indx))
+            "SELECT toaddress, fromaddress, subject, message,"
+            " folder ||',' || 'sent' as  folder, ackdata As"
+            " id, DATE(lastactiontime) As actionTime FROM sent"
+            " WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
+            " SELECT toaddress, fromaddress, subject, message,"
+            " folder ||',' || 'inbox' as  folder, msgid As id,"
+            " DATE(received) As actionTime FROM inbox"
+            " WHERE folder = 'trash' and toaddress = '{0}'"
+            " ORDER BY actionTime DESC limit {1}, {2}".format(
+                state.association, start_indx, end_indx))
 
     def set_mdList(self):
         """This method is used to create the mdlist"""
@@ -1148,7 +1173,7 @@ class Trash(Screen):
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
         self.has_refreshed = True if total_trash_msg != len(
-                self.ids.ml.children) else False
+            self.ids.ml.children) else False
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll"""
@@ -1220,6 +1245,7 @@ class Page(Screen):
 
 class Create(Screen):
     """Creates the screen widgets"""
+
     def __init__(self, **kwargs):
         """Getting Labels and address from addressbook"""
         super(Create, self).__init__(**kwargs)
@@ -1514,23 +1540,28 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         state.detailPageType = ''
         state.in_composer = False
 
-    def get_inbox_count(self):
+    @staticmethod
+    def get_inbox_count():
+        """Getting inbox count"""
         state.inbox_count = str(
             sqlQuery(
                 "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and"
                 " folder = 'inbox' ;".format(state.association))[0][0])
 
-    def get_sent_count(self):
+    @staticmethod
+    def get_sent_count():
+        """Getting sent count"""
         state.sent_count = str(
             sqlQuery(
                 "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
                 " folder = 'sent' ;".format(state.association))[0][0])
 
     def set_message_count(self):
+        """Setting message count"""
         try:
             msg_counter_objs = (
                 self.root_window.children[0].children[2].children[0].ids)
-        except Exception as e:
+        except Exception:
             msg_counter_objs = (
                 self.root_window.children[2].children[2].children[0].ids)
         self.get_inbox_count()
@@ -2121,10 +2152,18 @@ class Draft(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
+    # pylint: disable=too-many-arguments
     def draftDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This methosd is for retrieving draft messages"""
         self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, self.account, "draft", where, what, False, start_indx, end_indx)
+            xAddress,
+            self.account,
+            "draft",
+            where,
+            what,
+            False,
+            start_indx,
+            end_indx)
 
     def set_mdList(self):
         """This method is used to create mdlist"""
@@ -2296,7 +2335,8 @@ class Allmails(Screen):
         if self.all_mails:
             state.kivyapp.get_inbox_count()
             state.kivyapp.get_sent_count()
-            state.all_count = str(int(state.sent_count) + int(state.inbox_count))
+            state.all_count = str(
+                int(state.sent_count) + int(state.inbox_count))
             state.kivyapp.root.children[2].children[
                 0].ids.allmail_cnt.badge_text = state.all_count
             self.set_mdlist()
@@ -2313,13 +2353,16 @@ class Allmails(Screen):
             self.ids.ml.add_widget(content)
 
     def allMessageQuery(self, start_indx, end_indx):
-        """This method is used for retrieving data from inbox or sent both tables"""
+        """Retrieving data from inbox or sent both tables"""
         self.all_mails = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
             " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
-            " folder = 'sent' and fromaddress = '{0}' UNION SELECT toaddress, fromaddress, subject,"
-            " message, folder, msgid As id, DATE(received) As actionTime"
-            " FROM inbox WHERE folder = 'inbox' and toaddress = '{0}' ORDER BY actionTime DESC limit {1}, {2}".format(self.account, start_indx, end_indx))
+            " folder = 'sent' and fromaddress = '{0}'"
+            " UNION SELECT toaddress, fromaddress, subject, message, folder,"
+            " msgid As id, DATE(received) As actionTime FROM inbox"
+            " WHERE folder = 'inbox' and toaddress = '{0}'"
+            " ORDER BY actionTime DESC limit {1}, {2}".format(
+                self.account, start_indx, end_indx))
 
     def set_mdlist(self):
         """This method is used to create mdList for allmaills"""
