@@ -106,20 +106,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         count+=1
         if self.command == 'verack'.encode():
             addr_verack+=1
-            print('the addr_verack count are -{}'.format(addr_verack))
+            # print('the addr_verack count are -{}'.format(addr_verack))
 
         if self.command == 'version'.encode():
             addr_version+=1
-            print('the addr_version count are -{}'.format(addr_version))
+            # print('the addr_version count are -{}'.format(addr_version))
 
         if self.command == 'addr'.encode():
             addr_count+=1
-            print('the addr_count count are -{}'.format(addr_count))
+            # print('the addr_count count are -{}'.format(addr_count))
 
-        # print('The count of the excaution are -{}'.format(count))
-        # print('-----------count---------------{}'.format(count))
-        # print('------self command-----------{}'.format(self.command))
-        # print('----------self---------------{}'.format(self))
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
             #in the advancedispatched and length commend's
@@ -569,17 +565,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             logger.debug(
                 '%(host)s:%(port)i sending version',
                 self.destination._asdict())
-        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-                protocol.haveSSL(not self.isOutbound)):
-            self.isSSL = True
+        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL)):
+            # self.isSSL = True
+            pass
         if not self.verackReceived:
             return True
-        # print('inside the bmproto line')
-        # print('before the value of state are :-{}'.format(self.state))
+        # self.set_state(
+        #     "tls_init" if self.isSSL else "connection_fully_established",
+        #     length=self.payloadLength, expectBytes=0)
         self.set_state(
-            "tls_init" if self.isSSL else "connection_fully_established",
+            "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
-        # print('After the value of state are :-{}'.format(self.state))
         return False
 
     def peerValidityChecks(self):   # pylint: disable=too-many-return-statements

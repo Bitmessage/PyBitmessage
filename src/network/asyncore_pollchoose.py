@@ -249,7 +249,7 @@ def select_poller(timeout=0.0, map=None):
         rd = []
         wt = []
         ex = []
-        for fd, obj in map.items():
+        for fd, obj in list(map.items()):
             is_r = obj.readable()
             is_w = obj.writable()
             if is_r:
@@ -660,9 +660,6 @@ class dispatcher:
 
     def readable(self):
         """Predicate to indicate download throttle status"""
-        print('-------------------------------------')
-        print('---------------asyncore--------------')
-        print('-------------------------------------')
         if maxDownloadRate > 0:
             return downloadBucket > dispatcher.minTx
         return True

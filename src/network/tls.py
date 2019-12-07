@@ -84,7 +84,6 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
             # also exclude TLSv1 and TLSv1.1 in the future
             context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 |\
                 ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
-
             self.sslSocket = context.wrap_socket(
                 self.socket, server_side=self.server_side, do_handshake_on_connect=False)
         else:
