@@ -11,7 +11,7 @@ import time
 from binascii import hexlify
 
 import addresses
-import network.connectionpool
+from network import connectionpool
 import knownnodes
 import protocol
 import state
@@ -30,6 +30,19 @@ from network.objectracker import missingObjects, ObjectTracker
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from network.randomtrackingdict import RandomTrackingDict
 
+global addr_count
+addr_count = 0
+
+global addr_verack
+addr_verack = 0
+
+global addr_version
+addr_version = 0
+
+# global addr_count
+# addr_count = 0
+
+count = 0
 
 class BMProtoError(ProxyError):
     """A Bitmessage Protocol Base Error"""
@@ -83,12 +96,30 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object = None
 
     def state_bm_header(self):
+
         """Process incoming header"""
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
+        #its shoule be in string
         self.command = self.command.rstrip('\x00'.encode('utf-8'))
+        global count,addr_version,addr_count,addr_verack
+        count+=1
+        if self.command == 'verack'.encode():
+            addr_verack+=1
+            # print('the addr_verack count are -{}'.format(addr_verack))
+
+        if self.command == 'version'.encode():
+            addr_version+=1
+            # print('the addr_version count are -{}'.format(addr_version))
+
+        if self.command == 'addr'.encode():
+            addr_count+=1
+            # print('the addr_count count are -{}'.format(addr_count))
+
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
+            #in the advancedispatched and length commend's
+            #escape the 1 length
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
             logger.debug('Bad magic')
@@ -111,15 +142,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.invalid = True
         retval = True
         if not self.fullyEstablished and self.command not in (
-                "error", "version", "verack"):
+                "error".encode(), "version".encode(), "verack".encode()):
             logger.error(
-                'Received command %s before connection was fully'
-                ' established, ignoring', self.command)
+                'Received command {} before connection was fully'
+                ' established, ignoring'.format (self.command))
             self.invalid = True
         if not self.invalid:
             try:
+                command = self.command.decode() if self.command else self.command
+
                 retval = getattr(
-                    self, "bm_command_" + str(self.command).lower())()
+                    self, "bm_command_" +command)()
             except AttributeError:
                 # unimplemented command
                 logger.debug('unimplemented command %s', self.command)
@@ -147,11 +180,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # broken read, ignore
             pass
         else:
-            logger.debug('Closing due to invalid command %s', self.command)
-            self.close_reason = "Invalid command %s" % self.command
+            logger.debug('Closing due to invalid command {}'.format(self.command))
+            self.close_reason = ("Invalid command {}".format(self.command))
             self.set_state("close")
             return False
         if retval:
+            # print('if retval is true and inside the if ')
             self.set_state("bm_header", length=self.payloadLength)
             self.bm_proto_reset()
         # else assume the command requires a different state to follow
@@ -174,16 +208,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # protocol.checkIPAddress()
         services, host, port = self.decode_payload_content("Q16sH")
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, host[12:16])
         elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
             host = base64.b32encode(host[6:]).lower() + ".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, str(host))
+            host = socket.inet_ntop(socket.AF_INET6, host)
         if host == "":
             # This can happen on Windows systems which are not 64-bit
             # compatible so let us drop the IPv6 address.
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, host[12:16])
 
         return Node(services, host, port)
 
@@ -327,6 +361,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         If we have them and some other conditions are fulfilled,
         append them to the write queue.
         """
+        #32 an array bit long strings
         items = self.decode_payload_content("l32s")
         # skip?
         now = time.time()
@@ -429,11 +464,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return self.decode_payload_content("LQIQ16sH")
 
     def bm_command_addr(self):
+        # print('+++++++++++++++++++++++++++\
+            # bm_command_addr bm_command_addr bm_command_addr ++++++++++++++++')
         """Incoming addresses, process them"""
         addresses = self._decode_addr()      # pylint: disable=redefined-outer-name
         for i in addresses:
             seenTime, stream, services, ip, port = i
-            decodedIP = protocol.checkIPAddress(str(ip))
+            decodedIP = protocol.checkIPAddress(ip)
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if (
@@ -495,8 +532,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             "tls_init" if self.isSSL else "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
         return False
-
     def bm_command_version(self):
+        # print('inside the bmproto ')
         """
         Incoming version.
         Parse and log, remember important things, like streams, bitfields, etc.
@@ -528,13 +565,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             logger.debug(
                 '%(host)s:%(port)i sending version',
                 self.destination._asdict())
-        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-                protocol.haveSSL(not self.isOutbound)):
-            self.isSSL = True
+        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL)):
+            # self.isSSL = True
+            pass
         if not self.verackReceived:
             return True
+        # self.set_state(
+        #     "tls_init" if self.isSSL else "connection_fully_established",
+        #     length=self.payloadLength, expectBytes=0)
         self.set_state(
-            "tls_init" if self.isSSL else "connection_fully_established",
+            "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
         return False
 
@@ -578,13 +618,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         if self.destination in connectionpool.BMConnectionPool().inboundConnections:
             try:
+                # print('+++++++++++++++++++++++++++')
+                # print('self destination host -{}'.format(self.destination.host))
+                # print('++++++++++++++++++++++++++++++')
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
                         errorText="Too many connections from your IP."
-                        " Closing connection.", fatal=2))
+                    " Closing connection.", fatal=2))
                     logger.debug(
-                        'Closed connection to %s because we are already connected'
-                        ' to that IP.', self.destination)
+                        'Closed connection to {} because we are already connected'
+                        ' to that IP.'.format(self.destination))
                     return False
             except:
                 pass
@@ -631,7 +674,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             for address in peerList[i:i + BMProto.maxAddrCount]:
                 stream, peer, timestamp = address
                 payload += struct.pack(
-                    '>Q', timestamp)  # 64-bit time
+                    '>Q', int(timestamp))  # 64-bit time
                 payload += struct.pack('>I', stream)
                 payload += struct.pack(
                     '>q', 1)  # service bit flags offered by this node

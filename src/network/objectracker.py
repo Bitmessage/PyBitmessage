@@ -71,7 +71,7 @@ class ObjectTracker(object):
                 # release memory
                 deadline = time.time() - ObjectTracker.trackingExpires
                 with self.objectsNewToThemLock:
-                    self.objectsNewToThem = {k: v for k, v in self.objectsNewToThem.iteritems() if v >= deadline}
+                    self.objectsNewToThem = {k: v for k, v in iter(self.objectsNewToThem.items()) if v >= deadline}
             self.lastCleaned = time.time()
 
     def hasObj(self, hashid):

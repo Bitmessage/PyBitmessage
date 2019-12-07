@@ -452,8 +452,8 @@ class DropDownWidget(BoxLayout):
         # pylint: disable=too-many-locals
         fromAddress = str(self.ids.ti.text)
         toAddress = str(self.ids.txt_input.text)
-        subject = self.ids.subject.text.encode('utf-8').strip()
-        message = self.ids.body.text.encode('utf-8').strip()
+        subject = self.ids.subject.text.strip()
+        message = self.ids.body.text.strip()
         encoding = 3
         print ("message: ", self.ids.body.text)
         sendMessageToPeople = True
@@ -511,8 +511,8 @@ class DropDownWidget(BoxLayout):
                             0,
                             'sent',
                             encoding,
-                            BMConfigParser().getint(
-                                'bitmessagesettings', 'ttl'))
+                            int(BMConfigParser().safeGet(
+                                'bitmessagesettings', 'ttl')))
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[0].children[2].children[0].ids

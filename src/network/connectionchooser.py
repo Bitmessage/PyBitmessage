@@ -11,7 +11,7 @@ from queues import Queue, portCheckerQueue
 
 def getDiscoveredPeer():
     try:
-        peer = random.choice(state.discoveredPeers.keys())
+        peer = random.choice([key for key in state.discoveredPeers.keys()])
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -24,6 +24,7 @@ def getDiscoveredPeer():
 def chooseConnection(stream):
     haveOnion = BMConfigParser().safeGet(
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
+
     if state.trustedPeer:
         return state.trustedPeer
     try:
@@ -37,14 +38,14 @@ def chooseConnection(stream):
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = random.choice(knownnodes.knownNodes[stream].keys())
+        peer = random.choice([key for key in  knownnodes.knownNodes[stream].keys()])
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):
                 continue
             rating = peer_info["rating"]
         except TypeError:
-            logger.warning('Error in %s', peer)
+            logger.warning('Error in {}'.format(peer))
             rating = 0
         if haveOnion:
             # onion addresses have a higher priority when SOCKS

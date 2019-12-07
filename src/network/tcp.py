@@ -11,7 +11,7 @@ import time
 
 import addresses
 import network.asyncore_pollchoose as asyncore
-import network.connectionpool
+from network import connectionpool
 import helper_random
 import knownnodes
 import protocol
@@ -71,8 +71,8 @@ class TCPConnection(BMProto, TLSDispatcher):
             TLSDispatcher.__init__(self, sock, server_side=False)
             self.connect(self.destination)
             logger.debug(
-                'Connecting to %s:%i',
-                self.destination.host, self.destination.port)
+                'Connecting to {}:{}'.format(
+                self.destination.host, self.destination.port))
         try:
             self.local = (
                 protocol.checkIPAddress(
@@ -131,15 +131,15 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def set_connection_fully_established(self):
         """Initiate inventory synchronisation."""
-        if not self.isOutbound and not self.local:
-            shared.clientHasReceivedIncomingConnections = True
-            UISignalQueue.put(('setStatusIcon', 'green'))
+        shared.clientHasReceivedIncomingConnections = True
+        UISignalQueue.put(('setStatusIcon', 'green'))
         UISignalQueue.put((
             'updateNetworkStatusTab',
             (self.isOutbound, True, self.destination)
         ))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
+        print('inside the set_connection_fully_established in tcp file')
         if self.isOutbound:
             knownnodes.increaseRating(self.destination)
             Dandelion().maybeAddStem(self)
@@ -165,7 +165,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
                     filtered = [
-                        (k, v) for k, v in nodes.iteritems()
+                        (k, v) for k, v in iter(nodes.items())
                         if v["lastseen"] > int(time.time()) -
                         shared.maximumAgeOfNodesThatIAdvertiseToOthers and
                         v["rating"] >= 0 and len(k.host) <= 22
@@ -191,8 +191,8 @@ class TCPConnection(BMProto, TLSDispatcher):
             if objectCount == 0:
                 return
             logger.debug(
-                'Sending huge inv message with %i objects to just this'
-                ' one peer', objectCount)
+                'Sending huge inv message with {} objects to jcust this'
+                ' one peer'.format(objectCount))
             self.append_write_buf(protocol.CreatePacket(
                 'inv', addresses.encodeVarint(objectCount) + payload))
 
@@ -208,7 +208,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         continue
                     bigInvList[objHash] = 0
         objectCount = 0
-        payload = b''
+        payload = bytes()
         # Now let us start appending all of these hashes together. They will be
         # sent out in a big inv message to our new peer.
         for obj_hash, _ in bigInvList.items():
@@ -362,13 +362,15 @@ class TCPServer(AdvancedDispatcher):
     """TCP connection server for Bitmessage protocol"""
 
     def __init__(self, host='127.0.0.1', port=8444):
-        if not '_map' in dir(self):
+        if  '_map' not in dir(self):
             AdvancedDispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         for attempt in range(50):
+            print('inside the attempt of line 371')
             try:
                 if attempt > 0:
+                    print('inside the if condition attempt in 373')
                     port = random.randint(32767, 65535)
                 self.bind((host, port))
             except socket.error as e:
@@ -376,6 +378,7 @@ class TCPServer(AdvancedDispatcher):
                     continue
             else:
                 if attempt > 0:
+                    print('inside the if condition attempt in 381')
                     BMConfigParser().set(
                         'bitmessagesettings', 'port', str(port))
                     BMConfigParser().save()

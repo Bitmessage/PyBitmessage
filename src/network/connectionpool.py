@@ -18,7 +18,7 @@ from debug import logger
 from network.proxy import Proxy
 from singleton import Singleton
 from network.tcp import (
-    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection)
+        TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection,bootstrap)
 from network.udp import UDPSocket
 
 
@@ -71,9 +71,13 @@ class BMConnectionPool(object):
 
     def isAlreadyConnected(self, nodeid):
         """Check if we're already connected to this peer"""
+        # for i in (
+        #         self.inboundConnections.values() +
+        #         self.outboundConnections.values()
+        # ):
         for i in (
-                self.inboundConnections.values() +
-                self.outboundConnections.values()
+                [inboundConnections for inboundConnections  in self.inboundConnections.values()] +
+                [outboundConnections for outboundConnections in self.outboundConnections.values()]
         ):
             try:
                 if nodeid == i.nodeid:
@@ -138,10 +142,12 @@ class BMConnectionPool(object):
     def startListening(self, bind=None):
         """Open a listening socket and start accepting connections on it"""
         if bind is None:
+            "this return blank host"
             bind = self.getListeningIP()
-        port = BMConfigParser().safeGetInt("bitmessagesettings", "port")
+        port = int(BMConfigParser().safeGet("bitmessagesettings", "port"))
         # correct port even if it changed
         ls = TCPServer(host=bind, port=port)
+        print('inside the startListening method')
         self.listeningSockets[ls.destination] = ls
 
     def startUDPSocket(self, bind=None):
@@ -178,11 +184,10 @@ class BMConnectionPool(object):
             # This should never happen because socksproxytype setting
             # is handled in bitmessagemain before starting the connectionpool
             return
-
         bootstrapper = bootstrap(connection_base)
         if not hostname:
             port = helper_random.randomchoice([8080, 8444])
-            hostname = 'bootstrap%s.bitmessage.org' % port
+            hostname = ('bootstrap{}.bitmessage.org'.format(port))
         else:
             port = 8444
         self.addConnection(bootstrapper(hostname, port))
@@ -195,8 +200,8 @@ class BMConnectionPool(object):
         if BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
             acceptConnections = False
-        elif BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'sendoutgoingconnections'):
+        elif bool(BMConfigParser().safeGet(
+                'bitmessagesettings', 'sendoutgoingconnections')):
             spawnConnections = True
         socksproxytype = BMConfigParser().safeGet(
             'bitmessagesettings', 'socksproxytype', '')
@@ -215,12 +220,13 @@ class BMConnectionPool(object):
                 self.startBootstrappers()
                 knownnodes.knownNodesActual = True
             if not self.bootstrapped:
+
                 self.bootstrapped = True
                 Proxy.proxy = (
                     BMConfigParser().safeGet(
                         'bitmessagesettings', 'sockshostname'),
-                    BMConfigParser().safeGetInt(
-                        'bitmessagesettings', 'socksport')
+                    int(BMConfigParser().safeGet(
+                        'bitmessagesettings', 'socksport'))
                 )
                 # TODO AUTH
                 # TODO reset based on GUI settings changes
@@ -236,11 +242,11 @@ class BMConnectionPool(object):
                 except ValueError:
                     Proxy.onion_proxy = None
             established = sum(
-                1 for c in list(self.outboundConnections.values())
+                1 for c in [outboundConnections  for outboundConnections in self.outboundConnections.values()]
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
-            if established < BMConfigParser().safeGetInt(
-                    'bitmessagesettings', 'maxoutboundconnections'):
+            if established < int(BMConfigParser().safeGet(
+                    'bitmessagesettings', 'maxoutboundconnections')):
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
@@ -275,14 +281,19 @@ class BMConnectionPool(object):
 
                     self.lastSpawned = time.time()
 
-            print('++++++++++++++++++++++++++++++++++++++++++')
-            print('self.inboundConnections.values()-{}'.format(self.inboundConnections.values()))
-            print('self.outboundConnections.values() -{}'.format(self.outboundConnections.values()))
-            print('+++++++++++++++++++++++++++++++++++++++++++')
+            # print('++++++++++++++++++++++++++++++++++++++++++')
+            # print('self.inboundConnections.values()-{}'.format(self.inboundConnections.values()))
+            # print('self.outboundConnections.values() -{}'.format(self.outboundConnections.values()))
+            # print('+++++++++++++++++++++++++++++++++++++++++++')
         else:
+
+            # for i in (
+            #         list(self.inboundConnections.values()) +
+            #         list(self.outboundConnections.values())
+            # ):
             for i in (
-                    list(self.inboundConnections.values()) +
-                    list(self.outboundConnections.values())
+                    [inboundConnections for inboundConnections in self.inboundConnections.values()] +
+                    [inboundConnections for inboundConnections in self.outboundConnections.values()]
             ):
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
@@ -298,7 +309,8 @@ class BMConnectionPool(object):
                     ).split():
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
-            if not self.udpSockets:
+            if False:
+                # self.udpSockets :- {'0.0.0.0': <network.udp.UDPSocket connected at 0x7f95cce7d7b8>}
                 if BMConfigParser().safeGet('network', 'bind') == '':
                     self.startUDPSocket()
                 else:
@@ -327,9 +339,13 @@ class BMConnectionPool(object):
         asyncore.loop(timeout=loopTime, count=1000)
 
         reaper = []
+        # for i in (
+        #         list(self.inboundConnections.values()) +
+        #         list(self.outboundConnections.values())
+        # ):
         for i in (
-                list(self.inboundConnections.values()) +
-                list(self.outboundConnections.values())
+                [inboundConnections for inboundConnections in  self.inboundConnections.values()] +
+                [outboundConnections for outboundConnections in self.outboundConnections.values()]
         ):
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -341,11 +357,17 @@ class BMConnectionPool(object):
                     i.close_reason = "Timeout (%is)" % (
                         time.time() - i.lastTx)
                     i.set_state("close")
+        # for i in (
+        #         list(self.inboundConnections.values()) +
+        #         list(self.outboundConnections.values()) +
+        #         list(self.listeningSockets.values()) +
+        #         list(self.udpSockets.values())
+        # ):
         for i in (
-                list(self.inboundConnections.values()) +
-                list(self.outboundConnections.values()) +
-                list(self.listeningSockets.values()) +
-                list(self.udpSockets.values())
+                [inboundConnections for inboundConnections in  self.inboundConnections.values()] +
+                [outboundConnections for outboundConnections in self.outboundConnections.values()] +
+                [listeningSockets for listeningSockets in self.listeningSockets.values()] +
+                [udpSockets for udpSockets in self.udpSockets.values()]
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

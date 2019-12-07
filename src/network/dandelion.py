@@ -101,13 +101,27 @@ class Dandelion():      # pylint: disable=old-style-class
                 self.stem.append(connection)
                 for k in (k for k, v in iter(self.nodeMap.items()) if v is None):
                     self.nodeMap[k] = connection
-                for k, v in iter({
-                        k: v for k, v in iter(self.hashMap.items())
+                #The Purpose of adding this condition that if self
+                #hashMap is has any value
+            # if not [hasmap for hasmap in  self.hashMap.items()] ==[]:
+            try:
+                for k, v in {
+                        k: v for k, v in  iter([hasmap for hasmap in  self.hashMap.items()])
                         if v.child is None
-                }).items():
+                }.items():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
+            except AttributeError:
+                pass
+
+            # for k, v in iter({
+            #         k: v for k, v in  iter([hasmap for hasamp in  self.hashMap.items()])
+            #         if v.child is None
+            # }).items():
+            #     self.hashMap[k] = Stem(
+            #         connection, v.stream, self.poissonTimeout())
+            #     invQueue.put((v.stream, k, v.child))
 
     def maybeRemoveStem(self, connection):
         """
@@ -119,14 +133,15 @@ class Dandelion():      # pylint: disable=old-style-class
             if connection in self.stem:
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
+
                 for k in (
                         k for k, v in iter(self.nodeMap.items()) if v == connection
                 ):
                     self.nodeMap[k] = None
-                for k, v in iter({
-                        k: v for k, v in iter(self.hashMap.items())
+                for k, v in {
+                        k: v for k, v in iter(iter([hasmap for hasmap in  self.hashMap.items()]))
                         if v.child == connection
-                }).items():
+                }.items():
                     self.hashMap[k] = Stem(
                         None, v.stream, self.poissonTimeout())
 
