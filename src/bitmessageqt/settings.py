@@ -22,6 +22,19 @@ from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
 
+def getSOCKSProxyType(config):
+    """Get user socksproxytype setting from *config*"""
+    try:
+        result = ConfigParser.SafeConfigParser.get(
+            config, 'bitmessagesettings', 'socksproxytype')
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        return
+    else:
+        if result.lower() in ('', 'none', 'false'):
+            result = None
+    return result
+
+
 class SettingsDialog(QtGui.QDialog):
     """The "Settings" dialog"""
     def __init__(self, parent=None, firstrun=False):
@@ -129,14 +142,9 @@ class SettingsDialog(QtGui.QDialog):
         self.checkBoxOnionOnly.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'))
 
-        try:
-            # Get real value, not temporary
-            self._proxy_type = ConfigParser.SafeConfigParser.get(
-                config, 'bitmessagesettings', 'socksproxytype')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            self._proxy_type = 'none'
+        self._proxy_type = getSOCKSProxyType(config)
         self.comboBoxProxyType.setCurrentIndex(
-            0 if self._proxy_type == 'none'
+            0 if not self._proxy_type
             else self.comboBoxProxyType.findText(self._proxy_type))
         self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
 
@@ -330,7 +338,7 @@ class SettingsDialog(QtGui.QDialog):
 
         proxytype_index = self.comboBoxProxyType.currentIndex()
         if proxytype_index == 0:
-            if self._proxy_type != 'none' and shared.statusIconColor != 'red':
+            if self._proxy_type and shared.statusIconColor != 'red':
                 self.net_restart_needed = True
         elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
