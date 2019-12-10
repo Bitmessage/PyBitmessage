@@ -62,6 +62,6 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlStatementBase += " ORDER BY lastactiontime DESC limit {0}, {1}".format(start_indx, end_indx)
     elif folder == "inbox":
         sqlStatementBase += " ORDER BY received DESC limit {0}, {1}".format(start_indx, end_indx)
-    elif folder == "addressbook":
-        sqlStatementBase += " limit {0}, {1}".format(start_indx, end_indx)
+    # elif folder == "addressbook":
+    #     sqlStatementBase += " limit {0}, {1}".format(start_indx, end_indx)
     return sqlQuery(sqlStatementBase, sqlArguments)
