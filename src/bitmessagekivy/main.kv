@@ -99,6 +99,7 @@
         icon:'contact-mail'
         on_release: app.root.ids.scr_mngr.current = 'allmails'
         badge_text: "0"
+        on_press: app.load_screen(self)
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
         text: "All labels"
@@ -203,11 +204,18 @@ NavigationLayout:
         orientation: 'vertical'
         spacing: dp(10)
         SearchBar:
-        FloatLayout:
-            MDScrollViewRefreshLayout:
-                id: refresh_layout
-                refresh_callback: root.refresh_callback
-                root_layout: root.set_root_layout()
+        #FloatLayout:
+        #    MDScrollViewRefreshLayout:
+        #        id: refresh_layout
+        #        refresh_callback: root.refresh_callback
+        #        root_layout: root.set_root_layout()
+        #        MDList:
+        #            id: ml
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
                 MDList:
                     id: ml
     Loader:
@@ -273,13 +281,21 @@ NavigationLayout:
 
 <Allmails>:
     name: 'allmails'
-    FloatLayout:
-        MDScrollViewRefreshLayout:
-            id: refresh_layout
-            refresh_callback: root.refresh_callback
-            root_layout: root.set_root_layout()
+    #FloatLayout:
+    #    MDScrollViewRefreshLayout:
+    #        id: refresh_layout
+    #        refresh_callback: root.refresh_callback
+    #        root_layout: root.set_root_layout()
+    #        MDList:
+    #            id: ml
+    BoxLayout:
+        orientation:'vertical'
+        ScrollView:
+            id: scroll_y
+            do_scroll_x: False
             MDList:
                 id: ml
+    Loader:
     ComposerButton:
     
 <Test>:
@@ -366,7 +382,8 @@ NavigationLayout:
                     size_hint_y: None
                     font_size: '13sp'
                     height: self.parent.height/2
-                    hint_text: 'type or search recipients address starting with BM-'
+                    #hint_text: 'type or search recipients address starting with BM-'
+                    hint_text: 'type, select or scan QR code for recipients address'
                 RV:
                     id: rv
             MDTextField:
@@ -648,7 +665,7 @@ NavigationLayout:
         do_scroll_x: False
         BoxLayout:
             orientation: 'vertical'
-            padding: [dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1), dp(10)] 
+            padding: [dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1 if app.window_size[0] <= 800 else app.window_size[0]/18), dp(10)] 
             spacing: 12
             size_hint_y: None
             height: self.minimum_height + dp(app.window_size[1]) if app.window_size[1] > app.window_size[0] else dp(app.window_size[0])

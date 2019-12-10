@@ -62,6 +62,7 @@ import state
 from uikivysignaler import UIkivySignaler
 
 import identiconGeneration
+from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
 
 
 def toast(text):
@@ -298,9 +299,9 @@ class Inbox(Screen):
 
         Clock.schedule_once(refresh_callback, 1)
 
-    def set_root_layout(self):
-        """Setting root layout"""
-        return self.parent.parent.parent
+    # def set_root_layout(self):
+    #     """Setting root layout"""
+    #     return self.parent.parent.parent
 
 
 class MyAddress(Screen):
@@ -652,8 +653,8 @@ class DropDownWidget(BoxLayout):
                     # self.parent.parent.screens[0].ids.ml.clear_widgets()
                     # self.parent.parent.screens[0].loadMessagelist(state.association)
                     self.parent.parent.screens[3].update_sent_messagelist()
-                    self.parent.parent.screens[16].clear_widgets()
-                    self.parent.parent.screens[16].add_widget(Allmails())
+                    # self.parent.parent.screens[16].clear_widgets()
+                    # self.parent.parent.screens[16].add_widget(Allmails())
                     Clock.schedule_once(self.callback_for_msgsend, 3)
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print "sqlExecute successfully #######################"
@@ -1331,6 +1332,11 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         state.association = text
         state.searcing_text = ''
         LoadingPopup().open()
+        self.set_message_count()
+        Clock.schedule_once(self.setCurrentAccountData, 0.5)
+
+    def setCurrentAccountData(self, dt=0):
+        """This method set the current accout data on all the screens."""
         self.root.ids.sc1.ids.ml.clear_widgets()
         self.root.ids.sc1.loadMessagelist(state.association)
 
@@ -1348,7 +1354,6 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         self.root.ids.sc17.add_widget(Allmails())
 
         self.root.ids.scr_mngr.current = 'inbox'
-        self.set_message_count()
 
     @staticmethod
     def getCurrentAccount():
@@ -1699,18 +1704,32 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         if instance.text == 'Inbox':
             self.root.ids.scr_mngr.current = 'inbox'
             self.root.ids.sc1.children[1].active = True
-            self.root.ids.sc1.ids.ml.clear_widgets()
-        Clock.schedule_once(partial(self.load_screen_callback, instance), 0.5)
+        elif instance.text == 'All Mails':
+            self.root.ids.scr_mngr.current = 'allmails'
+            try:
+                self.root.ids.sc17.children[1].active = True
+            except Exception as e:
+                self.root.ids.sc17.children[0].children[1].active = True
+        Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
 
     def load_screen_callback(self, instance, dt=0):
         """This method is rotating loader for few seconds"""
         if instance.text == 'Inbox':
+            self.root.ids.sc1.ids.ml.clear_widgets()
             self.root.ids.sc1.loadMessagelist(state.association)
             self.root.ids.sc1.children[1].active = False
+        elif instance.text == 'All Mails':
+            self.root.ids.sc17.clear_widgets()
+            self.root.ids.sc17.add_widget(Allmails())
+            try:
+                self.root.ids.sc17.children[1].active = False
+            except Exception as e:
+                self.root.ids.sc17.children[0].children[1].active = False
 
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
+    valid = False
 
     def __init__(self, **kwargs):  # pylint: disable=useless-super-delegation
         """Grash of pop screen settings"""
@@ -1733,7 +1752,7 @@ class GrashofPopup(Popup):
         stored_labels = [labels[0] for labels in kivy_helper_search.search_sql(
             folder="addressbook")]
         if label and address and address not in stored_address \
-                and label not in stored_labels:
+                and label not in stored_labels and self.valid:
             # state.navinstance = self.parent.children[1]
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.dismiss()
@@ -1779,12 +1798,17 @@ class GrashofPopup(Popup):
             text = 'Address is already in the addressbook.'
         elif entered_text in my_addresses:
             text = 'You can not save your own address.'
+        elif entered_text:
+            text = self.addressChanged(entered_text)
 
         if entered_text in my_addresses or entered_text in add_book:
             self.ids.address.error = True
             self.ids.address.helper_text = text
-        elif entered_text:
+        elif entered_text and self.valid:
             self.ids.address.error = False
+        elif entered_text:
+            self.ids.address.error = True
+            self.ids.address.helper_text = text
         else:
             self.ids.address.error = False
             self.ids.address.helper_text = 'This field is required'
@@ -1802,6 +1826,33 @@ class GrashofPopup(Popup):
         else:
             self.ids.label.error = False
             self.ids.label.helper_text = 'This field is required'
+
+    def _onSuccess(self, addressVersion, streamNumber, ripe):
+        pass
+
+    def addressChanged(self, addr):
+        """Address validation callback, performs validation and gives feedback"""
+        status, addressVersion, streamNumber, ripe = decodeAddress(
+            str(addr))
+        self.valid = status == 'success'
+        if self.valid:
+            text = "Address is valid."
+            self._onSuccess(addressVersion, streamNumber, ripe)
+        elif status == 'missingbm':
+            text = "The address should start with ''BM-''"
+        elif status == 'checksumfailed':
+            text = "The address is not typed or copied correctly(the checksum failed)."
+        elif status == 'versiontoohigh':
+            text = "The version number of this address is higher than this software can support. Please upgrade Bitmessage."
+        elif status == 'invalidcharacters':
+            text = "The address contains invalid characters."
+        elif status == 'ripetooshort':
+            text = "Some data encoded in the address is too short."
+        elif status == 'ripetoolong':
+            text = "Some data encoded in the address is too long."
+        elif status == 'varintmalformed':
+            text = "Some data encoded in the address is malformed."
+        return text
 
 
 class AvatarSampleWidget(ILeftBody, Image):
@@ -2321,16 +2372,12 @@ class Allmails(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method all mails"""
-        self.mailaccounts()
-        print dt
-
-    def mailaccounts(self):
-        """Load all mails for account."""
-        self.account = state.association
         self.loadMessagelist()
+        print dt
 
     def loadMessagelist(self):
         """Load Inbox, Sent anf Draft list of messages."""
+        self.account = state.association
         self.allMessageQuery(0, 20)
         if self.all_mails:
             state.kivyapp.get_inbox_count()
@@ -2340,7 +2387,8 @@ class Allmails(Screen):
             state.kivyapp.root.children[2].children[
                 0].ids.allmail_cnt.badge_text = state.all_count
             self.set_mdlist()
-            self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
+            # self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
+            self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             content = MDLabel(
                 font_style='Body1',
@@ -2401,8 +2449,8 @@ class Allmails(Screen):
 
     def check_scroll_y(self, instance, somethingelse):
         """Scroll fixed length"""
-        if self.ids.refresh_layout.scroll_y <= -0.00 and self.has_refreshed:
-            self.ids.refresh_layout.scroll_y = .06
+        if self.ids.scroll_y.scroll_y <= -0.00 and self.has_refreshed:
+            self.ids.scroll_y.scroll_y = .06
             load_more = len(self.ids.ml.children)
             self.updating_allmail(load_more)
         else:
@@ -2439,13 +2487,13 @@ class Allmails(Screen):
                     unique_id))
         self.ids.ml.remove_widget(instance.parent.parent)
         try:
-            msg_count_objs = self.parent.parent.parent.parent.children[
-                2].children[0].ids
-            nav_lay_obj = self.parent.parent.parent.parent.ids
-        except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
             nav_lay_obj = self.parent.parent.parent.parent.parent.ids
+        except Exception:
+            msg_count_objs = self.parent.parent.parent.parent.parent.parent.children[
+                2].children[0].ids
+            nav_lay_obj = self.parent.parent.parent.parent.parent.parent.ids
         if folder == 'inbox':
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
@@ -2466,8 +2514,7 @@ class Allmails(Screen):
         state.all_count = str(int(state.all_count) - 1)
         nav_lay_obj.sc5.clear_widgets()
         nav_lay_obj.sc5.add_widget(Trash())
-        nav_lay_obj.sc17.clear_widgets()
-        nav_lay_obj.sc17.add_widget(Allmails())
+        nav_lay_obj.sc17.remove_widget(instance.parent.parent)
 
     # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
@@ -2496,10 +2543,13 @@ class Allmails(Screen):
 
 def avatarImageFirstLetter(letter_string):
     """This function is used to the first letter for the avatar image"""
-    if letter_string[0].upper() >= 'A' and letter_string[0].upper() <= 'Z':
-        img_latter = letter_string[0].upper()
-    elif int(letter_string[0]) >= 0 and int(letter_string[0]) <= 9:
-        img_latter = letter_string[0]
+    if letter_string:
+        if letter_string[0].upper() >= 'A' and letter_string[0].upper() <= 'Z':
+            img_latter = letter_string[0].upper()
+        elif int(letter_string[0]) >= 0 and int(letter_string[0]) <= 9:
+            img_latter = letter_string[0]
+        else:
+            img_latter = '!'
     else:
         img_latter = '!'
     return img_latter
