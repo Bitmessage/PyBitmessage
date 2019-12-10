@@ -62,7 +62,7 @@ import state
 from uikivysignaler import UIkivySignaler
 
 import identiconGeneration
-from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
+from addresses import addBMIfNotPresent, decodeAddress
 
 
 def toast(text):
@@ -590,7 +590,6 @@ class DropDownWidget(BoxLayout):
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
-                from addresses import decodeAddress
                 status, addressVersionNumber, streamNumber, ripe = (
                     decodeAddress(toAddress))
                 if status == 'success':
@@ -612,7 +611,6 @@ class DropDownWidget(BoxLayout):
                         state.detailPageType = ''
                         state.send_draft_mail = None
                     else:
-                        from addresses import addBMIfNotPresent
                         toAddress = addBMIfNotPresent(toAddress)
                         statusIconColor = 'red'
                         if (addressVersionNumber > 4) or (
@@ -1708,7 +1706,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.scr_mngr.current = 'allmails'
             try:
                 self.root.ids.sc17.children[1].active = True
-            except Exception as e:
+            except Exception:
                 self.root.ids.sc17.children[0].children[1].active = True
         Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
 
@@ -1723,7 +1721,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.sc17.add_widget(Allmails())
             try:
                 self.root.ids.sc17.children[1].active = False
-            except Exception as e:
+            except Exception:
                 self.root.ids.sc17.children[0].children[1].active = False
 
 
@@ -1843,7 +1841,8 @@ class GrashofPopup(Popup):
         elif status == 'checksumfailed':
             text = "The address is not typed or copied correctly(the checksum failed)."
         elif status == 'versiontoohigh':
-            text = "The version number of this address is higher than this software can support. Please upgrade Bitmessage."
+            text = "The version number of this address is higher"\
+                " than this software can support. Please upgrade Bitmessage."
         elif status == 'invalidcharacters':
             text = "The address contains invalid characters."
         elif status == 'ripetooshort':
@@ -2311,9 +2310,7 @@ class Draft(Screen):
         encoding = 3
         sendMessageToPeople = True
         if sendMessageToPeople:
-            from addresses import decodeAddress
             streamNumber, ripe = decodeAddress(toAddress)[2:]
-            from addresses import addBMIfNotPresent
             toAddress = addBMIfNotPresent(toAddress)
             stealthLevel = BMConfigParser().safeGetInt(
                 'bitmessagesettings', 'ackstealthlevel')
