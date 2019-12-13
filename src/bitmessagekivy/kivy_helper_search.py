@@ -20,7 +20,7 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
         sqlStatementBase = '''SELECT label, address From addressbook '''
     else:
         sqlStatementBase = (
-            '''SELECT folder, msgid, toaddress, message, fromaddress, subject,'''
+            '''SELECT folder, toaddress, message, fromaddress, subject,'''
             ''' received, read FROM inbox ''')
 
     sqlStatementParts = []

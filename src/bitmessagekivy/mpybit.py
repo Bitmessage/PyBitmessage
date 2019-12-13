@@ -237,8 +237,7 @@ class Inbox(Screen):
     def delete(self, data_index, instance, *args):
         """Delete inbox mail from inbox listing"""
         sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
-                data_index))
+            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
         try:
             msg_count_objs = (
                 self.parent.parent.parent.parent.children[2].children[0].ids)
@@ -267,8 +266,7 @@ class Inbox(Screen):
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing"""
         sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
-                data_index))
+            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -601,11 +599,11 @@ class DropDownWidget(BoxLayout):
                             fromAddress,
                             subject,
                             message,
-                            str(state.send_draft_mail))
+                            state.send_draft_mail)
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
-                        state.detailPageType = ''
-                        state.send_draft_mail = None
+                        # state.detailPageType = ''
+                        # state.send_draft_mail = None
                     else:
                         from addresses import addBMIfNotPresent
                         toAddress = addBMIfNotPresent(toAddress)
@@ -645,6 +643,12 @@ class DropDownWidget(BoxLayout):
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[2].children[0].ids
+                    if state.detailPageType == 'draft' \
+                            and state.send_draft_mail:
+                        state.draft_count = str(int(state.draft_count) - 1)
+                        state.msg_counter_objs.draft_cnt.badge_text = state.draft_count
+                        state.detailPageType = ''
+                        state.send_draft_mail = None
                     # self.parent.parent.screens[0].ids.ml.clear_widgets()
                     # self.parent.parent.screens[0].loadMessagelist(state.association)
                     self.parent.parent.screens[3].update_sent_messagelist()
@@ -681,7 +685,7 @@ class DropDownWidget(BoxLayout):
         msg_dialog.open()
 
     @staticmethod
-    def callback_for_menu_items(text_item):
+    def callback_for_menu_items(text_item, *arg):
         """Callback of alert box"""
         toast(text_item)
 
@@ -1068,7 +1072,7 @@ class Sent(Screen):
             state.all_count = str(int(state.all_count) - 1)
         sqlExecute(
             "UPDATE sent SET folder = 'trash'"
-            " WHERE ackdata = ?;", str(data_index))
+            " WHERE ackdata = ?;", data_index)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
         self.update_trash()
@@ -1077,7 +1081,7 @@ class Sent(Screen):
         """Archive sent mail from sent mail listing"""
         sqlExecute(
             "UPDATE sent SET folder = 'trash'"
-            " WHERE ackdata = ?;", str(data_index))
+            " WHERE ackdata = ?;", data_index)
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -1099,7 +1103,7 @@ class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens"""
     trash_messages = ListProperty()
     has_refreshed = True
-    delete_index = StringProperty()
+    # delete_index = StringProperty()
     table_name = StringProperty()
 
     def __init__(self, *args, **kwargs):
@@ -1214,7 +1218,7 @@ class Trash(Screen):
             events_callback=self.callback_for_delete_msg)
         delete_msg_dialog.open()
 
-    def callback_for_delete_msg(self, text_item):
+    def callback_for_delete_msg(self, text_item, *arg):
         """Getting the callback of alert box"""
         if text_item == 'Yes':
             self.delete_message_from_trash()
@@ -1225,11 +1229,9 @@ class Trash(Screen):
         """Deleting message from trash"""
         self.children[1].active = True
         if self.table_name == 'inbox':
-            sqlExecute("DELETE FROM inbox WHERE msgid = ?;", str(
-                self.delete_index))
+            sqlExecute("DELETE FROM inbox WHERE msgid = ?;", self.delete_index)
         elif self.table_name == 'sent':
-            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
-                self.delete_index))
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", self.delete_index)
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         if int(state.trash_count) > 0:
             msg_count_objs.trash_cnt.badge_text = str(
@@ -1956,7 +1958,7 @@ class MailDetail(Screen):
                 2].children[1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE"
-                " ackdata = ?;", str(state.mail_id))
+                " ackdata = ?;", state.mail_id)
             msg_count_objs.send_cnt.badge_text = str(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             self.parent.screens[3].ids.ml.clear_widgets()
@@ -1968,7 +1970,7 @@ class MailDetail(Screen):
                 1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE"
-                " msgid = ?;", str(state.mail_id))
+                " msgid = ?;", state.mail_id)
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
@@ -1976,8 +1978,7 @@ class MailDetail(Screen):
             self.parent.screens[0].loadMessagelist(state.association)
 
         elif state.detailPageType == 'draft':
-            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
-                state.mail_id))
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", state.mail_id)
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
@@ -1993,8 +1994,8 @@ class MailDetail(Screen):
                 int(state.all_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
-            self.parent.screens[4].ids.ml.clear_widgets()
-            self.parent.screens[4].init_ui(dt=0)
+            self.parent.screens[4].clear_widgets()
+            self.parent.screens[4].add_widget(Trash())
             self.parent.screens[16].ids.ml.clear_widgets()
             self.parent.screens[16].init_ui(dt=0)
         Clock.schedule_once(self.callback_for_delete, 4)
@@ -2012,7 +2013,7 @@ class MailDetail(Screen):
         """Reply inbox messages"""
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message from inbox where"
-            " msgid = ?;", str(state.mail_id))
+            " msgid = ?;", state.mail_id)
         composer_obj = self.parent.screens[2].children[1].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
@@ -2485,12 +2486,10 @@ class Allmails(Screen):
         """Delete inbox mail from all mail listing"""
         if folder == 'inbox':
             sqlExecute(
-                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", str(
-                    unique_id))
+                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", unique_id)
         else:
             sqlExecute(
-                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;", str(
-                    unique_id))
+                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;", unique_id)
         self.ids.ml.remove_widget(instance.parent.parent)
         try:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
