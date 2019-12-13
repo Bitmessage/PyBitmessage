@@ -13,6 +13,7 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 from openssl import OpenSSL
 from struct import pack, unpack
 import hash as Hash
+import hashlib as HashLib
 import msgpack
 from datetime import datetime
 from datetime import timedelta
@@ -24,7 +25,7 @@ def encode_datetime(obj):
 key_m = ''
 
 
-class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
+class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
     keymetadata = {"PubKey_expiry_Date": "", "Value" : "",}
     """
     Class for ECC blind signature functionality
@@ -71,10 +72,31 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         """
         Generate an ECC keypair
         """
-        d = ECCBlind.ec_get_random(group, ctx)
+        d = ECCBlindChain.ec_get_random(group, ctx)
         Q = OpenSSL.EC_POINT_new(group)
         OpenSSL.EC_POINT_mul(group, Q, d, 0, 0, 0)
         return (d, Q)
+
+    @staticmethod
+    def ec_serialize(msg):
+        """
+        Generate an ECC keypair
+        """
+        msg = msgpack.packb(msg, default=encode_datetime, use_bin_type=True)
+        return msg
+
+    @staticmethod
+    def ec_deSerialize(msg):
+        """
+        Generate an ECC keypair
+        """
+        msg = msgpack.unpackb(msg)
+        return msg
+
+    @staticmethod
+    def encrypt_string(hash_string):
+        sha_signature = HashLib.sha256(hash_string).hexdigest()
+        return sha_signature
 
     @staticmethod
     def ec_Ftor(F, group, ctx):
@@ -103,7 +125,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
             self.G = OpenSSL.EC_GROUP_get0_generator(self.group)
 
             # new keypair
-            self.keypair = ECCBlind.ec_gen_keypair(self.group, self.ctx)
+            self.keypair = ECCBlindChain.ec_gen_keypair(self.group, self.ctx)
             key_m = self.keypair
             self.Q = self.keypair[1]
 
@@ -118,7 +140,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         Init signer
         """
         # Signer: Random integer k
-        self.k = ECCBlind.ec_get_random(self.group, self.ctx)
+        self.k = ECCBlindChain.ec_get_random(self.group, self.ctx)
 
         # R = kG
         self.R = OpenSSL.EC_POINT_new(self.group)
@@ -140,12 +162,12 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # F != O
         while OpenSSL.EC_POINT_cmp(self.group, self.F, self.iO, self.ctx) == 0:
-            self.a = ECCBlind.ec_get_random(self.group, self.ctx)
-            self.b = ECCBlind.ec_get_random(self.group, self.ctx)
-            self.c = ECCBlind.ec_get_random(self.group, self.ctx)
+            self.a = ECCBlindChain.ec_get_random(self.group, self.ctx)
+            self.b = ECCBlindChain.ec_get_random(self.group, self.ctx)
+            self.c = ECCBlindChain.ec_get_random(self.group, self.ctx)
 
             # F = b^-1 * R...
-            self.binv = ECCBlind.ec_invert(self.group, self.b, self.ctx)
+            self.binv = ECCBlindChain.ec_invert(self.group, self.b, self.ctx)
             OpenSSL.EC_POINT_mul(self.group, temp, 0, self.R, self.binv, 0)
             OpenSSL.EC_POINT_copy(self.F, temp)
 
@@ -159,11 +181,13 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
             OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, 0)
 
         # F = (x0, y0)
-        self.r = ECCBlind.ec_Ftor(self.F, self.group, self.ctx)
+        self.r = ECCBlindChain.ec_Ftor(self.F, self.group, self.ctx)
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
-        msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
+        msg = ECCBlindChain.ec_serialize(msg)
+        #msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
+        #msg = ECCBlindChain.encrypt_string(msg)
         msg = Hash.hmac_sha256(msg, msg)# Here key is only the msg as we are passing pubkeys in msg
         OpenSSL.BN_bin2bn(msg, len(msg), self.m)
 
@@ -200,14 +224,16 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         """
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
+        msg = ECCBlindChain.ec_serialize(msg)
+        #msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
+        #msg_hash = ECCBlindChain.encrypt_string(msg)
         msg_hash = Hash.hmac_sha256(msg, msg)
         OpenSSL.BN_bin2bn(msg_hash, len(msg_hash), self.m)
 
         # init
         s, self.F = signature
         if self.r is None:
-            self.r = ECCBlind.ec_Ftor(self.F, self.group, self.ctx)
+            self.r = ECCBlindChain.ec_Ftor(self.F, self.group, self.ctx)
 
         lhs = OpenSSL.EC_POINT_new(self.group)
         rhs = OpenSSL.EC_POINT_new(self.group)
@@ -225,37 +251,18 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         else:
             return retval == 0 
 
-    # def verify_Chain(self,verify_msg,signature_list,signer_obj_list):
-    #     chainLength = len(verify_msg) - 1
-    #     while chainLength >=0:
-    #         # if chainLength is 1:
-    #         #      verify_msg[chainLength] = msgpack.packb([verify_msg[chainLength],self.keymetadata], default=encode_datetime, use_bin_type=True)
-    #         if chainLength is 0:
-    #             verifier_obj = ECCBlind(pubkey=signer_obj_list[0].pubkey)
-    #         else:
-    #             verifier_obj = ECCBlind(pubkey=signer_obj_list[chainLength-1].pubkey)
-    #         ret = verifier_obj.verify(verify_msg[chainLength]  , signature_list[chainLength])
-    #         if ret is True:
-    #             print("Verify successfully")
-    #             abc = msgpack.unpackb(verify_msg[chainLength])
-    #             print("Pubkey in the data is ",abc[0])
-    #         else:
-    #             print("Verify Fails")
-    #         chainLength = chainLength - 1
-
     def verify_Chain(self,msg):
-        abc = msgpack.unpackb(msg)
-        i = len(abc) - 1
-        print("Length of msg at line 248",abc)
+        Unpacked_dict = ECCBlindChain.ec_deSerialize(msg)#msgpack.unpackb(msg)
+        i = len(Unpacked_dict) - 1
+        print("Length of msg at line 248",Unpacked_dict)
 
         while i >= 0:
             
-            signer_pubkey = abc[i]['Msg']
-            signature = abc[i]['Sign']
+            signer_pubkey = Unpacked_dict[i]['Msg']
+            signature = Unpacked_dict[i]['Sign']
             
-            verifier_obj = ECCBlind(pubkey=abc[i]['Msg']['PubKEY'])
-
-            ret = verifier_obj.verify(abc[i]['Msg'] , signature)
+            verifier_obj = ECCBlindChain(pubkey=Unpacked_dict[i]['Msg']['PubKEY'])
+            ret = verifier_obj.verify(Unpacked_dict[i]['Msg'] , signature)
             if ret is True:
                 print("Message verified successfully")
             else:
