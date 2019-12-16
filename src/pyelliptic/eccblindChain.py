@@ -11,26 +11,17 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # pylint: disable=invalid-name
 
 from openssl import OpenSSL
-from struct import pack, unpack
 import hash as Hash
-import hashlib as HashLib
 import msgpack
 from datetime import datetime
 from datetime import timedelta
-import timedelta
-cur = datetime.now()
-exp = datetime.now()+(timedelta.Timedelta(days = 365))
 def encode_datetime(obj):
-        return {'Time': int(exp.strftime("%s"))}
-key_m = ''
-
+    return {'Time': int(obj.strftime("%s"))}
 
 class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
-    keymetadata = {"PubKey_expiry_Date": "", "Value" : "",}
     """
-    Class for ECC blind signature functionality
+    Class for ECC Blind Chain signature functionality
     """
-
     # init
     k = None
     R = None
@@ -80,7 +71,7 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def ec_serialize(msg):
         """
-        Generate an ECC keypair
+        Serialize the data using msgpack
         """
         msg = msgpack.packb(msg, default=encode_datetime, use_bin_type=True)
         return msg
@@ -88,13 +79,16 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def ec_deSerialize(msg):
         """
-        Generate an ECC keypair
+        Deserialize the data using msgpack
         """
         msg = msgpack.unpackb(msg)
         return msg
 
     @staticmethod
     def encrypt_string(hash_string):
+        """
+        Hashing the data using hashlib
+        """
         sha_signature = HashLib.sha256(hash_string).hexdigest()
         return sha_signature
 
@@ -110,7 +104,7 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
                                                     ctx)
         return x0
 
-    def __init__(self, curve="secp256k1", pubkey=None ):
+    def __init__(self, curve="secp256k1", pubkey=None):
         self.ctx = OpenSSL.BN_CTX_new()
 
         if pubkey:
@@ -186,10 +180,8 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
         msg = ECCBlindChain.ec_serialize(msg)
-        #msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
-        #msg = ECCBlindChain.encrypt_string(msg)
-        msg = Hash.hmac_sha256(msg, msg)# Here key is only the msg as we are passing pubkeys in msg
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        hashed_msg = Hash.hmac_sha256(msg, msg)# Here key is only the msg as we are passing pubkeys in msg
+        OpenSSL.BN_bin2bn(hashed_msg, len(hashed_msg), self.m)
 
         self.m_ = OpenSSL.BN_new()
         OpenSSL.BN_mod_mul(self.m_, self.b, self.r, self.n, self.ctx)
@@ -225,10 +217,8 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
         msg = ECCBlindChain.ec_serialize(msg)
-        #msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
-        #msg_hash = ECCBlindChain.encrypt_string(msg)
-        msg_hash = Hash.hmac_sha256(msg, msg)
-        OpenSSL.BN_bin2bn(msg_hash, len(msg_hash), self.m)
+        hashed_msg = Hash.hmac_sha256(msg, msg)
+        OpenSSL.BN_bin2bn(hashed_msg, len(hashed_msg), self.m)
 
         # init
         s, self.F = signature
@@ -246,21 +236,18 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
 
         retval = OpenSSL.EC_POINT_cmp(self.group, lhs, rhs, self.ctx)
         if retval == -1:
-            print("Not Verified")
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
             return retval == 0 
 
     def verify_Chain(self,msg):
-        Unpacked_dict = ECCBlindChain.ec_deSerialize(msg)#msgpack.unpackb(msg)
+        """
+        Verify complete chain with its relevant signature
+        """
+        Unpacked_dict = ECCBlindChain.ec_deSerialize(msg)
         i = len(Unpacked_dict) - 1
-        print("Length of msg at line 248",Unpacked_dict)
-
         while i >= 0:
-            
-            signer_pubkey = Unpacked_dict[i]['Msg']
             signature = Unpacked_dict[i]['Sign']
-            
             verifier_obj = ECCBlindChain(pubkey=Unpacked_dict[i]['Msg']['PubKEY'])
             ret = verifier_obj.verify(Unpacked_dict[i]['Msg'] , signature)
             if ret is True:
