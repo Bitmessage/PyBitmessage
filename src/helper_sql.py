@@ -29,7 +29,6 @@ sqlLock = threading.Lock()
 def sqlQuery(sqlStatement, *args):
     """
     Query sqlite and return results
-
     :param str sqlStatement: SQL statement string
     :param list args: SQL query parameters
     :rtype: list

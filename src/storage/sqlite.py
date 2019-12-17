@@ -28,6 +28,7 @@ class SqliteInventory(InventoryStorage):    # pylint: disable=too-many-ancestors
         self.lock = RLock()
 
     def __contains__(self, hash_):
+        print('----------contains------------------')
         with self.lock:
             if hash_ in self._objects:
                 return True
@@ -38,6 +39,7 @@ class SqliteInventory(InventoryStorage):    # pylint: disable=too-many-ancestors
             return True
 
     def __getitem__(self, hash_):
+        print('----------__getitem__------------------')
         with self.lock:
             if hash_ in self._inventory:
                 return self._inventory[hash_]
@@ -49,25 +51,30 @@ class SqliteInventory(InventoryStorage):    # pylint: disable=too-many-ancestors
             return InventoryItem(*rows[0])
 
     def __setitem__(self, hash_, value):
+        print('----------__setitem__------------------')
         with self.lock:
             value = InventoryItem(*value)
             self._inventory[hash_] = value
             self._objects[hash_] = value.stream
 
     def __delitem__(self, hash_):
+        print('----------__delitem__------------------')
         raise NotImplementedError
 
     def __iter__(self):
+        print('----------__iter__------------------')
         with self.lock:
             hashes = self._inventory.keys()[:]
             hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
     def __len__(self):
+        print('----------__len__------------------')
         with self.lock:
             return len(self._inventory) + sqlQuery('SELECT count(*) FROM inventory')[0][0]
 
     def by_type_and_tag(self, objectType, tag):
+        print('----------by_type_and_tag------------------')
         with self.lock:
             values = [value for value in self._inventory.values() if value.type == objectType and value.tag == tag]
             values += (InventoryItem(*value) for value in sqlQuery(

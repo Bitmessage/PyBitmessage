@@ -572,10 +572,23 @@ class sqlThread(threading.Thread):
                 rowcount = 0
                 # print 'item', item
                 # print 'parameters', parameters
+                # print('++++454++++++++++++++++++++++++')
+                # print ('parameters')
+                # print (parameters)
+                # print ('+++++++++++++++++++++++++++++')
+                try:
+                    if 'sent' == parameters[1] and 'B' in parameters[0]:
+                        item = '''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime   FROM sent WHERE fromaddress = ?   ORDER BY lastactiontime DESC '''
+                        parameters = (parameters[0],)
+                except (IndexError,TypeError) as e:
+                    pass
                 try:
                     self.cur.execute(item, parameters)
                     rowcount = self.cur.rowcount
                 except Exception as err:
+                    print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+                    print('inside the expectation')
+                    print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
                     if str(err) == 'database or disk is full':
                         logger.fatal(
                             '(while cur.execute) Alert: Your disk or data storage volume is full.'

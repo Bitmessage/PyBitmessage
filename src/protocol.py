@@ -142,16 +142,14 @@ def network_group(host):
 
 
 def checkIPAddress(host, private=False):
-    """
-    Returns hostStandardFormat if it is a valid IP address,
-    otherwise returns False
-    """
-    if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+
+    """Returns hostStandardFormat if it is a valid IP address, otherwise returns False"""
+    if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape'):
         hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
         return checkIPv4Address(host[12:], hostStandardFormat, private)
-    elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+    elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43'.encode('raw_unicode_escape'):
         # Onion, based on BMD/bitcoind
-        hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+        hostStandardFormat = base64.b32encode(host[6:]) + ".onion".encode()
         if private:
             return False
         return hostStandardFormat
@@ -168,22 +166,21 @@ def checkIPAddress(host, private=False):
 
 
 def checkIPv4Address(host, hostStandardFormat, private=False):
-    """
-    Returns hostStandardFormat if it is an IPv4 address,
-    otherwise returns False
-    """
-    if host[0] == '\x7F':  # 127/8
+
+    """Returns hostStandardFormat if it is an IPv4 address, otherwise returns False"""
+
+    if host[0] == '\x7F'.encode('raw_unicode_escape'):  # 127/8
         if not private:
             logger.debug(
                 'Ignoring IP address in loopback range: %s',
                 hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0] == '\x0A':  # 10/8
+    if host[0] == '\x0A'.encode('raw_unicode_escape'):  # 10/8
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0:2] == '\xC0\xA8':  # 192.168/16
+    if host[0:2] == '\xC0\xA8'.encode('raw_unicode_escape'):  # 192.168/16
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
