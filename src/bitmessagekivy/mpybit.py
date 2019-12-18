@@ -1587,6 +1587,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             msg_counter_objs.allmail_cnt.badge_text = state.all_count
 
     def on_start(self):
+        """Method activates on start"""
         self.set_message_count()
 
     @staticmethod
