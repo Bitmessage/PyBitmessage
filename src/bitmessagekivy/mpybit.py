@@ -45,7 +45,8 @@ from kivymd.uix.list import (
     ILeftBodyTouch,
     IRightBodyTouch,
     TwoLineAvatarIconListItem,
-    TwoLineListItem
+    TwoLineListItem,
+    OneLineIconListItem
 )
 from kivymd.uix.navigationdrawer import (
     MDNavigationDrawer,
@@ -873,12 +874,6 @@ class Random(Screen):
         self.ids.label.text = ''
 
 
-class AddressSuccessful(Screen):
-    """Getting Address Detail."""
-
-    pass
-
-
 class Sent(Screen):
     """Sent Screen uses screen to show widgets of screens"""
     queryreturn = ListProperty()
@@ -1439,8 +1434,8 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
-        elif key == 13:
-            if state.search_screen == 'inbox' and state.searcing_text:
+        elif key == 13 and state.searcing_text:
+            if state.search_screen == 'inbox':
                 self.root.ids.sc1.children[1].active = True
                 Clock.schedule_once(self.search_callback, 0.5)
             elif state.search_screen == 'addressbook':
@@ -1930,7 +1925,7 @@ class MailDetail(Screen):
         elif state.detailPageType == 'inbox':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message from inbox"
-                " where msgid = ?;", str(state.mail_id))
+                " where msgid = ?;", state.mail_id)
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
 
@@ -2589,3 +2584,8 @@ class LoadingPopup(Popup):
     def dismiss_popup(self, dt):
         """Dismiss popups"""
         self.dismiss()
+
+
+class AddressDropdown(OneLineIconListItem):
+    """AddressDropdown showns all the addresses"""
+    pass
