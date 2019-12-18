@@ -1,7 +1,5 @@
 """
-src/addresses.py
-================
-
+Operations with addresses
 """
 # pylint: disable=redefined-outer-name,inconsistent-return-statements
 
@@ -18,8 +16,9 @@ ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 def encodeBase58(num, alphabet=ALPHABET):
     """Encode a number in Base X
 
-    `num`: The number to encode
-    `alphabet`: The alphabet to use for encoding
+    Args:
+      num: The number to encode
+      alphabet: The alphabet to use for encoding
     """
     if num == 0:
         return alphabet[0]
@@ -27,7 +26,6 @@ def encodeBase58(num, alphabet=ALPHABET):
     base = len(alphabet)
     while num:
         rem = num % base
-        # print 'num is:', num
         num = num // base
         arr.append(alphabet[rem])
     arr.reverse()
@@ -37,9 +35,9 @@ def encodeBase58(num, alphabet=ALPHABET):
 def decodeBase58(string, alphabet=ALPHABET):
     """Decode a Base X encoded string into the number
 
-    Arguments:
-    - `string`: The encoded string
-    - `alphabet`: The alphabet to use for encoding
+    Args:
+      string: The encoded string
+      alphabet: The alphabet to use for encoding
     """
     base = len(alphabet)
     num = 0
@@ -54,11 +52,20 @@ def decodeBase58(string, alphabet=ALPHABET):
     return num
 
 
+class varintEncodeError(Exception):
+    """Exception class for encoding varint"""
+    pass
+
+
+class varintDecodeError(Exception):
+    """Exception class for decoding varint data"""
+    pass
+
+
 def encodeVarint(integer):
     """Convert integer into varint bytes"""
     if integer < 0:
-        logger.error('varint cannot be < 0')
-        raise SystemExit
+        raise varintEncodeError('varint cannot be < 0')
     if integer < 253:
         return pack('>B', integer)
     if integer >= 253 and integer < 65536:
@@ -68,13 +75,7 @@ def encodeVarint(integer):
     if integer >= 4294967296 and integer < 18446744073709551616:
         return pack('>B', 255) + pack('>Q', integer)
     if integer >= 18446744073709551616:
-        logger.error('varint cannot be >= 18446744073709551616')
-        raise SystemExit
-
-
-class varintDecodeError(Exception):
-    """Exception class for decoding varint data"""
-    pass
+        raise varintEncodeError('varint cannot be >= 18446744073709551616')
 
 
 def decodeVarint(data):

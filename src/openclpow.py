@@ -1,8 +1,9 @@
 #!/usr/bin/env python2.7
+"""
+Module for Proof of Work using OpenCL
+"""
 from struct import pack, unpack
-import time
 import hashlib
-import random
 import os
 
 from bmconfigparser import BMConfigParser
@@ -27,6 +28,8 @@ except ImportError:
 
 
 def initCL():
+    """Initlialise OpenCL engine"""
+    # pylint: disable=global-statement
     global ctx, queue, program, hash_dt, libAvailable
     if libAvailable is False:
         return
@@ -40,12 +43,13 @@ def initCL():
             for platform in cl.get_platforms():
                 gpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
                 if BMConfigParser().safeGet("bitmessagesettings", "opencl") == platform.vendor:
-                    enabledGpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
+                    enabledGpus.extend(platform.get_devices(
+                        device_type=cl.device_type.GPU))
                 if platform.vendor not in vendors:
                     vendors.append(platform.vendor)
         except:
             pass
-        if (len(enabledGpus) > 0):
+        if enabledGpus:
             ctx = cl.Context(devices=enabledGpus)
             queue = cl.CommandQueue(ctx)
             f = open(os.path.join(paths.codePath(), "bitmsghash", 'bitmsghash.cl'), 'r')
@@ -55,23 +59,29 @@ def initCL():
         else:
             logger.info("No OpenCL GPUs found")
             del enabledGpus[:]
-    except Exception as e:
+    except Exception:
         logger.error("OpenCL fail: ", exc_info=True)
         del enabledGpus[:]
 
+
 def openclAvailable():
-    return (len(gpus) > 0)
+    """Are there any OpenCL GPUs available?"""
+    return bool(gpus)
+
 
 def openclEnabled():
-    return (len(enabledGpus) > 0)
+    """Is OpenCL enabled (and available)?"""
+    return bool(enabledGpus)
 
-def do_opencl_pow(hash, target):
+
+def do_opencl_pow(hash_, target):
+    """Perform PoW using OpenCL"""
     output = numpy.zeros(1, dtype=[('v', numpy.uint64, 1)])
-    if (len(enabledGpus) == 0):
+    if not enabledGpus:
         return output[0][0]
 
     data = numpy.zeros(1, dtype=hash_dt, order='C')
-    data[0]['v'] = ("0000000000000000" + hash).decode("hex")
+    data[0]['v'] = ("0000000000000000" + hash_).decode("hex")
     data[0]['target'] = target
 
     hash_buf = cl.Buffer(ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=data)
@@ -83,9 +93,8 @@ def do_opencl_pow(hash, target):
     kernel.set_arg(0, hash_buf)
     kernel.set_arg(1, dest_buf)
 
-    start = time.time()
     progress = 0
-    globamt = worksize*2000
+    globamt = worksize * 2000
 
     while output[0][0] == 0 and shutdown == 0:
         kernel.set_arg(2, pack("<Q", progress))
@@ -96,20 +105,18 @@ def do_opencl_pow(hash, target):
             cl.enqueue_copy(queue, output, dest_buf)
         queue.finish()
         progress += globamt
-        sofar = time.time() - start
-#       logger.debug("Working for %.3fs, %.2f Mh/s", sofar, (progress / sofar) / 1000000)
     if shutdown != 0:
-        raise Exception ("Interrupted")
-    taken = time.time() - start
+        raise Exception("Interrupted")
 #   logger.debug("Took %d tries.", progress)
     return output[0][0]
 
-#initCL()
 
 if __name__ == "__main__":
-    target = 54227212183L
-    initialHash = "3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3".decode("hex")
-    nonce = do_opencl_pow(initialHash.encode("hex"), target)
-    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-    print "{} - value {} < {}".format(nonce, trialValue, target)
-
+    initCL()
+    target_ = 54227212183
+    initialHash = ("3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590"
+                   "b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3").decode("hex")
+    nonce = do_opencl_pow(initialHash.encode("hex"), target_)
+    trialValue, = unpack(
+        '>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+    print "{} - value {} < {}".format(nonce, trialValue, target_)

@@ -1,8 +1,13 @@
-#! /usr/bin/env python
+"""
+This is based upon the singleton class from
+`tendo <https://github.com/pycontribs/tendo>`_
+which is under the Python Software Foundation License version 2
+"""
 
 import atexit
 import os
 import sys
+
 import state
 
 try:
@@ -11,15 +16,10 @@ except ImportError:
     pass
 
 
-
-class singleinstance:
+class singleinstance(object):
     """
     Implements a single instance application by creating a lock file
     at appdata.
-
-    This is based upon the singleton class from tendo
-    https://github.com/pycontribs/tendo
-    which is under the Python Software Foundation License version 2
     """
     def __init__(self, flavor_id="", daemon=False):
         self.initialized = False
@@ -40,6 +40,7 @@ class singleinstance:
         atexit.register(self.cleanup)
 
     def lock(self):
+        """Obtain single instance lock"""
         if self.lockPid is None:
             self.lockPid = os.getpid()
         if sys.platform == 'win32':
@@ -52,8 +53,7 @@ class singleinstance:
                     self.lockfile,
                     os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC
                 )
-            except OSError:
-                type, e, tb = sys.exc_info()
+            except OSError as e:
                 if e.errno == 13:
                     print(
                         'Another instance of this application'
@@ -84,6 +84,7 @@ class singleinstance:
                 self.fp.flush()
 
     def cleanup(self):
+        """Release single instance lock"""
         if not self.initialized:
             return
         if self.daemon and self.lockPid == os.getpid():
@@ -94,7 +95,7 @@ class singleinstance:
                         os.close(self.fd)
                 else:
                     fcntl.lockf(self.fp, fcntl.LOCK_UN)
-            except Exception, e:
+            except Exception:
                 pass
 
             return

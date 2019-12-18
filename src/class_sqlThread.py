@@ -1,29 +1,34 @@
+"""
+sqlThread is defined here
+"""
+
 import threading
 from bmconfigparser import BMConfigParser
+
 import sqlite3
 import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
 from debug import logger
+
 import helper_sql
 import helper_startup
 import paths
 import queues
 import state
 import tr
-
-# This thread exists because SQLITE3 is so un-threadsafe that we must
-# submit queries to it and it puts results back in a different queue. They
-# won't let us just use locks.
+# pylint: disable=attribute-defined-outside-init,protected-access
 
 
 class sqlThread(threading.Thread):
+    """A thread for all SQL operations"""
 
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
 
-    def run(self):
+    def run(self):    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
@@ -32,30 +37,38 @@ class sqlThread(threading.Thread):
 
         try:
             self.cur.execute(
-                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, sighash blob, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
+                ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
+                ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
             self.cur.execute(
-                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, senttime integer, lastactiontime integer, sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''' )
+                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
+                ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
+                ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
             self.cur.execute(
-                '''CREATE TABLE subscriptions (label text, address text, enabled bool)''' )
+                '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
             self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text)''' )
+                '''CREATE TABLE addressbook (label text, address text)''')
             self.cur.execute(
-                '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
+                '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
             self.cur.execute(
-                '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
+                '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
             self.cur.execute(
-                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
+                ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
             self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
+                ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
             self.cur.execute(
-                '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
+                '''INSERT INTO subscriptions VALUES'''
+                '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
-                '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','10')''')
-            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
+                '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
+            self.cur.execute('''INSERT INTO settings VALUES('version','10')''')
+            self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
-                '''CREATE TABLE objectprocessorqueue (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE objectprocessorqueue'''
+                ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
             self.conn.commit()
             logger.info('Created messages database file')
         except Exception as err:
@@ -120,33 +133,38 @@ class sqlThread(threading.Thread):
             logger.debug(
                 "In messages.dat database, creating new 'settings' table.")
             self.cur.execute(
-                '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
-            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
+                '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
+            self.cur.execute('''INSERT INTO settings VALUES('version','1')''')
+            self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             logger.debug('In messages.dat database, removing an obsolete field from the pubkeys table.')
             self.cur.execute(
-                '''CREATE TEMPORARY TABLE pubkeys_backup(hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE);''')
+                '''CREATE TEMPORARY TABLE pubkeys_backup(hash blob, transmitdata blob, time int,'''
+                ''' usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE);''')
             self.cur.execute(
                 '''INSERT INTO pubkeys_backup SELECT hash, transmitdata, time, usedpersonally FROM pubkeys;''')
-            self.cur.execute( '''DROP TABLE pubkeys''')
+            self.cur.execute('''DROP TABLE pubkeys''')
             self.cur.execute(
-                '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE pubkeys'''
+                ''' (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''')
             self.cur.execute(
                 '''INSERT INTO pubkeys SELECT hash, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
-            self.cur.execute( '''DROP TABLE pubkeys_backup;''')
-            logger.debug('Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.')
+            self.cur.execute('''DROP TABLE pubkeys_backup;''')
+            logger.debug(
+                'Deleting all pubkeys from inventory.'
+                ' They will be redownloaded and then saved with the correct times.')
             self.cur.execute(
                 '''delete from inventory where objecttype = 'pubkey';''')
             logger.debug('replacing Bitmessage announcements mailing list with a new one.')
             self.cur.execute(
                 '''delete from subscriptions where address='BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx' ''')
             self.cur.execute(
-                '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
+                '''INSERT INTO subscriptions VALUES'''
+                '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             logger.debug('Commiting.')
             self.conn.commit()
             logger.debug('Vacuuming message.dat. You might notice that the file size gets much smaller.')
-            self.cur.execute( ''' VACUUM ''')
+            self.cur.execute(''' VACUUM ''')
 
         # After code refactoring, the possible status values for sent messages
         # have changed.
@@ -170,15 +188,21 @@ class sqlThread(threading.Thread):
                 'In messages.dat database, removing an obsolete field from'
                 ' the inventory table.')
             self.cur.execute(
-                '''CREATE TEMPORARY TABLE inventory_backup(hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE);''')
+                '''CREATE TEMPORARY TABLE inventory_backup'''
+                '''(hash blob, objecttype text, streamnumber int, payload blob,'''
+                ''' receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE);''')
             self.cur.execute(
-                '''INSERT INTO inventory_backup SELECT hash, objecttype, streamnumber, payload, receivedtime FROM inventory;''')
-            self.cur.execute( '''DROP TABLE inventory''')
+                '''INSERT INTO inventory_backup SELECT hash, objecttype, streamnumber, payload, receivedtime'''
+                ''' FROM inventory;''')
+            self.cur.execute('''DROP TABLE inventory''')
             self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inventory'''
+                ''' (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer,'''
+                ''' UNIQUE(hash) ON CONFLICT REPLACE)''')
             self.cur.execute(
-                '''INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime FROM inventory_backup;''')
-            self.cur.execute( '''DROP TABLE inventory_backup;''')
+                '''INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime'''
+                ''' FROM inventory_backup;''')
+            self.cur.execute('''DROP TABLE inventory_backup;''')
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (3,)
             self.cur.execute(item, parameters)
@@ -208,7 +232,8 @@ class sqlThread(threading.Thread):
         if currentVersion == 4:
             self.cur.execute('''DROP TABLE pubkeys''')
             self.cur.execute(
-                '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''')
+                '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int,'''
+                '''usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''')
             self.cur.execute(
                 '''delete from inventory where objecttype = 'pubkey';''')
             item = '''update settings set value=? WHERE key='version';'''
@@ -224,7 +249,8 @@ class sqlThread(threading.Thread):
         if currentVersion == 5:
             self.cur.execute('''DROP TABLE knownnodes''')
             self.cur.execute(
-                '''CREATE TABLE objectprocessorqueue (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+                '''CREATE TABLE objectprocessorqueue'''
+                ''' (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (6,)
             self.cur.execute(item, parameters)
@@ -240,10 +266,15 @@ class sqlThread(threading.Thread):
             logger.debug(
                 'In messages.dat database, dropping and recreating'
                 ' the inventory table.')
-            self.cur.execute( '''DROP TABLE inventory''')
-            self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''DROP TABLE objectprocessorqueue''')
-            self.cur.execute( '''CREATE TABLE objectprocessorqueue (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
+            self.cur.execute('''DROP TABLE inventory''')
+            self.cur.execute(
+                '''CREATE TABLE inventory'''
+                ''' (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer,'''
+                ''' tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
+            self.cur.execute('''DROP TABLE objectprocessorqueue''')
+            self.cur.execute(
+                '''CREATE TABLE objectprocessorqueue'''
+                ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (7,)
             self.cur.execute(item, parameters)
@@ -305,15 +336,24 @@ class sqlThread(threading.Thread):
                 ' fields into the retrynumber field and adding the'
                 ' sleeptill and ttl fields...')
             self.cur.execute(
-                '''CREATE TEMPORARY TABLE sent_backup (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, retrynumber integer, folder text, encodingtype int)''' )
+                '''CREATE TEMPORARY TABLE sent_backup'''
+                ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
+                ''' ackdata blob, lastactiontime integer, status text, retrynumber integer,'''
+                ''' folder text, encodingtype int)''')
             self.cur.execute(
-                '''INSERT INTO sent_backup SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, 0, folder, encodingtype FROM sent;''')
-            self.cur.execute( '''DROP TABLE sent''')
+                '''INSERT INTO sent_backup SELECT msgid, toaddress, toripe, fromaddress,'''
+                ''' subject, message, ackdata, lastactiontime,'''
+                ''' status, 0, folder, encodingtype FROM sent;''')
+            self.cur.execute('''DROP TABLE sent''')
             self.cur.execute(
-                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, senttime integer, lastactiontime integer, sleeptill int, status text, retrynumber integer, folder text, encodingtype int, ttl int)''' )
+                '''CREATE TABLE sent'''
+                ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
+                ''' ackdata blob, senttime integer, lastactiontime integer, sleeptill int, status text,'''
+                ''' retrynumber integer, folder text, encodingtype int, ttl int)''')
             self.cur.execute(
-                '''INSERT INTO sent SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, lastactiontime, 0, status, 0, folder, encodingtype, 216000 FROM sent_backup;''')
-            self.cur.execute( '''DROP TABLE sent_backup''')
+                '''INSERT INTO sent SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata,'''
+                ''' lastactiontime, lastactiontime, 0, status, 0, folder, encodingtype, 216000 FROM sent_backup;''')
+            self.cur.execute('''DROP TABLE sent_backup''')
             logger.info('In messages.dat database, finished making TTL-related changes.')
             logger.debug('In messages.dat database, adding address field to the pubkeys table.')
             # We're going to have to calculate the address for each row in the pubkeys
@@ -330,16 +370,24 @@ class sqlThread(threading.Thread):
                 self.cur.execute(item, parameters)
             # Now we can remove the hash field from the pubkeys table.
             self.cur.execute(
-                '''CREATE TEMPORARY TABLE pubkeys_backup (address text, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''' )
+                '''CREATE TEMPORARY TABLE pubkeys_backup'''
+                ''' (address text, addressversion int, transmitdata blob, time int,'''
+                ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
             self.cur.execute(
-                '''INSERT INTO pubkeys_backup SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys;''')
-            self.cur.execute( '''DROP TABLE pubkeys''')
+                '''INSERT INTO pubkeys_backup'''
+                ''' SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys;''')
+            self.cur.execute('''DROP TABLE pubkeys''')
             self.cur.execute(
-                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE pubkeys'''
+                ''' (address text, addressversion int, transmitdata blob, time int, usedpersonally text,'''
+                ''' UNIQUE(address) ON CONFLICT REPLACE)''')
             self.cur.execute(
-                '''INSERT INTO pubkeys SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
-            self.cur.execute( '''DROP TABLE pubkeys_backup''')
-            logger.debug('In messages.dat database, done adding address field to the pubkeys table and removing the hash field.')
+                '''INSERT INTO pubkeys SELECT'''
+                ''' address, addressversion, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
+            self.cur.execute('''DROP TABLE pubkeys_backup''')
+            logger.debug(
+                'In messages.dat database, done adding address field to the pubkeys table'
+                ' and removing the hash field.')
             self.cur.execute('''update settings set value=10 WHERE key='version';''')
 
         # Are you hoping to add a new option to the keys.dat file of existing
@@ -349,7 +397,7 @@ class sqlThread(threading.Thread):
         try:
             testpayload = '\x00\x00'
             t = ('1234', 1, testpayload, '12345678', 'no')
-            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?,?)''', t)
+            self.cur.execute('''INSERT INTO pubkeys VALUES(?,?,?,?,?)''', t)
             self.conn.commit()
             self.cur.execute(
                 '''SELECT transmitdata FROM pubkeys WHERE address='1234' ''')
@@ -359,13 +407,29 @@ class sqlThread(threading.Thread):
             self.cur.execute('''DELETE FROM pubkeys WHERE address='1234' ''')
             self.conn.commit()
             if transmitdata == '':
-                logger.fatal('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
-                logger.fatal('PyBitmessage will now exit very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
+                logger.fatal(
+                    'Problem: The version of SQLite you have cannot store Null values.'
+                    ' Please download and install the latest revision of your version of Python'
+                    ' (for example, the latest Python 2.7 revision) and try again.\n')
+                logger.fatal(
+                    'PyBitmessage will now exit very abruptly.'
+                    ' You may now see threading errors related to this abrupt exit'
+                    ' but the problem you need to solve is related to SQLite.\n\n')
                 os._exit(0)
         except Exception as err:
             if str(err) == 'database or disk is full':
-                logger.fatal('(While null value test) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                logger.fatal(
+                    '(While null value test) Alert: Your disk or data storage volume is full.'
+                    ' sqlThread will now exit.')
+                queues.UISignalQueue.put((
+                    'alert', (
+                        tr._translate(
+                            "MainWindow",
+                            "Disk full"),
+                        tr._translate(
+                            "MainWindow",
+                            'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                        True)))
                 os._exit(0)
             else:
                 logger.error(err)
@@ -381,11 +445,21 @@ class sqlThread(threading.Thread):
             if int(value) < int(time.time()) - 86400:
                 logger.info('It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...')
                 try:
-                    self.cur.execute( ''' VACUUM ''')
+                    self.cur.execute(''' VACUUM ''')
                 except Exception as err:
                     if str(err) == 'database or disk is full':
-                        logger.fatal('(While VACUUM) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        logger.fatal(
+                            '(While VACUUM) Alert: Your disk or data storage volume is full.'
+                            ' sqlThread will now exit.')
+                        queues.UISignalQueue.put((
+                            'alert', (
+                                tr._translate(
+                                    "MainWindow",
+                                    "Disk full"),
+                                tr._translate(
+                                    "MainWindow",
+                                    'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                                True)))
                         os._exit(0)
                 item = '''update settings set value=? WHERE key='lastvacuumtime';'''
                 parameters = (int(time.time()),)
@@ -400,8 +474,18 @@ class sqlThread(threading.Thread):
                     self.conn.commit()
                 except Exception as err:
                     if str(err) == 'database or disk is full':
-                        logger.fatal('(While committing) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        logger.fatal(
+                            '(While committing) Alert: Your disk or data storage volume is full.'
+                            ' sqlThread will now exit.')
+                        queues.UISignalQueue.put((
+                            'alert', (
+                                tr._translate(
+                                    "MainWindow",
+                                    "Disk full"),
+                                tr._translate(
+                                    "MainWindow",
+                                    'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                                True)))
                         os._exit(0)
             elif item == 'exit':
                 self.conn.close()
@@ -415,8 +499,18 @@ class sqlThread(threading.Thread):
                     self.conn.commit()
                 except Exception as err:
                     if str(err) == 'database or disk is full':
-                        logger.fatal('(while movemessagstoprog) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        logger.fatal(
+                            '(while movemessagstoprog) Alert: Your disk or data storage volume is full.'
+                            ' sqlThread will now exit.')
+                        queues.UISignalQueue.put((
+                            'alert', (
+                                tr._translate(
+                                    "MainWindow",
+                                    "Disk full"),
+                                tr._translate(
+                                    "MainWindow",
+                                    'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                                True)))
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
@@ -431,8 +525,18 @@ class sqlThread(threading.Thread):
                     self.conn.commit()
                 except Exception as err:
                     if str(err) == 'database or disk is full':
-                        logger.fatal('(while movemessagstoappdata) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        logger.fatal(
+                            '(while movemessagstoappdata) Alert: Your disk or data storage volume is full.'
+                            ' sqlThread will now exit.')
+                        queues.UISignalQueue.put((
+                            'alert', (
+                                tr._translate(
+                                    "MainWindow",
+                                    "Disk full"),
+                                tr._translate(
+                                    "MainWindow",
+                                    'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                                True)))
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
@@ -445,11 +549,21 @@ class sqlThread(threading.Thread):
                 self.cur.execute('''delete from sent where folder='trash' ''')
                 self.conn.commit()
                 try:
-                    self.cur.execute( ''' VACUUM ''')
+                    self.cur.execute(''' VACUUM ''')
                 except Exception as err:
                     if str(err) == 'database or disk is full':
-                        logger.fatal('(while deleteandvacuume) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        logger.fatal(
+                            '(while deleteandvacuume) Alert: Your disk or data storage volume is full.'
+                            ' sqlThread will now exit.')
+                        queues.UISignalQueue.put((
+                            'alert', (
+                                tr._translate(
+                                    "MainWindow",
+                                    "Disk full"),
+                                tr._translate(
+                                    "MainWindow",
+                                    'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                                True)))
                         os._exit(0)
             else:
                 parameters = helper_sql.sqlSubmitQueue.get()
@@ -461,11 +575,30 @@ class sqlThread(threading.Thread):
                     rowcount = self.cur.rowcount
                 except Exception as err:
                     if str(err) == 'database or disk is full':
-                        logger.fatal('(while cur.execute) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        logger.fatal(
+                            '(while cur.execute) Alert: Your disk or data storage volume is full.'
+                            ' sqlThread will now exit.')
+                        queues.UISignalQueue.put((
+                            'alert', (
+                                tr._translate(
+                                    "MainWindow",
+                                    "Disk full"),
+                                tr._translate(
+                                    "MainWindow",
+                                    'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+                                True)))
                         os._exit(0)
                     else:
-                        logger.fatal('Major error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "%s"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: %s. Here is the actual error message thrown by the sqlThread: %s', str(item), str(repr(parameters)),  str(err))
+                        logger.fatal(
+                            'Major error occurred when trying to execute a SQL statement within the sqlThread.'
+                            ' Please tell Atheros about this error message or post it in the forum!'
+                            ' Error occurred while trying to execute statement: "%s"  Here are the parameters;'
+                            ' you might want to censor this data with asterisks (***)'
+                            ' as it can contain private information: %s.'
+                            ' Here is the actual error message thrown by the sqlThread: %s',
+                            str(item),
+                            str(repr(parameters)),
+                            str(err))
                         logger.fatal('This program shall now abruptly exit!')
 
                     os._exit(0)

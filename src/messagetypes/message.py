@@ -1,10 +1,9 @@
-"""
-src/messagetypes/message.py
-===========================
-"""
-from debug import logger
+import logging
+
 from messagetypes import MsgBase
 # pylint: disable=attribute-defined-outside-init
+
+logger = logging.getLogger('default')
 
 
 class Message(MsgBase):

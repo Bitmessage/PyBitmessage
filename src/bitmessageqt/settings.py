@@ -99,6 +99,8 @@ class SettingsDialog(QtGui.QDialog):
             config.getboolean('bitmessagesettings', 'socksauthentication'))
         self.checkBoxSocksListen.setChecked(
             config.getboolean('bitmessagesettings', 'sockslisten'))
+        self.checkBoxOnionOnly.setChecked(
+            config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'))
 
         proxy_type = config.safeGet(
             'bitmessagesettings', 'socksproxytype', 'none')
@@ -110,6 +112,7 @@ class SettingsDialog(QtGui.QDialog):
             self.lineEditSocksPassword.setEnabled(False)
             self.checkBoxAuthentication.setEnabled(False)
             self.checkBoxSocksListen.setEnabled(False)
+            self.checkBoxOnionOnly.setEnabled(False)
         elif proxy_type == 'SOCKS4a':
             self.comboBoxProxyType.setCurrentIndex(1)
         elif proxy_type == 'SOCKS5':
@@ -200,11 +203,13 @@ class SettingsDialog(QtGui.QDialog):
             self.lineEditSocksPassword.setEnabled(False)
             self.checkBoxAuthentication.setEnabled(False)
             self.checkBoxSocksListen.setEnabled(False)
+            self.checkBoxOnionOnly.setEnabled(False)
         elif comboBoxIndex in (1, 2):
             self.lineEditSocksHostname.setEnabled(True)
             self.lineEditSocksPort.setEnabled(True)
             self.checkBoxAuthentication.setEnabled(True)
             self.checkBoxSocksListen.setEnabled(True)
+            self.checkBoxOnionOnly.setEnabled(True)
             if self.checkBoxAuthentication.isChecked():
                 self.lineEditSocksUsername.setEnabled(True)
                 self.lineEditSocksPassword.setEnabled(True)
@@ -334,6 +339,11 @@ class SettingsDialog(QtGui.QDialog):
             self.lineEditSocksPassword.text()))
         self.config.set('bitmessagesettings', 'sockslisten', str(
             self.checkBoxSocksListen.isChecked()))
+        if self.checkBoxOnionOnly.isChecked() \
+                and not self.config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'):
+            self.net_restart_needed = True
+        self.config.set('bitmessagesettings', 'onionservicesonly', str(
+            self.checkBoxOnionOnly.isChecked()))
         try:
             # Rounding to integers just for aesthetics
             self.config.set('bitmessagesettings', 'maxdownloadrate', str(

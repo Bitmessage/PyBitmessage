@@ -2,24 +2,28 @@
 src/network/udp.py
 ==================
 """
+import logging
 import time
 import socket
 
 import state
 import protocol
 from bmproto import BMProto
-from debug import logger
+from node import Peer
 from objectracker import ObjectTracker
 from queues import receiveDataQueue
 
+logger = logging.getLogger('default')
 
-class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attributes
+
+class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
     """Bitmessage protocol over UDP (class)"""
     port = 8444
     announceInterval = 60
 
     def __init__(self, host=None, sock=None, announcing=False):
-        super(BMProto, self).__init__(sock=sock)        # pylint: disable=bad-super-call
+        # pylint: disable=bad-super-call
+        super(BMProto, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
         # .. todo:: sort out streams
@@ -40,8 +44,8 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
         else:
             self.socket = sock
             self.set_socket_reuse()
-        self.listening = state.Peer(*self.socket.getsockname())
-        self.destination = state.Peer(*self.socket.getsockname())
+        self.listening = Peer(*self.socket.getsockname())
+        self.destination = Peer(*self.socket.getsockname())
         ObjectTracker.__init__(self)
         self.connecting = False
         self.connected = True
@@ -79,7 +83,8 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if (seenTime < time.time() - self.maxTimeOffset or seenTime > time.time() + self.maxTimeOffset):
+            if (seenTime < time.time() - self.maxTimeOffset
+                    or seenTime > time.time() + self.maxTimeOffset):
                 continue
             if decodedIP is False:
                 # if the address isn't local, interpret it as
@@ -92,7 +97,7 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
             self.destination.host, self.destination.port, remoteport)
         if self.local:
             state.discoveredPeers[
-                state.Peer(self.destination.host, remoteport)
+                Peer(self.destination.host, remoteport)
             ] = time.time()
         return True
 
@@ -127,7 +132,7 @@ class UDPSocket(BMProto):           # pylint: disable=too-many-instance-attribut
             logger.error("socket error: %s", e)
             return
 
-        self.destination = state.Peer(*addr)
+        self.destination = Peer(*addr)
         encodedAddr = protocol.encodeHost(addr[0])
         self.local = bool(protocol.checkIPAddress(encodedAddr, True))
         # overwrite the old buffer to avoid mixing data and so that

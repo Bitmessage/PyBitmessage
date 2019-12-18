@@ -1,31 +1,28 @@
 # pylint: disable=too-many-branches,protected-access
 """
 Copyright (C) 2013 by Daniel Kraft <d@domob.eu>
-This file is part of the Bitmessage project.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-.. todo:: from debug import logger crashes PyBitmessage due to a circular dependency. The debug module will also
-override/disable logging.getLogger() # loggers so module level logging functions are used instead
+Namecoin queries
 """
+# This file is part of the Bitmessage project.
 
-from __future__ import absolute_import
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import base64
 import httplib
@@ -258,7 +255,7 @@ class namecoinConnection(object):
                 resp = self.con.getresponse()
                 result = resp.read()
                 if resp.status != 200:
-                    raise Exception("Namecoin returned status %i: %s" % resp.status, resp.reason)
+                    raise Exception("Namecoin returned status %i: %s" % (resp.status, resp.reason))
             except:
                 logger.info("HTTP receive error")
         except:
@@ -288,7 +285,7 @@ class namecoinConnection(object):
             return result
 
         except socket.error as exc:
-            raise Exception("Socket error in RPC connection: %s" % str(exc))
+            raise Exception("Socket error in RPC connection: %s" % exc)
 
 
 def lookupNamecoinFolder():

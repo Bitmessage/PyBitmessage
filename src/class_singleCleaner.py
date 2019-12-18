@@ -1,20 +1,21 @@
 """
-The singleCleaner class is a timer-driven thread that cleans data structures
+The `singleCleaner` class is a timer-driven thread that cleans data structures
 to free memory, resends messages when a remote node doesn't respond, and
 sends pong messages to keep connections alive if the network isn't busy.
+
 It cleans these data structures in memory:
-inventory (moves data to the on-disk sql database)
-inventorySets (clears then reloads data out of sql database)
+  - inventory (moves data to the on-disk sql database)
+  - inventorySets (clears then reloads data out of sql database)
 
 It cleans these tables on the disk:
-inventory (clears expired objects)
-pubkeys (clears pubkeys older than 4 weeks old which we have not used
- personally)
-knownNodes (clears addresses which have not been online for over 3 days)
+  - inventory (clears expired objects)
+  - pubkeys (clears pubkeys older than 4 weeks old which we have not used
+    personally)
+  - knownNodes (clears addresses which have not been online for over 3 days)
 
 It resends messages when there has been no response:
-resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
-resends msg messages in 5 days (then 10 days, then 20 days, etc...)
+  - resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
+  - resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 """
 # pylint: disable=relative-import, protected-access
@@ -23,36 +24,35 @@ import os
 import time
 import shared
 
+import knownnodes
+import queues
+import shared
+import state
 import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlQuery, sqlExecute
-from helper_threading import StoppableThread
 from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from debug import logger
-import knownnodes
-import queues
-import state
+from network import BMConnectionPool, StoppableThread
 
 
 class singleCleaner(StoppableThread):
-    """Base method that Cleanup knownnodes and handle possible severe exception"""
+    """The singleCleaner thread class"""
     name = "singleCleaner"
     cycleLength = 300
     expireDiscoveredPeers = 300
 
-    def run(self):    # pylint: disable=too-many-branches
+    def run(self):  # pylint: disable=too-many-branches
         gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
             shared.maximumLengthOfTimeToBotherResendingMessages = (
                 float(BMConfigParser().get(
-                    'bitmessagesettings', 'stopresendingafterxdays')) *
-                24 * 60 * 60
+                    'bitmessagesettings', 'stopresendingafterxdays'))
+                * 24 * 60 * 60
             ) + (
                 float(BMConfigParser().get(
-                    'bitmessagesettings', 'stopresendingafterxmonths')) *
-                (60 * 60 * 24 * 365) / 12)
+                    'bitmessagesettings', 'stopresendingafterxmonths'))
+                * (60 * 60 * 24 * 365) / 12)
         except:
             # Either the user hasn't set stopresendingafterxdays and
             # stopresendingafterxmonths yet or the options are missing
@@ -93,13 +93,13 @@ class singleCleaner(StoppableThread):
                 queryreturn = sqlQuery(
                     "SELECT toaddress, ackdata, status FROM sent"
                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
-                    " AND folder LIKE '%sent%' AND sleeptill<? AND senttime>?)",
-                    int(time.time()), int(time.time()) -
-                    shared.maximumLengthOfTimeToBotherResendingMessages
+                    " AND folder='sent' AND sleeptill<? AND senttime>?)",
+                    int(time.time()), int(time.time())
+                    - shared.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for row in queryreturn:
                     if len(row) < 2:
-                        logger.error(
+                        self.logger.error(
                             'Something went wrong in the singleCleaner thread:'
                             ' a query did not return the requested fields. %r',
                             row
@@ -108,17 +108,18 @@ class singleCleaner(StoppableThread):
                         break
                     toAddress, ackData, status = row
                     if status == 'awaitingpubkey':
-                        resendPubkeyRequest(toAddress)
+                        self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
-                        resendMsg(ackData)
+                        self.resendMsg(ackData)
 
             try:
                 # Cleanup knownnodes and handle possible severe exception
                 # while writing it to disk
                 knownnodes.cleanupKnownNodes()
             except Exception as err:
+                # pylint: disable=protected-access
                 if "Errno 28" in str(err):
-                    logger.fatal(
+                    self.logger.fatal(
                         '(while writing knownnodes to disk)'
                         ' Alert: Your disk or data storage volume is full.'
                     )
@@ -131,20 +132,11 @@ class singleCleaner(StoppableThread):
                              ' is full. Bitmessage will now exit.'),
                          True)
                     ))
-                    # ..FIXME redundant?
-                    # pylint: disable=no-member
-                    if shared.daemon or not state.enableGUI:
+                    if shared.thisapp.daemon or not state.enableGUI:
                         os._exit(1)
 
-#            # clear download queues
-#            for thread in threading.enumerate():
-#                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
-#                    thread.downloadQueue.clear()
-
             # inv/object tracking
-            for connection in \
-                    BMConnectionPool().inboundConnections.values() + \
-                    BMConnectionPool().outboundConnections.values():
+            for connection in BMConnectionPool().connections():
                 connection.clean()
 
             # discovery tracking
@@ -155,50 +147,49 @@ class singleCleaner(StoppableThread):
                     del state.discoveredPeers[k]
                 except KeyError:
                     pass
-            # ..TODO: cleanup pending upload / download
+
+            # ..todo:: cleanup pending upload / download
 
             gc.collect()
 
             if state.shutdown == 0:
                 self.stop.wait(singleCleaner.cycleLength)
 
+    def resendPubkeyRequest(self, address):
+        """Resend pubkey request for address"""
+        self.logger.debug(
+            'It has been a long time and we haven\'t heard a response to our'
+            ' getpubkey request. Sending again.'
+        )
+        try:
+            # We need to take this entry out of the neededPubkeys structure
+            # because the queues.workerQueue checks to see whether the entry
+            # is already present and will not do the POW and send the message
+            # because it assumes that it has already done it recently.
+            del state.neededPubkeys[address]
+        except:
+            pass
 
-def resendPubkeyRequest(address):
-    """After a long time, method send getpubkey request"""
-    logger.debug(
-        'It has been a long time and we haven\'t heard a response to our'
-        ' getpubkey request. Sending again.'
-    )
-    try:
-        # We need to take this entry out of the neededPubkeys structure
-        # because the queues.workerQueue checks to see whether the entry
-        # is already present and will not do the POW and send the message
-        # because it assumes that it has already done it recently.
-        del state.neededPubkeys[address]
-    except:
-        pass
+        queues.UISignalQueue.put((
+            'updateStatusBar',
+            'Doing work necessary to again attempt to request a public key...'
+        ))
+        sqlExecute(
+            '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
+            address)
+        queues.workerQueue.put(('sendmessage', ''))
 
-    queues.UISignalQueue.put((
-        'updateStatusBar',
-        'Doing work necessary to again attempt to request a public key...'
-    ))
-    sqlExecute(
-        '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
-        address)
-    queues.workerQueue.put(('sendmessage', ''))
-
-
-def resendMsg(ackdata):
-    """After a long time, method send acknowledgement msg"""
-    logger.debug(
-        'It has been a long time and we haven\'t heard an acknowledgement'
-        ' to our msg. Sending again.'
-    )
-    sqlExecute(
-        '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
-        ackdata)
-    queues.workerQueue.put(('sendmessage', ''))
-    queues.UISignalQueue.put((
-        'updateStatusBar',
-        'Doing work necessary to again attempt to deliver a message...'
-    ))
+    def resendMsg(self, ackdata):
+        """Resend message by ackdata"""
+        self.logger.debug(
+            'It has been a long time and we haven\'t heard an acknowledgement'
+            ' to our msg. Sending again.'
+        )
+        sqlExecute(
+            '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
+            ackdata)
+        queues.workerQueue.put(('sendmessage', ''))
+        queues.UISignalQueue.put((
+            'updateStatusBar',
+            'Doing work necessary to again attempt to deliver a message...'
+        ))

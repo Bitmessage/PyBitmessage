@@ -1,2 +1,2 @@
-.. mdinclude:: fabfile/README.md
+.. mdinclude:: ../../../fabfile/README.md
 
