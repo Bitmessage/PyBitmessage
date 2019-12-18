@@ -1433,8 +1433,8 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
-        elif key == 13:
-            if state.search_screen == 'inbox' and state.searcing_text:
+        elif key == 13 and state.searcing_text:
+            if state.search_screen == 'inbox':
                 self.root.ids.sc1.children[1].active = True
                 Clock.schedule_once(self.search_callback, 0.5)
             elif state.search_screen == 'addressbook':
