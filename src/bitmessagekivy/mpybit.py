@@ -409,11 +409,9 @@ class MyAddress(Screen):
     @staticmethod
     def filter_address(address):
         """Method will filter the my address list data"""
-        # if filter(lambda x: (state.searcing_text).lower() in x, [
-        #         BMConfigParser().get(
-        #             address, 'label').lower(), address.lower()]):
-        if [x for x in [BMConfigParser().get(
-                address, 'label').lower(), address.lower()]]:
+        if filter(lambda x: (state.searcing_text).lower() in x, [
+                BMConfigParser().get(
+                    address, 'label').lower(), address.lower()]):
             return True
         return False
 
@@ -608,8 +606,6 @@ class DropDownWidget(BoxLayout):
                             str(state.send_draft_mail))
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
-                        state.detailPageType = ''
-                        state.send_draft_mail = None
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
                         statusIconColor = 'red'
@@ -648,6 +644,12 @@ class DropDownWidget(BoxLayout):
                     state.check_sent_acc = fromAddress
                     state.msg_counter_objs = self.parent.parent.parent.parent\
                         .parent.parent.children[2].children[0].ids
+                    if state.detailPageType == 'draft' \
+                            and state.send_draft_mail:
+                        state.draft_count = str(int(state.draft_count) - 1)
+                        state.msg_counter_objs.draft_cnt.badge_text = state.draft_count
+                        state.detailPageType = ''
+                        state.send_draft_mail = None
                     # self.parent.parent.screens[0].ids.ml.clear_widgets()
                     # self.parent.parent.screens[0].loadMessagelist(state.association)
                     self.parent.parent.screens[3].update_sent_messagelist()
@@ -884,16 +886,12 @@ class Sent(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method sent accounts"""
-        self.sentaccounts()
-        print dt
-
-    def sentaccounts(self):
-        """Load sent accounts."""
-        self.account = state.association
         self.loadSent()
+        print dt
 
     def loadSent(self, where="", what=""):
         """Load Sent list for Sent messages."""
+        self.account = state.association
         if state.searcing_text:
             self.ids.scroll_y.scroll_y = 1.0
             where = ['subject', 'message']
@@ -1987,8 +1985,8 @@ class MailDetail(Screen):
                 int(state.all_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
-            self.parent.screens[4].ids.ml.clear_widgets()
-            self.parent.screens[4].init_ui(dt=0)
+            self.parent.screens[4].clear_widgets()
+            self.parent.screens[4].add_widget(Trash())
             self.parent.screens[16].ids.ml.clear_widgets()
             self.parent.screens[16].init_ui(dt=0)
         Clock.schedule_once(self.callback_for_delete, 4)
@@ -2288,7 +2286,8 @@ class Draft(Screen):
             data_index))
         try:
             msg_count_objs = (
-                self.parent.parent.parent.parent.children[2].children[0].ids)
+                self.parent.parent.parent.parent.parent.parent.children[
+                2].children[0].ids)
         except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
