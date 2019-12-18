@@ -25,7 +25,8 @@
 #:set color_font   (0.957, 0.890, 0.843, 1)  # off white
 
 <MyNavigationDrawerIconButton@NavigationDrawerIconButton>:
-    icon: 'checkbox-blank-circle'
+    font_style: 'Body1'
+    theme_text_color: 'Secondary'
 
 <MySpinnerOption@SpinnerOption>:
     font_size: '12.5sp'
@@ -39,7 +40,7 @@
         height: dp(7)
     NavigationDrawerSubheader:
         text: "Accounts"
-    NavigationDrawerIconButton:
+    AddressDropdown:
         CustomSpinner:
             id: btn
             pos_hint:{"x":0,"y":.25}
@@ -57,47 +58,48 @@
                 y: self.parent.y + self.parent.height/4
                 size: self.parent.height/2, self.parent.height/2
             ArrowImg:
-    NavigationDrawerIconButton:
+    MyNavigationDrawerIconButton:
         id: inbox_cnt
         icon: 'email-open'
         text: "Inbox"
         on_release: app.root.ids.scr_mngr.current = 'inbox'
         badge_text: "0"
         on_press: app.load_screen(self)
-    NavigationDrawerIconButton:
+    MyNavigationDrawerIconButton:
         id: send_cnt
         icon: 'send'
         text: "Sent"
+        #use_active: False
         on_release: app.root.ids.scr_mngr.current = 'sent'
         badge_text: "0"
-    NavigationDrawerIconButton:
+    MyNavigationDrawerIconButton:
         id: draft_cnt
         icon: 'message-draw'
         text: "Draft"
         on_release: app.root.ids.scr_mngr.current = 'draft'
         badge_text: "0"
-    #NavigationDrawerIconButton:
+    #MyNavigationDrawerIconButton:
         #text: "Starred"
         #icon:'star'
         #on_release: app.root.ids.scr_mngr.current = 'starred'
         #badge_text: "0"
-    #NavigationDrawerIconButton:
+    #MyNavigationDrawerIconButton:
         #icon: 'archive'
         #text: "Archieve"
         #on_release: app.root.ids.scr_mngr.current = 'archieve'
         #badge_text: "0"
-    #NavigationDrawerIconButton:
+    #MyNavigationDrawerIconButton:
         #icon: 'email-open-outline'
         #text: "Spam"
         #on_release: app.root.ids.scr_mngr.current = 'spam'
         #badge_text: "0"
-    NavigationDrawerIconButton:
+    MyNavigationDrawerIconButton:
         id: trash_cnt
         icon: 'delete'
         text: "Trash"
         on_release: app.root.ids.scr_mngr.current = 'trash'
         badge_text: "0"
-    NavigationDrawerIconButton:
+    MyNavigationDrawerIconButton:
         id: allmail_cnt
         text: "All Mails"
         icon:'contact-mail'
@@ -107,31 +109,31 @@
     NavigationDrawerDivider:
     NavigationDrawerSubheader:
         text: "All labels"
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "Address Book"
         icon:'book-multiple'
         on_release: app.root.ids.scr_mngr.current = 'addressbook' 
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "Settings"
         icon:'settings'
         on_release: app.root.ids.scr_mngr.current = 'set'
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "Subscriptions/Payment"
         icon:'bell'
         on_release: app.root.ids.scr_mngr.current = 'payment'
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "Credits"
         icon:'wallet'
         on_release: app.root.ids.scr_mngr.current = 'credits'
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "new address"
         icon:'account-plus'
         on_release: app.root.ids.scr_mngr.current = 'login'
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "Network Status"
         icon:'server-network'
         on_release: app.root.ids.scr_mngr.current = 'networkstat'
-    NavigationDrawerIconButton: 
+    MyNavigationDrawerIconButton:
         text: "My Addresses"
         icon:'account-multiple'
         on_release: app.root.ids.scr_mngr.current = 'myaddress'
@@ -544,12 +546,6 @@ NavigationLayout:
                             font_size: '13sp'
                             color: (1,1,1,1)
                             halign: 'center'
-
-<AddressSuccessful>:
-    name: 'add_sucess'
-    Label:
-        text: 'Successfully created a new bit address'
-        color: 0,0,0,1
 
 <Setting>:
     name: 'set'
