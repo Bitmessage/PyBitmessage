@@ -10,20 +10,14 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # to PEP8
 # pylint: disable=invalid-name
 
-from openssl import OpenSSL
-import hash as Hash
-import msgpack
-from datetime import datetime
-from datetime import timedelta
-cur = datetime.now()
-exp = datetime.now()+(timedelta(days =365))
-def encode_datetime(obj):
-    return {'Time': int(obj.strftime("%s"))}
+from .openssl import OpenSSL
+
 
 class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
     """
     Class for ECC blind signature functionality
     """
+
     # init
     k = None
     R = None
@@ -83,9 +77,6 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         return x0
 
     def __init__(self, curve="secp256k1", pubkey=None):
-        """
-        init method
-        """
         self.ctx = OpenSSL.BN_CTX_new()
 
         if pubkey:
@@ -101,7 +92,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
             # new keypair
             self.keypair = ECCBlind.ec_gen_keypair(self.group, self.ctx)
-            #key_m = self.keypair
+
             self.Q = self.keypair[1]
 
         self.pubkey = (self.group, self.G, self.n, self.Q)
@@ -160,11 +151,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
-        msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
-
-        # Here key is only the msg as we are passing pubkeys in msg
-        hashed_msg = Hash.hmac_sha256(msg, msg)
-        OpenSSL.BN_bin2bn(hashed_msg, len(hashed_msg), self.m)
+        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
 
         self.m_ = OpenSSL.BN_new()
         OpenSSL.BN_mod_mul(self.m_, self.b, self.r, self.n, self.ctx)
@@ -197,11 +184,10 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         """
         Verify signature with certifier's pubkey
         """
+
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        msg = msgpack.packb(msg,default=encode_datetime, use_bin_type=True)
-        msg_hash = Hash.hmac_sha256(msg, msg)
-        OpenSSL.BN_bin2bn(msg_hash, len(msg_hash), self.m)
+        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
 
         # init
         s, self.F = signature
@@ -219,7 +205,6 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         retval = OpenSSL.EC_POINT_cmp(self.group, lhs, rhs, self.ctx)
         if retval == -1:
-            print("Not Verified")
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
-            return retval == 0 
+            return retval == 0

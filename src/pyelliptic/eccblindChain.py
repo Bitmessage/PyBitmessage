@@ -10,13 +10,18 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # to PEP8
 # pylint: disable=invalid-name
 
-from openssl import OpenSSL
+import hashlib as HashLib
 import hash as Hash
 import msgpack
-from datetime import datetime
-from datetime import timedelta
+from openssl import OpenSSL
+
+
 def encode_datetime(obj):
+    """
+    Method to format time
+    """
     return {'Time': int(obj.strftime("%s"))}
+
 
 class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
     """
@@ -120,7 +125,6 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
 
             # new keypair
             self.keypair = ECCBlindChain.ec_gen_keypair(self.group, self.ctx)
-            key_m = self.keypair
             self.Q = self.keypair[1]
 
         self.pubkey = (self.group, self.G, self.n, self.Q)
@@ -180,7 +184,8 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
         msg = ECCBlindChain.ec_serialize(msg)
-        hashed_msg = Hash.hmac_sha256(msg, msg)# Here key is only the msg as we are passing pubkeys in msg
+        # Here key is only the msg as we are passing pubkeys in msg
+        hashed_msg = Hash.hmac_sha256(msg, msg)
         OpenSSL.BN_bin2bn(hashed_msg, len(hashed_msg), self.m)
 
         self.m_ = OpenSSL.BN_new()
@@ -238,9 +243,10 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
         if retval == -1:
             raise RuntimeError("EC_POINT_cmp returned an error")
         else:
-            return retval == 0 
+            return retval == 0
 
-    def verify_Chain(self,msg):
+    @staticmethod
+    def verify_Chain(msg):
         """
         Verify complete chain with its relevant signature
         """
@@ -249,10 +255,9 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
         while i >= 0:
             signature = Unpacked_dict[i]['Sign']
             verifier_obj = ECCBlindChain(pubkey=Unpacked_dict[i]['Msg']['PubKEY'])
-            ret = verifier_obj.verify(Unpacked_dict[i]['Msg'] , signature)
+            ret = verifier_obj.verify(Unpacked_dict[i]['Msg'], signature)
             if ret is True:
                 print("Message verified successfully")
             else:
                 print("Message verification fails")
             i = i - 1
-           
