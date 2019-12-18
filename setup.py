@@ -17,13 +17,7 @@ EXTRAS_REQUIRE = {
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
     'tor': ['stem'],
-    'docs': [
-        'sphinx',  # fab build_docs
-        'graphviz',  # fab build_docs
-        'curses',  # src/depends.py
-        'python2-pythondialog',  # src/depends.py
-        'm2r',  # fab build_docs
-    ]
+    'docs': ['sphinx', 'sphinxcontrib-apidoc', 'm2r']
 }
 
 
@@ -155,5 +149,9 @@ if __name__ == "__main__":
             # ]
         },
         scripts=['src/pybitmessage'],
-        cmdclass={'install': InstallCmd}
+        cmdclass={'install': InstallCmd},
+        command_options={
+            'build_sphinx': {
+                'source_dir': ('setup.py', 'docs')}
+        }
     )

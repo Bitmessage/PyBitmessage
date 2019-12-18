@@ -1,6 +1,6 @@
-#!/usr/bin/python2.7
+"""Additional SQL helper for searching messages"""
 
-from helper_sql import *
+from helper_sql import sqlQuery
 
 try:
     from PyQt4 import QtGui
@@ -8,13 +8,17 @@ try:
 except ImportError:
     haveQt = False
 
-def search_translate (context, text):
+
+def search_translate(context, text):
+    """Translation wrapper"""
     if haveQt:
         return QtGui.QApplication.translate(context, text)
-    else:
-        return text.lower()
+    return text.lower()
 
-def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where = None, what = None, unreadOnly = False):
+
+def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
+    """Perform a search in mailbox tables"""
+    # pylint: disable=too-many-arguments, too-many-branches
     if what is not None and what != "":
         what = "%" + what + "%"
         if where == search_translate("MainWindow", "To"):
@@ -32,7 +36,7 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
 
     if folder == "sent":
         sqlStatementBase = '''
-            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
+            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime
             FROM sent '''
     else:
         sqlStatementBase = '''SELECT folder, msgid, toaddress, fromaddress, subject, received, read
@@ -62,13 +66,16 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
         sqlArguments.append(what)
     if unreadOnly:
         sqlStatementParts.append("read = 0")
-    if len(sqlStatementParts) > 0:
+    if sqlStatementParts:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
     if folder == "sent":
         sqlStatementBase += " ORDER BY lastactiontime"
     return sqlQuery(sqlStatementBase, sqlArguments)
 
-def check_match(toAddress, fromAddress, subject, message, where = None, what = None):
+
+def check_match(toAddress, fromAddress, subject, message, where=None, what=None):
+    """Check if a single message matches a filter (used when new messages are added to messagelists)"""
+    # pylint: disable=too-many-arguments
     if what is not None and what != "":
         if where in (search_translate("MainWindow", "To"), search_translate("MainWindow", "All")):
             if what.lower() not in toAddress.lower():

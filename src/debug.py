@@ -1,26 +1,38 @@
 """
 Logging and debuging facility
-=============================
+-----------------------------
 
 Levels:
 
-   DEBUG
-      Detailed information, typically of interest only when diagnosing problems.
-   INFO
-      Confirmation that things are working as expected.
-   WARNING
-      An indication that something unexpected happened, or indicative of some problem in the
-      near future (e.g. 'disk space low'). The software is still working as expected.
-   ERROR
-      Due to a more serious problem, the software has not been able to perform some function.
-   CRITICAL
-      A serious error, indicating that the program itself may be unable to continue running.
+  DEBUG
+    Detailed information, typically of interest only when diagnosing problems.
+  INFO
+    Confirmation that things are working as expected.
+  WARNING
+    An indication that something unexpected happened, or indicative of
+    some problem in the near future (e.g. 'disk space low'). The software
+    is still working as expected.
+  ERROR
+    Due to a more serious problem, the software has not been able to
+    perform some function.
+  CRITICAL
+    A serious error, indicating that the program itself may be unable to
+    continue running.
 
-There are three loggers: `console_only`, `file_only` and `both`.
+There are three loggers by default: `console_only`, `file_only` and `both`.
+You can configure logging in the logging.dat in the appdata dir.
+It's format is described in the :func:`logging.config.fileConfig` doc.
 
-Use: `from debug import logger` to import this facility into whatever module you wish to log messages from.
-    Logging is thread-safe so you don't have to worry about locks, just import and log.
+Use:
 
+>>> import logging
+>>> logger = logging.getLogger('default')
+
+The old form: ``from debug import logger`` is also may be used,
+but only in the top level modules.
+
+Logging is thread-safe so you don't have to worry about locks,
+just import and log.
 """
 
 import ConfigParser
@@ -28,6 +40,7 @@ import logging
 import logging.config
 import os
 import sys
+
 import helper_startup
 import state
 
@@ -40,14 +53,22 @@ log_level = 'WARNING'
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
+    """The last resort logging function used for sys.excepthook"""
     logging.critical('Unhandled exception', exc_info=(ex_cls, ex, tb))
 
 
 def configureLogging():
+    """
+    Configure logging,
+    using either logging.dat file in the state.appdata dir
+    or dictionary with hardcoded settings.
+    """
+    sys.excepthook = log_uncaught_exceptions
     fail_msg = ''
     try:
         logging_config = os.path.join(state.appdata, 'logging.dat')
-        logging.config.fileConfig(logging_config)
+        logging.config.fileConfig(
+            logging_config, disable_existing_loggers=False)
         return (
             False,
             'Loaded logger configuration from %s' % logging_config
@@ -59,12 +80,11 @@ def configureLogging():
                 ' logging config\n%s' % \
                 (logging_config, sys.exc_info())
         else:
-            # no need to confuse the user if the logger config is missing entirely
+            # no need to confuse the user if the logger config
+            # is missing entirely
             fail_msg = 'Using default logger configuration'
 
-    sys.excepthook = log_uncaught_exceptions
-
-    logging.config.dictConfig({
+    logging_config = {
         'version': 1,
         'formatters': {
             'default': {
@@ -106,34 +126,29 @@ def configureLogging():
             'level': log_level,
             'handlers': ['console'],
         },
-    })
+    }
+
+    logging_config['loggers']['default'] = logging_config['loggers'][
+        'file_only' if '-c' in sys.argv else 'both']
+    logging.config.dictConfig(logging_config)
 
     return True, fail_msg
 
 
-def initLogging():
-    preconfigured, msg = configureLogging()
-    if preconfigured:
-        if '-c' in sys.argv:
-            logger = logging.getLogger('file_only')
-        else:
-            logger = logging.getLogger('both')
-    else:
-        logger = logging.getLogger('default')
-
-    if msg:
-        logger.log(logging.WARNING if preconfigured else logging.INFO, msg)
-    return logger
-
-
 def resetLogging():
+    """Reconfigure logging in runtime when state.appdata dir changed"""
+    # pylint: disable=global-statement, used-before-assignment
     global logger
-    for i in logger.handlers.iterkeys():
+    for i in logger.handlers:
         logger.removeHandler(i)
         i.flush()
         i.close()
-    logger = initLogging()
+    configureLogging()
+    logger = logging.getLogger('default')
 
 
 # !
-logger = initLogging()
+preconfigured, msg = configureLogging()
+logger = logging.getLogger('default')
+if msg:
+    logger.log(logging.WARNING if preconfigured else logging.INFO, msg)

@@ -1,6 +1,5 @@
 """
-src/paths.py
-============
+Path related functions
 """
 # pylint: disable=import-error
 import logging
@@ -10,6 +9,7 @@ import sys
 from datetime import datetime
 from shutil import move
 from kivy.utils import platform
+
 
 logger = logging.getLogger('default')
 
@@ -46,7 +46,8 @@ def lookupAppdataFolder():
             dataFolder = os.path.join(
                 os.environ['HOME'],
                 'Library/Application Support/', APPNAME
-            ) + '/'  # ..fixme:: should also be os.path.sep
+            ) + '/'
+
         except KeyError:
             sys.exit(
                 'Could not find home folder, please report this message'
@@ -83,6 +84,7 @@ def codePath():
         return os.path.dirname(__file__)
     return (
         os.environ.get('RESOURCEPATH')
+        # pylint: disable=protected-access
         if frozen == "macosx_app" else sys._MEIPASS)
 
 

@@ -8,7 +8,7 @@ src/network/socks5.py
 import socket
 import struct
 
-import state
+from node import Peer
 from proxy import GeneralProxyError, Proxy, ProxyError
 
 
@@ -200,7 +200,7 @@ class Socks5Resolver(Socks5):
     def __init__(self, host):
         self.host = host
         self.port = 8444
-        Socks5.__init__(self, address=state.Peer(self.host, self.port))
+        Socks5.__init__(self, address=Peer(self.host, self.port))
 
     def state_auth_done(self):
         """Perform resolving"""

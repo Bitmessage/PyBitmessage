@@ -2,17 +2,18 @@
 SSL/TLS negotiation.
 """
 
+import logging
 import os
 import socket
 import ssl
 import sys
 
-from debug import logger
 from network.advanceddispatcher import AdvancedDispatcher
 import network.asyncore_pollchoose as asyncore
 from queues import receiveDataQueue
 import paths
 
+logger = logging.getLogger('default')
 
 _DISCONNECTED_SSL = frozenset((ssl.SSL_ERROR_EOF,))
 
@@ -38,12 +39,13 @@ else:
     sslProtocolCiphers = "AECDH-AES256-SHA"
 
 
-class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instance-attributes
+class TLSDispatcher(AdvancedDispatcher):
     """TLS functionality for classes derived from AdvancedDispatcher"""
-    # pylint: disable=too-many-arguments, super-init-not-called, unused-argument
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-arguments,super-init-not-called,unused-argument
     def __init__(
-            self, address=None, sock=None, certfile=None, keyfile=None,
-            server_side=False, ciphers=sslProtocolCiphers
+        self, address=None, sock=None, certfile=None, keyfile=None,
+        server_side=False, ciphers=sslProtocolCiphers
     ):
         self.want_read = self.want_write = True
         if certfile is None:
@@ -95,7 +97,10 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
 
     @staticmethod
     def state_tls_handshake():
-        """Do nothing while TLS handshake is pending, as during this phase we need to react to callbacks instead"""
+        """
+        Do nothing while TLS handshake is pending, as during this phase
+        we need to react to callbacks instead
+        """
         return False
 
     def writable(self):
@@ -121,10 +126,11 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
         except AttributeError:
             return AdvancedDispatcher.readable(self)
 
-    def handle_read(self):      # pylint: disable=inconsistent-return-statements
+    def handle_read(self):  # pylint: disable=inconsistent-return-statements
         """
-        Handle reads for sockets during TLS handshake. Requires special treatment as during the handshake, buffers must
-        remain empty and normal reads must be ignored
+        Handle reads for sockets during TLS handshake. Requires special
+        treatment as during the handshake, buffers must remain empty
+        and normal reads must be ignored.
         """
         try:
             # wait for write buffer flush
@@ -146,10 +152,11 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
             self.handle_close()
             return
 
-    def handle_write(self):     # pylint: disable=inconsistent-return-statements
+    def handle_write(self):  # pylint: disable=inconsistent-return-statements
         """
-        Handle writes for sockets during TLS handshake. Requires special treatment as during the handshake, buffers
-        must remain empty and normal writes must be ignored
+        Handle writes for sockets during TLS handshake. Requires special
+        treatment as during the handshake, buffers must remain empty
+        and normal writes must be ignored.
         """
         try:
             # wait for write buffer flush
@@ -192,18 +199,23 @@ class TLSDispatcher(AdvancedDispatcher):      # pylint: disable=too-many-instanc
             if not (self.want_write or self.want_read):
                 raise
         except socket.error as err:
-            if err.errno in asyncore._DISCONNECTED:     # pylint: disable=protected-access
+            # pylint: disable=protected-access
+            if err.errno in asyncore._DISCONNECTED:
                 self.handle_close()
             else:
                 raise
         else:
             if sys.version_info >= (2, 7, 9):
                 self.tlsVersion = self.sslSocket.version()
-                logger.debug("%s:%i: TLS handshake success, TLS protocol version: %s",
-                             self.destination.host, self.destination.port, self.sslSocket.version())
+                logger.debug(
+                    '%s:%i: TLS handshake success, TLS protocol version: %s',
+                    self.destination.host, self.destination.port,
+                    self.tlsVersion)
             else:
                 self.tlsVersion = "TLSv1"
-                logger.debug("%s:%i: TLS handshake success", self.destination.host, self.destination.port)
+                logger.debug(
+                    '%s:%i: TLS handshake success',
+                    self.destination.host, self.destination.port)
             # The handshake has completed, so remove this channel and...
             self.del_channel()
             self.set_socket(self.sslSocket)

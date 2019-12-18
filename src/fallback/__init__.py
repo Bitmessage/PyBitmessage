@@ -1,12 +1,18 @@
 """
-.. todo:: hello world
+Fallback expressions help PyBitmessage modules to run without some external
+dependencies.
+
+
+RIPEMD160Hash
+-------------
+
+We need to check :mod:`hashlib` for RIPEMD-160, as it won't be available
+if OpenSSL is not linked against or the linked OpenSSL has RIPEMD disabled.
+Try to use `pycryptodome <https://pypi.org/project/pycryptodome/>`_
+in that case.
 """
 
 import hashlib
-
-# We need to check hashlib for RIPEMD-160, as it won't be available
-# if OpenSSL is not linked against or the linked OpenSSL has RIPEMD
-# disabled.
 
 try:
     hashlib.new('ripemd160')

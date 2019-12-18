@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
-src/pyelliptic/hash.py
-=====================
+Wrappers for hash functions from OpenSSL.
 """
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.

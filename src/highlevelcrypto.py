@@ -1,6 +1,10 @@
 """
-src/highlevelcrypto.py
-======================
+High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
+
+.. note::
+  Upstream pyelliptic was upgraded from SHA1 to SHA256 for signing.
+  We must upgrade PyBitmessage gracefully.
+  `More discussion. <https://github.com/yann2192/pyelliptic/issues/32>`_
 """
 
 from binascii import hexlify
@@ -12,12 +16,13 @@ from pyelliptic import arithmetic as a
 
 
 def makeCryptor(privkey):
-    """Return a private pyelliptic.ECC() instance"""
+    """Return a private `.pyelliptic.ECC` instance"""
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
     privkey_bin = '\x02\xca\x00\x20' + private_key
     pubkey_bin = '\x02\xca\x00\x20' + public_key[1:-32] + '\x00\x20' + public_key[-32:]
-    cryptor = pyelliptic.ECC(curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
+    cryptor = pyelliptic.ECC(
+        curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
     return cryptor
 
 
@@ -29,7 +34,7 @@ def hexToPubkey(pubkey):
 
 
 def makePubCryptor(pubkey):
-    """Return a public pyelliptic.ECC() instance"""
+    """Return a public `.pyelliptic.ECC` instance"""
     pubkey_bin = hexToPubkey(pubkey)
     return pyelliptic.ECC(curve='secp256k1', pubkey=pubkey_bin)
 
@@ -43,7 +48,8 @@ def privToPub(privkey):
 
 def encrypt(msg, hexPubkey):
     """Encrypts message with hex public key"""
-    return pyelliptic.ECC(curve='secp256k1').encrypt(msg, hexToPubkey(hexPubkey))
+    return pyelliptic.ECC(curve='secp256k1').encrypt(
+        msg, hexToPubkey(hexPubkey))
 
 
 def decrypt(msg, hexPrivkey):
@@ -52,36 +58,38 @@ def decrypt(msg, hexPrivkey):
 
 
 def decryptFast(msg, cryptor):
-    """Decrypts message with an existing pyelliptic.ECC.ECC object"""
+    """Decrypts message with an existing `.pyelliptic.ECC` object"""
     return cryptor.decrypt(msg)
 
 
 def sign(msg, hexPrivkey):
-    """Signs with hex private key"""
-    # pyelliptic is upgrading from SHA1 to SHA256 for signing. We must
-    # upgrade PyBitmessage gracefully.
-    # https://github.com/yann2192/pyelliptic/pull/33
-    # More discussion: https://github.com/yann2192/pyelliptic/issues/32
-    digestAlg = BMConfigParser().safeGet('bitmessagesettings', 'digestalg', 'sha1')
+    """
+    Signs with hex private key using SHA1 or SHA256 depending on
+    "digestalg" setting
+    """
+    digestAlg = BMConfigParser().safeGet(
+        'bitmessagesettings', 'digestalg', 'sha1')
     if digestAlg == "sha1":
         # SHA1, this will eventually be deprecated
-        return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
+        return makeCryptor(hexPrivkey).sign(
+            msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
     elif digestAlg == "sha256":
         # SHA256. Eventually this will become the default
         return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
     else:
-        raise ValueError("Unknown digest algorithm %s" % (digestAlg))
+        raise ValueError("Unknown digest algorithm %s" % digestAlg)
 
 
 def verify(msg, sig, hexPubkey):
-    """Verifies with hex public key"""
+    """Verifies with hex public key using SHA1 or SHA256"""
     # As mentioned above, we must upgrade gracefully to use SHA256. So
     # let us check the signature using both SHA1 and SHA256 and if one
     # of them passes then we will be satisfied. Eventually this can
     # be simplified and we'll only check with SHA256.
     try:
         # old SHA1 algorithm.
-        sigVerifyPassed = makePubCryptor(hexPubkey).verify(sig, msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
+        sigVerifyPassed = makePubCryptor(hexPubkey).verify(
+            sig, msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
     except:
         sigVerifyPassed = False
     if sigVerifyPassed:
@@ -89,7 +97,8 @@ def verify(msg, sig, hexPubkey):
         return True
     # The signature check using SHA1 failed. Let us try it with SHA256.
     try:
-        return makePubCryptor(hexPubkey).verify(sig, msg, digest_alg=OpenSSL.EVP_sha256)
+        return makePubCryptor(hexPubkey).verify(
+            sig, msg, digest_alg=OpenSSL.EVP_sha256)
     except:
         return False
 
@@ -100,13 +109,14 @@ def pointMult(secret):
 
     Evidently, this type of error can occur very rarely:
 
-        File "highlevelcrypto.py", line 54, in pointMult
-          group = OpenSSL.EC_KEY_get0_group(k)
-        WindowsError: exception: access violation reading 0x0000000000000008
+    >>> File "highlevelcrypto.py", line 54, in pointMult
+    >>>  group = OpenSSL.EC_KEY_get0_group(k)
+    >>> WindowsError: exception: access violation reading 0x0000000000000008
     """
     while True:
         try:
-            k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
+            k = OpenSSL.EC_KEY_new_by_curve_name(
+                OpenSSL.get_curve('secp256k1'))
             priv_key = OpenSSL.BN_bin2bn(secret, 32, None)
             group = OpenSSL.EC_KEY_get0_group(k)
             pub_key = OpenSSL.EC_POINT_new(group)

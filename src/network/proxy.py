@@ -3,14 +3,16 @@ src/network/proxy.py
 ====================
 """
 # pylint: disable=protected-access
+import logging
 import socket
 import time
 
 import asyncore_pollchoose as asyncore
-import state
 from advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import BMConfigParser
-from debug import logger
+from node import Peer
+
+logger = logging.getLogger('default')
 
 
 class ProxyError(Exception):
@@ -88,9 +90,10 @@ class Proxy(AdvancedDispatcher):
     def onion_proxy(self, address):
         """Set onion proxy address"""
         if address is not None and (
-                not isinstance(address, tuple) or len(address) < 2 or
-                not isinstance(address[0], str) or
-                not isinstance(address[1], int)):
+            not isinstance(address, tuple) or len(address) < 2
+            or not isinstance(address[0], str)
+            or not isinstance(address[1], int)
+        ):
             raise ValueError
         self.__class__._onion_proxy = address
 
@@ -105,7 +108,7 @@ class Proxy(AdvancedDispatcher):
         self.__class__._onion_auth = authTuple
 
     def __init__(self, address):
-        if not isinstance(address, state.Peer):
+        if not isinstance(address, Peer):
             raise ValueError
         AdvancedDispatcher.__init__(self)
         self.destination = address
@@ -144,5 +147,6 @@ class Proxy(AdvancedDispatcher):
 
     def state_proxy_handshake_done(self):
         """Handshake is complete at this point"""
-        self.connectedAt = time.time()      # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=attribute-defined-outside-init
+        self.connectedAt = time.time()
         return False
