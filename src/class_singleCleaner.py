@@ -21,12 +21,12 @@ It resends messages when there has been no response:
 # pylint: disable=relative-import, protected-access
 import gc
 import os
+from datetime import datetime, timedelta
 import time
 import shared
 
 import knownnodes
 import queues
-import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser

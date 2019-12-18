@@ -409,6 +409,7 @@ class MyAddress(Screen):
     @staticmethod
     def filter_address(address):
         """Method will filter the my address list data"""
+        # pylint: disable=deprecated-lambda
         if filter(lambda x: (state.searcing_text).lower() in x, [
                 BMConfigParser().get(
                     address, 'label').lower(), address.lower()]):
@@ -529,7 +530,7 @@ class AddressBook(Screen):
 class SelectableRecycleBoxLayout(
         FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout):
     """Adds selection and focus behaviour to the view"""
-    # pylint: disable = too-many-ancestors
+    # pylint: disable = too-many-ancestors, duplicate-bases
     pass
 
 
@@ -2287,7 +2288,7 @@ class Draft(Screen):
         try:
             msg_count_objs = (
                 self.parent.parent.parent.parent.parent.parent.children[
-                2].children[0].ids)
+                    2].children[0].ids)
         except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
