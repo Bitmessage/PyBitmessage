@@ -1,6 +1,5 @@
 """
-src/network/proxy.py
-====================
+Set proxy if avaiable otherwise exception
 """
 # pylint: disable=protected-access
 import logging
@@ -122,8 +121,7 @@ class Proxy(AdvancedDispatcher):
                 BMConfigParser().safeGet(
                     "bitmessagesettings", "socksusername"),
                 BMConfigParser().safeGet(
-                    "bitmessagesettings", "sockspassword")
-            )
+                    "bitmessagesettings", "sockspassword"))
         else:
             self.auth = None
         self.connect(

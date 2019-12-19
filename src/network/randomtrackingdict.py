@@ -1,8 +1,6 @@
 """
-src/randomtrackingdict.py
-=========================
+Track randomize ordered dict
 """
-
 import random
 from threading import RLock
 from time import time
@@ -14,10 +12,12 @@ class RandomTrackingDict(object):
     """
     Dict with randomised order and tracking.
 
-    Keeps a track of how many items have been requested from the dict, and timeouts. Resets after all objects have been
-    retrieved and timed out. The main purpose of this isn't as much putting related code together as performance
-    optimisation and anonymisation of downloading of objects from other peers. If done using a standard dict or array,
-    it takes too much CPU (and looks convoluted). Randomisation helps with anonymity.
+    Keeps a track of how many items have been requested from the dict,
+    and timeouts. Resets after all objects have been retrieved and timed out.
+    The main purpose of this isn't as much putting related code together
+    as performance optimisation and anonymisation of downloading of objects
+    from other peers. If done using a standard dict or array, it takes
+    too much CPU (and looks convoluted). Randomisation helps with anonymity.
     """
     # pylint: disable=too-many-instance-attributes
     maxPending = 10
@@ -85,13 +85,14 @@ class RandomTrackingDict(object):
 
     def setMaxPending(self, maxPending):
         """
-        Sets maximum number of objects that can be retrieved from the class simultaneously as long as there is no
-        timeout
+        Sets maximum number of objects that can be retrieved from the class
+        simultaneously as long as there is no timeout
         """
         self.maxPending = maxPending
 
     def setPendingTimeout(self, pendingTimeout):
-        """Sets how long to wait for a timeout if max pending is reached (or all objects have been retrieved)"""
+        """Sets how long to wait for a timeout if max pending is reached
+        (or all objects have been retrieved)"""
         self.pendingTimeout = pendingTimeout
 
     def setLastObject(self):
@@ -99,7 +100,8 @@ class RandomTrackingDict(object):
         self.lastObject = time()
 
     def randomKeys(self, count=1):
-        """Retrieve count random keys from the dict that haven't already been retrieved"""
+        """Retrieve count random keys from the dict
+        that haven't already been retrieved"""
         if self.len == 0 or ((self.pendingLen >= self.maxPending or
                               self.pendingLen == self.len) and self.lastPoll +
                              self.pendingTimeout > time()):
@@ -109,13 +111,15 @@ class RandomTrackingDict(object):
         with self.lock:
             # reset if we've requested all
             # and if last object received too long time ago
-            if self.pendingLen == self.len and self.lastObject + self.pendingTimeout < time():
+            if self.pendingLen == self.len and self.lastObject + \
+                    self.pendingTimeout < time():
                 self.pendingLen = 0
                 self.setLastObject()
             available = self.len - self.pendingLen
             if count > available:
                 count = available
-            randomIndex = helper_random.randomsample(range(self.len - self.pendingLen), count)
+            randomIndex = helper_random.randomsample(
+                range(self.len - self.pendingLen), count)
             retval = [self.indexDict[i] for i in randomIndex]
 
             for i in sorted(randomIndex, reverse=True):

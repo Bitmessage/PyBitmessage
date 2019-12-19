@@ -1,13 +1,12 @@
 """
-src/network/udp.py
-==================
+UDP protocol handler
 """
 import logging
-import time
 import socket
+import time
 
-import state
 import protocol
+import state
 from bmproto import BMProto
 from node import Peer
 from objectracker import ObjectTracker
@@ -79,7 +78,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         if not self.local:
             return True
         remoteport = False
-        for seenTime, stream, services, ip, port in addresses:
+        for seenTime, stream, _, ip, port in addresses:
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
@@ -96,9 +95,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             "received peer discovery from %s:%i (port %i):",
             self.destination.host, self.destination.port, remoteport)
         if self.local:
-            state.discoveredPeers[
-                Peer(self.destination.host, remoteport)
-            ] = time.time()
+            state.discoveredPeers[Peer(self.destination.host, remoteport)] = \
+                time.time()
         return True
 
     def bm_command_portcheck(self):
