@@ -1,20 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-src/pyelliptic/cipher.py
-========================
+Symmetric encryption
 """
-
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
 from openssl import OpenSSL
 
 
-# pylint: disable=redefined-builtin
 class Cipher(object):
     """
-    Symmetric encryption
+    Main class for encryption
 
         import pyelliptic
         iv = pyelliptic.Cipher.gen_IV('aes-256-cfb')
@@ -26,6 +23,7 @@ class Cipher(object):
         ctx2 = pyelliptic.Cipher("secretkey", iv, 0, ciphername='aes-256-cfb')
         print ctx2.ciphering(ciphertext)
     """
+
     def __init__(self, key, iv, do, ciphername='aes-256-cbc'):
         """
         do == 1 => Encrypt; do == 0 => Decrypt
@@ -59,30 +57,30 @@ class Cipher(object):
         cipher = OpenSSL.get_cipher(ciphername)
         return OpenSSL.rand(cipher.get_blocksize())
 
-    def update(self, input):
+    def update(self, input_):
         """Update result with more data"""
         i = OpenSSL.c_int(0)
-        buffer = OpenSSL.malloc(b"", len(input) + self.cipher.get_blocksize())
-        inp = OpenSSL.malloc(input, len(input))
-        if OpenSSL.EVP_CipherUpdate(self.ctx, OpenSSL.byref(buffer),
-                                    OpenSSL.byref(i), inp, len(input)) == 0:
+        buffer_ = OpenSSL.malloc(b"", len(input_) + self.cipher.get_blocksize())
+        inp = OpenSSL.malloc(input_, len(input_))
+        if OpenSSL.EVP_CipherUpdate(self.ctx, OpenSSL.byref(buffer_),
+                                    OpenSSL.byref(i), inp, len(input_)) == 0:
             raise Exception("[OpenSSL] EVP_CipherUpdate FAIL ...")
-        return buffer.raw[0:i.value]    # pylint: disable=invalid-slice-index
+        return buffer_.raw[0:i.value]  # pylint: disable=invalid-slice-index
 
     def final(self):
         """Returning the final value"""
         i = OpenSSL.c_int(0)
-        buffer = OpenSSL.malloc(b"", self.cipher.get_blocksize())
-        if (OpenSSL.EVP_CipherFinal_ex(self.ctx, OpenSSL.byref(buffer),
+        buffer_ = OpenSSL.malloc(b"", self.cipher.get_blocksize())
+        if (OpenSSL.EVP_CipherFinal_ex(self.ctx, OpenSSL.byref(buffer_),
                                        OpenSSL.byref(i))) == 0:
             raise Exception("[OpenSSL] EVP_CipherFinal_ex FAIL ...")
-        return buffer.raw[0:i.value]    # pylint: disable=invalid-slice-index
+        return buffer_.raw[0:i.value]  # pylint: disable=invalid-slice-index
 
-    def ciphering(self, input):
+    def ciphering(self, input_):
         """
         Do update and final in one method
         """
-        buff = self.update(input)
+        buff = self.update(input_)
         return buff + self.final()
 
     def __del__(self):

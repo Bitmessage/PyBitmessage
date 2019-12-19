@@ -2,11 +2,11 @@
 #  See LICENSE for details.
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
-# pylint: disable=protected-access
 """
 This module loads openssl libs with ctypes and incapsulates
 needed openssl functionality in class _OpenSSL.
 """
+# pylint: disable=protected-access
 
 import sys
 import ctypes
@@ -14,10 +14,9 @@ import ctypes
 OpenSSL = None
 
 
-class CipherName:
+class CipherName:  # pylint: disable=old-style-class
     """Class returns cipher name, pointer and blocksize"""
 
-    # pylint: disable=old-style-class
     def __init__(self, name, pointer, blocksize):
         self._name = name
         self._pointer = pointer
@@ -78,6 +77,7 @@ class _OpenSSL:
     Wrapper for OpenSSL using ctypes
     """
     # pylint: disable=too-many-statements, too-many-instance-attributes, old-style-class
+
     def __init__(self, library):
         """
         Build the wrapper
@@ -140,7 +140,8 @@ class _OpenSSL:
         self.EC_KEY_get0_group.restype = ctypes.c_void_p
         self.EC_KEY_get0_group.argtypes = [ctypes.c_void_p]
 
-        self.EC_POINT_get_affine_coordinates_GFp = self._lib.EC_POINT_get_affine_coordinates_GFp
+        self.EC_POINT_get_affine_coordinates_GFp = \
+            self._lib.EC_POINT_get_affine_coordinates_GFp
         self.EC_POINT_get_affine_coordinates_GFp.restype = ctypes.c_int
         self.EC_POINT_get_affine_coordinates_GFp.argtypes = [ctypes.c_void_p,
                                                              ctypes.c_void_p,
@@ -163,7 +164,8 @@ class _OpenSSL:
         self.EC_KEY_set_group.argtypes = [ctypes.c_void_p,
                                           ctypes.c_void_p]
 
-        self.EC_POINT_set_affine_coordinates_GFp = self._lib.EC_POINT_set_affine_coordinates_GFp
+        self.EC_POINT_set_affine_coordinates_GFp = \
+            self._lib.EC_POINT_set_affine_coordinates_GFp
         self.EC_POINT_set_affine_coordinates_GFp.restype = ctypes.c_int
         self.EC_POINT_set_affine_coordinates_GFp.argtypes = [ctypes.c_void_p,
                                                              ctypes.c_void_p,
@@ -297,7 +299,8 @@ class _OpenSSL:
         self.EVP_CipherUpdate = self._lib.EVP_CipherUpdate
         self.EVP_CipherUpdate.restype = ctypes.c_int
         self.EVP_CipherUpdate.argtypes = [ctypes.c_void_p,
-                                          ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+                                          ctypes.c_void_p, ctypes.c_void_p,
+                                          ctypes.c_void_p, ctypes.c_int]
 
         self.EVP_CipherFinal_ex = self._lib.EVP_CipherFinal_ex
         self.EVP_CipherFinal_ex.restype = ctypes.c_int
@@ -330,12 +333,14 @@ class _OpenSSL:
         self.ECDSA_sign = self._lib.ECDSA_sign
         self.ECDSA_sign.restype = ctypes.c_int
         self.ECDSA_sign.argtypes = [ctypes.c_int, ctypes.c_void_p,
-                                    ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+                                    ctypes.c_int, ctypes.c_void_p,
+                                    ctypes.c_void_p, ctypes.c_void_p]
 
         self.ECDSA_verify = self._lib.ECDSA_verify
         self.ECDSA_verify.restype = ctypes.c_int
         self.ECDSA_verify.argtypes = [ctypes.c_int, ctypes.c_void_p,
-                                      ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
+                                      ctypes.c_int, ctypes.c_void_p,
+                                      ctypes.c_int, ctypes.c_void_p]
 
         if self._hexversion >= 0x10100000 and not self._libreSSL:
             self.EVP_MD_CTX_new = self._lib.EVP_MD_CTX_new
@@ -393,7 +398,8 @@ class _OpenSSL:
         self.HMAC = self._lib.HMAC
         self.HMAC.restype = ctypes.c_void_p
         self.HMAC.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
-                              ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p]
+                              ctypes.c_void_p, ctypes.c_int,
+                              ctypes.c_void_p, ctypes.c_void_p]
 
         try:
             self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
@@ -530,17 +536,24 @@ class _OpenSSL:
 
     def _set_ciphers(self):
         self.cipher_algo = {
-            'aes-128-cbc': CipherName('aes-128-cbc', self.EVP_aes_128_cbc, 16),
-            'aes-256-cbc': CipherName('aes-256-cbc', self.EVP_aes_256_cbc, 16),
-            'aes-128-cfb': CipherName('aes-128-cfb', self.EVP_aes_128_cfb128, 16),
-            'aes-256-cfb': CipherName('aes-256-cfb', self.EVP_aes_256_cfb128, 16),
-            'aes-128-ofb': CipherName('aes-128-ofb', self._lib.EVP_aes_128_ofb, 16),
-            'aes-256-ofb': CipherName('aes-256-ofb', self._lib.EVP_aes_256_ofb, 16),
+            'aes-128-cbc': CipherName(
+                'aes-128-cbc', self.EVP_aes_128_cbc, 16),
+            'aes-256-cbc': CipherName(
+                'aes-256-cbc', self.EVP_aes_256_cbc, 16),
+            'aes-128-cfb': CipherName(
+                'aes-128-cfb', self.EVP_aes_128_cfb128, 16),
+            'aes-256-cfb': CipherName(
+                'aes-256-cfb', self.EVP_aes_256_cfb128, 16),
+            'aes-128-ofb': CipherName(
+                'aes-128-ofb', self._lib.EVP_aes_128_ofb, 16),
+            'aes-256-ofb': CipherName(
+                'aes-256-ofb', self._lib.EVP_aes_256_ofb, 16),
             # 'aes-128-ctr': CipherName('aes-128-ctr', self._lib.EVP_aes_128_ctr, 16),
             # 'aes-256-ctr': CipherName('aes-256-ctr', self._lib.EVP_aes_256_ctr, 16),
             'bf-cfb': CipherName('bf-cfb', self.EVP_bf_cfb64, 8),
             'bf-cbc': CipherName('bf-cbc', self.EVP_bf_cbc, 8),
-            'rc4': CipherName('rc4', self.EVP_rc4, 128),  # 128 is the initialisation size not block size
+            # 128 is the initialisation size not block size
+            'rc4': CipherName('rc4', self.EVP_rc4, 128),
         }
 
     def _set_curves(self):
@@ -600,14 +613,13 @@ class _OpenSSL:
             raise Exception("Unknown curve")
         return self.curves[name]
 
-    def get_curve_by_id(self, id):
+    def get_curve_by_id(self, id_):
         """
         returns the name of a elliptic curve with his id
         """
-        # pylint: disable=redefined-builtin
         res = None
         for i in self.curves:
-            if self.curves[i] == id:
+            if self.curves[i] == id_:
                 res = i
                 break
         if res is None:
@@ -618,32 +630,31 @@ class _OpenSSL:
         """
         OpenSSL random function
         """
-        # pylint: disable=redefined-builtin
-        buffer = self.malloc(0, size)
-        # This pyelliptic library, by default, didn't check the return value of RAND_bytes. It is
-        # evidently possible that it returned an error and not-actually-random data. However, in
-        # tests on various operating systems, while generating hundreds of gigabytes of random
-        # strings of various sizes I could not get an error to occur. Also Bitcoin doesn't check
-        # the return value of RAND_bytes either.
+        buffer_ = self.malloc(0, size)
+        # This pyelliptic library, by default, didn't check the return value
+        # of RAND_bytes. It is evidently possible that it returned an error
+        # and not-actually-random data. However, in tests on various
+        # operating systems, while generating hundreds of gigabytes of random
+        # strings of various sizes I could not get an error to occur.
+        # Also Bitcoin doesn't check the return value of RAND_bytes either.
         # Fixed in Bitmessage version 0.4.2 (in source code on 2013-10-13)
-        while self.RAND_bytes(buffer, size) != 1:
+        while self.RAND_bytes(buffer_, size) != 1:
             import time
             time.sleep(1)
-        return buffer.raw
+        return buffer_.raw
 
     def malloc(self, data, size):
         """
         returns a create_string_buffer (ctypes)
         """
-        # pylint: disable=redefined-builtin
-        buffer = None
+        buffer_ = None
         if data != 0:
             if sys.version_info.major == 3 and isinstance(data, type('')):
                 data = data.encode()
-            buffer = self.create_string_buffer(data, size)
+            buffer_ = self.create_string_buffer(data, size)
         else:
-            buffer = self.create_string_buffer(size)
-        return buffer
+            buffer_ = self.create_string_buffer(size)
+        return buffer_
 
 
 def loadOpenSSL():
@@ -657,12 +668,18 @@ def loadOpenSSL():
     if getattr(sys, 'frozen', None):
         if 'darwin' in sys.platform:
             libdir.extend([
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.1.0.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.0.2.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.0.1.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.1.0.0.dylib'),
-                path.join(environ['RESOURCEPATH'], '..', 'Frameworks', 'libcrypto.0.9.8.dylib'),
+                path.join(environ['RESOURCEPATH'],
+                          '..', 'Frameworks', 'libcrypto.dylib'),
+                path.join(environ['RESOURCEPATH'],
+                          '..', 'Frameworks', 'libcrypto.1.1.0.dylib'),
+                path.join(environ['RESOURCEPATH'],
+                          '..', 'Frameworks', 'libcrypto.1.0.2.dylib'),
+                path.join(environ['RESOURCEPATH'],
+                          '..', 'Frameworks', 'libcrypto.1.0.1.dylib'),
+                path.join(environ['RESOURCEPATH'],
+                          '..', 'Frameworks', 'libcrypto.1.0.0.dylib'),
+                path.join(environ['RESOURCEPATH'],
+                          '..', 'Frameworks', 'libcrypto.0.9.8.dylib'),
             ])
         elif 'win32' in sys.platform or 'win64' in sys.platform:
             libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
@@ -682,7 +699,8 @@ def loadOpenSSL():
                 path.join(sys._MEIPASS, 'libssl.so.0.9.8'),
             ])
     if 'darwin' in sys.platform:
-        libdir.extend(['libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
+        libdir.extend(
+            ['libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append('libeay32.dll')
     else:
@@ -690,7 +708,8 @@ def loadOpenSSL():
         libdir.append('libssl.so')
         libdir.append('libcrypto.so.1.0.0')
         libdir.append('libssl.so.1.0.0')
-    if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
+    if 'linux' in sys.platform or 'darwin' in sys.platform \
+            or 'bsd' in sys.platform:
         libdir.append(find_library('ssl'))
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
@@ -700,7 +719,8 @@ def loadOpenSSL():
             return
         except:
             pass
-    raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
+    raise Exception(
+        "Couldn't find and load the OpenSSL library. You must install it.")
 
 
 loadOpenSSL()
