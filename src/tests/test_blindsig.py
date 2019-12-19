@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import timedelta
 sys.path.insert(1, '/home/cis/ektarepo/PyBitmessage/src/pyelliptic')
 from eccblindChain import ECCBlindChain
+from eccblind import ECCBlind
 from openssl import OpenSSL
 EXP = datetime.now() + (timedelta(days=365))
 SIGNER_OBJ_LIST = []
@@ -25,7 +26,7 @@ class TestBlindSig(unittest.TestCase):
         """
         level = 0
         while level <= 4:
-            signer_obj = ECCBlindChain()
+            signer_obj = ECCBlind()
             SIGNER_OBJ_LIST.append(signer_obj)
             if level == 0:
                 signer_obj = SIGNER_OBJ_LIST[0]
