@@ -21,12 +21,12 @@ It resends messages when there has been no response:
 # pylint: disable=relative-import, protected-access
 import gc
 import os
+from datetime import datetime, timedelta
 import time
 import shared
 
 import knownnodes
 import queues
-import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
@@ -111,7 +111,7 @@ class singleCleaner(StoppableThread):
                         self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
                         self.resendMsg(ackData)
-
+            deleteTrashMsgPermonantly()
             try:
                 # Cleanup knownnodes and handle possible severe exception
                 # while writing it to disk
@@ -193,3 +193,12 @@ class singleCleaner(StoppableThread):
             'updateStatusBar',
             'Doing work necessary to again attempt to deliver a message...'
         ))
+
+
+def deleteTrashMsgPermonantly():
+    """This method is used to delete old messages"""
+    ndays_before_time = datetime.now() - timedelta(days=30)
+    old_messages = time.mktime(ndays_before_time.timetuple())
+    sqlExecute("delete from sent where folder = 'trash' and lastactiontime <= ?;", int(old_messages))
+    sqlExecute("delete from inbox where folder = 'trash' and received <= ?;", int(old_messages))
+    return
