@@ -11,6 +11,15 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # pylint: disable=invalid-name
 
 from openssl import OpenSSL
+import hash as Hash
+import msgpack
+
+
+def encode_datetime(obj):
+    """
+    Method to format time
+    """
+    return {'Time': int(obj.strftime("%s"))}
 
 
 class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
@@ -76,6 +85,22 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
                                                     ctx)
         return x0
 
+    @staticmethod
+    def ec_serialize(msg):
+        """
+        Serialize the data using msgpack
+        """
+        msg = msgpack.packb(msg, default=encode_datetime, use_bin_type=True)
+        return msg
+
+    @staticmethod
+    def ec_deSerialize(msg):
+        """
+        Deserialize the data using msgpack
+        """
+        msg = msgpack.unpackb(msg)
+        return msg
+
     def __init__(self, curve="secp256k1", pubkey=None):
         self.ctx = OpenSSL.BN_CTX_new()
 
@@ -114,6 +139,51 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         return self.R
 
+    # def create_signing_request(self, R, msg):
+    #     """
+    #     Requester creates a new signing request
+    #     """
+    #     self.R = R
+
+    #     # Requester: 3 random blinding factors
+    #     self.F = OpenSSL.EC_POINT_new(self.group)
+    #     OpenSSL.EC_POINT_set_to_infinity(self.group, self.F)
+    #     temp = OpenSSL.EC_POINT_new(self.group)
+    #     abinv = OpenSSL.BN_new()
+
+    #     # F != O
+    #     while OpenSSL.EC_POINT_cmp(self.group, self.F, self.iO, self.ctx) == 0:
+    #         self.a = ECCBlind.ec_get_random(self.group, self.ctx)
+    #         self.b = ECCBlind.ec_get_random(self.group, self.ctx)
+    #         self.c = ECCBlind.ec_get_random(self.group, self.ctx)
+
+    #         # F = b^-1 * R...
+    #         self.binv = ECCBlind.ec_invert(self.group, self.b, self.ctx)
+    #         OpenSSL.EC_POINT_mul(self.group, temp, 0, self.R, self.binv, 0)
+    #         OpenSSL.EC_POINT_copy(self.F, temp)
+
+    #         # ... + a*b^-1 * Q...
+    #         OpenSSL.BN_mul(abinv, self.a, self.binv, self.ctx)
+    #         OpenSSL.EC_POINT_mul(self.group, temp, 0, self.Q, abinv, 0)
+    #         OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, 0)
+
+    #         # ... + c*G
+    #         OpenSSL.EC_POINT_mul(self.group, temp, 0, self.G, self.c, 0)
+    #         OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, 0)
+
+    #     # F = (x0, y0)
+    #     self.r = ECCBlind.ec_Ftor(self.F, self.group, self.ctx)
+
+    #     # Requester: Blinding (m' = br(m) + a)
+    #     self.m = OpenSSL.BN_new()
+    #     OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+
+    #     self.m_ = OpenSSL.BN_new()
+    #     OpenSSL.BN_mod_mul(self.m_, self.b, self.r, self.n, self.ctx)
+    #     OpenSSL.BN_mod_mul(self.m_, self.m_, self.m, self.n, self.ctx)
+    #     OpenSSL.BN_mod_add(self.m_, self.m_, self.a, self.n, self.ctx)
+    #     return self.m_
+
     def create_signing_request(self, R, msg):
         """
         Requester creates a new signing request
@@ -151,7 +221,10 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        # msg = ECCBlind.ec_serialize(msg)
+        # Here key is only the msg as we are passing pubkeys in msg
+        hashed_msg = Hash.hmac_sha256(msg, msg)
+        OpenSSL.BN_bin2bn(hashed_msg, len(hashed_msg), self.m)
 
         self.m_ = OpenSSL.BN_new()
         OpenSSL.BN_mod_mul(self.m_, self.b, self.r, self.n, self.ctx)
@@ -180,14 +253,43 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         self.signature = (s, self.F)
         return self.signature
 
+    # def verify(self, msg, signature):
+    #     """
+    #     Verify signature with certifier's pubkey
+    #     """
+
+    #     # convert msg to BIGNUM
+    #     self.m = OpenSSL.BN_new()
+    #     OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+
+    #     # init
+    #     s, self.F = signature
+    #     if self.r is None:
+    #         self.r = ECCBlind.ec_Ftor(self.F, self.group, self.ctx)
+
+    #     lhs = OpenSSL.EC_POINT_new(self.group)
+    #     rhs = OpenSSL.EC_POINT_new(self.group)
+
+    #     OpenSSL.EC_POINT_mul(self.group, lhs, s, 0, 0, 0)
+
+    #     OpenSSL.EC_POINT_mul(self.group, rhs, 0, self.Q, self.m, 0)
+    #     OpenSSL.EC_POINT_mul(self.group, rhs, 0, rhs, self.r, 0)
+    #     OpenSSL.EC_POINT_add(self.group, rhs, rhs, self.F, self.ctx)
+
+    #     retval = OpenSSL.EC_POINT_cmp(self.group, lhs, rhs, self.ctx)
+    #     if retval == -1:
+    #         raise RuntimeError("EC_POINT_cmp returned an error")
+    #     else:
+    #         return retval == 0
+
     def verify(self, msg, signature):
         """
         Verify signature with certifier's pubkey
         """
-
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        hashed_msg = Hash.hmac_sha256(msg, msg)
+        OpenSSL.BN_bin2bn(hashed_msg, len(hashed_msg), self.m)
 
         # init
         s, self.F = signature

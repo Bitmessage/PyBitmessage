@@ -21,6 +21,7 @@ class TestBlindSig(unittest.TestCase):
         Class to test blind signature mechanism
     """
     def test_blind_sig(self):
+        callchain = ECCBlindChain()
         """
         Method to test blind signature API
         """
@@ -41,8 +42,9 @@ class TestBlindSig(unittest.TestCase):
                 val = ""
 
             msg = {"PubKEY": signer_obj.pubkey, "Expiry": pubkey_expiry_date, "val": val}
-            requester_obj = ECCBlindChain(pubkey=signer_obj.pubkey)
-            msg_blinded = requester_obj.create_signing_request(point_r, msg)
+            requester_obj = ECCBlind(pubkey=signer_obj.pubkey)
+            msgun = callchain.ec_serialize(msg)
+            msg_blinded = requester_obj.create_signing_request(point_r, msgun)
             msg_blinded_str = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(msg_blinded))
             OpenSSL.BN_bn2bin(msg_blinded, msg_blinded_str)
             signature_blinded = signer_obj.blind_sign(msg_blinded)
@@ -57,7 +59,8 @@ class TestBlindSig(unittest.TestCase):
             level = level + 1
             MSG_UNPACK_CHAIN.append(chain)
         level = level - 1
-        callchain = ECCBlindChain()
+        
+        callECC = ECCBlind()
         packed_msg_chain = callchain.ec_serialize(MSG_UNPACK_CHAIN)
         callchain.verify_Chain(packed_msg_chain)
 
