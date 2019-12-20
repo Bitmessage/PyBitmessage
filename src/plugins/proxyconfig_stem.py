@@ -112,7 +112,8 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
         onionkeytype = config.safeGet(onionhostname, 'keytype')
 
         response = controller.create_ephemeral_hidden_service(
-            config.safeGetInt('bitmessagesettings', 'onionport', 8444),
+            {config.safeGetInt('bitmessagesettings', 'onionport', 8444):
+             config.safeGetInt('bitmessagesettings', 'port', 8444)},
             key_type=(onionkeytype or 'NEW'),
             key_content=(onionkey or onionhostname and 'ED25519-V3' or 'BEST')
         )
