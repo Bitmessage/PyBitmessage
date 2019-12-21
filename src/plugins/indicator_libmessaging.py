@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/indicator_libmessaging.py
-=====================================
+Indicator plugin using libmessaging
 """
 
 import gi
@@ -37,7 +36,7 @@ class IndicatorLibmessaging(object):
         if self.app:
             self.app.unregister()
 
-    def activate(self, app, source):                # pylint: disable=unused-argument
+    def activate(self, app, source):  # pylint: disable=unused-argument
         """Activate the libmessaging indicator plugin"""
         self.form.appIndicatorInbox(
             self.new_message_item if source == 'messages'
