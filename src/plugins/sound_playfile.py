@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/sound_playfile.py
-===================================
+Sound notification plugin using external executable or winsound (on Windows)
 """
 
 try:
@@ -23,7 +22,7 @@ except ImportError:
 
     def connect_plugin(sound_file):
         """This function implements the entry point."""
-        global play_cmd    # pylint: disable=global-statement
+        global play_cmd  # pylint: disable=global-statement
 
         ext = os.path.splitext(sound_file)[-1]
         try:
