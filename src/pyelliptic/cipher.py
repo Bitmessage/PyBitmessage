@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-src/pyelliptic/cipher.py
-========================
+Symmetric Encryption
 """
-
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
@@ -14,7 +12,7 @@ from openssl import OpenSSL
 # pylint: disable=redefined-builtin
 class Cipher(object):
     """
-    Symmetric encryption
+    Main class for encryption
 
         import pyelliptic
         iv = pyelliptic.Cipher.gen_IV('aes-256-cfb')
@@ -67,7 +65,7 @@ class Cipher(object):
         if OpenSSL.EVP_CipherUpdate(self.ctx, OpenSSL.byref(buffer),
                                     OpenSSL.byref(i), inp, len(input)) == 0:
             raise Exception("[OpenSSL] EVP_CipherUpdate FAIL ...")
-        return buffer.raw[0:i.value]    # pylint: disable=invalid-slice-index
+        return buffer.raw[0:i.value]  # pylint: disable=invalid-slice-index
 
     def final(self):
         """Returning the final value"""
@@ -76,7 +74,7 @@ class Cipher(object):
         if (OpenSSL.EVP_CipherFinal_ex(self.ctx, OpenSSL.byref(buffer),
                                        OpenSSL.byref(i))) == 0:
             raise Exception("[OpenSSL] EVP_CipherFinal_ex FAIL ...")
-        return buffer.raw[0:i.value]    # pylint: disable=invalid-slice-index
+        return buffer.raw[0:i.value]  # pylint: disable=invalid-slice-index
 
     def ciphering(self, input):
         """
