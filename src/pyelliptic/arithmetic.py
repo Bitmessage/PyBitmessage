@@ -1,5 +1,6 @@
-# pylint: disable=missing-docstring,too-many-function-args
-
+"""
+Arithmetic Expressions
+"""
 import hashlib
 import re
 
@@ -11,6 +12,7 @@ G = (Gx, Gy)
 
 
 def inv(a, n):
+    """Inversion"""
     lm, hm = 1, 0
     low, high = a % n, n
     while low > 1:
@@ -21,6 +23,7 @@ def inv(a, n):
 
 
 def get_code_string(base):
+    """Returns string according to base value"""
     if base == 2:
         return '01'
     elif base == 10:
@@ -36,6 +39,7 @@ def get_code_string(base):
 
 
 def encode(val, base, minlen=0):
+    """Returns the encoded string"""
     code_string = get_code_string(base)
     result = ""
     while val > 0:
@@ -47,6 +51,7 @@ def encode(val, base, minlen=0):
 
 
 def decode(string, base):
+    """Returns the decoded string"""
     code_string = get_code_string(base)
     result = 0
     if base == 16:
@@ -59,10 +64,13 @@ def decode(string, base):
 
 
 def changebase(string, frm, to, minlen=0):
+    """Change base of the string"""
     return encode(decode(string, frm), to, minlen)
 
 
 def base10_add(a, b):
+    """Adding the numbers that are of base10"""
+    # pylint: disable=too-many-function-args
     if a is None:
         return b[0], b[1]
     if b is None:
@@ -78,6 +86,7 @@ def base10_add(a, b):
 
 
 def base10_double(a):
+    """Double the numbers that are of base10"""
     if a is None:
         return None
     m = ((3 * a[0] * a[0] + A) * inv(2 * a[1], P)) % P
@@ -87,6 +96,7 @@ def base10_double(a):
 
 
 def base10_multiply(a, n):
+    """Multiply the numbers that are of base10"""
     if n == 0:
         return G
     if n == 1:
@@ -99,28 +109,35 @@ def base10_multiply(a, n):
 
 
 def hex_to_point(h):
+    """Converting hexadecimal to point value"""
     return (decode(h[2:66], 16), decode(h[66:], 16))
 
 
 def point_to_hex(p):
+    """Converting point value to hexadecimal"""
     return '04' + encode(p[0], 16, 64) + encode(p[1], 16, 64)
 
 
 def multiply(privkey, pubkey):
-    return point_to_hex(base10_multiply(hex_to_point(pubkey), decode(privkey, 16)))
+    """Multiplying keys"""
+    return point_to_hex(base10_multiply(
+        hex_to_point(pubkey), decode(privkey, 16)))
 
 
 def privtopub(privkey):
+    """Converting key from private to public"""
     return point_to_hex(base10_multiply(G, decode(privkey, 16)))
 
 
 def add(p1, p2):
+    """Adding two public keys"""
     if len(p1) == 32:
         return encode(decode(p1, 16) + decode(p2, 16) % P, 16, 32)
     return point_to_hex(base10_add(hex_to_point(p1), hex_to_point(p2)))
 
 
 def hash_160(string):
+    """Hashed version of public key"""
     intermed = hashlib.sha256(string).digest()
     ripemd160 = hashlib.new('ripemd160')
     ripemd160.update(intermed)
@@ -128,17 +145,18 @@ def hash_160(string):
 
 
 def dbl_sha256(string):
+    """Double hashing (SHA256)"""
     return hashlib.sha256(hashlib.sha256(string).digest()).digest()
 
 
 def bin_to_b58check(inp):
+    """Convert binary to base58"""
     inp_fmtd = '\x00' + inp
     leadingzbytes = len(re.match('^\x00*', inp_fmtd).group(0))
     checksum = dbl_sha256(inp_fmtd)[:4]
     return '1' * leadingzbytes + changebase(inp_fmtd + checksum, 256, 58)
 
-# Convert a public key (in hex) to a Bitcoin address
-
 
 def pubkey_to_address(pubkey):
+    """Convert a public key (in hex) to a Bitcoin address"""
     return bin_to_b58check(hash_160(changebase(pubkey, 16, 256)))

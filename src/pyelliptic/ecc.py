@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-src/pyelliptic/ecc.py
-=====================
+Asymmetric cryptography using elliptic curves
 """
 # pylint: disable=protected-access
 
