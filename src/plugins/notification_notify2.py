@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/notification_notify2.py
-===================================
+Notification plugin using notify2
 """
 
 import gi
@@ -11,7 +10,7 @@ from gi.repository import Notify
 Notify.init('pybitmessage')
 
 
-def connect_plugin(title, subtitle, category, label, icon):
+def connect_plugin(title, subtitle, category, _, icon):
     """Plugin for notify2"""
     if not icon:
         icon = 'mail-message-new' if category == 2 else 'pybitmessage'
