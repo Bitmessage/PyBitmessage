@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/menu_qrcode.py
-==========================
-
 A menu plugin showing QR-Code for bitmessage address in modal dialog.
 """
 
@@ -15,10 +12,11 @@ from pybitmessage.tr import _translate
 
 
 # http://stackoverflow.com/questions/20452486
-class Image(qrcode.image.base.BaseImage):           # pylint: disable=abstract-method
+class Image(qrcode.image.base.BaseImage):  # pylint: disable=abstract-method
     """Image output class for qrcode using QPainter"""
 
-    def __init__(self, border, width, box_size):        # pylint: disable=super-init-not-called
+    def __init__(self, border, width, box_size):
+        # pylint: disable=super-init-not-called
         self.border = border
         self.width = width
         self.box_size = box_size
