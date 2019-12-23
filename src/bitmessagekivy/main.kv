@@ -16,6 +16,7 @@
 #:import MDScrollViewRefreshLayout kivymd.refreshlayout.MDScrollViewRefreshLayout
 #:import MDSpinner kivymd.spinner.MDSpinner
 #:import NoTransition kivy.uix.screenmanager.NoTransition
+#:import MDSeparator kivymd.card.MDSeparator
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
 #:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
@@ -202,8 +203,18 @@ NavigationLayout:
     transition: NoTransition()
     BoxLayout:
         orientation: 'vertical'
-        spacing: dp(10)
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Body1'
+                bold: True
         #FloatLayout:
         #    MDScrollViewRefreshLayout:
         #        id: refresh_layout
@@ -225,7 +236,18 @@ NavigationLayout:
     name: 'sent'
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Body1'
+                bold: True
         BoxLayout:
             orientation:'vertical'
             ScrollView:
@@ -238,21 +260,52 @@ NavigationLayout:
 
 <Trash>:
     name: 'trash'
-    ScrollView:
-        id: scroll_y
-        do_scroll_x: False
-        MDList:
-            id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(5)
+        GridLayout:
+            id: identi_tag
+            padding: [20, 20, 0, 5]
+            spacing: dp(5)
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Body1'
+                bold: True
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
     Loader:
     ComposerButton:
-    
+ 
 <Draft>:
     name: 'draft'
-    ScrollView:
-        id: scroll_y
-        do_scroll_x: False
-        MDList:
-            id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(5)
+        GridLayout:
+            id: identi_tag
+            padding: [20, 20, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Body1'
+                bold: True
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
     ComposerButton:
 
 <Starred>:
@@ -289,12 +342,26 @@ NavigationLayout:
     #        MDList:
     #            id: ml
     BoxLayout:
-        orientation:'vertical'
-        ScrollView:
-            id: scroll_y
-            do_scroll_x: False
-            MDList:
-                id: ml
+        orientation: 'vertical'
+        spacing: dp(5)
+        GridLayout:
+            id: identi_tag
+            padding: [20, 20, 0, 5]
+            spacing: dp(5)
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Body1'
+                bold: True
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
     Loader:
     ComposerButton:
     
@@ -495,7 +562,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .5, .35
                         height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
                         on_press: app.root.ids.sc7.reset_address_label()
@@ -541,7 +607,6 @@ NavigationLayout:
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        size_hint: .5, None
                         height: dp(40)
                         on_release: root.generateaddress(app)
                         opposite_colors: True
@@ -627,7 +692,18 @@ NavigationLayout:
     name: 'myaddress'
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: 'My Addresses'
+                font_style: 'Body1'
+                bold: True
         FloatLayout:
             MDScrollViewRefreshLayout:
                 id: refresh_layout
@@ -642,7 +718,18 @@ NavigationLayout:
     name: 'addressbook'
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Body1'
+                bold: True
         BoxLayout:
             orientation:'vertical'
             ScrollView:
@@ -803,7 +890,7 @@ NavigationLayout:
     id: popup
     size_hint : (None,None)
     height: 2*(label.height + address.height) + 10
-    width :app.window_size[0] - app.window_size[0]/10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     title: 'add contact\'s'
     background: './images/popup.jpeg'
     title_size: sp(20)
@@ -1036,7 +1123,7 @@ NavigationLayout:
     id: myadd_popup
     size_hint : (None,None)
     height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
-    width :app.window_size[0] - app.window_size[0]/10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     background: './images/popup.jpeg'
     auto_dismiss: False
     separator_height: 0 
@@ -1116,7 +1203,7 @@ NavigationLayout:
     id: addbook_popup
     size_hint : (None,None)
     height: 4*(add_label.height)
-    width :app.window_size[0] - app.window_size[0]/10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     background: './images/popup.jpeg'
     separator_height: 0 
     auto_dismiss: False
