@@ -1,21 +1,28 @@
-﻿from __future__ import division
+﻿"""
+Some shared functions
+
+.. deprecated:: 0.6.3
+  Should be moved to different places and this file removed,
+  but it needs refactoring.
+"""
+from __future__ import division
 
 # Libraries.
+import hashlib
 import os
 import sys
 import stat
 import threading
-import hashlib
 import subprocess
 from binascii import hexlify
 from pyelliptic import arithmetic
 from kivy.utils import platform
 # Project imports.
-import state
 import highlevelcrypto
+import state
+from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
-from addresses import decodeAddress, encodeVarint
 from helper_sql import sqlQuery
 
 
@@ -56,6 +63,7 @@ maximumLengthOfTimeToBotherResendingMessages = 0
 
 
 def isAddressInMyAddressBook(address):
+    """Is address in my addressbook?"""
     queryreturn = sqlQuery(
         '''select address from addressbook where address=?''',
         address)
@@ -64,6 +72,7 @@ def isAddressInMyAddressBook(address):
 
 # At this point we should really just have a isAddressInMy(book, address)...
 def isAddressInMySubscriptionsList(address):
+    """Am I subscribed to this address?"""
     queryreturn = sqlQuery(
         '''select * from subscriptions where address=?''',
         str(address))
@@ -71,6 +80,9 @@ def isAddressInMySubscriptionsList(address):
 
 
 def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
+    """
+    Am I subscribed to this address, is it in my addressbook or whitelist?
+    """
     if isAddressInMyAddressBook(address):
         return True
 
@@ -90,6 +102,11 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     return False
 
 def decodeWalletImportFormat(WIFstring):
+    # pylint: disable=inconsistent-return-statements
+    """
+    Convert private key from base58 that's used in the config file to
+    8-bit binary string
+    """
     fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
@@ -98,6 +115,7 @@ def decodeWalletImportFormat(WIFstring):
             ' private keys, the checksum failed. Here are the first'
             ' 6 characters of the PRIVATE key: {}'.format(str(WIFstring)[:6])
         )
+
         os._exit(0)
     if privkey[0:1] == '\x80'.encode()[1:]:  # checksum passed
         return privkey[1:]
@@ -107,10 +125,11 @@ def decodeWalletImportFormat(WIFstring):
         ' the checksum passed but the key doesn\'t begin with hex 80.'
         ' Here is the PRIVATE key: {}'.format(WIFstring)
     )
-    os._exit(0)
+    os._exit(0)    # pylint: disable=protected-access
 
 
 def reloadMyAddressHashes():
+    """Reload keys for user's addresses from the config file"""
     logger.debug('reloading keys from keys.dat file')
 
     myECCryptorObjects.clear()
@@ -118,33 +137,29 @@ def reloadMyAddressHashes():
     myAddressesByTag.clear()
     # myPrivateKeys.clear()
 
-    keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
+    keyfileSecure = checkSensitiveFilePermissions(os.path.join(
+        state.appdata, 'keys.dat'))
     hasEnabledKeys = False
     for addressInKeysFile in BMConfigParser().addresses():
         isEnabled = BMConfigParser().safeGet(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
             # status
-            _, addressVersionNumber, streamNumber, hash = \
-                decodeAddress(addressInKeysFile)
+            addressVersionNumber, streamNumber, hashobj = decodeAddress(addressInKeysFile)[1:]
             if addressVersionNumber in (2, 3, 4):
                 # Returns a simple 32 bytes of information encoded
                 # in 64 Hex characters, or null if there was an error.
                 privEncryptionKey = hexlify(decodeWalletImportFormat(
-                    BMConfigParser().get(addressInKeysFile, 'privencryptionkey'))
-                )
-
+                    BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
                 # It is 32 bytes encoded as 64 hex characters
                 if len(privEncryptionKey) == 64:
-                    myECCryptorObjects[hash] = \
+                    myECCryptorObjects[hashobj] = \
                         highlevelcrypto.makeCryptor(privEncryptionKey)
-                    myAddressesByHash[hash] = addressInKeysFile
+                    myAddressesByHash[hashobj] = addressInKeysFile
                     tag = hashlib.sha512(hashlib.sha512(
                         encodeVarint(addressVersionNumber) +
-                        encodeVarint(streamNumber) + hash).digest()
-                    ).digest()[32:]
+                        encodeVarint(streamNumber) + hashobj).digest()).digest()[32:]
                     myAddressesByTag[tag] = addressInKeysFile
-
             else:
                 logger.error(
                     'Error in reloadMyAddressHashes: Can\'t handle'
@@ -157,6 +172,10 @@ def reloadMyAddressHashes():
 
 
 def reloadBroadcastSendersForWhichImWatching():
+    """
+    Reinitialize runtime data for the broadcasts I'm subscribed to
+    from the config file
+    """
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     queryreturn = sqlQuery('SELECT address FROM subscriptions where enabled=1')
@@ -164,22 +183,23 @@ def reloadBroadcastSendersForWhichImWatching():
     for row in queryreturn:
         address, = row
         # status
-        _, addressVersionNumber, streamNumber, hash = decodeAddress(address)
+        addressVersionNumber, streamNumber, hashobj = decodeAddress(address)[1:]
         if addressVersionNumber == 2:
-            broadcastSendersForWhichImWatching[hash] = 0
+            broadcastSendersForWhichImWatching[hashobj] = 0
         # Now, for all addresses, even version 2 addresses,
         # we should create Cryptor objects in a dictionary which we will
         # use to attempt to decrypt encrypted broadcast messages.
         if addressVersionNumber <= 3:
-            privEncryptionKey = hashlib.sha512((
+            privEncryptionKey = hashlib.sha512(
                 encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + hash)).digest()[:32]
-            MyECSubscriptionCryptorObjects[hash] = \
+                encodeVarint(streamNumber) + hashobj
+            ).digest()[:32]
+            MyECSubscriptionCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
                 encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + hash
+                encodeVarint(streamNumber) + hashobj
             ).digest()).digest()
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
@@ -188,21 +208,23 @@ def reloadBroadcastSendersForWhichImWatching():
 
 
 def fixPotentiallyInvalidUTF8Data(text):
+    """Sanitise invalid UTF-8 strings"""
     try:
         unicode(text, 'utf-8')
         return text
     except:
-        return 'Part of the message is corrupt. The message cannot be'\
+
+        return 'Part of the message is corrupt. The message cannot be' \
             ' displayed the normal way.\n\n' + repr(text)
 
 
-# Checks sensitive file permissions for inappropriate umask
-# during keys.dat creation. (Or unwise subsequent chmod.)
-#
-# Returns true iff file appears to have appropriate permissions.
 def checkSensitiveFilePermissions(filename):
+    """
+    :param str filename: path to the file
+    :return: True if file appears to have appropriate permissions.
+    """
     if sys.platform == 'win32':
-        # TODO: This might deserve extra checks by someone familiar with
+        # .. todo:: This might deserve extra checks by someone familiar with
         # Windows systems.
         return True
     elif sys.platform[:7] == 'freebsd':
@@ -210,30 +232,30 @@ def checkSensitiveFilePermissions(filename):
         present_permissions = os.stat(filename)[0]
         disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
         return present_permissions & disallowed_permissions == 0
-    else:
-        try:
-            # Skip known problems for non-Win32 filesystems
-            # without POSIX permissions.
-            fstype = subprocess.check_output(
-                'stat -f -c "%%T" %s' % (filename),
-                shell=True,
-                stderr=subprocess.STDOUT
-            )
-            if 'fuseblk' in fstype:
-                logger.info(
-                    'Skipping file permissions check for %s.'
-                    ' Filesystem fuseblk detected.', filename)
-                return True
-        except:
-            # Swallow exception here, but we might run into trouble later!
-            logger.error('Could not determine filesystem type. %s', filename)
-        present_permissions = os.stat(filename)[0]
-        disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
-        return present_permissions & disallowed_permissions == 0
+    try:
+        # Skip known problems for non-Win32 filesystems
+        # without POSIX permissions.
+        fstype = subprocess.check_output(
+            'stat -f -c "%%T" %s' % (filename),
+            shell=True,
+            stderr=subprocess.STDOUT
+        )
+        if 'fuseblk' in fstype:
+            logger.info(
+                'Skipping file permissions check for %s.'
+                ' Filesystem fuseblk detected.', filename)
+            return True
+    except:
+        # Swallow exception here, but we might run into trouble later!
+        logger.error('Could not determine filesystem type. %s', filename)
+    present_permissions = os.stat(filename)[0]
+    disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
+    return present_permissions & disallowed_permissions == 0
 
 
 # Fixes permissions on a sensitive file.
 def fixSensitiveFilePermissions(filename, hasEnabledKeys):
+    """Try to change file permissions to be more restrictive"""
     if hasEnabledKeys:
         logger.warning(
             'Keyfile had insecure permissions, and there were enabled'
@@ -258,6 +280,7 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
 
 
 def openKeysFile():
+    """Open keys file with an external editor"""
     if 'linux' in sys.platform:
         subprocess.call(["xdg-open", state.appdata + 'keys.dat'])
     else:

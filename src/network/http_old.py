@@ -1,7 +1,3 @@
-"""
-src/network/http-old.py
-=======================
-"""
 import asyncore
 import socket
 import time

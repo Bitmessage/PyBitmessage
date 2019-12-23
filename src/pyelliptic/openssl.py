@@ -1,25 +1,18 @@
+#  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
+#  See LICENSE for details.
+#
+#  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
+# pylint: disable=protected-access, import-error
 """
-src/pyelliptic/openssl.py
-=================================
+This module loads openssl libs with ctypes and incapsulates
+needed openssl functionality in class _OpenSSL.
 """
-# pylint: disable=import-error
+
 import sys
 import ctypes
 from kivy.utils import platform
 
 OpenSSL = None
-
-# !/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-src/pyelliptic/openssl.py
-=====================
-"""
-#  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
-#  See LICENSE for details.
-#
-#  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
-# pylint: disable=protected-access
 
 
 class CipherName:

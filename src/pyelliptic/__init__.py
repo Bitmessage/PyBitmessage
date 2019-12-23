@@ -1,10 +1,13 @@
 """
-src/pyelliptic/__init__.py
-=====================================
+Copyright (C) 2010
+Author: Yann GUIBET
+Contact: <yannguibet@gmail.com>
+
+Python OpenSSL wrapper.
+For modern cryptography with ECC, AES, HMAC, Blowfish, ...
+
+This is an abandoned package maintained inside of the PyBitmessage.
 """
-# Copyright (C) 2010
-# Author: Yann GUIBET
-# Contact: <yannguibet@gmail.com>
 
 from .openssl import OpenSSL
 from .ecc import ECC

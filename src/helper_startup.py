@@ -1,8 +1,5 @@
 """
-src/helper_startup.py
-=====================
-
-Helper Start performs all the startup operations.
+Startup operations.
 """
 # pylint: disable=too-many-branches,too-many-statements
 from __future__ import print_function
@@ -19,30 +16,10 @@ import paths
 import state
 from bmconfigparser import BMConfigParser
 
+
 # The user may de-select Portable Mode in the settings if they want
 # the config files to stay in the application data folder.
 StoreConfigFilesInSameDirectoryAsProgramByDefault = False
-
-
-def _loadTrustedPeer():
-    trustedPeer = ''
-    try:
-        trustedPeer = BMConfigParser().get('bitmessagesettings', 'trustedpeer')
-    except configparser.Error:
-        # This probably means the trusted peer wasn't specified so we
-        # can just leave it as None
-        return
-    try:
-            
-        if trustedPeer != None:
-            host, port = trustedPeer.split(':')
-            state.trustedPeer = state.Peer(host, int(port))
-    except ValueError:
-        sys.exit(
-            'Bad trustedpeer config setting! It should be set as'
-            ' trustedpeer=<hostname>:<portnumber>'
-        )
-
 
 def loadConfig():
     """Load the config"""
@@ -138,7 +115,7 @@ def loadConfig():
     else:
         updateConfig()
 
-    _loadTrustedPeer()
+
 
 def updateConfig():
     """Save the config"""

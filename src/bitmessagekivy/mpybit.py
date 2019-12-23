@@ -1,8 +1,8 @@
 """
-src/bitmessagekivy/mpybit.py
-=================================
+Bitmessage android(mobile) interface
 """
-# pylint: disable=relative-import, unused-variable, import-error, no-name-in-module, too-many-lines
+# pylint: disable=relative-import, import-error, no-name-in-module
+# pylint: disable=too-few-public-methods, too-many-lines, unused-argument
 import os
 import time
 from bmconfigparser import BMConfigParser
@@ -36,9 +36,11 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
-from bitmessagekivy import kivy_helper_search
-from kivymd.uix.dialog import MDDialog
+
+
+from bitmessagekivy  import kivy_helper_search
 from kivymd.uix.button import MDIconButton
+from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import (
     ILeftBody,
@@ -58,23 +60,22 @@ import queues
 from semaphores import kivyuisignaler
 
 import state
-
 from bitmessagekivy.uikivysignaler import UIkivySignaler
+
 from bitmessagekivy import identiconGeneration
-from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
-# pylint: disable=unused-argument, too-few-public-methods
+from addresses import addBMIfNotPresent, decodeAddress
 
 
 def toast(text):
-    """Method will display the toast message."""
-    from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
+    """Function displays toast message"""
+    # pylint: disable=redefined-outer-name
+    from kivymd.toast.kivytoast import toast
     toast(text)
     return
 
 
 class Navigatorss(MDNavigationDrawer):
-    """Navigators class contains image, title and logo."""
-
+    """Navigator class (image, title and logo)"""
     image_source = StringProperty('images/qidenticon_two.png')
     title = StringProperty('Navigation')
     drawer_logo = StringProperty()
@@ -521,36 +522,35 @@ class AddressBook(Screen):
             "DELETE FROM  addressbook WHERE address = '{}';".format(address))
 
 
-class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
-                                 RecycleBoxLayout):
-    """Adds selection and focus behaviour to the view."""
-
+class SelectableRecycleBoxLayout(
+        FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout):
+    """Adds selection and focus behaviour to the view"""
+    # pylint: disable = too-many-ancestors, duplicate-bases
     pass
 
 
 class SelectableLabel(RecycleDataViewBehavior, Label):
-    """Add selection support to the Label."""
-
+    """Add selection support to the Label"""
     index = None
     selected = BooleanProperty(False)
     selectable = BooleanProperty(True)
 
     def refresh_view_attrs(self, rv, index, data):
-        """Catch and handle the view changes."""
+        """Catch and handle the view changes"""
         self.index = index
         return super(SelectableLabel, self).refresh_view_attrs(
             rv, index, data)
 
     # pylint: disable=inconsistent-return-statements
     def on_touch_down(self, touch):
-        """Add selection on touch down."""
+        """Add selection on touch down"""
         if super(SelectableLabel, self).on_touch_down(touch):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
             return self.parent.select_with_touch(self.index, touch)
 
     def apply_selection(self, rv, index, is_selected):
-        """Respond to the selection of items in the view."""
+        """Respond to the selection of items in the view"""
         self.selected = is_selected
         if is_selected:
             print("selection changed to {0}".format(rv.data[index]))
@@ -559,10 +559,9 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 
 
 class RV(RecycleView):
-    """Recycling View."""
-
-    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
-        """Recycling Method."""
+    """Recycling View"""
+    def __init__(self, **kwargs):  # pylint: disable=useless-super-delegation
+        """Recycling Method"""
         super(RV, self).__init__(**kwargs)
 
 
@@ -584,7 +583,6 @@ class DropDownWidget(BoxLayout):
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
-                from addresses import decodeAddress
                 status, addressVersionNumber, streamNumber, ripe = (
                     decodeAddress(toAddress))
                 if status == 'success':
@@ -603,10 +601,7 @@ class DropDownWidget(BoxLayout):
                             state.send_draft_mail)
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
-                        # state.detailPageType = ''
-                        # state.send_draft_mail = None
                     else:
-                        from addresses import addBMIfNotPresent
                         toAddress = addBMIfNotPresent(toAddress)
                         statusIconColor = 'red'
                         if (addressVersionNumber > 4) or (
@@ -706,8 +701,7 @@ class DropDownWidget(BoxLayout):
 
 
 class MyTextInput(TextInput):
-    """Takes the text input in the field."""
-
+    """Takes the text input in the field"""
     txt_input = ObjectProperty()
     flt_list = ObjectProperty()
     word_list = ListProperty()
@@ -719,7 +713,7 @@ class MyTextInput(TextInput):
         super(MyTextInput, self).__init__(**kwargs)
 
     def on_text(self, instance, value):
-        """Find all the occurrence of the word."""
+        """Find all the occurrence of the word"""
         self.parent.parent.parent.parent.ids.rv.data = []
         matches = [self.word_list[i] for i in range(
             len(self.word_list)) if self.word_list[
@@ -734,7 +728,7 @@ class MyTextInput(TextInput):
             self.parent.height = 400
 
     def keyboard_on_key_down(self, window, keycode, text, modifiers):
-        """Key Down."""
+        """Key Down"""
         if self.suggestion_text and keycode[1] == 'tab':
             self.insert_text(self.suggestion_text + ' ')
             return True
@@ -763,14 +757,12 @@ class Payment(Screen):
 
 
 class Credits(Screen):
-    """Credits Method"""
-    available_credits = StringProperty(
-        '{0}'.format('0'))
+    """Credits Module"""
+    available_credits = StringProperty('{0}'.format('0'))
 
 
 class Login(Screen):
-    """Login Screeen."""
-
+    """Login Screeen"""
     pass
 
 
@@ -809,8 +801,7 @@ class NetworkStat(Screen):
 
 
 class ContentNavigationDrawer(Navigatorss):
-    """Navigate Content Drawer."""
-
+    """Navigate Content Drawer"""
     pass
 
 
@@ -1098,7 +1089,7 @@ class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens"""
     trash_messages = ListProperty()
     has_refreshed = True
-    # delete_index = StringProperty()
+    delete_index = StringProperty()
     table_name = StringProperty()
 
     def __init__(self, *args, **kwargs):
@@ -1213,7 +1204,7 @@ class Trash(Screen):
             events_callback=self.callback_for_delete_msg)
         delete_msg_dialog.open()
 
-    def callback_for_delete_msg(self, text_item, *arg):
+    def callback_for_delete_msg(self, text_item):
         """Getting the callback of alert box"""
         if text_item == 'Yes':
             self.delete_message_from_trash()
@@ -1224,9 +1215,11 @@ class Trash(Screen):
         """Deleting message from trash"""
         self.children[1].active = True
         if self.table_name == 'inbox':
-            sqlExecute("DELETE FROM inbox WHERE msgid = ?;", self.delete_index)
+            sqlExecute("DELETE FROM inbox WHERE msgid = ?;", str(
+                self.delete_index))
         elif self.table_name == 'sent':
-            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", self.delete_index)
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
+                self.delete_index))
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         if int(state.trash_count) > 0:
             msg_count_objs.trash_cnt.badge_text = str(
@@ -1236,16 +1229,15 @@ class Trash(Screen):
 
 
 class Page(Screen):
-    """Page Screen show widgets of page."""
-
+    """Page Screen show widgets of page"""
     pass
 
 
 class Create(Screen):
-    """Creates the screen widgets."""
+    """Creates the screen widgets"""
 
     def __init__(self, **kwargs):
-        """Getting Labels and address from addressbook."""
+        """Getting Labels and address from addressbook"""
         super(Create, self).__init__(**kwargs)
         widget_1 = DropDownWidget()
         widget_1.ids.txt_input.word_list = [
@@ -1256,8 +1248,7 @@ class Create(Screen):
 
 
 class Setting(Screen):
-    """Setting the Screen components."""
-
+    """Setting the Screen components"""
     pass
 
 
@@ -1292,6 +1283,8 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
 
     def build(self):
         """Method builds the widget"""
+        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSss")
+        print(os.path.join(os.path.dirname(__file__), 'main.kv'))
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
@@ -1841,7 +1834,8 @@ class GrashofPopup(Popup):
         elif status == 'checksumfailed':
             text = "The address is not typed or copied correctly(the checksum failed)."
         elif status == 'versiontoohigh':
-            text = "The version number of this address is higher than this software can support. Please upgrade Bitmessage."
+            text = "The version number of this address is higher"\
+                " than this software can support. Please upgrade Bitmessage."
         elif status == 'invalidcharacters':
             text = "The address contains invalid characters."
         elif status == 'ripetooshort':
@@ -1854,40 +1848,36 @@ class GrashofPopup(Popup):
 
 
 class AvatarSampleWidget(ILeftBody, Image):
-    """Avatar Sample Widget."""
-
+    """Avatar Sample Widget"""
     pass
 
 
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
-    """Left icon sample widget."""
-
+    """Left icon sample widget"""
     pass
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
-    """Right icon sample widget."""
-
+    """Right icon sample widget"""
     pass
 
 
 class NavigationDrawerTwoLineListItem(
         TwoLineListItem, NavigationDrawerHeaderBase):
-    """Navigation Drawer in Listitems."""
-
+    """Navigation Drawer in Listitems"""
     address_property = StringProperty()
 
     def __init__(self, **kwargs):
-        """Method for Navigation Drawer."""
+        """Method for Navigation Drawer"""
         super(NavigationDrawerTwoLineListItem, self).__init__(**kwargs)
         Clock.schedule_once(lambda dt: self.setup())
 
     def setup(self):
-        """Bind Controller.current_account property."""
+        """Bind Controller.current_account property"""
         pass
 
     def on_current_account(self, account):
-        """Account detail."""
+        """Account detail"""
         pass
 
     def _update_specific_text_color(self, instance, value):
@@ -1965,7 +1955,7 @@ class MailDetail(Screen):
                 1].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE"
-                " msgid = ?;", state.mail_id)
+                " msgid = ?;", str(state.mail_id))
             msg_count_objs.inbox_cnt.badge_text = str(
                 int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
@@ -1973,7 +1963,8 @@ class MailDetail(Screen):
             self.parent.screens[0].loadMessagelist(state.association)
 
         elif state.detailPageType == 'draft':
-            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", state.mail_id)
+            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
+                state.mail_id))
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
@@ -2008,7 +1999,7 @@ class MailDetail(Screen):
         """Reply inbox messages"""
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message from inbox where"
-            " msgid = ?;", state.mail_id)
+            " msgid = ?;", str(state.mail_id))
         composer_obj = self.parent.screens[2].children[1].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
@@ -2144,10 +2135,10 @@ class AddbookDetailPopup(Popup):
 
 
 class ShowQRCode(Screen):
-    """ShowQRCode Screen uses to show the detail of mails."""
+    """ShowQRCode Screen uses to show the detail of mails"""
 
     def qrdisplay(self):
-        """Method used for showing QR Code."""
+        """Showing QR Code"""
         # self.manager.parent.parent.parent.ids.search_bar.clear_widgets()
         self.ids.qr.clear_widgets()
         from kivy.garden.qrcode import QRCodeWidget
@@ -2289,7 +2280,8 @@ class Draft(Screen):
             data_index))
         try:
             msg_count_objs = (
-                self.parent.parent.parent.parent.parent.children[2].children[0].ids)
+                self.parent.parent.parent.parent.parent.parent.children[
+                    2].children[0].ids)
         except Exception:
             msg_count_objs = self.parent.parent.parent.parent.parent.parent.children[
                 2].children[0].ids
@@ -2313,9 +2305,7 @@ class Draft(Screen):
         encoding = 3
         sendMessageToPeople = True
         if sendMessageToPeople:
-            from addresses import decodeAddress
             streamNumber, ripe = decodeAddress(toAddress)[2:]
-            from addresses import addBMIfNotPresent
             toAddress = addBMIfNotPresent(toAddress)
             stealthLevel = BMConfigParser().safeGetInt(
                 'bitmessagesettings', 'ackstealthlevel')
@@ -2350,10 +2340,10 @@ class Draft(Screen):
 
 
 class CustomSpinner(Spinner):
-    """This class is used for setting spinner size."""
+    """This class is used for setting spinner size"""
 
     def __init__(self, *args, **kwargs):
-        """Method used for setting size of spinner."""
+        """Setting size of spinner"""
         super(CustomSpinner, self).__init__(*args, **kwargs)
         self.dropdown_cls.max_height = Window.size[1] / 3
 
@@ -2556,20 +2546,17 @@ def avatarImageFirstLetter(letter_string):
 
 
 class Starred(Screen):
-    """Starred Screen show widgets of page."""
-
+    """Starred Screen show widgets of page"""
     pass
 
 
 class Archieve(Screen):
-    """Archieve Screen show widgets of page."""
-
+    """Archieve Screen show widgets of page"""
     pass
 
 
 class Spam(Screen):
-    """Spam Screen show widgets of page."""
-
+    """Spam Screen show widgets of page"""
     pass
 
 
@@ -2584,8 +2571,3 @@ class LoadingPopup(Popup):
     def dismiss_popup(self, dt):
         """Dismiss popups"""
         self.dismiss()
-
-
-class AddressDropdown(OneLineIconListItem):
-    """AddressDropdown showns all the addresses"""
-    pass

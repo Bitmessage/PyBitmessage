@@ -1,0 +1,9 @@
+version: 2
+
+python:
+  version: 2.7
+  install:
+    - requirements: docs/requirements.txt
+    - method: setuptools
+      path: .
+  system_packages: true

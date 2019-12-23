@@ -62,7 +62,7 @@ To re-build them, run `fab build_docs:dep_graphs=true`. Note that the dot graph 
 .. figure:: ../../../../_static/deps-sfdp.png
    :alt: SFDP graph of dependencies
    :width: 100 pc
-   
+
    :index:`SFDP` graph of dependencies
 
 .. figure:: ../../../../_static/deps-dot.png

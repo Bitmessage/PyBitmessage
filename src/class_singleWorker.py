@@ -1,6 +1,5 @@
 """
-src/class_singleWorker.py
-=========================
+Thread for performing PoW
 """
 # pylint: disable=protected-access,too-many-branches,too-many-statements
 # pylint: disable=no-self-use,too-many-lines,too-many-locals,relative-import
@@ -26,10 +25,9 @@ import state
 import tr
 from addresses import calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
 from bmconfigparser import BMConfigParser
-from debug import logger
 from helper_sql import sqlExecute, sqlQuery
-from helper_threading import StoppableThread
 from inventory import Inventory
+from network.threads import StoppableThread
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -101,7 +99,7 @@ class singleWorker(StoppableThread):
             '''SELECT ackdata FROM sent WHERE status = 'msgsent' ''')
         for row in queryreturn:
             ackdata, = row
-            logger.info('Watching for ackdata %s', hexlify(ackdata))
+            self.logger.info('Watching for ackdata %s', hexlify(ackdata))
             shared.ackdataForWhichImWatching[ackdata] = 0
 
         # Fix legacy (headerless) watched ackdata to include header
@@ -176,14 +174,14 @@ class singleWorker(StoppableThread):
                 self.busy = 0
                 return
             else:
-                logger.error(
+                self.logger.error(
                     'Probable programming error: The command sent'
                     ' to the workerThread is weird. It is: %s\n',
                     command
                 )
 
             queues.workerQueue.task_done()
-        logger.info("Quitting...")
+        self.logger.info("Quitting...")
 
     def _getKeysForAddress(self, address):
         privSigningKeyBase58 = BMConfigParser().get(
@@ -220,25 +218,24 @@ class singleWorker(StoppableThread):
                     )) / (2 ** 16))
             ))
         initialHash = hashlib.sha512(payload).digest()
-        logger.info(
+        self.logger.info(
             '%s Doing proof of work... TTL set to %s', log_prefix, TTL)
         if log_time:
             start_time = time.time()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
+        self.logger.info(
             '%s Found proof of work %s Nonce: %s',
             log_prefix, trialValue, nonce
         )
         try:
             delta = time.time() - start_time
-            logger.info(
+            self.logger.info(
                 'PoW took %.1f seconds, speed %s.',
                 delta, sizeof_fmt(nonce / delta)
             )
         except:  # NameError
             pass
         payload = pack('>Q', nonce) + payload
-        # inventoryHash = calculateInventoryHash(payload)
         return payload
 
     def doPOWForMyV2Pubkey(self, adressHash):
@@ -263,7 +260,7 @@ class singleWorker(StoppableThread):
             _, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
         except Exception as err:
-            logger.error(
+            self.logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
                 ' address. %s\n', err
@@ -281,7 +278,8 @@ class singleWorker(StoppableThread):
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
 
-        logger.info('broadcasting inv with hash: %s', hexlify(inventoryHash))
+        self.logger.info(
+            'broadcasting inv with hash: %s', hexlify(inventoryHash))
 
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
@@ -306,7 +304,7 @@ class singleWorker(StoppableThread):
             # The address has been deleted.
             return
         if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
-            logger.info('This is a chan address. Not sending pubkey.')
+            self.logger.info('This is a chan address. Not sending pubkey.')
             return
         _, addressVersionNumber, streamNumber, adressHash = decodeAddress(
             myAddress)
@@ -336,7 +334,7 @@ class singleWorker(StoppableThread):
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
         except Exception as err:
-            logger.error(
+            self.logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
                 ' address. %s\n', err
@@ -363,7 +361,8 @@ class singleWorker(StoppableThread):
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
 
-        logger.info('broadcasting inv with hash: %s', hexlify(inventoryHash))
+        self.logger.info(
+            'broadcasting inv with hash: %s', hexlify(inventoryHash))
 
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
@@ -386,7 +385,7 @@ class singleWorker(StoppableThread):
             # The address has been deleted.
             return
         if shared.BMConfigParser().safeGetBoolean(myAddress, 'chan'):
-            logger.info('This is a chan address. Not sending pubkey.')
+            self.logger.info('This is a chan address. Not sending pubkey.')
             return
         _, addressVersionNumber, streamNumber, addressHash = decodeAddress(
             myAddress)
@@ -405,7 +404,7 @@ class singleWorker(StoppableThread):
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
         except Exception as err:
-            logger.error(
+            self.logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
                 ' address. %s\n', err
@@ -453,7 +452,8 @@ class singleWorker(StoppableThread):
             doubleHashOfAddressData[32:]
         )
 
-        logger.info('broadcasting inv with hash: %s', hexlify(inventoryHash))
+        self.logger.info(
+            'broadcasting inv with hash: %s', hexlify(inventoryHash))
 
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
@@ -462,7 +462,7 @@ class singleWorker(StoppableThread):
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
             BMConfigParser().save()
         except Exception as err:
-            logger.error(
+            self.logger.error(
                 'Error: Couldn\'t add the lastpubkeysendtime'
                 ' to the keys.dat file. Error message: %s', err
             )
@@ -470,8 +470,8 @@ class singleWorker(StoppableThread):
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
         if not peer:  # find own onionhostname
-            for peer in state.ownAddresses:    # pylint: disable=redefined-argument-from-local
-                if peer.host.endswith('.onion'):
+            for peer_ in state.ownAddresses:
+                if peer_.host.endswith('.onion'):
                     break
             else:
                 return
@@ -500,7 +500,7 @@ class singleWorker(StoppableThread):
             objectType, streamNumber, buffer(payload),
             embeddedTime, buffer(tag)
         )
-        logger.info(
+        self.logger.info(
             'sending inv (within sendOnionPeerObj function) for object: %s',
             hexlify(inventoryHash))
         queues.invQueue.put((streamNumber, inventoryHash))
@@ -523,7 +523,7 @@ class singleWorker(StoppableThread):
             _, addressVersionNumber, streamNumber, ripe = \
                 decodeAddress(fromaddress)
             if addressVersionNumber <= 1:
-                logger.error(
+                self.logger.error(
                     'Error: In the singleWorker thread, the '
                     ' sendBroadcast function doesn\'t understand'
                     ' the address version.\n')
@@ -639,7 +639,7 @@ class singleWorker(StoppableThread):
             # to not let the user try to send a message this large
             # until we implement message continuation.
             if len(payload) > 2 ** 18:  # 256 KiB
-                logger.critical(
+                self.logger.critical(
                     'This broadcast object is too large to send.'
                     ' This should never happen. Object size: %s',
                     len(payload)
@@ -650,7 +650,7 @@ class singleWorker(StoppableThread):
             objectType = 3
             Inventory()[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
-            logger.info(
+            self.logger.info(
                 'sending inv (within sendBroadcast function)'
                 ' for object: %s',
                 hexlify(inventoryHash)
@@ -870,8 +870,8 @@ class singleWorker(StoppableThread):
                             "MainWindow",
                             "Looking up the receiver\'s public key"))
                 ))
-                logger.info('Sending a message.')
-                logger.debug(
+                self.logger.info('Sending a message.')
+                self.logger.debug(
                     'First 150 characters of message: %s',
                     repr(message[:150])
                 )
@@ -915,7 +915,7 @@ class singleWorker(StoppableThread):
                     if not shared.BMConfigParser().safeGetBoolean(
                             'bitmessagesettings', 'willinglysendtomobile'
                     ):
-                        logger.info(
+                        self.logger.info(
                             'The receiver is a mobile user but the'
                             ' sender (you) has not selected that you'
                             ' are willing to send to mobiles. Aborting'
@@ -981,7 +981,7 @@ class singleWorker(StoppableThread):
                             defaults.networkDefaultPayloadLengthExtraBytes:
                         requiredPayloadLengthExtraBytes = \
                             defaults.networkDefaultPayloadLengthExtraBytes
-                    logger.debug(
+                    self.logger.debug(
                         'Using averageProofOfWorkNonceTrialsPerByte: %s'
                         ' and payloadLengthExtraBytes: %s.',
                         requiredAverageProofOfWorkNonceTrialsPerByte,
@@ -1046,8 +1046,9 @@ class singleWorker(StoppableThread):
                                                           l10n.formatTimestamp()))))
                             continue
             else:  # if we are sending a message to ourselves or a chan..
-                logger.info('Sending a message.')
-                logger.debug('First 150 characters of message: %r', message[:150])
+                self.logger.info('Sending a message.')
+                self.logger.debug(
+                    'First 150 characters of message: %r', message[:150])
                 behaviorBitfield = protocol.getBitfield(fromaddress)
 
                 try:
@@ -1066,7 +1067,7 @@ class singleWorker(StoppableThread):
                                 " message. %1"
                             ).arg(l10n.formatTimestamp()))
                     ))
-                    logger.error(
+                    self.logger.error(
                         'Error within sendMsg. Could not read the keys'
                         ' from the keys.dat file for our own address. %s\n',
                         err)
@@ -1142,14 +1143,14 @@ class singleWorker(StoppableThread):
             payload += encodeVarint(encodedMessage.length)
             payload += encodedMessage.data
             if BMConfigParser().has_section(toaddress):
-                logger.info(
+                self.logger.info(
                     'Not bothering to include ackdata because we are'
                     ' sending to ourselves or a chan.'
                 )
                 fullAckPayload = ''
             elif not protocol.checkBitfield(
                     behaviorBitfield, protocol.BITFIELD_DOESACK):
-                logger.info(
+                self.logger.info(
                     'Not bothering to include ackdata because'
                     ' the receiver said that they won\'t relay it anyway.'
                 )
@@ -1202,7 +1203,7 @@ class singleWorker(StoppableThread):
                             requiredPayloadLengthExtraBytes
                         )) / (2 ** 16))
                 ))
-            logger.info(
+            self.logger.info(
                 '(For msg message) Doing proof of work. Total required'
                 ' difficulty: %f. Required small message difficulty: %f.',
                 float(requiredAverageProofOfWorkNonceTrialsPerByte) /
@@ -1215,12 +1216,12 @@ class singleWorker(StoppableThread):
             initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
             print("nonce calculated value#############################", nonce)
-            logger.info(
+            self.logger.info(
                 '(For msg message) Found proof of work %s Nonce: %s',
                 trialValue, nonce
             )
             try:
-                logger.info(
+                self.logger.info(
                     'PoW took %.1f seconds, speed %s.',
                     time.time() - powStartTime,
                     sizeof_fmt(nonce / (time.time() - powStartTime))
@@ -1235,7 +1236,7 @@ class singleWorker(StoppableThread):
             # in the code to not let the user try to send a message
             # this large until we implement message continuation.
             if len(encryptedPayload) > 2 ** 18:  # 256 KiB
-                logger.critical(
+                self.logger.critical(
                     'This msg object is too large to send. This should'
                     ' never happen. Object size: %i',
                     len(encryptedPayload)
@@ -1266,7 +1267,7 @@ class singleWorker(StoppableThread):
                             " Sent on %1"
                         ).arg(l10n.formatTimestamp()))
                 ))
-            logger.info(
+            self.logger.info(
                 'Broadcasting inv for my msg(within sendmsg function): %s',
                 hexlify(inventoryHash)
             )
@@ -1319,7 +1320,7 @@ class singleWorker(StoppableThread):
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
             toAddress)
         if toStatus != 'success':
-            logger.error(
+            self.logger.error(
                 'Very abnormal error occurred in requestPubKey.'
                 ' toAddress is: %r. Please report this error to Atheros.',
                 toAddress
@@ -1333,7 +1334,7 @@ class singleWorker(StoppableThread):
             toAddress
         )
         if not queryReturn:
-            logger.critical(
+            self.logger.critical(
                 'BUG: Why are we requesting the pubkey for %s'
                 ' if there are no messages in the sent folder'
                 ' to that address?', toAddress
@@ -1381,11 +1382,11 @@ class singleWorker(StoppableThread):
         payload += encodeVarint(streamNumber)
         if addressVersionNumber <= 3:
             payload += ripe
-            logger.info(
+            self.logger.info(
                 'making request for pubkey with ripe: %s', hexlify(ripe))
         else:
             payload += tag
-            logger.info(
+            self.logger.info(
                 'making request for v4 pubkey with tag: %s', hexlify(tag))
 
         # print 'trial value', trialValue
@@ -1406,7 +1407,7 @@ class singleWorker(StoppableThread):
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
-        logger.info('sending inv (for the getpubkey message)')
+        self.logger.info('sending inv (for the getpubkey message)')
         queues.invQueue.put((streamNumber, inventoryHash))
 
         # wait 10% past expiration

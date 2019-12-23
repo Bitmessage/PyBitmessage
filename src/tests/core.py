@@ -17,6 +17,7 @@ from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
+from network.node import Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 
@@ -30,7 +31,7 @@ def pickle_knownnodes():
     with open(knownnodes_file, 'wb') as dst:
         pickle.dump({
             stream: {
-                state.Peer(
+                Peer(
                     '%i.%i.%i.%i' % tuple([
                         random.randint(1, 255) for i in range(4)]),
                     8444): {'lastseen': now, 'rating': 0.1}
@@ -90,7 +91,7 @@ class TestCore(unittest.TestCase):
         """initial fill script from network.tcp"""
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         try:
-            for peer in (state.Peer("127.0.0.1", 8448),):
+            for peer in (Peer("127.0.0.1", 8448),):
                 direct = TCPConnection(peer)
                 while asyncore.socket_map:
                     print("loop, state = %s" % direct.state)
@@ -147,7 +148,7 @@ class TestCore(unittest.TestCase):
     def _initiate_bootstrap(self):
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         self._outdate_knownnodes()
-        knownnodes.addKnownNode(1, state.Peer('127.0.0.1', 8444), is_self=True)
+        knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
         knownnodes.cleanupKnownNodes()
         time.sleep(2)
 
@@ -172,6 +173,22 @@ class TestCore(unittest.TestCase):
         else:  # pylint: disable=useless-else-on-loop
             self.fail(
                 'Failed to connect during %s sec' % (time.time() - _started))
+
+    def test_onionservicesonly(self):
+        """test onionservicesonly networking mode"""
+        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
+        self._initiate_bootstrap()
+        BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+        for _ in range(360):
+            time.sleep(1)
+            for n, peer in enumerate(BMConnectionPool().outboundConnections):
+                if n > 2:
+                    return
+                if not peer.host.endswith('.onion'):
+                    self.fail(
+                        'Found non onion hostname %s in outbound connections!'
+                        % peer.host)
+        self.fail('Failed to connect to at least 3 nodes within 360 sec')
 
     def test_bootstrap(self):
         """test bootstrapping"""

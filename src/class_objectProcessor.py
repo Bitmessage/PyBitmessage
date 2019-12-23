@@ -1,6 +1,9 @@
+"""
+The objectProcessor thread, of which there is only one, processes the network objects
+"""
 import hashlib
+import logging
 import random
-import shared
 import threading
 import time
 from binascii import hexlify
@@ -8,11 +11,13 @@ from subprocess import call  # nosec
 
 import highlevelcrypto
 import knownnodes
+import shared
 from addresses import (
     calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
     encodeVarint, varintDecodeError
 )
 from bmconfigparser import BMConfigParser
+
 import helper_bitcoin
 import helper_inbox
 import helper_msgcoding
@@ -20,13 +25,18 @@ import helper_sent
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from helper_ackPayload import genAckPayload
 from network import bmproto
+from network.node import Peer
+
 import protocol
 import queues
 import state
 import tr
-from debug import logger
 from fallback import RIPEMD160Hash
+
 import l10n
+# pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
+
+logger = logging.getLogger('default')
 
 
 class objectProcessor(threading.Thread):
@@ -55,6 +65,7 @@ class objectProcessor(threading.Thread):
         self.successfullyDecryptMessageTimings = []
 
     def run(self):
+        """Process the objects from `.queues.objectProcessorQueue`"""
         while True:
             objectType, data = queues.objectProcessorQueue.get()
 
@@ -118,7 +129,10 @@ class objectProcessor(threading.Thread):
                 state.shutdown = 2
                 break
 
-    def checkackdata(self, data):
+    @staticmethod
+    def checkackdata(data):
+        """Checking Acknowledgement of message received or not?"""
+        # pylint: disable=protected-access
         # Let's check whether this is a message acknowledgement bound for us.
         if len(data) < 32:
             return
@@ -158,7 +172,7 @@ class objectProcessor(threading.Thread):
 
         if not host:
             return
-        peer = state.Peer(host, port)
+        peer = Peer(host, port)
         with knownnodes.knownNodesLock:
             knownnodes.addKnownNode(
                 stream, peer, is_self=state.ownAddresses.get(peer))
@@ -268,6 +282,7 @@ class objectProcessor(threading.Thread):
             queues.workerQueue.put(('sendOutOrStoreMyV4Pubkey', myAddress))
 
     def processpubkey(self, data):
+        """Process a pubkey object"""
         pubkeyProcessingStartTime = time.time()
         shared.numberOfPubkeysProcessed += 1
         queues.UISignalQueue.put((
@@ -316,13 +331,14 @@ class objectProcessor(threading.Thread):
                 '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
-            logger.debug(
-                'within recpubkey, addressVersion: %s, streamNumber: %s'
-                '\nripe %s\npublicSigningKey in hex: %s'
-                '\npublicEncryptionKey in hex: %s',
-                addressVersion, streamNumber, hexlify(ripe),
-                hexlify(publicSigningKey), hexlify(publicEncryptionKey)
-            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    'within recpubkey, addressVersion: %s, streamNumber: %s'
+                    '\nripe %s\npublicSigningKey in hex: %s'
+                    '\npublicEncryptionKey in hex: %s',
+                    addressVersion, streamNumber, hexlify(ripe),
+                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
 
@@ -380,13 +396,14 @@ class objectProcessor(threading.Thread):
             sha.update(publicSigningKey + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
-            logger.debug(
-                'within recpubkey, addressVersion: %s, streamNumber: %s'
-                '\nripe %s\npublicSigningKey in hex: %s'
-                '\npublicEncryptionKey in hex: %s',
-                addressVersion, streamNumber, hexlify(ripe),
-                hexlify(publicSigningKey), hexlify(publicEncryptionKey)
-            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    'within recpubkey, addressVersion: %s, streamNumber: %s'
+                    '\nripe %s\npublicSigningKey in hex: %s'
+                    '\npublicEncryptionKey in hex: %s',
+                    addressVersion, streamNumber, hexlify(ripe),
+                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
             queryreturn = sqlQuery(
@@ -438,6 +455,7 @@ class objectProcessor(threading.Thread):
             timeRequiredToProcessPubkey)
 
     def processmsg(self, data):
+        """Process a message object"""
         messageProcessingStartTime = time.time()
         shared.numberOfMessagesProcessed += 1
         queues.UISignalQueue.put((
@@ -579,17 +597,18 @@ class objectProcessor(threading.Thread):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
-        logger.debug(
-            'As a matter of intellectual curiosity, here is the Bitcoin'
-            ' address associated with the keys owned by the other person:'
-            ' %s  ..and here is the testnet address: %s. The other person'
-            ' must take their private signing key from Bitmessage and'
-            ' import it into Bitcoin (or a service like Blockchain.info)'
-            ' for it to be of any use. Do not use this unless you know'
-            ' what you are doing.',
-            helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey),
-            helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey)
-        )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                'As a matter of intellectual curiosity, here is the Bitcoin'
+                ' address associated with the keys owned by the other person:'
+                ' %s  ..and here is the testnet address: %s. The other person'
+                ' must take their private signing key from Bitmessage and'
+                ' import it into Bitcoin (or a service like Blockchain.info)'
+                ' for it to be of any use. Do not use this unless you know'
+                ' what you are doing.',
+                helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey),
+                helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey)
+            )
         # Used to detect and ignore duplicate messages in our inbox
         sigHash = hashlib.sha512(
             hashlib.sha512(signature).digest()).digest()[32:]
@@ -732,7 +751,7 @@ class objectProcessor(threading.Thread):
                 # We really should have a discussion about how to
                 # set the TTL for mailing list broadcasts. This is obviously
                 # hard-coded.
-                TTL = 2*7*24*60*60  # 2 weeks
+                TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
                 t = ('',
                      toAddress,
                      ripe,
@@ -784,6 +803,7 @@ class objectProcessor(threading.Thread):
         )
 
     def processbroadcast(self, data):
+        """Process a broadcast object"""
         messageProcessingStartTime = time.time()
         shared.numberOfBroadcastsProcessed += 1
         queues.UISignalQueue.put((
@@ -968,7 +988,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        logger.info('fromAddress: %s' % fromAddress)
+        logger.info('fromAddress: %s', fromAddress)
 
         # Let's store the public key in case we want to reply to this person.
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
@@ -985,7 +1005,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        logger.debug('fromAddress: ' + fromAddress)
+        logger.debug('fromAddress: %s', fromAddress)
 
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
@@ -1046,17 +1066,18 @@ class objectProcessor(threading.Thread):
         # for it.
         elif addressVersion >= 4:
             tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe
+                encodeVarint(addressVersion) + encodeVarint(streamNumber)
+                + ripe
             ).digest()).digest()[32:]
             if tag in state.neededPubkeys:
                 del state.neededPubkeys[tag]
                 self.sendMessages(address)
 
-    def sendMessages(self, address):
+    @staticmethod
+    def sendMessages(address):
         """
-        This function is called by the possibleNewPubkey function when
-        that function sees that we now have the necessary pubkey
-        to send one or more messages.
+        This method is called by the `possibleNewPubkey` when it sees
+        that we now have the necessary pubkey to send one or more messages.
         """
         logger.info('We have been awaiting the arrival of this pubkey.')
         sqlExecute(
@@ -1066,7 +1087,9 @@ class objectProcessor(threading.Thread):
             " AND folder='sent'", address)
         queues.workerQueue.put(('sendmessage', ''))
 
-    def ackDataHasAValidHeader(self, ackData):
+    @staticmethod
+    def ackDataHasAValidHeader(ackData):
+        """Checking ackData with valid Header, not sending ackData when false"""
         if len(ackData) < protocol.Header.size:
             logger.info(
                 'The length of ackData is unreasonably short. Not sending'
@@ -1101,11 +1124,12 @@ class objectProcessor(threading.Thread):
             return False
         return True
 
-    def addMailingListNameToSubject(self, subject, mailingListName):
+    @staticmethod
+    def addMailingListNameToSubject(subject, mailingListName):
+        """Adding mailingListName to subject"""
         subject = subject.strip()
         if subject[:3] == 'Re:' or subject[:3] == 'RE:':
             subject = subject[3:].strip()
         if '[' + mailingListName + ']' in subject:
             return subject
-        else:
-            return '[' + mailingListName + '] ' + subject
+        return '[' + mailingListName + '] ' + subject

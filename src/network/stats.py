@@ -19,21 +19,22 @@ currentSentSpeed = 0
 
 def connectedHostsList():
     """List of all the connected hosts"""
-    retval = []
-    # for i in list(BMConnectionPool().inboundConnections.values()) + \
-    #         list(BMConnectionPool().outboundConnections.values()):
+    # retval = []
+    # # for i in list(BMConnectionPool().inboundConnections.values()) + \
+    # #         list(BMConnectionPool().outboundConnections.values()):
 
-    outBoundConnections = [outConnection for outConnection in BMConnectionPool().outboundConnections.values()]
-    inBoundConnections = [inConnection for inConnection in BMConnectionPool().inboundConnections.values()]
-    for i in outBoundConnections+inBoundConnections:
-        if not i.fullyEstablished:
-            continue
-        try:
-            retval.append(i)
-        except AttributeError:
-            pass
+    # outBoundConnections = [outConnection for outConnection in BMConnectionPool().outboundConnections.values()]
+    # inBoundConnections = [inConnection for inConnection in BMConnectionPool().inboundConnections.values()]
+    # for i in outBoundConnections+inBoundConnections:
+    #     if not i.fullyEstablished:
+    #         continue
+    #     try:
+    #         retval.append(i)
+    #     except AttributeError:
+    #         pass
 
-    return retval
+    # return retval
+    return BMConnectionPool().establishedConnections()
 
 
 def sentBytes():
@@ -76,12 +77,6 @@ def downloadSpeed():
 def pendingDownload():
     """Getting pending downloads"""
     return len(missingObjects)
-    # tmp = {}
-    # for connection in BMConnectionPool().inboundConnections.values() + \
-    #         BMConnectionPool().outboundConnections.values():
-    #     for k in connection.objectsNewToMe.keys():
-    #         tmp[k] = True
-    # return len(tmp)
 
 
 def pendingUpload():

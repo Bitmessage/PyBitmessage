@@ -1,18 +1,14 @@
 # pylint: disable=too-many-locals,too-many-lines,no-self-use,too-many-public-methods,too-many-branches
 # pylint: disable=too-many-statements
-"""
-src/api.py
-==========
 
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2019 The Bitmessage developers
 
+"""
 This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
-
-from __future__ import absolute_import
 
 import base64
 import errno
@@ -42,8 +38,8 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
-from helper_threading import StoppableThread
 from inventory import Inventory
+from network.threads import StoppableThread
 
 str_chan = '[chan]'
 
@@ -99,6 +95,8 @@ class singleAPI(StoppableThread):
         for attempt in range(50):
             try:
                 if attempt > 0:
+                    logger.warning(
+                        'Failed to start API listener on port %s', port)
                     port = random.randint(32767, 65535)
                 se = StoppableXMLRPCServer(
                     (BMConfigParser().get(
@@ -110,8 +108,9 @@ class singleAPI(StoppableThread):
                     continue
             else:
                 if attempt > 0:
+                    logger.warning('Setting apiport to %s', port)
                     BMConfigParser().set(
-                        "bitmessagesettings", "apiport", str(port))
+                        'bitmessagesettings', 'apiport', str(port))
                     BMConfigParser().save()
                 break
         se.register_introspection_functions()

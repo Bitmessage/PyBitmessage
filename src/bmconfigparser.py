@@ -56,7 +56,7 @@ class BMConfigParser(configparser.ConfigParser):
             raise ValueError("Invalid value %s" % value)
         return configparser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
+    def get(self, section, option, raw=False, variables=None):    # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return configparser.ConfigParser.get(
@@ -85,6 +85,7 @@ class BMConfigParser(configparser.ConfigParser):
 
     def safeGetBoolean(self, section, field):
         config = configparser.ConfigParser()
+
         try:
             #Used in the python2.7
             # return self.getboolean(section, field)
@@ -96,6 +97,7 @@ class BMConfigParser(configparser.ConfigParser):
 
     def safeGetInt(self, section, field, default=0):
         config = configparser.ConfigParser()
+
         try:
             #Used in the python2.7
             # return self.getint(section, field)
@@ -106,6 +108,7 @@ class BMConfigParser(configparser.ConfigParser):
             return default
 
     def safeGet(self, section, option, default=None):
+        """Return value as is, default on exceptions, None if default missing"""
         try:
             return self.get(section, option)
         except (configparser.NoSectionError, configparser.NoOptionError,
@@ -117,6 +120,7 @@ class BMConfigParser(configparser.ConfigParser):
 
     def addresses(self):
         return [x for x in BMConfigParser().sections() if x.startswith('BM-')]
+
 
     def read(self, filenames):
         configparser.ConfigParser.read(self, filenames)
@@ -139,6 +143,7 @@ class BMConfigParser(configparser.ConfigParser):
                     continue
 
     def save(self):
+        """Save the runtime config onto the filesystem"""
         fileName = os.path.join(state.appdata, 'keys.dat')
         fileNameBak = '.'.join([
             fileName, datetime.now().strftime("%Y%j%H%M%S%f"), 'bak'])
@@ -160,12 +165,15 @@ class BMConfigParser(configparser.ConfigParser):
             os.remove(fileNameBak)
 
     def validate(self, section, option, value):
+        """Input validator interface (using factory pattern)"""
         try:
             return getattr(self, 'validate_{}_{}'.format(section, option))(value)
         except AttributeError:
             return True
 
-    def validate_bitmessagesettings_maxoutboundconnections(self, value):
+    @staticmethod
+    def validate_bitmessagesettings_maxoutboundconnections(value):
+        """Reject maxoutboundconnections that are too high or too low"""
         try:
             value = int(value)
         except ValueError:

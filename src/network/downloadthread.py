@@ -1,18 +1,17 @@
 """
-src/network/downloadthread.py
-=============================
+`DownloadThread` class definition
 """
+
 import time
 
 import addresses
 import helper_random
 import protocol
 from network.dandelion import Dandelion
-from debug import logger
-from helper_threading import StoppableThread
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.objectracker import missingObjects
+from network.threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):
@@ -25,12 +24,11 @@ class DownloadThread(StoppableThread):
 
     def __init__(self):
         super(DownloadThread, self).__init__(name="Downloader")
-        logger.info("init download thread")
         self.lastCleaned = time.time()
 
     def cleanPending(self):
         """Expire pending downloads eventually"""
-        deadline = time.time() - DownloadThread.requestExpires
+        deadline = time.time() - self.requestExpires
         try:
             toDelete = [k for k, v in iter(missingObjects.items()) if v < deadline]
         except RuntimeError:
@@ -44,15 +42,17 @@ class DownloadThread(StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = [
-                x for x in
-                list(BMConnectionPool().inboundConnections.values()) + list(BMConnectionPool().outboundConnections.values())
-                if x.fullyEstablished]
+            # connections = [
+            #     x for x in
+            #     list(BMConnectionPool().inboundConnections.values()) + list(BMConnectionPool().outboundConnections.values())
+            #     if x.fullyEstablished]
+
+            connections = BMConnectionPool().establishedConnections()
             helper_random.randomshuffle(connections)
-            try:
-                requestChunk = max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
-            except ZeroDivisionError:
-                requestChunk = 1
+            requestChunk = max(int(
+                min(self.maxRequestChunk, len(missingObjects))
+                / len(connections)), 1) if connections else 1
+
             for i in connections:
                 now = time.time()
                 # avoid unnecessary delay
@@ -78,9 +78,11 @@ class DownloadThread(StoppableThread):
                     continue
                 payload[0:0] = addresses.encodeVarint(chunkCount)
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
-                logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, chunkCount)
+                self.logger.debug(
+                    '%s:%i Requesting %i objects',
+                    i.destination.host, i.destination.port, chunkCount)
                 requested += chunkCount
-            if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
+            if time.time() >= self.lastCleaned + self.cleanInterval:
                 self.cleanPending()
             if not requested:
                 self.stop.wait(1)

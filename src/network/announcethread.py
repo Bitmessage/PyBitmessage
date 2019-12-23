@@ -2,22 +2,22 @@
 src/network/announcethread.py
 =================================
 """
+
 import time
 
+import state
+
 from bmconfigparser import BMConfigParser
-from debug import logger
-from helper_threading import StoppableThread
-from network.bmproto import BMProto
+from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
-import state
+from .node import Peer
+from network.threads import StoppableThread
 
 
 class AnnounceThread(StoppableThread):
     """A thread to manage regular announcing of this node"""
-    def __init__(self):
-        super(AnnounceThread, self).__init__(name="Announcer")
-        logger.info("init announce thread")
+    name = "Announcer"
 
     def run(self):
         lastSelfAnnounced = 0
@@ -38,6 +38,13 @@ class AnnounceThread(StoppableThread):
             for stream in state.streamsInWhichIAmParticipating:
                 addr = (
                     stream,
-                    state.Peer('127.0.0.1',int( BMConfigParser().safeGet("bitmessagesettings", "port"))),
-                    int(time.time()))
-                connection.append_write_buf(BMProto.assembleAddr([addr]))
+
+                #     state.Peer('127.0.0.1',int( BMConfigParser().safeGet("bitmessagesettings", "port"))),
+                #     int(time.time()))
+                # connection.append_write_buf(BMProto.assembleAddr([addr]))
+
+                    Peer(
+                        '127.0.0.1',
+                        BMConfigParser().safeGetInt('bitmessagesettings', 'port')),
+                    time.time())
+                connection.append_write_buf(assemble_addr([addr]))

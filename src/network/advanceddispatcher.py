@@ -3,15 +3,14 @@ src/network/advanceddispatcher.py
 =================================
 """
 # pylint: disable=attribute-defined-outside-init
-
+# import pdb;pdb.set_trace()
 import socket
 import threading
 import time
 
 import network.asyncore_pollchoose as asyncore
 import state
-from debug import logger
-from helper_threading import BusyError, nonBlocking
+from network.threads import BusyError, nonBlocking
 
 
 class ProcessingError(Exception):
@@ -87,7 +86,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
                     try:
                         cmd = getattr(self, "state_" + str(self.state))
                     except AttributeError:
-                        logger.error("Unknown state %s", self.state, exc_info=True)
+                        self.logger.error(
+                            'Unknown state %s', self.state, exc_info=True)
                         raise UnknownStateError(self.state)
                     if not cmd():
                         break

@@ -2,6 +2,7 @@
 src/network/dandelion.py
 ========================
 """
+import logging
 from collections import namedtuple
 from random import choice, sample, expovariate
 from threading import RLock
@@ -9,7 +10,6 @@ from time import time
 
 from network import connectionpool
 import state
-from debug import logging
 from queues import invQueue
 from singleton import Singleton
 
@@ -23,6 +23,8 @@ FLUFF_TRIGGER_MEAN_DELAY = 30
 MAX_STEMS = 2
 
 Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
+
+logger = logging.getLogger('default')
 
 
 @Singleton
@@ -72,9 +74,10 @@ class Dandelion():      # pylint: disable=old-style-class
 
     def removeHash(self, hashId, reason="no reason specified"):
         """Switch inventory vector from stem to fluff mode"""
-        logging.debug(
-            "%s entering fluff mode due to %s.",
-            ''.join('%02x' % ord(i) for i in hashId), reason)
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                '%s entering fluff mode due to %s.',
+                ''.join('%02x' % ord(i) for i in hashId), reason)
         with self.lock:
             try:
                 del self.hashMap[hashId]
