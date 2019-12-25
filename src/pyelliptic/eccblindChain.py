@@ -10,12 +10,9 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # to PEP8
 # pylint: disable=invalid-name
 
-import hashlib as HashLib
-import hash as Hash
-import msgpack
-import os
 import sys
-from openssl import OpenSSL
+import msgpack
+import hash as Hash
 sys.path.insert(1, '/home/cis/ektarepo/PyBitmessage/src/pyelliptic')
 from eccblind import ECCBlind
 
@@ -31,56 +28,42 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
     """
     # Class for ECC Blind Chain signature functionality
     """
-    # init
-    k = None
-    R = None
-    keypair = None
-    F = None
-    Q = None
-    a = None
-    b = None
-    c = None
-    binv = None
-    r = None
-    m = None
-    m_ = None
-    s_ = None
     signature = None
-    @staticmethod
-    def ec_serialize(msg):
+
+    def ec_serialize(self, msg):
         """
         Serialize the data using msgpack
         """
         msg = msgpack.packb(msg, default=encode_datetime, use_bin_type=True)
         return msg
 
-    @staticmethod
-    def ec_deSerialize(msg):
+    def ec_deSerialize(self, msg):
         """
         Deserialize the data using msgpack
         """
         msg = msgpack.unpackb(msg)
         return msg
 
-    @staticmethod
-    def encrypt_string(hash_string):
+    def encrypt_string(self, hash_string):
         """
         Hashing the data using hashlib
         """
-        sha_signature = HashLib.sha256(hash_string).hexdigest()
+        sha_signature = Hash.hmac_sha256(hash_string, hash_string)
         return sha_signature
 
-    @staticmethod
-    def verify_Chain(msg):
+    def verify_Chain(self, msg):
         """
         Verify complete chain with its relevant signature
         """
-        Unpacked_dict = ECCBlindChain.ec_deSerialize(msg)
+        call = ECCBlindChain()
+        Unpacked_dict = call.ec_deSerialize(msg)
         i = len(Unpacked_dict) - 1
         while i >= 0:
             signature = Unpacked_dict[i]['Sign']
             verifier_obj = ECCBlind(pubkey=Unpacked_dict[i]['Msg']['PubKEY'])
-            ret = verifier_obj.verify(ECCBlindChain.ec_serialize(Unpacked_dict[i]['Msg']), signature)
+            msgtoverify = call.ec_serialize(Unpacked_dict[i]['Msg'])
+            hashedmsg = call.encrypt_string(msgtoverify)
+            ret = verifier_obj.verify(hashedmsg, signature)
             if ret is True:
                 print("Message verified successfully")
             else:
