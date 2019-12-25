@@ -23,7 +23,8 @@ import queues
 import shared
 import state
 import tr
-from addresses import calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
+from addresses import (
+    calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint)
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory

@@ -20,7 +20,6 @@ from network.threads import StoppableThread
 
 class addressGenerator(StoppableThread):
     """A thread for creating addresses"""
-
     name = "addressGenerator"
 
     def stopThread(self):
@@ -35,7 +34,8 @@ class addressGenerator(StoppableThread):
         Process the requests for addresses generation
         from `.queues.addressGeneratorQueue`
         """
-        # pylint: disable=too-many-locals, too-many-branches, protected-access, too-many-statements
+        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=protected-access, too-many-statements
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
@@ -140,7 +140,7 @@ class addressGenerator(StoppableThread):
                     ripe = RIPEMD160Hash(sha.digest()).digest()
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
-                            '\x00'.encode('utf-8') * numberOfNullBytesDemandedOnFrontOfRipeHash
+                        '\x00'.encode('utf-8') * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
                 self.logger.info(
@@ -206,9 +206,14 @@ class addressGenerator(StoppableThread):
                     queues.workerQueue.put((
                         'sendOutOrStoreMyV4Pubkey', address))
 
-            elif command == 'createDeterministicAddresses' \
-                    or command == 'getDeterministicAddress' \
-                    or command == 'createChan' or command == 'joinChan':
+            # elif command == 'createDeterministicAddresses' \
+            #         or command == 'getDeterministicAddress' \
+            #         or command == 'createChan' or command == 'joinChan':
+            elif command in (
+                    'createDeterministicAddresses',
+                    'getDeterministicAddress',
+                    'createChan',
+                    'joinChan'):
                 if not deterministicPassphrase:
                     self.logger.warning(
                         'You are creating deterministic'
@@ -333,8 +338,8 @@ class addressGenerator(StoppableThread):
                             BMConfigParser().set(address, 'label', label)
                             BMConfigParser().set(address, 'enabled', 'true')
                             BMConfigParser().set(address, 'decoy', 'false')
-                            if command == 'joinChan' \
-                                    or command == 'createChan':
+                            # if command == 'joinChan' or command == 'createChan':
+                            if command in ('joinChan', 'createChan'):
                                 BMConfigParser().set(address, 'chan', 'true')
                             BMConfigParser().set(
                                 address, 'noncetrialsperbyte',
@@ -385,8 +390,12 @@ class addressGenerator(StoppableThread):
                             address)
 
                 # Done generating addresses.
-                if command == 'createDeterministicAddresses' \
-                        or command == 'joinChan' or command == 'createChan':
+                # if command == 'createDeterministicAddresses' \
+                #         or command == 'joinChan' or command == 'createChan':
+                if command in (
+                        'createDeterministicAddresses',
+                        'joinChan',
+                        'createChan'):
                     queues.apiAddressGeneratorReturnQueue.put(
                         listOfNewAddressesToSendOutThroughTheAPI)
                 elif command == 'getDeterministicAddress':
