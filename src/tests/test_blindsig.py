@@ -2,10 +2,12 @@
 Test for ECC blind signatures
 """
 import os
+import time
 import unittest
 from ctypes import cast, c_char_p
 
-from pybitmessage.pyelliptic.eccblind import ECCBlind
+from pybitmessage.pyelliptic.eccblind import ECCBlind, Metadata
+from pybitmessage.pyelliptic.eccblindchain import ECCBlindChain
 from pybitmessage.pyelliptic.openssl import OpenSSL
 
 
@@ -50,3 +52,47 @@ class TestBlindSig(unittest.TestCase):
         # (5) Verification
         verifier_obj = ECCBlind(pubkey=signer_obj.pubkey)
         self.assertTrue(verifier_obj.verify(msg, signature))
+
+        # Serialization and deserialisation
+        pk = signer_obj.serialize()
+        pko = ECCBlind.deserialize(pk)
+        self.assertTrue(pko.verify(msg, signature))
+
+    def test_blind_sig_chain(self):
+        """Test blind signature chain using a random certifier key and a random message"""
+
+        test_levels = 5
+        value = 1
+        msg = os.urandom(1024)
+
+        chain = ECCBlindChain()
+        ca = ECCBlind()
+        signer_obj = ca
+        signer_pubkey = signer_obj.serialize()
+
+        for level in range(test_levels):
+            if level == 0:
+                metadata = Metadata(exp=int(time.time()) + 100,
+                                    value=value).serialize()
+                requester_obj = ECCBlind(pubkey=signer_obj.pubkey,
+                                         metadata=metadata)
+            else:
+                requester_obj = ECCBlind(pubkey=signer_obj.pubkey)
+            point_r = signer_obj.signer_init()
+
+            if level == test_levels - 1:
+                msg_blinded = requester_obj.create_signing_request(point_r,
+                                                                   msg)
+            else:
+                msg_blinded = requester.obj.create_signing_request(point_r,
+                                                                   signer_pubkey)
+            signature_blinded = signer_obj.blind_sign(msg_blinded)
+            signature = requester_obj.unblind(signature_blinded)
+            chain.add_level(signer_obj.pubkey,
+                            signer_obj.metadata.serialize,
+                            signature)
+            signer_obj = requester_obj
+            signer_pubkey = requester_obj.serialize()
+        sigchain = chain.serialize()
+        verifychain = ECCBlindChain.deserialize(sigchain)
+        self.assertTrue(verifychain.verify(msg, value))

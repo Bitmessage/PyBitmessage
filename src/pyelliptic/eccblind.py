@@ -10,7 +10,50 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # variable names are based on the math in the paper, so they don't conform
 # to PEP8
 
+from hashlib import sha256
+import time
+
+try:
+    import msgpack
+except ImportError:
+    try:
+        import umsgpack as msgpack
+    except ImportError:
+        import fallback.umsgpack.umsgpack as msgpack
+
 from .openssl import OpenSSL
+
+
+class Metadata(object):
+    """
+    Pubkey metadata
+    """
+    def __init__(self, exp=0, value=0):
+        self.exp = 0
+        self.value = 0
+        if exp:
+            self.exp = exp
+        if value:
+            self.value = value
+
+    def serialize(self):
+        if self.exp or self.value:
+            return [self.exp, self.value]
+        else:
+            return []
+
+    @staticmethod
+    def deserialize(self, data):
+        exp, value = data
+        return Medatadata(exp, value)
+
+    def verify(self, value):
+        if self.value and value > self.value:
+            return False
+        if self.exp:
+            if time.time() > self.exp:
+                return False
+        return True
 
 
 class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
@@ -75,7 +118,21 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         OpenSSL.EC_POINT_get_affine_coordinates_GFp(group, F, x0, y0, ctx)
         return x0
 
-    def __init__(self, curve="secp256k1", pubkey=None):
+    @staticmethod
+    def deserialize(self, data):
+        pubkey_deserialized, meta = msgpack.unpackb(data)
+        if meta:
+            obj = ECCBlind(pubkey=pubkey_deserialized, metadata=meta)
+        else:
+            obj = ECCBlind(pubkey=pubkey_deserialized)
+        return obj
+
+    def serialize(self):
+        data = (self.pubkey, self.metadata.serialize)
+        retval = msgpack.packb(data)
+        return retval
+
+    def __init__(self, curve="secp256k1", pubkey=None, metadata=None):
         self.ctx = OpenSSL.BN_CTX_new()
 
         if pubkey:
@@ -101,6 +158,14 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         self.iO = OpenSSL.EC_POINT_new(self.group)
         OpenSSL.EC_POINT_set_to_infinity(self.group, self.iO)
 
+        if metadata:
+            self._set_metadata(self, metadata)
+        else: 
+            self.metadata = Metadata()
+
+    def _set_metadata(self, metadata):
+        self.metadata = Metadata.deserialise(metadata)
+
     def signer_init(self):
         """
         Init signer
@@ -119,6 +184,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         Requester creates a new signing request
         """
         self.R = R
+        msghash = sha256(msg)
 
         # Requester: 3 random blinding factors
         self.F = OpenSSL.EC_POINT_new(self.group)
@@ -151,7 +217,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # Requester: Blinding (m' = br(m) + a)
         self.m = OpenSSL.BN_new()
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        OpenSSL.BN_bin2bn(msghash, len(msghash), self.m)
 
         self.m_ = OpenSSL.BN_new()
         OpenSSL.BN_mod_mul(self.m_, self.b, self.r, self.n, self.ctx)
@@ -180,14 +246,15 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         self.signature = (s, self.F)
         return self.signature
 
-    def verify(self, msg, signature):
+    def verify(self, msg, signature, value=0):
         """
         Verify signature with certifier's pubkey
         """
 
         # convert msg to BIGNUM
         self.m = OpenSSL.BN_new()
-        OpenSSL.BN_bin2bn(msg, len(msg), self.m)
+        msghash = sha256(msg)
+        OpenSSL.BN_bin2bn(msghash, len(msghash), self.m)
 
         # init
         s, self.F = signature
@@ -206,5 +273,8 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         retval = OpenSSL.EC_POINT_cmp(self.group, lhs, rhs, self.ctx)
         if retval == -1:
             raise RuntimeError("EC_POINT_cmp returned an error")
-        else:
-            return retval == 0
+        elif retval != 0:
+            return False
+        elif self.metadata:
+            return self.metadata.verify(value)
+        return True
