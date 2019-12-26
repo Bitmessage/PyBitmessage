@@ -214,7 +214,8 @@ class sqlThread(threading.Thread):
         parameters = ''
         self.cur.execute(item, parameters)
         currentVersion = int(self.cur.fetchall()[0][0])
-        if currentVersion == 1 or currentVersion == 3:
+        # if currentVersion == 1 or currentVersion == 3:
+        if currentVersion in (1, 3):
             logger.debug(
                 'In messages.dat database, adding tag field to'
                 ' the inventory table.')
@@ -578,9 +579,13 @@ class sqlThread(threading.Thread):
                 # print ('+++++++++++++++++++++++++++++')
                 try:
                     if 'sent' == parameters[1] and 'B' in parameters[0]:
-                        item = '''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime   FROM sent WHERE fromaddress = ?   ORDER BY lastactiontime DESC '''
+                        item = (
+                            '''SELECT toaddress, fromaddress, subject,'''
+                            ''' message, status, ackdata, lastactiontime'''
+                            ''' FROM sent WHERE fromaddress = ?'''
+                            ''' ORDER BY lastactiontime DESC''')
                         parameters = (parameters[0],)
-                except (IndexError,TypeError) as e:
+                except(IndexError, TypeError):
                     pass
                 try:
                     self.cur.execute(item, parameters)

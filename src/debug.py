@@ -151,7 +151,7 @@ def resetLogging():
 try:
     preconfigured, msg = configureLogging()
     if msg:
-      logger.log(logging.WARNING if preconfigured else logging.INFO, msg)
+        logger.log(logging.WARNING if preconfigured else logging.INFO, msg)
 
 except:
     pass

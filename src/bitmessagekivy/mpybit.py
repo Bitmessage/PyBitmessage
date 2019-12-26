@@ -1,8 +1,8 @@
 """
 Bitmessage android(mobile) interface
 """
-# pylint: disable=relative-import, import-error, no-name-in-module
-# pylint: disable=too-few-public-methods, too-many-lines, unused-argument
+# pylint: disable=import-error, no-name-in-module, too-many-lines
+# pylint: disable=too-few-public-methods, unused-argument, too-many-ancestors
 import os
 import time
 from bmconfigparser import BMConfigParser
@@ -36,9 +36,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
-
-
-from bitmessagekivy  import kivy_helper_search
+from bitmessagekivy import kivy_helper_search
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
@@ -48,7 +46,6 @@ from kivymd.uix.list import (
     IRightBodyTouch,
     TwoLineAvatarIconListItem,
     TwoLineListItem,
-    OneLineIconListItem
 )
 from kivymd.uix.navigationdrawer import (
     MDNavigationDrawer,
@@ -525,7 +522,7 @@ class AddressBook(Screen):
 class SelectableRecycleBoxLayout(
         FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout):
     """Adds selection and focus behaviour to the view"""
-    # pylint: disable = too-many-ancestors, duplicate-bases
+    # pylint: disable = duplicate-bases
     pass
 
 
@@ -541,7 +538,6 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         return super(SelectableLabel, self).refresh_view_attrs(
             rv, index, data)
 
-    # pylint: disable=inconsistent-return-statements
     def on_touch_down(self, touch):
         """Add selection on touch down"""
         if super(SelectableLabel, self).on_touch_down(touch):
@@ -568,7 +564,6 @@ class RV(RecycleView):
 class DropDownWidget(BoxLayout):
     """Adding Dropdown Widget"""
     # pylint: disable=too-many-statements, too-many-locals
-    # pylint: disable=inconsistent-return-statements
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
@@ -579,7 +574,7 @@ class DropDownWidget(BoxLayout):
         subject = self.ids.subject.text.strip()
         message = self.ids.subject.text.strip()
         encoding = 3
-        print ("message: ", self.ids.body.text)
+        print("message: ", self.ids.body.text)
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
@@ -606,12 +601,11 @@ class DropDownWidget(BoxLayout):
                         statusIconColor = 'red'
                         if (addressVersionNumber > 4) or (
                                 addressVersionNumber <= 1):
-                            print ("addressVersionNumber > 4"\
-                                " or addressVersionNumber <= 1")
+                            print("addressVersionNumber > 4 or addressVersionNumber <= 1")
                         if streamNumber > 1 or streamNumber == 0:
-                            print ("streamNumber > 1 or streamNumber == 0")
+                            print("streamNumber > 1 or streamNumber == 0")
                         if statusIconColor == 'red':
-                            print ("shared.statusIconColor == 'red'")
+                            print("shared.statusIconColor == 'red'")
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         from helper_ackPayload import genAckPayload
@@ -652,7 +646,7 @@ class DropDownWidget(BoxLayout):
                     # self.parent.parent.screens[16].add_widget(Allmails())
                     Clock.schedule_once(self.callback_for_msgsend, 3)
                     queues.workerQueue.put(('sendmessage', toAddress))
-                    print ("sqlExecute successfully #######################")
+                    print("sqlExecute successfully #######################")
                     state.in_composer = True
                     return
                 else:
@@ -708,7 +702,7 @@ class MyTextInput(TextInput):
     starting_no = NumericProperty(3)
     suggestion_text = ''
 
-    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
+    def __init__(self, **kwargs):  # pylint: disable=useless-super-delegation
         """Getting Text Input."""
         super(MyTextInput, self).__init__(**kwargs)
 
@@ -802,6 +796,7 @@ class NetworkStat(Screen):
 
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer"""
+    # pylint: disable=too-many-arguments
     pass
 
 
@@ -1283,8 +1278,6 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
 
     def build(self):
         """Method builds the widget"""
-        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSss")
-        print(os.path.join(os.path.dirname(__file__), 'main.kv'))
         main_widget = Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
         self.nav_drawer = Navigatorss()
@@ -1385,7 +1378,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             if not os.path.exists(directory):
                 os.makedirs(directory)
         except OSError:
-            print ('Error: Creating directory. ' + directory)
+            print('Error: Creating directory. ' + directory)
 
     @staticmethod
     def get_default_image():
@@ -1586,7 +1579,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
     @staticmethod
     def on_stop():
         """On stop methos is used for stoping the runing script"""
-        print ("*******************EXITING FROM APPLICATION*******************")
+        print("*******************EXITING FROM APPLICATION*******************")
         import shutdown
         shutdown.doCleanShutdown()
 
@@ -1699,7 +1692,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.scr_mngr.current = 'allmails'
             try:
                 self.root.ids.sc17.children[1].active = True
-            except Exception as e:
+            except Exception:
                 self.root.ids.sc17.children[0].children[1].active = True
         Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
 
@@ -1714,7 +1707,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.sc17.add_widget(Allmails())
             try:
                 self.root.ids.sc17.children[1].active = False
-            except Exception as e:
+            except Exception:
                 self.root.ids.sc17.children[0].children[1].active = False
 
 
@@ -2328,9 +2321,7 @@ class Draft(Screen):
                 0,
                 'draft',
                 encoding,
-                int(BMConfigParser().safeGet(
-                                'bitmessagesettings', 'ttl')))
-
+                int(BMConfigParser().safeGet('bitmessagesettings', 'ttl')))
             state.msg_counter_objs = src_object.children[2].children[0].ids
             state.draft_count = str(int(state.draft_count) + 1)
             src_object.ids.sc16.clear_widgets()
@@ -2366,7 +2357,7 @@ class Allmails(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method all mails"""
         self.loadMessagelist()
-        print (dt)
+        print(dt)
 
     def loadMessagelist(self):
         """Load Inbox, Sent anf Draft list of messages."""
