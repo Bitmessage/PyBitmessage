@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """
-Check dependendies and give recommendations about how to satisfy them
+Check dependencies and give recommendations about how to satisfy them
 
 Limitations:
 

@@ -22,7 +22,7 @@ SOFTWARE.
 
 ===== qidenticon.py identicon python implementation with QPixmap output by sendiulo <sendiulo@gmx.net>
 
-qidenticon.py is Licesensed under FreeBSD License.
+qidenticon.py is Licensed under FreeBSD License.
 (http://www.freebsd.org/copyright/freebsd-license.html)
 
 Copyright 2013 "Sendiulo". All rights reserved.
@@ -36,7 +36,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS OR I
 
 ===== based on identicon.py identicon python implementation.  by Shin Adachi <shn@glucose.jp>
 
-identicon.py is Licesensed under FreeBSD License.
+identicon.py is Licensed under FreeBSD License.
 (http://www.freebsd.org/copyright/freebsd-license.html)
 
 Copyright 1994-2009 Shin Adachi. All rights reserved.
