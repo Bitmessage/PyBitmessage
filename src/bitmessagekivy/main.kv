@@ -208,8 +208,17 @@ NavigationLayout:
     transition: NoTransition()
     BoxLayout:
         orientation: 'vertical'
-        spacing: dp(10)
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Subtitle2'
         #FloatLayout:
         #    MDScrollViewRefreshLayout:
         #        id: refresh_layout
@@ -231,7 +240,17 @@ NavigationLayout:
     name: 'sent'
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Subtitle2'
         BoxLayout:
             orientation:'vertical'
             ScrollView:
@@ -244,21 +263,50 @@ NavigationLayout:
 
 <Trash>:
     name: 'trash'
-    ScrollView:
-        id: scroll_y
-        do_scroll_x: False
-        MDList:
-            id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(5)
+        GridLayout:
+            id: identi_tag
+            padding: [20, 20, 0, 5]
+            spacing: dp(5)
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Subtitle2'
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
     Loader:
     ComposerButton:
     
 <Draft>:
     name: 'draft'
-    ScrollView:
-        id: scroll_y
-        do_scroll_x: False
-        MDList:
-            id: ml
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(5)
+        GridLayout:
+            id: identi_tag
+            padding: [20, 20, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Subtitle2'
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
     ComposerButton:
 
 <Starred>:
@@ -295,12 +343,25 @@ NavigationLayout:
     #        MDList:
     #            id: ml
     BoxLayout:
-        orientation:'vertical'
-        ScrollView:
-            id: scroll_y
-            do_scroll_x: False
-            MDList:
-                id: ml
+        orientation: 'vertical'
+        spacing: dp(5)
+        GridLayout:
+            id: identi_tag
+            padding: [20, 20, 0, 5]
+            spacing: dp(5)
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Subtitle2'
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
     Loader:
     ComposerButton:
     
@@ -620,7 +681,17 @@ NavigationLayout:
     name: 'myaddress'
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: 'My Addresses'
+                font_style: 'Subtitle2'
         FloatLayout:
             MDScrollViewRefreshLayout:
                 id: refresh_layout
@@ -635,7 +706,17 @@ NavigationLayout:
     name: 'addressbook'
     BoxLayout:
         orientation: 'vertical'
+        spacing: dp(5)
         SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: ''
+                font_style: 'Subtitle2'
         BoxLayout:
             orientation:'vertical'
             ScrollView:
@@ -796,7 +877,7 @@ NavigationLayout:
     id: popup
     size_hint : (None,None)
     height: 2*(label.height + address.height) + 10
-    width :app.window_size[0] - app.window_size[0]/10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     title: 'add contact\'s'
     background: './images/popup.jpeg'
     title_size: sp(20)
@@ -1027,7 +1108,7 @@ NavigationLayout:
     id: myadd_popup
     size_hint : (None,None)
     height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
-    width :app.window_size[0] - app.window_size[0]/10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     background: './images/popup.jpeg'
     auto_dismiss: False
     separator_height: 0 
@@ -1107,7 +1188,7 @@ NavigationLayout:
     id: addbook_popup
     size_hint : (None,None)
     height: 4*(add_label.height)
-    width :app.window_size[0] - app.window_size[0]/10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     background: './images/popup.jpeg'
     separator_height: 0 
     auto_dismiss: False
