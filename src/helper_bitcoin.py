@@ -53,3 +53,4 @@ def calculateTestnetAddressFromPubkey(pubkey):
         numberOfZeroBytesOnBinaryBitcoinAddress += 1
         binaryBitcoinAddress = binaryBitcoinAddress[1:]
     base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
+    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded

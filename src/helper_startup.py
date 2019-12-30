@@ -4,7 +4,6 @@ Startup operations.
 # pylint: disable=too-many-branches,too-many-statements
 from __future__ import print_function
 
-import configparser
 import os
 import platform
 import sys
@@ -20,6 +19,7 @@ from bmconfigparser import BMConfigParser
 # The user may de-select Portable Mode in the settings if they want
 # the config files to stay in the application data folder.
 StoreConfigFilesInSameDirectoryAsProgramByDefault = False
+
 
 def loadConfig():
     """Load the config"""
@@ -114,7 +114,6 @@ def loadConfig():
         config.save()
     else:
         updateConfig()
-
 
 
 def updateConfig():

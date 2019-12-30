@@ -101,7 +101,7 @@ def sqlStoredProcedure(procName):
     sqlLock.release()
 
 
-class SqlBulkExecute(object):
+class SqlBulkExecute(object):  # pylint: disable=no-init
     """This is used when you have to execute the same statement in a cycle."""
 
     def __enter__(self):
