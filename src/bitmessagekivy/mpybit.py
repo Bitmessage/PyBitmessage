@@ -260,6 +260,8 @@ class Inbox(Screen):
                 int(state.trash_count) + 1)
             state.all_count = str(
                 int(state.all_count) - 1)
+            if int(state.inbox_count) <= 0:
+                self.ids.identi_tag.children[0].text = ''
         self.ids.ml.remove_widget(
             instance.parent.parent)
         toast('Deleted')
@@ -322,7 +324,9 @@ class MyAddress(Screen):
             filtered_list = [x for x in BMConfigParser().addresses() if self.filter_address(x)]
             self.addresses_list = filtered_list
         self.addresses_list = [obj for obj in reversed(self.addresses_list)]
+        self.ids.identi_tag.children[0].text = ''
         if self.addresses_list:
+            self.ids.identi_tag.children[0].text = 'My Addresses'
             self.has_refreshed = True
             self.set_mdList(0, 15)
             self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
@@ -393,7 +397,7 @@ class MyAddress(Screen):
             """Method used for loading the myaddress screen data"""
             state.searcing_text = ''
             state.kivyapp.root.ids.sc10.children[2].active = False
-            self.children[2].children[1].ids.search_field.text = ''
+            self.children[2].children[2].ids.search_field.text = ''
             self.has_refreshed = True
             self.ids.ml.clear_widgets()
             self.init_ui()
@@ -435,10 +439,12 @@ class AddressBook(Screen):
             where = ['label', 'address']
             what = state.searcing_text
         xAddress = ''
+        self.ids.identi_tag.children[0].text = ''
         self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "addressbook", where, what, False)
         self.queryreturn = [obj for obj in reversed(self.queryreturn)]
         if self.queryreturn:
+            self.ids.identi_tag.children[0].text = 'Address Book'
             self.has_refreshed = True
             self.set_mdList(0, 20)
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
@@ -514,6 +520,8 @@ class AddressBook(Screen):
     def delete_address(self, address, instance, *args):
         """Delete inbox mail from inbox listing"""
         self.ids.ml.remove_widget(instance.parent.parent)
+        if len(self.ids.ml.children) == 0:
+            self.ids.identi_tag.children[0].text = ''
         sqlExecute(
             "DELETE FROM  addressbook WHERE address = '{}';".format(address))
 
@@ -673,9 +681,10 @@ class DropDownWidget(BoxLayout):
     # pylint: disable=attribute-defined-outside-init
     def address_error_message(self, msg):
         """Generates error message"""
+        width = .8 if platform == 'android' else .55
         msg_dialog = MDDialog(
             text=msg,
-            title='', size_hint=(.8, .25), text_button_ok='Ok',
+            title='', size_hint=(width, .25), text_button_ok='Ok',
             events_callback=self.callback_for_menu_items)
         msg_dialog.open()
 
@@ -896,8 +905,10 @@ class Sent(Screen):
             what = state.searcing_text
         xAddress = 'fromaddress'
         data = []
+        self.ids.identi_tag.children[0].text = ''
         self.sentDataQuery(xAddress, where, what)
         if self.queryreturn:
+            self.ids.identi_tag.children[0].text = 'Sent'
             self.set_sentCount(state.sent_count)
             for mail in self.queryreturn:
                 data.append({
@@ -1059,6 +1070,8 @@ class Sent(Screen):
             state.sent_count = str(int(state.sent_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
+            if int(state.sent_count) <= 0:
+                self.ids.identi_tag.children[0].text = ''
         sqlExecute(
             "UPDATE sent SET folder = 'trash'"
             " WHERE ackdata = ?;", data_index)
@@ -1105,8 +1118,10 @@ class Trash(Screen):
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
+        self.ids.identi_tag.children[0].text = ''
         self.trashDataQuery(0, 20)
         if self.trash_messages:
+            self.ids.identi_tag.children[0].text = 'Trash'
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             src_mng_obj.trash_cnt.badge_text = state.trash_count
             self.set_mdList()
@@ -1197,11 +1212,12 @@ class Trash(Screen):
 
     def delete_confirmation(self):
         """Show confirmation delete popup"""
+        width = .8 if platform == 'android' else .55
         delete_msg_dialog = MDDialog(
             text='Are you sure you want to delete this'
             ' message permanently from trash?',
             title='',
-            size_hint=(.8, .25),
+            size_hint=(width, .25),
             text_button_ok='Yes',
             text_button_cancel='No',
             events_callback=self.callback_for_delete_msg)
@@ -1264,6 +1280,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
     nav_drawer = ObjectProperty()
     state.screen_density = Window.size
     window_size = state.screen_density
+    app_platform = platform
     title = "PyBitmessage"
     imgstatus = False
     count = 0
@@ -1333,7 +1350,7 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         self.root.ids.sc1.loadMessagelist(state.association)
 
         self.root.ids.sc4.ids.ml.clear_widgets()
-        self.root.ids.sc4.children[2].children[1].ids.search_field.text = ''
+        self.root.ids.sc4.children[2].children[2].ids.search_field.text = ''
         self.root.ids.sc4.loadSent(state.association)
 
         self.root.ids.sc16.clear_widgets()
@@ -1637,30 +1654,30 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         if state.search_screen == 'inbox':
             try:
                 self.root.ids.sc1.children[
-                    3].children[1].ids.search_field.text = ''
+                    3].children[2].ids.search_field.text = ''
             except Exception:
                 self.root.ids.sc1.children[
-                    2].children[1].ids.search_field.text = ''
+                    2].children[2].ids.search_field.text = ''
             self.root.ids.sc1.children[1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         elif state.search_screen == 'addressbook':
             self.root.ids.sc11.children[
-                2].children[1].ids.search_field.text = ''
+                2].children[2].ids.search_field.text = ''
             self.root.ids.sc11.children[
                 1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         elif state.search_screen == 'myaddress':
             try:
                 self.root.ids.sc10.children[
-                    3].children[1].ids.search_field.text = ''
+                    3].children[2].ids.search_field.text = ''
             except Exception:
                 self.root.ids.sc10.children[
-                    2].children[1].ids.search_field.text = ''
+                    2].children[2].ids.search_field.text = ''
             self.root.ids.sc10.children[1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         else:
             self.root.ids.sc4.children[
-                2].children[1].ids.search_field.text = ''
+                2].children[2].ids.search_field.text = ''
             self.root.ids.sc4.children[1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         return
@@ -1711,8 +1728,12 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.sc1.loadMessagelist(state.association)
             self.root.ids.sc1.children[1].active = False
         elif instance.text == 'All Mails':
-            self.root.ids.sc17.clear_widgets()
-            self.root.ids.sc17.add_widget(Allmails())
+            if len(self.root.ids.sc17.ids.ml.children) <= 2:
+                self.root.ids.sc17.clear_widgets()
+                self.root.ids.sc17.add_widget(Allmails())
+            else:
+                self.root.ids.sc17.ids.ml.clear_widgets()
+                self.root.ids.sc17.loadMessagelist()
             try:
                 self.root.ids.sc17.children[1].active = False
             except Exception:
@@ -1753,26 +1774,6 @@ class GrashofPopup(Popup):
             self.parent.children[1].ids.sc11.loadAddresslist(None, 'All', '')
             self.parent.children[1].ids.scr_mngr.current = 'addressbook'
             toast('Saved')
-
-    # pylint: disable=attribute-defined-outside-init
-    def show_error_message(self):
-        """Showing error message"""
-        content = MDLabel(
-            font_style='Body1',
-            theme_text_color='Secondary',
-            text="Hey you are not allowed to save blank address contact. "
-            "That's wrong!",
-            size_hint_y=None,
-            valign='top')
-        content.bind(texture_size=content.setter('size'))
-        self.dialog = MDDialog(content=content,
-                               size_hint=(.8, None),
-                               height=dp(200),
-                               auto_dismiss=False)
-
-        self.dialog.add_action_button("ok",
-                                      action=lambda *x: self.dialog.dismiss())
-        self.dialog.open()
 
     @staticmethod
     def close_pop():
@@ -1944,7 +1945,7 @@ class MailDetail(Screen):
         self.children[0].children[0].active = True
         if state.detailPageType == 'sent':
             state.kivyapp.root.ids.sc4.children[
-                2].children[1].ids.search_field.text = ''
+                2].children[2].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE"
                 " ackdata = ?;", state.mail_id)
@@ -1954,9 +1955,9 @@ class MailDetail(Screen):
             self.parent.screens[3].loadSent(state.association)
         elif state.detailPageType == 'inbox':
             state.kivyapp.root.ids.sc1.children[
-                2].children[1].ids.search_field.text = ''
+                2].children[2].ids.search_field.text = ''
             self.parent.screens[0].children[2].children[
-                1].ids.search_field.text = ''
+                2].ids.search_field.text = ''
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE"
                 " msgid = ?;", state.mail_id)
@@ -1985,8 +1986,8 @@ class MailDetail(Screen):
             state.all_count = str(int(state.all_count) - 1)
             self.parent.screens[4].clear_widgets()
             self.parent.screens[4].add_widget(Trash())
-            self.parent.screens[16].ids.ml.clear_widgets()
-            self.parent.screens[16].init_ui(dt=0)
+            self.parent.screens[16].clear_widgets()
+            self.parent.screens[16].add_widget(Allmails())
         Clock.schedule_once(self.callback_for_delete, 4)
 
     def callback_for_delete(self, dt=0):
@@ -2178,11 +2179,13 @@ class Draft(Screen):
     def loadDraft(self, where="", what=""):
         """Load draft list for Draft messages"""
         xAddress = 'fromaddress'
+        self.ids.identi_tag.children[0].text = ''
         self.draftDataQuery(xAddress, where, what)
         if state.msg_counter_objs:
             state.msg_counter_objs.draft_cnt.badge_text = str(
                 len(self.queryreturn))
         if self.queryreturn:
+            self.ids.identi_tag.children[0].text = 'Draft'
             src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             src_mng_obj.draft_cnt.badge_text = state.draft_count
             self.set_mdList()
@@ -2279,8 +2282,7 @@ class Draft(Screen):
 
     def delete_draft(self, data_index, instance, *args):
         """Delete draft message permanently"""
-        sqlExecute("DELETE FROM sent WHERE ackdata = ?;", str(
-            data_index))
+        sqlExecute("DELETE FROM sent WHERE ackdata = ?;", data_index)
         try:
             msg_count_objs = (
                 self.parent.parent.parent.parent.parent.children[2].children[0].ids)
@@ -2293,6 +2295,8 @@ class Draft(Screen):
             msg_count_objs.draft_cnt.badge_text = str(
                 int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
+            if int(state.draft_count) <= 0:
+                self.ids.identi_tag.children[0].text = ''
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
@@ -2373,8 +2377,10 @@ class Allmails(Screen):
     def loadMessagelist(self):
         """Load Inbox, Sent anf Draft list of messages"""
         self.account = state.association
+        self.ids.identi_tag.children[0].text = ''
         self.allMessageQuery(0, 20)
         if self.all_mails:
+            self.ids.identi_tag.children[0].text = 'All Mails'
             state.kivyapp.get_inbox_count()
             state.kivyapp.get_sent_count()
             state.all_count = str(
@@ -2504,6 +2510,8 @@ class Allmails(Screen):
             int(state.all_count) - 1)
         state.trash_count = str(int(state.trash_count) + 1)
         state.all_count = str(int(state.all_count) - 1)
+        if int(state.all_count) <= 0:
+            self.ids.identi_tag.children[0].text = ''
         nav_lay_obj.sc5.clear_widgets()
         nav_lay_obj.sc5.add_widget(Trash())
         nav_lay_obj.sc17.remove_widget(instance.parent.parent)
