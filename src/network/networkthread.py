@@ -19,12 +19,12 @@ class BMNetworkThread(StoppableThread):
 
     def stopThread(self):
         super(BMNetworkThread, self).stopThread()
-        for i in [listeningSockets  for listeningSockets in BMConnectionPool().listeningSockets.values()]:
+        for i in [listeningSockets for listeningSockets in BMConnectionPool().listeningSockets.values()]:
             try:
                 i.close()
             except:
                 pass
-        for i in [ outboundConnections for outboundConnections in  BMConnectionPool().outboundConnections.values()]:
+        for i in [outboundConnections for outboundConnections in BMConnectionPool().outboundConnections.values()]:
             try:
                 i.close()
             except:

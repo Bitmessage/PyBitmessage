@@ -32,7 +32,7 @@ from network.bmobject import (
     BMObjectInvalidError, BMObjectAlreadyHaveError)
 from network.proxy import ProxyError
 from network.objectracker import missingObjects, ObjectTracker
-from .node import Node, Peer
+from network.node import Node, Peer
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from network.randomtrackingdict import RandomTrackingDict
 
@@ -51,6 +51,7 @@ addr_version = 0
 count = 0
 
 logger = logging.getLogger('default')
+
 
 class BMProtoError(ProxyError):
     """A Bitmessage Protocol Base Error"""
@@ -94,30 +95,30 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object = None
 
     def state_bm_header(self):
-
         """Process incoming header"""
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-        #its shoule be in string
+        # its shoule be in string
         self.command = self.command.rstrip('\x00'.encode('utf-8'))
-        global count,addr_version,addr_count,addr_verack
-        count+=1
+        # pylint: disable=global-statement
+        global count, addr_version, addr_count, addr_verack
+        count += 1
         if self.command == 'verack'.encode():
-            addr_verack+=1
+            addr_verack += 1
             # print('the addr_verack count are -{}'.format(addr_verack))
 
         if self.command == 'version'.encode():
-            addr_version+=1
+            addr_version += 1
             # print('the addr_version count are -{}'.format(addr_version))
 
         if self.command == 'addr'.encode():
-            addr_count+=1
+            addr_count += 1
             # print('the addr_count count are -{}'.format(addr_count))
 
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
-            #in the advancedispatched and length commend's
-            #escape the 1 length
+            # in the advancedispatched and length commend's
+            # escape the 1 length
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
             logger.debug('Bad magic')
@@ -132,7 +133,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             length=protocol.Header.size, expectBytes=self.payloadLength)
         return True
 
-    def state_bm_command(self):     # pylint: disable=too-many-branches
+    def state_bm_command(self):  # pylint: disable=too-many-branches, too-many-statements
         """Process incoming command"""
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
@@ -143,14 +144,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 "error".encode(), "version".encode(), "verack".encode()):
             logger.error(
                 'Received command {} before connection was fully'
-                ' established, ignoring'.format (self.command))
+                ' established, ignoring'.format(self.command))
             self.invalid = True
         if not self.invalid:
             try:
                 command = self.command.decode() if self.command else self.command
 
                 retval = getattr(
-                    self, "bm_command_" +command)()
+                    self, "bm_command_" + command)()
             except AttributeError:
                 # unimplemented command
                 logger.debug('unimplemented command %s', self.command)
@@ -346,8 +347,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_error(self):
         """Decode an error message and log it"""
-        fatalStatus, banTime, inventoryVector, errorText = \
-            self.decode_payload_content("vvlsls")
+        err_values = self.decode_payload_content("vvlsls")
+        fatalStatus = err_values[0]
+        # banTime = err_values[1]
+        # inventoryVector = err_values[2]
+        errorText = err_values[3]
         logger.error(
             '%s:%i error: %i, %s', self.destination.host,
             self.destination.port, fatalStatus, errorText)
@@ -359,7 +363,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         If we have them and some other conditions are fulfilled,
         append them to the write queue.
         """
-        #32 an array bit long strings
+        # 32 an array bit long strings
         items = self.decode_payload_content("l32s")
         # skip?
         now = time.time()
@@ -463,11 +467,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_addr(self):
         # print('+++++++++++++++++++++++++++\
-            # bm_command_addr bm_command_addr bm_command_addr ++++++++++++++++')
+        # bm_command_addr bm_command_addr bm_command_addr ++++++++++++++++')
         """Incoming addresses, process them"""
         addresses = self._decode_addr()      # pylint: disable=redefined-outer-name
         for i in addresses:
-            seenTime, stream, services, ip, port = i
+            seenTime, stream, _, ip, port = i
             decodedIP = protocol.checkIPAddress(ip)
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
@@ -533,6 +537,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             "tls_init" if self.isSSL else "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
         return False
+
     def bm_command_version(self):
         # print('inside the bmproto ')
         """
@@ -566,7 +571,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             logger.debug(
                 '%(host)s:%(port)i sending version',
                 self.destination._asdict())
-        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL)):
+        if self.services & protocol.NODE_SSL == protocol.NODE_SSL:
             # self.isSSL = True
             pass
         if not self.verackReceived:
@@ -625,7 +630,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
                         errorText="Too many connections from your IP."
-                    " Closing connection.", fatal=2))
+                        " Closing connection.", fatal=2))
                     logger.debug(
                         'Closed connection to {} because we are already connected'
                         ' to that IP.'.format(self.destination))
@@ -660,9 +665,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 "Closed connection to %s because I'm connected to myself.",
                 self.destination)
             return False
-
         return True
-
 
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):

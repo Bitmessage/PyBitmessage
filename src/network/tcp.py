@@ -77,7 +77,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             self.connect(self.destination)
             logger.debug(
                 'Connecting to {}:{}'.format(
-                self.destination.host, self.destination.port))
+                    self.destination.host, self.destination.port))
         try:
             self.local = (
                 protocol.checkIPAddress(
@@ -90,7 +90,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         ObjectTracker.__init__(self)  # pylint: disable=non-parent-init-called
         self.bm_proto_reset()
         # print('--------------tcp------------------')
-        from network import stats
+        # from network import stats
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def antiIntersectionDelay(self, initial=False):
@@ -370,7 +370,7 @@ class TCPServer(AdvancedDispatcher):
     """TCP connection server for Bitmessage protocol"""
 
     def __init__(self, host='127.0.0.1', port=8444):
-        if  '_map' not in dir(self):
+        if '_map' not in dir(self):
             AdvancedDispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()

@@ -102,7 +102,9 @@ def _strerror(err):
         return os.strerror(err)
     except (ValueError, OverflowError, NameError):
         if err in errorcode:
-            ret18 ("Unknown error {}".format(err))
+            return errorcode[err]
+        return "Unknown error %s" % err
+    # ret18 ("Unknown error {}".format(err))
 
 
 class ExitNow(Exception):
@@ -477,7 +479,7 @@ def kqueue_poller(timeout=0.0, map=None):
         current_thread().stop.wait(timeout)
 
 
-def loop(timeout=30.0, use_poll=False, map=None, count=None, poller=None):
+def loop(timeout=30.0, _=False, map=None, count=None, poller=None):
     """Poll in a loop, until count or timeout is reached"""
     # pylint: disable=redefined-builtin
 
@@ -518,7 +520,7 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None, poller=None):
             count = count - 1
 
 
-class dispatcher:
+class dispatcher(object):
     """Dispatcher for socket objects"""
     # pylint: disable=too-many-public-methods,too-many-instance-attributes,old-style-class
 
@@ -786,7 +788,7 @@ class dispatcher:
     def log_info(self, message, log_type='info'):
         """Conditionally print a message"""
         if log_type not in self.ignore_log_types:
-            print ('{}: {}'.format(log_type, message))
+            print('{}: {}'.format(log_type, message))
 
     def handle_read_event(self):
         """Handle a read event"""

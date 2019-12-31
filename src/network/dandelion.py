@@ -28,7 +28,7 @@ logger = logging.getLogger('default')
 
 
 @Singleton
-class Dandelion():      # pylint: disable=old-style-class
+class Dandelion(object):
     """Dandelion class for tracking stem/fluff stages."""
     def __init__(self):
         # currently assignable child stems
@@ -104,12 +104,12 @@ class Dandelion():      # pylint: disable=old-style-class
                 self.stem.append(connection)
                 for k in (k for k, v in iter(self.nodeMap.items()) if v is None):
                     self.nodeMap[k] = connection
-                #The Purpose of adding this condition that if self
-                #hashMap is has any value
+                # The Purpose of adding this condition that if self
+                # hashMap is has any value
             # if not [hasmap for hasmap in  self.hashMap.items()] ==[]:
             try:
                 for k, v in {
-                        k: v for k, v in  iter([hasmap for hasmap in  self.hashMap.items()])
+                        k: v for k, v in iter([hasmap for hasmap in self.hashMap.items()])
                         if v.child is None
                 }.items():
                     self.hashMap[k] = Stem(
@@ -142,7 +142,7 @@ class Dandelion():      # pylint: disable=old-style-class
                 ):
                     self.nodeMap[k] = None
                 for k, v in {
-                        k: v for k, v in iter(iter([hasmap for hasmap in  self.hashMap.items()]))
+                        k: v for k, v in iter(iter([hasmap for hasmap in self.hashMap.items()]))
                         if v.child == connection
                 }.items():
                     self.hashMap[k] = Stem(

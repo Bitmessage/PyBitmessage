@@ -11,7 +11,7 @@ from bmconfigparser import BMConfigParser
 from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
-from .node import Peer
+from network.node import Peer
 from network.threads import StoppableThread
 
 
@@ -32,17 +32,15 @@ class AnnounceThread(StoppableThread):
     @staticmethod
     def announceSelf():
         """Announce our presence"""
-        for connection in [ udpSockets for udpSockets in BMConnectionPool().udpSockets.values()]:
+        for connection in [udpSockets for udpSockets in BMConnectionPool().udpSockets.values()]:
             if not connection.announcing:
                 continue
             for stream in state.streamsInWhichIAmParticipating:
                 addr = (
                     stream,
-
-                #     state.Peer('127.0.0.1',int( BMConfigParser().safeGet("bitmessagesettings", "port"))),
-                #     int(time.time()))
-                # connection.append_write_buf(BMProto.assembleAddr([addr]))
-
+                    #     state.Peer('127.0.0.1',int( BMConfigParser().safeGet("bitmessagesettings", "port"))),
+                    #     int(time.time()))
+                    # connection.append_write_buf(BMProto.assembleAddr([addr]))
                     Peer(
                         '127.0.0.1',
                         BMConfigParser().safeGetInt('bitmessagesettings', 'port')),

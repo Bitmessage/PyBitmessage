@@ -1,4 +1,3 @@
-# import queue as Queue
 """
 Announce addresses as they are received from other hosts
 """
