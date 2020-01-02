@@ -1,8 +1,8 @@
 """The Inventory singleton"""
 
 # TODO make this dynamic, and watch out for frozen, like with messagetypes
-import storage.sqlite
 import storage.filesystem
+import storage.sqlite
 from bmconfigparser import BMConfigParser
 from singleton import Singleton
 

@@ -34,7 +34,8 @@ import tr
 from fallback import RIPEMD160Hash
 
 import l10n
-# pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
+# pylint: disable=too-many-locals, too-many-return-statements
+# pylint: disable=too-many-branches, too-many-statements
 
 logger = logging.getLogger('default')
 
@@ -644,7 +645,8 @@ class objectProcessor(threading.Thread):
         if decodeAddress(toAddress)[1] >= 3 \
                 and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
             # If I'm not friendly with this person:
-            if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):
+            if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(
+                    fromAddress):
                 requiredNonceTrialsPerByte = BMConfigParser().getint(
                     toAddress, 'noncetrialsperbyte')
                 requiredPayloadLengthExtraBytes = BMConfigParser().getint(

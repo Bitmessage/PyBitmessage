@@ -185,7 +185,8 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0:2] >= '\xAC\x10'.encode('raw_unicode_escape') and host[0:2] < '\xAC\x20'.encode('raw_unicode_escape'):  # 172.16/12
+    # 172.16/12
+    if host[0:2] >= '\xAC\x10'.encode('raw_unicode_escape') and host[0:2] < '\xAC\x20'.encode('raw_unicode_escape'):
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
@@ -198,15 +199,15 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
     if host == ('\x00'.encode() * 15) + '\x01'.encode():
 
         if not private:
-            logger.debug('Ignoring loopback address: {}'.format( hostStandardFormat))
+            logger.debug('Ignoring loopback address: {}'.format(hostStandardFormat))
         return False
     if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
         if not private:
-            logger.debug('Ignoring local address: {}'.format( hostStandardFormat))
+            logger.debug('Ignoring local address: {}'.format(hostStandardFormat))
         return hostStandardFormat if private else False
     if (ord(host[0:1]) & 0xfe) == 0xfc:
         if not private:
-            logger.debug('Ignoring unique local address: {}'.format( hostStandardFormat))
+            logger.debug('Ignoring unique local address: {}'.format(hostStandardFormat))
 
         return hostStandardFormat if private else False
     return False if private else hostStandardFormat
@@ -325,7 +326,7 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     )
     # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
 
-    #python3 need to check
+    # python3 need to check
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode() + pack('>L', 2130706433)
 
     # we have a separate extPort and incoming over clearnet
@@ -338,10 +339,9 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     ):
         payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
-        payload += pack('>H',  int(BMConfigParser().safeGet('bitmessagesettings', 'onionport')))
+        payload += pack('>H', int(BMConfigParser().safeGet('bitmessagesettings', 'onionport')))
     else:  # no extport and not incoming over Tor
         payload += pack('>H', int(BMConfigParser().safeGet('bitmessagesettings', 'port')))
-
 
     if nodeid is not None:
         payload += nodeid[0:8]
@@ -374,7 +374,7 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload += encodeVarint(len(inventoryVector))
     payload += inventoryVector.encode() if type(payload) == bytes else inventoryVector
     payload += encodeVarint(len(errorText))
-    payload += errorText.encode() if type(payload)== bytes else errorText
+    payload += errorText.encode() if type(payload) == bytes else errorText
     return CreatePacket('error', payload)
 
 

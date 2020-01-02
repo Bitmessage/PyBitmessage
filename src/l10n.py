@@ -64,25 +64,25 @@ else:
 # comprehensive decoding tests
 if time_format != DEFAULT_TIME_FORMAT:
     try:
-        #Check day names
+        # Check day names
         new_time_format = time_format
         import sys
         if sys.version_info >= (3, 0, 0) and time_format == '%%c':
             time_format = '%c'
         for i in range(7):
-            #this work for python2.7
+            # this work for python2.7
             # unicode(time.strftime(time_format, (0, 0, 0, 0, 0, 0, i, 0, 0)), encoding)
-            #this code for the python3
+            # this code for the python3
             (time.strftime(time_format, (0, 0, 0, 0, 0, 0, i, 0, 0))).encode()
-        #Check month names
+        # Check month names
         for i in range(1, 13):
             # unicode(time.strftime(time_format, (0, i, 0, 0, 0, 0, 0, 0, 0)), encoding)
             (time.strftime(time_format, (0, i, 0, 0, 0, 0, 0, 0, 0))).encode()
 
-        #Check AM/PM
+        # Check AM/PM
         (time.strftime(time_format, (0, 0, 0, 11, 0, 0, 0, 0, 0))).encode()
         (time.strftime(time_format, (0, 0, 0, 13, 0, 0, 0, 0, 0))).encode()
-        #Check DST
+        # Check DST
         (time.strftime(time_format, (0, 0, 0, 0, 0, 0, 0, 0, 1))).encode()
 
     except:

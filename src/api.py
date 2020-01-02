@@ -37,6 +37,7 @@ from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from network.threads import StoppableThread
+# pylint: disable=unused-variable
 
 str_chan = '[chan]'
 
@@ -275,7 +276,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         data = '{"addresses":['
         for addressInKeysFile in BMConfigParser().addresses():
-            # pylint: disable=unused-variable
             status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
                 addressInKeysFile)
             if len(data) > 20:
@@ -609,7 +609,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             label = str_chan + ' ' + passphrase
         except BaseException:
             label = str_chan + ' ' + repr(passphrase)
-        # pylint: disable=unused-variable
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(
             suppliedAddress)
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
@@ -634,7 +633,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need parameters.')
         elif len(params) == 1:
             address, = params
-            # pylint: disable=unused-variable
             status, addressVersionNumber, streamNumber, toRipe = \
                 self._verifyAddress(address)
         address = addBMIfNotPresent(address)
@@ -657,7 +655,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need parameters.')
         elif len(params) == 1:
             address, = params
-        # pylint: disable=unused-variable
         status, addressVersionNumber, streamNumber, toRipe = \
             self._verifyAddress(address)
         address = addBMIfNotPresent(address)
@@ -878,7 +875,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         data = '{"sentMessages":['
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, lastactiontime, message, \
-                encodingtype, status, ackdata = row  # pylint: disable=unused-variable
+                encodingtype, status, ackdata = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
@@ -988,7 +985,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             TTL = 28 * 24 * 60 * 60
         toAddress = addBMIfNotPresent(toAddress)
         fromAddress = addBMIfNotPresent(fromAddress)
-        # pylint: disable=unused-variable
         status, addressVersionNumber, streamNumber, toRipe = \
             self._verifyAddress(toAddress)
         self._verifyAddress(fromAddress)
@@ -1165,7 +1161,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def ListSubscriptions(self, params):
         """Handle a request to list susbcriptions"""
 
-        # pylint: disable=unused-variable
         queryreturn = sqlQuery(
             "SELECT label, address, enabled FROM subscriptions")
         data = {'subscriptions': []}
@@ -1271,7 +1266,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             pubkeyReadPosition += 8
         else:
             pubkeyReadPosition += 4
-        # pylint: disable=unused-variable
         addressVersion, addressVersionLength = decodeVarint(
             payload[pubkeyReadPosition:pubkeyReadPosition + 10])
         pubkeyReadPosition += addressVersionLength

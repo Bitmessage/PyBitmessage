@@ -101,6 +101,7 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
     return False
 
+
 def decodeWalletImportFormat(WIFstring):
     # pylint: disable=inconsistent-return-statements
     """
@@ -116,7 +117,7 @@ def decodeWalletImportFormat(WIFstring):
             ' 6 characters of the PRIVATE key: {}'.format(str(WIFstring)[:6])
         )
 
-        os._exit(0)
+        os._exit(0)  # pylint: disable=protected-access
     if privkey[0:1] == '\x80'.encode()[1:]:  # checksum passed
         return privkey[1:]
 

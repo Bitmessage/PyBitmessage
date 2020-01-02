@@ -114,8 +114,9 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
         return ret
 
-    def process_message(self, peer, mailfrom, rcpttos, data):  # pylint: disable=too-many-locals, too-many-branches
+    def process_message(self, peer, mailfrom, rcpttos, data):
         """Process an email"""
+        # pylint: disable=too-many-locals, too-many-branches
         # print 'Receiving message from:', peer
         p = re.compile(".*<([^>]+)>")
         if not hasattr(self.channel, "auth") or not self.channel.auth:
