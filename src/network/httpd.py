@@ -5,7 +5,7 @@ src/network/httpd.py
 import asyncore
 import socket
 
-from tls import TLSHandshake
+from .tls import TLSHandshake
 
 
 class HTTPRequestHandler(asyncore.dispatcher):
@@ -129,7 +129,7 @@ class HTTPServer(asyncore.dispatcher):
     def handle_accept(self):
         pair = self.accept()
         if pair is not None:
-            sock, addr = pair
+            sock, _ = pair
             # print 'Incoming connection from %s' % repr(addr)
             self.connections += 1
             # if self.connections % 1000 == 0:
@@ -148,7 +148,7 @@ class HTTPSServer(HTTPServer):
     def handle_accept(self):
         pair = self.accept()
         if pair is not None:
-            sock, addr = pair
+            sock, _ = pair
             # print 'Incoming connection from %s' % repr(addr)
             self.connections += 1
             # if self.connections % 1000 == 0:

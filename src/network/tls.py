@@ -1,7 +1,6 @@
 """
 SSL/TLS negotiation.
 """
-
 import logging
 import os
 import socket
@@ -23,7 +22,7 @@ if sys.version_info >= (2, 7, 13):
     # in the future change to
     # ssl.PROTOCOL_TLS1.2
     # Right now I am using the python3.5.2 and I faced the ssl for protocol due to this I
-        # have used try and catch
+    # have used try and catch
     try:
         sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
     except AttributeError:

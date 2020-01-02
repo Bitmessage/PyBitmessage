@@ -3,7 +3,6 @@ src/network/advanceddispatcher.py
 =================================
 """
 # pylint: disable=attribute-defined-outside-init
-# import pdb;pdb.set_trace()
 import socket
 import threading
 import time
@@ -32,7 +31,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         # python 2 below condition is used
         # if not hasattr(self, '_map'):
         # python 3 below condition is used
-        if not '_map' in dir(self):
+        if '_map' not in dir(self):
             asyncore.dispatcher.__init__(self, sock)
         self.read_buf = bytearray()
         self.write_buf = bytearray()

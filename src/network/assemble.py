@@ -13,7 +13,7 @@ from protocol import CreatePacket, encodeHost
 def assemble_addr(peerList):
     """Create address command"""
     if isinstance(peerList, Peer):
-        peerList = (peerList)
+        peerList = [peerList]
     if not peerList:
         return b''
     retval = b''
