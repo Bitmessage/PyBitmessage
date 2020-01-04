@@ -11,11 +11,19 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 # pylint: disable=invalid-name
 
 import sys
-import msgpack
 import hash as Hash
 sys.path.insert(1, '/home/cis/ektarepo/PyBitmessage/src/pyelliptic')
 from eccblind import ECCBlind
 
+try:
+    import msgpack
+except ImportError:
+    try:
+        import umsgpack as msgpack
+    except ImportError:
+        import fallback.umsgpack.umsgpack as msgpack
+
+from eccblind import ECCBlind
 
 def encode_datetime(obj):
     """
@@ -28,44 +36,52 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
     """
     # Class for ECC Blind Chain signature functionality
     """
-    signature = None
+    chain = []
+    ca = []
 
-    def ec_serialize(self, msg):
-        """
-        Serialize the data using msgpack
-        """
-        msg = msgpack.packb(msg, default=encode_datetime, use_bin_type=True)
-        return msg
+    def __init__(self, chain=None):
+        if chain is not None:
+            self.chain = chain
 
-    def ec_deSerialize(self, msg):
+    def serialize(self):
+        data = msgpack.packb(self.chain)
+        return data
+
+    @staticmethod
+    def deserialize(chain):
         """
         Deserialize the data using msgpack
         """
-        msg = msgpack.unpackb(msg)
-        return msg
+        data = msgpack.unpackb(chain)
+        return ECCBlindChain(data)
 
-    def encrypt_string(self, hash_string):
-        """
-        Hashing the data using hashlib
-        """
-        sha_signature = Hash.hmac_sha256(hash_string, hash_string)
-        return sha_signature
+    def add_level(self, pubkey, metadata, signature):
+        self.chain.append((pubkey, metadata, signature))
 
-    def verify_Chain(self, msg):
-        """
-        Verify complete chain with its relevant signature
-        """
-        call = ECCBlindChain()
-        Unpacked_dict = call.ec_deSerialize(msg)
-        i = len(Unpacked_dict) - 1
-        while i >= 0:
-            signature = Unpacked_dict[i]['Sign']
-            verifier_obj = ECCBlind(pubkey=Unpacked_dict[i]['Msg']['PubKEY'])
-            msgtoverify = call.ec_serialize(Unpacked_dict[i]['Msg'])
-            hashedmsg = call.encrypt_string(msgtoverify)
-            ret = verifier_obj.verify(hashedmsg, signature)
-            if ret is True:
-                print("Message verified successfully")
-            else:
-                print("Message verification fails")
-            i = i - 1
+    def add_ca(self, ca):
+        pubkey = ca.pubkey
+        metadata = ca.metadata
+        self.ca.append(pubkey)
+
+    def verify(self, msg, value):
+        lastpubkey = None
+        retval = False
+        for level in reversed(self.chain):
+            pubkey, metadata, signature = level
+            verifier_obj = ECCBlind(pubkey=pubkey, metadata=metadata)
+            retval = verifier_obj.verify(msgpack.packb([pubkey,metadata]), signature, value)
+            if not retval:
+                break
+            lastpubkey = pubkey
+        if retval:
+            retval = False
+            for ca in self.ca:
+                match = True
+                for i in range(4):
+                    if lastpubkey[i] != ca[i]:
+                        match = False
+                        break
+                if match:
+                    #retval = True
+                    return True
+        return retval
