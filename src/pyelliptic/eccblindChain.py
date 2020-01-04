@@ -69,19 +69,19 @@ class ECCBlindChain(object):  # pylint: disable=too-many-instance-attributes
         for level in reversed(self.chain):
             pubkey, metadata, signature = level
             verifier_obj = ECCBlind(pubkey=pubkey, metadata=metadata)
+
+            # As msg is being seriaized so no need of using lastpubkey it will be the msg which is being signed
             retval = verifier_obj.verify(msgpack.packb([pubkey,metadata]), signature, value)
             if not retval:
                 break
-            lastpubkey = pubkey
         if retval:
             retval = False
             for ca in self.ca:
                 match = True
                 for i in range(4):
-                    if lastpubkey[i] != ca[i]:
+                    if pubkey[i] != ca[i]:
                         match = False
                         break
                 if match:
-                    #retval = True
                     return True
         return retval

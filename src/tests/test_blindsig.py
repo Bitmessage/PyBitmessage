@@ -84,8 +84,8 @@ class TestBlindSig(unittest.TestCase):
         for level in range(test_levels):
 
             ca = ECCBlind()
-            signer_obj = ca
-            signer_pubkey = signer_obj.serialize()
+            signer_obj_ca = ca
+            signer_pubkey = signer_obj_ca.serialize()
             SIGNER_OBJ_LIST.append(ca)
             if level == 0:
                 signer_obj = SIGNER_OBJ_LIST[0]
@@ -104,21 +104,20 @@ class TestBlindSig(unittest.TestCase):
                                                                    msg)
             signature_blinded = signer_obj.blind_sign(msg_blinded)
             signature = requester_obj.unblind(signature_blinded)
-            signer_obj = requester_obj
-            chain.add_level(signer_obj.pubkey,
-                            signer_obj.metadata.serialize(),
+            chain.add_level(requester_obj.pubkey,
+                            requester_obj.metadata.serialize(),
                             signature)
-            chain.add_ca(ca)
+
+            chain.add_ca(signer_obj)
             signer_pubkey = requester_obj.serialize()
-        
         sigchain = chain.serialize()
         verifychain = ECCBlindChain.deserialize(sigchain)
-        ret = verifychain.verify(msg, value)
+        ret = verifychain.verify(sigchain, value)
         if ret is True:
-            print("Chain verified succesfully")
+            print("Chain gets verified successfully")
         else:
-            print("Chain not verified")
-        self.assertTrue(verifychain.verify(msg, value))
+            print("Chain erification Fails ")
+        self.assertTrue(verifychain.verify(sigchain, value))
 
 obj = TestBlindSig('test_blind_sig')
 obj.test_blind_sig_chain()
