@@ -326,6 +326,7 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
     # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
     #python3 need to check
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape') + pack('>L', 2130706433)
+
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
     extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
