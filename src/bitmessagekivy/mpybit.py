@@ -1,11 +1,13 @@
 """
-src/bitmessagekivy/mpybit.py
-=================================
+Bitmessage android(mobile) interface
 """
-# pylint: disable=import-error, no-name-in-module, too-many-lines
-# pylint: disable=too-few-public-methods, unused-argument, too-many-ancestors
+# pylint: disable=import-error,no-name-in-module,unused-argument,too-few-public-methods,too-many-arguments
+# pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation,attribute-defined-outside-init
 import os
 import time
+from bitmessagekivy import identiconGeneration
+from bitmessagekivy import kivy_helper_search
+from bitmessagekivy.uikivysignaler import UIkivySignaler
 from bmconfigparser import BMConfigParser
 from functools import partial
 from helper_sql import sqlExecute, sqlQuery
@@ -14,7 +16,6 @@ from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
 from kivy.lang import Builder
-from kivy.metrics import dp
 from kivy.properties import (
     BooleanProperty,
     ListProperty,
@@ -37,7 +38,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
-from bitmessagekivy import kivy_helper_search
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
@@ -51,7 +51,8 @@ from kivymd.uix.list import (
 )
 from kivymd.uix.navigationdrawer import (
     MDNavigationDrawer,
-    NavigationDrawerHeaderBase)
+    NavigationDrawerHeaderBase
+)
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.theming import ThemeManager
 
@@ -59,16 +60,13 @@ import queues
 from semaphores import kivyuisignaler
 
 import state
-
-from bitmessagekivy.uikivysignaler import UIkivySignaler
-from bitmessagekivy import identiconGeneration
-from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
-# pylint: disable=unused-argument, too-few-public-methods
+from addresses import decodeAddress
 
 
 def toast(text):
     """Method will display the toast message"""
-    from kivymd.toast.kivytoast import toast    # pylint: disable=redefined-outer-name
+    # pylint: disable=redefined-outer-name
+    from kivymd.toast.kivytoast import toast
     toast(text)
     return
 
@@ -105,7 +103,6 @@ class Inbox(Screen):
 
     def loadMessagelist(self, where="", what=""):
         """Load Inbox list for Inbox messages"""
-        # pylint: disable=too-many-locals
         self.set_defaultAddress()
         self.account = state.association
         if state.searcing_text:
@@ -142,7 +139,6 @@ class Inbox(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    # pylint: disable=too-many-arguments
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method used for retrieving inbox data"""
         self.queryreturn = kivy_helper_search.search_sql(
@@ -283,7 +279,6 @@ class Inbox(Screen):
             self.parent.parent.screens[4].clear_widgets()
             self.parent.parent.screens[4].add_widget(Trash())
 
-    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
         """Method updates the state of application,
         While the spinner remains on the screen"""
@@ -389,7 +384,6 @@ class MyAddress(Screen):
         p.open()
         p.set_address(fromaddress, label)
 
-    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
         """Method updates the state of application,
         While the spinner remains on the screen"""
@@ -408,7 +402,13 @@ class MyAddress(Screen):
     @staticmethod
     def filter_address(address):
         """Method will filter the my address list data"""
-        if [x for x in [BMConfigParser().get(address, 'label').lower(), address.lower()] if (state.searcing_text).lower() in x]:
+        if [
+                x for x in [
+                    BMConfigParser().get(address, 'label').lower(),
+                    address.lower()
+                ]
+                if (state.searcing_text).lower() in x
+        ]:
             return True
         return False
 
@@ -526,8 +526,8 @@ class AddressBook(Screen):
             "DELETE FROM  addressbook WHERE address = '{}';".format(address))
 
 
-class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
-                                 RecycleBoxLayout):
+class SelectableRecycleBoxLayout(
+        FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout):
     """Adds selection and focus behaviour to the view"""
     # pylint: disable = duplicate-bases
     pass
@@ -565,14 +565,14 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 class RV(RecycleView):
     """Recycling View"""
 
-    def __init__(self, **kwargs):       # pylint: disable=useless-super-delegation
+    def __init__(self, **kwargs):
         """Recycling Method"""
         super(RV, self).__init__(**kwargs)
 
 
 class DropDownWidget(BoxLayout):
     """Adding Dropdown Widget"""
-    # pylint: disable=too-many-statements, too-many-locals
+    # pylint: disable=too-many-statements
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
@@ -587,7 +587,6 @@ class DropDownWidget(BoxLayout):
         sendMessageToPeople = True
         if sendMessageToPeople:
             if toAddress != '' and subject and message:
-                from addresses import decodeAddress
                 status, addressVersionNumber, streamNumber, ripe = (
                     decodeAddress(toAddress))
                 if status == 'success':
@@ -678,7 +677,6 @@ class DropDownWidget(BoxLayout):
         state.kivyapp.back_press()
         toast('sent')
 
-    # pylint: disable=attribute-defined-outside-init
     def address_error_message(self, msg):
         """Generates error message"""
         width = .8 if platform == 'android' else .55
@@ -717,7 +715,7 @@ class MyTextInput(TextInput):
     starting_no = NumericProperty(3)
     suggestion_text = ''
 
-    def __init__(self, **kwargs):  # pylint: disable=useless-super-delegation
+    def __init__(self, **kwargs):
         """Getting Text Input."""
         super(MyTextInput, self).__init__(**kwargs)
 
@@ -748,8 +746,9 @@ class MyTextInput(TextInput):
 class Payment(Screen):
     """Payment module"""
 
-    def get_available_credits(self, instance):  # pylint: disable=no-self-use
+    def get_available_credits(self, instance):
         """Get the available credits"""
+        # pylint: disable=no-self-use
         state.availabe_credit = instance.parent.children[1].text
         existing_credits = (
             state.kivyapp.root.ids.sc18.ids.ml.children[0].children[
@@ -813,7 +812,6 @@ class NetworkStat(Screen):
 
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer"""
-    # pylint: disable=too-many-arguments
     pass
 
 
@@ -931,7 +929,6 @@ class Sent(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    # pylint: disable=too-many-arguments
     def sentDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used to retrieving data from sent table"""
         self.queryreturn = kivy_helper_search.search_sql(
@@ -1271,8 +1268,9 @@ class Setting(Screen):
     pass
 
 
-class NavigateApp(App):  # pylint: disable=too-many-public-methods
+class NavigateApp(App):
     """Navigation Layout of class"""
+    # pylint: disable=too-many-public-methods
     theme_cls = ThemeManager()
     previous_date = ObjectProperty()
     obj_1 = ObjectProperty()
@@ -1319,10 +1317,10 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
-    # pylint: disable=inconsistent-return-statements
     @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown"""
+        # pylint: disable=inconsistent-return-statements
         if name == "text":
             if BMConfigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
@@ -1649,8 +1647,9 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
         self.refreshScreen()
         state.in_search_mode = False
 
-    def refreshScreen(self):  # pylint: disable=unused-variable
+    def refreshScreen(self):
         """Method show search button only on inbox or sent screen"""
+        # pylint: disable=unused-variable
         state.searcing_text = ''
         if state.search_screen == 'inbox':
             try:
@@ -1745,7 +1744,7 @@ class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
     valid = False
 
-    def __init__(self, **kwargs):  # pylint: disable=useless-super-delegation
+    def __init__(self, **kwargs):
         """Grash of pop screen settings"""
         super(GrashofPopup, self).__init__(**kwargs)
 
@@ -1837,7 +1836,9 @@ class GrashofPopup(Popup):
         elif status == 'checksumfailed':
             text = "The address is not typed or copied correctly(the checksum failed)."
         elif status == 'versiontoohigh':
-            text = "The version number of this address is higher than this software can support. Please upgrade Bitmessage."
+            text = (
+                "The version number of this address is higher than this"
+                " software can support. Please upgrade Bitmessage.")
         elif status == 'invalidcharacters':
             text = "The address contains invalid characters."
         elif status == 'ripetooshort':
@@ -2045,7 +2046,7 @@ class MyaddDetailPopup(Popup):
     address_label = StringProperty()
     address = StringProperty()
 
-    def __init__(self, **kwargs):  # pylint: disable=useless-super-delegation
+    def __init__(self, **kwargs):
         """My Address Details screen setting"""
         super(MyaddDetailPopup, self).__init__(**kwargs)
 
@@ -2079,7 +2080,6 @@ class AddbookDetailPopup(Popup):
 
     def __init__(self, **kwargs):
         """Set screen of address detail page"""
-        # pylint: disable=useless-super-delegation
         super(AddbookDetailPopup, self).__init__(**kwargs)
 
     def set_addbook_data(self, address, label):
@@ -2201,7 +2201,6 @@ class Draft(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    # pylint: disable=too-many-arguments
     def draftDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This methosd is for retrieving draft messages"""
         self.queryreturn = kivy_helper_search.search_sql(
@@ -2229,8 +2228,7 @@ class Draft(Screen):
                 'ackdata': mail[5]})
         for item in data:
             meny = TwoLineAvatarIconListItem(
-                text='Draft',
-                secondary_text=item['text'],
+                text='Draft', secondary_text=item['text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
@@ -2302,7 +2300,7 @@ class Draft(Screen):
         toast('Deleted')
 
     @staticmethod
-    def draft_msg(src_object):  # pylint: disable=too-many-locals
+    def draft_msg(src_object):
         """Save draft mails"""
         composer_object = state.kivyapp.root.ids.sc3.children[1].ids
         fromAddress = str(composer_object.ti.text)
@@ -2312,7 +2310,6 @@ class Draft(Screen):
         encoding = 3
         sendMessageToPeople = True
         if sendMessageToPeople:
-            from addresses import decodeAddress
             streamNumber, ripe = decodeAddress(toAddress)[2:]
             from addresses import addBMIfNotPresent
             toAddress = addBMIfNotPresent(toAddress)
@@ -2480,10 +2477,12 @@ class Allmails(Screen):
         """Delete inbox mail from all mail listing"""
         if folder == 'inbox':
             sqlExecute(
-                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", unique_id)
+                "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;",
+                unique_id)
         else:
             sqlExecute(
-                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;", unique_id)
+                "UPDATE sent SET folder = 'trash' WHERE ackdata = ?;",
+                unique_id)
         self.ids.ml.remove_widget(instance.parent.parent)
         try:
             msg_count_objs = self.parent.parent.parent.parent.parent.children[
@@ -2517,7 +2516,6 @@ class Allmails(Screen):
         nav_lay_obj.sc5.add_widget(Trash())
         nav_lay_obj.sc17.remove_widget(instance.parent.parent)
 
-    # pylint: disable=attribute-defined-outside-init
     def refresh_callback(self, *args):
         """Method updates the state of application,
         While the spinner remains on the screen"""
@@ -2558,19 +2556,16 @@ def avatarImageFirstLetter(letter_string):
 
 class Starred(Screen):
     """Starred Screen show widgets of page"""
-
     pass
 
 
 class Archieve(Screen):
     """Archieve Screen show widgets of page"""
-
     pass
 
 
 class Spam(Screen):
     """Spam Screen show widgets of page"""
-
     pass
 
 
