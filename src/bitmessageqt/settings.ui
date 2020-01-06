@@ -75,7 +75,7 @@
              <string>Minimize to tray</string>
             </property>
             <property name="checked">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -419,12 +419,12 @@
             </item>
             <item>
              <property name="text">
-              <string>SOCKS4a</string>
+              <string notr="true">SOCKS4a</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>SOCKS5</string>
+              <string notr="true">SOCKS5</string>
              </property>
             </item>
            </widget>

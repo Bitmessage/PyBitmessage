@@ -3,7 +3,7 @@
 The PyBitmessage startup script
 """
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2019 The Bitmessage developers
+# Copyright (c) 2012-2020 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,7 +31,8 @@ import shutdown
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
 from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
+    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections,
+    start_proxyconfig
 )
 from inventory import Inventory
 from knownnodes import readKnownNodes
@@ -166,30 +167,9 @@ def signal_handler(signum, frame):
 
 class Main(object):
     """Main PyBitmessage class"""
-    @staticmethod
-    def start_proxyconfig(config):
-        """Check socksproxytype and start any proxy configuration plugin"""
-        proxy_type = config.safeGet('bitmessagesettings', 'socksproxytype')
-        if proxy_type not in ('none', 'SOCKS4a', 'SOCKS5'):
-            # pylint: disable=relative-import
-            from plugins.plugin import get_plugin
-            try:
-                proxyconfig_start = time.time()
-                if not get_plugin('proxyconfig', name=proxy_type)(config):
-                    raise TypeError
-            except TypeError:
-                logger.error(
-                    'Failed to run proxy config plugin %s',
-                    proxy_type, exc_info=True)
-                shutdown.doCleanShutdown()
-                sys.exit(2)
-            else:
-                logger.info(
-                    'Started proxy config plugin %s in %s sec',
-                    proxy_type, time.time() - proxyconfig_start)
-
-    def start(self):    # pylint: disable=too-many-statements, too-many-branches, too-many-locals
+    def start(self):
         """Start main application"""
+        # pylint: disable=too-many-statements,too-many-branches,too-many-locals
         _fixSocket()
 
         config = BMConfigParser()
@@ -346,7 +326,7 @@ class Main(object):
                 singleAPIThread.start()
         # start network components if networking is enabled
         if state.enableNetwork:
-            self.start_proxyconfig(config)
+            start_proxyconfig()
             BMConnectionPool()
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
@@ -405,7 +385,7 @@ class Main(object):
                     self.stop()
         elif not state.enableGUI:
             from tests import core as test_core  # pylint: disable=relative-import
-            test_core_result = test_core.run(self)
+            test_core_result = test_core.run()
             state.enableGUI = True
             self.stop()
             test_core.cleanup()
