@@ -15,14 +15,20 @@ import knownnodes
 import state
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
+from helper_startup import start_proxyconfig
 from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
 from network.node import Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 
+try:
+    import stem.version as stem_version
+except ImportError:
+    stem_version = None
+
+
 knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
-program = None
 
 
 def pickle_knownnodes():
@@ -170,12 +176,29 @@ class TestCore(unittest.TestCase):
                     self.assertIsInstance(con, connection_base)
                     self.assertNotEqual(peer.host, '127.0.0.1')
                     return
-        else:  # pylint: disable=useless-else-on-loop
-            self.fail(
-                'Failed to connect during %s sec' % (time.time() - _started))
+        self.fail(
+            'Failed to connect during %s sec' % (time.time() - _started))
 
-    def test_onionservicesonly(self):
-        """test onionservicesonly networking mode"""
+    def test_bootstrap(self):
+        """test bootstrapping"""
+        self._initiate_bootstrap()
+        self._check_bootstrap()
+
+    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
+    def test_bootstrap_tor(self):
+        """test bootstrapping with tor"""
+        self._initiate_bootstrap()
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'stem')
+        start_proxyconfig()
+        self._check_bootstrap()
+
+    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
+    def test_onionservicesonly(self):  # this should start after bootstrap
+        """
+        set onionservicesonly, wait for 3 connections and check them all
+        are onions
+        """
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
         self._initiate_bootstrap()
         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
@@ -184,26 +207,18 @@ class TestCore(unittest.TestCase):
             for n, peer in enumerate(BMConnectionPool().outboundConnections):
                 if n > 2:
                     return
-                if not peer.host.endswith('.onion'):
+                if (
+                    not peer.host.endswith('.onion')
+                    and not peer.host.startswith('bootstrap')
+                ):
                     self.fail(
                         'Found non onion hostname %s in outbound connections!'
                         % peer.host)
         self.fail('Failed to connect to at least 3 nodes within 360 sec')
 
-    def test_bootstrap(self):
-        """test bootstrapping"""
-        self._initiate_bootstrap()
-        self._check_bootstrap()
-        self._initiate_bootstrap()
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'stem')
-        program.start_proxyconfig(BMConfigParser())
-        self._check_bootstrap()
 
-
-def run(prog):
+def run():
     """Starts all tests defined in this module"""
-    global program  # pylint: disable=global-statement
-    program = prog
     loader = unittest.TestLoader()
     loader.sortTestMethodsUsing = None
     suite = loader.loadTestsFromTestCase(TestCore)

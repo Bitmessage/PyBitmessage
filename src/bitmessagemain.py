@@ -3,7 +3,7 @@
 The PyBitmessage startup script
 """
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2019 The Bitmessage developers
+# Copyright (c) 2012-2020 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -32,7 +32,8 @@ from bmconfigparser import BMConfigParser
 # this should go before any threads
 from debug import logger
 from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
+    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections,
+    start_proxyconfig
 )
 from inventory import Inventory
 from knownnodes import readKnownNodes
@@ -188,10 +189,9 @@ class Main(object):
                 logger.info(
                     'Started proxy config plugin %s in %s sec',
                     proxy_type, time.time() - proxyconfig_start)
-
     def start(self):
         """Start main application"""
-        # pylint: disable=too-many-statements, too-many-branches, too-many-locals
+        # pylint: disable=too-many-statements,too-many-branches,too-many-locals
         _fixSocket()
 
         config = BMConfigParser()
@@ -268,11 +268,10 @@ class Main(object):
 
         set_thread_name("PyBitmessage")
 
-        state.dandelion = config.safeGetInt('network', 'dandelion')
+        state.dandelion = config.safeGet('network', 'dandelion')
         # dandelion requires outbound connections, without them,
         # stem objects will get stuck forever
-        if state.dandelion and not config.safeGetBoolean(
-                'bitmessagesettings', 'sendoutgoingconnections'):
+        if state.dandelion and not (config.safeGet('bitmessagesettings', 'sendoutgoingconnections') == 'True'):
             state.dandelion = 0
 
         if state.testmode or config.safeGetBoolean(
@@ -350,7 +349,7 @@ class Main(object):
                 singleAPIThread.start()
         # start network components if networking is enabled
         if state.enableNetwork:
-            self.start_proxyconfig(config)
+            start_proxyconfig()
             BMConnectionPool()
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
@@ -408,9 +407,8 @@ class Main(object):
                 if (state.testmode and time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
-            # pylint: disable=relative-import
-            from tests import core as test_core
-            test_core_result = test_core.run(self)
+            from tests import core as test_core  # pylint: disable=relative-import
+            test_core_result = test_core.run()
             state.enableGUI = True
             self.stop()
             test_core.cleanup()

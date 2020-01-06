@@ -141,13 +141,13 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in shared.ackdataForWhichImWatching:
+        if bytes(data[readPosition:]) in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
             del shared.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
-                'ackreceived', int(time.time()), data[readPosition:])
+                ' ackreceived', int(time.time()), data[readPosition:])
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata',
                 (data[readPosition:],
@@ -221,7 +221,7 @@ class objectProcessor(threading.Thread):
                 'the hash requested in this getpubkey request is: %s',
                 hexlify(requestedHash))
             # if this address hash is one of mine
-            if requestedHash in shared.myAddressesByHash:
+            if bytes(requestedHash) in shared.myAddressesByHash:
                 myAddress = shared.myAddressesByHash[requestedHash]
         elif requestedAddressVersionNumber >= 4:
             requestedTag = data[readPosition:readPosition + 32]
@@ -233,7 +233,7 @@ class objectProcessor(threading.Thread):
             logger.debug(
                 'the tag requested in this getpubkey request is: %s',
                 hexlify(requestedTag))
-            if requestedTag in shared.myAddressesByTag:
+            if bytes(requestedTag) in shared.myAddressesByTag:
                 myAddress = shared.myAddressesByTag[requestedTag]
 
         if myAddress == '':
@@ -328,7 +328,7 @@ class objectProcessor(threading.Thread):
             dataToStore = data[20:readPosition]
             sha = hashlib.new('sha512')
             sha.update(
-                '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
+                '\x04'.encode() + publicSigningKey + '\x04'.encode() + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
             if logger.isEnabledFor(logging.DEBUG):
@@ -367,9 +367,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            publicSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            publicSigningKey = ('\x04').encode() + data[readPosition:readPosition + 64]
             readPosition += 64
-            publicEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            publicEncryptionKey = ('\x04').encode() + data[readPosition:readPosition + 64]
             readPosition += 64
             _, specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])
@@ -433,7 +433,7 @@ class objectProcessor(threading.Thread):
                 return
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in state.neededPubkeys:
+            if tag not in bytes(state.neededPubkeys):
                 logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
                 return
@@ -866,7 +866,7 @@ class objectProcessor(threading.Thread):
         elif broadcastVersion == 5:
             embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
-            if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
+            if bytes(embeddedTag) not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.

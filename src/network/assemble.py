@@ -22,7 +22,7 @@ def assemble_addr(peerList):
             len(peerList[i:i + MAX_ADDR_COUNT]))
         for stream, peer, timestamp in peerList[i:i + MAX_ADDR_COUNT]:
             payload += struct.pack(
-                '>Q', timestamp)  # 64-bit time
+                '>Q', int(timestamp))  # 64-bit time
             payload += struct.pack('>I', stream)
             payload += struct.pack(
                 '>q', 1)  # service bit flags offered by this node

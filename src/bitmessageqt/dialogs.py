@@ -47,7 +47,7 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
         try:
             self.label_2.setText(
                 self.label_2.text().replace(
-                    '2019', str(last_commit.get('time').year)
+                    '2020', str(last_commit.get('time').year)
                 ))
         except AttributeError:
             pass

@@ -172,9 +172,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except BMObjectAlreadyHaveError:
                 logger.debug(
                     '%(host)s:%(port)i already got object, skipping',
-                    self.destination._asdict())
+                    self.destinaestion._asdict())
             except struct.error:
                 logger.debug('decoding error, skipping')
+            except ValueError:
+                pass
         elif self.socket.type == socket.SOCK_DGRAM:
             # broken read, ignore
             pass
@@ -206,9 +208,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Decode node details from the payload"""
         # protocol.checkIPAddress()
         services, host, port = self.decode_payload_content("Q16sH")
-        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape'):
             host = socket.inet_ntop(socket.AF_INET, host[12:16])
-        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43'.encode('raw_unicode_escape'):
             # Onion, based on BMD/bitcoind
             host = base64.b32encode(host[6:]).lower() + ".onion"
         else:
@@ -385,7 +387,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if dandelion and not state.dandelion:
             return True
 
-        for i in map(str, items):
+        for i in map(bytes, items):
             if i in Inventory() and not Dandelion().hasHash(i):
                 continue
             if dandelion and not Dandelion().hasHash(i):
@@ -438,7 +440,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                self.object.objectType, buffer(self.object.data)))
+                self.object.objectType, memoryview(self.object.data)))
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -449,12 +451,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-
-        Inventory()[self.object.inventoryHash] = (
+        [self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            buffer(self.payload[objectOffset:]), self.object.expiresTime,
-            buffer(self.object.tag)
+            memoryview(self.payload[objectOffset:]), self.object.expiresTime,
+            memoryview(self.object.tag)
         )
+        Inventory()[self.object.inventoryHash]
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((

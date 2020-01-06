@@ -164,7 +164,7 @@ if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
     if not compiler:
         compilerToPackages()
     prereqToPackages()
-    if mandatory:
+    if prereqs and mandatory:
         sys.exit(1)
 else:
     print("All the dependencies satisfied, you can install PyBitmessage")
