@@ -1,7 +1,6 @@
 """
 BMObject and it's exceptions.
 """
-
 import logging
 import time
 
@@ -15,12 +14,14 @@ logger = logging.getLogger('default')
 
 
 class BMObjectInsufficientPOWError(Exception):
-    """Exception indicating the object doesn't have sufficient proof of work."""
+    """Exception indicating the object
+    doesn't have sufficient proof of work."""
     errorCodes = ("Insufficient proof of work")
 
 
 class BMObjectInvalidDataError(Exception):
-    """Exception indicating the data being parsed does not match the specification."""
+    """Exception indicating the data being parsed
+    does not match the specification."""
     errorCodes = ("Data invalid")
 
 
@@ -30,7 +31,8 @@ class BMObjectExpiredError(Exception):
 
 
 class BMObjectUnwantedStreamError(Exception):
-    """Exception indicating the object is in a stream we didn't advertise as being interested in."""
+    """Exception indicating the object is in a stream
+    we didn't advertise as being interested in."""
     errorCodes = ("Object in unwanted stream")
 
 
@@ -44,9 +46,8 @@ class BMObjectAlreadyHaveError(Exception):
     errorCodes = ("Already have this object")
 
 
-class BMObject(object):
+class BMObject(object):  # pylint: disable=too-many-instance-attributes
     """Bitmessage Object as a class."""
-    # pylint: disable=too-many-instance-attributes
 
     # max TTL, 28 days and 3 hours
     maxTTL = 28 * 24 * 60 * 60 + 10800
@@ -81,31 +82,36 @@ class BMObject(object):
             raise BMObjectInsufficientPOWError()
 
     def checkEOLSanity(self):
-        """Check if object's lifetime isn't ridiculously far in the past or future."""
+        """Check if object's lifetime
+        isn't ridiculously far in the past or future."""
         # EOL sanity check
         if self.expiresTime - int(time.time()) > BMObject.maxTTL:
             logger.info(
-                'This object\'s End of Life time is too far in the future. Ignoring it. Time is %i',
-                self.expiresTime)
+                'This object\'s End of Life time is too far in the future.'
+                ' Ignoring it. Time is %i', self.expiresTime)
             # .. todo::  remove from download queue
             raise BMObjectExpiredError()
 
         if self.expiresTime - int(time.time()) < BMObject.minTTL:
             logger.info(
-                'This object\'s End of Life time was too long ago. Ignoring the object. Time is %i',
-                self.expiresTime)
+                'This object\'s End of Life time was too long ago.'
+                ' Ignoring the object. Time is %i', self.expiresTime)
             # .. todo::  remove from download queue
             raise BMObjectExpiredError()
 
     def checkStream(self):
         """Check if object's stream matches streams we are interested in"""
         if self.streamNumber not in state.streamsInWhichIAmParticipating:
-            logger.debug('The streamNumber %i isn\'t one we are interested in.', self.streamNumber)
+            logger.debug(
+                'The streamNumber %i isn\'t one we are interested in.',
+                self.streamNumber)
             raise BMObjectUnwantedStreamError()
 
     def checkAlreadyHave(self):
         """
-        Check if we already have the object (so that we don't duplicate it in inventory or advertise it unnecessarily)
+        Check if we already have the object
+        (so that we don't duplicate it in inventory
+        or advertise it unnecessarily)
         """
         # if it's a stem duplicate, pretend we don't have it
         if Dandelion().hasHash(self.inventoryHash):
@@ -114,7 +120,8 @@ class BMObject(object):
             raise BMObjectAlreadyHaveError()
 
     def checkObjectByType(self):
-        """Call a object type specific check (objects can have additional checks based on their types)"""
+        """Call a object type specific check
+        (objects can have additional checks based on their types)"""
         if self.objectType == protocol.OBJECT_GETPUBKEY:
             self.checkGetpubkey()
         elif self.objectType == protocol.OBJECT_PUBKEY:
@@ -125,20 +132,21 @@ class BMObject(object):
             self.checkBroadcast()
         # other objects don't require other types of tests
 
-    def checkMessage(self):
+    def checkMessage(self):  # pylint: disable=no-self-use
         """"Message" object type checks."""
-        # pylint: disable=no-self-use
         return
 
     def checkGetpubkey(self):
         """"Getpubkey" object type checks."""
         if len(self.data) < 42:
-            logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
+            logger.info(
+                'getpubkey message doesn\'t contain enough data. Ignoring.')
             raise BMObjectInvalidError()
 
     def checkPubkey(self):
         """"Pubkey" object type checks."""
-        if len(self.data) < 146 or len(self.data) > 440:  # sanity check
+        # sanity check
+        if len(self.data) < 146 or len(self.data) > 440:
             logger.info('pubkey object too short or too long. Ignoring.')
             raise BMObjectInvalidError()
 
@@ -146,8 +154,9 @@ class BMObject(object):
         """"Broadcast" object type checks."""
         if len(self.data) < 180:
             logger.debug(
-                'The payload length of this broadcast packet is unreasonably low.'
-                ' Someone is probably trying funny business. Ignoring message.')
+                'The payload length of this broadcast'
+                ' packet is unreasonably low. Someone is probably'
+                ' trying funny business. Ignoring message.')
             raise BMObjectInvalidError()
 
         # this isn't supported anymore

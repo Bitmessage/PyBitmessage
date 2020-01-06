@@ -1,3 +1,6 @@
+"""
+Network subsystem packages
+"""
 from addrthread import AddrThread
 from announcethread import AnnounceThread
 from connectionpool import BMConnectionPool

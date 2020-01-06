@@ -1,10 +1,9 @@
 """
-src/network/dandelion.py
-========================
+Dandelion class definition, tracks stages
 """
 import logging
 from collections import namedtuple
-from random import choice, sample, expovariate
+from random import choice, expovariate, sample
 from threading import RLock
 from time import time
 
@@ -28,7 +27,7 @@ logger = logging.getLogger('default')
 
 
 @Singleton
-class Dandelion():      # pylint: disable=old-style-class
+class Dandelion:  # pylint: disable=old-style-class
     """Dandelion class for tracking stem/fluff stages."""
     def __init__(self):
         # currently assignable child stems
@@ -123,7 +122,8 @@ class Dandelion():      # pylint: disable=old-style-class
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
                 for k in (
-                        k for k, v in self.nodeMap.iteritems() if v == connection
+                        k for k, v in self.nodeMap.iteritems()
+                        if v == connection
                 ):
                     self.nodeMap[k] = None
                 for k, v in {
