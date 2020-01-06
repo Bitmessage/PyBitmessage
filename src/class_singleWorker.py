@@ -470,8 +470,8 @@ class singleWorker(StoppableThread):
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
         if not peer:  # find own onionhostname
-            for peer_ in state.ownAddresses:
-                if peer_.host.endswith('.onion'):
+            for peer in state.ownAddresses:
+                if peer.host.endswith('.onion'):
                     break
             else:
                 return

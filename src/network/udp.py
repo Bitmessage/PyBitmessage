@@ -149,6 +149,9 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             retval = self.socket.sendto(
                 self.write_buf, ('<broadcast>', self.port))
         except socket.error as e:
-            logger.error("socket error on sendato: %s", e)
+            logger.error("socket error on sendto: %s", e)
+            if e.errno == 101:
+                self.announcing = False
+                self.socket.close()
             retval = 0
         self.slice_write_buf(retval)

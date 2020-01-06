@@ -1,3 +1,4 @@
+import ConfigParser
 import os
 import sys
 
@@ -16,8 +17,22 @@ import tempfile
 import widgets
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlStoredProcedure
+from helper_startup import start_proxyconfig
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
+
+
+def getSOCKSProxyType(config):
+    """Get user socksproxytype setting from *config*"""
+    try:
+        result = ConfigParser.SafeConfigParser.get(
+            config, 'bitmessagesettings', 'socksproxytype')
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        return
+    else:
+        if result.lower() in ('', 'none', 'false'):
+            result = None
+    return result
 
 
 class SettingsDialog(QtGui.QDialog):
@@ -31,6 +46,16 @@ class SettingsDialog(QtGui.QDialog):
         self.config = BMConfigParser()
         self.net_restart_needed = False
         self.timer = QtCore.QTimer()
+
+        try:
+            import pkg_resources
+        except ImportError:
+            pass
+        else:
+            # Append proxy types defined in plugins
+            for ep in pkg_resources.iter_entry_points(
+                    'bitmessage.proxyconfig'):
+                self.comboBoxProxyType.addItem(ep.name)
 
         self.lineEditMaxOutboundConnections.setValidator(
             QtGui.QIntValidator(0, 8, self.lineEditMaxOutboundConnections))
@@ -47,20 +72,33 @@ class SettingsDialog(QtGui.QDialog):
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
         # pylint: disable=too-many-branches,too-many-statements
-        self.checkBoxStartOnLogon.setChecked(
-            config.getboolean('bitmessagesettings', 'startonlogon'))
-        self.checkBoxMinimizeToTray.setChecked(
-            config.getboolean('bitmessagesettings', 'minimizetotray'))
-        self.checkBoxTrayOnClose.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'trayonclose'))
+        if not self.parent.tray.isSystemTrayAvailable():
+            self.groupBoxTray.setEnabled(False)
+            self.groupBoxTray.setTitle(_translate(
+                "MainWindow", "Tray (not available in your system)"))
+            for setting in (
+                    'minimizetotray', 'trayonclose', 'startintray'):
+                config.set('bitmessagesettings', setting, 'false')
+        else:
+            self.checkBoxMinimizeToTray.setChecked(
+                config.getboolean('bitmessagesettings', 'minimizetotray'))
+            self.checkBoxTrayOnClose.setChecked(
+                config.safeGetBoolean('bitmessagesettings', 'trayonclose'))
+            self.checkBoxStartInTray.setChecked(
+                config.getboolean('bitmessagesettings', 'startintray'))
+
         self.checkBoxHideTrayConnectionNotifications.setChecked(
-            config.getboolean("bitmessagesettings", "hidetrayconnectionnotifications"))
+            config.getboolean(
+                'bitmessagesettings', 'hidetrayconnectionnotifications'))
         self.checkBoxShowTrayNotifications.setChecked(
             config.getboolean('bitmessagesettings', 'showtraynotifications'))
-        self.checkBoxStartInTray.setChecked(
-            config.getboolean('bitmessagesettings', 'startintray'))
+
+        self.checkBoxStartOnLogon.setChecked(
+            config.getboolean('bitmessagesettings', 'startonlogon'))
+
         self.checkBoxWillinglySendToMobile.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
+            config.safeGetBoolean(
+                'bitmessagesettings', 'willinglysendtomobile'))
         self.checkBoxUseIdenticons.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'useidenticons'))
         self.checkBoxReplyBelow.setChecked(
@@ -82,10 +120,12 @@ class SettingsDialog(QtGui.QDialog):
                 "MainWindow", "Start-on-login not yet supported on your OS."))
             self.checkBoxMinimizeToTray.setDisabled(True)
             self.checkBoxMinimizeToTray.setText(_translate(
-                "MainWindow", "Minimize-to-tray not yet supported on your OS."))
+                "MainWindow",
+                "Minimize-to-tray not yet supported on your OS."))
             self.checkBoxShowTrayNotifications.setDisabled(True)
             self.checkBoxShowTrayNotifications.setText(_translate(
-                "MainWindow", "Tray notifications not yet supported on your OS."))
+                "MainWindow",
+                "Tray notifications not yet supported on your OS."))
         elif 'linux' in sys.platform:
             self.checkBoxStartOnLogon.setDisabled(True)
             self.checkBoxStartOnLogon.setText(_translate(
@@ -102,21 +142,11 @@ class SettingsDialog(QtGui.QDialog):
         self.checkBoxOnionOnly.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'))
 
-        proxy_type = config.safeGet(
-            'bitmessagesettings', 'socksproxytype', 'none')
-        if proxy_type == 'none':
-            self.comboBoxProxyType.setCurrentIndex(0)
-            self.lineEditSocksHostname.setEnabled(False)
-            self.lineEditSocksPort.setEnabled(False)
-            self.lineEditSocksUsername.setEnabled(False)
-            self.lineEditSocksPassword.setEnabled(False)
-            self.checkBoxAuthentication.setEnabled(False)
-            self.checkBoxSocksListen.setEnabled(False)
-            self.checkBoxOnionOnly.setEnabled(False)
-        elif proxy_type == 'SOCKS4a':
-            self.comboBoxProxyType.setCurrentIndex(1)
-        elif proxy_type == 'SOCKS5':
-            self.comboBoxProxyType.setCurrentIndex(2)
+        self._proxy_type = getSOCKSProxyType(config)
+        self.comboBoxProxyType.setCurrentIndex(
+            0 if not self._proxy_type
+            else self.comboBoxProxyType.findText(self._proxy_type))
+        self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
 
         self.lineEditSocksHostname.setText(
             config.get('bitmessagesettings', 'sockshostname'))
@@ -204,7 +234,7 @@ class SettingsDialog(QtGui.QDialog):
             self.checkBoxAuthentication.setEnabled(False)
             self.checkBoxSocksListen.setEnabled(False)
             self.checkBoxOnionOnly.setEnabled(False)
-        elif comboBoxIndex in (1, 2):
+        else:
             self.lineEditSocksHostname.setEnabled(True)
             self.lineEditSocksPort.setEnabled(True)
             self.checkBoxAuthentication.setEnabled(True)
@@ -306,27 +336,22 @@ class SettingsDialog(QtGui.QDialog):
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
 
-        proxy_type = self.config.safeGet(
-            'bitmessagesettings', 'socksproxytype', 'none')
-        if (
-            proxy_type == 'none' and
-            self.comboBoxProxyType.currentText()[0:5] == 'SOCKS' and
-            shared.statusIconColor != 'red'
-        ):
-            self.net_restart_needed = True
-        if (
-            proxy_type[0:5] == 'SOCKS' and
-            self.comboBoxProxyType.currentText()[0:5] != 'SOCKS'
-        ):
+        proxytype_index = self.comboBoxProxyType.currentIndex()
+        if proxytype_index == 0:
+            if self._proxy_type and shared.statusIconColor != 'red':
+                self.net_restart_needed = True
+        elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
             self.parent.statusbar.clearMessage()
 
         self.config.set(
             'bitmessagesettings', 'socksproxytype',
-            str(self.comboBoxProxyType.currentText())
-            if self.comboBoxProxyType.currentText()[0:5] == 'SOCKS'
-            else 'none'
+            'none' if self.comboBoxProxyType.currentIndex() == 0
+            else str(self.comboBoxProxyType.currentText())
         )
+        if proxytype_index > 2:  # last literal proxytype in ui
+            start_proxyconfig()
+
         self.config.set('bitmessagesettings', 'socksauthentication', str(
             self.checkBoxAuthentication.isChecked()))
         self.config.set('bitmessagesettings', 'sockshostname', str(
