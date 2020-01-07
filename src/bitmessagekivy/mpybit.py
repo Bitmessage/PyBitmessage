@@ -81,6 +81,7 @@ class Navigatorss(MDNavigationDrawer):
 
 class Inbox(Screen):
     """Inbox Screen uses screen to show widgets of screens"""
+
     queryreturn = ListProperty()
     has_refreshed = True
     account = StringProperty()
@@ -301,6 +302,7 @@ class Inbox(Screen):
 
 class MyAddress(Screen):
     """MyAddress screen uses screen to show widgets of screens"""
+
     addresses_list = ListProperty()
     has_refreshed = True
     is_add_created = False
@@ -316,7 +318,10 @@ class MyAddress(Screen):
         self.addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
             self.ids.refresh_layout.scroll_y = 1.0
-            filtered_list = [x for x in BMConfigParser().addresses() if self.filter_address(x)]
+            filtered_list = [
+                x for x in BMConfigParser().addresses()
+                if self.filter_address(x)
+            ]
             self.addresses_list = filtered_list
         self.addresses_list = [obj for obj in reversed(self.addresses_list)]
         self.ids.identi_tag.children[0].text = ''
@@ -419,6 +424,7 @@ class MyAddress(Screen):
 
 class AddressBook(Screen):
     """AddressBook Screen uses screen to show widgets of screens"""
+
     queryreturn = ListProperty()
     has_refreshed = True
 
@@ -530,6 +536,7 @@ class SelectableRecycleBoxLayout(
         FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout):
     """Adds selection and focus behaviour to the view"""
     # pylint: disable = duplicate-bases
+
     pass
 
 
@@ -573,6 +580,7 @@ class RV(RecycleView):
 class DropDownWidget(BoxLayout):
     """Adding Dropdown Widget"""
     # pylint: disable=too-many-statements
+
     txt_input = ObjectProperty()
     rv = ObjectProperty()
 
@@ -613,7 +621,9 @@ class DropDownWidget(BoxLayout):
                         statusIconColor = 'red'
                         if (addressVersionNumber > 4) or (
                                 addressVersionNumber <= 1):
-                            print("addressVersionNumber > 4 or addressVersionNumber <= 1")
+                            print(
+                                "addressVersionNumber > 4"
+                                " or addressVersionNumber <= 1")
                         if streamNumber > 1 or streamNumber == 0:
                             print("streamNumber > 1 or streamNumber == 0")
                         if statusIconColor == 'red':
@@ -648,7 +658,8 @@ class DropDownWidget(BoxLayout):
                     if state.detailPageType == 'draft' \
                             and state.send_draft_mail:
                         state.draft_count = str(int(state.draft_count) - 1)
-                        state.msg_counter_objs.draft_cnt.badge_text = state.draft_count
+                        state.msg_counter_objs.draft_cnt.badge_text = (
+                            state.draft_count)
                         state.detailPageType = ''
                         state.send_draft_mail = None
                     # self.parent.parent.screens[0].ids.ml.clear_widgets()
@@ -766,6 +777,7 @@ class Payment(Screen):
 
 class Credits(Screen):
     """Credits Method"""
+
     available_credits = StringProperty(
         '{0}'.format('0'))
 
@@ -778,13 +790,15 @@ class Login(Screen):
 
 class NetworkStat(Screen):
     """Method used to show network stat"""
+
     text_variable_1 = StringProperty(
         '{0}::{1}'.format('Total Connections', '0'))
     text_variable_2 = StringProperty(
         'Processed {0} per-to-per messages'.format('0'))
     text_variable_3 = StringProperty(
         'Processed {0} brodcast messages'.format('0'))
-    text_variable_4 = StringProperty('Processed {0} public keys'.format('0'))
+    text_variable_4 = StringProperty(
+        'Processed {0} public keys'.format('0'))
     text_variable_5 = StringProperty(
         'Processed {0} object to be synced'.format('0'))
 
@@ -812,11 +826,13 @@ class NetworkStat(Screen):
 
 class ContentNavigationDrawer(Navigatorss):
     """Navigate Content Drawer"""
+
     pass
 
 
 class Random(Screen):
     """Generates Random Address"""
+
     is_active = BooleanProperty(False)
     checked = StringProperty("")
 
@@ -877,6 +893,7 @@ class Random(Screen):
 
 class Sent(Screen):
     """Sent Screen uses screen to show widgets of screens"""
+
     queryreturn = ListProperty()
     has_refreshed = True
     account = StringProperty()
@@ -1100,6 +1117,7 @@ class Sent(Screen):
 
 class Trash(Screen):
     """Trash Screen uses screen to show widgets of screens"""
+
     trash_messages = ListProperty()
     has_refreshed = True
     # delete_index = StringProperty()
@@ -1231,9 +1249,11 @@ class Trash(Screen):
         """Deleting message from trash"""
         self.children[1].active = True
         if self.table_name == 'inbox':
-            sqlExecute("DELETE FROM inbox WHERE msgid = ?;", self.delete_index)
+            sqlExecute(
+                "DELETE FROM inbox WHERE msgid = ?;", self.delete_index)
         elif self.table_name == 'sent':
-            sqlExecute("DELETE FROM sent WHERE ackdata = ?;", self.delete_index)
+            sqlExecute(
+                "DELETE FROM sent WHERE ackdata = ?;", self.delete_index)
         msg_count_objs = state.kivyapp.root.children[2].children[0].ids
         if int(state.trash_count) > 0:
             msg_count_objs.trash_cnt.badge_text = str(
@@ -1271,6 +1291,7 @@ class Setting(Screen):
 class NavigateApp(App):
     """Navigation Layout of class"""
     # pylint: disable=too-many-public-methods
+
     theme_cls = ThemeManager()
     previous_date = ObjectProperty()
     obj_1 = ObjectProperty()
@@ -1742,6 +1763,7 @@ class NavigateApp(App):
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
+
     valid = False
 
     def __init__(self, **kwargs):
@@ -1834,7 +1856,9 @@ class GrashofPopup(Popup):
         elif status == 'missingbm':
             text = "The address should start with ''BM-''"
         elif status == 'checksumfailed':
-            text = "The address is not typed or copied correctly(the checksum failed)."
+            text = (
+                "The address is not typed or copied correctly"
+                " (the checksum failed).")
         elif status == 'versiontoohigh':
             text = (
                 "The version number of this address is higher than this"
@@ -1896,6 +1920,7 @@ class NavigationDrawerTwoLineListItem(
 
 class MailDetail(Screen):
     """MailDetail Screen uses to show the detail of mails"""
+
     to_addr = StringProperty()
     from_addr = StringProperty()
     subject = StringProperty()
@@ -2043,6 +2068,7 @@ class MailDetail(Screen):
 
 class MyaddDetailPopup(Popup):
     """MyaddDetailPopup pop is used for showing my address detail"""
+
     address_label = StringProperty()
     address = StringProperty()
 
@@ -2075,6 +2101,7 @@ class MyaddDetailPopup(Popup):
 
 class AddbookDetailPopup(Popup):
     """AddbookDetailPopup pop is used for showing my address detail"""
+
     address_label = StringProperty()
     address = StringProperty()
 
@@ -2154,6 +2181,7 @@ class ShowQRCode(Screen):
 
 class Draft(Screen):
     """Draft screen is used to show the list of draft messages"""
+
     data = ListProperty()
     account = StringProperty()
     queryreturn = ListProperty()
@@ -2284,10 +2312,12 @@ class Draft(Screen):
         sqlExecute("DELETE FROM sent WHERE ackdata = ?;", data_index)
         try:
             msg_count_objs = (
-                self.parent.parent.parent.parent.parent.children[2].children[0].ids)
+                self.parent.parent.parent.parent.parent.children[
+                    2].children[0].ids)
         except Exception:
-            msg_count_objs = self.parent.parent.parent.parent.parent.parent.children[
-                2].children[0].ids
+            msg_count_objs = (
+                self.parent.parent.parent.parent.parent.parent.children[
+                    2].children[0].ids)
             # msg_count_objs = self.parent.parent.parent.parent.parent.children[
             #     2].children[0].ids
         if int(state.draft_count) > 0:
@@ -2354,6 +2384,7 @@ class CustomSpinner(Spinner):
 
 class Allmails(Screen):
     """All mails Screen uses screen to show widgets of screens"""
+
     data = ListProperty()
     has_refreshed = True
     all_mails = ListProperty()
@@ -2489,8 +2520,9 @@ class Allmails(Screen):
                 2].children[0].ids
             nav_lay_obj = self.parent.parent.parent.parent.parent.ids
         except Exception:
-            msg_count_objs = self.parent.parent.parent.parent.parent.parent.children[
-                2].children[0].ids
+            msg_count_objs = (
+                self.parent.parent.parent.parent.parent.parent.children[
+                    2].children[0].ids)
             nav_lay_obj = self.parent.parent.parent.parent.parent.parent.ids
         if folder == 'inbox':
             msg_count_objs.inbox_cnt.badge_text = str(
@@ -2584,4 +2616,5 @@ class LoadingPopup(Popup):
 
 class AddressDropdown(OneLineIconListItem):
     """AddressDropdown showns all the addresses"""
+
     pass
