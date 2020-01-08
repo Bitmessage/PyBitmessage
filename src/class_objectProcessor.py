@@ -147,7 +147,7 @@ class objectProcessor(threading.Thread):
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
-                ' ackreceived', int(time.time()), data[readPosition:])
+                'ackreceived', int(time.time()), data[readPosition:])
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata',
                 (data[readPosition:],
@@ -383,9 +383,9 @@ class objectProcessor(threading.Thread):
             signatureLength, signatureLengthLength = decodeVarint(
                 data[readPosition:readPosition + 10])
             readPosition += signatureLengthLength
-            signature = data[readPosition:readPosition + signatureLength]
+            signature = bytes(data[readPosition:readPosition + signatureLength])
             if highlevelcrypto.verify(
-                    data[8:endOfSignedDataPosition],
+                    bytes(data[8:endOfSignedDataPosition]),
                     signature, hexlify(publicSigningKey)):
                 logger.debug('ECDSA verify passed (within processpubkey)')
             else:

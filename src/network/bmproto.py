@@ -468,8 +468,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return self.decode_payload_content("LQIQ16sH")
 
     def bm_command_addr(self):
-        # print('+++++++++++++++++++++++++++\
-        # bm_command_addr bm_command_addr bm_command_addr ++++++++++++++++')
         """Incoming addresses, process them"""
         addresses = self._decode_addr()      # pylint: disable=redefined-outer-name
         for i in addresses:
