@@ -59,8 +59,7 @@ def random_color(hash_string):
     r = rgb[:split]
     g = rgb[split:2 * split]
     b = rgb[2 * split:3 * split]
-    color = (int(r, 16), int(g, 16),
-             int(b, 16), 0xFF)
+    color = (int(r, 16), int(g, 16), int(b, 16), 0xFF)
     return color
 
 
@@ -78,6 +77,5 @@ def generate_image(image, color, hash_string):
             if int(hash_string[index], 16) % 2 == 0:
                 image.putpixel((x, y), color)
                 image.putpixel((limit_x - x, y), color)
-
             index = index + 1
     return image

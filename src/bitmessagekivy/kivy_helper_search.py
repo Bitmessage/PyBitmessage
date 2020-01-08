@@ -7,22 +7,24 @@ from helper_sql import sqlQuery
 def search_sql(
         xAddress="toaddress", account=None, folder="inbox", where=None,
         what=None, unreadOnly=False, start_indx=0, end_indx=20):
-    """Method helping for searching mails"""
     # pylint: disable=too-many-arguments, too-many-branches
+    """Method helping for searching mails"""
     if what is not None and what != "":
         what = "%" + what + "%"
     else:
         what = None
-    if folder == "sent" or folder == "draft":
+    if folder in ("sent", "draft"):
         sqlStatementBase = (
             '''SELECT toaddress, fromaddress, subject, message, status,'''
-            ''' ackdata, lastactiontime FROM sent ''')
+            ''' ackdata, lastactiontime FROM sent '''
+        )
     elif folder == "addressbook":
         sqlStatementBase = '''SELECT label, address From addressbook '''
     else:
         sqlStatementBase = (
             '''SELECT folder, msgid, toaddress, message, fromaddress,'''
-            ''' subject, received, read FROM inbox ''')
+            ''' subject, received, read FROM inbox '''
+        )
     sqlStatementParts = []
     sqlArguments = []
     if account is not None:
@@ -59,7 +61,7 @@ def search_sql(
     if sqlStatementParts:
         sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
     # if folder in ("sent", "draft"):
-    if folder == "sent" or folder == "draft":
+    if folder in ("sent", "draft"):
         sqlStatementBase += \
             "ORDER BY lastactiontime DESC limit {0}, {1}".format(
                 start_indx, end_indx)
