@@ -1,8 +1,8 @@
-﻿# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
-"""
+﻿"""
 Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
+# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
 
 import httplib
 import socket
@@ -19,8 +19,8 @@ import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
 from network.connectionpool import BMConnectionPool
-from network.threads import StoppableThread
 from network.node import Peer
+from network.threads import StoppableThread
 
 
 def createRequestXML(service, action, arguments=None):
@@ -83,6 +83,7 @@ class UPnPError(Exception):
 
 class Router:  # pylint: disable=old-style-class
     """Encapulate routing"""
+
     name = ""
     path = ""
     address = None
@@ -152,7 +153,6 @@ class Router:  # pylint: disable=old-style-class
 
     def DeletePortMapping(self, externalPort, protocol):
         """Delete UPnP port mapping"""
-
         resp = self.soapRequest(self.upnp_schema + ':1', 'DeletePortMapping', [
             ('NewRemoteHost', ''),
             ('NewExternalPort', str(externalPort)),
@@ -163,16 +163,12 @@ class Router:  # pylint: disable=old-style-class
 
     def GetExternalIPAddress(self):
         """Get the external address"""
-
-        resp = self.soapRequest(
-            self.upnp_schema + ':1', 'GetExternalIPAddress')
+        resp = self.soapRequest(self.upnp_schema + ':1', 'GetExternalIPAddress')
         dom = parseString(resp.read())
-        return dom.getElementsByTagName(
-            'NewExternalIPAddress')[0].childNodes[0].data
+        return dom.getElementsByTagName('NewExternalIPAddress')[0].childNodes[0].data
 
     def soapRequest(self, service, action, arguments=None):
         """Make a request to a router"""
-
         conn = httplib.HTTPConnection(self.routerPath.hostname, self.routerPath.port)
         conn.request(
             'POST',
@@ -223,7 +219,6 @@ class uPnPThread(StoppableThread):
 
     def run(self):
         """Start the thread to manage UPnP activity"""
-
         logger.debug("Starting UPnP thread")
         logger.debug("Local IP: %s", self.localIP)
         lastSent = 0
@@ -261,16 +256,12 @@ class uPnPThread(StoppableThread):
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
                         try:
-                            self_peer = Peer(
-                                newRouter.GetExternalIPAddress(),
-                                self.extPort
-                            )
+                            self_peer = Peer(newRouter.GetExternalIPAddress(), self.extPort)
                         except:
                             logger.debug('Failed to get external IP')
                         else:
                             with knownnodes.knownNodesLock:
-                                knownnodes.addKnownNode(
-                                    1, self_peer, is_self=True)
+                                knownnodes.addKnownNode(1, self_peer, is_self=True)
                         queues.UISignalQueue.put(('updateStatusBar', tr._translate(
                             "MainWindow", 'UPnP port mapping established on port %1'
                         ).arg(str(self.extPort))))
@@ -296,12 +287,12 @@ class uPnPThread(StoppableThread):
                 deleted = True
                 self.deletePortMapping(router)
         if deleted:
-            queues.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", 'UPnP port mapping removed')))
+            queues.UISignalQueue.put(
+                ('updateStatusBar', tr._translate("MainWindow", 'UPnP port mapping removed')))
         logger.debug("UPnP thread done")
 
     def getLocalIP(self):
         """Get the local IP of the node"""
-
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         s.connect((uPnPThread.GOOGLE_DNS, 1))
@@ -309,7 +300,6 @@ class uPnPThread(StoppableThread):
 
     def sendSearchRouter(self):
         """Querying for UPnP services"""
-
         ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" + \
             "HOST: %s:%d\r\n" % (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT) + \
             "MAN: \"ssdp:discover\"\r\n" + \
@@ -324,7 +314,6 @@ class uPnPThread(StoppableThread):
 
     def createPortMapping(self, router):
         """Add a port mapping"""
-
         for i in range(50):
             try:
                 localIP = self.localIP
@@ -336,10 +325,7 @@ class uPnPThread(StoppableThread):
                     extPort = randint(32767, 65535)
                 logger.debug(
                     "Attempt %i, requesting UPnP mapping for %s:%i on external port %i",
-                    i,
-                    localIP,
-                    self.localPort,
-                    extPort)
+                    i, localIP, self.localPort, extPort)
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
                 self.extPort = extPort
                 BMConfigParser().set('bitmessagesettings', 'extport', str(extPort))

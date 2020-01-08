@@ -294,7 +294,7 @@ def init():
     global bitmsglib, bmpow
 
     openclpow.initCL()
-    if "win32" == sys.platform:
+    if sys.platform == "win32":
         if ctypes.sizeof(ctypes.c_voidp) == 4:
             bitmsglib = 'bitmsghash32.dll'
         else:
@@ -323,7 +323,7 @@ def init():
     elif platform == "android":
         try:
             bso = ctypes.CDLL('libbitmsghash.so')
-        except Exception as e:
+        except Exception:
             bso = None
 
     else:

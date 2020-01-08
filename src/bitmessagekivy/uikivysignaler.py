@@ -1,12 +1,15 @@
-
+"""
+Ui Singnaler for kivy interface
+"""
 from threading import Thread
-import state
+
 import queues
+import state
 from semaphores import kivyuisignaler
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 
 
 class UIkivySignaler(Thread):
+    """Kivy ui signaler"""
 
     def run(self):
         kivyuisignaler.acquire()
@@ -14,13 +17,12 @@ class UIkivySignaler(Thread):
             try:
                 command, data = queues.UISignalQueue.get()
                 if command == 'writeNewAddressToTable':
-                    label, address, streamNumber = data
+                    address = data[1]
                     state.kivyapp.variable_1.append(address)
                 # elif command == 'rerenderAddressBook':
                 #     state.kivyapp.obj_1.refreshs()
                 # Need to discuss this
                 elif command == 'updateSentItemStatusByAckdata':
                     state.kivyapp.status_dispatching(data)
-
             except Exception as e:
                 print(e)

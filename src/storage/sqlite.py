@@ -39,15 +39,20 @@ class SqliteInventory(InventoryStorage):    # pylint: disable=too-many-ancestors
             return True
 
     def __getitem__(self, hash_):
-        print('----------__getitem__------------------')
+        if hash_ == 0:
+            hash_ = bytes()
         with self.lock:
-            if hash_ in self._inventory:
-                return self._inventory[hash_]
-            rows = sqlQuery(
-                'SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?',
-                sqlite3.Binary(hash_))
-            if not rows:
-                raise KeyError(hash_)
+            try:
+                if hash_ in self._inventory:
+                    return self._inventory[hash_]
+                rows = sqlQuery(
+                    'SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?',
+                    sqlite3.Binary(hash_))
+                if not rows:
+                    pass
+                    # raise KeyError(hash_)
+            except:
+                pass
             return InventoryItem(*rows[0])
 
     def __setitem__(self, hash_, value):

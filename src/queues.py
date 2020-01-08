@@ -1,6 +1,5 @@
-
-import queue as Queue
 """Most of the queues used by bitmessage threads are defined here."""
+import queue as Queue
 
 import threading
 import time

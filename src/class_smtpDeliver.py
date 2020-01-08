@@ -3,7 +3,6 @@ src/class_smtpDeliver.py
 ========================
 """
 # pylint: disable=unused-variable
-
 import smtplib
 import urlparse
 from email.header import Header
@@ -24,7 +23,8 @@ class smtpDeliver(StoppableThread):
 
     def stopThread(self):
         try:
-            queues.UISignallerQueue.put(("stopThread", "data"))  # pylint: disable=no-member
+            # pylint: disable=no-member
+            queues.UISignallerQueue.put(("stopThread", "data"))
         except:
             pass
         super(smtpDeliver, self).stopThread()
@@ -50,23 +50,27 @@ class smtpDeliver(StoppableThread):
                 ackData, message = data
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
-                dest = BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '')
+                dest = BMConfigParser().safeGet(
+                    "bitmessagesettings", "smtpdeliver", '')
                 if dest == '':
                     continue
                 try:
+                    # pylint: disable=deprecated-lambda
                     u = urlparse.urlparse(dest)
                     to = urlparse.parse_qs(u.query)['to']
                     client = smtplib.SMTP(u.hostname, u.port)
                     msg = MIMEText(body, 'plain', 'utf-8')
                     msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
-                    toLabel = map(  # pylint: disable=deprecated-lambda
+                    toLabel = map(
                         lambda y: BMConfigParser().safeGet(y, "label"),
-                        filter(  # pylint: disable=deprecated-lambda
+                        filter(
                             lambda x: x == toAddress, BMConfigParser().addresses())
                     )
                     if toLabel:
-                        msg['To'] = "\"%s\" <%s>" % (Header(toLabel[0], 'utf-8'), toAddress + '@' + SMTPDOMAIN)
+                        msg['To'] = "\"%s\" <%s>" % (
+                            Header(toLabel[0], 'utf-8'),
+                            toAddress + '@' + SMTPDOMAIN)
                     else:
                         msg['To'] = toAddress + '@' + SMTPDOMAIN
                     client.ehlo()
@@ -80,7 +84,8 @@ class smtpDeliver(StoppableThread):
                 except:
                     self.logger.error('smtp delivery error', exc_info=True)
             elif command == 'displayNewSentMessage':
-                toAddress, fromLabel, fromAddress, subject, message, ackdata = data
+                toAddress, fromLabel, fromAddress, subject, message, ackdata = \
+                    data
             elif command == 'updateNetworkStatusTab':
                 pass
             elif command == 'updateNumberOfMessagesProcessed':

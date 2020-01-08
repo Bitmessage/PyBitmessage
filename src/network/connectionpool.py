@@ -17,11 +17,11 @@ from bmconfigparser import BMConfigParser
 from network.connectionchooser import chooseConnection
 from network.proxy import Proxy
 
-from .node import Peer
-from singleton import Singleton
 from network.tcp import (
-        TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection,bootstrap)
+    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection, bootstrap)
 from network.udp import UDPSocket
+from singleton import Singleton
+from .node import Peer
 
 logger = logging.getLogger('default')
 
@@ -78,8 +78,8 @@ class BMConnectionPool(object):
         `inboundConnections` and `outboundConnections` dicts
         """
         inboundConnections = [inboundConnections for inboundConnections in self.inboundConnections.values()]
-        outboundConnections = [outboundConnections for outboundConnections in  self.outboundConnections.values()]
-        return [ connections for connections in inboundConnections +outboundConnections]
+        outboundConnections = [outboundConnections for outboundConnections in self.outboundConnections.values()]
+        return [connections for connections in inboundConnections + outboundConnections]
 
     def establishedConnections(self):
         """Shortcut for list of connections having fullyEstablished == True"""
@@ -292,7 +292,7 @@ class BMConnectionPool(object):
                 except ValueError:
                     Proxy.onion_proxy = None
             established = sum(
-                1 for c in [outboundConnections  for outboundConnections in self.outboundConnections.values()]
+                1 for c in [outboundConnections for outboundConnections in self.outboundConnections.values()]
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < int(BMConfigParser().safeGet(
@@ -430,14 +430,13 @@ class BMConnectionPool(object):
         #         list(self.udpSockets.values())
         # ):
         for i in (
-
-                # [inboundConnections for inboundConnections in  self.inboundConnections.values()] +
-                # [outboundConnections for outboundConnections in self.outboundConnections.values()] +
-                # [listeningSockets for listeningSockets in self.listeningSockets.values()] +
-                # [udpSockets for udpSockets in self.udpSockets.values()]
-
-            self.connections()
-            + [listeningSockets for listeningSockets in  self.listeningSockets.values()] + [udpSockets for udpSockets in self.udpSockets.values()]
+            # [inboundConnections for inboundConnections in  self.inboundConnections.values()] +
+            # [outboundConnections for outboundConnections in self.outboundConnections.values()] +
+            # [listeningSockets for listeningSockets in self.listeningSockets.values()] +
+            # [udpSockets for udpSockets in self.udpSockets.values()]
+            self.connections() +
+            [listeningSockets for listeningSockets in self.listeningSockets.values()] +
+            [udpSockets for udpSockets in self.udpSockets.values()]
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

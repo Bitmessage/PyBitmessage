@@ -1,7 +1,7 @@
 """
 BMConfigParser class definition and default configuration settings
 """
-
+# pylint: disable=no-self-use, arguments-differ
 import configparser
 import shutil
 import os
@@ -45,7 +45,7 @@ BMConfigDefaults = {
 class BMConfigParser(configparser.ConfigParser):
     """Singleton class inherited from ConfigParsedadfeConfigParser
     with additional methods specific to bitmessage config."""
-
+    # pylint: disable=too-many-ancestors
     _temp = {}
 
     def set(self, section, option, value=None):
@@ -56,7 +56,8 @@ class BMConfigParser(configparser.ConfigParser):
             raise ValueError("Invalid value %s" % value)
         return configparser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):    # pylint: disable=arguments-differ
+    def get(self, section, option, raw=False, variables=None):
+        # pylint: disable=unused-argument
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return configparser.ConfigParser.get(
@@ -84,24 +85,26 @@ class BMConfigParser(configparser.ConfigParser):
             self._temp[section] = {option: value}
 
     def safeGetBoolean(self, section, field):
+        """Return value as boolean, False on exceptions"""
         config = configparser.ConfigParser()
-
         try:
-            #Used in the python2.7
+            # Used in the python2.7
             # return self.getboolean(section, field)
-            #Used in the python3.5.2
+            # Used in the python3.5.2
             return config.getboolean(section, field)
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return False
 
     def safeGetInt(self, section, field, default=0):
+        """Return value as integer, default on exceptions,
+        0 if default missing"""
         config = configparser.ConfigParser()
 
         try:
-            #Used in the python2.7
+            # Used in the python2.7
             # return self.getint(section, field)
-            #Used in the python3.5.2
+            # Used in the python3.5.2
             return config.getint(section, field)
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
@@ -116,11 +119,13 @@ class BMConfigParser(configparser.ConfigParser):
             return default
 
     def items(self, section, raw=False, variables=None):
+        """Return section variables as parent,
+        but override the "raw" argument to always True"""
         return configparser.ConfigParser.items(self, section, True, variables)
 
     def addresses(self):
+        """Return a list of local bitmessage addresses (from section labels)"""
         return [x for x in BMConfigParser().sections() if x.startswith('BM-')]
-
 
     def read(self, filenames):
         configparser.ConfigParser.read(self, filenames)
@@ -167,7 +172,8 @@ class BMConfigParser(configparser.ConfigParser):
     def validate(self, section, option, value):
         """Input validator interface (using factory pattern)"""
         try:
-            return getattr(self, 'validate_{}_{}'.format(section, option))(value)
+            return getattr(self, 'validate_{}_{}'.format(
+                section, option))(value)
         except AttributeError:
             return True
 

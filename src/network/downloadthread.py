@@ -44,7 +44,8 @@ class DownloadThread(StoppableThread):
             # Choose downloading peers randomly
             # connections = [
             #     x for x in
-            #     list(BMConnectionPool().inboundConnections.values()) + list(BMConnectionPool().outboundConnections.values())
+            #     list(BMConnectionPool().inboundConnections.values()) +
+            #     list(BMConnectionPool().outboundConnections.values())
             #     if x.fullyEstablished]
 
             connections = BMConnectionPool().establishedConnections()
