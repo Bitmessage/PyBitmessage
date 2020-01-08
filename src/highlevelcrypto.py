@@ -30,7 +30,7 @@ def makeCryptor(privkey):
 def hexToPubkey(pubkey):
     """Convert a pubkey from hex to binary"""
     pubkey_raw = a.changebase(pubkey[2:], 16, 256, minlen=64)
-    pubkey_bin = '\x02\xca\x00 ' + pubkey_raw[:32] + '\x00 ' + pubkey_raw[32:]
+    pubkey_bin = '\x02\xca\x00 '.encode('raw_unicode_escape') + pubkey_raw[:32] + '\x00 '.encode() + pubkey_raw[32:]
     return pubkey_bin
 
 
