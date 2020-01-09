@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/proxyconfig_stem.py
-===================================
+Configure tor proxy and hidden service with
+`stem <https://stem.torproject.org/>`_ depending on *bitmessagesettings*:
+
+  * try to start own tor instance on *socksport* if *sockshostname*
+    is unset or set to localhost;
+  * if *socksport* is already in use that instance is used only for
+    hidden service (if *sockslisten* is also set True);
+  * create ephemeral hidden service v3 if there is already *onionhostname*;
+  * otherwise use stem's 'BEST' version and save onion keys to the new
+    section using *onionhostname* as name for future use.
 """
 import os
 import logging
@@ -14,9 +22,8 @@ import stem.process
 import stem.version
 
 
-class DebugLogger(object):
+class DebugLogger(object):  # pylint: disable=too-few-public-methods
     """Safe logger wrapper for tor and plugin's logs"""
-    # pylint: disable=too-few-public-methods
     def __init__(self):
         self._logger = logging.getLogger('default')
         self._levels = {
@@ -36,13 +43,20 @@ class DebugLogger(object):
 
 
 def connect_plugin(config):  # pylint: disable=too-many-branches
-    """Run stem proxy configurator"""
+    """
+    Run stem proxy configurator
+
+    :param config: current configuration instance
+    :type config: :class:`pybitmessage.bmconfigparser.BMConfigParser`
+    :return: True if configuration was done successfully
+    """
     logwrite = DebugLogger()
-    if config.safeGet('bitmessagesettings', 'sockshostname') not in (
-            'localhost', '127.0.0.1', ''
+    if config.safeGet('bitmessagesettings', 'sockshostname', '') not in (
+        'localhost', '127.0.0.1', ''
     ):
         # remote proxy is choosen for outbound connections,
         # nothing to do here, but need to set socksproxytype to SOCKS5!
+        config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         logwrite(
             'sockshostname is set to remote address,'
             ' aborting stem proxy configuration')
@@ -77,6 +91,8 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
             logwrite('Started tor on port %s' % port)
             break
 
+    config.setTemp('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+
     if config.safeGetBoolean('bitmessagesettings', 'sockslisten'):
         # need a hidden service for inbound connections
         try:
@@ -91,11 +107,13 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
         onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
         onionkey = config.safeGet(onionhostname, 'privsigningkey')
         if onionhostname and not onionkey:
-            logwrite('The hidden service found in config ): %s' % onionhostname)
+            logwrite('The hidden service found in config ): %s' %
+                     onionhostname)
         onionkeytype = config.safeGet(onionhostname, 'keytype')
 
         response = controller.create_ephemeral_hidden_service(
-            config.safeGetInt('bitmessagesettings', 'onionport', 8444),
+            {config.safeGetInt('bitmessagesettings', 'onionport', 8444):
+             config.safeGetInt('bitmessagesettings', 'port', 8444)},
             key_type=(onionkeytype or 'NEW'),
             key_content=(onionkey or onionhostname and 'ED25519-V3' or 'BEST')
         )
@@ -106,7 +124,8 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
 
         if not onionkey:
             logwrite('Started hidden service %s.onion' % response.service_id)
-            # only save new service keys if onionhostname was not set previously
+            # only save new service keys
+            # if onionhostname was not set previously
             if not onionhostname:
                 onionhostname = response.service_id + '.onion'
                 config.set(
@@ -117,6 +136,5 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
                 config.set(
                     onionhostname, 'keytype', response.private_key_type)
                 config.save()
-        config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
 
-        return True
+    return True

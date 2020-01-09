@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-src/pyelliptic/ecc.py
-=====================
+Asymmetric cryptography using elliptic curves
 """
-# pylint: disable=protected-access
-
+# pylint: disable=protected-access, too-many-branches, too-many-locals
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
@@ -173,7 +171,8 @@ class ECC(object):
 
             if OpenSSL.EC_POINT_get_affine_coordinates_GFp(
                     group, pub_key, pub_key_x, pub_key_y, 0) == 0:
-                raise Exception("[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ...")
+                raise Exception(
+                    "[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ...")
 
             privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(priv_key))
             pubkeyx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_x))
@@ -276,7 +275,6 @@ class ECC(object):
 
     def raw_check_key(self, privkey, pubkey_x, pubkey_y, curve=None):
         """Check key validity, key is supplied as binary data"""
-        # pylint: disable=too-many-branches
         if curve is None:
             curve = self.curve
         elif isinstance(curve, str):
@@ -324,7 +322,6 @@ class ECC(object):
         """
         Sign the input with ECDSA method and returns the signature
         """
-        # pylint: disable=too-many-branches,too-many-locals
         try:
             size = len(inputb)
             buff = OpenSSL.malloc(inputb, size)
@@ -394,7 +391,6 @@ class ECC(object):
         Verify the signature with the input and the local public key.
         Returns a boolean
         """
-        # pylint: disable=too-many-branches
         try:
             bsig = OpenSSL.malloc(sig, len(sig))
             binputb = OpenSSL.malloc(inputb, len(inputb))
@@ -437,10 +433,13 @@ class ECC(object):
                 0, digest, dgst_len.contents, bsig, len(sig), key)
 
             if ret == -1:
-                return False  # Fail to Check
+                # Fail to Check
+                return False
             if ret == 0:
-                return False  # Bad signature !
-            return True  # Good
+                # Bad signature !
+                return False
+            # Good
+            return True
 
         finally:
             OpenSSL.EC_KEY_free(key)
@@ -488,7 +487,6 @@ class ECC(object):
         """
         Decrypt data with ECIES method using the local private key
         """
-        # pylint: disable=too-many-locals
         blocksize = OpenSSL.get_cipher(ciphername).get_blocksize()
         iv = data[:blocksize]
         i = blocksize

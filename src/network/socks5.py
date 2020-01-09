@@ -1,7 +1,5 @@
 """
-src/network/socks5.py
-=====================
-
+SOCKS5 proxy module
 """
 # pylint: disable=attribute-defined-outside-init
 
@@ -155,7 +153,8 @@ class Socks5(Proxy):
         return True
 
     def proxy_sock_name(self):
-        """Handle return value when using SOCKS5 for DNS resolving instead of connecting."""
+        """Handle return value when using SOCKS5
+        for DNS resolving instead of connecting."""
         return socket.inet_ntoa(self.__proxysockname[0])
 
 

@@ -1,8 +1,6 @@
 """
-src/bitmessagecurses/__init__.py
-================================
+Bitmessage commandline interface
 """
-
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
 #
@@ -20,21 +18,22 @@ import time
 from textwrap import fill
 from threading import Timer
 
-from addresses import addBMIfNotPresent, decodeAddress
-from bmconfigparser import BMConfigParser
 from dialog import Dialog
-from helper_ackPayload import genAckPayload
-from helper_sql import sqlExecute, sqlQuery
-from inventory import Inventory
 import l10n
 import network.stats
-from pyelliptic.openssl import OpenSSL
 import queues
 import shared
 import shutdown
 
+from addresses import addBMIfNotPresent, decodeAddress
+from bmconfigparser import BMConfigParser
+from helper_ackPayload import genAckPayload
+from helper_sql import sqlExecute, sqlQuery
+from inventory import Inventory
+# pylint: disable=global-statement
 
-quit = False    # pylint: disable=redefined-builtin
+
+quit_ = False
 menutab = 1
 menu = ["Inbox", "Send", "Sent", "Your Identities", "Subscriptions", "Address Book", "Blacklist", "Network Status"]
 naptime = 100
@@ -61,26 +60,31 @@ bwtype = "black"
 BROADCAST_STR = "[Broadcast subscribers]"
 
 
-class printLog:         # pylint: disable=no-self-use, no-init, old-style-class
+class printLog(object):
     """Printing logs"""
+    # pylint: disable=no-self-use
 
     def write(self, output):
-        # pylint: disable=global-statement
+        """Write logs"""
         global log
         log += output
 
     def flush(self):
+        """Flush logs"""
         pass
 
 
-class errLog:       # pylint: disable=no-self-use, no-init, old-style-class
+class errLog(object):
     """Error logs"""
+    # pylint: disable=no-self-use
+
     def write(self, output):
-        # pylint: disable=global-statement
+        """Write error logs"""
         global log
         log += "!" + output
 
     def flush(self):
+        """Flush error logs"""
         pass
 
 
@@ -138,14 +142,15 @@ def scrollbox(d, text, height=None, width=None):
 
 def resetlookups():
     """Reset the Inventory Lookups"""
-    global inventorydata        # pylint: disable=global-statement
+    global inventorydata
     inventorydata = Inventory().numberOfInventoryLookupsPerformed
     Inventory().numberOfInventoryLookupsPerformed = 0
     Timer(1, resetlookups, ()).start()
 
 
-def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statements
+def drawtab(stdscr):
     """Method for drawing different tabs"""
+    # pylint: disable=too-many-branches, too-many-statements
     if menutab in range(1, len(menu) + 1):
         if menutab == 1:		# Inbox
             stdscr.addstr(3, 5, "To", curses.A_BOLD)
@@ -282,12 +287,12 @@ def drawtab(stdscr):        # pylint: disable=too-many-branches, too-many-statem
             stdscr.addstr(13, 6, "Log", curses.A_BOLD)
             n = log.count('\n')
             if n > 0:
-                l = log.split('\n')
+                lg = log.split('\n')
                 if n > 512:
-                    del l[:(n - 256)]
+                    del lg[:(n - 256)]
                     logpad.erase()
-                    n = len(l)
-                for i, item in enumerate(l):
+                    n = len(lg)
+                for i, item in enumerate(lg):
                     a = 0
                     if item and item[0] == '!':
                         a = curses.color_pair(1)
@@ -314,7 +319,8 @@ def dialogreset(stdscr):
 
 # pylint: disable=too-many-branches, too-many-statements
 def handlech(c, stdscr):
-    # pylint: disable=redefined-outer-name, too-many-nested-blocks, too-many-locals, global-statement
+    """Handle character given on the command-line interface"""
+    # pylint: disable=redefined-outer-name, too-many-nested-blocks, too-many-locals
     if c != curses.ERR:
         global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
         if c in range(256):
@@ -322,8 +328,8 @@ def handlech(c, stdscr):
                 global menutab
                 menutab = int(chr(c))
             elif chr(c) == 'q':
-                global quit
-                quit = True
+                global quit_
+                quit_ = True
             elif chr(c) == '\n':
                 curses.curs_set(1)
                 d = Dialog(dialog="dialog")
@@ -363,10 +369,10 @@ def handlech(c, stdscr):
                                 inbox[inboxcur][7] = 1
                             else:
                                 scrollbox(d, unicode("Could not fetch message."))
-                        elif t == "2":		 # Mark unread
+                        elif t == "2":       # Mark unread
                             sqlExecute("UPDATE inbox SET read=0 WHERE msgid=?", inbox[inboxcur][0])
                             inbox[inboxcur][7] = 0
-                        elif t == "3":		 # Reply
+                        elif t == "3":       # Reply
                             curses.curs_set(1)
                             m = inbox[inboxcur]
                             fromaddr = m[4]
@@ -375,7 +381,7 @@ def handlech(c, stdscr):
                                 if fromaddr == item[2] and item[3] != 0:
                                     ischan = True
                                     break
-                            if not addresses[i][1]:     # pylint: disable=undefined-loop-variable
+                            if not addresses[i][1]:  # pylint: disable=undefined-loop-variable
                                 scrollbox(d, unicode(
                                     "Sending address disabled, please either enable it"
                                     "or choose a different address."))
@@ -396,7 +402,7 @@ def handlech(c, stdscr):
 
                             sendMessage(fromaddr, toaddr, ischan, subject, body, True)
                             dialogreset(stdscr)
-                        elif t == "4":		 # Add to Address Book
+                        elif t == "4":       # Add to Address Book
                             addr = inbox[inboxcur][4]
                             if addr not in [item[1] for i, item in enumerate(addrbook)]:
                                 r, t = d.inputbox("Label for address \"" + addr + "\"")
@@ -409,7 +415,7 @@ def handlech(c, stdscr):
                                     addrbook.reverse()
                             else:
                                 scrollbox(d, unicode("The selected address is already in the Address Book."))
-                        elif t == "5": 		# Save message
+                        elif t == "5":      # Save message
                             set_background_title(d, "Save \"" + inbox[inboxcur][5] + "\" as text file")
                             r, t = d.inputbox("Filename", init=inbox[inboxcur][5] + ".txt")
                             if r == d.DIALOG_OK:
@@ -418,12 +424,12 @@ def handlech(c, stdscr):
                                 if ret != []:
                                     for row in ret:
                                         msg, = row
-                                    fh = open(t, "a") 		# Open in append mode just in case
+                                    fh = open(t, "a")       # Open in append mode just in case
                                     fh.write(msg)
                                     fh.close()
                                 else:
                                     scrollbox(d, unicode("Could not fetch message."))
-                        elif t == "6":		 # Move to trash
+                        elif t == "6":       # Move to trash
                             sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=?", inbox[inboxcur][0])
                             del inbox[inboxcur]
                             scrollbox(d, unicode(
@@ -431,7 +437,7 @@ def handlech(c, stdscr):
                                 " \nbut the message is still on disk if you are desperate to recover it."))
                 elif menutab == 2:
                     a = ""
-                    if addresses[addrcur][3] != 0: 		# if current address is a chan
+                    if addresses[addrcur][3] != 0:      # if current address is a chan
                         a = addresses[addrcur][2]
                     sendMessage(addresses[addrcur][2], a)
                 elif menutab == 3:
@@ -467,7 +473,7 @@ def handlech(c, stdscr):
                                 scrollbox(d, unicode(ascii(msg)), 30, 80)
                             else:
                                 scrollbox(d, unicode("Could not fetch message."))
-                        elif t == "2":		 # Move to trash
+                        elif t == "2":       # Move to trash
                             sqlExecute(
                                 "UPDATE sent SET folder='trash' WHERE subject=? AND ackdata=?",
                                 sentbox[sentcur][4],
@@ -495,7 +501,7 @@ def handlech(c, stdscr):
                                 ("6", "Delete"),
                                 ("7", "Special address behavior")])
                     if r == d.DIALOG_OK:
-                        if t == "1":		 # Create new address
+                        if t == "1":         # Create new address
                             set_background_title(d, "Create new address")
                             scrollbox(
                                 d, unicode(
@@ -598,12 +604,12 @@ def handlech(c, stdscr):
                                                      str(passphrase), shorten))
                                         else:
                                             scrollbox(d, unicode("Passphrases do not match"))
-                        elif t == "2": 		# Send a message
+                        elif t == "2":      # Send a message
                             a = ""
-                            if addresses[addrcur][3] != 0:		 # if current address is a chan
+                            if addresses[addrcur][3] != 0:       # if current address is a chan
                                 a = addresses[addrcur][2]
                             sendMessage(addresses[addrcur][2], a)
-                        elif t == "3": 		# Rename address label
+                        elif t == "3":      # Rename address label
                             a = addresses[addrcur][2]
                             label = addresses[addrcur][0]
                             r, t = d.inputbox("New address label", init=label)
@@ -613,35 +619,35 @@ def handlech(c, stdscr):
                                 # Write config
                                 BMConfigParser().save()
                                 addresses[addrcur][0] = label
-                        elif t == "4": 		# Enable address
+                        elif t == "4":      # Enable address
                             a = addresses[addrcur][2]
-                            BMConfigParser().set(a, "enabled", "true")		 # Set config
+                            BMConfigParser().set(a, "enabled", "true")       # Set config
                             # Write config
                             BMConfigParser().save()
                             # Change color
                             if BMConfigParser().safeGetBoolean(a, 'chan'):
-                                addresses[addrcur][3] = 9 		# orange
+                                addresses[addrcur][3] = 9       # orange
                             elif BMConfigParser().safeGetBoolean(a, 'mailinglist'):
-                                addresses[addrcur][3] = 5 		# magenta
+                                addresses[addrcur][3] = 5       # magenta
                             else:
-                                addresses[addrcur][3] = 0 		# black
+                                addresses[addrcur][3] = 0       # black
                             addresses[addrcur][1] = True
-                            shared.reloadMyAddressHashes() 		# Reload address hashes
-                        elif t == "5":		 # Disable address
+                            shared.reloadMyAddressHashes()      # Reload address hashes
+                        elif t == "5":       # Disable address
                             a = addresses[addrcur][2]
-                            BMConfigParser().set(a, "enabled", "false")		# Set config
-                            addresses[addrcur][3] = 8 		# Set color to gray
+                            BMConfigParser().set(a, "enabled", "false")     # Set config
+                            addresses[addrcur][3] = 8       # Set color to gray
                             # Write config
                             BMConfigParser().save()
                             addresses[addrcur][1] = False
-                            shared.reloadMyAddressHashes() 		# Reload address hashes
-                        elif t == "6": 		# Delete address
+                            shared.reloadMyAddressHashes()      # Reload address hashes
+                        elif t == "6":      # Delete address
                             r, t = d.inputbox("Type in \"I want to delete this address\"", width=50)
                             if r == d.DIALOG_OK and t == "I want to delete this address":
                                 BMConfigParser().remove_section(addresses[addrcur][2])
                                 BMConfigParser().save()
                                 del addresses[addrcur]
-                        elif t == "7": 		# Special address behavior
+                        elif t == "7":      # Special address behavior
                             a = addresses[addrcur][2]
                             set_background_title(d, "Special address behavior")
                             if BMConfigParser().safeGetBoolean(a, "chan"):
@@ -658,9 +664,9 @@ def handlech(c, stdscr):
                                     if t == "1" and m:
                                         BMConfigParser().set(a, "mailinglist", "false")
                                         if addresses[addrcur][1]:
-                                            addresses[addrcur][3] = 0 		# Set color to black
+                                            addresses[addrcur][3] = 0       # Set color to black
                                         else:
-                                            addresses[addrcur][3] = 8 		# Set color to gray
+                                            addresses[addrcur][3] = 8       # Set color to gray
                                     elif t == "2" and m is False:
                                         try:
                                             mn = BMConfigParser().get(a, "mailinglistname")
@@ -671,7 +677,7 @@ def handlech(c, stdscr):
                                             mn = t
                                             BMConfigParser().set(a, "mailinglist", "true")
                                             BMConfigParser().set(a, "mailinglistname", mn)
-                                            addresses[addrcur][3] = 6 		# Set color to magenta
+                                            addresses[addrcur][3] = 6       # Set color to magenta
                                     # Write config
                                     BMConfigParser().save()
                 elif menutab == 5:
@@ -877,7 +883,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             10,
             60)
         if r != d.DIALOG_OK:
-            global menutab      # pylint: disable=global-statement
+            global menutab
             menutab = 6
             return
         recv = t
@@ -890,7 +896,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
         if r != d.DIALOG_OK:
             return
         broadcast = False
-        if t == "2": 		# Broadcast
+        if t == "2":        # Broadcast
             broadcast = True
     if subject == "" or reply:
         r, t = d.inputbox("Message subject", width=60, init=subject)
@@ -906,9 +912,9 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
 
     if not broadcast:
         recvlist = []
-        for i, item in enumerate(recv.replace(",", ";").split(";")):
+        for _, item in enumerate(recv.replace(",", ";").split(";")):
             recvlist.append(item.strip())
-        list(set(recvlist)) 		# Remove exact duplicates
+        list(set(recvlist))         # Remove exact duplicates
         for addr in recvlist:
             if addr != "":
                 # pylint: disable=redefined-outer-name
@@ -968,16 +974,16 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         subject,
                         body,
                         ackdata,
-                        int(time.time()), 		# sentTime (this will never change)
-                        int(time.time()), 		# lastActionTime
-                        0, 		# sleepTill time. This will get set when the POW gets done.
+                        int(time.time()),       # sentTime (this will never change)
+                        int(time.time()),       # lastActionTime
+                        0,      # sleepTill time. This will get set when the POW gets done.
                         "msgqueued",
-                        0, 		# retryNumber
+                        0,      # retryNumber
                         "sent",
-                        2, 		# encodingType
+                        2,      # encodingType
                         BMConfigParser().getint('bitmessagesettings', 'ttl'))
                     queues.workerQueue.put(("sendmessage", addr))
-    else: 		# Broadcast
+    else:       # Broadcast
         if recv == "":
             set_background_title(d, "Empty sender error")
             scrollbox(d, unicode("You must specify an address to send the message from."))
@@ -995,13 +1001,13 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                 subject,
                 body,
                 ackdata,
-                int(time.time()), 		# sentTime (this will never change)
-                int(time.time()), 		# lastActionTime
-                0, 		# sleepTill time. This will get set when the POW gets done.
+                int(time.time()),       # sentTime (this will never change)
+                int(time.time()),       # lastActionTime
+                0,      # sleepTill time. This will get set when the POW gets done.
                 "broadcastqueued",
-                0, 		# retryNumber
-                "sent", 		# folder
-                2, 		# encodingType
+                0,      # retryNumber
+                "sent",         # folder
+                2,      # encodingType
                 BMConfigParser().getint('bitmessagesettings', 'ttl'))
             queues.workerQueue.put(('sendbroadcast', ''))
 
@@ -1039,12 +1045,12 @@ def loadInbox():
         fromlabel = ""
         if BMConfigParser().has_section(fromaddr):
             fromlabel = BMConfigParser().get(fromaddr, "label")
-        if fromlabel == "": 		# Check Address Book
+        if fromlabel == "":         # Check Address Book
             qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", fromaddr)
             if qr != []:
                 for r in qr:
                     fromlabel, = r
-        if fromlabel == "": 		# Check Subscriptions
+        if fromlabel == "":         # Check Subscriptions
             qr = sqlQuery("SELECT label FROM subscriptions WHERE address=?", fromaddr)
             if qr != []:
                 for r in qr:
@@ -1170,7 +1176,7 @@ def loadSubscriptions():
 
 def loadBlackWhiteList():
     """load black/white list"""
-    global bwtype       # pylint: disable=global-statement
+    global bwtype
     bwtype = BMConfigParser().get("bitmessagesettings", "blackwhitelist")
     if bwtype == "black":
         ret = sqlQuery("SELECT label, address, enabled FROM blacklist")
@@ -1183,10 +1189,10 @@ def loadBlackWhiteList():
 
 
 def runwrapper():
+    """Main method"""
     sys.stdout = printlog
     # sys.stderr = errlog
 
-    # Load messages from database
     loadInbox()
     loadSent()
     loadAddrBook()
@@ -1195,7 +1201,7 @@ def runwrapper():
 
     stdscr = curses.initscr()
 
-    global logpad        # pylint: disable=global-statement
+    global logpad
     logpad = curses.newpad(1024, curses.COLS)
 
     stdscr.nodelay(0)
@@ -1207,26 +1213,27 @@ def runwrapper():
 
 
 def run(stdscr):
+    """Main loop"""
     # Schedule inventory lookup data
     resetlookups()
 
     # Init color pairs
     if curses.has_colors():
-        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK) 		# red
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK) 		# green
-        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK) 		# yellow
-        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK) 		# blue
-        curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK) 		# magenta
-        curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK) 		# cyan
-        curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK) 		# white
+        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)       # red
+        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)         # green
+        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)        # yellow
+        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)      # blue
+        curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)       # magenta
+        curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)      # cyan
+        curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)         # white
         if curses.can_change_color():
-            curses.init_color(8, 500, 500, 500) 		# gray
+            curses.init_color(8, 500, 500, 500)         # gray
             curses.init_pair(8, 8, 0)
-            curses.init_color(9, 844, 465, 0) 		# orange
+            curses.init_color(9, 844, 465, 0)       # orange
             curses.init_pair(9, 9, 0)
         else:
-            curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK) 		# grayish
-            curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK) 		# orangish
+            curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)         # grayish
+            curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK)        # orangish
 
     # Init list of address in 'Your Identities' tab
     configSections = BMConfigParser().addresses()
@@ -1235,18 +1242,18 @@ def run(stdscr):
         addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
         # Set address color
         if not isEnabled:
-            addresses[len(addresses) - 1].append(8) 		# gray
+            addresses[len(addresses) - 1].append(8)         # gray
         elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan'):
-            addresses[len(addresses) - 1].append(9) 		# orange
+            addresses[len(addresses) - 1].append(9)         # orange
         elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist'):
-            addresses[len(addresses) - 1].append(5) 		# magenta
+            addresses[len(addresses) - 1].append(5)         # magenta
         else:
-            addresses[len(addresses) - 1].append(0) 		# black
+            addresses[len(addresses) - 1].append(0)         # black
     addresses.reverse()
 
     stdscr.clear()
     redraw(stdscr)
-    while quit is False:
+    while quit_ is False:
         drawtab(stdscr)
         handlech(stdscr.getch(), stdscr)
 
@@ -1259,5 +1266,4 @@ def doShutdown():
     shutdown.doCleanShutdown()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
-
-    os._exit(0)         # pylint: disable=protected-access
+    os._exit(0)  # pylint: disable=protected-access

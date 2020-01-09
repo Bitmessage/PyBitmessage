@@ -1,6 +1,6 @@
 """
-src/multiqueue.py
-=================
+A queue with multiple internal subqueues.
+Elements are added into a random subqueue, and retrieval rotates
 """
 
 import Queue

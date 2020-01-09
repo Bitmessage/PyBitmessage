@@ -15,7 +15,7 @@ OSX:
 
 https://github.com/Bitmessage/PyBitmessage/releases
 
-Wors on OSX 10.7.5 or higher
+Works on OSX 10.7.5 or higher
 
 
 Arch linux:

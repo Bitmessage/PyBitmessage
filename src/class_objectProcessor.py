@@ -149,11 +149,13 @@ class objectProcessor(threading.Thread):
                 'ackreceived', int(time.time()), data[readPosition:])
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata',
-                (data[readPosition:],
-                 tr._translate(
-                     "MainWindow",
-                     "Acknowledgement of the message received %1"
-                 ).arg(l10n.formatTimestamp()))
+                (
+                    data[readPosition:],
+                    tr._translate(
+                        "MainWindow",
+                        "Acknowledgement of the message received %1"
+                    ).arg(l10n.formatTimestamp())
+                )
             ))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')

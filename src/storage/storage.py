@@ -1,21 +1,22 @@
 """
-src/storage/storage.py
-======================
+Storing inventory items
 """
 import collections
 
-InventoryItem = collections.namedtuple('InventoryItem', 'type stream payload expires tag')
+InventoryItem = collections.namedtuple(
+    'InventoryItem', 'type stream payload expires tag')
 
 
-class Storage(object):
-    """Base class for storing inventory (extendable for other items to store)"""
+class Storage(object):  # pylint: disable=too-few-public-methods
+    """Base class for storing inventory
+    (extendable for other items to store)"""
     pass
 
 
 class InventoryStorage(Storage, collections.MutableMapping):
     """Module used for inventory storage"""
-    def __init__(self):
-        # pylint: disable=super-init-not-called
+
+    def __init__(self):  # pylint: disable=super-init-not-called
         self.numberOfInventoryLookupsPerformed = 0
 
     def __contains__(self, _):
@@ -53,8 +54,20 @@ class InventoryStorage(Storage, collections.MutableMapping):
         raise NotImplementedError
 
 
-class MailboxStorage(Storage, collections.MutableMapping):    # pylint: disable=abstract-method
+class MailboxStorage(Storage, collections.MutableMapping):
     """Method for storing mails"""
-    def __init__(self):
-        # pylint: disable=super-init-not-called
-        pass
+
+    def __delitem__(self, key):
+        raise NotImplementedError
+
+    def __getitem__(self, key):
+        raise NotImplementedError
+
+    def __iter__(self):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError

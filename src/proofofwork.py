@@ -1,7 +1,6 @@
 # pylint: disable=too-many-branches,too-many-statements,protected-access
 """
-src/proofofwork.py
-==================
+Proof of work calculation
 """
 
 import ctypes

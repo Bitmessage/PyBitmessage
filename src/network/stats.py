@@ -1,6 +1,5 @@
 """
-src/network/stats.py
-====================
+Network statistics
 """
 import time
 
@@ -34,7 +33,9 @@ def uploadSpeed():
     currentTimestamp = time.time()
     if int(lastSentTimestamp) < int(currentTimestamp):
         currentSentBytes = asyncore.sentBytes
-        currentSentSpeed = int((currentSentBytes - lastSentBytes) / (currentTimestamp - lastSentTimestamp))
+        currentSentSpeed = int(
+            (currentSentBytes - lastSentBytes) / (
+                currentTimestamp - lastSentTimestamp))
         lastSentBytes = currentSentBytes
         lastSentTimestamp = currentTimestamp
     return currentSentSpeed
@@ -53,7 +54,8 @@ def downloadSpeed():
     if int(lastReceivedTimestamp) < int(currentTimestamp):
         currentReceivedBytes = asyncore.receivedBytes
         currentReceivedSpeed = int(
-            (currentReceivedBytes - lastReceivedBytes) / (currentTimestamp - lastReceivedTimestamp))
+            (currentReceivedBytes - lastReceivedBytes) / (
+                currentTimestamp - lastReceivedTimestamp))
         lastReceivedBytes = currentReceivedBytes
         lastReceivedTimestamp = currentTimestamp
     return currentReceivedSpeed

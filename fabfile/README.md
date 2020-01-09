@@ -1,6 +1,6 @@
 # Fabric
 
-[Fabric](https://www.fabfile.org) is a Python library for performing devops tasks. You can thing of it a bit like a
+[Fabric](https://www.fabfile.org) is a Python library for performing devops tasks. You can think of it a bit like a
 makefile on steroids for Python. Its api abstracts away the clunky way you would run shell commands in Python, check
 return values and manage stdio. Tasks may be targetted at particular hosts or group of hosts.
 
@@ -46,7 +46,7 @@ Furthermore, you can use -- to run arbitrary shell commands rather than tasks:
 
 There are a number of advantages that should benefit us:
 
- * Common tasks can be writen in Python and executed consistently
+ * Common tasks can be written in Python and executed consistently
  * Common tasks are now under source control
  * All developers can run the same commands, if the underlying command sequence for a task changes (after review, obv)
    the user does not have to care

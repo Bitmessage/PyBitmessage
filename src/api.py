@@ -2,7 +2,7 @@
 # pylint: disable=too-many-statements
 
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2019 The Bitmessage developers
+# Copyright (c) 2012-2020 The Bitmessage developers
 
 """
 This is not what you run to run the Bitmessage API. Instead, enable the API

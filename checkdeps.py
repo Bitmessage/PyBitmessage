@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """
-Check dependendies and give recommendations about how to satisfy them
+Check dependencies and give recommendations about how to satisfy them
 
 Limitations:
 
@@ -164,7 +164,7 @@ if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
     if not compiler:
         compilerToPackages()
     prereqToPackages()
-    if mandatory:
+    if prereqs and mandatory:
         sys.exit(1)
 else:
     print("All the dependencies satisfied, you can install PyBitmessage")
