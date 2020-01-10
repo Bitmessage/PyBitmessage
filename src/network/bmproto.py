@@ -441,7 +441,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        Inventory()[self.object.inventoryHash] = (
+        [self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
             memoryview(self.object.tag)
