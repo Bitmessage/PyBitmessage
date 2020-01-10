@@ -150,7 +150,6 @@ class TCPConnection(BMProto, TLSDispatcher):
         ))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
-        # print('inside the set_connection_fully_established in tcp file')
         if self.isOutbound:
             knownnodes.increaseRating(self.destination)
             Dandelion().maybeAddStem(self)
@@ -378,7 +377,6 @@ class TCPServer(AdvancedDispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         for attempt in range(50):
-            print('inside the attempt of line 371')
             try:
                 if attempt > 0:
                     logger.warning('Failed to bind on port %s', port)

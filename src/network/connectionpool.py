@@ -195,7 +195,6 @@ class BMConnectionPool(object):
         port = int(BMConfigParser().safeGet("bitmessagesettings", "port"))
         # correct port even if it changed
         ls = TCPServer(host=bind, port=port)
-        print('inside the startListening method')
         self.listeningSockets[ls.destination] = ls
 
     def startUDPSocket(self, bind=None):
