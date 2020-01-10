@@ -114,14 +114,14 @@ def createDefaultKnownNodes():
 def readKnownNodes():
     """Load knownnodes from filesystem"""
     try:
-        with open(state.appdata + 'knownnodes.dat', 'r') as source:
+        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
             with knownNodesLock:
                 try:
                     json_deserialize_knownnodes(source)
                 except ValueError:
                     source.seek(0)
                     pickle_deserialize_old_knownnodes(source)
-    except (IOError, OSError, KeyError, EOFError):
+    except (IOError, OSError, KeyError, EOFError,pickle.UnpicklingError):
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
