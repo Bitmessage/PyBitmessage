@@ -326,7 +326,11 @@ class BMConnectionPool(object):
                         continue
 
                     try:
-                        if chosen.host.endswith(".onion") and Proxy.onion_proxy:
+                        if type(chosen.host) == bytes:
+                            onion= '.onion'.encode()
+                        else:
+                            onion = '.onion'
+                        if chosen.host.endswith(onion) and Proxy.onion_proxy:
                             if onionsocksproxytype == "SOCKS5":
                                 self.addConnection(Socks5BMConnection(chosen))
                             elif onionsocksproxytype == "SOCKS4a":

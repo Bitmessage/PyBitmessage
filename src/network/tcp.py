@@ -69,9 +69,14 @@ class TCPConnection(BMProto, TLSDispatcher):
         else:
             self.destination = address
             self.isOutbound = True
-            self.create_socket(
-                socket.AF_INET6 if ":" in address.host else socket.AF_INET,
-                socket.SOCK_STREAM)
+            try:
+                self.create_socket(
+                    socket.AF_INET6 if ":" in address.host else socket.AF_INET,
+                    socket.SOCK_STREAM)
+            except TypeError:
+                self.create_socket(
+                    socket.AF_INET6 if ':'.encode() in address.host else socket.AF_INET,
+                    socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             TLSDispatcher.__init__(self, sock, server_side=False)
             self.connect(self.destination)
