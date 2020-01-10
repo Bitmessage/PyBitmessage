@@ -1,0 +1,68 @@
+<Setting>:
+    name: 'set'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+            size_hint_y: None
+            height: dp(500)
+            OneLineListItem:
+                text: "SERVER SETTINGS"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .6, .55
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'H6'
+                            text: 'Server'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+            OneLineListItem:
+                text: "DATA SETTINGS"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .6, .55
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'H6'
+                            text: 'Import or export data'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+            OneLineListItem:
+                text: "OTHER SETTINGS"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        size_hint: .6, .55
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'H6'
+                            text: 'Restart background service'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+            BoxLayout:
+                AnchorLayout:
+                    MDLabel:
+                        font_style: 'Body1'
+                        theme_text_color: 'Primary'
+                        text: "bitmessage is 11 seconds behind the network"
+                        halign: 'center'
+                        color: [0.941, 0, 0,1]
+
+            BoxLayout:
+                MDCheckbox:
+                    id:            chkbox
+                    size_hint:    None, None
+                    size:        dp(48), dp(64)
+                    active: True
+                MDLabel:
+                    font_style: 'Body1'
+                    theme_text_color: 'Primary'
+                    text: "show settings (for advanced users only)"
+                    halign: 'left'
+                    color: app.theme_cls.primary_dark

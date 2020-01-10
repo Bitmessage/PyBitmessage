@@ -1,0 +1,103 @@
+<Login>:
+    name: 'login'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(750)
+            padding: dp(10)
+            BoxLayout:
+                MDLabel:
+                    font_style: 'Subtitle2'
+                    theme_text_color: 'Primary'
+                    text: "You may generate addresses by using either random numbers or by using a passphrase If you use a passphrase, the address is called a deterministic; address The Random Number option is selected by default but deterministic addresses have several \n pros and cons:\n"
+                    halign: 'center'
+                    color:app.theme_cls.primary_dark
+            BoxLayout:
+                MDLabel:
+                    font_style: 'Subtitle2'
+                    theme_text_color: 'Primary'
+                    text: "If talk about pros You can recreate your addresses on any computer from memory, You need-not worry about backing up your keys.dat file as long as you can remember your passphrase and aside talk about cons You must remember (or write down) your  You must remember the address version number and the stream number along with your passphrase If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you"
+                    halign: 'center'
+                    color:app.theme_cls.primary_dark
+            MDCheckbox:
+                id:            grp_chkbox_1
+                group:        'test'
+                active: True
+                allow_no_selection: False
+            MDLabel:
+                font_style: 'Body2'
+                theme_text_color: 'Primary'
+                text: "use a random number generator to make an address"
+                halign: 'center'
+                size_hint_y: None
+                height: self.texture_size[1] + dp(4)
+                color: [0.941, 0, 0,1]
+            MDCheckbox:
+                id:            grp_chkbox_1
+                group:        'test'
+                allow_no_selection: False
+            MDLabel:
+                font_style: 'Body2'
+                theme_text_color: 'Primary'
+                text: "use a pseudo number generator to make an address"
+                halign: 'center'
+                size_hint_y: None
+                color: [0.941, 0, 0,1]
+                height: self.texture_size[1] + dp(4)
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        height: dp(40)
+                        on_press: app.root.ids.scr_mngr.current = 'random'
+                        on_press: app.root.ids.sc7.reset_address_label()
+                        MDLabel:
+                            font_style: 'H6'
+                            text: 'proceed'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'
+
+<Random>:
+    name: 'random'
+    ScrollView:
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+            padding: dp(20)
+            spacing: 100
+            MDLabel:
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Random Addresses"
+                halign: 'center'
+                color:app.theme_cls.primary_dark
+
+            MDLabel:
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Here you may generate as many addresses as you like, Indeed creating and abandoning addresses is encouraged"
+                halign: 'center'
+                color:app.theme_cls.primary_dark
+
+            MDTextField:
+                id: label
+                multiline: True
+                hint_text: "Label"
+                required: True
+                helper_text_mode: "on_error"
+                on_text: root.add_validation(self)
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        height: dp(40)
+                        on_release: root.generateaddress(app)
+                        opposite_colors: True
+                        MDLabel:
+                            font_style: 'H6'
+                            text: 'next'
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'

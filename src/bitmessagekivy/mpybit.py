@@ -65,6 +65,12 @@ import state
 from addresses import decodeAddress
 
 
+KVFILES = ['settings', 'popup', 'allmails', 'draft',
+            'maildetail', 'common_widgets', 'addressbook',
+            'myaddress', 'composer', 'payment', 'sent',
+            'network', 'login', 'credits', 'trash', 'inbox']
+
+
 def toast(text):
     """Method will display the toast message"""
     # pylint: disable=redefined-outer-name
@@ -842,8 +848,8 @@ class Random(Screen):
                 nonceTrialsPerByte,
                 payloadLengthExtraBytes))
             self.ids.label.text = ''
-            self.parent.parent.children[1].opacity = 1
-            self.parent.parent.children[1].disabled = False
+            self.parent.parent.ids.toolbar.opacity = 1
+            self.parent.parent.ids.toolbar.disabled = False
             state.kivyapp.loadMyAddressScreen(True)
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
@@ -1290,34 +1296,19 @@ class NavigateApp(MDApp):
     title = "PyBitmessage"
     imgstatus = False
     count = 0
-    menu_items = [
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-    ]
 
     def build(self):
         """Method builds the widget"""
-        print(os.path.join(os.path.dirname(__file__), 'main.kv'))
-        main_widget = Builder.load_file(
-            os.path.join(os.path.dirname(__file__), 'main.kv'))
+        for kv_file in KVFILES:
+            Builder.load_file(
+                os.path.join(os.path.dirname(__file__),f"kv/{kv_file}.kv"))
         self.obj_1 = AddressBook()
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
         kivysignalthread.start()
         Window.bind(on_keyboard=self.on_key)
-        return main_widget
+        return Builder.load_file(
+            os.path.join(os.path.dirname(__file__), 'main.kv'))
 
     def run(self):
         """Running the widgets"""
@@ -1655,10 +1646,11 @@ class NavigateApp(MDApp):
     def closeSearchScreen(self):
         """Function for close search screen"""
         self.set_common_header()
-        address_label = self.current_address_label(
-            BMConfigParser().get(
-                state.association, 'label'), state.association)
-        self.root.ids.toolbar.title = address_label
+        if state.association:
+            address_label = self.current_address_label(
+                BMConfigParser().get(
+                    state.association, 'label'), state.association)
+            self.root.ids.toolbar.title = address_label
         state.searcing_text = ''
         self.refreshScreen()
         state.in_search_mode = False
@@ -2144,11 +2136,13 @@ class ShowQRCode(Screen):
 
     def qrdisplay(self):
         """Method used for showing QR Code"""
-        # self.manager.parent.parent.parent.ids.search_bar.clear_widgets()
         self.ids.qr.clear_widgets()
         from kivy.garden.qrcode import QRCodeWidget
-        self.ids.qr.add_widget(QRCodeWidget(
-            data=self.manager.get_parent_window().children[0].address))
+        try:
+            address = self.manager.get_parent_window().children[0].address
+        except Exception as e:
+             address = self.manager.get_parent_window().children[1].address
+        self.ids.qr.add_widget(QRCodeWidget(data=address))
         toast('Show QR code')
 
 
@@ -2283,19 +2277,19 @@ class Draft(Screen):
     def delete_draft(self, data_index, instance, *args):
         """Delete draft message permanently"""
         sqlExecute("DELETE FROM sent WHERE ackdata = ?;", data_index)
-        try:
-            msg_count_objs = (
-                self.parent.parent.parent.parent.parent.children[
-                    2].children[0].ids)
-        except Exception:
-            msg_count_objs = (
-                self.parent.parent.parent.parent.parent.parent.children[
-                    2].children[0].ids)
+        # try:
+        #     msg_count_objs = (
+        #         self.parent.parent.parent.parent.parent.children[
+        #             2].children[0].ids)
+        # except Exception:
+        #     msg_count_objs = (
+        #         self.parent.parent.parent.parent.parent.parent.children[
+        #             2].children[0].ids)
             # msg_count_objs = self.parent.parent.parent.parent.parent.children[
             #     2].children[0].ids
         if int(state.draft_count) > 0:
-            msg_count_objs.draft_cnt.badge_text = str(
-                int(state.draft_count) - 1)
+            # msg_count_objs.draft_cnt.badge_text = str(
+            #     int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
             if int(state.draft_count) <= 0:
                 self.ids.identi_tag.children[0].text = ''
