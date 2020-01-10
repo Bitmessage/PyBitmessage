@@ -41,13 +41,6 @@ class DownloadThread(StoppableThread):
     def run(self):
         while not self._stopped:
             requested = 0
-            # Choose downloading peers randomly
-            # connections = [
-            #     x for x in
-            #     list(BMConnectionPool().inboundConnections.values()) +
-            #     list(BMConnectionPool().outboundConnections.values())
-            #     if x.fullyEstablished]
-
             connections = BMConnectionPool().establishedConnections()
             helper_random.randomshuffle(connections)
             requestChunk = max(int(

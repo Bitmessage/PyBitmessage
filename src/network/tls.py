@@ -68,7 +68,6 @@ class TLSDispatcher(AdvancedDispatcher):
         self.isSSL = False
 
     def state_tls_init(self):
-        # print()
         """Prepare sockets for TLS handshake"""
         # pylint: disable=attribute-defined-outside-init
         self.isSSL = True
@@ -95,9 +94,7 @@ class TLSDispatcher(AdvancedDispatcher):
                 ciphers=self.ciphers, do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
-        # print('before tls file python 98 state are :- {}'.format(self.state))
         self.set_state("tls_handshake")
-        # print('after tls file python 100 state are :- {}'.format(self.state))
         return False
 #        if hasattr(self.socket, "context"):
 #            self.socket.context.set_ecdh_curve("secp256k1")
@@ -186,23 +183,18 @@ class TLSDispatcher(AdvancedDispatcher):
             return
 
     def tls_handshake(self):
-        # print('inside the tls_handshake')
         """Perform TLS handshake and handle its stages"""
         # wait for flush
         if self.write_buf:
             return False
         # Perform the handshake.
         try:
-            # print "handshaking (internal)"
             self.sslSocket.do_handshake()
         except ssl.SSLError as err:
-            # print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                # print "want read"
                 self.want_read = True
             if err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                # print "want write"
                 self.want_write = True
             if not (self.want_write or self.want_read):
                 raise

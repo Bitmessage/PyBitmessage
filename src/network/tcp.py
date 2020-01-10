@@ -94,8 +94,6 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.network_group = protocol.network_group(self.destination.host)
         ObjectTracker.__init__(self)  # pylint: disable=non-parent-init-called
         self.bm_proto_reset()
-        # print('--------------tcp------------------')
-        # from network import stats
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def antiIntersectionDelay(self, initial=False):
@@ -152,7 +150,6 @@ class TCPConnection(BMProto, TLSDispatcher):
         ))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
-        # print('inside the set_connection_fully_established in tcp file')
         if self.isOutbound:
             knownnodes.increaseRating(self.destination)
             Dandelion().maybeAddStem(self)
@@ -380,7 +377,6 @@ class TCPServer(AdvancedDispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         for attempt in range(50):
-            print('inside the attempt of line 371')
             try:
                 if attempt > 0:
                     logger.warning('Failed to bind on port %s', port)

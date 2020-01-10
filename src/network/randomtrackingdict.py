@@ -14,10 +14,12 @@ class RandomTrackingDict(object):
     """
     Dict with randomised order and tracking.
 
-    Keeps a track of how many items have been requested from the dict, and timeouts. Resets after all objects have been
-    retrieved and timed out. The main purpose of this isn't as much putting related code together as performance
-    optimisation and anonymisation of downloading of objects from other peers. If done using a standard dict or array,
-    it takes too much CPU (and looks convoluted). Randomisation helps with anonymity.
+    Keeps a track of how many items have been requested from the dict, and timeouts.
+    Resets after all objects have been retrieved and timed out.
+    The main purpose of this isn't as much putting related code together
+    as performance optimisation and anonymisation of downloading of objects from other peers.
+    If done using a standard dict or array, it takes too much CPU (and looks convoluted).
+    Randomisation helps with anonymity.
     """
     # pylint: disable=too-many-instance-attributes
     maxPending = 10

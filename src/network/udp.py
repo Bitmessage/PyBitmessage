@@ -65,19 +65,15 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
     # only addr (peer discovery), error and object are implemented
 
     def bm_command_getdata(self):
-        # return BMProto.bm_command_getdata(self)
         return True
 
     def bm_command_inv(self):
-        # return BMProto.bm_command_inv(self)
         return True
 
     def bm_command_addr(self):
         addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid
         # attacks from random IPs on the internet
-        # if not self.local:
-        #     return True
         self.local = True
         remoteport = False
         for seenTime, stream, services, ip, port in addresses:

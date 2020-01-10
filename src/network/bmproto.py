@@ -105,20 +105,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         count += 1
         if self.command == 'verack'.encode():
             addr_verack += 1
-            # print('the addr_verack count are -{}'.format(addr_verack))
-
         if self.command == 'version'.encode():
             addr_version += 1
-            # print('the addr_version count are -{}'.format(addr_version))
-
         if self.command == 'addr'.encode():
             addr_count += 1
-            # print('the addr_count count are -{}'.format(addr_count))
-
         if self.magic != 0xE9BEB4D9:
-            # skip 1 byte in order to sync
-            # in the advancedispatched and length commend's
-            # escape the 1 length
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
             logger.debug('Bad magic')
@@ -186,7 +177,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.set_state("close")
             return False
         if retval:
-            # print('if retval is true and inside the if ')
             self.set_state("bm_header", length=self.payloadLength)
             self.bm_proto_reset()
         # else assume the command requires a different state to follow
@@ -451,7 +441,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        [self.object.inventoryHash] = (
+        Inventory()[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
             memoryview(self.object.tag)
@@ -539,7 +529,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return False
 
     def bm_command_version(self):
-        # print('inside the bmproto ')
         """
         Incoming version.
         Parse and log, remember important things, like streams, bitfields, etc.
@@ -624,9 +613,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         if self.destination in connectionpool.BMConnectionPool().inboundConnections:
             try:
-                # print('+++++++++++++++++++++++++++')
-                # print('self destination host -{}'.format(self.destination.host))
-                # print('++++++++++++++++++++++++++++++')
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
                         errorText="Too many connections from your IP."
