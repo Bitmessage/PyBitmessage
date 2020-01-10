@@ -344,21 +344,6 @@ class BMConnectionPool(object):
                     except socket.error as e:
                         if e.errno == errno.ENETUNREACH:
                             continue
-        #     # print('++++++++++++++++++++++++++++++++++++++++++')
-        #     # print('self.inboundConnections.values()-{}'.format(self.inboundConnections.values()))
-        #     # print('self.outboundConnections.values() -{}'.format(self.outboundConnections.values()))
-        #     # print('+++++++++++++++++++++++++++++++++++++++++++')
-        # else:
-
-        #     # for i in (
-        #     #         list(self.inboundConnections.values()) +
-        #     #         list(self.outboundConnections.values())
-        #     # ):
-        #     for i in (
-        #             [inboundConnections for inboundConnections in self.inboundConnections.values()] +
-        #             [inboundConnections for inboundConnections in self.outboundConnections.values()]
-        #     ):
-
                     self._lastSpawned = time.time()
         else:
             for i in self.connections():
@@ -377,7 +362,6 @@ class BMConnectionPool(object):
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
             if False:
-                # self.udpSockets :- {'0.0.0.0': <network.udp.UDPSocket connected at 0x7f95cce7d7b8>}
                 if BMConfigParser().safeGet('network', 'bind') == '':
                     self.startUDPSocket()
                 else:
@@ -407,15 +391,6 @@ class BMConnectionPool(object):
 
         reaper = []
 
-        # # for i in (
-        # #         list(self.inboundConnections.values()) +
-        # #         list(self.outboundConnections.values())
-        # # ):
-        # for i in (
-        #         [inboundConnections for inboundConnections in  self.inboundConnections.values()] +
-        #         [outboundConnections for outboundConnections in self.outboundConnections.values()]
-        # ):
-
         for i in self.connections():
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -427,17 +402,7 @@ class BMConnectionPool(object):
                     i.close_reason = "Timeout (%is)" % (
                         time.time() - i.lastTx)
                     i.set_state("close")
-        # for i in (
-        #         list(self.inboundConnections.values()) +
-        #         list(self.outboundConnections.values()) +
-        #         list(self.listeningSockets.values()) +
-        #         list(self.udpSockets.values())
-        # ):
         for i in (
-            # [inboundConnections for inboundConnections in  self.inboundConnections.values()] +
-            # [outboundConnections for outboundConnections in self.outboundConnections.values()] +
-            # [listeningSockets for listeningSockets in self.listeningSockets.values()] +
-            # [udpSockets for udpSockets in self.udpSockets.values()]
             self.connections() +
             [listeningSockets for listeningSockets in self.listeningSockets.values()] +
             [udpSockets for udpSockets in self.udpSockets.values()]

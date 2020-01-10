@@ -118,14 +118,6 @@ class Dandelion(object):
             except AttributeError:
                 pass
 
-            # for k, v in iter({
-            #         k: v for k, v in  iter([hasmap for hasamp in  self.hashMap.items()])
-            #         if v.child is None
-            # }).items():
-            #     self.hashMap[k] = Stem(
-            #         connection, v.stream, self.poissonTimeout())
-            #     invQueue.put((v.stream, k, v.child))
-
     def maybeRemoveStem(self, connection):
         """
         Remove current connection from the stem list (called e.g. when

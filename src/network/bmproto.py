@@ -624,9 +624,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         if self.destination in connectionpool.BMConnectionPool().inboundConnections:
             try:
-                # print('+++++++++++++++++++++++++++')
-                # print('self destination host -{}'.format(self.destination.host))
-                # print('++++++++++++++++++++++++++++++')
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
                         errorText="Too many connections from your IP."

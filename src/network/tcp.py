@@ -94,8 +94,6 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.network_group = protocol.network_group(self.destination.host)
         ObjectTracker.__init__(self)  # pylint: disable=non-parent-init-called
         self.bm_proto_reset()
-        # print('--------------tcp------------------')
-        # from network import stats
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def antiIntersectionDelay(self, initial=False):
