@@ -1,0 +1,87 @@
+<NetworkStat>:
+    name: 'networkstat'
+    MDTabs:
+        id: tab_panel
+        tab_display_mode:'text'
+
+        Tab:
+            text: "Total connections"
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(200)
+                    OneLineListItem:
+                        text: "Total Connections"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .6, .3
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_1
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+        Tab:
+            text: 'Processes'
+            ScrollView:
+                do_scroll_x: False
+                MDList:
+                    id: ml
+                    size_hint_y: None
+                    height: dp(500)
+                    OneLineListItem:
+                        text: "person-to-person"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_2
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+                    OneLineListItem:
+                        text: "Brodcast"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_3
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+                    OneLineListItem:
+                        text: "publickeys"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_4
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'
+                    OneLineListItem:
+                        text: "objects"
+                    BoxLayout:
+                        AnchorLayout:
+                            MDRaisedButton:
+                                size_hint: .7, .55
+                                height: dp(40)
+                                MDLabel:
+                                    font_style: 'H6'
+                                    text: root.text_variable_5
+                                    font_size: '13sp'
+                                    color: (1,1,1,1)
+                                    halign: 'center'

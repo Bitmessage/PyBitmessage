@@ -1,0 +1,45 @@
+<MailDetail>:
+    name: 'mailDetail'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(500) + self.minimum_height
+            padding: dp(32)
+            MDLabel:
+                font_style: 'Subtitle1'
+                theme_text_color: 'Primary'
+                text: root.subject
+                halign: 'left'
+                font_size: '20sp'
+                CopyTextBtn:
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: "From: " + root.from_addr
+                halign: 'left'
+                CopyTextBtn:
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: "To: " + root.to_addr
+                halign: 'left'
+                CopyTextBtn:
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: root.status
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: root.message
+                halign: 'left'
+                bold: True
+                CopyTextBtn:
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(100) + self.minimum_height
+    Loader:
