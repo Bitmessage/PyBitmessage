@@ -472,7 +472,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         addresses = self._decode_addr()      # pylint: disable=redefined-outer-name
         for i in addresses:
             seenTime, stream, _, ip, port = i
-            decodedIP = protocol.checkIPAddress(ip)
+            decodedIP = protocol.checkIPAddress(bytes(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if (
