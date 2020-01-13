@@ -32,6 +32,7 @@ StoreConfigFilesInSameDirectoryAsProgramByDefault = False
 def loadConfig():
     """Load the config"""
     config = BMConfigParser()
+
     if state.appdata:
         config.read(state.appdata + 'keys.dat')
         # state.appdata must have been specified as a startup option.

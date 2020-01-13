@@ -12,15 +12,6 @@ The PyBitmessage startup script
 
 import os
 import sys
-
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
-
-
-import depends
-depends.check_dependencies()
-
 import ctypes
 import getopt
 import multiprocessing
@@ -33,6 +24,7 @@ import traceback
 from struct import pack
 
 import defaults
+import depends
 import shared
 import state
 import shutdown
@@ -54,6 +46,12 @@ from singleinstance import singleinstance
 from threads import (
     set_thread_name,
     addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
+
+app_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(app_dir)
+sys.path.insert(0, app_dir)
+
+depends.check_dependencies()
 
 
 def connectToStream(streamNumber):
@@ -158,13 +156,13 @@ def signal_handler(signum, frame):
     if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
-        print('# Thread: %s(%d)' % (thread.name, thread.ident))
+        print '# Thread: %s(%d)' % (thread.name, thread.ident)
         for filename, lineno, name, line in traceback.extract_stack(frame):
-            print('File: "%s", line %d, in %s' % (filename, lineno, name))
+            print 'File: "%s", line %d, in %s' % (filename, lineno, name)
             if line:
-                print('  %s' % line.strip())
-        print('Unfortunately you cannot use Ctrl+C when running the UI'
-              ' because the UI captures the signal.')
+                print '  %s' % line.strip()
+        print 'Unfortunately you cannot use Ctrl+C when running the UI \
+        because the UI captures the signal.'
 
 
 class Main(object):
@@ -217,7 +215,8 @@ class Main(object):
         if daemon:
             state.enableGUI = False  # run without a UI
 
-        if state.enableGUI and not state.curses and not depends.check_pyqt():
+        # is the application already running?  If yes then exit.
+        if state.enableGUI and not state.curses and not state.kivy and not depends.check_pyqt():
             sys.exit(
                 'PyBitmessage requires PyQt unless you want'
                 ' to run it as a daemon and interact with it'
@@ -231,11 +230,14 @@ class Main(object):
                 ' \'-c\' as a commandline argument.'
             )
         # is the application already running?  If yes then exit.
-        shared.thisapp = singleinstance("", daemon)
+        try:
+            shared.thisapp = singleinstance("", daemon)
+        except Exception:
+            pass
 
         if daemon:
             with shared.printLock:
-                print('Running as a daemon. Send TERM signal to end.')
+                print 'Running as a daemon. Send TERM signal to end.'
             self.daemonize()
 
         self.setSignalHandler()
@@ -258,6 +260,7 @@ class Main(object):
 
         readKnownNodes()
 
+
         # Not needed if objproc is disabled
         if state.enableObjProc:
 
@@ -279,14 +282,11 @@ class Main(object):
         # The closeEvent should command this thread to exit gracefully.
         sqlLookup.daemon = False
         sqlLookup.start()
-
         Inventory()  # init
         # init, needs to be early because other thread may access it early
         Dandelion()
-
         # Enable object processor and SMTP only if objproc enabled
         if state.enableObjProc:
-
             # SMTP delivery thread
             if daemon and config.safeGet(
                     'bitmessagesettings', 'smtpdeliver', '') != '':
@@ -308,18 +308,15 @@ class Main(object):
             # each object.
             objectProcessorThread.daemon = False
             objectProcessorThread.start()
-
         # Start the cleanerThread
         singleCleanerThread = singleCleaner()
         # close the main program even if there are threads left
         singleCleanerThread.daemon = True
         singleCleanerThread.start()
-
         # Not needed if objproc disabled
         if state.enableObjProc:
             shared.reloadMyAddressHashes()
             shared.reloadBroadcastSendersForWhichImWatching()
-
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
@@ -327,7 +324,6 @@ class Main(object):
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
                 singleAPIThread.start()
-
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
@@ -356,7 +352,6 @@ class Main(object):
             state.uploadThread.start()
 
             connectToStream(1)
-
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()
@@ -364,18 +359,19 @@ class Main(object):
         else:
             # Populate with hardcoded value (same as connectToStream above)
             state.streamsInWhichIAmParticipating.append(1)
-
         if not daemon and state.enableGUI:
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
-                print('Running with curses')
+                print 'Running with curses'
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
+
             elif state.kivy:
                 config.remove_option('bitmessagesettings', 'dontconnect')
                 from bitmessagekivy.mpybit import NavigateApp
-                NavigateApp().run()
+                state.kivyapp = NavigateApp()
+                state.kivyapp.run()
             else:
                 import bitmessageqt
                 bitmessageqt.run()
@@ -385,8 +381,7 @@ class Main(object):
         if daemon:
             while state.shutdown == 0:
                 time.sleep(1)
-                if (
-                        state.testmode and time.time() - state.last_api_response >= 30):
+                if (state.testmode and time.time() - state.last_api_response >= 30):
                     self.stop()
         elif not state.enableGUI:
             from tests import core as test_core  # pylint: disable=relative-import
@@ -412,6 +407,7 @@ class Main(object):
                 # wait until grandchild ready
                 while True:
                     time.sleep(1)
+
                 os._exit(0)    # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
@@ -433,6 +429,7 @@ class Main(object):
                 # wait until child ready
                 while True:
                     time.sleep(1)
+
                 os._exit(0)    # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
@@ -479,7 +476,7 @@ All parameters are optional.
     def stop():
         """Stop main application"""
         with shared.printLock:
-            print('Stopping Bitmessage Deamon.')
+            print 'Stopping Bitmessage Deamon.'
         shutdown.doCleanShutdown()
 
     # .. todo:: nice function but no one is using this

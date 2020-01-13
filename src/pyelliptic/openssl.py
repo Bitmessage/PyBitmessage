@@ -2,6 +2,7 @@
 #  See LICENSE for details.
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
+# pylint: disable=protected-access, import-error
 """
 This module loads openssl libs with ctypes and incapsulates
 needed openssl functionality in class _OpenSSL.
@@ -9,6 +10,7 @@ needed openssl functionality in class _OpenSSL.
 # pylint: disable=protected-access
 import sys
 import ctypes
+from kivy.utils import platform
 
 OpenSSL = None
 
@@ -27,7 +29,7 @@ class CipherName(object):
                " | Function pointer : " + str(self._pointer)
 
     def get_pointer(self):
-        """This method returns cipher pointer"""
+        """Method returns the pointer"""
         return self._pointer()
 
     def get_name(self):
@@ -40,7 +42,7 @@ class CipherName(object):
 
 
 def get_version(library):
-    """This function return version, hexversion and cflages"""
+    """Method returns the version of the OpenSSL Library"""
     version = None
     hexversion = None
     cflags = None
@@ -77,9 +79,7 @@ class _OpenSSL(object):
     """
     # pylint: disable=too-many-statements, too-many-instance-attributes
     def __init__(self, library):
-        """
-        Build the wrapper
-        """
+        """Build the wrapper"""
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
         self._libreSSL = self._version.startswith("LibreSSL")
@@ -661,8 +661,9 @@ class _OpenSSL(object):
 
 
 def loadOpenSSL():
-    """This function finds and load the OpenSSL library"""
-    # pylint: disable=global-statement
+    """Method find and load the OpenSSL library"""
+    # pylint: disable=global-statement, protected-access, too-many-branches
+
     global OpenSSL
     from os import path, environ
     from ctypes.util import find_library
@@ -712,14 +713,21 @@ def loadOpenSSL():
             'libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append('libeay32.dll')
+    elif platform == "android":
+        libdir.append('libcrypto1.0.2p.so')
+        libdir.append('libssl1.0.2p.so')
+        libdir.append('libcrypto1.1.so')
+        libdir.append('libssl1.1.so')
     else:
         libdir.append('libcrypto.so')
         libdir.append('libssl.so')
         libdir.append('libcrypto.so.1.0.0')
         libdir.append('libssl.so.1.0.0')
-    if 'linux' in sys.platform or 'darwin' in sys.platform \
-            or 'bsd' in sys.platform:
-        libdir.append(find_library('ssl'))
+    if 'linux' in sys.platform or 'darwin' in sys.platform or 'bsd' in sys.platform:
+        try:
+            libdir.append(find_library('ssl'))
+        except OSError:
+            pass
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
     for library in libdir:

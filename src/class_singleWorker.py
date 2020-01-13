@@ -1,8 +1,8 @@
 """
 Thread for performing PoW
 """
-# pylint: disable=protected-access,too-many-branches,too-many-statements,no-self-use,too-many-lines,too-many-locals
-
+# pylint: disable=protected-access,too-many-branches,too-many-statements
+# pylint: disable=no-self-use,too-many-lines,too-many-locals,relative-import
 from __future__ import division
 
 import hashlib
@@ -28,6 +28,9 @@ from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import StoppableThread
+
+# This thread, of which there is only one, does the heavy lifting:
+# calculating POWs.
 
 
 def sizeof_fmt(num, suffix='h/s'):
@@ -67,7 +70,7 @@ class singleWorker(StoppableThread):
         # Initialize the neededPubkeys dictionary.
         queryreturn = sqlQuery(
             '''SELECT DISTINCT toaddress FROM sent'''
-            ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
+            ''' WHERE (status='awaitingpubkey' AND folder LIKE '%sent%')''')
         for row in queryreturn:
             toAddress, = row
             # toStatus
@@ -476,7 +479,7 @@ class singleWorker(StoppableThread):
         embeddedTime = int(time.time() + TTL)
         streamNumber = 1  # Don't know yet what should be here
         objectType = protocol.OBJECT_ONIONPEER
-        # FIXME: ideally the objectPayload should be signed
+        # ..FIXME: ideally the objectPayload should be signed
         objectPayload = encodeVarint(peer.port) + protocol.encodeHost(peer.host)
         tag = calculateInventoryHash(objectPayload)
 
@@ -512,7 +515,7 @@ class singleWorker(StoppableThread):
         queryreturn = sqlQuery(
             '''SELECT fromaddress, subject, message, '''
             ''' ackdata, ttl, encodingtype FROM sent '''
-            ''' WHERE status=? and folder='sent' ''', 'broadcastqueued')
+            ''' WHERE status=? and folder LIKE '%sent%' ''', 'broadcastqueued')
 
         for row in queryreturn:
             fromaddress, subject, body, ackdata, TTL, encoding = row
@@ -682,7 +685,7 @@ class singleWorker(StoppableThread):
             '''SELECT toaddress, fromaddress, subject, message, '''
             ''' ackdata, status, ttl, retrynumber, encodingtype FROM '''
             ''' sent WHERE (status='msgqueued' or status='forcepow') '''
-            ''' and folder='sent' ''')
+            ''' and folder LIKE '%sent%' ''')
         # while we have a msg that needs some work
         for row in queryreturn:
             toaddress, fromaddress, subject, message, \
@@ -1212,6 +1215,7 @@ class singleWorker(StoppableThread):
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
+            print("nonce calculated value#############################", nonce)
             self.logger.info(
                 '(For msg message) Found proof of work %s Nonce: %s',
                 trialValue, nonce

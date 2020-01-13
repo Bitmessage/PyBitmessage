@@ -6,7 +6,6 @@ import hashlib
 from binascii import hexlify
 from pyelliptic import arithmetic
 from pyelliptic.openssl import OpenSSL
-
 import tr
 import queues
 import state
@@ -118,9 +117,7 @@ class addressGenerator(StoppableThread):
                     defaults.networkDefaultPayloadLengthExtraBytes
             if command == 'createRandomAddress':
                 queues.UISignalQueue.put((
-                    'updateStatusBar',
-                    tr._translate(
-                        "MainWindow", "Generating one new address")
+                    'updateStatusBar'
                 ))
                 # This next section is a little bit strange. We're going
                 # to generate keys over and over until we find one
@@ -177,7 +174,6 @@ class addressGenerator(StoppableThread):
                     privEncryptionKey).digest()).digest()[0:4]
                 privEncryptionKeyWIF = arithmetic.changebase(
                     privEncryptionKey + checksum, 256, 58)
-
                 BMConfigParser().add_section(address)
                 BMConfigParser().set(address, 'label', label)
                 BMConfigParser().set(address, 'enabled', 'true')
@@ -197,11 +193,7 @@ class addressGenerator(StoppableThread):
                 queues.apiAddressGeneratorReturnQueue.put(address)
 
                 queues.UISignalQueue.put((
-                    'updateStatusBar',
-                    tr._translate(
-                        "MainWindow",
-                        "Done generating address. Doing work necessary"
-                        " to broadcast it...")
+                    'updateStatusBar'
                 ))
                 queues.UISignalQueue.put(('writeNewAddressToTable', (
                     label, address, streamNumber)))

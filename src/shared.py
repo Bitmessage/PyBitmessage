@@ -16,7 +16,7 @@ import threading
 import subprocess
 from binascii import hexlify
 from pyelliptic import arithmetic
-
+from kivy.utils import platform
 # Project imports.
 import highlevelcrypto
 import state
@@ -134,6 +134,7 @@ def decodeWalletImportFormat(WIFstring):
 def reloadMyAddressHashes():
     """Reload keys for user's addresses from the config file"""
     logger.debug('reloading keys from keys.dat file')
+
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     myAddressesByTag.clear()
@@ -168,9 +169,9 @@ def reloadMyAddressHashes():
                     ' address versions other than 2, 3, or 4.\n'
                 )
 
-    if not keyfileSecure:
-        fixSensitiveFilePermissions(os.path.join(
-            state.appdata, 'keys.dat'), hasEnabledKeys)
+    if not platform == "android":
+        if not keyfileSecure:
+            fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)
 
 
 def reloadBroadcastSendersForWhichImWatching():

@@ -18,14 +18,15 @@ It resends messages when there has been no response:
   - resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 """
-
+# pylint: disable=relative-import, protected-access
 import gc
 import os
+from datetime import datetime, timedelta
 import time
+import shared
 
 import knownnodes
 import queues
-import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
@@ -73,7 +74,7 @@ class singleCleaner(StoppableThread):
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
-            # FIXME redundant?
+            # ..FIXME redundant?
             if shared.thisapp.daemon or not state.enableGUI:
                 queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < \
@@ -110,7 +111,7 @@ class singleCleaner(StoppableThread):
                         self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
                         self.resendMsg(ackData)
-
+            deleteTrashMsgPermonantly()
             try:
                 # Cleanup knownnodes and handle possible severe exception
                 # while writing it to disk
@@ -146,6 +147,7 @@ class singleCleaner(StoppableThread):
                     del state.discoveredPeers[k]
                 except KeyError:
                     pass
+
             # ..todo:: cleanup pending upload / download
 
             gc.collect()
@@ -191,3 +193,12 @@ class singleCleaner(StoppableThread):
             'updateStatusBar',
             'Doing work necessary to again attempt to deliver a message...'
         ))
+
+
+def deleteTrashMsgPermonantly():
+    """This method is used to delete old messages"""
+    ndays_before_time = datetime.now() - timedelta(days=30)
+    old_messages = time.mktime(ndays_before_time.timetuple())
+    sqlExecute("delete from sent where folder = 'trash' and lastactiontime <= ?;", int(old_messages))
+    sqlExecute("delete from inbox where folder = 'trash' and received <= ?;", int(old_messages))
+    return

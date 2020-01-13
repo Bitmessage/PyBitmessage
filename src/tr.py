@@ -16,12 +16,12 @@ class translateClass:
         self.context = context
         self.text = text
 
-    def arg(self, _):
+    def arg(self, argument):        # pylint: disable=unused-argument
         """Replace argument placeholders"""
         if '%' in self.text:
+            return translateClass(self.context, self.text.replace('%', '', 1))
             # This doesn't actually do anything with the arguments
             # because we don't have a UI in which to display this information anyway.
-            return translateClass(self.context, self.text.replace('%', '', 1))
         return self.text
 
 
@@ -35,7 +35,7 @@ def translateText(context, text, n=None):
         enableGUI = state.enableGUI
     except AttributeError:  # inside the plugin
         enableGUI = True
-    if enableGUI:
+    if not state.kivy and enableGUI:
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
