@@ -1,6 +1,5 @@
 """
-src/network/invthread.py
-========================
+Thread to send inv annoucements
 """
 import Queue
 import random
@@ -34,7 +33,7 @@ def handleExpiredDandelion(expired):
 
 
 class InvThread(StoppableThread):
-    """A thread to send inv annoucements."""
+    """Main thread that sends inv annoucements"""
 
     name = "InvBroadcaster"
 
@@ -43,12 +42,13 @@ class InvThread(StoppableThread):
         """Locally generated inventory items require special handling"""
         Dandelion().addHash(hashId, stream=stream)
         for connection in BMConnectionPool().connections():
-            if state.dandelion and connection != Dandelion().objectChildStem(hashId):
+            if state.dandelion and connection != \
+                    Dandelion().objectChildStem(hashId):
                 continue
             connection.objectsNewToThem[hashId] = time()
 
-    def run(self):      # pylint: disable=too-many-branches
-        while not state.shutdown:       # pylint: disable=too-many-nested-blocks
+    def run(self):  # pylint: disable=too-many-branches
+        while not state.shutdown:  # pylint: disable=too-many-nested-blocks
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
@@ -92,15 +92,17 @@ class InvThread(StoppableThread):
                         random.shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket(
                             'inv',
-                            addresses.encodeVarint(len(fluffs)) + ''.join(fluffs)))
+                            addresses.encodeVarint(
+                                len(fluffs)) + ''.join(fluffs)))
                     if stems:
                         random.shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket(
                             'dinv',
-                            addresses.encodeVarint(len(stems)) + ''.join(stems)))
+                            addresses.encodeVarint(
+                                len(stems)) + ''.join(stems)))
 
             invQueue.iterate()
-            for i in range(len(chunk)):
+            for _ in range(len(chunk)):
                 invQueue.task_done()
 
             if Dandelion().refresh < time():

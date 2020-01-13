@@ -1,3 +1,6 @@
+"""
+Select which node to connect to
+"""
 # pylint: disable=too-many-branches
 import logging
 import random  # nosec
@@ -12,6 +15,7 @@ logger = logging.getLogger('default')
 
 
 def getDiscoveredPeer():
+    """Get a peer from the local peer discovery list"""
     try:
         peer = random.choice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
@@ -24,6 +28,7 @@ def getDiscoveredPeer():
 
 
 def chooseConnection(stream):
+    """Returns an appropriate connection"""
     haveOnion = BMConfigParser().safeGet(
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
     onionOnly = BMConfigParser().safeGetBoolean(
@@ -49,7 +54,8 @@ def chooseConnection(stream):
             logger.warning('Error in %s', peer)
             rating = 0
         if haveOnion:
-            # do not connect to raw IP addresses--keep all traffic within Tor overlay
+            # do not connect to raw IP addresses
+            # --keep all traffic within Tor overlay
             if onionOnly and not peer.host.endswith('.onion'):
                 continue
             # onion addresses have a higher priority when SOCKS

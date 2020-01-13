@@ -1,7 +1,6 @@
 """
 `DownloadThread` class definition
 """
-
 import time
 
 import addresses
@@ -30,7 +29,9 @@ class DownloadThread(StoppableThread):
         """Expire pending downloads eventually"""
         deadline = time.time() - self.requestExpires
         try:
-            toDelete = [k for k, v in missingObjects.iteritems() if v < deadline]
+            toDelete = [
+                k for k, v in missingObjects.iteritems()
+                if v < deadline]
         except RuntimeError:
             pass
         else:
