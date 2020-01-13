@@ -1574,10 +1574,11 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
     def closeSearchScreen(self):
         """Function for close search screen"""
         self.set_common_header()
-        address_label = self.current_address_label(
-            BMConfigParser().get(
-                state.association, 'label'), state.association)
-        self.root.ids.toolbar.title = address_label
+        if state.association:
+            address_label = self.current_address_label(
+                BMConfigParser().get(
+                    state.association, 'label'), state.association)
+            self.root.ids.toolbar.title = address_label
         state.searcing_text = ''
         self.refreshScreen()
         state.in_search_mode = False
@@ -1662,8 +1663,12 @@ class NavigateApp(App):  # pylint: disable=too-many-public-methods
             self.root.ids.sc1.loadMessagelist(state.association)
             self.root.ids.sc1.children[1].active = False
         elif instance.text == 'All Mails':
-            self.root.ids.sc17.clear_widgets()
-            self.root.ids.sc17.add_widget(Allmails())
+            if len(self.root.ids.sc17.ids.ml.children) <= 2:
+                self.root.ids.sc17.clear_widgets()
+                self.root.ids.sc17.add_widget(Allmails())
+            else:
+                self.root.ids.sc17.ids.ml.clear_widgets()
+                self.root.ids.sc17.loadMessagelist()
             try:
                 self.root.ids.sc17.children[1].active = False
             except Exception:
@@ -1860,10 +1865,6 @@ class MailDetail(Screen):
         self.message = data[0][3]
         if len(data[0]) == 6:
             self.status = data[0][4]
-        state.write_msg = {'to_addr': self.to_addr,
-                           'from_addr': self.from_addr,
-                           'subject': self.subject,
-                           'message': self.message}
 
     def delete_mail(self):
         """Method for mail delete"""
@@ -1945,14 +1946,16 @@ class MailDetail(Screen):
     def write_msg(self, navApp):
         """Write on draft mail"""
         state.send_draft_mail = state.mail_id
+        data = sqlQuery(
+            "select toaddress, fromaddress, subject, message from sent where"
+            " ackdata = ?;", str(state.mail_id))
         composer_ids = (
             self.parent.parent.parent.parent.parent.ids.sc3.children[1].ids)
-        composer_ids.ti.text = state.write_msg['from_addr']
-        composer_ids.btn.text = state.write_msg['from_addr']
-        composer_ids.txt_input.text = state.write_msg['to_addr']
-        composer_ids.subject.text = state.write_msg[
-            'subject'] if state.write_msg['subject'] != '(no subject)' else ''
-        composer_ids.body.text = state.write_msg['message']
+        composer_ids.ti.text = data[0][1]
+        composer_ids.btn.text = data[0][1]
+        composer_ids.txt_input.text = data[0][0]
+        composer_ids.subject.text = data[0][2] if data[0][2] != '(no subject)' else ''
+        composer_ids.body.text = data[0][3]
         self.parent.current = 'create'
         navApp.set_navbar_for_composer()
 
