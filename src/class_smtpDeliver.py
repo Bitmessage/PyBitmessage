@@ -22,8 +22,9 @@ class smtpDeliver(StoppableThread):
     _instance = None
 
     def stopThread(self):
+        # pylint: disable=no-member
         try:
-            queues.UISignallerQueue.put(("stopThread", "data"))  # pylint: disable=no-member
+            queues.UISignallerQueue.put(("stopThread", "data"))
         except:
             pass
         super(smtpDeliver, self).stopThread()
@@ -37,6 +38,7 @@ class smtpDeliver(StoppableThread):
 
     def run(self):
         # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+        # pylint: disable=deprecated-lambda
         while state.shutdown == 0:
             command, data = queues.UISignalQueue.get()
             if command == 'writeNewAddressToTable':
@@ -59,9 +61,9 @@ class smtpDeliver(StoppableThread):
                     msg = MIMEText(body, 'plain', 'utf-8')
                     msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
-                    toLabel = map(  # pylint: disable=deprecated-lambda
+                    toLabel = map(
                         lambda y: BMConfigParser().safeGet(y, "label"),
-                        filter(  # pylint: disable=deprecated-lambda
+                        filter(
                             lambda x: x == toAddress, BMConfigParser().addresses())
                     )
                     if toLabel:

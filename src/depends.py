@@ -231,12 +231,13 @@ def check_sqlite():
             conn.close()
 
 
-def check_openssl():    # pylint: disable=too-many-branches, too-many-return-statements
+def check_openssl():
     """Do openssl dependency check.
 
     Here we are checking for openssl with its all dependent libraries
     and version checking.
     """
+    # pylint: disable=too-many-branches, too-many-return-statements
     # pylint: disable=protected-access, redefined-outer-name
     ctypes = try_import('ctypes')
     if not ctypes:

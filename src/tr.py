@@ -25,7 +25,8 @@ class translateClass:
         return self.text
 
 
-def _translate(context, text, disambiguation=None, encoding=None, n=None):    # pylint: disable=unused-argument
+def _translate(context, text, disambiguation=None, encoding=None, n=None):
+    # pylint: disable=unused-argument
     return translateText(context, text, n)
 
 
@@ -45,7 +46,7 @@ def translateText(context, text, n=None):
                 ' or by searching Google for \'PyQt Download\'.'\
                 ' If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
             print 'Error message:', err
-            os._exit(0)    # pylint: disable=protected-access
+            os._exit(0)  # pylint: disable=protected-access
         if n is None:
             return QtGui.QApplication.translate(context, text)
         return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, n)

@@ -1,7 +1,8 @@
 """
 Thread for performing PoW
 """
-# pylint: disable=protected-access,too-many-branches,too-many-statements,no-self-use,too-many-lines,too-many-locals
+# pylint: disable=protected-access,too-many-branches,too-many-statements
+# pylint: disable=no-self-use,too-many-lines,too-many-locals
 
 from __future__ import division
 

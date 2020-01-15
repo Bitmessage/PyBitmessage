@@ -58,7 +58,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):    # pylint: disable=arguments-differ
+    def get(self, section, option, raw=False, variables=None):
+        # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return ConfigParser.ConfigParser.get(
@@ -109,8 +110,9 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, variables=None):    # pylint: disable=arguments-differ
+    def items(self, section, raw=False, variables=None):
         """Return section variables as parent, but override the "raw" argument to always True"""
+        # pylint: disable=arguments-differ
         return ConfigParser.ConfigParser.items(self, section, True, variables)
 
     @staticmethod

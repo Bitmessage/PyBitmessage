@@ -118,7 +118,7 @@ def decodeWalletImportFormat(WIFstring):
             ' 6 characters of the PRIVATE key: %s',
             str(WIFstring)[:6]
         )
-        os._exit(0)    # pylint: disable=protected-access
+        os._exit(0)  # pylint: disable=protected-access
         # return ""
     elif privkey[0] == '\x80':  # checksum passed
         return privkey[1:]
@@ -128,7 +128,7 @@ def decodeWalletImportFormat(WIFstring):
         ' the checksum passed but the key doesn\'t begin with hex 80.'
         ' Here is the PRIVATE key: %s', WIFstring
     )
-    os._exit(0)    # pylint: disable=protected-access
+    os._exit(0)  # pylint: disable=protected-access
 
 
 def reloadMyAddressHashes():

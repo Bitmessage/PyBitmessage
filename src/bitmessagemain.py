@@ -412,7 +412,7 @@ class Main(object):
                 # wait until grandchild ready
                 while True:
                     time.sleep(1)
-                os._exit(0)    # pylint: disable=protected-access
+                os._exit(0)  # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
@@ -433,7 +433,7 @@ class Main(object):
                 # wait until child ready
                 while True:
                     time.sleep(1)
-                os._exit(0)    # pylint: disable=protected-access
+                os._exit(0)  # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass

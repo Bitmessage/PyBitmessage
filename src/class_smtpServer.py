@@ -76,8 +76,9 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 #            print >> DEBUGSTREAM, 'Incoming connection from %s' % repr(addr)
             self.channel = smtpServerChannel(self, conn, addr)
 
-    def send(self, fromAddress, toAddress, subject, message):  # pylint: disable=arguments-differ
+    def send(self, fromAddress, toAddress, subject, message):
         """Send a bitmessage"""
+        # pylint: disable=arguments-differ
         streamNumber, ripe = decodeAddress(toAddress)[2:]
         stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
@@ -114,8 +115,9 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
         return ret
 
-    def process_message(self, peer, mailfrom, rcpttos, data):  # pylint: disable=too-many-locals, too-many-branches
+    def process_message(self, peer, mailfrom, rcpttos, data):
         """Process an email"""
+        # pylint: disable=too-many-locals, too-many-branches
         # print 'Receiving message from:', peer
         p = re.compile(".*<([^>]+)>")
         if not hasattr(self.channel, "auth") or not self.channel.auth:

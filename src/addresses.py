@@ -180,7 +180,7 @@ def decodeAddress(address):
     returns (status, address version number, stream number,
     data (almost certainly a ripe hash))
     """
-    # pylint: disable=too-many-return-statements,too-many-statements,too-many-return-statements,too-many-branches
+    # pylint: disable=too-many-return-statements,too-many-statements,too-many-branches
 
     address = str(address).strip()
 
