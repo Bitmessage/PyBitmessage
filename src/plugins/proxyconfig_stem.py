@@ -22,9 +22,8 @@ import stem.process
 import stem.version
 
 
-class DebugLogger(object):
+class DebugLogger(object):  # pylint: disable=too-few-public-methods
     """Safe logger wrapper for tor and plugin's logs"""
-    # pylint: disable=too-few-public-methods
     def __init__(self):
         self._logger = logging.getLogger('default')
         self._levels = {
@@ -108,7 +107,8 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
         onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
         onionkey = config.safeGet(onionhostname, 'privsigningkey')
         if onionhostname and not onionkey:
-            logwrite('The hidden service found in config ): %s' % onionhostname)
+            logwrite('The hidden service found in config ): %s' %
+                     onionhostname)
         onionkeytype = config.safeGet(onionhostname, 'keytype')
 
         response = controller.create_ephemeral_hidden_service(
@@ -124,7 +124,8 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
 
         if not onionkey:
             logwrite('Started hidden service %s.onion' % response.service_id)
-            # only save new service keys if onionhostname was not set previously
+            # only save new service keys
+            # if onionhostname was not set previously
             if not onionhostname:
                 onionhostname = response.service_id + '.onion'
                 config.set(

@@ -1,8 +1,7 @@
 """
-src/network/bmproto.py
-==================================
+Bitmessage Protocol
 """
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init, too-few-public-methods
 import base64
 import hashlib
 import logging
@@ -19,17 +18,16 @@ import state
 from bmconfigparser import BMConfigParser
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
-from network.constants import (
-    ADDRESS_ALIVE,
-    MAX_MESSAGE_SIZE,
-    MAX_OBJECT_COUNT,
-    MAX_OBJECT_PAYLOAD_SIZE,
-    MAX_TIME_OFFSET)
-from network.dandelion import Dandelion
 from network.bmobject import (
     BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError,
     BMObjectExpiredError, BMObjectUnwantedStreamError,
-    BMObjectInvalidError, BMObjectAlreadyHaveError)
+    BMObjectInvalidError, BMObjectAlreadyHaveError
+)
+from network.constants import (
+    ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
+    MAX_OBJECT_PAYLOAD_SIZE, MAX_TIME_OFFSET
+)
+from network.dandelion import Dandelion
 from network.proxy import ProxyError
 from network.objectracker import missingObjects, ObjectTracker
 from network.node import Node, Peer
@@ -73,7 +71,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
     timeOffsetWrongCount = 0
 
-    def __init__(self, address=None, sock=None):    # pylint: disable=unused-argument, super-init-not-called
+    def __init__(self, address=None, sock=None):
+        # pylint: disable=unused-argument, super-init-not-called
         AdvancedDispatcher.__init__(self, sock)
         self.isOutbound = False
         # packet/connection from a local IP
@@ -190,7 +189,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def decode_payload_varint(self):
         """Decode a varint from the payload"""
-        value, offset = addresses.decodeVarint(self.payload[self.payloadOffset:])
+        value, offset = addresses.decodeVarint(
+            self.payload[self.payloadOffset:])
         self.payloadOffset += offset
         return value
 
@@ -212,8 +212,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         return Node(services, host, port)
 
-    def decode_payload_content(self, pattern="v"):  # pylint: disable=too-many-branches, too-many-statements
-
+    # pylint: disable=too-many-branches, too-many-statements
+    def decode_payload_content(self, pattern="v"):
         """
         Decode the payload depending on pattern:
 
@@ -229,7 +229,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         , = end of array
         """
 
-        def decode_simple(self, char="v"):  # pylint: disable=inconsistent-return-statements
+        # pylint: disable=inconsistent-return-statements
+        def decode_simple(self, char="v"):
             """Decode the payload using one char pattern"""
             if char == "v":
                 return self.decode_payload_varint()
@@ -442,6 +443,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
         [self.object.inventoryHash] = (
+
             self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
             memoryview(self.object.tag)
@@ -463,23 +465,26 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for i in addresses:
             seenTime, stream, _, ip, port = i
             decodedIP = protocol.checkIPAddress(bytes(ip))
+
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if (
-                    decodedIP and time.time() - seenTime > 0 and
-                    seenTime > time.time() - ADDRESS_ALIVE and
-                    port > 0
+                decodedIP and time.time() - seenTime > 0 and
+                seenTime > time.time() - ADDRESS_ALIVE and
+                port > 0
             ):
                 peer = Peer(decodedIP, port)
                 try:
-                    if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
+                    if knownnodes.knownNodes[stream][peer]["lastseen"] > \
+                            seenTime:
                         continue
                 except KeyError:
                     pass
                 if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().safeGet("knownnodes", "maxnodes")):
                     with knownnodes.knownNodesLock:
                         try:
-                            knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
+                            knownnodes.knownNodes[stream][peer]["lastseen"] = \
+                                seenTime
                         except (TypeError, KeyError):
                             knownnodes.knownNodes[stream][peer] = {
                                 "lastseen": seenTime,
@@ -573,7 +578,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             length=self.payloadLength, expectBytes=0)
         return False
 
-    def peerValidityChecks(self):   # pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-return-statements
+    def peerValidityChecks(self):
         """Check the validity of the peer"""
         if self.remoteProtocolVersion < 3:
             self.append_write_buf(protocol.assembleErrorMessage(
@@ -585,8 +591,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         if self.timeOffset > MAX_TIME_OFFSET:
             self.append_write_buf(protocol.assembleErrorMessage(
-                errorText="Your time is too far in the future compared to mine."
-                " Closing connection.", fatal=2))
+                errorText="Your time is too far in the future"
+                " compared to mine. Closing connection.", fatal=2))
             logger.info(
                 "%s's time is too far in the future (%s seconds)."
                 " Closing connection to it.", self.destination, self.timeOffset)
@@ -608,8 +614,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 errorText="We don't have shared stream interests."
                 " Closing connection.", fatal=2))
             logger.debug(
-                'Closed connection to %s because there is no overlapping interest'
-                ' in streams.', self.destination)
+                'Closed connection to %s because there is no overlapping'
+                ' interest in streams.', self.destination)
             return False
         if self.destination in connectionpool.BMConnectionPool().inboundConnections:
             try:

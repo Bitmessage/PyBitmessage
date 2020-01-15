@@ -1,6 +1,5 @@
 """
-src/network/objectracker.py
-===========================
+Module for tracking objects
 """
 import time
 from threading import RLock
@@ -50,15 +49,18 @@ class ObjectTracker(object):
         """Init bloom filter for tracking. WIP."""
         if haveBloom:
             # lock?
-            self.invBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
-                                        error_rate=ObjectTracker.invErrorRate)
+            self.invBloom = BloomFilter(
+                capacity=ObjectTracker.invInitialCapacity,
+                error_rate=ObjectTracker.invErrorRate)
 
     def initAddrBloom(self):
-        """Init bloom filter for tracking addrs, WIP. This either needs to be moved to addrthread.py or removed."""
+        """Init bloom filter for tracking addrs, WIP.
+        This either needs to be moved to addrthread.py or removed."""
         if haveBloom:
             # lock?
-            self.addrBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
-                                         error_rate=ObjectTracker.invErrorRate)
+            self.addrBloom = BloomFilter(
+                capacity=ObjectTracker.invInitialCapacity,
+                error_rate=ObjectTracker.invErrorRate)
 
     def clean(self):
         """Clean up tracking to prevent memory bloat"""
@@ -72,6 +74,10 @@ class ObjectTracker(object):
                 deadline = time.time() - ObjectTracker.trackingExpires
                 with self.objectsNewToThemLock:
                     self.objectsNewToThem = {k: v for k, v in iter(self.objectsNewToThem.items()) if v >= deadline}
+                    # self.objectsNewToThem = {
+                    #     k: v
+                    #     for k, v in self.objectsNewToThem.iteritems()
+                    #     if v >= deadline}
             self.lastCleaned = time.time()
 
     def hasObj(self, hashid):
@@ -102,10 +108,12 @@ class ObjectTracker(object):
                 del i.objectsNewToMe[hashid]
             except KeyError:
                 if streamNumber in i.streams and (
-                        not Dandelion().hasHash(hashid) or Dandelion().objectChildStem(hashid) == i):
+                        not Dandelion().hasHash(hashid) or
+                        Dandelion().objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
                         i.objectsNewToThem[hashid] = time.time()
-                    # update stream number, which we didn't have when we just received the dinv
+                    # update stream number,
+                    # which we didn't have when we just received the dinv
                     # also resets expiration of the stem mode
                     Dandelion().setHashStream(hashid, streamNumber)
 

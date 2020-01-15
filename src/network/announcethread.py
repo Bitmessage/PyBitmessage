@@ -1,8 +1,6 @@
 """
-src/network/announcethread.py
-=================================
+Announce myself (node address)
 """
-
 import time
 
 import state
@@ -43,6 +41,7 @@ class AnnounceThread(StoppableThread):
                     # connection.append_write_buf(BMProto.assembleAddr([addr]))
                     Peer(
                         '127.0.0.1',
-                        BMConfigParser().safeGetInt('bitmessagesettings', 'port')),
+                        BMConfigParser().safeGetInt(
+                            'bitmessagesettings', 'port')),
                     time.time())
                 connection.append_write_buf(assemble_addr([addr]))

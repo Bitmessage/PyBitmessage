@@ -1,6 +1,5 @@
 """
-src/network/socks4a.py
-=================================
+SOCKS4a proxy module
 """
 # pylint: disable=attribute-defined-outside-init
 import socket

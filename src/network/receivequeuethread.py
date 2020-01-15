@@ -1,3 +1,6 @@
+"""
+Process data incoming from network
+"""
 import errno
 import queue as Queue
 import socket
@@ -10,6 +13,8 @@ from network.threads import StoppableThread
 
 
 class ReceiveQueueThread(StoppableThread):
+    """This thread processes data received from the network
+    (which is done by the asyncore thread)"""
     def __init__(self, num=0):
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
 
@@ -32,12 +37,14 @@ class ReceiveQueueThread(StoppableThread):
 
             try:
                 connection = BMConnectionPool().getConnectionByAddr(dest)
-            except KeyError:  # connection object not found
+            # connection object not found
+            except KeyError:
                 receiveDataQueue.task_done()
                 continue
             try:
                 connection.process()
-            except UnknownStateError:  # state isn't implemented
+            # state isn't implemented
+            except UnknownStateError:
                 pass
             except socket.error as err:
                 if err.errno == errno.EBADF:

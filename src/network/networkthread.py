@@ -1,3 +1,6 @@
+"""
+A thread to handle network concerns
+"""
 import network.asyncore_pollchoose as asyncore
 import state
 from network.connectionpool import BMConnectionPool
@@ -6,7 +9,7 @@ from network.threads import StoppableThread
 
 
 class BMNetworkThread(StoppableThread):
-    """A thread to handle network concerns"""
+    """Main network thread"""
     name = "Asyncore"
 
     def run(self):

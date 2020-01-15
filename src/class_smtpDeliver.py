@@ -1,6 +1,5 @@
 """
-src/class_smtpDeliver.py
-========================
+SMTP client thread for delivering emails
 """
 # pylint: disable=unused-variable
 import smtplib

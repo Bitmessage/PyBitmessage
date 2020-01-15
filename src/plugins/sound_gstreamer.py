@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-src/plugins/sound_gstreamer.py
-===================================
+Sound notification plugin using gstreamer
 """
 import gi
 gi.require_version('Gst', '1.0')

@@ -1,6 +1,6 @@
 PyBitmessage(Android)
 
-This sample aims to be as close to a real world example of a mobile. It has a more refined design and also provides a practical example of how a mobile app would interact and communicate with its adresses.
+This sample aims to be as close to a real world example of a mobile. It has a more refined design and also provides a practical example of how a mobile app would interact and communicate with its addresses.
 
 Steps for trying out this sample:
 
@@ -13,7 +13,7 @@ This sample uses the kivy as Kivy is an open source, cross-platform Python frame
 
 Kivy is written in Python and Cython, supports various input devices and has an extensive widget library. With the same codebase, you can target Windows, OS X, Linux, Android and iOS. All Kivy widgets are built with multitouch support. 
 
-Kivy in support take Buildozer which is a tool that automates the entire build process. It downloads and sets up all the prequisites for python-for-android, including the android SDK and NDK, then builds an apk that can be automatically pushed to the device.
+Kivy in support take Buildozer which is a tool that automates the entire build process. It downloads and sets up all the prerequisite for python-for-android, including the android SDK and NDK, then builds an apk that can be automatically pushed to the device.
 
 Buildozer currently works only in Linux, and is an alpha release, but it already works well and can significantly simplify the apk build.
 

@@ -1,6 +1,5 @@
 """
-src/storage/filesystem.py
-=========================
+Module for using filesystem (directory with files) for inventory storage
 """
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
@@ -12,8 +11,9 @@ from paths import lookupAppdataFolder
 from storage.storage import InventoryStorage, InventoryItem
 
 
-class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ancestors, abstract-method
-    """Module for using filesystem (directory with files) for inventory storage"""
+class FilesystemInventory(InventoryStorage):
+    """Filesystem for inventory storage"""
+    # pylint: disable=too-many-ancestors, abstract-method
     topDir = "inventory"
     objectDir = "objects"
     metadataFilename = "metadata"
@@ -21,21 +21,23 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
 
     def __init__(self):
         super(FilesystemInventory, self).__init__()
-        self.baseDir = path.join(lookupAppdataFolder(), FilesystemInventory.topDir)
+        self.baseDir = path.join(
+            lookupAppdataFolder(), FilesystemInventory.topDir)
         for createDir in [self.baseDir, path.join(self.baseDir, "objects")]:
             if path.exists(createDir):
                 if not path.isdir(createDir):
-                    raise IOError("%s exists but it's not a directory" % (createDir))
+                    raise IOError(
+                        "%s exists but it's not a directory" % createDir)
             else:
                 makedirs(createDir)
-        # Guarantees that two receiveDataThreads don't receive and process the same message
+        # Guarantees that two receiveDataThreads
+        # don't receive and process the same message
         # concurrently (probably sent by a malicious individual)
         self.lock = RLock()
         self._inventory = {}
         self._load()
 
     def __contains__(self, hashval):
-        retval = False
         for streamDict in self._inventory.values():
             if hashval in streamDict:
                 return True
@@ -48,7 +50,12 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
             except KeyError:
                 continue
             if retval.payload is None:
-                retval = InventoryItem(retval.type, retval.stream, self.getData(hashval), retval.expires, retval.tag)
+                retval = InventoryItem(
+                    retval.type,
+                    retval.stream,
+                    self.getData(hashval),
+                    retval.expires,
+                    retval.tag)
             return retval
         raise KeyError(hashval)
 
@@ -56,7 +63,10 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
         with self.lock:
             value = InventoryItem(*value)
             try:
-                makedirs(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashval)))
+                makedirs(path.join(
+                    self.baseDir,
+                    FilesystemInventory.objectDir,
+                    hexlify(hashval)))
             except OSError:
                 pass
             try:
@@ -69,7 +79,11 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
                     ),
                     "w",
                 ) as f:
-                    f.write("%s,%s,%s,%s," % (value.type, value.stream, value.expires, hexlify(value.tag)))
+                    f.write("%s,%s,%s,%s," % (
+                        value.type,
+                        value.stream,
+                        value.expires,
+                        hexlify(value.tag)))
                 with open(
                     path.join(
                         self.baseDir,
@@ -115,7 +129,10 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
             except IOError:
                 pass
             try:
-                rmdir(path.join(self.baseDir, FilesystemInventory.objectDir, hexlify(hashval)))
+                rmdir(path.join(
+                    self.baseDir,
+                    FilesystemInventory.objectDir,
+                    hexlify(hashval)))
             except IOError:
                 pass
 
@@ -135,7 +152,8 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
         newInventory = {}
         for hashId in self.object_list():
             try:
-                objectType, streamNumber, expiresTime, tag = self.getMetadata(hashId)
+                objectType, streamNumber, expiresTime, tag = self.getMetadata(
+                    hashId)
                 try:
                     newInventory[streamNumber][hashId] = InventoryItem(
                         objectType, streamNumber, None, expiresTime, tag)
@@ -155,7 +173,8 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
 
     def object_list(self):
         """Return inventory vectors (hashes) from a directory"""
-        return [unhexlify(x) for x in listdir(path.join(self.baseDir, FilesystemInventory.objectDir))]
+        return [unhexlify(x) for x in listdir(path.join(
+            self.baseDir, FilesystemInventory.objectDir))]
 
     def getData(self, hashId):
         """Get object data"""
@@ -185,15 +204,20 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
                 ),
                 "r",
             ) as f:
-                objectType, streamNumber, expiresTime, tag, undef = string.split(f.read(), ",", 4)
-                return [int(objectType), int(streamNumber), int(expiresTime), unhexlify(tag)]
+                objectType, streamNumber, expiresTime, tag = string.split(
+                    f.read(), ",", 4)[:4]
+                return [
+                    int(objectType),
+                    int(streamNumber),
+                    int(expiresTime),
+                    unhexlify(tag)]
         except IOError:
             raise KeyError
 
     def by_type_and_tag(self, objectType, tag):
         """Get a list of objects filtered by object type and tag"""
         retval = []
-        for stream, streamDict in self._inventory:
+        for streamDict in self._inventory.values():
             for hashId, item in streamDict:
                 if item.type == objectType and item.tag == tag:
                     try:
@@ -201,7 +225,12 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
                             item.payload = self.getData(hashId)
                     except IOError:
                         continue
-                    retval.append(InventoryItem(item.type, item.stream, item.payload, item.expires, item.tag))
+                    retval.append(InventoryItem(
+                        item.type,
+                        item.stream,
+                        item.payload,
+                        item.expires,
+                        item.tag))
         return retval
 
     def hashes_by_stream(self, stream):
@@ -215,7 +244,8 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
         """Return unexpired hashes in the inventory for a particular stream"""
         t = int(time.time())
         try:
-            return [x for x, value in self._inventory[stream].items() if value.expires > t]
+            return [x for x, value in self._inventory[stream].items()
+                    if value.expires > t]
         except KeyError:
             return []
 
@@ -227,7 +257,7 @@ class FilesystemInventory(InventoryStorage):    # pylint: disable=too-many-ances
         """Clean out old items from the inventory"""
         minTime = int(time.time()) - (60 * 60 * 30)
         deletes = []
-        for stream, streamDict in self._inventory.items():
+        for streamDict in self._inventory.values():
             for hashId, item in streamDict.items():
                 if item.expires < minTime:
                     deletes.append(hashId)

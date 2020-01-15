@@ -11,17 +11,17 @@ Bitmessage makes use of fabric_ to define tasks such as building documentation o
 Code style and linters
 ----------------------
 
-We aim to be PEP8 compliant but we recognise that we have a long way still to go. Currently we have style and lint exceptions specified at the most specific place we can. We are ignoring certain issues project-wide in order to avoid alert-blindess, avoid style and lint regressions and to allow continuous integration to hook into the output from the tools. While it is hoped that all new changes pass the checks, fixing some existing violations are mini-projects in themselves. Current thinking on ignorable violations is reflected in the options and comments in setup.cfg. Module and line-level lint warnings represent refactoring opportunities.
+We aim to be PEP8 compliant but we recognize that we have a long way still to go. Currently we have style and lint exceptions specified at the most specific place we can. We are ignoring certain issues project-wide in order to avoid alert-blindness, avoid style and lint regressions and to allow continuous integration to hook into the output from the tools. While it is hoped that all new changes pass the checks, fixing some existing violations are mini-projects in themselves. Current thinking on ignorable violations is reflected in the options and comments in setup.cfg. Module and line-level lint warnings represent refactoring opportunities.
 
 Pull requests
 -------------
 
-There is a template at PULL_REQUEST_TEMPLATE.md that appears in the pull-request description. Please replace this text with something appropriate to your changes based off the ideas in the template.
+There is a template at PULL_REQUEST_TEMPLATE.md that appears in the pull-request description. Please replace this text with something appropriate to your changes based on the ideas in the template.
 
 Bike-shedding
 -------------
 
-Beyond having well-documented, Pythonic code with static analysis tool checks, extensive test coverage and powerful devops tools, what else can we have? Without violating any linters there is room for making arbirary decisions solely for the sake of project consistency. These are the stuff of the pedant's PR comments. Rather than have such conversations in PR comments, we can lay out the result of discussion here.
+Beyond having well-documented, Pythonic code with static analysis tool checks, extensive test coverage and powerful devops tools, what else can we have? Without violating any linters there is room for making arbitrary decisions solely for the sake of project consistency. These are the stuff of the pedant's PR comments. Rather than have such conversations in PR comments, we can lay out the result of discussion here.
 
 I'm putting up a strawman for each topic here, mostly based on my memory of reading related Stack Overflow articles etc. If contributors feel strongly (and we don't have anything better to do) then maybe we can convince each other to update this section.
 
@@ -49,7 +49,7 @@ British vs American spelling
 Dependency graph
 ----------------
 
-These images are not very useful right now but the aim is to tweak the settings of one or more of them to be informative, and/or divide them up into smaller grapghs.
+These images are not very useful right now but the aim is to tweak the settings of one or more of them to be informative, and/or divide them up into smaller graphs.
 
 To re-build them, run `fab build_docs:dep_graphs=true`. Note that the dot graph takes a lot of time.
 

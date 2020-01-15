@@ -21,12 +21,12 @@ If we are to make bold claims about protecting your privacy we should demonstrat
 - looking to audit
 - warrant canary
 
-Digital foootprint
+Digital footprint
 ------------------
 
 Your internet use can reveal metadata you wouldn't expect. This can be connected with other information about you if you're not careful.
 
- * Use separate addresses for different puprose
+ * Use separate addresses for different purposes
  * Don't make the same mistakes all the time
  * Your language use is unique. The more you type, the more you fingerprint yourself. The words you know and use often vs the words you don't know or use often.
 

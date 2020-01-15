@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-ECC blind signature functionality based on "An Efficient Blind Signature Scheme
+ECC blind signature functionality based on
+"An Efficient Blind Signature Scheme
 Based on the Elliptic CurveDiscrete Logarithm Problem" by Morteza Nikooghadama
 <mnikooghadam@sbu.ac.ir> and Ali Zakerolhosseini <a-zaker@sbu.ac.ir>,
 http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pdf
@@ -8,7 +9,6 @@ http://www.isecure-journal.com/article_39171_47f9ec605dd3918c2793565ec21fcd7a.pd
 
 # variable names are based on the math in the paper, so they don't conform
 # to PEP8
-# pylint: disable=invalid-name
 
 from .openssl import OpenSSL
 
@@ -72,8 +72,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         # F = (x0, y0)
         x0 = OpenSSL.BN_new()
         y0 = OpenSSL.BN_new()
-        OpenSSL.EC_POINT_get_affine_coordinates_GFp(group, F, x0, y0,
-                                                    ctx)
+        OpenSSL.EC_POINT_get_affine_coordinates_GFp(group, F, x0, y0, ctx)
         return x0
 
     def __init__(self, curve="secp256k1", pubkey=None):
@@ -82,7 +81,8 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         if pubkey:
             self.group, self.G, self.n, self.Q = pubkey
         else:
-            self.group = OpenSSL.EC_GROUP_new_by_curve_name(OpenSSL.get_curve(curve))
+            self.group = OpenSSL.EC_GROUP_new_by_curve_name(
+                OpenSSL.get_curve(curve))
             # Order n
             self.n = OpenSSL.BN_new()
             OpenSSL.EC_GROUP_get_order(self.group, self.n, self.ctx)

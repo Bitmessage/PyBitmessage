@@ -1,10 +1,9 @@
 """
-src/network/dandelion.py
-========================
+Dandelion class definition, tracks stages
 """
 import logging
 from collections import namedtuple
-from random import choice, sample, expovariate
+from random import choice, expovariate, sample
 from threading import RLock
 from time import time
 
@@ -131,6 +130,8 @@ class Dandelion(object):
 
                 for k in (
                         k for k, v in iter(self.nodeMap.items()) if v == connection
+                        # k for k, v in self.nodeMap.iteritems()
+                        # if v == connection
                 ):
                     self.nodeMap[k] = None
                 for k, v in {

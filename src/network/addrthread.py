@@ -12,6 +12,7 @@ from network.threads import StoppableThread
 
 
 class AddrThread(StoppableThread):
+    """(Node) address broadcasting thread"""
     name = "AddrBroadcaster"
 
     def run(self):

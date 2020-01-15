@@ -1,9 +1,7 @@
+"""
+TCP protocol handler
+"""
 # pylint: disable=too-many-ancestors
-"""
-src/network/tcp.py
-==================
-"""
-
 import logging
 import math
 import random
@@ -33,13 +31,13 @@ from network.tls import TLSDispatcher
 from .node import Peer
 from queues import UISignalQueue, invQueue, receiveDataQueue
 
+
 logger = logging.getLogger('default')
 
 
 class TCPConnection(BMProto, TLSDispatcher):
     # pylint: disable=too-many-instance-attributes
     """
-
     .. todo:: Look to understand and/or fix the non-parent-init-called
     """
 
@@ -90,7 +88,8 @@ class TCPConnection(BMProto, TLSDispatcher):
                 not protocol.checkSocksIP(self.destination.host)
             )
         except socket.error:
-            pass  # it's probably a hostname
+            # it's probably a hostname
+            pass
         self.network_group = protocol.network_group(self.destination.host)
         ObjectTracker.__init__(self)  # pylint: disable=non-parent-init-called
         self.bm_proto_reset()
@@ -142,12 +141,12 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def set_connection_fully_established(self):
         """Initiate inventory synchronisation."""
-        shared.clientHasReceivedIncomingConnections = True
-        UISignalQueue.put(('setStatusIcon', 'green'))
-        UISignalQueue.put((
-            'updateNetworkStatusTab',
-            (self.isOutbound, True, self.destination)
-        ))
+        if not self.isOutbound and not self.local:
+            shared.clientHasReceivedIncomingConnections = True
+            UISignalQueue.put(('setStatusIcon', 'green'))
+        UISignalQueue.put(
+            ('updateNetworkStatusTab', (
+                self.isOutbound, True, self.destination)))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
         if self.isOutbound:
@@ -221,6 +220,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         payload = bytes()
         # Now let us start appending all of these hashes together. They will be
         # sent out in a big inv message to our new peer.
+
         for obj_hash, _ in bigInvList.items():
             payload += obj_hash
             objectCount += 1
