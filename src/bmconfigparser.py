@@ -99,13 +99,11 @@ class BMConfigParser(configparser.ConfigParser):
     def safeGetInt(self, section, field, default=0):
         """Return value as integer, default on exceptions,
         0 if default missing"""
-        config = configparser.ConfigParser()
-
         try:
             # Used in the python2.7
             # return self.getint(section, field)
-            # Used in the python3.5.2
-            return config.getint(section, field)
+            # Used in the python3.7.0
+            return int(self.get(section, field))
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
