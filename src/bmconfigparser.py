@@ -47,6 +47,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
     with additional methods specific to bitmessage config.
     """
+    # pylint: disable=too-many-ancestors
 
     _temp = {}
 
@@ -95,7 +96,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             return False
 
     def safeGetInt(self, section, field, default=0):
-        """Return value as integer, default on exceptions, 0 if default missing"""
+        """Return value as integer, default on exceptions,
+        0 if default missing"""
         try:
             return self.getint(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
@@ -111,7 +113,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             return default
 
     def items(self, section, raw=False, variables=None):
-        """Return section variables as parent, but override the "raw" argument to always True"""
+        """Return section variables as parent,
+        but override the "raw" argument to always True"""
         # pylint: disable=arguments-differ
         return ConfigParser.ConfigParser.items(self, section, True, variables)
 

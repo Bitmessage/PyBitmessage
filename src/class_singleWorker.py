@@ -24,7 +24,9 @@ import queues
 import shared
 import state
 import tr
-from addresses import calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
+from addresses import (
+    calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
+)
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
@@ -237,11 +239,13 @@ class singleWorker(StoppableThread):
         return payload
 
     def doPOWForMyV2Pubkey(self, adressHash):
-        """ This function also broadcasts out the pubkey message once it is done with the POW"""
+        """ This function also broadcasts out the pubkey
+        message once it is done with the POW"""
         # Look up my stream number based on my address hash
         myAddress = shared.myAddressesByHash[adressHash]
         # status
-        _, addressVersionNumber, streamNumber, adressHash = decodeAddress(myAddress)
+        _, addressVersionNumber, streamNumber, adressHash = (
+            decodeAddress(myAddress))
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
