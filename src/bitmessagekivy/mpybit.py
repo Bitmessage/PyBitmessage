@@ -1306,7 +1306,7 @@ class NavigateApp(MDApp):
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
         kivysignalthread.start()
-        Window.bind(on_keyboard=self.on_key)
+        Window.bind(on_keyboard=self.on_key, on_request_close=self.on_request_closee)
         return Builder.load_file(
             os.path.join(os.path.dirname(__file__), 'main.kv'))
 
@@ -1748,6 +1748,23 @@ class NavigateApp(MDApp):
             except Exception:
                 self.root.ids.sc17.children[0].children[1].active = False
 
+    def on_request_closee(self, *args):
+        box = BoxLayout(orientation='vertical')
+        box.add_widget(Label(
+            text=(
+                "Bitmessage isn't connected to the network.\n"
+                "If you quit now, it may cause delivery delays.\n"
+                "Wait until connected and the synchronisation finishes?")))
+        mybutton = Button(text='Yes', size_hint=(1, 0.50))
+        box.add_widget(mybutton)
+        mybutton2 = Button(text='No', size_hint=(1, 0.50))
+        box.add_widget(mybutton2)
+        mybutton3 = Button(text='Cancel', size_hint=(1, 0.50))
+        box.add_widget(mybutton3)
+        popup = Popup(title="Window close", content=box, size_hint=(None, None), size=(500, 300))
+        popup.open()
+        return True
+        
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
