@@ -37,12 +37,18 @@
                 required: True
                 helper_text_mode: "on_error"
                 on_text: root.checkLabel_valid(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
             MDTextField:
                 id: address
                 hint_text: "Address"
                 required: True
                 helper_text_mode: "on_error"
                 on_text: root.checkAddress_valid(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
         BoxLayout:
             spacing:5
             orientation: 'horizontal'
@@ -112,6 +118,9 @@
                 required: True
                 helper_text_mode: "on_error"
                 on_text: root.checkLabel_valid(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
             MDLabel:
                 font_style: 'Subtitle2'
                 theme_text_color: 'Primary'

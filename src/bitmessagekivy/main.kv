@@ -29,12 +29,26 @@
     color: color_font
 
 <NavigationItem>
-    theme_text_color: 'Custom'
-    divider: None
+    on_press: root.active = not root.active
+    active_color: root.theme_cls.primary_color if root.active else root.theme_cls.text_color
 
     IconLeftWidget:
         icon: root.icon
+        theme_text_color: "Custom"
+        text_color: root.active_color
 
+    BadgeText:
+        text: f"{root.badge_text}"
+        theme_text_color: "Custom"
+        text_color: root.active_color
+        halign: 'right'
+
+<NavigationDrawerDivider>:
+    canvas:
+        Color:
+            rgba: self.theme_cls.divider_color
+        Line:
+            points: root.x, root.y + dp(8), root.x + self.width, root.y + dp(8)
 
 <ContentNavigationDrawer>
 
@@ -53,7 +67,8 @@
                 x: root.parent.x
                 pos_hint: {"top": 1}
                 Image:
-                    source: './images/drawer_logo1.png'
+                    #source: './images/drawer_logo1.png'
+                    source: app.get_default_logo()
 
         ScrollView:
             pos_hint: {"top": 1}
@@ -63,12 +78,15 @@
                 cols: 1
                 size_hint_y: None
                 height: self.minimum_height
+                NavigationDrawerDivider:
+                NavigationDrawerSubheader:
+                    text: "Accounts"
                 NavigationItem:
-                    Spinner:
+                    CustomSpinner:
                         id: btn
-                        pos_hint:{"x":0,"y":.1}
+                        pos_hint:{"x":0,"y":0}
                         option_cls: Factory.get("MySpinnerOption")
-                        font_size: '11.9sp'
+                        font_size: '10.9sp'
                         text: app.getDefaultAccData()
                         background_color: color_button if self.state == 'normal' else color_button_pressed
                         background_down: 'atlas://data/images/defaulttheme/spinner'
@@ -82,38 +100,45 @@
                             size: self.parent.height/2, self.parent.height/2
                         ArrowImg:
                 NavigationItem:
+                    id: inbox_cnt
                     text: 'Inbox'
                     icon: 'email-open'
                     divider: None
-                    badge_text: "0"
                     on_release: app.root.ids.scr_mngr.current = 'inbox'
                     on_release: root.parent.toggle_nav_drawer()
                     on_press: app.load_screen(self)
                 NavigationItem:
+                    id: send_cnt
                     text: 'Sent'
                     icon: 'send'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'sent'
                     on_release: root.parent.toggle_nav_drawer()
                 NavigationItem:
+                    id: draft_cnt
                     text: 'Draft'
                     icon: 'message-draw'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'draft'
                     on_release: root.parent.toggle_nav_drawer()
                 NavigationItem:
+                    id: trash_cnt
                     text: 'Trash'
                     icon: 'delete'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'trash'
                     on_release: root.parent.toggle_nav_drawer()
                 NavigationItem:
+                    id: allmail_cnt
                     text: 'All Mails'
                     icon: 'contact-mail'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
                     on_release: root.parent.toggle_nav_drawer()
                     on_press: app.load_screen(self)
+                NavigationDrawerDivider:
+                NavigationDrawerSubheader:
+                    text: "All labels"
                 NavigationItem:
                     text: 'Address Book'
                     icon: 'book-multiple'

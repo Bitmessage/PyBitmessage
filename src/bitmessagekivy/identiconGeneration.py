@@ -12,7 +12,7 @@ from kivy.uix.image import Image as kiImage
 
 
 # constants
-RESOLUTION = 128, 128
+RESOLUTION = 300, 300
 V_RESOLUTION = 7, 7
 BACKGROUND_COLOR = 255, 255, 255, 255
 MODE = "RGB"
