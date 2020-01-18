@@ -480,7 +480,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         continue
                 except KeyError:
                     pass
-                if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().safeGet("knownnodes", "maxnodes")):
+                if len(knownnodes.knownNodes[stream]) < BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
                     with knownnodes.knownNodesLock:
                         try:
                             knownnodes.knownNodes[stream][peer]["lastseen"] = \

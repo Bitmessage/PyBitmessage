@@ -241,7 +241,7 @@ def checkSensitiveFilePermissions(filename):
             shell=True,
             stderr=subprocess.STDOUT
         )
-        if 'fuseblk' in fstype:
+        if 'fuseblk'.encode() in fstype:
             logger.info(
                 'Skipping file permissions check for %s.'
                 ' Filesystem fuseblk detected.', filename)
