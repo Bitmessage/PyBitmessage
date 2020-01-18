@@ -89,6 +89,9 @@
                 required: True
                 helper_text_mode: "on_error"
                 on_text: root.add_validation(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:

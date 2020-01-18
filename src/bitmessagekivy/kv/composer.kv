@@ -8,7 +8,7 @@
             spacing: 15
             BoxLayout:
                 orientation: 'vertical'
-                MDTextField:
+                MyMDTextField:
                     id: ti
                     hint_text: 'type or select sender address'
                     size_hint_y: None
@@ -21,7 +21,7 @@
                 BoxLayout:
                     size_hint_y: None
                     height: dp(40)
-                    Spinner:
+                    CustomSpinner:
                         id: btn
                         background_color: app.theme_cls.primary_dark
                         values: app.variable_1
@@ -46,7 +46,7 @@
                     hint_text: 'type, select or scan QR code for recipients address'
                 RV:
                     id: rv
-            MDTextField:
+            MyMDTextField:
                 id: subject
                 hint_text: 'subject'
                 required: True
@@ -56,7 +56,7 @@
                 multiline: False
                 helper_text_mode: "on_error"
 
-            MDTextField:
+            MyMDTextField:
                 id: body
                 multiline: True
                 hint_text: 'body'
@@ -99,3 +99,9 @@
         height: self.minimum_height
         orientation: 'vertical'
         multiselect: False
+
+
+<MyMDTextField@MDTextField>:
+    canvas.before:
+        Color:
+            rgba: (0,0,0,1)

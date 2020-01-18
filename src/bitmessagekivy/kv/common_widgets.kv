@@ -16,6 +16,9 @@
         id: search_field
         hint_text: 'Search'
         on_text: app.searchQuery(self)
+        canvas.before:
+            Color:
+                rgba: (0,0,0,1)
 
 <Loader@MDSpinner>:
     id: spinner
