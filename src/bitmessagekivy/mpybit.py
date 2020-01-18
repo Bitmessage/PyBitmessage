@@ -647,8 +647,8 @@ class DropDownWidget(BoxLayout):
                             0,
                             'sent',
                             encoding,
-                            int(BMConfigParser().safeGet(
-                                'bitmessagesettings', 'ttl')))
+                            BMConfigParser().safeGetInt(
+                                'bitmessagesettings', 'ttl'))
                     state.check_sent_acc = fromAddress
                     # state.msg_counter_objs = self.parent.parent.parent.parent\
                     #     .parent.parent.children[2].children[0].ids
@@ -2331,7 +2331,7 @@ class Draft(Screen):
                 0,
                 'draft',
                 encoding,
-                int(BMConfigParser().safeGet('bitmessagesettings', 'ttl')))
+                BMConfigParser().safeGetInt('bitmessagesettings', 'ttl'))
             state.msg_counter_objs = src_object.children[2].children[0].ids
             state.draft_count = str(int(state.draft_count) + 1)
             src_object.ids.sc16.clear_widgets()

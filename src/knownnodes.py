@@ -49,9 +49,14 @@ def json_serialize_knownnodes(output):
     for stream, peers in iter(knownNodes.items()):
         for peer, info in iter(peers.items()):
             info.update(rating=round(info.get('rating', 0), 2))
-            _serialized.append({
-                'stream': stream, 'peer': peer._asdict(), 'info': info
-            })
+            if type(peer[0]) != bytes:
+                _serialized.append({'stream': stream, 'peer': peer._asdict(), 'info': info})
+            else:
+                from collections import OrderedDict
+                _serialized.append({
+                    'stream': stream,
+                    'peer': OrderedDict({'host': str(peer[0].decode()), 'port': int(peer[1])}),
+                    'info': info})
     json.dump(_serialized, output, indent=4)
 
 
@@ -171,7 +176,7 @@ def decreaseRating(peer):
 def trimKnownNodes(recAddrStream=1):
     """Triming Knownnodes"""
     if len(knownNodes[recAddrStream]) < \
-            int(BMConfigParser().safeGet("knownnodes", "maxnodes")):
+            BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
         return
     with knownNodesLock:
         oldestList = sorted(

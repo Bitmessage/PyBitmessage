@@ -192,7 +192,7 @@ class BMConnectionPool(object):
         if bind is None:
             "this return blank host"
             bind = self.getListeningIP()
-        port = int(BMConfigParser().safeGet("bitmessagesettings", "port"))
+        port = BMConfigParser().safeGetInt("bitmessagesettings", "port")
         # correct port even if it changed
         ls = TCPServer(host=bind, port=port)
         self.listeningSockets[ls.destination] = ls
@@ -274,8 +274,8 @@ class BMConnectionPool(object):
                 Proxy.proxy = (
                     BMConfigParser().safeGet(
                         'bitmessagesettings', 'sockshostname'),
-                    int(BMConfigParser().safeGet(
-                        'bitmessagesettings', 'socksport'))
+                    BMConfigParser().safeGetInt(
+                        'bitmessagesettings', 'socksport')
                 )
                 # TODO AUTH
                 # TODO reset based on GUI settings changes
@@ -294,8 +294,8 @@ class BMConnectionPool(object):
                 1 for c in [outboundConnections for outboundConnections in self.outboundConnections.values()]
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
-            if established < int(BMConfigParser().safeGet(
-                    'bitmessagesettings', 'maxoutboundconnections')):
+            if established < BMConfigParser().safeGetInt(
+                    'bitmessagesettings', 'maxoutboundconnections'):
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
