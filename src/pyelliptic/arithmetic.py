@@ -51,6 +51,7 @@ def encode(val, base, minlen=0):
         result = code_string[0] * (minlen - len(result)) + result
     return result
 
+
 def decode(string, base):
     """Returns the decoded string"""
     code_string = get_code_string(base)

@@ -371,6 +371,7 @@ class Main(object):
 
             elif state.kivy:
                 config.remove_option('bitmessagesettings', 'dontconnect')
+                # pylint: disable=no-member, import-error
                 from bitmessagekivy.mpybit import NavigateApp
                 state.kivyapp = NavigateApp()
                 state.kivyapp.run()

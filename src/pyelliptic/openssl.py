@@ -699,7 +699,7 @@ def loadOpenSSL():
                 path.join(sys._MEIPASS, 'libssl.so'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.1.0'),
                 path.join(sys._MEIPASS, 'libssl.so.1.1.0'),
-                path.join(sys._MEIPASS,  'libcrypto.so.1.0.2'),
+                path.join(sys._MEIPASS, 'libcrypto.so.1.0.2'),
                 path.join(sys._MEIPASS, 'libssl.so.1.0.2'),
                 path.join(sys._MEIPASS, 'libcrypto.so.1.0.1'),
                 path.join(sys._MEIPASS, 'libssl.so.1.0.1'),

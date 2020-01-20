@@ -326,7 +326,7 @@ class BMConnectionPool(object):
 
                     try:
                         if type(chosen.host) == bytes:
-                            onion= '.onion'.encode()
+                            onion = '.onion'.encode()
                         else:
                             onion = '.onion'
                         if chosen.host.endswith(onion) and Proxy.onion_proxy:
