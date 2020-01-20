@@ -47,12 +47,8 @@ from kivymd.uix.list import (
     ILeftBodyTouch,
     IRightBodyTouch,
     TwoLineAvatarIconListItem,
-    TwoLineListItem,
     OneLineIconListItem,
-    OneLineAvatarListItem,
-    IRightBody,
     OneLineAvatarIconListItem,
-    IRightBodyTouch,
     OneLineListItem
 )
 # from kivymd.uix.navigationdrawer import (
@@ -60,7 +56,6 @@ from kivymd.uix.list import (
 #     NavigationDrawerHeaderBase
 # )
 from kivymd.uix.selectioncontrol import MDCheckbox
-from kivymd.theming import ThemeManager
 
 import queues
 from semaphores import kivyuisignaler
@@ -69,10 +64,12 @@ import state
 from addresses import decodeAddress
 
 
-KVFILES = ['settings', 'popup', 'allmails', 'draft',
-            'maildetail', 'common_widgets', 'addressbook',
-            'myaddress', 'composer', 'payment', 'sent',
-            'network', 'login', 'credits', 'trash', 'inbox']
+KVFILES = [
+    'settings', 'popup', 'allmails', 'draft',
+    'maildetail', 'common_widgets', 'addressbook',
+    'myaddress', 'composer', 'payment', 'sent',
+    'network', 'login', 'credits', 'trash', 'inbox'
+]
 
 
 def toast(text):
@@ -149,7 +146,7 @@ class Inbox(Screen):
                 valign='top')
             self.ids.ml.add_widget(content)
 
-    def set_inboxCount(self, msgCnt):
+    def set_inboxCount(self, msgCnt):  # pylint: disable=no-self-use
         """This method is used to sent inbox message count"""
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.inbox_cnt
         src_mng_obj.children[0].children[0].text = showLimitedCnt(int(msgCnt))
@@ -321,7 +318,6 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock schdule for method Myaddress accounts"""
-        # pylint: disable=unnecessary-lambda, deprecated-lambda
         self.addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
             self.ids.refresh_layout.scroll_y = 1.0
@@ -402,7 +398,7 @@ class MyAddress(Screen):
         def refresh_callback(interval):
             """Method used for loading the myaddress screen data"""
             state.searcing_text = ''
-            #state.kivyapp.root.ids.sc10.children[2].active = False
+            # state.kivyapp.root.ids.sc10.children[2].active = False
             # self.children[2].children[2].ids.search_field.text = ''
             self.children[3].children[2].ids.search_field.text = ''
             self.has_refreshed = True
@@ -557,7 +553,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         return super(SelectableLabel, self).refresh_view_attrs(
             rv, index, data)
 
-    def on_touch_down(self, touch):
+    def on_touch_down(self, touch):  # pylint: disable=inconsistent-return-statements
         """Add selection on touch down"""
         if super(SelectableLabel, self).on_touch_down(touch):
             return True
@@ -1160,7 +1156,7 @@ class Trash(Screen):
             " ORDER BY actionTime DESC limit {1}, {2}".format(
                 state.association, start_indx, end_indx))
 
-    def set_TrashCnt(self, Count):
+    def set_TrashCnt(self, Count):  # pylint: disable=no-self-use
         """This method is used to set trash message count"""
         trashCnt_obj = state.kivyapp.root.ids.content_drawer.ids.trash_cnt
         trashCnt_obj.children[0].children[0].text = showLimitedCnt(int(Count))
@@ -1308,7 +1304,7 @@ class NavigateApp(MDApp):
         """Method builds the widget"""
         for kv_file in KVFILES:
             Builder.load_file(
-                os.path.join(os.path.dirname(__file__),f"kv/{kv_file}.kv"))
+                os.path.join(os.path.dirname(__file__), f"kv/{kv_file}.kv"))
         self.obj_1 = AddressBook()
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
@@ -1433,6 +1429,7 @@ class NavigateApp(MDApp):
         return False
 
     def on_key(self, window, key, *args):
+        # pylint: disable=inconsistent-return-statements
         """Method is used for going on previous screen"""
         if key == 27:
             if state.in_search_mode and self.root.ids.scr_mngr.current != (
@@ -1493,7 +1490,7 @@ class NavigateApp(MDApp):
 
     def loadMyAddressScreen(self, action):
         """loadMyAddressScreen method spin the loader"""
-        if len(self.root.ids.sc10.children) <=3:
+        if len(self.root.ids.sc10.children) <= 3:
             self.root.ids.sc10.children[1].active = action
         else:
             self.root.ids.sc10.children[2].active = action
@@ -1709,7 +1706,7 @@ class NavigateApp(MDApp):
         """Show identicon in address spinner"""
         img = identiconGeneration.generate(text)
         self.root.children[0].children[0].ids.btn.children[1].texture = (img.texture)
-        #below line is for displaing logo
+        # below line is for displaing logo
         self.root.ids.content_drawer.ids.top_box.children[0].texture = (img.texture)
 
     def set_mail_detail_header(self):
@@ -1763,11 +1760,11 @@ class NavigateApp(MDApp):
             except Exception:
                 self.root.ids.sc17.children[0].children[1].active = False
 
-    def on_request_close(self, *args):
+    def on_request_close(self, *args):  # pylint: disable=no-self-use
         """This method is for app closing request"""
         AppClosingPopup().open()
         return True
-        
+
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
@@ -1900,7 +1897,6 @@ class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget"""
 
     pass
-
 
 
 class MailDetail(Screen):
@@ -2156,8 +2152,8 @@ class ShowQRCode(Screen):
         from kivy.garden.qrcode import QRCodeWidget
         try:
             address = self.manager.get_parent_window().children[0].address
-        except Exception as e:
-             address = self.manager.get_parent_window().children[1].address
+        except Exception:
+            address = self.manager.get_parent_window().children[1].address
         self.ids.qr.add_widget(QRCodeWidget(data=address))
         toast('Show QR code')
 
@@ -2223,7 +2219,7 @@ class Draft(Screen):
             start_indx,
             end_indx)
 
-    def set_draftCnt(self, Count):
+    def set_draftCnt(self, Count):  # pylint: disable=no-self-use
         """This method set the count of draft mails"""
         draftCnt_obj = state.kivyapp.root.ids.content_drawer.ids.draft_cnt
         draftCnt_obj.children[0].children[0].text = showLimitedCnt(int(Count))
@@ -2305,8 +2301,8 @@ class Draft(Screen):
         #     msg_count_objs = (
         #         self.parent.parent.parent.parent.parent.parent.children[
         #             2].children[0].ids)
-            # msg_count_objs = self.parent.parent.parent.parent.parent.children[
-            #     2].children[0].ids
+        #     msg_count_objs = self.parent.parent.parent.parent.parent.children[
+        #         2].children[0].ids
         if int(state.draft_count) > 0:
             # msg_count_objs.draft_cnt.badge_text = str(
             #     int(state.draft_count) - 1)
@@ -2429,7 +2425,7 @@ class Allmails(Screen):
             " ORDER BY actionTime DESC limit {1}, {2}".format(
                 self.account, start_indx, end_indx))
 
-    def set_AllmailCnt(self, Count):
+    def set_AllmailCnt(self, Count):  # pylint: disable=no-self-use
         """This method is used to set allmails message count"""
         allmailCnt_obj = state.kivyapp.root.ids.content_drawer.ids.allmail_cnt
         allmailCnt_obj.children[0].children[0].text = showLimitedCnt(int(Count))
@@ -2600,6 +2596,7 @@ class AddressDropdown(OneLineIconListItem):
 
 
 class BadgeText(IRightBodyTouch, MDLabel):
+    """Class for badgetext"""
     pass
 
 
@@ -2645,6 +2642,7 @@ class AppClosingPopup(Popup):
         super(AppClosingPopup, self).__init__(**kwargs)
 
     def closingAction(self, text):
+        """Action on closing window"""
         if text == 'Yes':
             print("*******************EXITING FROM APPLICATION*******************")
             import shutdown

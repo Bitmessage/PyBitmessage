@@ -105,7 +105,9 @@ def encodeHost(host):
         colon = ':'
         full_stop = '.'
     if host.find(onion) > -1:
-        return  '\xfd\x87\xd8\x7e\xeb\x43'.encode('raw_unicode_escape') + base64.b32decode(host.split(full_stop)[0], True)
+        return '\xfd\x87\xd8\x7e\xeb\x43'.encode(
+            'raw_unicode_escape') + base64.b32decode(
+                host.split(full_stop)[0], True)
     elif host.find(colon) == -1:
         return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape') + \
             socket.inet_aton(host)
@@ -286,7 +288,7 @@ def isProofOfWorkSufficient(
 
 def CreatePacket(command, payload=''):
     """Construct and return a number of bytes from a payload"""
-    payload = payload if type(payload) in [bytes,bytearray] else payload.encode()
+    payload = payload if type(payload) in [bytes, bytearray] else payload.encode()
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
     byte = bytearray(Header.size + payload_length)
@@ -332,7 +334,7 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=
         (NODE_DANDELION if state.dandelion else 0)
     )
     # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    #python3 need to check
+    # python3 need to check
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape') + pack('>L', 2130706433)
 
     # we have a separate extPort and incoming over clearnet

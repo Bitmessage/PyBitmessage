@@ -31,7 +31,7 @@ import shared
 import shutdown
 import state
 
-from addresses import addBMIfNotPresent, calculateInventoryHash, decodeAddress,   decodeVarint, varintDecodeError
+from addresses import addBMIfNotPresent, calculateInventoryHash, decodeAddress, decodeVarint, varintDecodeError
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_ackPayload import genAckPayload
