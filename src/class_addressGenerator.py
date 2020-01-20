@@ -117,7 +117,7 @@ class addressGenerator(StoppableThread):
                     defaults.networkDefaultPayloadLengthExtraBytes
             if command == 'createRandomAddress':
                 queues.UISignalQueue.put((
-                    'updateStatusBar'
+                    'updateStatusBar', ""
                 ))
                 # This next section is a little bit strange. We're going
                 # to generate keys over and over until we find one
@@ -193,7 +193,7 @@ class addressGenerator(StoppableThread):
                 queues.apiAddressGeneratorReturnQueue.put(address)
 
                 queues.UISignalQueue.put((
-                    'updateStatusBar'
+                    'updateStatusBar', ""
                 ))
                 queues.UISignalQueue.put(('writeNewAddressToTable', (
                     label, address, streamNumber)))
