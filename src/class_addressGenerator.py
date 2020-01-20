@@ -116,7 +116,9 @@ class addressGenerator(StoppableThread):
                 payloadLengthExtraBytes = \
                     defaults.networkDefaultPayloadLengthExtraBytes
             if command == 'createRandomAddress':
-                queues.UISignalQueue.put(('updateStatusBar', None))
+                queues.UISignalQueue.put((
+                    'updateStatusBar', ""
+                ))
                 # This next section is a little bit strange. We're going
                 # to generate keys over and over until we find one
                 # that starts with either \x00 or \x00\x00. Then when
@@ -190,7 +192,9 @@ class addressGenerator(StoppableThread):
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
                 queues.apiAddressGeneratorReturnQueue.put(address)
-                queues.UISignalQueue.put(('updateStatusBar', None))
+                queues.UISignalQueue.put((
+                    'updateStatusBar', ""
+                ))
                 queues.UISignalQueue.put(('writeNewAddressToTable', (
                     label, address, streamNumber)))
                 shared.reloadMyAddressHashes()
