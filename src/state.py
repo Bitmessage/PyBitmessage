@@ -118,8 +118,6 @@ is_allmail = False
 
 in_composer = False
 
-write_msg = {}
-
 availabe_credit = 0
 
 in_sent_method = False
