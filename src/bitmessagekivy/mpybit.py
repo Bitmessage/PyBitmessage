@@ -102,7 +102,7 @@ class Inbox(Screen):
 
     @staticmethod
     def set_defaultAddress():
-        """This method set default address"""
+        """This method set's default address"""
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
@@ -122,7 +122,9 @@ class Inbox(Screen):
         xAddress = 'toaddress'
         data = []
         self.inboxDataQuery(xAddress, where, what)
+        self.ids.identi_tag.children[0].text = ''
         if self.queryreturn:
+            self.ids.identi_tag.children[0].text = 'Inbox'
             state.kivyapp.get_inbox_count()
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
@@ -157,32 +159,21 @@ class Inbox(Screen):
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used for retrieving inbox data"""
         self.queryreturn = kivy_helper_search.search_sql(
-            xAddress,
-            self.account,
-            "inbox",
-            where,
-            what,
-            False,
-            start_indx,
-            end_indx)
+            xAddress, self.account, "inbox", where, what,
+            False, start_indx, end_indx)
 
     def set_mdList(self, data):
         """This method is used to create the mdList"""
         total_message = len(self.ids.ml.children)
         for item in data:
             meny = TwoLineAvatarIconListItem(
-                text=item['text'],
-                secondary_text=item['secondary_text'],
+                text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny.add_widget(
-                AvatarSampleWidget(
-                    source='./images/text_images/{}.png'.format(
-                        avatarImageFirstLetter(
-                            item['secondary_text'].strip()))))
-            meny.bind(
-                on_press=partial(
-                    self.inbox_detail, item['msgid']))
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item['secondary_text'].strip()))))
+            meny.bind(on_press=partial(self.inbox_detail, item['msgid']))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -192,16 +183,12 @@ class Inbox(Screen):
             del_btn = Button(text='Delete')
             del_btn.background_normal = ''
             del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(
-                on_press=partial(
-                    self.delete, item['msgid']))
+            del_btn.bind(on_press=partial(self.delete, item['msgid']))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
             ach_btn = Button(text='Achieve')
             ach_btn.background_color = (0, 1, 0, 1)
-            ach_btn.bind(
-                on_press=partial(
-                    self.archive, item['msgid']))
+            ach_btn.bind(on_press=partial(self.archive, item['msgid']))
             carousel.add_widget(ach_btn)
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
@@ -209,7 +196,7 @@ class Inbox(Screen):
         self.has_refreshed = True if total_message != update_message else False
 
     def check_scroll_y(self, instance, somethingelse):
-        """This method is used to load data on scroll"""
+        """Loads data on scroll"""
         if self.children[2].children[0].children[
                 0].scroll_y <= -0.0 and self.has_refreshed:
             self.children[2].children[0].children[0].scroll_y = 0.06
@@ -303,7 +290,6 @@ class Inbox(Screen):
             self.has_refreshed = True
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
-
         Clock.schedule_once(refresh_callback, 1)
 
 
@@ -321,7 +307,6 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock schdule for method Myaddress accounts"""
-        # pylint: disable=unnecessary-lambda, deprecated-lambda
         self.addresses_list = state.kivyapp.variable_1
         if state.searcing_text:
             self.ids.refresh_layout.scroll_y = 1.0
@@ -362,8 +347,7 @@ class MyAddress(Screen):
                 'secondary_text': address})
         for item in data:
             meny = TwoLineAvatarIconListItem(
-                text=item['text'],
-                secondary_text=item['secondary_text'],
+                text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
@@ -473,9 +457,7 @@ class AddressBook(Screen):
         """Creating the mdList"""
         for item in self.queryreturn[start_index:end_index]:
             meny = TwoLineAvatarIconListItem(
-                text=item[0],
-                secondary_text=item[1],
-                theme_text_color='Custom',
+                text=item[0], secondary_text=item[1], theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
@@ -746,7 +728,7 @@ class MyTextInput(TextInput):
             self.parent.height = 400
 
     def keyboard_on_key_down(self, window, keycode, text, modifiers):
-        """Key Down"""
+        """Keyboard on key Down"""
         if self.suggestion_text and keycode[1] == 'tab':
             self.insert_text(self.suggestion_text + ' ')
             return True
@@ -849,10 +831,8 @@ class Random(Screen):
         if entered_label and entered_label not in lables:
             toast('Address Creating...')
             queues.addressGeneratorQueue.put((
-                'createRandomAddress',
-                4, streamNumberForAddress,
-                label, 1, "", eighteenByteRipe,
-                nonceTrialsPerByte,
+                'createRandomAddress', 4, streamNumberForAddress, label, 1,
+                "", eighteenByteRipe, nonceTrialsPerByte,
                 payloadLengthExtraBytes))
             self.ids.label.text = ''
             self.parent.parent.ids.toolbar.opacity = 1
@@ -964,15 +944,13 @@ class Sent(Screen):
         total_sent_msg = len(self.ids.ml.children)
         for item in data:
             meny = TwoLineAvatarIconListItem(
-                text=item['text'],
-                secondary_text=item['secondary_text'],
+                text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
-            meny.bind(on_press=partial(
-                self.sent_detail, item['ackdata']))
+            meny.bind(on_press=partial(self.sent_detail, item['ackdata']))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -982,14 +960,12 @@ class Sent(Screen):
             del_btn = Button(text='Delete')
             del_btn.background_normal = ''
             del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(
-                self.delete, item['ackdata']))
+            del_btn.bind(on_press=partial(self.delete, item['ackdata']))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
             ach_btn = Button(text='Achieve')
             ach_btn.background_color = (0, 1, 0, 1)
-            ach_btn.bind(on_press=partial(
-                self.archive, item['ackdata']))
+            ach_btn.bind(on_press=partial(self.archive, item['ackdata']))
             carousel.add_widget(ach_btn)
             carousel.index = 1
             self.ids.ml.add_widget(carousel, index=set_index)
@@ -1394,9 +1370,8 @@ class NavigateApp(MDApp):
                 img.texture.save('{1}/images/default_identicon/{0}.png'.format(
                     BMConfigParser().addresses()[0], android_path))
             else:
-                img.texture.save(
-                    './images/default_identicon/{}.png'.format(
-                        BMConfigParser().addresses()[0]))
+                img.texture.save('./images/default_identicon/{}.png'.format(
+                    BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
@@ -1453,7 +1428,8 @@ class NavigateApp(MDApp):
             elif self.root.ids.scr_mngr.current == "random":
                 self.root.ids.scr_mngr.current = 'login'
             else:
-                self.root.ids.scr_mngr.current = 'inbox'
+                if state.kivyapp.variable_1:
+                    self.root.ids.scr_mngr.current = 'inbox'
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
@@ -1578,18 +1554,16 @@ class NavigateApp(MDApp):
     @staticmethod
     def get_inbox_count():
         """Getting inbox count"""
-        state.inbox_count = str(
-            sqlQuery(
-                "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and"
-                " folder = 'inbox' ;".format(state.association))[0][0])
+        state.inbox_count = str(sqlQuery(
+            "SELECT COUNT(*) FROM inbox WHERE toaddress = '{}' and"
+            " folder = 'inbox' ;".format(state.association))[0][0])
 
     @staticmethod
     def get_sent_count():
         """Getting sent count"""
-        state.sent_count = str(
-            sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
-                " folder = 'sent' ;".format(state.association))[0][0])
+        state.sent_count = str(sqlQuery(
+            "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
+            " folder = 'sent' ;".format(state.association))[0][0])
 
     def set_message_count(self):
         """Setting message count"""
@@ -1606,12 +1580,10 @@ class NavigateApp(MDApp):
             " where fromaddress = '{0}' and  folder = 'trash' )"
             "+(SELECT count(*) FROM inbox where toaddress = '{0}' and"
             " folder = 'trash') AS SumCount".format(state.association))[0][0])
-        state.draft_count = str(
-            sqlQuery(
-                "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
-                " folder = 'draft' ;".format(state.association))[0][0])
+        state.draft_count = str(sqlQuery(
+            "SELECT COUNT(*) FROM sent WHERE fromaddress = '{}' and"
+            " folder = 'draft' ;".format(state.association))[0][0])
         state.all_count = str(int(state.sent_count) + int(state.inbox_count))
-
         if msg_counter_objs:
             msg_counter_objs.send_cnt.badge_text = state.sent_count
             msg_counter_objs.inbox_cnt.badge_text = state.inbox_count
@@ -1989,7 +1961,7 @@ class MailDetail(Screen):
             msg_count_objs.allmail_cnt.children[0].children[0].text = str(
                 int(state.all_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
-            state.all_count = str(int(state.all_count) - 1)
+            state.all_count = str(int(state.all_count) - 1) if int(state.all_count) else '0'
             self.parent.screens[4].clear_widgets()
             self.parent.screens[4].add_widget(Trash())
             self.parent.screens[16].clear_widgets()
@@ -2214,14 +2186,8 @@ class Draft(Screen):
     def draftDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This methosd is for retrieving draft messages"""
         self.queryreturn = kivy_helper_search.search_sql(
-            xAddress,
-            self.account,
-            "draft",
-            where,
-            what,
-            False,
-            start_indx,
-            end_indx)
+            xAddress, self.account, "draft", where, what,
+            False, start_indx, end_indx)
 
     def set_draftCnt(self, Count):
         """This method set the count of draft mails"""
@@ -2259,8 +2225,7 @@ class Draft(Screen):
             del_btn = Button(text='Delete')
             del_btn.background_normal = ''
             del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(
-                self.delete_draft, item['ackdata']))
+            del_btn.bind(on_press=partial(self.delete_draft, item['ackdata']))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
             carousel.index = 1

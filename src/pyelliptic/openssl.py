@@ -2,6 +2,7 @@
 #  See LICENSE for details.
 #
 #  Software slightly changed by Jonathan Warren <bitmessage at-symbol jonwarren.org>
+# pylint: disable=protected-access, import-error
 """
 This module loads openssl libs with ctypes and incapsulates
 needed openssl functionality in class _OpenSSL.
@@ -728,6 +729,7 @@ def loadOpenSSL():
             libdir.append(find_library('ssl'))
         except OSError:
             pass
+    elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append(find_library('libeay32'))
     for library in libdir:
         try:
