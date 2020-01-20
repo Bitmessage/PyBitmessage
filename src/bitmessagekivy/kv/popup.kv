@@ -251,3 +251,64 @@
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
+
+<AppClosingPopup>:
+    id: closing_popup
+    size_hint : (None,None)
+    height: 1.3*(popup_label.height+ my_add_btn.children[0].height)
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    background: './images/popup.jpeg'
+    auto_dismiss: False
+    separator_height: 0
+    BoxLayout:
+        id: myadd_popup_box
+        size_hint_y: None
+        spacing:dp(70)
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(25)
+            MDLabel:
+                id: popup_label
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Bitmessage isn't connected to the network.\n If you quit now, it may cause delivery delays.\n Wait until connected and the synchronisation finishes?"
+                font_size: '17sp'
+                halign: 'left'
+        BoxLayout:
+            id: my_add_btn
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.closingAction(self.children[0].text)
+                on_press: app.stop()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Yes'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.closingAction(self.children[0].text)
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'No'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                #on_press: root.dismiss()
+                on_press: root.closingAction(self.children[0].text)
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
