@@ -2,7 +2,7 @@
 Low-level protocol-related functions.
 """
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements
-# pylint: disable=too-many-locals,too-many-statements
+# pylint: disable=too-many-locals,too-many-statements,logging-format-interpolation
 
 import base64
 import hashlib
@@ -65,6 +65,7 @@ Header = Struct('!L12sL4s')
 VersionPacket = Struct('>LqQ20s4s36sH')
 
 # Bitfield
+# pylint: disable=unidiomatic-typecheck
 
 
 def getBitfield(address):

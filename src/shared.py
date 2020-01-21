@@ -24,7 +24,7 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery
-
+# pylint: disable=logging-format-interpolation
 
 verbose = 1
 # This is obsolete with the change to protocol v3

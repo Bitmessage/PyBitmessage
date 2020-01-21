@@ -14,6 +14,7 @@ import state
 from queues import receiveDataQueue
 
 logger = logging.getLogger('default')
+# pylint: disable=logging-format-interpolation
 
 
 class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
@@ -91,8 +92,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         if remoteport is False:
             return True
         logger.debug(
-            "received peer discovery from {}:{} (port {}):",
-            self.destination.host, self.destination.port, remoteport)
+            "received peer discovery from {}:{} (port {}):".format(
+                self.destination.host, self.destination.port, remoteport))
         if self.local:
             state.discoveredPeers[Peer(self.destination.host, remoteport)] = \
                 time.time()
