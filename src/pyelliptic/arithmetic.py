@@ -33,8 +33,8 @@ def get_code_string(base):
     elif base == 58:
         return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     elif base == 256:
-        '''raw_unicode_escape is used because in the python3 after range(161) its genreate
-         the speical character so avoiding that function we have used the raw_unicode method '''
+        # raw_unicode_escape is used because in the python3 after range(161) its genreate
+        # the speical character so avoiding that function we have used the raw_unicode method
         return bytes(range(0, 256))
     else:
         raise ValueError("Invalid base!")

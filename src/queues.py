@@ -21,6 +21,7 @@ class ObjectProcessorQueue(Queue.Queue):
         self.curSize = 0
 
     def put(self, item, block=True, timeout=None):
+        """Putting values in queues"""
         while self.curSize >= self.maxSize:
             time.sleep(1)
         with self.sizeLock:
@@ -28,6 +29,7 @@ class ObjectProcessorQueue(Queue.Queue):
         Queue.Queue.put(self, item, block, timeout)
 
     def get(self, block=True, timeout=None):
+        """Getting values from queues"""
         item = Queue.Queue.get(self, block, timeout)
         with self.sizeLock:
             self.curSize -= len(item[1])

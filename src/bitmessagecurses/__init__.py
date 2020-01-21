@@ -258,7 +258,7 @@ def drawtab(stdscr):
             stdscr.addstr(6, 18, "Connections", curses.A_BOLD)
             stdscr.hline(7, 6, '-', 23)
             streamcount = []
-            for host, stream in connected_hosts:
+            for _, stream in connected_hosts:
                 if stream >= len(streamcount):
                     streamcount.append(1)
                 else:

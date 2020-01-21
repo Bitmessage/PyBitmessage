@@ -49,6 +49,7 @@ def json_serialize_knownnodes(output):
     for stream, peers in iter(knownNodes.items()):
         for peer, info in iter(peers.items()):
             info.update(rating=round(info.get('rating', 0), 2))
+            # pylint: disable=unidiomatic-typecheck
             if type(peer[0]) != bytes:
                 _serialized.append({'stream': stream, 'peer': peer._asdict(), 'info': info})
             else:
