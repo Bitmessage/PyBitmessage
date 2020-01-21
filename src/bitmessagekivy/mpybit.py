@@ -1,8 +1,8 @@
 """
 Bitmessage android(mobile) interface
 """
-# pylint: disable=import-error,no-name-in-module,unused-argument,too-few-public-methods,too-many-arguments
-# pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation,attribute-defined-outside-init
+# pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
+# pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
 import os
 import time
 from bitmessagekivy import identiconGeneration
@@ -62,7 +62,7 @@ from semaphores import kivyuisignaler
 
 import state
 from addresses import decodeAddress
-
+# pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
 
 KVFILES = [
     'settings', 'popup', 'allmails', 'draft',
@@ -509,7 +509,8 @@ class AddressBook(Screen):
     def delete_address(self, address, instance, *args):
         """Delete inbox mail from inbox listing"""
         self.ids.ml.remove_widget(instance.parent.parent)
-        if len(self.ids.ml.children) == 0:
+        # if len(self.ids.ml.children) == 0:
+        if self.ids.ml.children is not None:
             self.ids.identi_tag.children[0].text = ''
         sqlExecute(
             "DELETE FROM  addressbook WHERE address = '{}';".format(address))
@@ -1263,7 +1264,7 @@ class Setting(Screen):
 
 class NavigateApp(MDApp):
     """Navigation Layout of class"""
-    # pylint: disable=too-many-public-methods
+    # pylint: disable=too-many-public-methods,inconsistent-return-statements
 
     # theme_cls = ThemeManager()
     previous_date = ObjectProperty()
@@ -1280,8 +1281,7 @@ class NavigateApp(MDApp):
     def build(self):
         """Method builds the widget"""
         for kv_file in KVFILES:
-            Builder.load_file(
-                os.path.join(os.path.dirname(__file__), f"kv/{kv_file}.kv"))
+            Builder.load_file(os.path.join(os.path.dirname(__file__), "kv/{}.kv").format(kv_file))
         self.obj_1 = AddressBook()
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
@@ -1298,7 +1298,6 @@ class NavigateApp(MDApp):
     @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown"""
-        # pylint: disable=inconsistent-return-statements
         if name == "text":
             if BMConfigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
@@ -1590,6 +1589,7 @@ class NavigateApp(MDApp):
             msg_counter_objs.allmail_cnt.badge_text = state.all_count
 
     def on_start(self):
+        """Setting message count"""
         self.set_message_count()
 
     # @staticmethod
@@ -2585,6 +2585,7 @@ class NavigationDrawerDivider(OneLineListItem):
     _txt_bot_pad = NumericProperty(dp(8))
 
     def __init__(self, **kwargs):
+        # pylint: disable=bad-super-call
         super(OneLineListItem, self).__init__(**kwargs)
         self.height = dp(16)
 

@@ -14,6 +14,7 @@ import state
 from queues import receiveDataQueue
 
 logger = logging.getLogger('default')
+# pylint: disable=logging-format-interpolation
 
 
 class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
