@@ -30,7 +30,7 @@ from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
 from .node import Peer
 from queues import UISignalQueue, invQueue, receiveDataQueue
-
+# pylint: disable=logging-format-interpolation
 
 logger = logging.getLogger('default')
 

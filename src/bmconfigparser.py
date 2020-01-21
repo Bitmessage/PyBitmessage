@@ -117,6 +117,7 @@ class BMConfigParser(configparser.ConfigParser):
             return default
 
     def items(self, section, raw=False, variables=None):
+        # pylint: disable=signature-differs
         """Return section variables as parent,
         but override the "raw" argument to always True"""
         return configparser.ConfigParser.items(self, section, True, variables)

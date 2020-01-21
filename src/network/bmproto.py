@@ -1,7 +1,7 @@
 """
 Bitmessage Protocol
 """
-# pylint: disable=attribute-defined-outside-init, too-few-public-methods
+# pylint: disable=attribute-defined-outside-init, too-few-public-methods, logging-format-interpolation
 import base64
 import hashlib
 import logging
@@ -123,7 +123,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             length=protocol.Header.size, expectBytes=self.payloadLength)
         return True
 
-    def state_bm_command(self):  # pylint: disable=too-many-branches, too-many-statements
+    def state_bm_command(self):
+        # pylint: disable=too-many-branches, too-many-statements
         """Process incoming command"""
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:

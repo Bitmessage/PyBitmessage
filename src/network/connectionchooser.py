@@ -1,7 +1,7 @@
 """
 Select which node to connect to
 """
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches, logging-format-interpolation, unidiomatic-typecheck
 import logging
 import random  # nosec
 

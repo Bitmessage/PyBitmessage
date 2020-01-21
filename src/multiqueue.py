@@ -22,7 +22,7 @@ class MultiQueue(Queue.Queue):
         Queue.Queue.__init__(self, maxsize)
 
     # Initialize the queue representation
-    def _init(self, maxsize):
+    def _init(self, _):
         self.iter = 0
         self.queues = []
         for _ in range(self.queueCount):
