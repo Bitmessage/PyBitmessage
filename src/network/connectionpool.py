@@ -190,7 +190,6 @@ class BMConnectionPool(object):
     def startListening(self, bind=None):
         """Open a listening socket and start accepting connections on it"""
         if bind is None:
-            """this return blank host"""
             bind = self.getListeningIP()
         port = BMConfigParser().safeGetInt("bitmessagesettings", "port")
         # correct port even if it changed
@@ -325,6 +324,7 @@ class BMConnectionPool(object):
                         continue
 
                     try:
+                        # pylint: disable=unidiomatic-typecheck
                         if type(chosen.host) == bytes:
                             onion = '.onion'.encode()
                         else:
