@@ -22,12 +22,16 @@ def search_sql(
         sqlStatementBase = '''SELECT label, address From addressbook '''
     else:
         sqlStatementBase = (
-            '''SELECT folder, msgid, toaddress, message, fromaddress,'''
+            '''SELECT folder, toaddress, message, fromaddress,'''
             ''' subject, received, read FROM inbox '''
         )
     sqlStatementParts = []
     sqlArguments = []
     if account is not None:
+        #xAddress = 'toaddress'
+        #where = ['subject', 'message']
+        #what = None
+        #unreadOnly = False
         if xAddress == 'both':
             sqlStatementParts.append("(fromaddress = ? OR toaddress = ?)")
             sqlArguments.append(account)

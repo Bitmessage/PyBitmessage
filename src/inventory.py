@@ -24,6 +24,8 @@ class Inventory():
 
     # cheap inheritance copied from asyncore
     def __getattr__(self, attr):
+        # attr = '__contains__'
+        print('$$$$$$$$$$$$$ inside the __getattr__ item $$$$$$$$$$$$$$$$')
         if attr == "__contains__":
             self.numberOfInventoryLookupsPerformed += 1
         try:
@@ -38,4 +40,5 @@ class Inventory():
 
     # hint for pylint: this is dictionary like object
     def __getitem__(self, key):
+        print('@@@@@@@@@@@@@@@@@@ inside the __getitem__ item @@@@@@@@@@@@@@@')
         return self._realInventory[key]

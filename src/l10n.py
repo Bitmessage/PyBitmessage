@@ -123,7 +123,8 @@ def formatTimestamp(timestamp=None, as_unicode=True):
             timestring = time.strftime(time_format)
 
     if as_unicode:
-        return unicode(timestring, encoding)
+        return (timestring.encode('utf-8'))
+        # return unicode(timestring, encoding)
     return timestring
 
 

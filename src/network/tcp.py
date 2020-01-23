@@ -211,6 +211,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             # may lock for a long time, but I think it's better than
             # thousands of small locks
             with self.objectsNewToThemLock:
+                # import pdb;pdb.set_trace()
                 for objHash in Inventory().unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
                     if Dandelion().hasHash(objHash):
@@ -220,18 +221,18 @@ class TCPConnection(BMProto, TLSDispatcher):
         payload = bytes()
         # Now let us start appending all of these hashes together. They will be
         # sent out in a big inv message to our new peer.
+        if len(bigInvList) is not 0: 
+            for obj_hash, _ in bigInvList.items():
+                payload += obj_hash
+                objectCount += 1
 
-        for obj_hash, _ in bigInvList.items():
-            payload += obj_hash
-            objectCount += 1
-
-            # Remove -1 below when sufficient time has passed for users to
-            # upgrade to versions of PyBitmessage that accept inv with 50,000
-            # items
-            if objectCount >= MAX_OBJECT_COUNT - 1:
-                sendChunk()
-                payload = b''
-                objectCount = 0
+                # Remove -1 below when sufficient time has passed for users to
+                # upgrade to versions of PyBitmessage that accept inv with 50,000
+                # items
+                if objectCount >= MAX_OBJECT_COUNT - 1:
+                    sendChunk()
+                    payload = b''
+                    objectCount = 0
 
         # flush
         sendChunk()

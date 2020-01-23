@@ -364,7 +364,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if now < self.skipUntil:
             return True
         for i in items:
-            self.pendingUpload[str(i)] = now
+            self.pendingUpload[bytes(i)] = now
         return True
 
     def _command_inv(self, dandelion=False):
@@ -380,6 +380,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return True
 
         for i in map(bytes, items):
+            import pdb;pdb.set_trace()
             if i in Inventory() and not Dandelion().hasHash(i):
                 continue
             if dandelion and not Dandelion().hasHash(i):
@@ -443,13 +444,26 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        [self.object.inventoryHash] = (
+        # import pdb; pdb.set_trace()
 
-            self.object.objectType, self.object.streamNumber,
+        inventoryHash_list = [self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
-            memoryview(self.object.tag)
-        )
-        Inventory()[self.object.inventoryHash]
+            memoryview(self.object.tag)]
+        # [self.object.inventoryHash] = (
+
+        #     self.object.objectType, self.object.streamNumber,
+        #     memoryview(self.payload[objectOffset:]), self.object.expiresTime,
+        #     memoryview(self.object.tag)
+        # )
+
+
+        
+        # Inventory()[self.object.inventoryHash] = (self.object.objectType, self.object.streamNumber,
+        #     buffer(self.payload[objectOffset:]), self.object.expiresTime,
+        #     buffer(self.object.tag))
+        
+
+
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((

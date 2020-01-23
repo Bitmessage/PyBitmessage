@@ -108,13 +108,13 @@ def _doFastPoW(target, initialHash):
                 logger.debug("Fast PoW done")
                 return result[0], result[1]
         time.sleep(0.2)
+        
 
 
 def _doCPoW(target, initialHash):
-    h = initialHash
-    m = target
-    out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
-    out_m = ctypes.c_ulonglong(m)
+    # import pdb; pdb.set_trace()
+    out_h = ctypes.pointer(ctypes.create_string_buffer(initialHash, 64))
+    out_m = ctypes.c_ulonglong(target)
     logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
     trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
@@ -241,7 +241,6 @@ def buildCPoW():
 
 def run(target, initialHash):
     """Run the proof of work thread"""
-
     if state.shutdown != 0:
         raise  # pylint: disable=misplaced-bare-raise
     target = int(target)
@@ -254,6 +253,7 @@ def run(target, initialHash):
             pass  # fallback
     if bmpow:
         try:
+            print('-------------inside the proofofwork-----------------')
             return _doCPoW(target, initialHash)
         except StopIteration:
             raise
@@ -294,6 +294,8 @@ def init():
 
     openclpow.initCL()
     if sys.platform == "win32":
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print('inside the sys.platform == "win32"')
         if ctypes.sizeof(ctypes.c_voidp) == 4:
             bitmsglib = 'bitmsghash32.dll'
         else:
@@ -326,13 +328,16 @@ def init():
             bso = None
 
     else:
+        # import pdb; pdb.set_trace()
+        print('####################################')
+        print('else else else eles else ')
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
         except OSError:
             import glob
             try:
                 bso = ctypes.CDLL(glob.glob(os.path.join(
-                    paths.codePath(), "bitmsghash", "bitmsghash*.so"
+                    paths.codePath(), " ", "bitmsghash*.so"
                 ))[0])
             except (OSError, IndexError):
                 bso = None
@@ -349,4 +354,6 @@ def init():
     else:
         bmpow = None
     if bmpow is None:
+        print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+        print('intailed the bmpow')
         buildCPoW()

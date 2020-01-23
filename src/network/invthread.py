@@ -87,19 +87,19 @@ class InvThread(StoppableThread):
                                     fluffs.append(inv[1])
                         except KeyError:
                             fluffs.append(inv[1])
-
                     if fluffs:
+                        # import pdb; pdb.set_trace()
                         random.shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket(
                             'inv',
                             addresses.encodeVarint(
-                                len(fluffs)) + ''.join(fluffs)))
+                                len(fluffs)) + ('').encode().join([x for x in fluffs]))) #compare result with python2
                     if stems:
                         random.shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket(
                             'dinv',
                             addresses.encodeVarint(
-                                len(stems)) + ''.join(stems)))
+                                len(stems)) + ('').encode().join([x for x in stems]))) #compare result with python2
 
             invQueue.iterate()
             for _ in range(len(chunk)):
