@@ -1,6 +1,6 @@
 """Building osx."""
-from glob import glob
 import os
+from glob import glob
 from PyQt4 import QtCore
 from setuptools import setup
 

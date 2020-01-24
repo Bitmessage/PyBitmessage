@@ -2,15 +2,12 @@
 sqlThread is defined here
 """
 
-import threading
-from bmconfigparser import BMConfigParser
-
-import sqlite3
-import time
-import shutil  # used for moving the messages.dat file
-import sys
 import os
-from debug import logger
+import shutil  # used for moving the messages.dat file
+import sqlite3
+import sys
+import threading
+import time
 
 import helper_sql
 import helper_startup
@@ -18,6 +15,8 @@ import paths
 import queues
 import state
 import tr
+from bmconfigparser import BMConfigParser
+from debug import logger
 # pylint: disable=attribute-defined-outside-init,protected-access
 
 

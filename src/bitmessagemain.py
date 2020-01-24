@@ -33,8 +33,8 @@ from struct import pack
 
 import defaults
 import shared
-import state
 import shutdown
+import state
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
 from helper_startup import (

@@ -3,8 +3,8 @@ BMConfigParser class definition and default configuration settings
 """
 
 import ConfigParser
-import shutil
 import os
+import shutil
 from datetime import datetime
 
 import state

@@ -29,7 +29,7 @@ import shared
 import state
 import tr
 from bmconfigparser import BMConfigParser
-from helper_sql import sqlQuery, sqlExecute
+from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import BMConnectionPool, StoppableThread
 

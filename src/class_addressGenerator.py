@@ -1,22 +1,22 @@
 """
 A thread for creating addresses
 """
-import time
 import hashlib
+import time
 from binascii import hexlify
-from pyelliptic import arithmetic
-from pyelliptic.openssl import OpenSSL
 
-import tr
-import queues
-import state
-import shared
 import defaults
 import highlevelcrypto
-from bmconfigparser import BMConfigParser
+import queues
+import shared
+import state
+import tr
 from addresses import decodeAddress, encodeAddress, encodeVarint
+from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
 from network import StoppableThread
+from pyelliptic import arithmetic
+from pyelliptic.openssl import OpenSSL
 
 
 class addressGenerator(StoppableThread):

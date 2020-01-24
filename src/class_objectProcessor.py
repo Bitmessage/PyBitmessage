@@ -12,31 +12,29 @@ import time
 from binascii import hexlify
 from subprocess import call  # nosec
 
-import highlevelcrypto
-import knownnodes
-import shared
-from addresses import (
-    calculateInventoryHash, decodeAddress, decodeVarint, encodeAddress,
-    encodeVarint, varintDecodeError
-)
-from bmconfigparser import BMConfigParser
-
 import helper_bitcoin
 import helper_inbox
 import helper_msgcoding
 import helper_sent
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
-from helper_ackPayload import genAckPayload
-from network import bmproto
-from network.node import Peer
-
+import highlevelcrypto
+import knownnodes
+import l10n
 import protocol
 import queues
+import shared
 import state
 import tr
+from addresses import (
+    calculateInventoryHash, decodeAddress, decodeVarint,
+    encodeAddress, encodeVarint, varintDecodeError
+)
+from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
-
-import l10n
+from helper_ackPayload import genAckPayload
+from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
+from network import bmproto
+from network.node import Peer
+# pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
 
 logger = logging.getLogger('default')
 

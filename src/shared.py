@@ -10,12 +10,11 @@ from __future__ import division
 # Libraries.
 import hashlib
 import os
-import sys
 import stat
-import threading
 import subprocess
+import sys
+import threading
 from binascii import hexlify
-from pyelliptic import arithmetic
 
 # Project imports.
 import highlevelcrypto
@@ -24,6 +23,8 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery
+
+from pyelliptic import arithmetic
 
 
 verbose = 1

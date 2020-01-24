@@ -2,14 +2,14 @@
 """
 Module for Proof of Work using OpenCL
 """
-from struct import pack, unpack
 import hashlib
 import os
+from struct import pack, unpack
 
-from bmconfigparser import BMConfigParser
 import paths
-from state import shutdown
+from bmconfigparser import BMConfigParser
 from debug import logger
+from state import shutdown
 
 libAvailable = True
 ctx = False

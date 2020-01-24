@@ -8,7 +8,6 @@ import sys
 from datetime import datetime
 from shutil import move
 
-
 logger = logging.getLogger('default')
 
 # When using py2exe or py2app, the variable frozen is added to the sys

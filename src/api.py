@@ -18,8 +18,6 @@ from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
 
-from version import softwareVersion
-
 import defaults
 import helper_inbox
 import helper_sent
@@ -42,6 +40,7 @@ from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from network.threads import StoppableThread
+from version import softwareVersion
 
 str_chan = '[chan]'
 
