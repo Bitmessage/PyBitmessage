@@ -4,7 +4,6 @@ Announce myself (node address)
 import time
 
 import state
-
 from bmconfigparser import BMConfigParser
 from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool

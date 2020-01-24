@@ -6,9 +6,9 @@
 This module loads openssl libs with ctypes and incapsulates
 needed openssl functionality in class _OpenSSL.
 """
-# pylint: disable=protected-access
-import sys
 import ctypes
+import sys
+# pylint: disable=protected-access
 
 OpenSSL = None
 

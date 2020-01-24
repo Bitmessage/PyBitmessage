@@ -11,8 +11,8 @@ Configure tor proxy and hidden service with
   * otherwise use stem's 'BEST' version and save onion keys to the new
     section using *onionhostname* as name for future use.
 """
-import os
 import logging
+import os
 import random  # noseq
 import tempfile
 

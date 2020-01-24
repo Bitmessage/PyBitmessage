@@ -19,9 +19,9 @@ from bmconfigparser import BMConfigParser
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
-    BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError,
-    BMObjectExpiredError, BMObjectUnwantedStreamError,
-    BMObjectInvalidError, BMObjectAlreadyHaveError
+    BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError,
+    BMObjectInsufficientPOWError, BMObjectInvalidDataError,
+    BMObjectInvalidError, BMObjectUnwantedStreamError
 )
 from network.constants import (
     ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
@@ -30,8 +30,8 @@ from network.constants import (
 from network.dandelion import Dandelion
 from network.proxy import ProxyError
 from node import Node, Peer
-from objectracker import missingObjects, ObjectTracker
-from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
+from objectracker import ObjectTracker, missingObjects
+from queues import addrQueue, invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
 
 logger = logging.getLogger('default')
