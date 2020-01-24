@@ -87,6 +87,7 @@ class BMConnectionPool(object):
     def connectToStream(self, streamNumber):
         """Connect to a bitmessage stream"""
         self.streams.append(streamNumber)
+        state.streamsInWhichIAmParticipating.append(streamNumber)
 
     def getConnectionByAddr(self, addr):
         """

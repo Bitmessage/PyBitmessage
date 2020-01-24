@@ -38,9 +38,7 @@ import state
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
 from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections,
-    start_proxyconfig
-)
+    adjustHalfOpenConnectionsLimit, start_proxyconfig)
 from inventory import Inventory
 from knownnodes import readKnownNodes
 # Network objects and threads
@@ -53,27 +51,6 @@ from singleinstance import singleinstance
 from threads import (
     set_thread_name, printLock,
     addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
-
-
-def connectToStream(streamNumber):
-    """Connect to a stream"""
-    state.streamsInWhichIAmParticipating.append(streamNumber)
-
-    if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
-        # Some XP and Vista systems can only have 10 outgoing connections
-        # at a time.
-        state.maximumNumberOfHalfOpenConnections = 9
-    else:
-        state.maximumNumberOfHalfOpenConnections = 64
-    try:
-        # don't overload Tor
-        if BMConfigParser().get(
-                'bitmessagesettings', 'socksproxytype') != 'none':
-            state.maximumNumberOfHalfOpenConnections = 4
-    except:
-        pass
-
-    BMConnectionPool().connectToStream(streamNumber)
 
 
 def _fixSocket():
@@ -174,6 +151,7 @@ class Main(object):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
         _fixSocket()
+        adjustHalfOpenConnectionsLimit()
 
         config = BMConfigParser()
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
@@ -332,7 +310,7 @@ class Main(object):
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            BMConnectionPool()
+            BMConnectionPool().connectToStream(1)
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
@@ -355,8 +333,6 @@ class Main(object):
             state.uploadThread = UploadThread()
             state.uploadThread.daemon = True
             state.uploadThread.start()
-
-            connectToStream(1)
 
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
