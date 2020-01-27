@@ -573,6 +573,7 @@ class sqlThread(threading.Thread):
                 rowcount = 0
                 # print 'item', item
                 # print 'parameters', parameters
+                # if 'inbox' in item:
                 try:
                     self.cur.execute(item, parameters)
                     rowcount = self.cur.rowcount

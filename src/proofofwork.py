@@ -108,13 +108,12 @@ def _doFastPoW(target, initialHash):
                 logger.debug("Fast PoW done")
                 return result[0], result[1]
         time.sleep(0.2)
+        
 
 
 def _doCPoW(target, initialHash):
-    h = initialHash
-    m = target
-    out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
-    out_m = ctypes.c_ulonglong(m)
+    out_h = ctypes.pointer(ctypes.create_string_buffer(initialHash, 64))
+    out_m = ctypes.c_ulonglong(target)
     logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
     trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
@@ -241,7 +240,6 @@ def buildCPoW():
 
 def run(target, initialHash):
     """Run the proof of work thread"""
-
     if state.shutdown != 0:
         raise  # pylint: disable=misplaced-bare-raise
     target = int(target)
@@ -332,7 +330,7 @@ def init():
             import glob
             try:
                 bso = ctypes.CDLL(glob.glob(os.path.join(
-                    paths.codePath(), "bitmsghash", "bitmsghash*.so"
+                    paths.codePath(), " ", "bitmsghash*.so"
                 ))[0])
             except (OSError, IndexError):
                 bso = None

@@ -45,6 +45,7 @@ class UploadThread(StoppableThread):
                     if Dandelion().hasHash(chunk) and \
                        i != Dandelion().objectChildStem(chunk):
                         i.antiIntersectionDelay()
+                        print
                         self.logger.info(
                             '%s asked for a stem object we didn\'t offer to it.',
                             i.destination)

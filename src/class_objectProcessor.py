@@ -48,7 +48,7 @@ class objectProcessor(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")
         random.seed()
-        # It may be the case that the last time Bitmessage was running,
+        # It may be the case that the last time Bitmes0sage was running,
         # the user closed it before it finished processing everything in the
         # objectProcessorQueue. Assuming that Bitmessage wasn't closed
         # forcefully, it should have saved the data in the queue into the
@@ -69,9 +69,7 @@ class objectProcessor(threading.Thread):
         """Process the objects from `.queues.objectProcessorQueue`"""
         while True:
             objectType, data = queues.objectProcessorQueue.get()
-
             self.checkackdata(data)
-
             try:
                 if objectType == protocol.OBJECT_GETPUBKEY:
                     self.processgetpubkey(data)
@@ -143,7 +141,7 @@ class objectProcessor(threading.Thread):
 
         if bytes(data[readPosition:]) in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[readPosition:]]
+            del shared.ackdataForWhichImWatching[bytes(data[readPosition:])]
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
@@ -237,7 +235,7 @@ class objectProcessor(threading.Thread):
                 'the tag requested in this getpubkey request is: %s',
                 hexlify(requestedTag))
             if bytes(requestedTag) in shared.myAddressesByTag:
-                myAddress = shared.myAddressesByTag[requestedTag]
+                myAddress = shared.myAddressesByTag[bytes(requestedTag)]
 
         if myAddress == '':
             logger.info('This getpubkey request is not for any of my keys.')
@@ -436,14 +434,14 @@ class objectProcessor(threading.Thread):
                 return
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in bytes(state.neededPubkeys):
+            if bytes(tag) not in state.neededPubkeys:
                 logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
                 return
 
             # Let us try to decrypt the pubkey
-            toAddress, _ = state.neededPubkeys[tag]
-            if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
+            toAddress, _ = state.neededPubkeys[bytes(tag)] #check with py2
+            if protocol.decryptAndCheckPubkeyPayload(bytes(data),   toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
                 # pubkey. This function will command the workerThread

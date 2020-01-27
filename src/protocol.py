@@ -431,7 +431,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = state.neededPubkeys[tag]
+        toAddress, cryptorObject = state.neededPubkeys[bytes(tag)]
         if toAddress != address:
             logger.critical(
                 'decryptAndCheckPubkeyPayload failed due to toAddress'
@@ -444,6 +444,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             # That sort of address-malleability should have been caught
             # by the UI or API and an error given to the user.
             return 'failed'
+        print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW#################################################")
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
         except:
@@ -451,13 +452,13 @@ def decryptAndCheckPubkeyPayload(data, address):
             # but tagged it with a tag for which we are watching.
             logger.info('Pubkey decryption was unsuccessful.')
             return 'failed'
-
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        print("working fine till here#################################################################")    
+        publicSigningKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        publicEncryptionKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         specifiedNonceTrialsPerByteLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])[1]
@@ -471,7 +472,6 @@ def decryptAndCheckPubkeyPayload(data, address):
             decryptedData[readPosition:readPosition + 10])
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
-
         if not highlevelcrypto.verify(
                 signedData, signature, hexlify(publicSigningKey)):
             logger.info(
@@ -480,11 +480,9 @@ def decryptAndCheckPubkeyPayload(data, address):
 
         logger.info(
             'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
-
         sha = hashlib.new('sha512')
         sha.update(publicSigningKey + publicEncryptionKey)
         embeddedRipe = RIPEMD160Hash(sha.digest()).digest()
-
         if embeddedRipe != ripe:
             # Although this pubkey object had the tag were were looking for
             # and was encrypted with the correct encryption key,
@@ -503,9 +501,9 @@ def decryptAndCheckPubkeyPayload(data, address):
             addressVersion, streamNumber, hexlify(ripe),
             hexlify(publicSigningKey), hexlify(publicEncryptionKey)
         )
-
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
+        print("successful Insertion of pubkey hurray#################################################")
         return 'successful'
     except varintDecodeError:
         logger.info(

@@ -116,7 +116,7 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
         # if it's a stem duplicate, pretend we don't have it
         if Dandelion().hasHash(self.inventoryHash):
             return
-        if self.inventoryHash in Inventory():
+        if self.inventoryHash in Inventory()._realInventory:
             raise BMObjectAlreadyHaveError()
 
     def checkObjectByType(self):

@@ -29,7 +29,6 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
         self.lock = RLock()
 
     def __contains__(self, hash_):
-        print('----------contains------------------')
         with self.lock:
             if hash_ in self._objects:
                 return True
@@ -40,44 +39,34 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
                 return False
             self._objects[hash_] = rows[0][0]
             return True
-
+    
     def __getitem__(self, hash_):
-        if hash_ == 0:
-            hash_ = bytes()
         with self.lock:
-            try:
-                if hash_ in self._inventory:
-                    return self._inventory[hash_]
-                rows = sqlQuery(
-                    'SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?',
-                    sqlite3.Binary(hash_))
-                if not rows:
-                    pass
-                    # raise KeyError(hash_)
-            except:
-                pass
-            return InventoryItem(*rows[0])
+            if hash_ in self._inventory:
+                return self._inventory[hash_]
+            rows = sqlQuery(
+                'SELECT objecttype, streamnumber, payload, expirestime, tag'
+                ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
+            if not rows:
+                raise KeyError(hash_)
+            return InventoryItem(*rows[0])  
 
     def __setitem__(self, hash_, value):
-        print('----------__setitem__------------------')
         with self.lock:
             value = InventoryItem(*value)
             self._inventory[hash_] = value
             self._objects[hash_] = value.stream
 
     def __delitem__(self, hash_):
-        print('----------__delitem__------------------')
         raise NotImplementedError
 
     def __iter__(self):
-        print('----------__iter__------------------')
         with self.lock:
             hashes = self._inventory.keys()[:]
             hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
     def __len__(self):
-        print('----------__len__------------------')
         with self.lock:
             return len(self._inventory) + sqlQuery(
                 'SELECT count(*) FROM inventory')[0][0]
@@ -99,9 +88,10 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
             t = int(time.time())
             hashes = [x for x, value in self._inventory.items()
                       if value.stream == stream and value.expires > t]
-            hashes += (str(payload) for payload, in sqlQuery(
+            hashes += (payload for payload, in sqlQuery(
                 'SELECT hash FROM inventory WHERE streamnumber=?'
                 ' AND expirestime>?', stream, t))
+            # print('sqlllllllllllllllllllllllllllllllllll',hashes)
             return hashes
 
     def flush(self):
