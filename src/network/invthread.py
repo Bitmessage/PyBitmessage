@@ -88,7 +88,6 @@ class InvThread(StoppableThread):
                         except KeyError:
                             fluffs.append(inv[1])
                     if fluffs:
-                        # import pdb; pdb.set_trace()
                         random.shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket(
                             'inv',

@@ -141,7 +141,7 @@ class objectProcessor(threading.Thread):
 
         if bytes(data[readPosition:]) in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[readPosition:]]
+            del shared.ackdataForWhichImWatching[bytes(data[readPosition:])]
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
@@ -234,7 +234,6 @@ class objectProcessor(threading.Thread):
             logger.debug(
                 'the tag requested in this getpubkey request is: %s',
                 hexlify(requestedTag))
-            # import pdb;pdb.set_trace()
             if bytes(requestedTag) in shared.myAddressesByTag:
                 myAddress = shared.myAddressesByTag[bytes(requestedTag)]
 
@@ -441,15 +440,12 @@ class objectProcessor(threading.Thread):
                 return
 
             # Let us try to decrypt the pubkey
-            print("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT#################################################", tag)
             toAddress, _ = state.neededPubkeys[bytes(tag)] #check with py2
-            # import pdb;pdb.set_trace()
-            if protocol.decryptAndCheckPubkeyPayload(bytes(data), toAddress) == \
+            if protocol.decryptAndCheckPubkeyPayload(bytes(data),   toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
                 # pubkey. This function will command the workerThread
                 # to start work on the messages that require it.
-                print("decryptAndCheckPubkeyPayload completed#########################################################")
                 self.possibleNewPubkey(toAddress)
 
         # Display timing data

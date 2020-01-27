@@ -224,6 +224,7 @@ class singleWorker(StoppableThread):
         if log_time:
             start_time = time.time()
         trialValue, nonce = proofofwork.run(target, initialHash)
+        print("nonce calculated value#############################", nonce)
         self.logger.info(
             '%s Found proof of work %s Nonce: %s',
             log_prefix, trialValue, nonce
@@ -679,7 +680,6 @@ class singleWorker(StoppableThread):
         """Send a message-type object (assemble the object, perform PoW and put it to the inv announcement queue)"""
         # pylint: disable=too-many-nested-blocks
         # Reset just in case
-        # import pdb;pdb.set_trace()
         sqlExecute(
             '''UPDATE sent SET status='msgqueued' '''
             ''' WHERE status IN ('doingpubkeypow', 'doingmsgpow')''')
@@ -690,7 +690,6 @@ class singleWorker(StoppableThread):
             ''' and folder LIKE '%sent%' ''')
         # while we have a msg that needs some work
         for row in queryreturn:
-            print(row, "rowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowrowv")
             toaddress, fromaddress, subject, message, \
                 ackdata, status, TTL, retryNumber, encoding = row
             # toStatus
@@ -732,7 +731,6 @@ class singleWorker(StoppableThread):
                     toaddress
                 )
                 # If we have the needed pubkey in the pubkey table already,
-                print("sendmsg line no 734#####################################################################")
                 if queryreturn != []:
                     # set the status of this msg to doingmsgpow
                     sqlExecute(
@@ -753,7 +751,6 @@ class singleWorker(StoppableThread):
                     )
                 # We don't have the needed pubkey in the pubkeys table already.
                 else:
-                    print("sendmsg line no 756#####################################################################")
                     if toAddressVersionNumber <= 3:
                         toTag = ''
                     else:
@@ -763,16 +760,14 @@ class singleWorker(StoppableThread):
                         ).digest()).digest()[32:]
                     if toaddress in state.neededPubkeys or \
                             toTag in state.neededPubkeys:
-                        print("sendmsg line no 766#####################################################################")
                         # We already sent a request for the pubkey
                         sqlExecute(
                             '''UPDATE sent SET status='awaitingpubkey', '''
                             ''' sleeptill=? WHERE toaddress=? '''
                             ''' AND status='msgqueued' ''',
-                            int(10),
+                            int(time.time()) + 2.5 * 24 * 60 * 60,
                             toaddress
                         )
-                        print("sendmsg line no 774#####################################################################")
                         queues.UISignalQueue.put((
                             'updateSentItemStatusByToAddress', (
                                 toaddress,
@@ -780,11 +775,9 @@ class singleWorker(StoppableThread):
                                     "MainWindow",
                                     "Encryption key was requested earlier."))
                         ))
-                        print("sendmsg line no 783#####################################################################")
                         # on with the next msg on which we can do some work
                         continue
                     else:
-                        print("sendmsg line no 785#####################################################################")
                         # We have not yet sent a request for the pubkey
                         needToRequestPubkey = True
                         # If we are trying to send to address
@@ -812,7 +805,6 @@ class singleWorker(StoppableThread):
                                 highlevelcrypto.makeCryptor(
                                     hexlify(privEncryptionKey))
                             )
-
                             for value in Inventory().by_type_and_tag(1, toTag):
                                 # if valid, this function also puts it
                                 # in the pubkeys table.
@@ -858,7 +850,6 @@ class singleWorker(StoppableThread):
                             self.requestPubKey(toaddress)
                             # on with the next msg on which we can do some work
                             continue
-            print("sendmsg line no 856#####################################################################")                
             # At this point we know that we have the necessary pubkey
             # in the pubkeys table.
             TTL *= 2**retryNumber
@@ -867,10 +858,8 @@ class singleWorker(StoppableThread):
             # add some randomness to the TTL
             TTL = int(TTL + helper_random.randomrandrange(-300, 300))
             embeddedTime = int(time.time() + TTL)
-            print("sendmsg line no 870#####################################################################")
             # if we aren't sending this to ourselves or a chan
             if not BMConfigParser().has_section(toaddress):
-                print("sendmsg line no 873#####################################################################")
                 shared.ackdataForWhichImWatching[ackdata] = 0
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -878,22 +867,23 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Looking up the receiver\'s public key"))
-                ))
+                ))                
                 self.logger.info('Sending a message.')
-                self.logger.debug(
-                    'First 150 characters of message: %s',
-                    repr(message[:150])
-                )
+                # self.logger.debug(
+                #     'First 150 characters of message: %s',
+                #     repr(message[:150])
+                # )
 
                 # Let us fetch the recipient's public key out of
                 # our database. If the required proof of work difficulty
                 # is too hard then we'll abort.
+                
                 queryreturn = sqlQuery(
                     'SELECT transmitdata FROM pubkeys WHERE address=?',
                     toaddress)
                 for row in queryreturn:  # pylint: disable=redefined-outer-name
                     pubkeyPayload, = row
-
+                
                 # The pubkey message is stored with the following items
                 # all appended:
                 #    -address version
@@ -917,7 +907,7 @@ class singleWorker(StoppableThread):
 
                 # if receiver is a mobile device who expects that their
                 # address RIPE is included unencrypted on the front of
-                # the message..
+                # the message..                
                 if protocol.isBitSetWithinBitfield(behaviorBitfield, 30):
                     # if we are Not willing to include the receiver's
                     # RIPE hash on the message..
@@ -954,9 +944,8 @@ class singleWorker(StoppableThread):
                 pubEncryptionKeyBase256 = pubkeyPayload[
                     readPosition:readPosition + 64]
                 readPosition += 64
-
                 # Let us fetch the amount of work required by the recipient.
-                if toAddressVersionNumber == 2:
+                if toAddressVersionNumber == 2:                    
                     requiredAverageProofOfWorkNonceTrialsPerByte = \
                         defaults.networkDefaultProofOfWorkNonceTrialsPerByte
                     requiredPayloadLengthExtraBytes = \
@@ -970,6 +959,7 @@ class singleWorker(StoppableThread):
                                 "There is no required difficulty for"
                                 " version 2 addresses like this."))
                     ))
+                
                 elif toAddressVersionNumber >= 3:
                     requiredAverageProofOfWorkNonceTrialsPerByte, \
                         varintLength = decodeVarint(
@@ -996,7 +986,6 @@ class singleWorker(StoppableThread):
                         requiredAverageProofOfWorkNonceTrialsPerByte,
                         requiredPayloadLengthExtraBytes
                     )
-
                     queues.UISignalQueue.put(
                         (
                             'updateSentItemStatusByAckdata',
@@ -1021,17 +1010,15 @@ class singleWorker(StoppableThread):
                             )
                         )
                     )
-
                     if status != 'forcepow':
-                        maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
-                            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-                        maxacceptablepayloadlengthextrabytes = BMConfigParser().getint(
-                            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')
+                        maxacceptablenoncetrialsperbyte = int(BMConfigParser().get(
+                            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'))
+                        maxacceptablepayloadlengthextrabytes = int(BMConfigParser().get(
+                            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'))
                         cond1 = maxacceptablenoncetrialsperbyte and \
                             requiredAverageProofOfWorkNonceTrialsPerByte > maxacceptablenoncetrialsperbyte
                         cond2 = maxacceptablepayloadlengthextrabytes and \
                             requiredPayloadLengthExtraBytes > maxacceptablepayloadlengthextrabytes
-
                         if cond1 or cond2:
                             # The demanded difficulty is more than
                             # we are willing to do.
@@ -1055,12 +1042,10 @@ class singleWorker(StoppableThread):
                                                           l10n.formatTimestamp()))))
                             continue
             else:  # if we are sending a message to ourselves or a chan..
-                print("sendmsg line no 1058#####################################################################")
                 self.logger.info('Sending a message.')
                 self.logger.debug(
                     'First 150 characters of message: %r', message[:150])
                 behaviorBitfield = protocol.getBitfield(fromaddress)
-
                 try:
                     privEncryptionKeyBase58 = BMConfigParser().get(
                         toaddress, 'privencryptionkey')
@@ -1097,7 +1082,6 @@ class singleWorker(StoppableThread):
                             "MainWindow",
                             "Doing work necessary to send message."))
                 ))
-            print("sendmsg line no 1093#####################################################################")          
             # Now we can start to assemble our message.
             payload = encodeVarint(fromAddressVersionNumber)
             payload += encodeVarint(fromStreamNumber)
@@ -1105,10 +1089,8 @@ class singleWorker(StoppableThread):
             # that can be expected from me. (See
             # https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features)
             payload += protocol.getBitfield(fromaddress)
-            print("sendmsg line no 1101#####################################################################")      
             # We need to convert our private keys to public keys in order
             # to include them.
-            # import pdb; pdb.set_trace()
             try:
                 privSigningKeyHex, privEncryptionKeyHex, \
                     pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
@@ -1123,9 +1105,7 @@ class singleWorker(StoppableThread):
                             " (your address) in the keys.dat file."))
                 ))
                 continue
-            print("sendmsg line no 1119#####################################################################")          
             payload += pubSigningKey + pubEncryptionKey
-
             if fromAddressVersionNumber >= 3:
                 # If the receiver of our message is in our address book,
                 # subscriptions list, or whitelist then we will allow them to
@@ -1142,13 +1122,11 @@ class singleWorker(StoppableThread):
                         fromaddress, 'noncetrialsperbyte')))
                     payload += encodeVarint(int(BMConfigParser().get(
                         fromaddress, 'payloadlengthextrabytes')))
-            print('@@@@@@@@@@@@@@ before payload creating@@@@@@@@@@@@@@@@')
             # This hash will be checked by the receiver of the message
             # to verify that toRipe belongs to them. This prevents
             # a Surreptitious Forwarding Attack.
             payload += toRipe
             payload += encodeVarint(encoding)  # message encoding type
-            # import pdb;pdb.set_trace()
             encodedMessage = helper_msgcoding.MsgEncode(
                 {"subject": subject, "body": message}, encoding
             )
@@ -1174,7 +1152,7 @@ class singleWorker(StoppableThread):
                 fullAckPayload = self.generateFullAckMessage(
                     ackdata, toStreamNumber, TTL)
             payload += encodeVarint(len(fullAckPayload))
-            payload += fullAckPayload.encode()
+            payload += fullAckPayload if isinstance(fullAckPayload,bytes) else fullAckPayload.encode()  
             dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02'.encode() + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
             signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
@@ -1201,7 +1179,6 @@ class singleWorker(StoppableThread):
                         ).arg(l10n.formatTimestamp()))
                 ))
                 continue
-            print('@@@@@@@@@@@@@@ before encryptedPayload creating@@@@@@@@@@@@@@@@')
             encryptedPayload = pack('>Q', embeddedTime)
             encryptedPayload += '\x00\x00\x00\x02'.encode()  # object type: msg
             encryptedPayload += encodeVarint(1)  # msg version
@@ -1226,10 +1203,7 @@ class singleWorker(StoppableThread):
 
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
-            # import pdb; pdb.set_trace()
-            
             trialValue, nonce = proofofwork.run(target, initialHash)
-            print("nonce calculated value#############################", nonce)
             self.logger.info(
                 '(For msg message) Found proof of work %s Nonce: %s',
                 trialValue, nonce
@@ -1242,8 +1216,6 @@ class singleWorker(StoppableThread):
                 )
             except:
                 pass
-            print("line no 1234#########################################")    
-            # import pdb; pdb.set_trace()
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
             # Sanity check. The encryptedPayload size should never be
@@ -1257,18 +1229,12 @@ class singleWorker(StoppableThread):
                     len(encryptedPayload)
                 )
                 continue
-            print("line no 1248#########################################")        
             inventoryHash = calculateInventoryHash(encryptedPayload)
-            print("line no 1250248#########################################")  
             objectType = 2
-            print("line no 1252#########################################")  
-            # import pdb; pdb.set_trace()
             inventoryHashlist = (
                 objectType, toStreamNumber,encryptedPayload, embeddedTime, '')
-            print("line no 1255#########################################")  
-            # import pdb; pdb.set_trace() 
-            Inventory()[inventoryHashlist]
-            print("line no 1257#########################################")  
+            Inventory()._realInventory[inventoryHash] = (
+                objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             if BMConfigParser().has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 queues.UISignalQueue.put((
@@ -1289,7 +1255,6 @@ class singleWorker(StoppableThread):
                             " Sent on %1"
                         ).arg(l10n.formatTimestamp()))
                 ))
-            print("line no 1282#########################################")  
             self.logger.info(
                 'Broadcasting inv for my msg(within sendmsg function): %s',
                 hexlify(inventoryHash)
@@ -1297,7 +1262,6 @@ class singleWorker(StoppableThread):
             queues.invQueue.put((toStreamNumber, inventoryHash))
             # Update the sent message in the sent table with the
             # necessary information.
-            print("line no 1290#########################################")  
             if BMConfigParser().has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 newStatus = 'msgsentnoackexpected'
@@ -1313,7 +1277,6 @@ class singleWorker(StoppableThread):
             )
             # If we are sending to ourselves or a chan, let's put
             # the message in our own inbox.
-            print("line no 1306#########################################")  
             if BMConfigParser().has_section(toaddress):
                 # Used to detect and ignore duplicate messages in our inbox
                 sigHash = hashlib.sha512(hashlib.sha512(
@@ -1340,7 +1303,6 @@ class singleWorker(StoppableThread):
 
     def requestPubKey(self, toAddress):
         """Send a getpubkey object"""
-        # import pdb;pdb.set_trace()
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
             toAddress)
         if toStatus != 'success':
@@ -1350,7 +1312,6 @@ class singleWorker(StoppableThread):
                 toAddress
             )
             return
-
         queryReturn = sqlQuery(
             '''SELECT retrynumber FROM sent WHERE toaddress=? '''
             ''' AND (status='doingpubkeypow' OR status='awaitingpubkey') '''
@@ -1365,10 +1326,9 @@ class singleWorker(StoppableThread):
             )
             return
         retryNumber = queryReturn[0][0]
-
-        if addressVersionNumber <= 3:
+        if addressVersionNumber <= 3:            
             state.neededPubkeys[toAddress] = 0
-        elif addressVersionNumber >= 4:
+        elif addressVersionNumber >= 4:            
             # If the user just clicked 'send' then the tag
             # (and other information) will already be in the
             # neededPubkeys dictionary. But if we are recovering
@@ -1424,17 +1384,14 @@ class singleWorker(StoppableThread):
                     "MainWindow",
                     "Doing work necessary to request encryption key."))
         ))
-
         payload = self._doPOWDefaults(payload, TTL)
-
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        inventoryHashlist = (
+        Inventory()._realInventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
-        Inventory()[inventoryHashlist]
+        # Inventory()._realInventory[inventoryHashlist]
         self.logger.info('sending inv (for the getpubkey message)')
         queues.invQueue.put((streamNumber, inventoryHash))
-
         # wait 10% past expiration
         sleeptill = int(time.time() + TTL * 1.1)
         sqlExecute(
@@ -1443,7 +1400,6 @@ class singleWorker(StoppableThread):
             ''' WHERE toaddress=? AND (status='doingpubkeypow' OR '''
             ''' status='awaitingpubkey') ''',
             int(time.time()), retryNumber + 1, sleeptill, toAddress)
-
         queues.UISignalQueue.put((
             'updateStatusBar',
             tr._translate(
@@ -1461,7 +1417,7 @@ class singleWorker(StoppableThread):
                 ).arg(l10n.formatTimestamp()))
         ))
 
-    def generateFullAckMessage(self,     ackdata, _, TTL):
+    def generateFullAckMessage(self, ackdata, _, TTL):
         """
         It might be perfectly fine to just use the same TTL for the ackdata that we use for the message. But I would
         rather it be more difficult for attackers to associate ackData with the associated msg object. However, users

@@ -61,7 +61,7 @@ class DownloadThread(StoppableThread):
                 payload = bytearray()
                 chunkCount = 0
                 for chunk in request:
-                    if chunk in Inventory() and not Dandelion().hasHash(chunk):
+                    if chunk in Inventory()._realInventory and not Dandelion().hasHash(chunk):
                         try:
                             del i.objectsNewToMe[chunk]
                         except KeyError:

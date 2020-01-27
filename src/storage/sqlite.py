@@ -13,7 +13,6 @@ from storage.storage import InventoryStorage, InventoryItem
 class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
     """Inventory using SQLite"""
     def __init__(self):
-        # import pdb;pdb.set_trace()
         super(SqliteInventory, self).__init__()
         # of objects (like msg payloads and pubkey payloads)
         # Does not include protocol headers (the first 24 bytes of each packet).
@@ -30,8 +29,6 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
         self.lock = RLock()
 
     def __contains__(self, hash_):
-        print('__contains__(self, hash_)__contains__(self, hash_)__contains__(self, hash_) ',hash_)
-        hash_ = str(hash_).encode() if type(hash_) == int else hash_
         with self.lock:
             if hash_ in self._objects:
                 return True
@@ -42,59 +39,34 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
                 return False
             self._objects[hash_] = rows[0][0]
             return True
-
-    # def __getitem__(self, hash_):
-    #     raw = [None]
-    #     # some think broke
-    #     if hash_ == 0:
-    #         hash_ = bytes()
-    #     with self.lock:
-    #         try:
-    #             if hash_ in self._inventory:
-    #                 return self._inventory[hash_]
-    #             rows = sqlQuery(
-    #                 'SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?',
-    #                 sqlite3.Binary(hash_))
-    #             if not rows:
-    #                 # raise KeyError(hash_)
-    #                 pass
-    #         except:
-    #             rows = [hash_]
-    #         return InventoryItem(*rows[0])
-
+    
     def __getitem__(self, hash_):
-        # import pdb;pdb.set_trace()
         with self.lock:
             if hash_ in self._inventory:
                 return self._inventory[hash_]
             rows = sqlQuery(
                 'SELECT objecttype, streamnumber, payload, expirestime, tag'
-                ' FROM inventory WHERE hash=?', sqlite3.Binary(bytes(hash_)))
+                ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
             if not rows:
                 raise KeyError(hash_)
-            return InventoryItem(*rows[0])
-
+            return InventoryItem(*rows[0])  
 
     def __setitem__(self, hash_, value):
-        print('----------__setitem__------------------')
         with self.lock:
             value = InventoryItem(*value)
             self._inventory[hash_] = value
             self._objects[hash_] = value.stream
 
     def __delitem__(self, hash_):
-        print('----------__delitem__------------------')
         raise NotImplementedError
 
     def __iter__(self):
-        print('----------__iter__------------------')
         with self.lock:
             hashes = self._inventory.keys()[:]
             hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
     def __len__(self):
-        print('----------__len__------------------')
         with self.lock:
             return len(self._inventory) + sqlQuery(
                 'SELECT count(*) FROM inventory')[0][0]
@@ -112,17 +84,14 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
 
     def unexpired_hashes_by_stream(self, stream):
         """Return unexpired inventory vectors filtered by stream"""
-        # print ('self._inventory.items() self._inventory.items() self._inventory.items()' ,self._inventory.items())
-        # import pdb;pdb.set_trace()
         with self.lock:
             t = int(time.time())
             hashes = [x for x, value in self._inventory.items()
                       if value.stream == stream and value.expires > t]
-            # print ('hasheshasheshasheshasheshasheshasheshasheshashes',hashes)
             hashes += (payload for payload, in sqlQuery(
                 'SELECT hash FROM inventory WHERE streamnumber=?'
                 ' AND expirestime>?', stream, t))
-            # print ('hasheshasheshasheshasheshasheshasheshasheshashes aaaaaaaaffter',hashes)
+            # print('sqlllllllllllllllllllllllllllllllllll',hashes)
             return hashes
 
     def flush(self):

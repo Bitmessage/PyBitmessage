@@ -112,7 +112,6 @@ def _doFastPoW(target, initialHash):
 
 
 def _doCPoW(target, initialHash):
-    # import pdb; pdb.set_trace()
     out_h = ctypes.pointer(ctypes.create_string_buffer(initialHash, 64))
     out_m = ctypes.c_ulonglong(target)
     logger.debug("C PoW start")
@@ -253,7 +252,6 @@ def run(target, initialHash):
             pass  # fallback
     if bmpow:
         try:
-            print('-------------inside the proofofwork-----------------')
             return _doCPoW(target, initialHash)
         except StopIteration:
             raise
@@ -294,8 +292,6 @@ def init():
 
     openclpow.initCL()
     if sys.platform == "win32":
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print('inside the sys.platform == "win32"')
         if ctypes.sizeof(ctypes.c_voidp) == 4:
             bitmsglib = 'bitmsghash32.dll'
         else:
@@ -328,9 +324,6 @@ def init():
             bso = None
 
     else:
-        # import pdb; pdb.set_trace()
-        print('####################################')
-        print('else else else eles else ')
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
         except OSError:
@@ -354,6 +347,4 @@ def init():
     else:
         bmpow = None
     if bmpow is None:
-        print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-        print('intailed the bmpow')
         buildCPoW()

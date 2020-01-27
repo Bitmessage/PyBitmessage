@@ -34,20 +34,6 @@ from network.node import Node, Peer
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 from network.randomtrackingdict import RandomTrackingDict
 
-global addr_count
-addr_count = 0
-
-global addr_verack
-addr_verack = 0
-
-global addr_version
-addr_version = 0
-
-# global addr_count
-# addr_count = 0
-
-count = 0
-
 logger = logging.getLogger('default')
 
 
@@ -100,14 +86,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # its shoule be in string
         self.command = self.command.rstrip('\x00'.encode('utf-8'))
         # pylint: disable=global-statement
-        global count, addr_version, addr_count, addr_verack
-        count += 1
-        if self.command == 'verack'.encode():
-            addr_verack += 1
-        if self.command == 'version'.encode():
-            addr_version += 1
-        if self.command == 'addr'.encode():
-            addr_count += 1
         if self.magic != 0xE9BEB4D9:
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
@@ -377,11 +355,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         # ignore dinv if dandelion turned off
         if dandelion and not state.dandelion:
-            return True
-
+            return True    
         for i in map(bytes, items):
-            import pdb;pdb.set_trace()
-            if i in Inventory() and not Dandelion().hasHash(i):
+            if i in Inventory()._realInventory and not Dandelion().hasHash(i):
                 continue
             if dandelion and not Dandelion().hasHash(i):
                 Dandelion().addHash(i, self)
@@ -442,28 +418,15 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except KeyError:
                 pass
 
-        if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
+        if self.object.inventoryHash in Inventory()._realInventory and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        # import pdb; pdb.set_trace()
+        [self.object.inventoryHash] = (
 
-        inventoryHash_list = [self.object.objectType, self.object.streamNumber,
+            self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
-            memoryview(self.object.tag)]
-        # [self.object.inventoryHash] = (
-
-        #     self.object.objectType, self.object.streamNumber,
-        #     memoryview(self.payload[objectOffset:]), self.object.expiresTime,
-        #     memoryview(self.object.tag)
-        # )
-
-
-        
-        # Inventory()[self.object.inventoryHash] = (self.object.objectType, self.object.streamNumber,
-        #     buffer(self.payload[objectOffset:]), self.object.expiresTime,
-        #     buffer(self.object.tag))
-        
-
-
+            memoryview(self.object.tag)
+        )
+        Inventory()[self.object.inventoryHash]
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((
