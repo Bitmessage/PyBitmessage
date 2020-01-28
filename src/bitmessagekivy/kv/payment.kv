@@ -45,7 +45,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size:  dp(app.window_size[0]) - 2*dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1) - 10 , 1
+                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
                     on_press: root.get_available_credits(self)
                     MDLabel:
@@ -90,7 +90,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size:  dp(app.window_size[0]) - 2*dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1) - 10 , 1
+                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
                     MDLabel:
                         font_style: 'H6'
@@ -134,7 +134,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size:  dp(app.window_size[0]) - 2*dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/4*1.1) - 10 , 1
+                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
                     MDLabel:
                         font_style: 'H6'

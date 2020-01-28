@@ -62,6 +62,8 @@ from semaphores import kivyuisignaler
 
 import state
 from addresses import decodeAddress
+from kivy.config import Config
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
 
 KVFILES = [
@@ -83,6 +85,30 @@ def toast(text):
 def showLimitedCnt(total_msg):
     """This method set the total count limit in badge_text"""
     return "99+" if total_msg > 99 else str(total_msg)
+
+
+def ShowTimeHistoy(act_time):
+    """This method is used to return the message sent or receive time"""
+    from datetime import datetime
+    action_time = datetime.fromtimestamp(int(act_time))
+    crnt_date = datetime.now()
+    duration = crnt_date - action_time
+    display_data = (action_time.strftime('%d/%m/%Y')
+        if duration.days >= 365 else action_time.strftime('%I:%M %p').lstrip('0')
+        if duration.days == 0 and crnt_date.strftime('%d/%m/%Y') == action_time.strftime('%d/%m/%Y')
+        else action_time.strftime("%d %b"))
+    return display_data
+
+
+def AddTimeWidget(time):
+    """This method is used to create TimeWidget"""
+    action_time = BadgeText(
+        size_hint= (None, None),
+        text= f"{ShowTimeHistoy(time)}",
+        halign='right',
+        font_style='Caption',
+        size= [65,70])
+    return action_time
 
 
 class Inbox(Screen):
@@ -118,6 +144,7 @@ class Inbox(Screen):
             what = state.searcing_text
         xAddress = 'toaddress'
         data = []
+        self.ids.identi_tag.children[0].text = ''
         self.inboxDataQuery(xAddress, where, what)
         self.ids.identi_tag.children[0].text = ''
         if self.queryreturn:
@@ -131,7 +158,7 @@ class Inbox(Screen):
                     'secondary_text': mail[5][:50] + '........' if len(
                         mail[5]) >= 50 else (mail[5] + ',' + mail[3].replace(
                             '\n', ''))[0:50] + '........',
-                    'msgid': mail[1]})
+                    'msgid': mail[1], 'received': mail[6]})
             self.has_refreshed = True
             self.set_mdList(data)
             self.children[2].children[0].children[0].bind(
@@ -171,6 +198,7 @@ class Inbox(Screen):
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
             meny.bind(on_press=partial(self.inbox_detail, item['msgid']))
+            meny.add_widget(AddTimeWidget(item['received']))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -183,10 +211,10 @@ class Inbox(Screen):
             del_btn.bind(on_press=partial(self.delete, item['msgid']))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
-            ach_btn = Button(text='Achieve')
-            ach_btn.background_color = (0, 1, 0, 1)
-            ach_btn.bind(on_press=partial(self.archive, item['msgid']))
-            carousel.add_widget(ach_btn)
+            # ach_btn = Button(text='Achieve')
+            # ach_btn.background_color = (0, 1, 0, 1)
+            # ach_btn.bind(on_press=partial(self.archive, item['msgid']))
+            # carousel.add_widget(ach_btn)
             carousel.index = 1
             self.ids.ml.add_widget(carousel)
         update_message = len(self.ids.ml.children)
@@ -304,7 +332,9 @@ class MyAddress(Screen):
 
     def init_ui(self, dt=0):
         """Clock schdule for method Myaddress accounts"""
-        self.addresses_list = state.kivyapp.variable_1
+        # pylint: disable=unnecessary-lambda, deprecated-lambda
+        # self.addresses_list = state.kivyapp.variable_1
+        self.addresses_list = BMConfigParser().addresses()
         if state.searcing_text:
             self.ids.refresh_layout.scroll_y = 1.0
             filtered_list = [
@@ -343,16 +373,34 @@ class MyAddress(Screen):
                 'text': BMConfigParser().get(address, 'label'),
                 'secondary_text': address})
         for item in data:
+            is_enable = BMConfigParser().get(item['secondary_text'], 'enabled')
             meny = TwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
-                theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                theme_text_color='Custom' if is_enable == 'true' else 'Primary',
+                text_color=NavigateApp().theme_cls.primary_color,
+                disabled=False if is_enable == 'true' else True)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
-            self.ids.ml.add_widget(meny)
+            carousel = Carousel(direction='right')
+            carousel.height = meny.height
+            carousel.size_hint_y = None
+            carousel.ignore_perpendicular_swipes = True
+            carousel.data_index = 0
+            carousel.min_move = 0.2
+            del_btn = Button(text='Disable' if is_enable == 'true' else 'Enable')
+            if is_enable == 'true':
+                del_btn.background_normal = ''
+            del_btn.background_color = (1, 0, 0, 1) if is_enable == 'true' else (0, 1, 0, 1)
+            del_btn.bind(
+                on_press=partial(
+                    self.disableAddress if is_enable == 'true' else self.enableAddress , item['secondary_text']))
+            carousel.add_widget(del_btn)
+            carousel.add_widget(meny)
+            carousel.index = 1
+            self.ids.ml.add_widget(carousel)
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll down"""
@@ -406,6 +454,33 @@ class MyAddress(Screen):
             return True
         return False
 
+    def disableAddress(self, address, instance, *args):
+        """This method is use for disabling address"""
+        BMConfigParser().set(str(address), 'enabled', 'false')
+        BMConfigParser().save()
+        state.kivyapp.loadMyAddressScreen(True)
+        state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
+        Clock.schedule_once(self.address_permision_callback, 0)
+        # state.kivyapp.root.ids.sc10.init_ui()
+        pass
+
+    def enableAddress(self, address, instance, *args):
+        """This method is use for enabling address"""
+        BMConfigParser().set(address, 'enabled', 'true')
+        BMConfigParser().save()
+        state.kivyapp.loadMyAddressScreen(True)
+        state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
+        Clock.schedule_once(self.address_permision_callback, 0)
+
+    # @staticmethod
+    def address_permision_callback(self, dt=0):
+        """New address created"""
+        state.kivyapp.loadMyAddressScreen(False)
+        state.kivyapp.root.ids.sc10.init_ui()
+        addresses = [addr for addr in BMConfigParser().addresses()
+                     if BMConfigParser().get(str(addr), 'enabled') == 'true']
+        self.parent.parent.ids.content_drawer.ids.btn.values = addresses
+        self.parent.parent.ids.sc3.children[1].ids.btn.values = addresses
 
 class AddressBook(Screen):
     """AddressBook Screen uses screen to show widgets of screens"""
@@ -570,8 +645,8 @@ class DropDownWidget(BoxLayout):
 
     def send(self, navApp):
         """Send message from one address to another"""
-        fromAddress = str(self.ids.ti.text)
-        toAddress = str(self.ids.txt_input.text)
+        fromAddress = self.ids.ti.text.strip()
+        toAddress = self.ids.txt_input.text.strip()
         subject = self.ids.subject.text.strip()
         message = self.ids.body.text.strip()
         encoding = 3
@@ -909,7 +984,7 @@ class Sent(Screen):
                     'secondary_text': mail[2][:50] + '........' if len(
                         mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace(
                             '\n', ''))[0:50] + '........',
-                    'ackdata': mail[5]})
+                    'ackdata': mail[5], 'senttime': mail[6]},)
             self.set_mdlist(data, 0)
             self.has_refreshed = True
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
@@ -944,11 +1019,13 @@ class Sent(Screen):
             meny = TwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=NavigateApp().theme_cls.primary_color
+                )
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
             meny.bind(on_press=partial(self.sent_detail, item['ackdata']))
+            meny.add_widget(AddTimeWidget(item['senttime']))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -961,10 +1038,10 @@ class Sent(Screen):
             del_btn.bind(on_press=partial(self.delete, item['ackdata']))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
-            ach_btn = Button(text='Achieve')
-            ach_btn.background_color = (0, 1, 0, 1)
-            ach_btn.bind(on_press=partial(self.archive, item['ackdata']))
-            carousel.add_widget(ach_btn)
+            # ach_btn = Button(text='Achieve')
+            # ach_btn.background_color = (0, 1, 0, 1)
+            # ach_btn.bind(on_press=partial(self.archive, item['ackdata']))
+            # carousel.add_widget(ach_btn)
             carousel.index = 1
             self.ids.ml.add_widget(carousel, index=set_index)
         updated_msgs = len(self.ids.ml.children)
@@ -989,7 +1066,7 @@ class Sent(Screen):
                     'secondary_text': mail[2][:50] + '........' if len(
                         mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace(
                             '\n', ''))[0:50] + '........',
-                    'ackdata': mail[5]})
+                    'ackdata': mail[5], 'senttime': mail[6]})
             self.set_mdlist(data, total_sent - 1)
         if state.msg_counter_objs and state.association == (
                 state.check_sent_acc):
@@ -1026,8 +1103,11 @@ class Sent(Screen):
     def set_sentCount(total_sent):
         """Set the total no. of sent message count"""
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.send_cnt
-        src_mng_obj.children[0].children[0].text = showLimitedCnt(int(total_sent))
-        state.sent_count = str(total_sent)
+        if state.association:
+            src_mng_obj.children[0].children[0].text = showLimitedCnt(int(total_sent))
+            # state.sent_count = str(total_sent)
+        else:
+            src_mng_obj.children[0].children[0].text = '0'
 
     def sent_detail(self, ackdata, *args):
         """Load sent mail details"""
@@ -1125,7 +1205,7 @@ class Trash(Screen):
         self.trash_messages = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message,"
             " folder ||',' || 'sent' as  folder, ackdata As"
-            " id, DATE(lastactiontime) As actionTime FROM sent"
+            " id, DATE(senttime) As actionTime FROM sent"
             " WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
             " SELECT toaddress, fromaddress, subject, message,"
             " folder ||',' || 'inbox' as  folder, msgid As id,"
@@ -1269,7 +1349,8 @@ class NavigateApp(MDApp):
     # theme_cls = ThemeManager()
     previous_date = ObjectProperty()
     obj_1 = ObjectProperty()
-    variable_1 = ListProperty(BMConfigParser().addresses())
+    variable_1 = ListProperty(addr for addr in BMConfigParser().addresses()
+                              if BMConfigParser().get(str(addr), 'enabled') == 'true')
     nav_drawer = ObjectProperty()
     state.screen_density = Window.size
     window_size = state.screen_density
@@ -1515,6 +1596,12 @@ class NavigateApp(MDApp):
             ['send',
              lambda x: self.root.ids.sc3.children[1].send(self)]]
 
+    def set_toolbar_for_QrCode(self):
+        """This method is use for setting Qr code toolbar."""
+        self.root.ids.toolbar.left_action_items = [
+            ['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.toolbar.right_action_items = []
+
     def set_common_header(self):
         """Common header for all window"""
         self.root.ids.toolbar.right_action_items = [
@@ -1522,7 +1609,7 @@ class NavigateApp(MDApp):
         # self.root.ids.toolbar.left_action_items = [
         #     ['menu', lambda x: self.root.toggle_nav_drawer()]]
         self.root.ids.toolbar.left_action_items = [
-            ['menu', lambda x: self.root.ids.nav_drawer.toggle_nav_drawer()]]
+            ['menu', lambda x: self.root.ids.nav_drawer.set_state("toggle")]]
         return
 
     def back_press(self):
@@ -1540,7 +1627,8 @@ class NavigateApp(MDApp):
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
-            if state.detailPageType else 'inbox'
+            if state.detailPageType else 'myaddress'\
+            if self.root.ids.scr_mngr.current == 'showqrcode' else 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -2122,6 +2210,7 @@ class ShowQRCode(Screen):
     def qrdisplay(self):
         """Method used for showing QR Code"""
         self.ids.qr.clear_widgets()
+        state.kivyapp.set_toolbar_for_QrCode()
         from kivy.garden.qrcode import QRCodeWidget
         try:
             address = self.manager.get_parent_window().children[0].address
@@ -2383,7 +2472,7 @@ class Allmails(Screen):
         """Retrieving data from inbox or sent both tables"""
         self.all_mails = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
-            " As id, DATE(lastactiontime) As actionTime FROM sent WHERE"
+            " As id, DATE(senttime) As actionTime FROM sent WHERE"
             " folder = 'sent' and fromaddress = '{0}'"
             " UNION SELECT toaddress, fromaddress, subject, message, folder,"
             " msgid As id, DATE(received) As actionTime FROM inbox"

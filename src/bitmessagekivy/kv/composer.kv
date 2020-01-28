@@ -27,8 +27,10 @@
                         values: app.variable_1
                         on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
                         option_cls: Factory.get("MySpinnerOption")
-                        background_color: color_button if self.state == 'normal' else color_button_pressed
-                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        #background_color: color_button if self.state == 'normal' else color_button_pressed
+                        #background_down: 'atlas://data/images/defaulttheme/spinner'
+                        background_normal: ''
+                        background_color: app.theme_cls.primary_color
                         color: color_font
                         font_size: '12.5sp'
                         ArrowImg:

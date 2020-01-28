@@ -24,8 +24,10 @@
 
 <MySpinnerOption@SpinnerOption>:
     font_size: '12.5sp'
-    background_color: color_button if self.state == 'down' else color_button_pressed
-    background_down: 'atlas://data/images/defaulttheme/button'
+    #background_color: color_button if self.state == 'down' else color_button_pressed
+    #background_down: 'atlas://data/images/defaulttheme/button'
+    background_normal: ''
+    background_color: app.theme_cls.primary_color 
     color: color_font
 
 <NavigationItem>
@@ -81,16 +83,21 @@
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
                     text: "Accounts"
+                    height:"35dp"
                 NavigationItem:
+                    size: 50,50
                     CustomSpinner:
                         id: btn
                         pos_hint:{"x":0,"y":0}
                         option_cls: Factory.get("MySpinnerOption")
                         font_size: '10.9sp'
                         text: app.getDefaultAccData()
-                        background_color: color_button if self.state == 'normal' else color_button_pressed
-                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        #background_color: color_button if self.state == 'normal' else color_button_pressed
+                        #background_down: 'atlas://data/images/defaulttheme/spinner'
                         color: color_font
+                        background_normal: ''
+                        background_color: app.theme_cls.primary_color
+                        #background_color: (0.62,0.67,0.72,1)
                         values: app.variable_1
                         on_text:app.getCurrentAccountData(self.text)
                         Image:
@@ -105,7 +112,7 @@
                     icon: 'email-open'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'inbox'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
                 NavigationItem:
                     id: send_cnt
@@ -113,28 +120,28 @@
                     icon: 'send'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'sent'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     id: draft_cnt
                     text: 'Draft'
                     icon: 'message-draw'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'draft'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     id: trash_cnt
                     text: 'Trash'
                     icon: 'delete'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'trash'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     id: allmail_cnt
                     text: 'All Mails'
                     icon: 'contact-mail'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
@@ -144,43 +151,43 @@
                     icon: 'book-multiple'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'addressbook'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     text: 'Settings'
                     icon: 'settings'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'set'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     text: 'Payment'
                     icon: 'bell'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'payment'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     text: 'Credits'
                     icon: 'wallet'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'credits'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     text: 'New address'
                     icon: 'account-plus'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'login'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     text: 'Network status'
                     icon: 'server-network'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'networkstat'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
                 NavigationItem:
                     text: 'My addresses'
                     icon: 'account-multiple'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'myaddress'
-                    on_release: root.parent.toggle_nav_drawer()
+                    on_release: root.parent.set_state()
 
 NavigationLayout:
     id: nav_layout
@@ -193,7 +200,7 @@ NavigationLayout:
         pos_hint: {"top": 1}
         md_bg_color: app.theme_cls.primary_color
         elevation: 10
-        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+        left_action_items: [['menu', lambda x: nav_drawer.set_state("toggle")]]
         right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
 
     ScreenManager:
