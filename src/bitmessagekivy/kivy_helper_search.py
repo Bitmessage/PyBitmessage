@@ -16,22 +16,18 @@ def search_sql(
     if folder in ("sent", "draft"):
         sqlStatementBase = (
             '''SELECT toaddress, fromaddress, subject, message, status,'''
-            ''' ackdata, lastactiontime FROM sent '''
+            ''' ackdata, senttime FROM sent '''
         )
     elif folder == "addressbook":
         sqlStatementBase = '''SELECT label, address From addressbook '''
     else:
         sqlStatementBase = (
-            '''SELECT folder, toaddress, message, fromaddress,'''
+            '''SELECT folder, msgid, toaddress, message, fromaddress,'''
             ''' subject, received, read FROM inbox '''
         )
     sqlStatementParts = []
     sqlArguments = []
     if account is not None:
-        #xAddress = 'toaddress'
-        #where = ['subject', 'message']
-        #what = None
-        #unreadOnly = False
         if xAddress == 'both':
             sqlStatementParts.append("(fromaddress = ? OR toaddress = ?)")
             sqlArguments.append(account)
@@ -67,7 +63,7 @@ def search_sql(
     # if folder in ("sent", "draft"):
     if folder in ("sent", "draft"):
         sqlStatementBase += \
-            "ORDER BY lastactiontime DESC limit {0}, {1}".format(
+            "ORDER BY senttime DESC limit {0}, {1}".format(
                 start_indx, end_indx)
     elif folder == "inbox":
         sqlStatementBase += \
