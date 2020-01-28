@@ -18,7 +18,7 @@ from common import cleanup
 def put_signal_file(path, filename):
     """Creates file, presence of which is a signal about some event."""
     with open(os.path.join(path, filename), 'wb') as outfile:
-        outfile.write(str(time.time()))
+        outfile.write(b'%i' % time.time())
 
 
 class TestProcessProto(unittest.TestCase):

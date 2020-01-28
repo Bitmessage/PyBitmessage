@@ -1,6 +1,9 @@
 language: python
+cache: pip
+dist: bionic
 python:
-  - "2.7"
+  - "2.7_with_system_site_packages"
+  - "3.7"
 addons:
   apt:
     packages:
@@ -11,7 +14,6 @@ addons:
       - xvfb
 install:
   - pip install -r requirements.txt
-  - ln -s src pybitmessage  # tests environment
   - python setup.py install
 script:
   - python checkdeps.py

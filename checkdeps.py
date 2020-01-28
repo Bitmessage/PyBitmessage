@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
 Check dependencies and give recommendations about how to satisfy them
 
