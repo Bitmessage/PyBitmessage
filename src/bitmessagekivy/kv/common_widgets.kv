@@ -56,3 +56,10 @@
         center_x: self.parent.center_x
         center_y: self.parent.center_y
         size: 20, 20
+
+
+<ToggleBtn>:
+    #size_hint: None, None
+    size: dp(36), dp(48)
+    pos_hint: {'center_x': .95, 'center_y': .4}
+    on_press: app.root.ids.sc10.toggleAction(self)

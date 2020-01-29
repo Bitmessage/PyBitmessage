@@ -55,7 +55,7 @@ from kivymd.uix.list import (
 #     MDNavigationDrawer,
 #     NavigationDrawerHeaderBase
 # )
-from kivymd.uix.selectioncontrol import MDCheckbox
+from kivymd.uix.selectioncontrol import MDCheckbox, MDSwitch
 
 import queues
 from semaphores import kivyuisignaler
@@ -263,17 +263,11 @@ class Inbox(Screen):
         """Delete inbox mail from inbox listing"""
         sqlExecute(
             "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
-        try:
-            msg_count_objs = (
-                self.parent.parent.parent.parent.children[2].children[0].ids)
-        except Exception:
-            msg_count_objs = (
-                self.parent.parent.parent.parent.parent.children[
-                    2].children[0].ids)
+        msg_count_objs = self.parent.parent.ids.content_drawer.ids
         if int(state.inbox_count) > 0:
-            msg_count_objs.inbox_cnt.badge_text = showLimitedCnt(int(state.inbox_count) - 1)
-            msg_count_objs.trash_cnt.badge_text = showLimitedCnt(int(state.trash_count) + 1)
-            msg_count_objs.allmail_cnt.badge_text = showLimitedCnt(int(state.all_count) - 1)
+            msg_count_objs.inbox_cnt.children[0].children[0].text = showLimitedCnt(int(state.inbox_count) - 1)
+            msg_count_objs.trash_cnt.children[0].children[0].text = showLimitedCnt(int(state.trash_count) + 1)
+            msg_count_objs.allmail_cnt.children[0].children[0].text = showLimitedCnt(int(state.all_count) - 1)
             state.inbox_count = str(
                 int(state.inbox_count) - 1)
             state.trash_count = str(
@@ -378,29 +372,37 @@ class MyAddress(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,
-                disabled=False if is_enable == 'true' else True)
+                )
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
-            carousel = Carousel(direction='right')
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text='Disable' if is_enable == 'true' else 'Enable')
-            if is_enable == 'true':
-                del_btn.background_normal = ''
-            del_btn.background_color = (1, 0, 0, 1) if is_enable == 'true' else (0, 1, 0, 1)
-            del_btn.bind(
-                on_press=partial(
-                    self.disableAddress if is_enable == 'true' else self.enableAddress , item['secondary_text']))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel)
+            if state.association == item['secondary_text']:
+                meny.add_widget(BadgeText(size_hint= (None, None),
+                                text='Active', halign='right',
+                                font_style='Body1', size= [50,60],
+                                theme_text_color='Custom',
+                                text_color=NavigateApp().theme_cls.primary_color))
+            else:
+                meny.add_widget(ToggleBtn(active = True if is_enable == 'true' else False))
+            # carousel = Carousel(direction='right')
+            # carousel.height = meny.height
+            # carousel.size_hint_y = None
+            # carousel.ignore_perpendicular_swipes = True
+            # carousel.data_index = 0
+            # carousel.min_move = 0.2
+            # del_btn = Button(text='Disable' if is_enable == 'true' else 'Enable')
+            # if is_enable == 'true':
+            #     del_btn.background_normal = ''
+            # del_btn.background_color = (1, 0, 0, 1) if is_enable == 'true' else (0, 1, 0, 1)
+            # del_btn.bind(
+            #     on_press=partial(
+            #         self.disableAddress if is_enable == 'true' else self.enableAddress , item['secondary_text']))
+            # carousel.add_widget(del_btn)
+            # carousel.add_widget(meny)
+            # carousel.index = 1
+            self.ids.ml.add_widget(meny)
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll down"""
@@ -421,9 +423,10 @@ class MyAddress(Screen):
     @staticmethod
     def myadd_detail(fromaddress, label, *args):
         """Load myaddresses details"""
-        p = MyaddDetailPopup()
-        p.open()
-        p.set_address(fromaddress, label)
+        if BMConfigParser().get(fromaddress, 'enabled') == 'true':
+            p = MyaddDetailPopup()
+            p.open()
+            p.set_address(fromaddress, label)
 
     def refresh_callback(self, *args):
         """Method updates the state of application,
@@ -432,8 +435,7 @@ class MyAddress(Screen):
             """Method used for loading the myaddress screen data"""
             state.searcing_text = ''
             # state.kivyapp.root.ids.sc10.children[2].active = False
-            # self.children[2].children[2].ids.search_field.text = ''
-            self.children[3].children[2].ids.search_field.text = ''
+            self.children[2].children[2].ids.search_field.text = ''
             self.has_refreshed = True
             self.ids.ml.clear_widgets()
             self.init_ui()
@@ -454,33 +456,38 @@ class MyAddress(Screen):
             return True
         return False
 
-    def disableAddress(self, address, instance, *args):
+
+    def disableAddress(self, address, instance):
         """This method is use for disabling address"""
         BMConfigParser().set(str(address), 'enabled', 'false')
         BMConfigParser().save()
-        state.kivyapp.loadMyAddressScreen(True)
-        state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
+        instance.parent.parent.theme_text_color = 'Primary'
+        toast('Address disabled')
         Clock.schedule_once(self.address_permision_callback, 0)
-        # state.kivyapp.root.ids.sc10.init_ui()
-        pass
 
-    def enableAddress(self, address, instance, *args):
+    def enableAddress(self, address, instance):
         """This method is use for enabling address"""
         BMConfigParser().set(address, 'enabled', 'true')
         BMConfigParser().save()
-        state.kivyapp.loadMyAddressScreen(True)
-        state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
+        instance.parent.parent.theme_text_color = 'Custom'
+        toast('Address Enabled')
         Clock.schedule_once(self.address_permision_callback, 0)
 
-    # @staticmethod
     def address_permision_callback(self, dt=0):
-        """New address created"""
-        state.kivyapp.loadMyAddressScreen(False)
-        state.kivyapp.root.ids.sc10.init_ui()
+        """callback for enable or disable addresses"""
         addresses = [addr for addr in BMConfigParser().addresses()
                      if BMConfigParser().get(str(addr), 'enabled') == 'true']
         self.parent.parent.ids.content_drawer.ids.btn.values = addresses
         self.parent.parent.ids.sc3.children[1].ids.btn.values = addresses
+
+    def toggleAction(self, instance):
+        """This method is used for enable or disable address"""
+        addr = instance.parent.parent.secondary_text
+        if instance.active:
+            self.disableAddress(addr, instance)
+        else:
+            self.enableAddress(addr, instance)
+
 
 class AddressBook(Screen):
     """AddressBook Screen uses screen to show widgets of screens"""
@@ -1105,7 +1112,7 @@ class Sent(Screen):
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.send_cnt
         if state.association:
             src_mng_obj.children[0].children[0].text = showLimitedCnt(int(total_sent))
-            # state.sent_count = str(total_sent)
+            state.sent_count = str(total_sent)
         else:
             src_mng_obj.children[0].children[0].text = '0'
 
@@ -1419,6 +1426,9 @@ class NavigateApp(MDApp):
         self.root.ids.sc17.clear_widgets()
         self.root.ids.sc17.add_widget(Allmails())
 
+        self.root.ids.sc10.ids.ml.clear_widgets()
+        self.root.ids.sc10.init_ui()
+
         self.root.ids.scr_mngr.current = 'inbox'
 
     @staticmethod
@@ -1547,10 +1557,10 @@ class NavigateApp(MDApp):
 
     def loadMyAddressScreen(self, action):
         """loadMyAddressScreen method spin the loader"""
-        if len(self.root.ids.sc10.children) <= 3:
-            self.root.ids.sc10.children[1].active = action
+        if len(self.root.ids.sc10.children) <= 2:
+            self.root.ids.sc10.children[0].active = action
         else:
-            self.root.ids.sc10.children[2].active = action
+            self.root.ids.sc10.children[1].active = action
 
     def save_draft(self):
         """Saving drafts messages"""
@@ -1750,7 +1760,7 @@ class NavigateApp(MDApp):
         elif state.search_screen == 'myaddress':
             try:
                 self.root.ids.sc10.children[
-                    3].children[2].ids.search_field.text = ''
+                    1].children[2].ids.search_field.text = ''
             except Exception:
                 self.root.ids.sc10.children[
                     2].children[2].ids.search_field.text = ''
@@ -1810,12 +1820,14 @@ class NavigateApp(MDApp):
             self.root.ids.sc1.loadMessagelist(state.association)
             self.root.ids.sc1.children[1].active = False
         elif instance.text == 'All Mails':
-            if len(self.root.ids.sc17.ids.ml.children) <= 2:
-                self.root.ids.sc17.clear_widgets()
-                self.root.ids.sc17.add_widget(Allmails())
-            else:
-                self.root.ids.sc17.ids.ml.clear_widgets()
-                self.root.ids.sc17.loadMessagelist()
+            # if len(self.root.ids.sc17.ids.ml.children) <= 2:
+            #     self.root.ids.sc17.clear_widgets()
+            #     self.root.ids.sc17.add_widget(Allmails())
+            # else:
+            #     self.root.ids.sc17.ids.ml.clear_widgets()
+            #     self.root.ids.sc17.loadMessagelist()
+            self.root.ids.sc17.clear_widgets()
+            self.root.ids.sc17.add_widget(Allmails())
             try:
                 self.root.ids.sc17.children[1].active = False
             except Exception:
@@ -1957,6 +1969,11 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget"""
 
+    pass
+
+
+class ToggleBtn(IRightBodyTouch, MDSwitch):
+    """Right toggle button widget"""
     pass
 
 
