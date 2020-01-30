@@ -8,6 +8,7 @@ import pickle  # nosec
 import Queue
 import random  # nosec
 import shutil
+import socket
 import string
 import sys
 import time
@@ -163,7 +164,12 @@ class TestCore(unittest.TestCase):
         knownnodes.cleanupKnownNodes()
         time.sleep(2)
 
-    def _check_bootstrap(self):
+    def _check_connection(self):
+        """
+        Check if there is at least one outbound connection to remote host
+        with name not starting with "bootstrap" in 3 minutes,
+        fail otherwise.
+        """
         _started = time.time()
         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
         proxy_type = BMConfigParser().safeGet(
@@ -184,10 +190,25 @@ class TestCore(unittest.TestCase):
         self.fail(
             'Failed to connect during %s sec' % (time.time() - _started))
 
+    def test_connection(self):
+        """test connection to bootstrap servers"""
+        self._initiate_bootstrap()
+        for port in [8080, 8444]:
+            for item in socket.getaddrinfo(
+                    'bootstrap%s.bitmessage.org' % port, 80):
+                try:
+                    addr = item[4][0]
+                    socket.inet_aton(item[4][0])
+                except (TypeError, socket.error):
+                    continue
+                else:
+                    knownnodes.addKnownNode(1, Peer(addr, port))
+        self._check_connection()
+
     def test_bootstrap(self):
         """test bootstrapping"""
         self._initiate_bootstrap()
-        self._check_bootstrap()
+        self._check_connection()
 
     @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
     def test_bootstrap_tor(self):
@@ -195,7 +216,7 @@ class TestCore(unittest.TestCase):
         self._initiate_bootstrap()
         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'stem')
         start_proxyconfig()
-        self._check_bootstrap()
+        self._check_connection()
 
     @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
     def test_onionservicesonly(self):  # this should start after bootstrap
