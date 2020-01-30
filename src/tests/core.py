@@ -167,7 +167,7 @@ class TestCore(unittest.TestCase):
     def _check_connection(self):
         """
         Check if there is at least one outbound connection to remote host
-        with name not starting with "bootstrap" in 3 minutes,
+        with name not starting with "bootstrap" in 6 minutes at most,
         fail otherwise.
         """
         _started = time.time()
@@ -180,10 +180,19 @@ class TestCore(unittest.TestCase):
             connection_base = Socks4aBMConnection
         else:
             connection_base = TCPConnection
-        for _ in range(180):
+        c = 360
+        while c > 0:
             time.sleep(1)
+            c -= 2
             for peer, con in BMConnectionPool().outboundConnections.iteritems():
-                if not peer.host.startswith('bootstrap'):
+                if peer.host.startswith('bootstrap'):
+                    if c < 60:
+                        self.fail(
+                            'Still connected to bootstrap node %s after % seconds' %
+                            (peer, time.time() - _started))
+                    c += 1
+                    break
+                else:
                     self.assertIsInstance(con, connection_base)
                     self.assertNotEqual(peer.host, '127.0.0.1')
                     return
