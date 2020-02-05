@@ -14,13 +14,17 @@ class Message(MsgBase):
         """Decode a message"""
         # UTF-8 and variable type validator
         if isinstance(data["subject"], str):
-            self.subject = unicode(data["subject"], 'utf-8', 'replace')
+            # Unicode is depreciated
+            self.subject =data["subject"]
         else:
-            self.subject = unicode(str(data["subject"]), 'utf-8', 'replace')
+            # Unicode is depreciated
+            self.subject = str(data["subject"])
         if isinstance(data["body"], str):
-            self.body = unicode(data["body"], 'utf-8', 'replace')
+            # Unicode is depreciated
+            self.body = data["body"]
         else:
-            self.body = unicode(str(data["body"]), 'utf-8', 'replace')
+            # Unicode is depreciated
+            self.body = str(data["body"])
 
     def encode(self, data):
         """Encode a message"""

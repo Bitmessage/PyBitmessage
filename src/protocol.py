@@ -276,7 +276,7 @@ def isProofOfWorkSufficient(
     if TTL < 300:
         TTL = 300
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-        data[:8] + hashlib.sha512(data[8:]).digest()
+        bytes(data[:8]) + hashlib.sha512(data[8:]).digest()
     ).digest()).digest()[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
