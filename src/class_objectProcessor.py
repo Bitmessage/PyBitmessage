@@ -479,16 +479,15 @@ class objectProcessor(threading.Thread):
 
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
-
         for key, cryptorObject in sorted(
                 shared.myECCryptorObjects.items(),
                 key=lambda x: random.random()):
             try:
                 # continue decryption attempts to avoid timing attacks
                 if initialDecryptionSuccessful:
-                    cryptorObject.decrypt(data[readPosition:])
+                    cryptorObject.decrypt(bytes(data[readPosition:]))
                 else:
-                    decryptedData = cryptorObject.decrypt(data[readPosition:])
+                    decryptedData = cryptorObject.decrypt(bytes(data[readPosition:]))
                     # This is the RIPE hash of my pubkeys. We need this
                     # below to compare to the destination_ripe included
                     # in the encrypted data.
@@ -536,9 +535,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -589,7 +588,7 @@ class objectProcessor(threading.Thread):
         readPosition += signatureLengthLength
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
-        signedData = data[8:20] + encodeVarint(1) + encodeVarint(
+        signedData = bytes(data[8:20]) + encodeVarint(1) + encodeVarint(
             streamNumberAsClaimedByMsg
         ) + decryptedData[:positionOfBottomOfAckData]
 
@@ -635,7 +634,6 @@ class objectProcessor(threading.Thread):
         # pubkey in order to send a message. If we are, it will do the POW
         # and send it.
         self.possibleNewPubkey(fromAddress)
-
         # If this message is bound for one of my version 3 addresses (or
         # higher), then we must check to make sure it meets our demanded
         # proof of work requirement. If this is bound for one of my chan
@@ -648,10 +646,10 @@ class objectProcessor(threading.Thread):
             # If I'm not friendly with this person:
             if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(
                     fromAddress):
-                requiredNonceTrialsPerByte = BMConfigParser().getint(
-                    toAddress, 'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = BMConfigParser().getint(
-                    toAddress, 'payloadlengthextrabytes')
+                requiredNonceTrialsPerByte = int(BMConfigParser().get(
+                    toAddress, 'noncetrialsperbyte'))
+                requiredPayloadLengthExtraBytes = int(BMConfigParser().get(
+                    toAddress, 'payloadlengthextrabytes'))
                 if not protocol.isProofOfWorkSufficient(
                         data, requiredNonceTrialsPerByte,
                         requiredPayloadLengthExtraBytes):
@@ -684,7 +682,6 @@ class objectProcessor(threading.Thread):
         toLabel = BMConfigParser().get(toAddress, 'label')
         if toLabel == '':
             toLabel = toAddress
-
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
                 messageEncodingType, message)
@@ -1121,8 +1118,8 @@ class objectProcessor(threading.Thread):
         if checksum != hashlib.sha512(payload).digest()[0:4]:
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
-        command = command.rstrip('\x00')
-        if command != 'object':
+        command = command.rstrip('\x00'.encode())
+        if command != 'object'.encode():
             return False
         return True
 

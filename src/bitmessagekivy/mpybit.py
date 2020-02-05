@@ -153,10 +153,12 @@ class Inbox(Screen):
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
                 # third_text = mail[3].replace('\n', ' ')
+                subject = mail[3].decode() if isinstance(mail[3],bytes) else mail[3]
+                body = mail[5].decode() if isinstance(mail[5],bytes) else mail[5]
                 data.append({
                     'text': mail[4].strip(),
-                    'secondary_text': mail[5][:50] + '........' if len(
-                        mail[5]) >= 50 else (mail[5] + ',' + mail[3].replace(
+                    'secondary_text': body[:50] + '........' if len(
+                        body) >= 50 else (body + ',' + subject.replace(
                             '\n', ''))[0:50] + '........',
                     'msgid': mail[1], 'received': mail[6]})
             self.has_refreshed = True
@@ -239,10 +241,12 @@ class Inbox(Screen):
         self.inboxDataQuery('toaddress', where, what, total_message, 5)
         for mail in self.queryreturn:
             # third_text = mail[3].replace('\n', ' ')
+            subject = mail[3].decode() if isinstance(mail[3],bytes) else mail[3]
+            body = mail[5].decode() if isinstance(mail[5],bytes) else mail[5]
             data.append({
                 'text': mail[4].strip(),
-                'secondary_text': mail[5][:50] + '........' if len(
-                    mail[5]) >= 50 else (mail[5] + ',' + mail[3].replace(
+                'secondary_text': body[:50] + '........' if len(
+                   body) >= 50 else (body + ',' +subject.replace(
                         '\n', ''))[0:50] + '........',
                 'msgid': mail[1]})
         self.set_mdList(data)
@@ -1233,16 +1237,17 @@ class Trash(Screen):
         """This method is used to create the mdlist"""
         total_trash_msg = len(self.ids.ml.children)
         for item in self.trash_messages:
+            subject =  item[2].decode() if isinstance(item[2],bytes) else item[2]
+            body = item[3].decode() if isinstance(item[3],bytes) else item[3]
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
                 secondary_text=item[2][:50] + '........' if len(
-                    item[2]) >= 50 else (item[2] + ',' + item[3].replace(
+                    subject) >= 50 else (subject + ',' + body.replace(
                         '\n', ''))[0:50] + '........',
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             img_latter = './images/text_images/{}.png'.format(
-                item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
-                    2][0].upper() <= 'Z') else '!')
+                subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
             meny.add_widget(AddTimeWidget(item[7]))
             carousel = Carousel(direction='right')
@@ -2021,11 +2026,14 @@ class MailDetail(Screen):
 
     def assign_mail_details(self, data):
         """Assigning mail details"""
+        subject = data[0][2].decode() if isinstance(data[0][2],bytes) else  data[0][2]
+        body = data[0][3].decode() if isinstance(data[0][2],bytes) else  data[0][3]
         self.to_addr = data[0][0]
         self.from_addr = data[0][1]
-        self.subject = data[0][2].upper(
-        ) if data[0][2].upper() else '(no subject)'
-        self.message = data[0][3]
+
+        self.subject = subject.upper(
+        ) if subject.upper() else '(no subject)'
+        self.message = body
         if len(data[0]) == 7:
             self.status = data[0][4]
         self.time_tag = ShowTimeHistoy(data[0][4]) if state.detailPageType == 'inbox' else ShowTimeHistoy(data[0][6])
@@ -2519,17 +2527,19 @@ class Allmails(Screen):
         """This method is used to create mdList for allmaills"""
         data_exist = len(self.ids.ml.children)
         for item in self.all_mails:
+            body = item[3].decode() if isinstance(item[3],bytes) else item[3]
+            subject = item[2].decode() if isinstance(item[2],bytes) else item[2]
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
-                secondary_text=item[2][:50] + '........' if len(
-                    item[2]) >= 50 else (
-                        item[2] + ',' + item[3].replace(
+                secondary_text=body[:50] + '........' if len(
+                   body) >= 50 else (
+                        body + ',' + subject.replace(
                             '\n', ''))[0:50] + '........',
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
-                    avatarImageFirstLetter(item[2].strip()))))
+                    avatarImageFirstLetter(body.strip()))))
             meny.bind(on_press=partial(
                 self.mail_detail, item[5], item[4]))
             meny.add_widget(AddTimeWidget(item[7]))
