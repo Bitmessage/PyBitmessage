@@ -31,7 +31,8 @@
     color: color_font
 
 <NavigationItem>
-    on_press: root.active = not root.active
+    #on_press: root.active = not root.active
+    on_press: root.currentlyActive()
     active_color: root.theme_cls.primary_color if root.active else root.theme_cls.text_color
 
     IconLeftWidget:
@@ -42,7 +43,7 @@
     BadgeText:
         text: f"{root.badge_text}"
         theme_text_color: "Custom"
-        text_color: root.active_color
+        #text_color: root.active_color
         halign: 'right'
 
 <NavigationDrawerDivider>:
