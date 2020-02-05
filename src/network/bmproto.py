@@ -31,7 +31,7 @@ from network.dandelion import Dandelion
 from network.proxy import ProxyError
 from node import Node, Peer
 from objectracker import ObjectTracker, missingObjects
-from queues import addrQueue, invQueue, objectProcessorQueue, portCheckerQueue
+from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
 
 logger = logging.getLogger('default')
@@ -466,8 +466,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                             }
                     # since we don't track peers outside of knownnodes,
                     # only spread if in knownnodes to prevent flood
-                    addrQueue.put((stream, peer, seenTime,
-                                   self.destination))
+                    # DISABLED TO WORKAROUND FLOOD/LEAK
+                    # addrQueue.put((stream, peer, seenTime,
+                    #               self.destination))
         return True
 
     def bm_command_portcheck(self):
