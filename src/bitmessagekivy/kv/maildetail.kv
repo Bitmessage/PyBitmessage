@@ -1,45 +1,84 @@
 <MailDetail>:
     name: 'mailDetail'
+    # ScrollView:
+    #     do_scroll_x: False
+    #     BoxLayout:
+    #         orientation: 'vertical'
+    #         size_hint_y: None
+    #         height: dp(500) + self.minimum_height
+    #         padding: dp(32)
+    #         MDLabel:
+    #             font_style: 'Subtitle1'
+    #             theme_text_color: 'Primary'
+    #             text: root.subject
+    #             halign: 'left'
+    #             font_size: '20sp'
+    #             CopyTextBtn:
+    #         MDLabel:
+    #             font_style: 'Body1'
+    #             theme_text_color: 'Primary'
+    #             text: "From: " + root.from_addr
+    #             halign: 'left'
+    #             CopyTextBtn:
+    #         MDLabel:
+    #             font_style: 'Body1'
+    #             theme_text_color: 'Primary'
+    #             text: "To: " + root.to_addr
+    #             halign: 'left'
+    #             CopyTextBtn:
+    #         MDLabel:
+    #             font_style: 'Body1'
+    #             theme_text_color: 'Primary'
+    #             text: root.status
+    #             halign: 'left'
+    #         MDLabel:
+    #             font_style: 'Subtitle2'
+    #             theme_text_color: 'Primary'
+    #             text: root.message
+    #             halign: 'left'
+    #             bold: True
+    #             CopyTextBtn:
+    #         BoxLayout:
+    #             orientation: 'vertical'
+    #             size_hint_y: None
+    #             height: dp(100) + self.minimum_height
     ScrollView:
         do_scroll_x: False
         BoxLayout:
-            orientation: 'vertical'
             size_hint_y: None
-            height: dp(500) + self.minimum_height
-            padding: dp(32)
-            MDLabel:
-                font_style: 'Subtitle1'
-                theme_text_color: 'Primary'
+            orientation: 'vertical'
+            height: dp(bod.height) + self.minimum_height
+            padding: dp(20)
+            OneLineListItem:
+                id: subj
                 text: root.subject
-                halign: 'left'
-                font_size: '20sp'
-                CopyTextBtn:
-            MDLabel:
-                font_style: 'Body1'
+                divider: None
+                disabled: True
+                font_style: 'H5'
                 theme_text_color: 'Primary'
-                text: "From: " + root.from_addr
-                halign: 'left'
-                CopyTextBtn:
-            MDLabel:
-                font_style: 'Body1'
-                theme_text_color: 'Primary'
-                text: "To: " + root.to_addr
-                halign: 'left'
-                CopyTextBtn:
-            MDLabel:
-                font_style: 'Body1'
-                theme_text_color: 'Primary'
+            TwoLineAvatarIconListItem:
+                id: subaft
+                text: root.from_addr
+                secondary_text: 'to ' + root.to_addr
+                divider: None
+                BadgeText:
+                    text: root.time_tag
+                    halign:'right'
+                    font_style:'Caption'
+                AvatarSampleWidget:
+                    source: root.avatarImg
+            OneLineListItem:
                 text: root.status
-                halign: 'left'
+                divider: None
+                disabled: True
+                font_style: 'Body2'
+                theme_text_color: 'Primary'
+                halign:'left'
             MDLabel:
+                id: bod
                 font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
                 text: root.message
                 halign: 'left'
-                bold: True
-                CopyTextBtn:
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: dp(100) + self.minimum_height
+                height: self.texture_size[1]
     Loader:

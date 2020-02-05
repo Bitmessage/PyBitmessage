@@ -671,11 +671,14 @@ class DropDownWidget(BoxLayout):
                             "UPDATE sent SET toaddress = ?"
                             ", fromaddress = ? , subject = ?"
                             ", message = ?, folder = 'sent'"
+                            ", senttime = ?, lastactiontime = ?"
                             " WHERE ackdata = ?;",
                             toAddress,
                             fromAddress,
                             subject,
                             message,
+                            int(time.time()),
+                            int(time.time()),
                             state.send_draft_mail)
                         self.parent.parent.screens[15].clear_widgets()
                         self.parent.parent.screens[15].add_widget(Draft())
@@ -1112,7 +1115,7 @@ class Sent(Screen):
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.send_cnt
         if state.association:
             src_mng_obj.children[0].children[0].text = showLimitedCnt(int(total_sent))
-            state.sent_count = str(total_sent)
+            state.kivyapp.get_sent_count()
         else:
             src_mng_obj.children[0].children[0].text = '0'
 
@@ -1212,11 +1215,11 @@ class Trash(Screen):
         self.trash_messages = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message,"
             " folder ||',' || 'sent' as  folder, ackdata As"
-            " id, DATE(senttime) As actionTime FROM sent"
+            " id, DATE(senttime) As actionTime, senttime as msgtime FROM sent"
             " WHERE folder = 'trash'  and fromaddress = '{0}' UNION"
             " SELECT toaddress, fromaddress, subject, message,"
             " folder ||',' || 'inbox' as  folder, msgid As id,"
-            " DATE(received) As actionTime FROM inbox"
+            " DATE(received) As actionTime, received as msgtime FROM inbox"
             " WHERE folder = 'trash' and toaddress = '{0}'"
             " ORDER BY actionTime DESC limit {1}, {2}".format(
                 state.association, start_indx, end_indx))
@@ -1241,6 +1244,7 @@ class Trash(Screen):
                 item[2][0].upper() if (item[2][0].upper() >= 'A' and item[
                     2][0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
+            meny.add_widget(AddTimeWidget(item[7]))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -1406,6 +1410,9 @@ class NavigateApp(MDApp):
         state.searcing_text = ''
         LoadingPopup().open()
         self.set_message_count()
+        for nav_obj in self.root.ids.content_drawer.children[
+                            0].children[0].children[0].children:
+            nav_obj.active = True if nav_obj.text == 'Inbox' else False
         Clock.schedule_once(self.setCurrentAccountData, 0.5)
 
     def setCurrentAccountData(self, dt=0):
@@ -1710,7 +1717,7 @@ class NavigateApp(MDApp):
             f_name = first_name.split()
             label = f_name[0][:14].capitalize() + '...' if len(
                 f_name[0]) > 15 else f_name[0].capitalize()
-            address = ' (' + addr + '...)'
+            address = ' (' + addr + ')'
             return label + address
         return ''
 
@@ -1986,6 +1993,8 @@ class MailDetail(Screen):
     message = StringProperty()
     status = StringProperty()
     page_type = StringProperty()
+    time_tag = StringProperty()
+    avatarImg = StringProperty()
 
     def __init__(self, *args, **kwargs):
         """Mail Details method"""
@@ -1998,14 +2007,14 @@ class MailDetail(Screen):
         if state.detailPageType == 'sent' or state.detailPageType == 'draft':
             data = sqlQuery(
                 "select toaddress, fromaddress, subject, message, status,"
-                " ackdata from sent where ackdata = ?;", state.mail_id)
+                " ackdata, senttime from sent where ackdata = ?;", state.mail_id)
             state.status = self
             state.ackdata = data[0][5]
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
         elif state.detailPageType == 'inbox':
             data = sqlQuery(
-                "select toaddress, fromaddress, subject, message from inbox"
+                "select toaddress, fromaddress, subject, message, received from inbox"
                 " where msgid = ?;", state.mail_id)
             self.assign_mail_details(data)
             state.kivyapp.set_mail_detail_header()
@@ -2017,8 +2026,11 @@ class MailDetail(Screen):
         self.subject = data[0][2].upper(
         ) if data[0][2].upper() else '(no subject)'
         self.message = data[0][3]
-        if len(data[0]) == 6:
+        if len(data[0]) == 7:
             self.status = data[0][4]
+        self.time_tag = ShowTimeHistoy(data[0][4]) if state.detailPageType == 'inbox' else ShowTimeHistoy(data[0][6])
+        self.avatarImg = './images/text_images/{0}.png'.format(
+            'avatar.png' if state.detailPageType == 'draft' else avatarImageFirstLetter(self.subject.strip()))
 
     def delete_mail(self):
         """Method for mail delete"""
@@ -2268,8 +2280,8 @@ class Draft(Screen):
         xAddress = 'fromaddress'
         self.ids.identi_tag.children[0].text = ''
         self.draftDataQuery(xAddress, where, what)
-        if state.msg_counter_objs:
-            state.msg_counter_objs.draft_cnt.children[0].children[0].text = showLimitedCnt(len(self.queryreturn))
+        # if state.msg_counter_objs:
+        #     state.msg_counter_objs.draft_cnt.children[0].children[0].text = showLimitedCnt(len(self.queryreturn))
         if self.queryreturn:
             self.ids.identi_tag.children[0].text = 'Draft'
             self.set_draftCnt(state.draft_count)
@@ -2309,7 +2321,7 @@ class Draft(Screen):
                     mail[2]) > 10 else mail[2] + '\n' + " " + (
                         third_text[:25] + '...!') if len(
                             third_text) > 25 else third_text,
-                'ackdata': mail[5]})
+                'ackdata': mail[5], 'senttime': mail[6]})
         for item in data:
             meny = TwoLineAvatarIconListItem(
                 text='Draft', secondary_text=item['text'],
@@ -2319,6 +2331,7 @@ class Draft(Screen):
                 source='./images/avatar.png'))
             meny.bind(on_press=partial(
                 self.draft_detail, item['ackdata']))
+            meny.add_widget(AddTimeWidget(item['senttime']))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -2422,7 +2435,7 @@ class Draft(Screen):
                 encoding,
                 BMConfigParser().safeGetInt('bitmessagesettings', 'ttl'))
             state.msg_counter_objs = src_object.children[2].children[0].ids
-            state.draft_count = str(int(state.draft_count) + 1)
+            state.draft_count = str(int(state.draft_count) + 1) if state.association == fromAddress else state.draft_count
             src_object.ids.sc16.clear_widgets()
             src_object.ids.sc16.add_widget(Draft())
             toast('Save draft')
@@ -2489,10 +2502,10 @@ class Allmails(Screen):
         """Retrieving data from inbox or sent both tables"""
         self.all_mails = sqlQuery(
             "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
-            " As id, DATE(senttime) As actionTime FROM sent WHERE"
+            " As id, DATE(senttime) As actionTime, senttime as msgtime FROM sent WHERE"
             " folder = 'sent' and fromaddress = '{0}'"
             " UNION SELECT toaddress, fromaddress, subject, message, folder,"
-            " msgid As id, DATE(received) As actionTime FROM inbox"
+            " msgid As id, DATE(received) As actionTime, received as msgtime FROM inbox"
             " WHERE folder = 'inbox' and toaddress = '{0}'"
             " ORDER BY actionTime DESC limit {1}, {2}".format(
                 self.account, start_indx, end_indx))
@@ -2519,6 +2532,7 @@ class Allmails(Screen):
                     avatarImageFirstLetter(item[2].strip()))))
             meny.bind(on_press=partial(
                 self.mail_detail, item[5], item[4]))
+            meny.add_widget(AddTimeWidget(item[7]))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -2677,6 +2691,11 @@ class NavigationItem(OneLineAvatarIconListItem):
     badge_text = StringProperty()
     icon = StringProperty()
     active = BooleanProperty(False)
+
+    def currentlyActive(self):
+        for nav_obj in self.parent.children:
+            nav_obj.active = False
+        self.active = True
 
 
 class NavigationDrawerDivider(OneLineListItem):
