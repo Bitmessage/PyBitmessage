@@ -21,7 +21,6 @@ import helper_addressbook
 
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
-from helper_startup import start_proxyconfig
 from helper_sql import sqlQuery
 from network import asyncore_pollchoose as asyncore, knownnodes
 from network.bmproto import BMProto
@@ -34,9 +33,10 @@ from version import softwareVersion
 from common import cleanup
 
 try:
-    import stem.version as stem_version
-except ImportError:
-    stem_version = None
+    socket.socket().bind(('127.0.0.1', 9050))
+    tor_port_free = True
+except (OSError, socket.error):
+    tor_port_free = False
 
 knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
 
@@ -159,12 +159,12 @@ class TestCore(unittest.TestCase):
 
     def _initiate_bootstrap(self):
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
-        self._outdate_knownnodes()
+        self._wipe_knownnodes()
         knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
         knownnodes.cleanupKnownNodes()
-        time.sleep(2)
+        time.sleep(5)
 
-    def _check_connection(self):
+    def _check_connection(self, full=False):
         """
         Check if there is at least one outbound connection to remote host
         with name not starting with "bootstrap" in 6 minutes at most,
@@ -185,7 +185,10 @@ class TestCore(unittest.TestCase):
             time.sleep(1)
             c -= 2
             for peer, con in BMConnectionPool().outboundConnections.iteritems():
-                if peer.host.startswith('bootstrap'):
+                if (
+                    peer.host.startswith('bootstrap')
+                    or peer.host == 'quzwelsuziwqgpt2.onion'
+                ):
                     if c < 60:
                         self.fail(
                             'Still connected to bootstrap node %s after % seconds' %
@@ -195,6 +198,8 @@ class TestCore(unittest.TestCase):
                 else:
                     self.assertIsInstance(con, connection_base)
                     self.assertNotEqual(peer.host, '127.0.0.1')
+                    if full and not con.fullyEstablished:
+                        continue
                     return
         self.fail(
             'Failed to connect during %s sec' % (time.time() - _started))
@@ -212,43 +217,43 @@ class TestCore(unittest.TestCase):
                     continue
                 else:
                     knownnodes.addKnownNode(1, Peer(addr, port))
-        self._check_connection()
+        self._check_connection(True)
 
     def test_bootstrap(self):
         """test bootstrapping"""
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
         self._initiate_bootstrap()
         self._check_connection()
 
-    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
+    @unittest.skipIf(tor_port_free, 'no running tor detected')
     def test_bootstrap_tor(self):
         """test bootstrapping with tor"""
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         self._initiate_bootstrap()
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'stem')
-        start_proxyconfig()
         self._check_connection()
 
-    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
-    def test_onionservicesonly(self):  # this should start after bootstrap
-        """
-        set onionservicesonly, wait for 3 connections and check them all
-        are onions
+    @unittest.skipIf(tor_port_free, 'no running tor detected')
+    def test_onionservicesonly(self):
+        """ensure bitmessage doesn't try to connect to non-onion nodes
+        if onionservicesonly set, wait at least 3 onion nodes
         """
         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
         self._initiate_bootstrap()
         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+        tried_hosts = set()
         for _ in range(360):
             time.sleep(1)
-            for n, peer in enumerate(BMConnectionPool().outboundConnections):
-                if n > 2:
+            for peer in BMConnectionPool().outboundConnections:
+                if peer.host.endswith('.onion'):
+                    tried_hosts.add(peer.host)
+                else:
+                    if not peer.host.startswith('bootstrap'):
+                        self.fail(
+                            'Found non onion hostname %s in outbound'
+                            'connections!' % peer.host)
+                if len(tried_hosts) > 2:
                     return
-                if (
-                    not peer.host.endswith('.onion')
-                    and not peer.host.startswith('bootstrap')
-                ):
-                    self.fail(
-                        'Found non onion hostname %s in outbound connections!'
-                        % peer.host)
         self.fail('Failed to connect to at least 3 nodes within 360 sec')
 
     @staticmethod
