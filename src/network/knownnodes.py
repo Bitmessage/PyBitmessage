@@ -1,6 +1,8 @@
 """
 Manipulations with knownNodes dictionary.
 """
+# TODO: knownnodes object maybe?
+# pylint: disable=global-statement
 
 import json
 import logging
@@ -65,7 +67,7 @@ def json_deserialize_knownnodes(source):
     """
     Read JSON from source and make knownnodes dict
     """
-    global knownNodesActual  # pylint: disable=global-statement
+    global knownNodesActual
     for node in json.load(source):
         peer = node['peer']
         info = node['info']
@@ -82,7 +84,7 @@ def pickle_deserialize_old_knownnodes(source):
     the old format was {Peer:lastseen, ...}
     the new format is {Peer:{"lastseen":i, "rating":f}}
     """
-    global knownNodes  # pylint: disable=global-statement
+    global knownNodes
     knownNodes = pickle.load(source)
     for stream in knownNodes.keys():
         for node, params in knownNodes[stream].iteritems():
@@ -230,6 +232,7 @@ def cleanupKnownNodes():
     """
     Cleanup knownnodes: remove old nodes and nodes with low rating
     """
+    global knownNodesActual
     now = int(time.time())
     needToWriteKnownNodesToDisk = False
 
@@ -240,6 +243,8 @@ def cleanupKnownNodes():
             keys = knownNodes[stream].keys()
             for node in keys:
                 if len(knownNodes[stream]) <= 1:  # leave at least one node
+                    if stream == 1:
+                        knownNodesActual = False
                     break
                 try:
                     age = now - knownNodes[stream][node]["lastseen"]
