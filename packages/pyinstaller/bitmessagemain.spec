@@ -33,7 +33,7 @@ os.rename(os.path.join(srcPath, '__init__.py'), os.path.join(srcPath, '__init__.
 a = Analysis(
              [srcPath + 'bitmessagemain.py'],
              pathex=[outPath],
-             hiddenimports=['pyopencl','numpy', 'win32com' , 'setuptools.msvc' ,'_cffi_backend'],
+             hiddenimports=['bitmessageqt.languagebox', 'pyopencl','numpy', 'win32com' , 'setuptools.msvc' ,'_cffi_backend'],
              hookspath=None,
              runtime_hooks=None
              )
@@ -94,7 +94,7 @@ exe = EXE(pyz,
           debug=False,
           strip=None,
           upx=True,
-          console=True, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
+          console=False, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
 
 coll = COLLECT(exe,
                a.binaries,
