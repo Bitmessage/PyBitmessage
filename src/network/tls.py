@@ -154,12 +154,13 @@ class TLSDispatcher(AdvancedDispatcher):
         except AttributeError:
             return AdvancedDispatcher.handle_read(self)
         except ssl.SSLError as err:
+            self.close_reason = "SSL Error in handle_read"
             if err.errno == ssl.SSL_ERROR_WANT_READ:
                 return
             elif err.errno in _DISCONNECTED_SSL:
                 self.handle_close()
                 return
-            logger.info("SSL Error: %s", str(err))
+            logger.info("SSL Error: %s", err)
             self.handle_close()
             return
 
@@ -184,12 +185,13 @@ class TLSDispatcher(AdvancedDispatcher):
         except AttributeError:
             return AdvancedDispatcher.handle_write(self)
         except ssl.SSLError as err:
+            self.close_reason = "SSL Error in handle_write"
             if err.errno == ssl.SSL_ERROR_WANT_WRITE:
                 return 0
             elif err.errno in _DISCONNECTED_SSL:
                 self.handle_close()
                 return 0
-            logger.info("SSL Error: %s", str(err))
+            logger.info("SSL Error: %s", err)
             self.handle_close()
             return
 
@@ -203,8 +205,8 @@ class TLSDispatcher(AdvancedDispatcher):
             logger.debug("handshaking (internal)")
             self.sslSocket.do_handshake()
         except ssl.SSLError as err:
-            logger.debug(
-                '%s:%i: handshake fail', self.destination.host, self.destination.port)
+            self.close_reason = "SSL Error in tls_handshake"
+            logger.info("%s:%i: handshake fail", *self.destination)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
                 logger.debug("want read")
@@ -217,6 +219,7 @@ class TLSDispatcher(AdvancedDispatcher):
         except socket.error as err:
             # pylint: disable=protected-access
             if err.errno in asyncore._DISCONNECTED:
+                self.close_reason = "socket.error in tls_handshake"
                 self.handle_close()
             else:
                 raise
