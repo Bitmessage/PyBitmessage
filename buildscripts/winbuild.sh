@@ -19,8 +19,6 @@ function download_sources_32 {
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/PyQt${PYQT_VERSION}-x32.exe?raw=true \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win32OpenSSL-${OPENSSL_VERSION}.exe?raw=true \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/pyopencl-2015.1-cp27-none-win32.whl?raw=true
-	#wget -P ${SRCPATH} -nc http://www.dll-found.com/zip/m/msvcr120.dll.zip
-	#wget -P ${SRCPATH} -nc http://www.dll-found.com/zip/m/msvcr100.dll.zip
 }
 
 function download_sources_64 {
@@ -61,24 +59,19 @@ function install_python(){
 		wine msiexec -i python-${PYTHON_VERSION}.amd64.msi /q /norestart
 		echo "Installing vcredist for 64 bit"
 		wine vcredist_x64.exe /q /norestart
-		echo "Upgrading pip"
-		wine python -m pip install --upgrade pip
 	else
 		echo "Installing Python ${PYTHON_VERSION} 32b"
 		wine msiexec -i python-${PYTHON_VERSION}.msi /q /norestart
-		echo "Installing vc_redist for 32 bit "
-		wine vcredist_x86.exe /q /norestart
-		#echo "Unpacking MSVCR120.DLL"
-		#unzip msvcr120.dll.zip -o -d $HOME/.wine32/drive_c/windows/system32/
-		#unzip msvcr100.dll.zip -o -d $HOME/.wine32/drive_c/windows/system32/
-		echo "Upgrading pip"
-		wine python -m pip install --upgrade pip
-
+		# MSVCR 2008 required for Windows XP
+		cd ${SRCPATH}
+		echo "Installing vc_redist (2008) for 32 bit "
+		wine vcredist_x86.exe /Q
 	fi
+	echo "Upgrading pip"
+	wine python -m pip install --upgrade pip
 }
 
 function install_pyqt(){
-	
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
 		echo "Installing PyQt-${PYQT_VERSION} 64b"
 		wine PyQt${PYQT_VERSION}-x64.exe /S /WX
@@ -100,19 +93,27 @@ function install_openssl(){
 
 function install_pyinstaller()
 {
+	cd ${BASE_DIR}
 	echo "Installing PyInstaller"
-	wine python -m pip install pyinstaller
+	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+		wine python -m pip install pyinstaller
+	else
+		# 3.2.1 is the last version to work on XP
+		# see https://github.com/pyinstaller/pyinstaller/issues/2931
+		wine python -m pip install -I pyinstaller==3.2.1
+	fi
 }
 
 function install_msgpack()
 {
+	cd ${BASE_DIR}
 	echo "Installing msgpack"
 	wine python -m pip install msgpack-python
 }
 
 function install_pyopencl()
 {
-	cd $SRCPATH
+	cd ${SRCPATH}
 	echo "Installing PyOpenCL"
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
 		wine python -m pip install pyopencl-2015.1-cp27-none-win_amd64.whl
@@ -123,7 +124,7 @@ function install_pyopencl()
 
 
 function build_dll(){
-	cd $BASE_DIR
+	cd ${BASE_DIR}
 	cd src/bitmsghash
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
 		echo "Create dll"
@@ -137,7 +138,7 @@ function build_dll(){
 }
 
 function build_exe(){
-	cd $BASE_DIR
+	cd ${BASE_DIR}
 	cd packages/pyinstaller
 	wine pyinstaller bitmessagemain.spec
 }
