@@ -1,5 +1,5 @@
 coverage
-python_prctl
+python_prctl;platform_system=="Linux"
 psutil
 pycrypto
 six
