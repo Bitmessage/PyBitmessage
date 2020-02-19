@@ -62,6 +62,16 @@
             size_hint_y: None
             height: "200dp"
 
+            MDIconButton:
+                icon: "file-image"
+                x: root.parent.x + dp(10)
+                pos_hint: {"top": 1, 'right': 1}
+                color: [1,0,0,1]
+                on_release: app.file_manager_open()
+                # md_bg_color: app.theme_cls.primary_color
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+
             BoxLayout:
                 id: top_box
                 size_hint_y: None
