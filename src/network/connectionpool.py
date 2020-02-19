@@ -8,20 +8,20 @@ import socket
 import sys
 import time
 
-import asyncore_pollchoose as asyncore
+import network.asyncore_pollchoose as asyncore
 import helper_random
 import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from connectionchooser import chooseConnection
-from node import Peer
-from proxy import Proxy
+from network.connectionchooser import chooseConnection
+from network.proxy import Proxy
+
+from network.tcp import (
+    TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection, bootstrap)
+from network.udp import UDPSocket
 from singleton import Singleton
-from tcp import (
-    bootstrap, Socks4aBMConnection, Socks5BMConnection,
-    TCPConnection, TCPServer)
-from udp import UDPSocket
+from .node import Peer
 
 logger = logging.getLogger('default')
 
@@ -77,7 +77,9 @@ class BMConnectionPool(object):
         Shortcut for combined list of connections from
         `inboundConnections` and `outboundConnections` dicts
         """
-        return self.inboundConnections.values() + self.outboundConnections.values()
+        inboundConnections = [inboundConnections for inboundConnections in self.inboundConnections.values()]
+        outboundConnections = [outboundConnections for outboundConnections in self.outboundConnections.values()]
+        return [connections for connections in inboundConnections + outboundConnections]
 
     def establishedConnections(self):
         """Shortcut for list of connections having fullyEstablished == True"""
@@ -113,6 +115,16 @@ class BMConnectionPool(object):
 
     def isAlreadyConnected(self, nodeid):
         """Check if we're already connected to this peer"""
+
+        # for i in (
+        #         self.inboundConnections.values() +
+        #         self.outboundConnections.values()
+        # ):
+        # for i in (
+        #         [inboundConnections for inboundConnections  in self.inboundConnections.values()] +
+        #         [outboundConnections for outboundConnections in self.outboundConnections.values()]
+        # ):
+
         for i in self.connections():
             try:
                 if nodeid == i.nodeid:
@@ -218,11 +230,10 @@ class BMConnectionPool(object):
             # This should never happen because socksproxytype setting
             # is handled in bitmessagemain before starting the connectionpool
             return
-
         bootstrapper = bootstrap(connection_base)
         if not hostname:
             port = helper_random.randomchoice([8080, 8444])
-            hostname = 'bootstrap%s.bitmessage.org' % port
+            hostname = ('bootstrap{}.bitmessage.org'.format(port))
         else:
             port = 8444
         self.addConnection(bootstrapper(hostname, port))
@@ -236,8 +247,8 @@ class BMConnectionPool(object):
         if BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
             acceptConnections = False
-        elif BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'sendoutgoingconnections'):
+        elif bool(BMConfigParser().safeGet(
+                'bitmessagesettings', 'sendoutgoingconnections')):
             spawnConnections = True
         socksproxytype = BMConfigParser().safeGet(
             'bitmessagesettings', 'socksproxytype', '')
@@ -279,7 +290,7 @@ class BMConnectionPool(object):
                 except ValueError:
                     Proxy.onion_proxy = None
             established = sum(
-                1 for c in self.outboundConnections.values()
+                1 for c in [outboundConnections for outboundConnections in self.outboundConnections.values()]
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt(
@@ -313,7 +324,12 @@ class BMConnectionPool(object):
                         continue
 
                     try:
-                        if chosen.host.endswith(".onion") and Proxy.onion_proxy:
+                        # pylint: disable=unidiomatic-typecheck
+                        if type(chosen.host) == bytes:
+                            onion = '.onion'.encode()
+                        else:
+                            onion = '.onion'
+                        if chosen.host.endswith(onion) and Proxy.onion_proxy:
                             if onionsocksproxytype == "SOCKS5":
                                 self.addConnection(Socks5BMConnection(chosen))
                             elif onionsocksproxytype == "SOCKS4a":
@@ -327,7 +343,6 @@ class BMConnectionPool(object):
                     except socket.error as e:
                         if e.errno == errno.ENETUNREACH:
                             continue
-
                     self._lastSpawned = time.time()
         else:
             for i in self.connections():
@@ -345,7 +360,7 @@ class BMConnectionPool(object):
                     ).split():
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
-            if not self.udpSockets:
+            if False:
                 if BMConfigParser().safeGet('network', 'bind') == '':
                     self.startUDPSocket()
                 else:
@@ -374,6 +389,7 @@ class BMConnectionPool(object):
         asyncore.loop(timeout=loopTime, count=1000)
 
         reaper = []
+
         for i in self.connections():
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -386,8 +402,9 @@ class BMConnectionPool(object):
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
-            self.connections()
-            + self.listeningSockets.values() + self.udpSockets.values()
+            self.connections() +
+            [listeningSockets for listeningSockets in self.listeningSockets.values()] +
+            [udpSockets for udpSockets in self.udpSockets.values()]
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

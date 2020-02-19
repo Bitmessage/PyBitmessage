@@ -22,7 +22,12 @@ if sys.version_info >= (2, 7, 13):
     # this means TLSv1 or higher
     # in the future change to
     # ssl.PROTOCOL_TLS1.2
-    sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
+    # Right now I am using the python3.5.2 and I faced the ssl for protocol due to this I
+    # have used try and catch
+    try:
+        sslProtocolVersion = ssl.PROTOCOL_TLS  # pylint: disable=no-member
+    except AttributeError:
+        sslProtocolVersion = ssl.PROTOCOL_SSLv23
 elif sys.version_info >= (2, 7, 9):
     # this means any SSL/TLS.
     # SSLv2 and 3 are excluded with an option after context is created
@@ -201,17 +206,12 @@ class TLSDispatcher(AdvancedDispatcher):
             return False
         # Perform the handshake.
         try:
-            # print "handshaking (internal)"
             self.sslSocket.do_handshake()
         except ssl.SSLError as err:
-            # print "%s:%i: handshake fail" % (
-            #    self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                # print "want read"
                 self.want_read = True
             if err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                # print "want write"
                 self.want_write = True
             if not (self.want_write or self.want_read):
                 raise

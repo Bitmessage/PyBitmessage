@@ -6,7 +6,7 @@ Symmetric Encryption
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
-from openssl import OpenSSL
+from .openssl import OpenSSL
 
 
 # pylint: disable=redefined-builtin

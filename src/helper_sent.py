@@ -1,7 +1,6 @@
 """
 Insert values into sent table
 """
-
 from helper_sql import sqlExecute
 
 

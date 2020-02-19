@@ -29,11 +29,13 @@ def get_code_string(base):
     elif base == 10:
         return '0123456789'
     elif base == 16:
-        return "0123456789abcdef"
+        return ("0123456789abcdef").encode()
     elif base == 58:
         return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     elif base == 256:
-        return ''.join([chr(x) for x in range(256)])
+        # raw_unicode_escape is used because in the python3 after range(161) its genreate
+        # the speical character so avoiding that function we have used the raw_unicode method
+        return bytes(range(0, 256))
     else:
         raise ValueError("Invalid base!")
 
@@ -41,10 +43,10 @@ def get_code_string(base):
 def encode(val, base, minlen=0):
     """Returns the encoded string"""
     code_string = get_code_string(base)
-    result = ""
+    result = str.encode('') if type(code_string) is bytes else ''
     while val > 0:
-        result = code_string[val % base] + result
-        val /= base
+        result = code_string[val % base:val % base + 1] + result
+        val = val // base
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
@@ -58,7 +60,7 @@ def decode(string, base):
         string = string.lower()
     while string:
         result *= base
-        result += code_string.find(string[0])
+        result += code_string.find(string[0:1])
         string = string[1:]
     return result
 

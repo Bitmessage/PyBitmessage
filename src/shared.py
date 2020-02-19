@@ -24,7 +24,7 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery
-
+# pylint: disable=logging-format-interpolation
 
 verbose = 1
 # This is obsolete with the change to protocol v3
@@ -110,23 +110,21 @@ def decodeWalletImportFormat(WIFstring):
     """
     fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
-    if fullString[-4:] != \
-       hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
+    if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
         logger.critical(
             'Major problem! When trying to decode one of your'
             ' private keys, the checksum failed. Here are the first'
-            ' 6 characters of the PRIVATE key: %s',
-            str(WIFstring)[:6]
+            ' 6 characters of the PRIVATE key: {}'.format(str(WIFstring)[:6])
         )
-        os._exit(0)    # pylint: disable=protected-access
-        # return ""
-    elif privkey[0] == '\x80':  # checksum passed
+
+        os._exit(0)  # pylint: disable=protected-access
+    if privkey[0:1] == '\x80'.encode()[1:]:  # checksum passed
         return privkey[1:]
 
     logger.critical(
         'Major problem! When trying to decode one of your  private keys,'
         ' the checksum passed but the key doesn\'t begin with hex 80.'
-        ' Here is the PRIVATE key: %s', WIFstring
+        ' Here is the PRIVATE key: {}'.format(WIFstring)
     )
     os._exit(0)    # pylint: disable=protected-access
 
@@ -144,7 +142,7 @@ def reloadMyAddressHashes():
         state.appdata, 'keys.dat'))
     hasEnabledKeys = False
     for addressInKeysFile in BMConfigParser().addresses():
-        isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
+        isEnabled = BMConfigParser().safeGet(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
             # status
@@ -192,7 +190,6 @@ def reloadBroadcastSendersForWhichImWatching():
         # Now, for all addresses, even version 2 addresses,
         # we should create Cryptor objects in a dictionary which we will
         # use to attempt to decrypt encrypted broadcast messages.
-
         if addressVersionNumber <= 3:
             privEncryptionKey = hashlib.sha512(
                 encodeVarint(addressVersionNumber) +
@@ -217,6 +214,7 @@ def fixPotentiallyInvalidUTF8Data(text):
         unicode(text, 'utf-8')
         return text
     except:
+
         return 'Part of the message is corrupt. The message cannot be' \
             ' displayed the normal way.\n\n' + repr(text)
 
@@ -243,7 +241,7 @@ def checkSensitiveFilePermissions(filename):
             shell=True,
             stderr=subprocess.STDOUT
         )
-        if 'fuseblk' in fstype:
+        if 'fuseblk'.encode() in fstype:
             logger.info(
                 'Skipping file permissions check for %s.'
                 ' Filesystem fuseblk detected.', filename)

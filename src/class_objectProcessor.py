@@ -34,7 +34,8 @@ import tr
 from fallback import RIPEMD160Hash
 
 import l10n
-# pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
+# pylint: disable=too-many-locals, too-many-return-statements
+# pylint: disable=too-many-branches, too-many-statements
 
 logger = logging.getLogger('default')
 
@@ -47,7 +48,7 @@ class objectProcessor(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")
         random.seed()
-        # It may be the case that the last time Bitmessage was running,
+        # It may be the case that the last time Bitmes0sage was running,
         # the user closed it before it finished processing everything in the
         # objectProcessorQueue. Assuming that Bitmessage wasn't closed
         # forcefully, it should have saved the data in the queue into the
@@ -68,9 +69,7 @@ class objectProcessor(threading.Thread):
         """Process the objects from `.queues.objectProcessorQueue`"""
         while True:
             objectType, data = queues.objectProcessorQueue.get()
-
             self.checkackdata(data)
-
             try:
                 if objectType == protocol.OBJECT_GETPUBKEY:
                     self.processgetpubkey(data)
@@ -140,9 +139,9 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in shared.ackdataForWhichImWatching:
+        if bytes(data[readPosition:]) in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[readPosition:]]
+            del shared.ackdataForWhichImWatching[bytes(data[readPosition:])]
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
@@ -223,7 +222,7 @@ class objectProcessor(threading.Thread):
                 'the hash requested in this getpubkey request is: %s',
                 hexlify(requestedHash))
             # if this address hash is one of mine
-            if requestedHash in shared.myAddressesByHash:
+            if bytes(requestedHash) in shared.myAddressesByHash:
                 myAddress = shared.myAddressesByHash[requestedHash]
         elif requestedAddressVersionNumber >= 4:
             requestedTag = data[readPosition:readPosition + 32]
@@ -235,8 +234,8 @@ class objectProcessor(threading.Thread):
             logger.debug(
                 'the tag requested in this getpubkey request is: %s',
                 hexlify(requestedTag))
-            if requestedTag in shared.myAddressesByTag:
-                myAddress = shared.myAddressesByTag[requestedTag]
+            if bytes(requestedTag) in shared.myAddressesByTag:
+                myAddress = shared.myAddressesByTag[bytes(requestedTag)]
 
         if myAddress == '':
             logger.info('This getpubkey request is not for any of my keys.')
@@ -330,7 +329,7 @@ class objectProcessor(threading.Thread):
             dataToStore = data[20:readPosition]
             sha = hashlib.new('sha512')
             sha.update(
-                '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
+                '\x04'.encode() + publicSigningKey + '\x04'.encode() + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
             if logger.isEnabledFor(logging.DEBUG):
@@ -369,9 +368,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            publicSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            publicSigningKey = ('\x04').encode() + data[readPosition:readPosition + 64]
             readPosition += 64
-            publicEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            publicEncryptionKey = ('\x04').encode() + data[readPosition:readPosition + 64]
             readPosition += 64
             _, specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])
@@ -385,9 +384,9 @@ class objectProcessor(threading.Thread):
             signatureLength, signatureLengthLength = decodeVarint(
                 data[readPosition:readPosition + 10])
             readPosition += signatureLengthLength
-            signature = data[readPosition:readPosition + signatureLength]
+            signature = bytes(data[readPosition:readPosition + signatureLength])
             if highlevelcrypto.verify(
-                    data[8:endOfSignedDataPosition],
+                    bytes(data[8:endOfSignedDataPosition]),
                     signature, hexlify(publicSigningKey)):
                 logger.debug('ECDSA verify passed (within processpubkey)')
             else:
@@ -435,14 +434,14 @@ class objectProcessor(threading.Thread):
                 return
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in state.neededPubkeys:
+            if bytes(tag) not in state.neededPubkeys:
                 logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
                 return
 
             # Let us try to decrypt the pubkey
-            toAddress, _ = state.neededPubkeys[tag]
-            if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
+            toAddress, _ = state.neededPubkeys[bytes(tag)] #check with py2
+            if protocol.decryptAndCheckPubkeyPayload(bytes(data),   toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
                 # pubkey. This function will command the workerThread
@@ -480,16 +479,15 @@ class objectProcessor(threading.Thread):
 
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
-
         for key, cryptorObject in sorted(
                 shared.myECCryptorObjects.items(),
                 key=lambda x: random.random()):
             try:
                 # continue decryption attempts to avoid timing attacks
                 if initialDecryptionSuccessful:
-                    cryptorObject.decrypt(data[readPosition:])
+                    cryptorObject.decrypt(bytes(data[readPosition:]))
                 else:
-                    decryptedData = cryptorObject.decrypt(data[readPosition:])
+                    decryptedData = cryptorObject.decrypt(bytes(data[readPosition:]))
                     # This is the RIPE hash of my pubkeys. We need this
                     # below to compare to the destination_ripe included
                     # in the encrypted data.
@@ -537,9 +535,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -590,7 +588,7 @@ class objectProcessor(threading.Thread):
         readPosition += signatureLengthLength
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
-        signedData = data[8:20] + encodeVarint(1) + encodeVarint(
+        signedData = bytes(data[8:20]) + encodeVarint(1) + encodeVarint(
             streamNumberAsClaimedByMsg
         ) + decryptedData[:positionOfBottomOfAckData]
 
@@ -636,7 +634,6 @@ class objectProcessor(threading.Thread):
         # pubkey in order to send a message. If we are, it will do the POW
         # and send it.
         self.possibleNewPubkey(fromAddress)
-
         # If this message is bound for one of my version 3 addresses (or
         # higher), then we must check to make sure it meets our demanded
         # proof of work requirement. If this is bound for one of my chan
@@ -647,11 +644,12 @@ class objectProcessor(threading.Thread):
         if decodeAddress(toAddress)[1] >= 3 \
                 and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
             # If I'm not friendly with this person:
-            if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):
-                requiredNonceTrialsPerByte = BMConfigParser().getint(
-                    toAddress, 'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = BMConfigParser().getint(
-                    toAddress, 'payloadlengthextrabytes')
+            if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(
+                    fromAddress):
+                requiredNonceTrialsPerByte = int(BMConfigParser().get(
+                    toAddress, 'noncetrialsperbyte'))
+                requiredPayloadLengthExtraBytes = int(BMConfigParser().get(
+                    toAddress, 'payloadlengthextrabytes'))
                 if not protocol.isProofOfWorkSufficient(
                         data, requiredNonceTrialsPerByte,
                         requiredPayloadLengthExtraBytes):
@@ -684,7 +682,6 @@ class objectProcessor(threading.Thread):
         toLabel = BMConfigParser().get(toAddress, 'label')
         if toLabel == '':
             toLabel = toAddress
-
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
                 messageEncodingType, message)
@@ -867,7 +864,7 @@ class objectProcessor(threading.Thread):
         elif broadcastVersion == 5:
             embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
-            if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
+            if bytes(embeddedTag) not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.
@@ -1121,8 +1118,8 @@ class objectProcessor(threading.Thread):
         if checksum != hashlib.sha512(payload).digest()[0:4]:
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
-        command = command.rstrip('\x00')
-        if command != 'object':
+        command = command.rstrip('\x00'.encode())
+        if command != 'object'.encode():
             return False
         return True
 

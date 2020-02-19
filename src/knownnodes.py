@@ -46,12 +46,18 @@ def json_serialize_knownnodes(output):
     Reorganize knownnodes dict and write it as JSON to output
     """
     _serialized = []
-    for stream, peers in knownNodes.iteritems():
-        for peer, info in peers.iteritems():
+    for stream, peers in iter(knownNodes.items()):
+        for peer, info in iter(peers.items()):
             info.update(rating=round(info.get('rating', 0), 2))
-            _serialized.append({
-                'stream': stream, 'peer': peer._asdict(), 'info': info
-            })
+            # pylint: disable=unidiomatic-typecheck
+            if type(peer[0]) != bytes:
+                _serialized.append({'stream': stream, 'peer': peer._asdict(), 'info': info})
+            else:
+                from collections import OrderedDict
+                _serialized.append({
+                    'stream': stream,
+                    'peer': OrderedDict({'host': str(peer[0].decode()), 'port': int(peer[1])}),
+                    'info': info})
     json.dump(_serialized, output, indent=4)
 
 
@@ -90,7 +96,7 @@ def saveKnownNodes(dirName=None):
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
-        with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
+        with open(os.path.join(dirName, 'knownnodes.dat'), 'w') as output:
             json_serialize_knownnodes(output)
 
 
@@ -121,7 +127,7 @@ def readKnownNodes():
                 except ValueError:
                     source.seek(0)
                     pickle_deserialize_old_knownnodes(source)
-    except (IOError, OSError, KeyError, EOFError):
+    except (IOError, OSError, KeyError, EOFError, pickle.UnpicklingError):
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
@@ -143,7 +149,7 @@ def increaseRating(peer):
     increaseAmount = 0.1
     maxRating = 1
     with knownNodesLock:
-        for stream in knownNodes.keys():
+        for stream in [key for key in knownNodes.keys()]:
             try:
                 knownNodes[stream][peer]["rating"] = min(
                     knownNodes[stream][peer]["rating"] + increaseAmount,

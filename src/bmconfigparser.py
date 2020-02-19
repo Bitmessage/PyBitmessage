@@ -1,8 +1,8 @@
 """
 BMConfigParser class definition and default configuration settings
 """
-
-import ConfigParser
+# pylint: disable=no-self-use, arguments-differ
+import configparser
 import shutil
 import os
 from datetime import datetime
@@ -42,37 +42,36 @@ BMConfigDefaults = {
 
 
 @Singleton
-class BMConfigParser(ConfigParser.SafeConfigParser):
-    """
-    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
-    with additional methods specific to bitmessage config.
-    """
-
+class BMConfigParser(configparser.ConfigParser):
+    """Singleton class inherited from ConfigParsedadfeConfigParser
+    with additional methods specific to bitmessage config."""
+    # pylint: disable=too-many-ancestors
     _temp = {}
 
     def set(self, section, option, value=None):
         if self._optcre is self.OPTCRE or value:
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 raise TypeError("option values must be strings")
         if not self.validate(section, option, value):
             raise ValueError("Invalid value %s" % value)
-        return ConfigParser.ConfigParser.set(self, section, option, value)
+        return configparser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):    # pylint: disable=arguments-differ
+    def get(self, section, option, raw=False, variables=None):
+        # pylint: disable=unused-argument
         try:
             if section == "bitmessagesettings" and option == "timeformat":
-                return ConfigParser.ConfigParser.get(
-                    self, section, option, raw, variables)
+                return configparser.ConfigParser.get(
+                    self, section, option, raw=True, vars=variables)
             try:
                 return self._temp[section][option]
             except KeyError:
                 pass
-            return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
-        except ConfigParser.InterpolationError:
-            return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+            return configparser.ConfigParser.get(
+                self, section, option, raw=True, vars=variables)
+        except configparser.InterpolationError:
+            return configparser.ConfigParser.get(
+                self, section, option, raw=True, vars=variables)
+        except (configparser.NoSectionError, configparser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
             except (KeyError, ValueError, AttributeError):
@@ -87,17 +86,25 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
 
     def safeGetBoolean(self, section, field):
         """Return value as boolean, False on exceptions"""
+        config = configparser.ConfigParser()
         try:
-            return self.getboolean(section, field)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+            # Used in the python2.7
+            # return self.getboolean(section, field)
+            # Used in the python3.5.2
+            return config.getboolean(section, field)
+        except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return False
 
     def safeGetInt(self, section, field, default=0):
-        """Return value as integer, default on exceptions, 0 if default missing"""
+        """Return value as integer, default on exceptions,
+        0 if default missing"""
         try:
-            return self.getint(section, field)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+            # Used in the python2.7
+            # return self.getint(section, field)
+            # Used in the python3.7.0
+            return int(self.get(section, field))
+        except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
@@ -105,36 +112,38 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         """Return value as is, default on exceptions, None if default missing"""
         try:
             return self.get(section, option)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+        except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, variables=None):    # pylint: disable=arguments-differ
-        """Return section variables as parent, but override the "raw" argument to always True"""
-        return ConfigParser.ConfigParser.items(self, section, True, variables)
+    def items(self, section, raw=False, variables=None):
+        # pylint: disable=signature-differs
+        """Return section variables as parent,
+        but override the "raw" argument to always True"""
+        return configparser.ConfigParser.items(self, section, True, variables)
 
-    @staticmethod
-    def addresses():
+    def addresses(self):
         """Return a list of local bitmessage addresses (from section labels)"""
-        return [
-            x for x in BMConfigParser().sections() if x.startswith('BM-')]
+        return [x for x in BMConfigParser().sections() if x.startswith('BM-')]
 
     def read(self, filenames):
-        ConfigParser.ConfigParser.read(self, filenames)
+        configparser.ConfigParser.read(self, filenames)
         for section in self.sections():
             for option in self.options(section):
                 try:
                     if not self.validate(
                         section, option,
-                        ConfigParser.ConfigParser.get(self, section, option)
+                        self[section][option]
                     ):
                         try:
                             newVal = BMConfigDefaults[section][option]
+                        except configparser.NoSectionError:
+                            continue
                         except KeyError:
                             continue
-                        ConfigParser.ConfigParser.set(
+                        configparser.ConfigParser.set(
                             self, section, option, newVal)
-                except ConfigParser.InterpolationError:
+                except configparser.InterpolationError:
                     continue
 
     def save(self):
@@ -153,7 +162,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             # didn't exist before.
             fileNameExisted = False
         # write the file
-        with open(fileName, 'wb') as configfile:
+        with open(fileName, 'w') as configfile:
             self.write(configfile)
         # delete the backup
         if fileNameExisted:
@@ -162,7 +171,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     def validate(self, section, option, value):
         """Input validator interface (using factory pattern)"""
         try:
-            return getattr(self, 'validate_%s_%s' % (section, option))(value)
+            return getattr(self, 'validate_{}_{}'.format(
+                section, option))(value)
         except AttributeError:
             return True
 

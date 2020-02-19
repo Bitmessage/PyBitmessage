@@ -14,7 +14,7 @@ import network.stats
 import shared
 import widgets
 from inventory import Inventory
-from network import BMConnectionPool
+from network.connectionpool import BMConnectionPool
 from retranslateui import RetranslateMixin
 from tr import _translate
 from uisignaler import UISignaler

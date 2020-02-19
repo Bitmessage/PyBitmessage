@@ -9,8 +9,8 @@ import socket
 import time
 
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
+import network.asyncore_pollchoose as asyncore
+from network import connectionpool
 import helper_random
 import knownnodes
 import protocol
@@ -28,8 +28,9 @@ from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
-from node import Peer
-from queues import invQueue, receiveDataQueue, UISignalQueue
+from .node import Peer
+from queues import UISignalQueue, invQueue, receiveDataQueue
+# pylint: disable=logging-format-interpolation
 
 logger = logging.getLogger('default')
 
@@ -66,15 +67,20 @@ class TCPConnection(BMProto, TLSDispatcher):
         else:
             self.destination = address
             self.isOutbound = True
-            self.create_socket(
-                socket.AF_INET6 if ":" in address.host else socket.AF_INET,
-                socket.SOCK_STREAM)
+            try:
+                self.create_socket(
+                    socket.AF_INET6 if ":" in address.host else socket.AF_INET,
+                    socket.SOCK_STREAM)
+            except TypeError:
+                self.create_socket(
+                    socket.AF_INET6 if ':'.encode() in address.host else socket.AF_INET,
+                    socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             TLSDispatcher.__init__(self, sock, server_side=False)
             self.connect(self.destination)
             logger.debug(
-                'Connecting to %s:%i',
-                self.destination.host, self.destination.port)
+                'Connecting to {}:{}'.format(
+                    self.destination.host, self.destination.port))
         try:
             self.local = (
                 protocol.checkIPAddress(
@@ -161,14 +167,14 @@ class TCPConnection(BMProto, TLSDispatcher):
         addrs = {}
         for stream in self.streams:
             with knownnodes.knownNodesLock:
-                for n, s in enumerate((stream, stream * 2, stream * 2 + 1)):
-                    nodes = knownnodes.knownNodes.get(s)
+                for nitro, sitro in enumerate((stream, stream * 2, stream * 2 + 1)):
+                    nodes = knownnodes.knownNodes.get(sitro)
                     if not nodes:
                         continue
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
                     filtered = [
-                        (k, v) for k, v in nodes.iteritems()
+                        (k, v) for k, v in iter(nodes.items())
                         if v["lastseen"] > int(time.time()) -
                         shared.maximumAgeOfNodesThatIAdvertiseToOthers and
                         v["rating"] >= 0 and len(k.host) <= 22
@@ -176,8 +182,8 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
                         len(filtered),
-                        maxAddrCount / 2 if n else maxAddrCount)
-                    addrs[s] = helper_random.randomsample(filtered, elemCount)
+                        maxAddrCount / 2 if nitro else maxAddrCount)
+                    addrs[sitro] = helper_random.randomsample(filtered, elemCount)
         for substream in addrs:
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
@@ -194,8 +200,8 @@ class TCPConnection(BMProto, TLSDispatcher):
             if objectCount == 0:
                 return
             logger.debug(
-                'Sending huge inv message with %i objects to just this'
-                ' one peer', objectCount)
+                'Sending huge inv message with {} objects to jcust this'
+                ' one peer'.format(objectCount))
             self.append_write_buf(protocol.CreatePacket(
                 'inv', addresses.encodeVarint(objectCount) + payload))
 
@@ -205,15 +211,16 @@ class TCPConnection(BMProto, TLSDispatcher):
             # may lock for a long time, but I think it's better than
             # thousands of small locks
             with self.objectsNewToThemLock:
-                for objHash in Inventory().unexpired_hashes_by_stream(stream):
+                for objHash in Inventory()._realInventory.unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
                     if Dandelion().hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
         objectCount = 0
-        payload = b''
-        # Now let us start appending all of these hashes together.
-        # They will be sent out in a big inv message to our new peer.
+        payload = bytes()
+        # Now let us start appending all of these hashes together. They will be
+        # sent out in a big inv message to our new peer.
+
         for obj_hash, _ in bigInvList.items():
             payload += obj_hash
             objectCount += 1
@@ -365,7 +372,7 @@ class TCPServer(AdvancedDispatcher):
     """TCP connection server for Bitmessage protocol"""
 
     def __init__(self, host='127.0.0.1', port=8444):
-        if not hasattr(self, '_map'):
+        if '_map' not in dir(self):
             AdvancedDispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()

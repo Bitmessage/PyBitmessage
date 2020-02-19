@@ -8,8 +8,9 @@ import protocol
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
-from randomtrackingdict import RandomTrackingDict
-from threads import StoppableThread
+from network.randomtrackingdict import RandomTrackingDict
+
+from network.threads import StoppableThread
 
 
 class UploadThread(StoppableThread):
@@ -44,6 +45,7 @@ class UploadThread(StoppableThread):
                     if Dandelion().hasHash(chunk) and \
                        i != Dandelion().objectChildStem(chunk):
                         i.antiIntersectionDelay()
+                        print
                         self.logger.info(
                             '%s asked for a stem object we didn\'t offer to it.',
                             i.destination)

@@ -35,7 +35,7 @@ Logging is thread-safe so you don't have to worry about locks,
 just import and log.
 """
 
-import ConfigParser
+import configparser
 import logging
 import logging.config
 import os
@@ -73,7 +73,7 @@ def configureLogging():
             False,
             'Loaded logger configuration from %s' % logging_config
         )
-    except (OSError, ConfigParser.NoSectionError):
+    except (OSError, configparser.NoSectionError):
         if os.path.isfile(logging_config):
             fail_msg = \
                 'Failed to load logger configuration from %s, using default' \
@@ -148,7 +148,11 @@ def resetLogging():
 
 
 # !
-preconfigured, msg = configureLogging()
+try:
+    preconfigured, msg = configureLogging()
+    if msg:
+        logger.log(logging.WARNING if preconfigured else logging.INFO, msg)
+
+except:
+    pass
 logger = logging.getLogger('default')
-if msg:
-    logger.log(logging.WARNING if preconfigured else logging.INFO, msg)

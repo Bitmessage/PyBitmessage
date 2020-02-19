@@ -22,7 +22,7 @@ def genAckPayload(streamNumber=1, stealthLevel=0):
        - level 1: a getpubkey request for a (random) dummy key hash
        - level 2: a standard message, encrypted to a random pubkey
     """
-    if stealthLevel == 2:      # Generate privacy-enhanced payload
+    if stealthLevel == 2:  # Generate privacy-enhanced payload
         # Generate a dummy privkey and derive the pubkey
         dummyPubKeyHex = highlevelcrypto.privToPub(
             hexlify(helper_random.randomBytes(32)))
@@ -35,12 +35,12 @@ def genAckPayload(streamNumber=1, stealthLevel=0):
         acktype = 2  # message
         version = 1
 
-    elif stealthLevel == 1:    # Basic privacy payload (random getpubkey)
+    elif stealthLevel == 1:  # Basic privacy payload (random getpubkey)
         ackdata = helper_random.randomBytes(32)
         acktype = 0  # getpubkey
         version = 4
 
-    else:            # Minimum viable payload (non stealth)
+    else:  # Minimum viable payload (non stealth)
         ackdata = helper_random.randomBytes(32)
         acktype = 2  # message
         version = 1

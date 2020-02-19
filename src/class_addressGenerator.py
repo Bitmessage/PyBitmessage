@@ -15,12 +15,11 @@ import highlevelcrypto
 from bmconfigparser import BMConfigParser
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from fallback import RIPEMD160Hash
-from network import StoppableThread
+from network.threads import StoppableThread
 
 
 class addressGenerator(StoppableThread):
     """A thread for creating addresses"""
-
     name = "addressGenerator"
 
     def stopThread(self):
@@ -35,7 +34,8 @@ class addressGenerator(StoppableThread):
         Process the requests for addresses generation
         from `.queues.addressGeneratorQueue`
         """
-        # pylint: disable=too-many-locals, too-many-branches, protected-access, too-many-statements
+        # pylint: disable=too-many-locals, too-many-branches
+        # pylint: disable=protected-access, too-many-statements
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
@@ -140,7 +140,7 @@ class addressGenerator(StoppableThread):
                     ripe = RIPEMD160Hash(sha.digest()).digest()
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
-                        '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                        '\x00'.encode('utf-8') * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
                 self.logger.info(
@@ -157,19 +157,20 @@ class addressGenerator(StoppableThread):
                     # The user must have a pretty fast computer.
                     # time.time() - startTime equaled zero.
                     pass
+
                 address = encodeAddress(
                     addressVersionNumber, streamNumber, ripe)
 
                 # An excellent way for us to store our keys
                 # is in Wallet Import Format. Let us convert now.
                 # https://en.bitcoin.it/wiki/Wallet_import_format
-                privSigningKey = '\x80' + potentialPrivSigningKey
+                privSigningKey = '\x80'.encode('utf-8')[1:] + potentialPrivSigningKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privSigningKey).digest()).digest()[0:4]
                 privSigningKeyWIF = arithmetic.changebase(
                     privSigningKey + checksum, 256, 58)
 
-                privEncryptionKey = '\x80' + potentialPrivEncryptionKey
+                privEncryptionKey = '\x80'.encode('utf-8')[1:] + potentialPrivEncryptionKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privEncryptionKey).digest()).digest()[0:4]
                 privEncryptionKeyWIF = arithmetic.changebase(
@@ -191,7 +192,6 @@ class addressGenerator(StoppableThread):
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
                 queues.apiAddressGeneratorReturnQueue.put(address)
-
                 queues.UISignalQueue.put((
                     'updateStatusBar', ""
                 ))
@@ -205,9 +205,14 @@ class addressGenerator(StoppableThread):
                     queues.workerQueue.put((
                         'sendOutOrStoreMyV4Pubkey', address))
 
-            elif command == 'createDeterministicAddresses' \
-                    or command == 'getDeterministicAddress' \
-                    or command == 'createChan' or command == 'joinChan':
+            # elif command == 'createDeterministicAddresses' \
+            #         or command == 'getDeterministicAddress' \
+            #         or command == 'createChan' or command == 'joinChan':
+            elif command in (
+                    'createDeterministicAddresses',
+                    'getDeterministicAddress',
+                    'createChan',
+                    'joinChan'):
                 if not deterministicPassphrase:
                     self.logger.warning(
                         'You are creating deterministic'
@@ -332,8 +337,8 @@ class addressGenerator(StoppableThread):
                             BMConfigParser().set(address, 'label', label)
                             BMConfigParser().set(address, 'enabled', 'true')
                             BMConfigParser().set(address, 'decoy', 'false')
-                            if command == 'joinChan' \
-                                    or command == 'createChan':
+                            # if command == 'joinChan' or command == 'createChan':
+                            if command in ('joinChan', 'createChan'):
                                 BMConfigParser().set(address, 'chan', 'true')
                             BMConfigParser().set(
                                 address, 'noncetrialsperbyte',
@@ -384,8 +389,12 @@ class addressGenerator(StoppableThread):
                             address)
 
                 # Done generating addresses.
-                if command == 'createDeterministicAddresses' \
-                        or command == 'joinChan' or command == 'createChan':
+                # if command == 'createDeterministicAddresses' \
+                #         or command == 'joinChan' or command == 'createChan':
+                if command in (
+                        'createDeterministicAddresses',
+                        'joinChan',
+                        'createChan'):
                     queues.apiAddressGeneratorReturnQueue.put(
                         listOfNewAddressesToSendOutThroughTheAPI)
                 elif command == 'getDeterministicAddress':

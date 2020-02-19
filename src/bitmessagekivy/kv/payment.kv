@@ -1,0 +1,144 @@
+<Payment>:
+    name: 'payment'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            padding: [dp(app.window_size[0]/16 if app.window_size[0] <= 720 else app.window_size[0]/6 if app.window_size[0] <= 800 else app.window_size[0]/18), dp(10)]
+            spacing: 12
+            size_hint_y: None
+            height: self.minimum_height + dp(app.window_size[1]) if app.window_size[1] > app.window_size[0] else dp(app.window_size[0])
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: app.theme_cls.primary_dark
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'H5'
+                    theme_text_color: 'Primary'
+                    text: 'Platinum'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Subtitle1'
+                    theme_text_color: 'Primary'
+                    text: 'We provide subscriptions for proof of work calculation for first month. '
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    id: free_pak
+                    font_style: 'H5'
+                    theme_text_color: 'Primary'
+                    text: '€ 50.0'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
+                    height: dp(40)
+                    on_press: root.get_available_credits(self)
+                    MDLabel:
+                        font_style: 'H6'
+                        text: 'Get Free Credits'
+                        font_size: '13sp'
+                        color: (0,0,0,1)
+                        halign: 'center'
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: app.theme_cls.primary_dark
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'H5'
+                    theme_text_color: 'Primary'
+                    text: 'Silver'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Subtitle1'
+                    theme_text_color: 'Primary'
+                    text: 'We provide for proof of work calculation for six month. '
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'H5'
+                    theme_text_color: 'Primary'
+                    text: '€ 100.0'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'H6'
+                        text: 'Get Monthly Credits'
+                        font_size: '13sp'
+                        color: (0,0,0,1)
+                        halign: 'center'
+            BoxLayout:
+                orientation: 'vertical'
+                padding: dp(5)
+                canvas.before:
+                    Color:
+                        rgba: app.theme_cls.primary_dark
+                    Rectangle:
+                        # self here refers to the widget i.e FloatLayout
+                        pos: self.pos
+                        size: self.size
+                MDLabel:
+                    size_hint_y: None
+                    font_style: 'H5'
+                    theme_text_color: 'Primary'
+                    text: 'Gold'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'Subtitle1'
+                    theme_text_color: 'Primary'
+                    text: 'We provide for proof of work calculation for 1years. '
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDLabel:
+                    font_style: 'H5'
+                    theme_text_color: 'Primary'
+                    text: '€ 500.0'
+                    halign: 'center'
+                    color: 1,1,1,1
+                MDRaisedButton:
+                    canvas:
+                        Color:
+                            rgb: (0.93, 0.93, 0.93)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
+                    height: dp(40)
+                    MDLabel:
+                        font_style: 'H6'
+                        text: 'Get Yearly Credits'
+                        font_size: '13sp'
+                        color: (0,0,0,1)
+                        halign: 'center'

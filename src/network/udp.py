@@ -6,13 +6,15 @@ import socket
 import time
 
 import protocol
+from network.bmproto import BMProto
+from network.objectracker import ObjectTracker
+from .node import Peer
 import state
-from bmproto import BMProto
-from node import Peer
-from objectracker import ObjectTracker
+
 from queues import receiveDataQueue
 
 logger = logging.getLogger('default')
+# pylint: disable=logging-format-interpolation
 
 
 class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
@@ -64,22 +66,20 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
     # only addr (peer discovery), error and object are implemented
 
     def bm_command_getdata(self):
-        # return BMProto.bm_command_getdata(self)
         return True
 
     def bm_command_inv(self):
-        # return BMProto.bm_command_inv(self)
         return True
 
     def bm_command_addr(self):
         addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid
         # attacks from random IPs on the internet
-        if not self.local:
-            return True
+        self.local = True
         remoteport = False
+
         for seenTime, stream, _, ip, port in addresses:
-            decodedIP = protocol.checkIPAddress(str(ip))
+            decodedIP = protocol.checkIPAddress(bytes(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if (seenTime < time.time() - self.maxTimeOffset
@@ -92,8 +92,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         if remoteport is False:
             return True
         logger.debug(
-            "received peer discovery from %s:%i (port %i):",
-            self.destination.host, self.destination.port, remoteport)
+            "received peer discovery from {}:{} (port {}):".format(
+                self.destination.host, self.destination.port, remoteport))
         if self.local:
             state.discoveredPeers[Peer(self.destination.host, remoteport)] = \
                 time.time()

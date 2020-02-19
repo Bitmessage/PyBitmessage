@@ -17,7 +17,7 @@ SQLite objects can only be used from one thread.
 """
 
 import threading
-import Queue
+import queue as Queue
 
 sqlSubmitQueue = Queue.Queue()
 """the queue for SQL"""
@@ -29,7 +29,6 @@ sqlLock = threading.Lock()
 def sqlQuery(sqlStatement, *args):
     """
     Query sqlite and return results
-
     :param str sqlStatement: SQL statement string
     :param list args: SQL query parameters
     :rtype: list
@@ -102,7 +101,7 @@ def sqlStoredProcedure(procName):
     sqlLock.release()
 
 
-class SqlBulkExecute(object):
+class SqlBulkExecute(object):  # pylint: disable=no-init
     """This is used when you have to execute the same statement in a cycle."""
 
     def __enter__(self):

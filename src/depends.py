@@ -231,12 +231,13 @@ def check_sqlite():
             conn.close()
 
 
-def check_openssl():    # pylint: disable=too-many-branches, too-many-return-statements
+def check_openssl():
     """Do openssl dependency check.
 
     Here we are checking for openssl with its all dependent libraries
     and version checking.
     """
+    # pylint: disable=too-many-branches, too-many-return-statements
     # pylint: disable=protected-access, redefined-outer-name
     ctypes = try_import('ctypes')
     if not ctypes:
@@ -365,6 +366,7 @@ def check_pyqt():
     Here we are checking for PyQt4 with its version, as for it require
     PyQt 4.8 or later.
     """
+
     QtCore = try_import(
         'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
 
@@ -420,11 +422,11 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage requires Python 2.7.4 or greater'
             ' (but not Python 3+)')
         has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required.')
-        has_all_dependencies = False
+    # if sys.hexversion >= 0x3000000:
+    #     logger.error(
+    #         'PyBitmessage does not support Python 3+. Python 2.7.4'
+    #         ' or greater is required.')
+    #     has_all_dependencies = False
 
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:

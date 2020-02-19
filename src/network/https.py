@@ -1,8 +1,8 @@
+# pylint: disable=missing-docstring
 import asyncore
 
-from http import HTTPClient
-from tls import TLSHandshake
-
+from .http import HTTPClient
+from .tls import TLSHandshake
 """
 self.sslSock = ssl.wrap_socket(
     self.sock,
@@ -17,6 +17,7 @@ self.sslSock = ssl.wrap_socket(
 
 class HTTPSClient(HTTPClient, TLSHandshake):
     def __init__(self, host, path):
+        # pylint: disable=non-parent-init-called
         if not hasattr(self, '_map'):
             asyncore.dispatcher.__init__(self)
         self.tlsDone = False

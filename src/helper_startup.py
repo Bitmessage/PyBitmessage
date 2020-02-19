@@ -129,7 +129,9 @@ def loadConfig():
 def updateConfig():
     """Save the config"""
     config = BMConfigParser()
-    settingsversion = config.getint('bitmessagesettings', 'settingsversion')
+    # Used python2.7
+    # settingsversion = int(BMConfigParser().get('bitmessagesettings', 'settingsversion') \
+    settingsversion = BMConfigParser().safeGetInt('bitmessagesettings', 'settingsvesion')
     if settingsversion == 1:
         config.set('bitmessagesettings', 'socksproxytype', 'none')
         config.set('bitmessagesettings', 'sockshostname', 'localhost')

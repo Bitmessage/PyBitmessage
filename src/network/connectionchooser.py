@@ -1,7 +1,7 @@
 """
 Select which node to connect to
 """
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches, logging-format-interpolation, unidiomatic-typecheck
 import logging
 import random  # nosec
 
@@ -17,7 +17,7 @@ logger = logging.getLogger('default')
 def getDiscoveredPeer():
     """Get a peer from the local peer discovery list"""
     try:
-        peer = random.choice(state.discoveredPeers.keys())
+        peer = random.choice([key for key in state.discoveredPeers.keys()])
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -44,14 +44,14 @@ def chooseConnection(stream):
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = random.choice(knownnodes.knownNodes[stream].keys())
+        peer = random.choice([key for key in knownnodes.knownNodes[stream].keys()])
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):
                 continue
             rating = peer_info["rating"]
         except TypeError:
-            logger.warning('Error in %s', peer)
+            logger.warning('Error in {}'.format(peer))
             rating = 0
         if haveOnion:
             # do not connect to raw IP addresses
