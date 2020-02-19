@@ -5,7 +5,7 @@ Tests for core and those that do not work outside
 
 import os
 import pickle  # nosec
-import Queue
+import queue as Queue
 import random  # nosec
 import string
 import time

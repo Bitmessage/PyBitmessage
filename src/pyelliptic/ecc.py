@@ -10,9 +10,9 @@ Asymmetric cryptography using elliptic curves
 from hashlib import sha512
 from struct import pack, unpack
 
-from cipher import Cipher
-from hash import equals, hmac_sha256
-from openssl import OpenSSL
+from pyelliptic.cipher import Cipher
+from pyelliptic.hash import equals, hmac_sha256
+from pyelliptic.openssl import OpenSSL
 
 
 class ECC(object):
@@ -62,7 +62,6 @@ class ECC(object):
             self.curve = OpenSSL.get_curve(curve)
         else:
             self.curve = curve
-
         if pubkey_x is not None and pubkey_y is not None:
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
         elif pubkey is not None:
@@ -294,7 +293,6 @@ class ECC(object):
                 if (OpenSSL.EC_KEY_set_private_key(key, priv_key)) == 0:
                     raise Exception(
                         "[OpenSSL] EC_KEY_set_private_key FAIL ...")
-
             group = OpenSSL.EC_KEY_get0_group(key)
             pub_key = OpenSSL.EC_POINT_new(group)
 

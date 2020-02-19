@@ -7,6 +7,7 @@ try:
     haveQt = True
 except ImportError:
     haveQt = False
+# pylint: disable=too-many-arguments
 
 
 def search_translate(context, text):
@@ -18,7 +19,7 @@ def search_translate(context, text):
 
 def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, what=None, unreadOnly=False):
     """Perform a search in mailbox tables"""
-    # pylint: disable=too-many-arguments, too-many-branches
+    # pylint: disable=too-many-branches
     if what is not None and what != "":
         what = "%" + what + "%"
         if where == search_translate("MainWindow", "To"):
@@ -75,7 +76,6 @@ def search_sql(xAddress="toaddress", account=None, folder="inbox", where=None, w
 
 def check_match(toAddress, fromAddress, subject, message, where=None, what=None):
     """Check if a single message matches a filter (used when new messages are added to messagelists)"""
-    # pylint: disable=too-many-arguments
     if what is not None and what != "":
         if where in (search_translate("MainWindow", "To"), search_translate("MainWindow", "All")):
             if what.lower() not in toAddress.lower():

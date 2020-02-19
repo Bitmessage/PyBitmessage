@@ -2,7 +2,7 @@
 Low-level protocol-related functions.
 """
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements
-# pylint: disable=too-many-locals,too-many-statements
+# pylint: disable=too-many-locals,too-many-statements,logging-format-interpolation
 
 import base64
 import hashlib
@@ -65,6 +65,7 @@ Header = Struct('!L12sL4s')
 VersionPacket = Struct('>LqQ20s4s36sH')
 
 # Bitfield
+# pylint: disable=unidiomatic-typecheck
 
 
 def getBitfield(address):
@@ -96,11 +97,20 @@ def isBitSetWithinBitfield(fourByteString, n):
 
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
-    if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
-            host.split(".")[0], True)
-    elif host.find(':') == -1:
-        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+    if type(host) == bytes:
+        onion = 'onion'.encode()
+        colon = ':'.encode()
+        full_stop = '.'.encode()
+    else:
+        onion = 'onion'
+        colon = ':'
+        full_stop = '.'
+    if host.find(onion) > -1:
+        return '\xfd\x87\xd8\x7e\xeb\x43'.encode(
+            'raw_unicode_escape') + base64.b32decode(
+                host.split(full_stop)[0], True)
+    elif host.find(colon) == -1:
+        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape') + \
             socket.inet_aton(host)
     return socket.inet_pton(socket.AF_INET6, host)
 
@@ -143,16 +153,14 @@ def network_group(host):
 
 
 def checkIPAddress(host, private=False):
-    """
-    Returns hostStandardFormat if it is a valid IP address,
-    otherwise returns False
-    """
-    if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+
+    """Returns hostStandardFormat if it is a valid IP address, otherwise returns False"""
+    if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape'):
         hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
         return checkIPv4Address(host[12:], hostStandardFormat, private)
-    elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+    elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43'.encode('raw_unicode_escape'):
         # Onion, based on BMD/bitcoind
-        hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+        hostStandardFormat = base64.b32encode(host[6:]) + ".onion".encode()
         if private:
             return False
         return hostStandardFormat
@@ -169,27 +177,27 @@ def checkIPAddress(host, private=False):
 
 
 def checkIPv4Address(host, hostStandardFormat, private=False):
-    """
-    Returns hostStandardFormat if it is an IPv4 address,
-    otherwise returns False
-    """
-    if host[0] == '\x7F':  # 127/8
+
+    """Returns hostStandardFormat if it is an IPv4 address, otherwise returns False"""
+
+    if host[0] == '\x7F'.encode('raw_unicode_escape'):  # 127/8
         if not private:
             logger.debug(
                 'Ignoring IP address in loopback range: %s',
                 hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0] == '\x0A':  # 10/8
+    if host[0] == '\x0A'.encode('raw_unicode_escape'):  # 10/8
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0:2] == '\xC0\xA8':  # 192.168/16
+    if host[0:2] == '\xC0\xA8'.encode('raw_unicode_escape'):  # 192.168/16
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20':  # 172.16/12
+    # 172.16/12
+    if host[0:2] >= '\xAC\x10'.encode('raw_unicode_escape') and host[0:2] < '\xAC\x20'.encode('raw_unicode_escape'):
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
@@ -198,22 +206,20 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
 
 
 def checkIPv6Address(host, hostStandardFormat, private=False):
-    """
-    Returns hostStandardFormat if it is an IPv6 address,
-    otherwise returns False
-    """
-    if host == ('\x00' * 15) + '\x01':
+    """Returns hostStandardFormat if it is an IPv6 address, otherwise returns False"""
+    if host == ('\x00'.encode() * 15) + '\x01'.encode():
+
         if not private:
-            logger.debug('Ignoring loopback address: %s', hostStandardFormat)
+            logger.debug('Ignoring loopback address: {}'.format(hostStandardFormat))
         return False
     if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
         if not private:
-            logger.debug('Ignoring local address: %s', hostStandardFormat)
+            logger.debug('Ignoring local address: {}'.format(hostStandardFormat))
         return hostStandardFormat if private else False
-    if (ord(host[0]) & 0xfe) == 0xfc:
+    if (ord(host[0:1]) & 0xfe) == 0xfc:
         if not private:
-            logger.debug(
-                'Ignoring unique local address: %s', hostStandardFormat)
+            logger.debug('Ignoring unique local address: {}'.format(hostStandardFormat))
+
         return hostStandardFormat if private else False
     return False if private else hostStandardFormat
 
@@ -225,6 +231,7 @@ def haveSSL(server=False):
     python < 2.7.9's ssl library does not support ECDSA server due to
     missing initialisation of available curves, but client works ok
     """
+    return False
     if not server:
         return True
     elif sys.version_info >= (2, 7, 9):
@@ -269,7 +276,7 @@ def isProofOfWorkSufficient(
     if TTL < 300:
         TTL = 300
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-        data[:8] + hashlib.sha512(data[8:]).digest()
+        bytes(data[:8]) + hashlib.sha512(data[8:]).digest()
     ).digest()).digest()[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
@@ -281,24 +288,20 @@ def isProofOfWorkSufficient(
 
 
 def CreatePacket(command, payload=''):
-    """Construct and return a packet"""
+    """Construct and return a number of bytes from a payload"""
+    payload = payload if type(payload) in [bytes, bytearray] else payload.encode()
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
+    byte = bytearray(Header.size + payload_length)
+    Header.pack_into(byte, 0, 0xE9BEB4D9, command.encode(), payload_length, checksum)
+    byte[Header.size:] = payload
+    return bytes(byte)
 
-    b = bytearray(Header.size + payload_length)
-    Header.pack_into(b, 0, 0xE9BEB4D9, command, payload_length, checksum)
-    b[Header.size:] = payload
-    return bytes(b)
 
+def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server=False, nodeid=None):
+    """Construct the payload of a version message, return the resultng bytes of running CreatePacket() on it"""
+    payload = bytes()
 
-def assembleVersionMessage(
-    remoteHost, remotePort, participatingStreams, server=False, nodeid=None
-):
-    """
-    Construct the payload of a version message,
-    return the resulting bytes of running `CreatePacket` on it
-    """
-    payload = ''
     payload += pack('>L', 3)  # protocol version.
     # bitflags of the services I offer.
     payload += pack(
@@ -331,10 +334,10 @@ def assembleVersionMessage(
         (NODE_SSL if haveSSL(server) else 0) |
         (NODE_DANDELION if state.dandelion else 0)
     )
-    # = 127.0.0.1. This will be ignored by the remote host.
-    # The actual remote connected IP will be used.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
-        '>L', 2130706433)
+    # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
+    # python3 need to check
+    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('raw_unicode_escape') + pack('>L', 2130706433)
+
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
     extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
@@ -345,11 +348,9 @@ def assembleVersionMessage(
     ):
         payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
-        payload += pack(
-            '>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
+        payload += pack('>H', int(BMConfigParser().safeGet('bitmessagesettings', 'onionport')))
     else:  # no extport and not incoming over Tor
-        payload += pack(
-            '>H', BMConfigParser().getint('bitmessagesettings', 'port'))
+        payload += pack('>H', int(BMConfigParser().safeGet('bitmessagesettings', 'port')))
 
     if nodeid is not None:
         payload += nodeid[0:8]
@@ -357,7 +358,7 @@ def assembleVersionMessage(
         payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
     userAgent = '/PyBitmessage:' + softwareVersion + '/'
     payload += encodeVarint(len(userAgent))
-    payload += userAgent
+    payload += userAgent.encode()
 
     # Streams
     payload += encodeVarint(len(participatingStreams))
@@ -380,9 +381,9 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload = encodeVarint(fatal)
     payload += encodeVarint(banTime)
     payload += encodeVarint(len(inventoryVector))
-    payload += inventoryVector
+    payload += inventoryVector.encode() if type(payload) == bytes else inventoryVector
     payload += encodeVarint(len(errorText))
-    payload += errorText
+    payload += errorText.encode() if type(payload) == bytes else errorText
     return CreatePacket('error', payload)
 
 
@@ -430,7 +431,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = state.neededPubkeys[tag]
+        toAddress, cryptorObject = state.neededPubkeys[bytes(tag)]
         if toAddress != address:
             logger.critical(
                 'decryptAndCheckPubkeyPayload failed due to toAddress'
@@ -443,6 +444,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             # That sort of address-malleability should have been caught
             # by the UI or API and an error given to the user.
             return 'failed'
+        print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW#################################################")
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
         except:
@@ -450,13 +452,13 @@ def decryptAndCheckPubkeyPayload(data, address):
             # but tagged it with a tag for which we are watching.
             logger.info('Pubkey decryption was unsuccessful.')
             return 'failed'
-
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        print("working fine till here#################################################################")    
+        publicSigningKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        publicEncryptionKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         specifiedNonceTrialsPerByteLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])[1]
@@ -470,7 +472,6 @@ def decryptAndCheckPubkeyPayload(data, address):
             decryptedData[readPosition:readPosition + 10])
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
-
         if not highlevelcrypto.verify(
                 signedData, signature, hexlify(publicSigningKey)):
             logger.info(
@@ -479,11 +480,9 @@ def decryptAndCheckPubkeyPayload(data, address):
 
         logger.info(
             'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
-
         sha = hashlib.new('sha512')
         sha.update(publicSigningKey + publicEncryptionKey)
         embeddedRipe = RIPEMD160Hash(sha.digest()).digest()
-
         if embeddedRipe != ripe:
             # Although this pubkey object had the tag were were looking for
             # and was encrypted with the correct encryption key,
@@ -502,9 +501,9 @@ def decryptAndCheckPubkeyPayload(data, address):
             addressVersion, streamNumber, hexlify(ripe),
             hexlify(publicSigningKey), hexlify(publicEncryptionKey)
         )
-
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
+        print("successful Insertion of pubkey hurray#################################################")
         return 'successful'
     except varintDecodeError:
         logger.info(

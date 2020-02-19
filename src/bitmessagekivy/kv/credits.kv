@@ -1,0 +1,20 @@
+<Credits>:
+    name: 'credits'
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            id: ml
+            size_hint_y: None
+            height: dp(200)
+            OneLineListItem:
+                text: "Available Credits"
+            BoxLayout:
+                AnchorLayout:
+                    MDRaisedButton:
+                        height: dp(40)
+                        MDLabel:
+                            font_style: 'H4'
+                            text: root.available_credits
+                            font_size: '13sp'
+                            color: (1,1,1,1)
+                            halign: 'center'

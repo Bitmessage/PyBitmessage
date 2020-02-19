@@ -8,7 +8,7 @@ import time
 
 import network.asyncore_pollchoose as asyncore
 import state
-from threads import BusyError, nonBlocking
+from network.threads import BusyError, nonBlocking
 
 
 class ProcessingError(Exception):
@@ -29,7 +29,10 @@ class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 131072  # 128kB
 
     def __init__(self, sock=None):
-        if not hasattr(self, '_map'):
+        # python 2 below condition is used
+        # if not hasattr(self, '_map'):
+        # python 3 below condition is used
+        if '_map' not in dir(self):
             asyncore.dispatcher.__init__(self, sock)
         self.read_buf = bytearray()
         self.write_buf = bytearray()

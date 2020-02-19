@@ -99,14 +99,14 @@ class MsgDecode(object):
     def decodeExtended(self, data):
         """Handle extended encoding"""
         dc = zlib.decompressobj()
-        tmp = ""
+        tmp = bytes()
         while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
             try:
                 got = dc.decompress(
                     data, BMConfigParser().safeGetInt("zlib", "maxsize") +
                     1 - len(tmp))
                 # EOF
-                if got == "":
+                if got == bytes():
                     break
                 tmp += got
                 data = dc.unconsumed_tail
@@ -128,7 +128,6 @@ class MsgDecode(object):
         except KeyError:
             logger.error("Message type missing")
             raise MsgDecodeException("Message type missing")
-
         msgObj = messagetypes.constructObject(tmp)
         if msgObj is None:
             raise MsgDecodeException("Malformed message")
@@ -142,7 +141,7 @@ class MsgDecode(object):
 
     def decodeSimple(self, data):
         """Handle simple encoding"""
-        bodyPositionIndex = string.find(data, '\nBody:')
+        bodyPositionIndex = bytes.find(data, '\nBody:'.encode())
         if bodyPositionIndex > 1:
             subject = data[8:bodyPositionIndex]
             # Only save and show the first 500 characters of the subject.

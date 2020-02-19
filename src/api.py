@@ -3,9 +3,16 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
+<<<<<<< HEAD
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2020 The Bitmessage developers
 # pylint: disable=too-many-lines,no-self-use,unused-variable,unused-argument
+=======
+# pylint: disable=too-many-locals,too-many-lines,no-self-use,unused-argument
+# pylint: disable=too-many-statements,too-many-public-methods,too-many-branches
+# Copyright (c) 2012-2016 Jonathan Warren
+# Copyright (c) 2012-2019 The Bitmessage developers
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
 import base64
 import errno
 import hashlib
@@ -27,6 +34,7 @@ import queues
 import shared
 import shutdown
 import state
+<<<<<<< HEAD
 from addresses import (
     addBMIfNotPresent,
     calculateInventoryHash,
@@ -34,13 +42,21 @@ from addresses import (
     decodeVarint,
     varintDecodeError
 )
+=======
+
+from addresses import addBMIfNotPresent, calculateInventoryHash, decodeAddress, decodeVarint, varintDecodeError
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from network.threads import StoppableThread
+<<<<<<< HEAD
 from version import softwareVersion
+=======
+# pylint: disable=unused-variable
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
 
 str_chan = '[chan]'
 
@@ -59,6 +75,7 @@ class APIError(Exception):
 
 class StoppableXMLRPCServer(SimpleXMLRPCServer):
     """A SimpleXMLRPCServer that honours state.shutdown"""
+    # pylint:disable=too-few-public-methods
     allow_reuse_address = True
 
     def serve_forever(self):
@@ -153,7 +170,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         Note: this method is the same as in SimpleXMLRPCRequestHandler,
         just hacked to handle cookies
         """
-
         # Check that the path is legal
         if not self.is_rpc_path_valid():
             self.report_404()
@@ -182,7 +198,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             response = self.server._marshaled_dispatch(
                 data, getattr(self, '_dispatch', None)
             )
-        except BaseException:  # This should only happen if the module is buggy
+        # This should only happen if the module is buggy
+        except BaseException:
             # internal error, report as HTTP server error
             self.send_response(500)
             self.end_headers()
@@ -258,9 +275,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(9, 'Invalid characters in address: ' + address)
             if status == 'versiontoohigh':
                 raise APIError(
+<<<<<<< HEAD
                     10,
                     'Address version number too high (or zero) in address: ' +
                     address)
+=======
+                    10, 'Address version number too high (or zero) in address: ' + address)
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
             if status == 'varintmalformed':
                 raise APIError(26, 'Malformed varint in address: ' + address)
             raise APIError(
@@ -501,7 +522,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # 0 means "just use the proper addressVersionNumber"
         if addressVersionNumber == 0:
             addressVersionNumber = 4
-        if addressVersionNumber != 3 and addressVersionNumber != 4:
+        # if addressVersionNumber != 3 and addressVersionNumber != 4:
+        if addressVersionNumber not in (3, 4):
             raise APIError(
                 2, 'The address version number currently must be 3, 4, or 0'
                 ' (which means auto-select). %i isn\'t supported.' %
@@ -552,7 +574,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
         passphrase = self._decode(passphrase, "base64")
-        if addressVersionNumber != 3 and addressVersionNumber != 4:
+        # if addressVersionNumber != 3 and addressVersionNumber != 4:
+        if addressVersionNumber not in (3, 4):
             raise APIError(
                 2, 'The address version number currently must be 3 or 4. %i'
                 ' isn\'t supported.' % addressVersionNumber)
@@ -622,8 +645,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             label = str_chan + ' ' + passphrase
         except BaseException:
             label = str_chan + ' ' + repr(passphrase)
+<<<<<<< HEAD
         status, addressVersionNumber, streamNumber, toRipe = (
             self._verifyAddress(suppliedAddress))
+=======
+        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(
+            suppliedAddress)
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         queues.addressGeneratorQueue.put((
@@ -646,8 +674,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need parameters.')
         elif len(params) == 1:
             address, = params
+<<<<<<< HEAD
             status, addressVersionNumber, streamNumber, toRipe = (
                 self._verifyAddress(address))
+=======
+            status, addressVersionNumber, streamNumber, toRipe = \
+                self._verifyAddress(address)
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
         address = addBMIfNotPresent(address)
         if not BMConfigParser().has_section(address):
             raise APIError(
@@ -668,8 +701,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need parameters.')
         elif len(params) == 1:
             address, = params
+<<<<<<< HEAD
         status, addressVersionNumber, streamNumber, toRipe = (
             self._verifyAddress(address))
+=======
+        status, addressVersionNumber, streamNumber, toRipe = \
+            self._verifyAddress(address)
+>>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
         address = addBMIfNotPresent(address)
         if not BMConfigParser().has_section(address):
             raise APIError(
@@ -1222,7 +1260,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
         with shared.printLock:
-            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
+            print('(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce)
             try:
                 print(
                     'POW took', int(time.time() - powStartTime),
@@ -1241,7 +1279,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             int(time.time()) + TTL, ''
         )
         with shared.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
+            print('Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
@@ -1271,10 +1309,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         target = 2 ** 64 / ((
             len(payload) + defaults.networkDefaultPayloadLengthExtraBytes + 8
         ) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message via API) Doing proof of work...'
+        print('(For pubkey message via API) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
+        print('(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce)
         payload = pack('>Q', nonce) + payload
 
         pubkeyReadPosition = 8  # bypass the nonce
@@ -1295,7 +1333,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
         with shared.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
+            print('broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash))
         queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):

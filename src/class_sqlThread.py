@@ -82,9 +82,11 @@ class sqlThread(threading.Thread):
         # If the settings version is equal to 2 or 3 then the
         # sqlThread will modify the pubkeys table and change
         # the settings version to 4.
-        settingsversion = BMConfigParser().getint(
-            'bitmessagesettings', 'settingsversion')
-
+        # settingsversion = BMConfigParser().getint('bitmessagesettings', 'settingsversion')
+        # In the Python3 I am below condition converting into int
+        # settingsversion = int(BMConfigParser().get('bitmessagesettings', 'settingsversion') \
+        #                       if BMConfigParser().get('bitmessagesettings', 'settingsversion') else 0)
+        settingsversion = BMConfigParser().safeGetInt('bitmessagesettings', 'settingsvesion')
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
         if settingsversion == 2:
@@ -211,7 +213,8 @@ class sqlThread(threading.Thread):
         parameters = ''
         self.cur.execute(item, parameters)
         currentVersion = int(self.cur.fetchall()[0][0])
-        if currentVersion == 1 or currentVersion == 3:
+        # if currentVersion == 1 or currentVersion == 3:
+        if currentVersion in (1, 3):
             logger.debug(
                 'In messages.dat database, adding tag field to'
                 ' the inventory table.')
@@ -569,6 +572,7 @@ class sqlThread(threading.Thread):
                 rowcount = 0
                 # print 'item', item
                 # print 'parameters', parameters
+                # if 'inbox' in item:
                 try:
                     self.cur.execute(item, parameters)
                     rowcount = self.cur.rowcount

@@ -27,8 +27,10 @@ import depends
 import shared
 import shutdown
 import state
+
 from bmconfigparser import BMConfigParser
-from debug import logger  # this should go before any threads
+# this should go before any threads
+from debug import logger
 from helper_startup import (
     isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections,
     start_proxyconfig
@@ -158,13 +160,13 @@ def signal_handler(signum, frame):
     if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
-        print '# Thread: %s(%d)' % (thread.name, thread.ident)
+        print('# Thread: {}({})'.format(thread.name, thread.ident))
         for filename, lineno, name, line in traceback.extract_stack(frame):
-            print 'File: "%s", line %d, in %s' % (filename, lineno, name)
+            print("File: '{}', line {}, in {}" .format(filename, lineno, name))
             if line:
-                print '  %s' % line.strip()
-        print 'Unfortunately you cannot use Ctrl+C when running the UI \
-        because the UI captures the signal.'
+                print('  {}'.format(line.strip()))
+        print('Unfortunately you cannot use Ctrl+C when running the UI \
+        because the UI captures the signal.')
 
 
 class Main(object):
@@ -199,7 +201,8 @@ class Main(object):
                 if os.path.isfile(os.path.join(
                         state.appdata, 'unittest.lock')):
                     daemon = True
-                state.enableGUI = False  # run without a UI
+                # run without a UI
+                state.enableGUI = False
                 # Fallback: in case when no api command was issued
                 state.last_api_response = time.time()
                 # Apply special settings
@@ -215,7 +218,8 @@ class Main(object):
                 )
 
         if daemon:
-            state.enableGUI = False  # run without a UI
+            # run without a UI
+            state.enableGUI = False
 
         # is the application already running?  If yes then exit.
         if state.enableGUI and not state.curses and not state.kivy and not depends.check_pyqt():
@@ -239,18 +243,17 @@ class Main(object):
 
         if daemon:
             with shared.printLock:
-                print 'Running as a daemon. Send TERM signal to end.'
+                print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
 
         self.setSignalHandler()
 
         set_thread_name("PyBitmessage")
 
-        state.dandelion = config.safeGetInt('network', 'dandelion')
+        state.dandelion = config.safeGet('network', 'dandelion')
         # dandelion requires outbound connections, without them,
         # stem objects will get stuck forever
-        if state.dandelion and not config.safeGetBoolean(
-                'bitmessagesettings', 'sendoutgoingconnections'):
+        if state.dandelion and not (config.safeGet('bitmessagesettings', 'sendoutgoingconnections') == 'True'):
             state.dandelion = 0
 
         if state.testmode or config.safeGetBoolean(
@@ -261,7 +264,6 @@ class Main(object):
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
         readKnownNodes()
-
 
         # Not needed if objproc is disabled
         if state.enableObjProc:
@@ -321,7 +323,8 @@ class Main(object):
             shared.reloadBroadcastSendersForWhichImWatching()
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
-                import api  # pylint: disable=relative-import
+                # pylint: disable=relative-import
+                import api
                 singleAPIThread = api.singleAPI()
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
@@ -333,7 +336,7 @@ class Main(object):
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
-            for i in range(config.getint('threads', 'receive')):
+            for i in range(config.safeGet('threads', 'receive')):
                 receiveQueueThread = ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()
@@ -365,12 +368,13 @@ class Main(object):
             if state.curses:
                 if not depends.check_curses():
                     sys.exit()
-                print 'Running with curses'
+                print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
 
             elif state.kivy:
                 config.remove_option('bitmessagesettings', 'dontconnect')
+                # pylint: disable=no-member,import-error,no-name-in-module,relative-import
                 from bitmessagekivy.mpybit import NavigateApp
                 state.kivyapp = NavigateApp()
                 state.kivyapp.run()
@@ -420,7 +424,8 @@ class Main(object):
             pass
         else:
             parentPid = os.getpid()
-            shared.thisapp.lock()  # relock
+            # relock
+            shared.thisapp.lock()
 
         os.umask(0)
         try:
@@ -435,13 +440,16 @@ class Main(object):
                 # wait until child ready
                 while True:
                     time.sleep(1)
-                os._exit(0)  # pylint: disable=protected-access
+                # pylint: disable=protected-access
+                os._exit(0)
         except AttributeError:
             # fork not implemented
             pass
         else:
-            shared.thisapp.lock()  # relock
-        shared.thisapp.lockPid = None  # indicate we're the final child
+            # relock
+            shared.thisapp.lock()
+        # indicate we're the final child
+        shared.thisapp.lockPid = None
         sys.stdout.flush()
         sys.stderr.flush()
         if not sys.platform.startswith('win'):
@@ -481,7 +489,7 @@ All parameters are optional.
     def stop():
         """Stop main application"""
         with shared.printLock:
-            print 'Stopping Bitmessage Deamon.'
+            print('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 
     # .. todo:: nice function but no one is using this

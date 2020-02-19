@@ -60,6 +60,7 @@ def _strerror(err):
         if err in errorcode:
             return errorcode[err]
         return "Unknown error %s" % err
+    # ret18 ("Unknown error {}".format(err))
 
 
 class ExitNow(Exception):
@@ -205,25 +206,24 @@ def select_poller(timeout=0.0, map=None):
     if map is None:
         map = socket_map
     if map:
-        r = []
-        w = []
-        e = []
+        rd = []
+        wt = []
+        ex = []
         for fd, obj in list(map.items()):
             is_r = obj.readable()
             is_w = obj.writable()
             if is_r:
-                r.append(fd)
+                rd.append(fd)
             # accepting sockets should not be writable
             if is_w and not obj.accepting:
-                w.append(fd)
+                wt.append(fd)
             if is_r or is_w:
-                e.append(fd)
-        if [] == r == w == e:
+                ex.append(fd)
+        if [] == rd == wt == ex:
             time.sleep(timeout)
             return
-
         try:
-            r, w, e = select.select(r, w, e, timeout)
+            rd, wt, ex = select.select(rd, wt, ex, timeout)
         except KeyboardInterrupt:
             return
         except socket.error as err:
@@ -233,19 +233,19 @@ def select_poller(timeout=0.0, map=None):
             if err.args[0] in (WSAENOTSOCK, ):
                 return
 
-        for fd in helper_random.randomsample(r, len(r)):
+        for fd in helper_random.randomsample(rd, len(rd)):
             obj = map.get(fd)
             if obj is None:
                 continue
             read(obj)
 
-        for fd in helper_random.randomsample(w, len(w)):
+        for fd in helper_random.randomsample(wt, len(wt)):
             obj = map.get(fd)
             if obj is None:
                 continue
             write(obj)
 
-        for fd in e:
+        for fd in ex:
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -441,7 +441,7 @@ def kqueue_poller(timeout=0.0, map=None):
         current_thread().stop.wait(timeout)
 
 
-def loop(timeout=30.0, use_poll=False, map=None, count=None, poller=None):
+def loop(timeout=30.0, _=False, map=None, count=None, poller=None):
     """Poll in a loop, until count or timeout is reached"""
 
     if map is None:
@@ -452,18 +452,18 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None, poller=None):
     # argument which should no longer be used in favor of
     # "poller"
 
-    if poller is None:
-        if use_poll:
-            poller = poll_poller
-        elif hasattr(select, 'epoll'):
-            poller = epoll_poller
-        elif hasattr(select, 'kqueue'):
-            poller = kqueue_poller
-        elif hasattr(select, 'poll'):
-            poller = poll_poller
-        elif hasattr(select, 'select'):
-            poller = select_poller
-
+    # if poller is None:
+    #     if use_poll:
+    #         poller = poll_poller
+    #     elif hasattr(select, 'epoll'):
+    #         poller = epoll_poller
+    #     elif hasattr(select, 'kqueue'):
+    #         poller = kqueue_poller
+    #     elif hasattr(select, 'poll'):
+    #         poller = poll_poller
+    #     elif hasattr(select, 'select'):
+    #         poller = select_poller
+    poller = select_poller
     if timeout == 0:
         deadline = 0
     else:
@@ -729,9 +729,9 @@ class dispatcher(object):
         try:
             retattr = getattr(self.socket, attr)
         except AttributeError:
-            raise AttributeError(
-                "%s instance has no attribute '%s'"
-                % (self.__class__.__name__, attr))
+            raise AttributeError("{} instance has no attribute {}"
+                                 .format(self.__class__.__name__, attr))
+
         else:
             msg = "%(me)s.%(attr)s is deprecated; use %(me)s.socket.%(attr)s"\
                   " instead" % {'me': self.__class__.__name__, 'attr': attr}
@@ -749,7 +749,7 @@ class dispatcher(object):
     def log_info(self, message, log_type='info'):
         """Conditionally print a message"""
         if log_type not in self.ignore_log_types:
-            print '%s: %s' % (log_type, message)
+            print('{}: {}'.format(log_type, message))
 
     def handle_read_event(self):
         """Handle a read event"""

@@ -5,8 +5,9 @@ import sqlite3
 import time
 from threading import RLock
 
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
-from storage import InventoryItem, InventoryStorage
+
+from helper_sql import sqlQuery, SqlBulkExecute, sqlExecute
+from storage.storage import InventoryStorage, InventoryItem
 
 
 class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
@@ -38,7 +39,7 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
                 return False
             self._objects[hash_] = rows[0][0]
             return True
-
+    
     def __getitem__(self, hash_):
         with self.lock:
             if hash_ in self._inventory:
@@ -48,7 +49,7 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
                 ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
             if not rows:
                 raise KeyError(hash_)
-            return InventoryItem(*rows[0])
+            return InventoryItem(*rows[0])  
 
     def __setitem__(self, hash_, value):
         with self.lock:
@@ -87,9 +88,10 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
             t = int(time.time())
             hashes = [x for x, value in self._inventory.items()
                       if value.stream == stream and value.expires > t]
-            hashes += (str(payload) for payload, in sqlQuery(
+            hashes += (payload for payload, in sqlQuery(
                 'SELECT hash FROM inventory WHERE streamnumber=?'
                 ' AND expirestime>?', stream, t))
+            # print('sqlllllllllllllllllllllllllllllllllll',hashes)
             return hashes
 
     def flush(self):

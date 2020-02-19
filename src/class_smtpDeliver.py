@@ -2,7 +2,6 @@
 SMTP client thread for delivering emails
 """
 # pylint: disable=unused-variable
-
 import smtplib
 import urlparse
 from email.header import Header
@@ -51,10 +50,12 @@ class smtpDeliver(StoppableThread):
                 ackData, message = data
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
-                dest = BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '')
+                dest = BMConfigParser().safeGet(
+                    "bitmessagesettings", "smtpdeliver", '')
                 if dest == '':
                     continue
                 try:
+                    # pylint: disable=deprecated-lambda
                     u = urlparse.urlparse(dest)
                     to = urlparse.parse_qs(u.query)['to']
                     client = smtplib.SMTP(u.hostname, u.port)
@@ -67,7 +68,9 @@ class smtpDeliver(StoppableThread):
                             lambda x: x == toAddress, BMConfigParser().addresses())
                     )
                     if toLabel:
-                        msg['To'] = "\"%s\" <%s>" % (Header(toLabel[0], 'utf-8'), toAddress + '@' + SMTPDOMAIN)
+                        msg['To'] = "\"%s\" <%s>" % (
+                            Header(toLabel[0], 'utf-8'),
+                            toAddress + '@' + SMTPDOMAIN)
                     else:
                         msg['To'] = toAddress + '@' + SMTPDOMAIN
                     client.ehlo()
@@ -81,7 +84,8 @@ class smtpDeliver(StoppableThread):
                 except:
                     self.logger.error('smtp delivery error', exc_info=True)
             elif command == 'displayNewSentMessage':
-                toAddress, fromLabel, fromAddress, subject, message, ackdata = data
+                toAddress, fromLabel, fromAddress, subject, message, ackdata = \
+                    data
             elif command == 'updateNetworkStatusTab':
                 pass
             elif command == 'updateNumberOfMessagesProcessed':

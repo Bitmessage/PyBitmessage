@@ -1,7 +1,6 @@
 import logging
 from importlib import import_module
 from os import listdir, path
-from string import lower
 try:
     from kivy.utils import platform
 except:
@@ -16,7 +15,7 @@ logger = logging.getLogger('default')
 class MsgBase(object):  # pylint: disable=too-few-public-methods
     """Base class for message types"""
     def __init__(self):
-        self.data = {"": lower(type(self).__name__)}
+        self.data = {"": (type(self).__name__).lower()}
 
 
 def constructObject(data):

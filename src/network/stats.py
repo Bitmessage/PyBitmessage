@@ -3,9 +3,9 @@ Network statistics
 """
 import time
 
-import asyncore_pollchoose as asyncore
+from network import asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
-from objectracker import missingObjects
+from network.objectracker import missingObjects
 
 
 lastReceivedTimestamp = time.time()
@@ -68,11 +68,4 @@ def pendingDownload():
 
 def pendingUpload():
     """Getting pending uploads"""
-    # tmp = {}
-    # for connection in BMConnectionPool().inboundConnections.values() + \
-    #         BMConnectionPool().outboundConnections.values():
-    #     for k in connection.objectsNewToThem.keys():
-    #         tmp[k] = True
-    # This probably isn't the correct logic so it's disabled
-    # return len(tmp)
     return 0

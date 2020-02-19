@@ -19,17 +19,18 @@ def makeCryptor(privkey):
     """Return a private `.pyelliptic.ECC` instance"""
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
-    privkey_bin = '\x02\xca\x00\x20' + private_key
-    pubkey_bin = '\x02\xca\x00\x20' + public_key[1:-32] + '\x00\x20' + public_key[-32:]
-    cryptor = pyelliptic.ECC(
-        curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
+    privkey_bin = '\x02\xca\x00\x20'.encode('raw_unicode_escape') + private_key
+    pubkey_bin = '\x02\xca\x00\x20'.encode(
+        'raw_unicode_escape') + public_key[1:-32] + '\x00\x20'.encode(
+            'utf-8') + public_key[-32:]
+    cryptor = pyelliptic.ECC(curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
     return cryptor
 
 
 def hexToPubkey(pubkey):
     """Convert a pubkey from hex to binary"""
     pubkey_raw = a.changebase(pubkey[2:], 16, 256, minlen=64)
-    pubkey_bin = '\x02\xca\x00 ' + pubkey_raw[:32] + '\x00 ' + pubkey_raw[32:]
+    pubkey_bin = '\x02\xca\x00 '.encode('raw_unicode_escape') + pubkey_raw[:32] + '\x00 '.encode() + pubkey_raw[32:]
     return pubkey_bin
 
 
@@ -53,6 +54,7 @@ def encrypt(msg, hexPubkey):
 
 
 def decrypt(msg, hexPrivkey):
+    print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS#################################################")
     """Decrypts message with hex private key"""
     return makeCryptor(hexPrivkey).decrypt(msg)
 

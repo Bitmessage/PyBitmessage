@@ -1,0 +1,23 @@
+<MyAddress>:
+    name: 'myaddress'
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(5)
+        SearchBar:
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                text: 'My Addresses'
+                font_style: 'Subtitle2'
+        FloatLayout:
+            MDScrollViewRefreshLayout:
+                id: refresh_layout
+                refresh_callback: root.refresh_callback
+                root_layout: root
+                MDList:
+                    id: ml
+    Loader:

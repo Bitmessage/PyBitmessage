@@ -5,7 +5,7 @@ import network.asyncore_pollchoose as asyncore
 import state
 from network.connectionpool import BMConnectionPool
 from queues import excQueue
-from threads import StoppableThread
+from network.threads import StoppableThread
 
 
 class BMNetworkThread(StoppableThread):
@@ -22,17 +22,17 @@ class BMNetworkThread(StoppableThread):
 
     def stopThread(self):
         super(BMNetworkThread, self).stopThread()
-        for i in BMConnectionPool().listeningSockets.values():
+        for i in [listeningSockets for listeningSockets in BMConnectionPool().listeningSockets.values()]:
             try:
                 i.close()
             except:
                 pass
-        for i in BMConnectionPool().outboundConnections.values():
+        for i in [outboundConnections for outboundConnections in BMConnectionPool().outboundConnections.values()]:
             try:
                 i.close()
             except:
                 pass
-        for i in BMConnectionPool().inboundConnections.values():
+        for i in [inboundConnections for inboundConnections in BMConnectionPool().inboundConnections.values()]:
             try:
                 i.close()
             except:

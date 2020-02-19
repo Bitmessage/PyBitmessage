@@ -6,8 +6,10 @@ SOCKS5 proxy module
 import socket
 import struct
 
-from node import Peer
-from proxy import GeneralProxyError, Proxy, ProxyError
+
+from network.proxy import GeneralProxyError, Proxy, ProxyError
+
+from .node import Peer
 
 
 class Socks5AuthError(ProxyError):
@@ -217,4 +219,4 @@ class Socks5Resolver(Socks5):
         To use this within PyBitmessage, a callback needs to be
         implemented which hasn't been done yet.
         """
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        print("Resolved {} as {}".format(self.host, self.proxy_sock_name()))

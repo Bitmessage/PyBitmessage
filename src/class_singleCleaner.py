@@ -32,7 +32,8 @@ import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
-from network import BMConnectionPool, StoppableThread
+from network.connectionpool import BMConnectionPool
+from network.threads import StoppableThread
 
 
 class singleCleaner(StoppableThread):
@@ -136,6 +137,7 @@ class singleCleaner(StoppableThread):
                         os._exit(1)
 
             # inv/object tracking
+
             for connection in BMConnectionPool().connections():
                 connection.clean()
 
@@ -199,6 +201,10 @@ def deleteTrashMsgPermonantly():
     """This method is used to delete old messages"""
     ndays_before_time = datetime.now() - timedelta(days=30)
     old_messages = time.mktime(ndays_before_time.timetuple())
-    sqlExecute("delete from sent where folder = 'trash' and lastactiontime <= ?;", int(old_messages))
-    sqlExecute("delete from inbox where folder = 'trash' and received <= ?;", int(old_messages))
+    sqlExecute(
+        "delete from sent where folder = 'trash' and lastactiontime <= ?;",
+        int(old_messages))
+    sqlExecute(
+        "delete from inbox where folder = 'trash' and received <= ?;",
+        int(old_messages))
     return

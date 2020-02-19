@@ -1,0 +1,314 @@
+<LoadingPopup>:
+    separator_color: 1, 1, 1, 1
+    background: "White.png"
+    Button:
+        id: btn
+        disabled: True
+        background_disabled_normal: "White.png"
+        Image:
+            source: './images/loader.zip'
+            anim_delay: 0
+            #mipmap: True
+            size: root.size
+
+
+<GrashofPopup>:
+    id: popup
+    size_hint : (None,None)
+    height: 2*(label.height + address.height) + 10
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    title: 'add contact\'s'
+    background: './images/popup.jpeg'
+    title_size: sp(20)
+    title_color: 0.4, 0.3765, 0.3451, 1
+    auto_dismiss: False
+    separator_color: 0.3529, 0.3922, 0.102, 0.7
+    BoxLayout:
+        size_hint_y: 0.5
+        orientation: 'vertical'
+        spacing:dp(20)
+        id: popup_box
+        BoxLayout:
+            orientation: 'vertical'
+            MDTextField:
+                id: label
+                multiline: False
+                hint_text: "Label"
+                required: True
+                helper_text_mode: "on_error"
+                on_text: root.checkLabel_valid(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
+            MDTextField:
+                id: address
+                hint_text: "Address"
+                required: True
+                helper_text_mode: "on_error"
+                on_text: root.checkAddress_valid(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
+        BoxLayout:
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                id: save_addr
+                size_hint: 1.5, None
+                height: dp(40)
+                on_release:                 
+                    root.savecontact()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Save'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                on_press: root.close_pop()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 2, None
+                height: dp(40)
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Scan QR code'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+<AddbookDetailPopup>:
+    id: addbook_popup
+    size_hint : (None,None)
+    height: 4*(add_label.height)
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    background: './images/popup.jpeg'
+    separator_height: 0 
+    auto_dismiss: False
+    BoxLayout:
+        size_hint_y: None
+        spacing:dp(70)
+        id: addbook_popup_box
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(20)
+            MDLabel:
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Label"
+                font_size: '17sp'
+                halign: 'left'
+            MDTextField:
+                id: add_label
+                font_style: 'Body1'
+                font_size: '15sp'
+                halign: 'left'
+                text: root.address_label
+                theme_text_color: 'Primary'
+                required: True
+                helper_text_mode: "on_error"
+                on_text: root.checkLabel_valid(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
+            MDLabel:
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Address"
+                font_size: '17sp'
+                halign: 'left'
+            MDLabel:
+                id: address
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: root.address
+                font_size: '15sp'
+                halign: 'left'
+        BoxLayout:
+            id: addbook_btn
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 2, None
+                height: dp(40)
+                on_press: root.send_message_to()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Send message to'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                font_size: '10sp'
+                on_press: root.update_addbook_label(root.address)
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Save'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                on_press: root.close_pop()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+
+<MyaddDetailPopup>:
+    id: myadd_popup
+    size_hint : (None,None)
+    height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    background: './images/popup.jpeg'
+    auto_dismiss: False
+    separator_height: 0 
+    BoxLayout:
+        id: myadd_popup_box
+        size_hint_y: None
+        spacing:dp(70)
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(25)
+            MDLabel:
+                id: myaddr_label
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Label"
+                font_size: '17sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: root.address_label
+                font_size: '15sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Address"
+                font_size: '17sp'
+                halign: 'left'
+            MDLabel:
+                font_style: 'Body1'
+                theme_text_color: 'Primary'
+                text: root.address
+                font_size: '15sp'
+                halign: 'left'
+        BoxLayout:
+            id: my_add_btn
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 2, None
+                height: dp(40)
+                on_press: root.send_message_from()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Send message from'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                on_press: app.root.ids.scr_mngr.current = 'showqrcode'
+                on_press: app.root.ids.sc15.qrdisplay()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Show QR code'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.dismiss()
+                on_press: root.close_pop()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+<AppClosingPopup>:
+    id: closing_popup
+    size_hint : (None,None)
+    height: 1.3*(popup_label.height+ my_add_btn.children[0].height)
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    background: './images/popup.jpeg'
+    auto_dismiss: False
+    separator_height: 0
+    BoxLayout:
+        id: myadd_popup_box
+        size_hint_y: None
+        spacing:dp(70)
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(25)
+            MDLabel:
+                id: popup_label
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: "Bitmessage isn't connected to the network.\n If you quit now, it may cause delivery delays.\n Wait until connected and the synchronisation finishes?"
+                font_size: '17sp'
+                halign: 'center'
+        BoxLayout:
+            id: my_add_btn
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.closingAction(self.children[0].text)
+                on_press: app.stop()
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Yes'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.closingAction(self.children[0].text)
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'No'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                #on_press: root.dismiss()
+                on_press: root.closingAction(self.children[0].text)
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'Cancel'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'

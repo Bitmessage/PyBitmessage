@@ -25,4 +25,4 @@ class UIkivySignaler(Thread):
                 elif command == 'updateSentItemStatusByAckdata':
                     state.kivyapp.status_dispatching(data)
             except Exception as e:
-                print e
+                print(e)
