@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 
+@unittest.skipUnless(os.getenv('TRAVIS_DIST') == 'xenial', 'appdata confusion')
 class TestLogger(unittest.TestCase):
     """A test case for bmconfigparser"""
 

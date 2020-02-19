@@ -39,6 +39,7 @@ class TestConfig(unittest.TestCase):
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
 
 
+@unittest.skipUnless(os.getenv('TRAVIS_DIST') == 'xenial', 'appdata confusion')
 class TestProcessConfig(TestProcessProto):
     """A test case for keys.dat"""
 
