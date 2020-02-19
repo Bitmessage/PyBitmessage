@@ -299,7 +299,13 @@ def init():
             bitmsglib = 'bitmsghash64.dll'
         try:
             # MSVS
-            bso = ctypes.WinDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
+            libfile = os.path.join(paths.codePath(), "bitmsghash", bitmsglib)
+            if os.path.isfile(libfile):
+                bso = ctypes.WinDLL(libfile)
+            else:
+                bitmsglib = 'bitmsghash.pyd'
+                libfile = os.path.join(paths.codePath(), "bitmsghash", bitmsglib)
+                bso = ctypes.PyDLL(libfile)
             logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
             bmpow = bso.BitmessagePOW
             bmpow.restype = ctypes.c_ulonglong

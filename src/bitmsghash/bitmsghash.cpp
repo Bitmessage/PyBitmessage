@@ -163,3 +163,8 @@ extern "C" EXPORT unsigned long long BitmessagePOW(unsigned char * starthash, un
 	free(threaddata);
 	return successval;
 }
+
+// workaround for building setuptools ext on Windows
+// https://stackoverflow.com/questions/34689210
+void initbitmsghash() {} //Python 2.7
+void PyInit_bitmsghash() {} //Python 3.5

@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 
 from setuptools import setup, Extension
 from setuptools.command.install import install
@@ -55,6 +56,13 @@ if __name__ == "__main__":
         sources=['src/bitmsghash/bitmsghash.cpp'],
         libraries=['pthread', 'crypto'],
     )
+
+    if sys.platform[:3] == 'win':
+        bitmsghash.libraries = ['libeay32', 'ws2_32']
+        openssl_dir = os.getenv('OPENSSL_DIR')
+        if openssl_dir:
+            bitmsghash.library_dirs = [os.path.join(openssl_dir, 'lib')]
+            bitmsghash.include_dirs = [os.path.join(openssl_dir, 'include')]
 
     installRequires = []
     packages = [
@@ -115,11 +123,11 @@ if __name__ == "__main__":
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
         data_files=[
-            ('share/applications/',
+            ('share/applications',
                 ['desktop/pybitmessage.desktop']),
-            ('share/icons/hicolor/scalable/apps/',
+            ('share/icons/hicolor/scalable/apps',
                 ['desktop/icons/scalable/pybitmessage.svg']),
-            ('share/icons/hicolor/24x24/apps/',
+            ('share/icons/hicolor/24x24/apps',
                 ['desktop/icons/24x24/pybitmessage.png'])
         ],
         ext_modules=[bitmsghash],
