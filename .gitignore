@@ -17,5 +17,5 @@ dist
 *.egg-info
 docs/_*/*
 docs/autodoc/
-build/sphinx/
+build
 pyan/
