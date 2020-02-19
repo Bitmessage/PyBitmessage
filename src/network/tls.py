@@ -7,11 +7,10 @@ import socket
 import ssl
 import sys
 
-from network.advanceddispatcher import AdvancedDispatcher
 import network.asyncore_pollchoose as asyncore
-
-from queues import receiveDataQueue
 import paths
+from network.advanceddispatcher import AdvancedDispatcher
+from queues import receiveDataQueue
 
 logger = logging.getLogger('default')
 

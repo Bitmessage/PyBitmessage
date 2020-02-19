@@ -1,0 +1,3 @@
+python: can't open file 'main.py.py': [Errno 2] No such file or directory
+[[1;33mWARNING[0m] [Config      ] Older configuration version detected (21 instead of 20)
+[[1;33mWARNING[0m] [Config      ] Upgrading configuration in progress.

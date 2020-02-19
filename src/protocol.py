@@ -11,7 +11,7 @@ import socket
 import sys
 import time
 from binascii import hexlify
-from struct import pack, unpack, Struct
+from struct import Struct, pack, unpack
 
 import defaults
 import highlevelcrypto

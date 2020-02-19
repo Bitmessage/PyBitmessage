@@ -2,13 +2,11 @@
 Operations with addresses
 """
 # pylint: disable=redefined-outer-name,inconsistent-return-statements
-
 import hashlib
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
 
 from debug import logger
-
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -180,7 +178,8 @@ def decodeAddress(address):
     returns (status, address version number, stream number,
     data (almost certainly a ripe hash))
     """
-    # pylint: disable=too-many-return-statements,too-many-statements,too-many-return-statements,too-many-branches
+    # pylint: disable=too-many-return-statements,too-many-statements
+    # pylint: disable=too-many-branches
 
     address = str(address).strip()
 

@@ -19,9 +19,9 @@ from bmconfigparser import BMConfigParser
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
-    BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError,
-    BMObjectExpiredError, BMObjectUnwantedStreamError,
-    BMObjectInvalidError, BMObjectAlreadyHaveError
+    BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError,
+    BMObjectInsufficientPOWError, BMObjectInvalidDataError,
+    BMObjectInvalidError, BMObjectUnwantedStreamError
 )
 from network.constants import (
     ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
@@ -30,8 +30,8 @@ from network.constants import (
 from network.dandelion import Dandelion
 from network.proxy import ProxyError
 from node import Node, Peer
-from objectracker import missingObjects, ObjectTracker
-from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
+from objectracker import ObjectTracker, missingObjects
+from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
 
 logger = logging.getLogger('default')
@@ -466,8 +466,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                             }
                     # since we don't track peers outside of knownnodes,
                     # only spread if in knownnodes to prevent flood
-                    addrQueue.put((stream, peer, seenTime,
-                                   self.destination))
+                    # DISABLED TO WORKAROUND FLOOD/LEAK
+                    # addrQueue.put((stream, peer, seenTime,
+                    #               self.destination))
         return True
 
     def bm_command_portcheck(self):

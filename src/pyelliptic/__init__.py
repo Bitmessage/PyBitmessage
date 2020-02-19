@@ -9,11 +9,11 @@ For modern cryptography with ECC, AES, HMAC, Blowfish, ...
 This is an abandoned package maintained inside of the PyBitmessage.
 """
 
-from .openssl import OpenSSL
+from .cipher import Cipher
 from .ecc import ECC
 from .eccblind import ECCBlind
-from .cipher import Cipher
 from .hash import hmac_sha256, hmac_sha512, pbkdf2
+from .openssl import OpenSSL
 
 __version__ = '1.3'
 

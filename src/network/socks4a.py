@@ -5,7 +5,7 @@ SOCKS4a proxy module
 import socket
 import struct
 
-from proxy import Proxy, ProxyError, GeneralProxyError
+from proxy import GeneralProxyError, Proxy, ProxyError
 
 
 class Socks4aError(ProxyError):

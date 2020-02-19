@@ -6,7 +6,7 @@ A menu plugin showing QR-Code for bitmessage address in modal dialog.
 import urllib
 
 import qrcode
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtCore, QtGui
 
 from pybitmessage.tr import _translate
 

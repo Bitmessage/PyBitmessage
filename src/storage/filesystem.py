@@ -1,14 +1,14 @@
 """
 Module for using filesystem (directory with files) for inventory storage
 """
+import string
+import time
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
-import string
 from threading import RLock
-import time
 
 from paths import lookupAppdataFolder
-from storage import InventoryStorage, InventoryItem
+from storage import InventoryItem, InventoryStorage
 
 
 class FilesystemInventory(InventoryStorage):

@@ -1,6 +1,6 @@
 """Building osx."""
-from glob import glob
 import os
+from glob import glob
 from PyQt4 import QtCore
 from setuptools import setup
 
@@ -13,8 +13,14 @@ DATA_FILES = [
     ('bitmsghash', ['bitmsghash/bitmsghash.cl', 'bitmsghash/bitmsghash.so']),
     ('translations', glob('translations/*.qm')),
     ('ui', glob('bitmessageqt/*.ui')),
-    ('translations', glob(str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)) + '/qt_??.qm')),
-    ('translations', glob(str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)) + '/qt_??_??.qm')),
+    (
+        'translations',
+        glob(os.path.join(str(QtCore.QLibraryInfo.location(
+            QtCore.QLibraryInfo.TranslationsPath)), 'qt_??.qm'))),
+    (
+        'translations',
+        glob(os.path.join(str(QtCore.QLibraryInfo.location(
+            QtCore.QLibraryInfo.TranslationsPath)), 'qt_??_??.qm'))),
 ]
 
 setup(

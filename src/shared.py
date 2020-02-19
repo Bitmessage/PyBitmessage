@@ -10,13 +10,14 @@ from __future__ import division
 # Libraries.
 import hashlib
 import os
-import sys
 import stat
-import threading
 import subprocess
+import sys
+import threading
 from binascii import hexlify
 from pyelliptic import arithmetic
 from kivy.utils import platform
+
 # Project imports.
 import highlevelcrypto
 import state
@@ -24,6 +25,8 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery
+
+from pyelliptic import arithmetic
 
 
 verbose = 1
@@ -118,7 +121,7 @@ def decodeWalletImportFormat(WIFstring):
             ' 6 characters of the PRIVATE key: %s',
             str(WIFstring)[:6]
         )
-        os._exit(0)    # pylint: disable=protected-access
+        os._exit(0)  # pylint: disable=protected-access
         # return ""
     elif privkey[0] == '\x80':  # checksum passed
         return privkey[1:]
@@ -128,7 +131,7 @@ def decodeWalletImportFormat(WIFstring):
         ' the checksum passed but the key doesn\'t begin with hex 80.'
         ' Here is the PRIVATE key: %s', WIFstring
     )
-    os._exit(0)    # pylint: disable=protected-access
+    os._exit(0)  # pylint: disable=protected-access
 
 
 def reloadMyAddressHashes():

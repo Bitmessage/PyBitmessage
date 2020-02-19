@@ -7,7 +7,6 @@ import time
 
 from bmconfigparser import BMConfigParser
 
-
 logger = logging.getLogger('default')
 
 

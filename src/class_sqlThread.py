@@ -2,15 +2,12 @@
 sqlThread is defined here
 """
 
-import threading
-from bmconfigparser import BMConfigParser
-
-import sqlite3
-import time
-import shutil  # used for moving the messages.dat file
-import sys
 import os
-from debug import logger
+import shutil  # used for moving the messages.dat file
+import sqlite3
+import sys
+import threading
+import time
 
 import helper_sql
 import helper_startup
@@ -18,6 +15,8 @@ import paths
 import queues
 import state
 import tr
+from bmconfigparser import BMConfigParser
+from debug import logger
 # pylint: disable=attribute-defined-outside-init,protected-access
 
 
@@ -27,7 +26,7 @@ class sqlThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
 
-    def run(self):    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    def run(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str

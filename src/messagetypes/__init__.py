@@ -1,6 +1,6 @@
 import logging
 from importlib import import_module
-from os import path, listdir
+from os import listdir, path
 from string import lower
 try:
     from kivy.utils import platform

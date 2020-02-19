@@ -9,7 +9,6 @@ The PyBitmessage startup script
 
 # Right now, PyBitmessage only support connecting to stream 1. It doesn't
 # yet contain logic to expand into further streams.
-
 import os
 import sys
 import ctypes
@@ -26,8 +25,8 @@ from struct import pack
 import defaults
 import depends
 import shared
-import state
 import shutdown
+import state
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
 from helper_startup import (
@@ -38,14 +37,15 @@ from inventory import Inventory
 from knownnodes import readKnownNodes
 # Network objects and threads
 from network import (
-    BMConnectionPool, Dandelion,
-    AddrThread, AnnounceThread, BMNetworkThread, InvThread, ReceiveQueueThread,
-    DownloadThread, UploadThread)
+    BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
+    InvThread, ReceiveQueueThread, DownloadThread, UploadThread
+)
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
-    set_thread_name,
-    addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
+    set_thread_name, addressGenerator, objectProcessor, singleCleaner,
+    singleWorker, sqlThread
+)
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(app_dir)
@@ -88,7 +88,8 @@ def _fixSocket():
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
 
         def inet_ntop(family, host):
-            """Converting an IP address in packed binary format to string format"""
+            """Converting an IP address in packed
+            binary format to string format"""
             if family == socket.AF_INET:
                 if len(host) != 4:
                     raise ValueError("invalid IPv4 host")
@@ -110,7 +111,8 @@ def _fixSocket():
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
 
         def inet_pton(family, host):
-            """Converting an IP address in string format to a packed binary format"""
+            """Converting an IP address in string format
+            to a packed binary format"""
             buf = "\0" * 28
             lengthBuf = pack("I", len(buf))
             if stringToAddress(str(host),
@@ -151,8 +153,8 @@ def signal_handler(signum, frame):
     if thread.name not in ("PyBitmessage", "MainThread"):
         return
     logger.error("Got signal %i", signum)
-    # there are possible non-UI variants to run bitmessage which should shutdown
-    # especially test-mode
+    # there are possible non-UI variants to run bitmessage
+    # which should shutdown especially test-mode
     if shared.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
@@ -381,10 +383,14 @@ class Main(object):
         if daemon:
             while state.shutdown == 0:
                 time.sleep(1)
-                if (state.testmode and time.time() - state.last_api_response >= 30):
+                if (
+                    state.testmode and time.time() -
+                    state.last_api_response >= 30
+                ):
                     self.stop()
         elif not state.enableGUI:
-            from tests import core as test_core  # pylint: disable=relative-import
+            # pylint: disable=relative-import
+            from tests import core as test_core
             test_core_result = test_core.run()
             state.enableGUI = True
             self.stop()
@@ -408,7 +414,7 @@ class Main(object):
                 while True:
                     time.sleep(1)
 
-                os._exit(0)    # pylint: disable=protected-access
+                os._exit(0)  # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
@@ -429,8 +435,7 @@ class Main(object):
                 # wait until child ready
                 while True:
                     time.sleep(1)
-
-                os._exit(0)    # pylint: disable=protected-access
+                os._exit(0)  # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass

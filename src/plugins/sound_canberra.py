@@ -3,9 +3,8 @@
 Sound theme plugin using pycanberra
 """
 
-from pybitmessage.bitmessageqt import sound
-
 import pycanberra
+from pybitmessage.bitmessageqt import sound
 
 _canberra = pycanberra.Canberra()
 

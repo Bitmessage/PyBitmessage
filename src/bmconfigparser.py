@@ -3,8 +3,8 @@ BMConfigParser class definition and default configuration settings
 """
 
 import ConfigParser
-import shutil
 import os
+import shutil
 from datetime import datetime
 
 import state
@@ -47,6 +47,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
     with additional methods specific to bitmessage config.
     """
+    # pylint: disable=too-many-ancestors
 
     _temp = {}
 
@@ -58,7 +59,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):    # pylint: disable=arguments-differ
+    def get(self, section, option, raw=False, variables=None):
+        # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return ConfigParser.ConfigParser.get(
@@ -94,7 +96,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             return False
 
     def safeGetInt(self, section, field, default=0):
-        """Return value as integer, default on exceptions, 0 if default missing"""
+        """Return value as integer, default on exceptions,
+        0 if default missing"""
         try:
             return self.getint(section, field)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
@@ -109,8 +112,10 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, variables=None):    # pylint: disable=arguments-differ
-        """Return section variables as parent, but override the "raw" argument to always True"""
+    def items(self, section, raw=False, variables=None):
+        """Return section variables as parent,
+        but override the "raw" argument to always True"""
+        # pylint: disable=arguments-differ
         return ConfigParser.ConfigParser.items(self, section, True, variables)
 
     @staticmethod
