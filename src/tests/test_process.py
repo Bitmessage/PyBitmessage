@@ -32,12 +32,21 @@ class TestProcessProto(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup environment and start pybitmessage"""
+        cls.flag = False
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
         put_signal_file(cls.home, 'unittest.lock')
         subprocess.call(cls._process_cmd)  # nosec
         time.sleep(5)
-        cls.pid = int(cls._get_readline('singleton.lock'))
+        try:
+            cls.pid = int(cls._get_readline('singleton.lock'))
+        except TypeError:
+            cls.flag = True
+            return
         cls.process = psutil.Process(cls.pid)
+
+    def setUp(self):
+        if self.flag:
+            self.fail("%s is not started ):" % self._process_cmd)
 
     @classmethod
     def _get_readline(cls, pfile):
@@ -71,7 +80,7 @@ class TestProcessProto(unittest.TestCase):
             if not cls._stop_process():
                 print(open(os.path.join(cls.home, 'debug.log'), 'rb').read())
                 cls.process.kill()
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, AttributeError):
             pass
         finally:
             cls._cleanup_files()
