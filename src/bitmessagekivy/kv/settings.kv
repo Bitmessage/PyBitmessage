@@ -1,68 +1,507 @@
 <Setting>:
     name: 'set'
-    ScrollView:
-        do_scroll_x: False
-        MDList:
-            id: ml
-            size_hint_y: None
-            height: dp(500)
-            OneLineListItem:
-                text: "SERVER SETTINGS"
-            BoxLayout:
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: .6, .55
-                        height: dp(40)
-                        MDLabel:
-                            font_style: 'H6'
-                            text: 'Server'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
-            OneLineListItem:
-                text: "DATA SETTINGS"
-            BoxLayout:
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: .6, .55
-                        height: dp(40)
-                        MDLabel:
-                            font_style: 'H6'
-                            text: 'Import or export data'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
-            OneLineListItem:
-                text: "OTHER SETTINGS"
-            BoxLayout:
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: .6, .55
-                        height: dp(40)
-                        MDLabel:
-                            font_style: 'H6'
-                            text: 'Restart background service'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
-            BoxLayout:
-                AnchorLayout:
-                    MDLabel:
-                        font_style: 'Body1'
-                        theme_text_color: 'Primary'
-                        text: "bitmessage is 11 seconds behind the network"
-                        halign: 'center'
-                        color: [0.941, 0, 0,1]
+    MDTabs:
+        id: tab_panel
+        tab_display_mode:'text'
 
-            BoxLayout:
-                MDCheckbox:
-                    id:            chkbox
-                    size_hint:    None, None
-                    size:        dp(48), dp(64)
-                    active: True
-                MDLabel:
-                    font_style: 'Body1'
-                    theme_text_color: 'Primary'
-                    text: "show settings (for advanced users only)"
-                    halign: 'left'
-                    color: app.theme_cls.primary_dark
+        Tab:
+            text: "User Interface"
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(400) + self.minimum_height
+                    padding: 10
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                            disabled: True
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Start-on-login not yet supported on your OS"
+                            halign: 'left'
+                            pos_hint: {'center_x': 0, 'center_y': 0.6}
+                            disabled: True
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [20, 0, 0, 0]
+                        spacing: dp(10)
+                        height: dp(100) + self.minimum_height
+                        # pos_hint: {'center_x': 0, 'center_y': 0.6}
+                        BoxLayout:
+                            id: box_height
+                            orientation: 'vertical'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Tray"
+                                halign: 'left'
+                                bold: True
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Start Bitmessage in the tray(don't show main window)"
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Minimize to tray"
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Close to tray"
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': .5}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Hide connection notifications"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Show notification when message received"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Run in Portable Mode"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        # id: box_height
+                        orientation: 'horizontal'
+                        padding: 10
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: 'In portable Mode, messages and config files are stored in the same directory as the program rather then the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.'
+                            # text: 'huiiiii'
+                            halign: 'left'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Willingly include unencrypted destination address when sending to a mobile device"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Use identicons"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Reply below Quote"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        padding: 10
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Interface Language"
+                            halign: 'left'
+                            bold: True
+                        MDDropDownItem:
+                            id: dropdown_item
+                            # on_select
+                            text: 'italiano'
+                            pos_hint: {'center_x': 0.1, 'center_y': 0}
+                            items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
+                    BoxLayout:
+                        spacing:5
+                        orientation: 'horizontal'
+                        pos_hint: {'x':.76}
+                        MDRaisedButton:
+                            text: 'Cancel'
+                        MDRaisedButton:
+                            text: 'Ok'
+        Tab:
+            text: 'Network Settings'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(550) + self.minimum_height
+                    padding: 10
+                    BoxLayout:
+                        id: box_height
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Listening port"
+                            halign: 'left'
+                            bold: True
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [10, 0, 0, 0]
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Listen for connections on port:"
+                                halign: 'left'
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(100), dp(30)
+                                text: '8444'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            padding_left: 10
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "UPnP"
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Proxy server / Tor"
+                            halign: 'left'
+                            bold: True
+
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [10, 0, 0, 0]
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Type:"
+                                halign: 'left'
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDDropDownItem:
+                                id: dropdown_item
+                                # on_select
+                                dropdown_bg: [1, 1, 1, 1]
+                                text: 'none'
+                                # pos_hint: {'left': 1}
+                                items: [f"{i}" for i in ['System Setting','U.S. English']]
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Server hostname:"
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: 'localhost'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Port:"
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: '9050'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Username:"
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Pass:"
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Authentication"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Listen for incoming connections when using proxy"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Only connect to onion services(*.onion)"
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0.1}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Bandwidth limit"
+                            halign: 'left'
+                            bold: True
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Maximum download rate (kB/s):[0:unlimited]"
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/2), dp(30)
+                            hint_text: '0'
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Maximum upload rate (kB/s):[0:unlimited]"
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/2), dp(30)
+                            hint_text: '0'
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Maximum outbound connections:[0:none]"
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/2), dp(30)
+                            hint_text: '8'
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        spacing:5
+                        orientation: 'horizontal'
+                        pos_hint: {'x':.76}
+                        MDRaisedButton:
+                            text: 'Cancel'
+                        MDRaisedButton:
+                            text: 'Ok'
+        Tab:
+            text: 'Resends Expire'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(200) + self.minimum_height
+                    padding: 20
+                    spacing: 10
+                    BoxLayout:
+                        id: box_height
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: root.exp_text
+                            halign: 'left'
+                    BoxLayout:
+                        id: box_height
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Leave these input fields blank for the default behavior."
+                            halign: 'left'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [10, 0, 0, 0]
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Give up after"
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: '0'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "days and"
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: '0'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "months"
+                                halign: 'left'
+                    BoxLayout:
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        pos_hint: {'x':.75}
+                        MDRaisedButton:
+                            text: 'Cancel'
+                        MDRaisedButton:
+                            text: 'Ok'

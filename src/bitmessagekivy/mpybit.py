@@ -56,12 +56,15 @@ from kivymd.uix.list import (
 #     NavigationDrawerHeaderBase
 # )
 from kivymd.uix.selectioncontrol import MDCheckbox, MDSwitch
+from kivymd.uix.chip import MDChip
 
 import queues
 from semaphores import kivyuisignaler
 
 import state
 from addresses import decodeAddress
+from kivy.uix.modalview import ModalView
+from datetime import datetime
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
@@ -89,7 +92,6 @@ def showLimitedCnt(total_msg):
 
 def ShowTimeHistoy(act_time):
     """This method is used to return the message sent or receive time"""
-    from datetime import datetime
     action_time = datetime.fromtimestamp(int(act_time))
     crnt_date = datetime.now()
     duration = crnt_date - action_time
@@ -109,6 +111,18 @@ def AddTimeWidget(time):
         font_style='Caption',
         size= [65,70])
     return action_time
+
+
+def chipTag(text):
+    """This method is used for showing chip tag"""
+    obj = MDChip()
+    obj.size_hint= (None, None)
+    obj.label= text
+    obj.icon= ''
+    obj.pos_hint= {'center_x': .96, 'center_y': .2}
+    obj.height= dp(18)
+    obj.radius= 8
+    return obj
 
 
 class Inbox(Screen):
@@ -735,7 +749,7 @@ class DropDownWidget(BoxLayout):
                         #     state.draft_count)
                         state.detailPageType = ''
                         state.send_draft_mail = None
-                    self.parent.parent.screens[3].update_sent_messagelist()
+                    self.parent.parent.parent.ids.sc4.update_sent_messagelist()
                     Clock.schedule_once(self.callback_for_msgsend, 3)
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print("sqlExecute successfully #######################")
@@ -1068,11 +1082,13 @@ class Sent(Screen):
             self.ids.ml.clear_widgets()
             self.loadSent()
             total_sent = int(state.sent_count) + 1
+            state.sent_count = str(int(state.sent_count) +1)
             self.set_sentCount(total_sent)
         else:
             data = []
             self.sentDataQuery('fromaddress', '', '', 0, 1)
             total_sent = int(state.sent_count) + 1
+            state.sent_count = str(int(state.sent_count) +1)
             self.set_sentCount(total_sent)
             for mail in self.queryreturn:
                 data.append({
@@ -1119,7 +1135,7 @@ class Sent(Screen):
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.send_cnt
         if state.association:
             src_mng_obj.children[0].children[0].text = showLimitedCnt(int(total_sent))
-            state.kivyapp.get_sent_count()
+            # state.kivyapp.get_sent_count()
         else:
             src_mng_obj.children[0].children[0].text = '0'
 
@@ -1250,6 +1266,7 @@ class Trash(Screen):
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
             meny.add_widget(AddTimeWidget(item[7]))
+            meny.add_widget(chipTag('inbox 'if 'inbox' in item[4] else 'sent'))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -1354,8 +1371,10 @@ class Create(Screen):
 
 class Setting(Screen):
     """Setting the Screen components"""
-
-    pass
+    exp_text = "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will\
+                send the message again after an additional two days. This will be continued with exponential backoff\
+                forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you\
+                may change that behavior by having Bitmessage give up after a certain number of days or months."
 
 
 class NavigateApp(MDApp):
@@ -1374,6 +1393,7 @@ class NavigateApp(MDApp):
     title = "PyBitmessage"
     imgstatus = False
     count = 0
+    manager_open = False
 
     def build(self):
         """Method builds the widget"""
@@ -1407,7 +1427,10 @@ class NavigateApp(MDApp):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data"""
-        self.set_identicon(text)
+        if os.path.exists('./images/default_identicon/{}.png'.format(text)):
+            self.load_selected_Image(text)
+        else:
+            self.set_identicon(text)
         address_label = self.current_address_label(
             BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
@@ -1469,8 +1492,10 @@ class NavigateApp(MDApp):
                 img.texture.save('{1}/images/default_identicon/{0}.png'.format(
                     BMConfigParser().addresses()[0], android_path))
             else:
-                img.texture.save('./images/default_identicon/{}.png'.format(
-                    BMConfigParser().addresses()[0]))
+                if not os.path.exists('./images/default_identicon/{}.png'.format(
+                    BMConfigParser().addresses()[0])):
+                    img.texture.save('./images/default_identicon/{}.png'.format(
+                        BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
 
@@ -1850,6 +1875,48 @@ class NavigateApp(MDApp):
         AppClosingPopup().open()
         return True
 
+    def file_manager_open(self):
+        """This method open the file manager of local system"""
+        from kivymd.uix.filemanager import MDFileManager
+        from kivymd.uix.dialog import MDDialog
+
+        self.manager = ModalView(size_hint=(1, 1), auto_dismiss=False)
+        self.file_manager = MDFileManager(
+            exit_manager=self.exit_manager,
+            select_path=self.select_path,
+            previous=False,
+            ext=['.png', '.jpg']
+        )
+        self.manager.add_widget(self.file_manager)
+        self.file_manager.show(os.environ["HOME"])
+        self.manager_open = True
+        self.manager.open()
+
+    def select_path(self, path):
+        """This method is used to save the select image"""
+        from PIL import Image as PilImage
+        if not os.path.exists('./images/default_identicon/'):
+            os.makedirs('./images/default_identicon/')
+        newImg = PilImage.open(path).resize((300,300))
+        newImg.save('./images/default_identicon/{0}.png'.format(state.association))
+        self.load_selected_Image(state.association)
+        self.exit_manager()
+        toast('Image changed')
+
+    def exit_manager(self, *args):
+        """Called when the user reaches the root of the directory tree."""
+
+        self.manager.dismiss()
+        self.manager_open = False
+
+    def load_selected_Image(self, curerentAddr):
+        """This method load the selected image on screen"""
+        top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
+        spinner_img_obj = self.root.ids.content_drawer.ids.btn.children[1]
+        spinner_img_obj.source = top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
+        top_box_obj.reload()
+        spinner_img_obj.reload()
+
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
@@ -1978,6 +2045,12 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     pass
 
 
+class IconReftSampleWidget(IRightBodyTouch, MDIconButton):
+    """Right icon sample widget"""
+
+    pass
+
+
 class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     """Right icon sample widget"""
 
@@ -2031,14 +2104,15 @@ class MailDetail(Screen):
         self.to_addr = data[0][0]
         self.from_addr = data[0][1]
 
-        self.subject = subject.upper(
-        ) if subject.upper() else '(no subject)'
+        self.subject = subject.capitalize(
+        ) if subject.capitalize() else '(no subject)'
         self.message = body
         if len(data[0]) == 7:
             self.status = data[0][4]
         self.time_tag = ShowTimeHistoy(data[0][4]) if state.detailPageType == 'inbox' else ShowTimeHistoy(data[0][6])
-        self.avatarImg = './images/text_images/{0}.png'.format(
-            'avatar.png' if state.detailPageType == 'draft' else avatarImageFirstLetter(self.subject.strip()))
+        self.avatarImg= './images/avatar.png' if state.detailPageType == 'draft' else (
+            './images/text_images/{0}.png'.format(avatarImageFirstLetter(self.subject.strip())))
+        self.timeinseconds = data[0][4] if state.detailPageType == 'inbox' else data[0][6]
 
     def delete_mail(self):
         """Method for mail delete"""
@@ -2092,12 +2166,15 @@ class MailDetail(Screen):
 
     def callback_for_delete(self, dt=0):
         """Delete method from allmails"""
-        self.children[0].children[0].active = False
-        state.kivyapp.set_common_header()
-        self.parent.current = 'allmails' \
-            if state.is_allmail else state.detailPageType
-        state.detailPageType = ''
-        toast('Deleted')
+        try:
+            self.children[0].children[0].active = False
+            state.kivyapp.set_common_header()
+            self.parent.current = 'allmails' \
+                if state.is_allmail else state.detailPageType
+            state.detailPageType = ''
+            toast('Deleted')
+        except Exception as e:
+            print("Exception occures..........")
 
     def inbox_reply(self):
         """Reply inbox messages"""
@@ -2130,15 +2207,16 @@ class MailDetail(Screen):
         self.parent.current = 'create'
         navApp.set_navbar_for_composer()
 
+    def detailedPopup(self):
+        obj = SenderDetailPopup()
+        obj.open()
+        arg = (self.to_addr, self.from_addr, self.timeinseconds)
+        obj.assignDetail(*arg)
+
     @staticmethod
-    def copy_composer_text(instance, *args):
-        """Copy the data from mail detail page"""
-        if len(instance.parent.text.split(':')) > 1:
-            cpy_text = instance.parent.text.split(':')[1].strip()
-        else:
-            cpy_text = instance.parent.text
-        Clipboard.copy(cpy_text)
-        toast('Copied')
+    def callback_for_menu_items(text_item, *arg):
+        """Callback of alert box"""
+        toast(text_item)
 
 
 class MyaddDetailPopup(Popup):
@@ -2543,6 +2621,7 @@ class Allmails(Screen):
             meny.bind(on_press=partial(
                 self.mail_detail, item[5], item[4]))
             meny.add_widget(AddTimeWidget(item[7]))
+            meny.add_widget(chipTag(item[4]))
             carousel = Carousel(direction='right')
             carousel.height = meny.height
             carousel.size_hint_y = None
@@ -2752,3 +2831,63 @@ class AppClosingPopup(Popup):
         else:
             self.dismiss()
             toast(text)
+
+
+class SenderDetailPopup(Popup):
+    """SenderDetailPopup pop is used for showing my address detail"""
+
+    to_addr = StringProperty()
+    from_addr = StringProperty()
+    time_tag = StringProperty()
+
+    def __init__(self, **kwargs):
+        """this metthod initialized the send message detial popup"""
+        super(SenderDetailPopup, self).__init__(**kwargs)
+
+    def assignDetail(self, to_addr, from_addr, timeinseconds):
+        self.to_addr = to_addr
+        self.from_addr = from_addr
+        time_obj = datetime.fromtimestamp(int(timeinseconds))
+        self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
+
+    def copy_composer_text(self, text):
+        """Copy the data from mail detail page"""
+        Clipboard.copy(text)
+        toast('Copied')
+
+
+class OneLineListTitle(OneLineListItem):
+    """class for long press behaviour"""
+    __events__ = ('on_long_press', )
+    long_press_time = NumericProperty(1)
+
+    def on_state(self, instance, value):
+        if value == 'down':
+            lpt = self.long_press_time
+            self._clockev = Clock.schedule_once(self._do_long_press, lpt)
+        else:
+            self._clockev.cancel()
+
+    def _do_long_press(self, dt):
+        self.dispatch('on_long_press')
+
+    def on_long_press(self, *largs):
+        self.copymessageTitle(self.text)
+
+    def copymessageTitle(self, text):
+        """this method is for displaying dialog box"""
+        width = .8 if platform == 'android' else .55
+        msg_dialog = MDDialog(
+            text=text,
+            title='', size_hint=(width, .25),
+            text_button_cancel='Cancel',
+            text_button_ok='Copy',
+            events_callback=self.callback_for_copy_title)
+        msg_dialog.open()
+
+    @staticmethod
+    def callback_for_copy_title(text_item, *arg):
+        """Callback of alert box"""
+        if text_item == 'Copy':
+            Clipboard.copy(str(arg[0].text))
+        toast(text_item)
