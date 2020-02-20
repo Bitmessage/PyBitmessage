@@ -91,7 +91,6 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
             hashes += (payload for payload, in sqlQuery(
                 'SELECT hash FROM inventory WHERE streamnumber=?'
                 ' AND expirestime>?', stream, t))
-            # print('sqlllllllllllllllllllllllllllllllllll',hashes)
             return hashes
 
     def flush(self):

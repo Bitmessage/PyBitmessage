@@ -54,7 +54,6 @@ def encrypt(msg, hexPubkey):
 
 
 def decrypt(msg, hexPrivkey):
-    print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS#################################################")
     """Decrypts message with hex private key"""
     return makeCryptor(hexPrivkey).decrypt(msg)
 

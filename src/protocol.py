@@ -444,7 +444,6 @@ def decryptAndCheckPubkeyPayload(data, address):
             # That sort of address-malleability should have been caught
             # by the UI or API and an error given to the user.
             return 'failed'
-        print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW#################################################")
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
         except:
@@ -455,7 +454,6 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        print("working fine till here#################################################################")    
         publicSigningKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         publicEncryptionKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
@@ -503,7 +501,6 @@ def decryptAndCheckPubkeyPayload(data, address):
         )
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
-        print("successful Insertion of pubkey hurray#################################################")
         return 'successful'
     except varintDecodeError:
         logger.info(
