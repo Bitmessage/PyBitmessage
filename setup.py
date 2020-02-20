@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 
 from setuptools import setup, Extension
 from setuptools.command.install import install
@@ -146,9 +147,9 @@ if __name__ == "__main__":
             'bitmessage.proxyconfig': [
                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
             ],
-            # 'console_scripts': [
-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
-            # ]
+            'console_scripts': [
+                'pybitmessage = pybitmessage.bitmessagemain:main'
+            ] if sys.platform[:3] == 'win' else []
         },
         scripts=['src/pybitmessage'],
         cmdclass={'install': InstallCmd},

@@ -35,7 +35,9 @@ class TestProcessProto(unittest.TestCase):
         cls.flag = False
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
         put_signal_file(cls.home, 'unittest.lock')
-        subprocess.call(cls._process_cmd)  # nosec
+        subprocess.Popen(
+            cls._process_cmd,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # nosec
         time.sleep(5)
         try:
             cls.pid = int(cls._get_readline('singleton.lock'))
