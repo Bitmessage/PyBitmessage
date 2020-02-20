@@ -21,16 +21,13 @@ app_dir = pathmagic.setup()
 import depends
 depends.check_dependencies()
 
-import ctypes
 import getopt
 import multiprocessing
 # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 import signal
-import socket
 import threading
 import time
 import traceback
-from struct import pack
 
 import defaults
 import shared
@@ -39,7 +36,7 @@ import state
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
 from helper_startup import (
-    adjustHalfOpenConnectionsLimit, start_proxyconfig)
+    adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
 from inventory import Inventory
 # Network objects and threads
 from network import (
@@ -52,67 +49,6 @@ from singleinstance import singleinstance
 from threads import (
     set_thread_name, printLock,
     addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
-
-
-def _fixSocket():
-    if sys.platform.startswith('linux'):
-        socket.SO_BINDTODEVICE = 25
-
-    if not sys.platform.startswith('win'):
-        return
-
-    # Python 2 on Windows doesn't define a wrapper for
-    # socket.inet_ntop but we can make one ourselves using ctypes
-    if not hasattr(socket, 'inet_ntop'):
-        addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
-
-        def inet_ntop(family, host):
-            """Converting an IP address in packed
-            binary format to string format"""
-            if family == socket.AF_INET:
-                if len(host) != 4:
-                    raise ValueError("invalid IPv4 host")
-                host = pack("hH4s8s", socket.AF_INET, 0, host, "\0" * 8)
-            elif family == socket.AF_INET6:
-                if len(host) != 16:
-                    raise ValueError("invalid IPv6 host")
-                host = pack("hHL16sL", socket.AF_INET6, 0, 0, host, 0)
-            else:
-                raise ValueError("invalid address family")
-            buf = "\0" * 64
-            lengthBuf = pack("I", len(buf))
-            addressToString(host, len(host), None, buf, lengthBuf)
-            return buf[0:buf.index("\0")]
-        socket.inet_ntop = inet_ntop
-
-    # Same for inet_pton
-    if not hasattr(socket, 'inet_pton'):
-        stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
-
-        def inet_pton(family, host):
-            """Converting an IP address in string format
-            to a packed binary format"""
-            buf = "\0" * 28
-            lengthBuf = pack("I", len(buf))
-            if stringToAddress(str(host),
-                               int(family),
-                               None,
-                               buf,
-                               lengthBuf) != 0:
-                raise socket.error("illegal IP address passed to inet_pton")
-            if family == socket.AF_INET:
-                return buf[4:8]
-            elif family == socket.AF_INET6:
-                return buf[8:24]
-            else:
-                raise ValueError("invalid address family")
-        socket.inet_pton = inet_pton
-
-    # These sockopts are needed on for IPv6 support
-    if not hasattr(socket, 'IPPROTO_IPV6'):
-        socket.IPPROTO_IPV6 = 41
-    if not hasattr(socket, 'IPV6_V6ONLY'):
-        socket.IPV6_V6ONLY = 27
 
 
 def signal_handler(signum, frame):
@@ -151,7 +87,7 @@ class Main(object):
     def start(self):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
-        _fixSocket()
+        fixSocket()
         adjustHalfOpenConnectionsLimit()
 
         config = BMConfigParser()

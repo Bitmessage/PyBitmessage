@@ -6,10 +6,16 @@ import sys
 import unittest
 
 from pybitmessage import protocol, state
+from pybitmessage.helper_startup import fixSocket
 
 
 class TestProtocol(unittest.TestCase):
     """Main protocol test case"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Execute fixSocket() before start. Only for Windows?"""
+        fixSocket()
 
     def test_checkIPv4Address(self):
         """Check the results of protocol.checkIPv4Address()"""
