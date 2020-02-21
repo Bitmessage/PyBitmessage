@@ -29,7 +29,7 @@ format=%(asctime)s {1} %(message)s
 class=FileHandler
 level=NOTSET
 formatter=default
-args=('{0}', 'w')
+args=({0!r}, 'w')
 
 [logger_root]
 level=DEBUG
