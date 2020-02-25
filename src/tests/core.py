@@ -204,6 +204,11 @@ class TestCore(unittest.TestCase):
         self.fail(
             'Failed to connect during %s sec' % (time.time() - _started))
 
+    def test_dontconnect(self):
+        """all connections are closed 5 seconds after setting dontconnect"""
+        self._initiate_bootstrap()
+        self.assertEqual(len(BMConnectionPool().connections()), 0)
+
     def test_connection(self):
         """test connection to bootstrap servers"""
         self._initiate_bootstrap()
