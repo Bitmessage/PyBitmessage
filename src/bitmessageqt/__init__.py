@@ -1617,6 +1617,9 @@ class MyForm(settingsmixin.SMainWindow):
 
     def showConnectDialog(self):
         dialog = dialogs.ConnectDialog(self)
+        if state.qttesting:
+            from graphicaltesting import test_appstart
+            test_appstart.connectme(dialog)
         if dialog.exec_():
             if dialog.radioButtonConnectNow.isChecked():
                 BMConfigParser().remove_option(
@@ -4159,5 +4162,9 @@ def run():
     # only show after wizards and connect dialogs have completed
     if not BMConfigParser().getboolean('bitmessagesettings', 'startintray'):
         myapp.show()
+
+    if state.qttesting:
+        from graphicaltesting import testinitialization
+        testinitialization.test_initialize(myapp)
 
     sys.exit(app.exec_())
