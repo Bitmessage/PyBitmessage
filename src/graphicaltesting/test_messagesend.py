@@ -1,3 +1,4 @@
+"""Test for message send"""
 import random
 from random import choice
 from string import ascii_lowercase
@@ -23,7 +24,7 @@ class BitmessageTest_MessageTesting(BitmessageTestCase):
                 self.myapp.ui.comboBoxSendFrom.setCurrentIndex(
                     random.randrange(1, len(BMConfigParser().addresses()) + 1)
                 )
-                QTest.qWait(800)
+                QTest.qWait(1000)
                 rand_address = choice(BMConfigParser().addresses())
                 random_address = ""
                 for x in range(len(rand_address)):

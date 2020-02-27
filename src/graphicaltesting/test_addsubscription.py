@@ -1,3 +1,4 @@
+"""Add address in the subscription list"""
 from random import choice
 from string import ascii_lowercase
 
@@ -12,6 +13,8 @@ from testloader import BitmessageTestCase
 
 
 class BitmessageTest_AddSubscription(BitmessageTestCase):
+    """Add address to list"""
+
     def test_subscription(self):
         """Test for subscription functionality"""
         QTest.qWait(500)
@@ -46,7 +49,8 @@ class BitmessageTest_AddSubscription(BitmessageTestCase):
                 if shared.isAddressInMySubscriptionsList(address):
                     print(
                         "\n Test Fail :--> You cannot add the same address to your subscriptions twice."
-                        " Perhaps rename the existing one if you want. \n")
+                        " Perhaps rename the existing one if you want. \n"
+                    )
                     QTest.qWait(500)
                     return 0
                 self.myapp.addSubscription(address, label)

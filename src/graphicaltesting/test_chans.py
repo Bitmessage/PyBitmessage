@@ -1,9 +1,12 @@
+"""Tests for changs Tab"""
 from PyQt4.QtTest import QTest
 
 from testloader import BitmessageTestCase
 
 
 class BitmessageTest_ChansTest(BitmessageTestCase):
+    """Switch to chans and test"""
+
     def test_chans(self):
         """Switch to chans window and test"""
         QTest.qWait(1200)

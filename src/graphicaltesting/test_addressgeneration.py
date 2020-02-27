@@ -1,3 +1,4 @@
+"""Generate Address for tests"""
 from random import choice
 from string import ascii_lowercase
 
@@ -83,6 +84,7 @@ class BitmessageTest_AddressGeneration(BitmessageTestCase):
             QTest.qWait(100)
             print(
                 "\n Test Fail :-->  Address Generatation Failed with passphrase"
-                " or Taking too much time to generate address \n")
+                " or Taking too much time to generate address \n"
+            )
             self.assertTrue(False, " \n Test Fail :-->  Address Generatation Failed with passphrase")
             return 0

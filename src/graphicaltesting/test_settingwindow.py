@@ -1,3 +1,4 @@
+"""Tests for setting window"""
 import random
 from random import choice
 from string import ascii_lowercase
@@ -11,6 +12,8 @@ from testloader import BitmessageTestCase
 
 
 class BitmessageTest_SettingWindowTest(BitmessageTestCase):
+    """Switch to setting tab and test"""
+
     def test_settingwindow(self):
         """Triggers the setting window"""
         self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
@@ -56,7 +59,7 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             dialog.languageComboBox.setStyleSheet("QComboBox {background-color: #FF5733; color: white;}")
             QTest.qWait(50)
             dialog.languageComboBox.setStyleSheet("")
-            dialog.languageComboBox.setCurrentIndex(6)
+            dialog.languageComboBox.setCurrentIndex(5)
             QTest.qWait(1000)
             ok_btn = dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok)
             QTest.mouseClick(ok_btn, Qt.LeftButton)

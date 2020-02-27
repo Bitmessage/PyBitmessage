@@ -1,3 +1,4 @@
+"""Tests for blackwhitelist"""
 from random import choice
 from string import ascii_lowercase
 
@@ -39,6 +40,7 @@ class BitmessageTest_BlackandWhiteList(BitmessageTestCase):
             pass
 
     def checkblacklist(self, myapp):
+        """fill blacklist and whitelist fields"""
         # pylint: disable=too-many-statements
         QTest.qWait(1000)
         self.dialog.lineEditLabel.setText("")
@@ -96,10 +98,13 @@ class BitmessageTest_BlackandWhiteList(BitmessageTestCase):
                 QTest.qWait(100)
                 print(
                     "\n Test Fail :--> You cannot add the same address to your list twice."
-                    " Perhaps rename the existing one if you want. \n")
+                    " Perhaps rename the existing one if you want. \n"
+                )
                 self.assertTrue(
-                    False, "\n Test Fail :--> You cannot add the same address to your list twice."
-                    " Perhaps rename the existing one if you want.")
+                    False,
+                    "\n Test Fail :--> You cannot add the same address to your list twice."
+                    " Perhaps rename the existing one if you want.",
+                )
                 return 0
         else:
             QTest.qWait(100)
