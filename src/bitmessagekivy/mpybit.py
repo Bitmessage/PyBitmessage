@@ -167,14 +167,14 @@ class Inbox(Screen):
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
                 # third_text = mail[3].replace('\n', ' ')
-                subject = mail[3].decode() if isinstance(mail[3],bytes) else mail[3]
-                body = mail[5].decode() if isinstance(mail[5],bytes) else mail[5]
+                body = mail[3].decode() if isinstance(mail[3],bytes) else mail[3]
+                subject  = mail[5].decode() if isinstance(mail[5],bytes) else mail[5]
                 data.append({
                     'text': mail[4].strip(),
-                    'secondary_text': body[:50] + '........' if len(
-                        body) >= 50 else (body + ',' + subject.replace(
-                            '\n', ''))[0:50] + '........',
+                    'secondary_text': (subject[:50] + '........' if len(
+                        subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                     'msgid': mail[1], 'received': mail[6]})
+
             self.has_refreshed = True
             self.set_mdList(data)
             self.children[2].children[0].children[0].bind(
@@ -330,6 +330,10 @@ class Inbox(Screen):
         Clock.schedule_once(refresh_callback, 1)
 
 
+class CustomTwoLineAvatarIconListItem(TwoLineAvatarIconListItem):
+    pass
+
+
 class MyAddress(Screen):
     """MyAddress screen uses screen to show widgets of screens"""
 
@@ -386,11 +390,12 @@ class MyAddress(Screen):
                 'secondary_text': address})
         for item in data:
             is_enable = BMConfigParser().get(item['secondary_text'], 'enabled')
-            meny = TwoLineAvatarIconListItem(
+            meny = CustomTwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,
                 )
+            meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
@@ -438,13 +443,25 @@ class MyAddress(Screen):
         """Loads more data on scroll down"""
         self.set_mdList(my_addresses, my_addresses + 20)
 
-    @staticmethod
-    def myadd_detail(fromaddress, label, *args):
+    # @staticmethod
+    def myadd_detail(self, fromaddress, label, *args):
         """Load myaddresses details"""
         if BMConfigParser().get(fromaddress, 'enabled') == 'true':
             p = MyaddDetailPopup()
             p.open()
             p.set_address(fromaddress, label)
+        else:
+            width = .8 if platform == 'android' else .55
+            msg_dialog = MDDialog(
+                text='Address is not currently active. Please click on Toggle button to active it.',
+                title='', size_hint=(width, .25), text_button_ok='Ok',
+                events_callback=self.callback_for_menu_items)
+            msg_dialog.open()
+
+    @staticmethod
+    def callback_for_menu_items(text_item, *arg):
+        """Callback of alert box"""
+        toast(text_item)
 
     def refresh_callback(self, *args):
         """Method updates the state of application,
@@ -480,6 +497,7 @@ class MyAddress(Screen):
         BMConfigParser().set(str(address), 'enabled', 'false')
         BMConfigParser().save()
         instance.parent.parent.theme_text_color = 'Primary'
+        instance.parent.parent.canvas.children[6].rgba = [0.5, 0.5, 0.5, 0.5]
         toast('Address disabled')
         Clock.schedule_once(self.address_permision_callback, 0)
 
@@ -488,6 +506,7 @@ class MyAddress(Screen):
         BMConfigParser().set(address, 'enabled', 'true')
         BMConfigParser().save()
         instance.parent.parent.theme_text_color = 'Custom'
+        instance.parent.parent.canvas.children[6].rgba = [0, 0, 0, 0]
         toast('Address Enabled')
         Clock.schedule_once(self.address_permision_callback, 0)
 
@@ -502,9 +521,9 @@ class MyAddress(Screen):
         """This method is used for enable or disable address"""
         addr = instance.parent.parent.secondary_text
         if instance.active:
-            self.disableAddress(addr, instance)
-        else:
             self.enableAddress(addr, instance)
+        else:
+            self.disableAddress(addr, instance)
 
 
 class AddressBook(Screen):
@@ -758,9 +777,9 @@ class DropDownWidget(BoxLayout):
                 else:
                     msg = 'Enter a valid recipients address'
             elif not toAddress:
-                msg = 'Please fill the form'
+                msg = 'Please fill the form completely'
             else:
-                msg = 'Please fill the form'
+                msg = 'Please fill the form completely'
             self.address_error_message(msg)
 
     @staticmethod
@@ -812,6 +831,7 @@ class MyTextInput(TextInput):
     def __init__(self, **kwargs):
         """Getting Text Input."""
         super(MyTextInput, self).__init__(**kwargs)
+        self.__lineBreak__=0
 
     def on_text(self, instance, value):
         """Find all the occurrence of the word"""
@@ -844,32 +864,38 @@ class Payment(Screen):
         """Get the available credits"""
         # pylint: disable=no-self-use
         state.availabe_credit = instance.parent.children[1].text
-        existing_credits = (
-            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[
-                0].children[0].children[0].text)
-        if len(existing_credits.split(' ')) > 1:
+        existing_credits = state.kivyapp.root.ids.sc18.ids.cred.text
+        if float(existing_credits.split()[1]) > 0:
             toast(
                 'We already have added free coins'
                 ' for the subscription to your account!')
         else:
             toast('Coins added to your account!')
-            state.kivyapp.root.ids.sc18.ids.ml.children[0].children[
-                0].children[0].children[0].text = '{0}'.format(
-                    state.availabe_credit)
+            state.kivyapp.root.ids.sc18.ids.cred.text = '{0}'.format(
+                state.availabe_credit)
 
 
 class Credits(Screen):
     """Credits Method"""
 
     available_credits = StringProperty(
-        '{0}'.format('0'))
+        '{0}'.format('€ 0'))
 
 
 class Login(Screen):
     """Login Screeen"""
-
-    pass
-
+    log_text1 = ('You may generate addresses by using either random numbers'
+                ' or by using a passphrase If you use a passphrase, the address'
+                ' is called a deterministic; address The Random Number option is'
+                ' selected by default but deterministic addresses have several pros'
+                ' and cons:')
+    log_text2 = ('If talk about pros You can recreate your addresses on any computer'
+                 ' from memory, You need-not worry about backing up your keys.dat file'
+                 ' as long as you can remember your passphrase and aside talk about cons'
+                 ' You must remember (or write down) your  You must remember the address'
+                 ' version number and the stream number along with your passphrase If you'
+                 ' choose a weak passphrase and someone on the Internet can brute-force it,'
+                 ' they can read your messages and send messages as you')
 
 class NetworkStat(Screen):
     """Method used to show network stat"""
@@ -922,6 +948,10 @@ class Random(Screen):
     def generateaddress(self, navApp):
         """Method for Address Generator"""
         entered_label = str(self.ids.label.text).strip()
+        if not entered_label:
+            self.ids.label.focus = True
+            # self.ids.label.error = True
+            # self.ids.label.helper_text = 'This field is required'
         streamNumberForAddress = 1
         label = self.ids.label.text
         eighteenByteRipe = False
@@ -1009,9 +1039,8 @@ class Sent(Screen):
             for mail in self.queryreturn:
                 data.append({
                     'text': mail[1].strip(),
-                    'secondary_text': mail[2][:50] + '........' if len(
-                        mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace(
-                            '\n', ''))[0:50] + '........',
+                    'secondary_text': (mail[2][:50] + '........' if len(
+                        mail[2]) >= 50 else (mail[2] + ',' + mail[3])[0:50] + '........').replace('\t', '').replace('  ', ''),
                     'ackdata': mail[5], 'senttime': mail[6]},)
             self.set_mdlist(data, 0)
             self.has_refreshed = True
@@ -1093,9 +1122,8 @@ class Sent(Screen):
             for mail in self.queryreturn:
                 data.append({
                     'text': mail[1].strip(),
-                    'secondary_text': mail[2][:50] + '........' if len(
-                        mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace(
-                            '\n', ''))[0:50] + '........',
+                    'secondary_text': (mail[2][:50] + '........' if len(
+                        mail[2]) >= 50 else (mail[2] + ',' + mail[3])[0:50] + '........').replace('\t', '').replace('  ', ''),
                     'ackdata': mail[5], 'senttime': mail[6]})
             self.set_mdlist(data, total_sent - 1)
         if state.msg_counter_objs and state.association == (
@@ -1257,9 +1285,8 @@ class Trash(Screen):
             body = item[3].decode() if isinstance(item[3],bytes) else item[3]
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
-                secondary_text=item[2][:50] + '........' if len(
-                    subject) >= 50 else (subject + ',' + body.replace(
-                        '\n', ''))[0:50] + '........',
+                secondary_text=(item[2][:50] + '........' if len(
+                    subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             img_latter = './images/text_images/{}.png'.format(
@@ -1603,8 +1630,8 @@ class NavigateApp(MDApp):
         """Saving drafts messages"""
         composer_objs = self.root
         from_addr = str(self.root.ids.sc3.children[1].ids.ti.text)
-        to_addr = str(self.root.ids.sc3.children[1].ids.txt_input.text)
-        if from_addr and to_addr and state.detailPageType != 'draft' \
+        # to_addr = str(self.root.ids.sc3.children[1].ids.txt_input.text)
+        if from_addr and state.detailPageType != 'draft' \
                 and not state.in_sent_method:
             Draft().draft_msg(composer_objs)
         return
@@ -1632,6 +1659,7 @@ class NavigateApp(MDApp):
         composer_obj.body.text = ''
         state.in_composer = True
         state.in_sent_method = False
+
 
     def set_navbar_for_composer(self):
         """Clearing toolbar data when composer open"""
@@ -1661,7 +1689,8 @@ class NavigateApp(MDApp):
 
     def back_press(self):
         """Method for, reverting composer to previous page"""
-        self.save_draft()
+        if self.root.ids.scr_mngr.current == 'create':
+            self.save_draft()
         if self.root.ids.scr_mngr.current == \
                 'mailDetail' and state.in_search_mode:
             toolbar_obj = self.root.ids.toolbar
@@ -1917,6 +1946,11 @@ class NavigateApp(MDApp):
         top_box_obj.reload()
         spinner_img_obj.reload()
 
+    def copy_composer_text(self, text):
+        """Copy the data from mail detail page"""
+        Clipboard.copy(text)
+        toast('Copied')
+
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
@@ -2045,7 +2079,7 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     pass
 
 
-class IconReftSampleWidget(IRightBodyTouch, MDIconButton):
+class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
     """Right icon sample widget"""
 
     pass
@@ -2101,7 +2135,7 @@ class MailDetail(Screen):
         """Assigning mail details"""
         subject = data[0][2].decode() if isinstance(data[0][2],bytes) else  data[0][2]
         body = data[0][3].decode() if isinstance(data[0][2],bytes) else  data[0][3]
-        self.to_addr = data[0][0]
+        self.to_addr = data[0][0] if len(data[0][0]) > 4 else ' '
         self.from_addr = data[0][1]
 
         self.subject = subject.capitalize(
@@ -2166,15 +2200,13 @@ class MailDetail(Screen):
 
     def callback_for_delete(self, dt=0):
         """Delete method from allmails"""
-        try:
+        if state.detailPageType:
             self.children[0].children[0].active = False
             state.kivyapp.set_common_header()
             self.parent.current = 'allmails' \
                 if state.is_allmail else state.detailPageType
             state.detailPageType = ''
             toast('Deleted')
-        except Exception as e:
-            print("Exception occures..........")
 
     def inbox_reply(self):
         """Reply inbox messages"""
@@ -2237,7 +2269,10 @@ class MyaddDetailPopup(Popup):
     def send_message_from(self):
         """Method used to fill from address of composer autofield"""
         state.kivyapp.set_navbar_for_composer()
-        window_obj = self.parent.children[1].ids
+        try:
+            window_obj = self.parent.children[2].ids
+        except Exception as e:
+            window_obj = self.parent.children[1].ids
         window_obj.sc3.children[1].ids.ti.text = self.address
         window_obj.sc3.children[1].ids.btn.text = self.address
         window_obj.sc3.children[1].ids.txt_input.text = ''
@@ -2288,7 +2323,10 @@ class AddbookDetailPopup(Popup):
     def send_message_to(self):
         """Method used to fill to_address of composer autofield"""
         state.kivyapp.set_navbar_for_composer()
-        window_obj = self.parent.children[1].ids
+        try:
+            window_obj = self.parent.children[2].ids
+        except Exception as e:
+            window_obj = self.parent.children[1].ids
         window_obj.sc3.children[1].ids.txt_input.text = self.address
         window_obj.sc3.children[1].ids.ti.text = ''
         window_obj.sc3.children[1].ids.btn.text = 'Select'
@@ -2321,6 +2359,7 @@ class AddbookDetailPopup(Popup):
 
 class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails"""
+    address = StringProperty()
 
     def qrdisplay(self):
         """Method used for showing QR Code"""
@@ -2331,7 +2370,9 @@ class ShowQRCode(Screen):
             address = self.manager.get_parent_window().children[0].address
         except Exception:
             address = self.manager.get_parent_window().children[1].address
+        self.address = address
         self.ids.qr.add_widget(QRCodeWidget(data=address))
+        self.ids.qr.children[0].show_border = False
         toast('Show QR code')
 
 
@@ -2609,10 +2650,9 @@ class Allmails(Screen):
             subject = item[2].decode() if isinstance(item[2],bytes) else item[2]
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
-                secondary_text=body[:50] + '........' if len(
-                   body) >= 50 else (
-                        body + ',' + subject.replace(
-                            '\n', ''))[0:50] + '........',
+                secondary_text=(subject[:50] + '........' if len(
+                   subject) >= 50 else (
+                        subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
@@ -2849,11 +2889,18 @@ class SenderDetailPopup(Popup):
         self.from_addr = from_addr
         time_obj = datetime.fromtimestamp(int(timeinseconds))
         self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
-
-    def copy_composer_text(self, text):
-        """Copy the data from mail detail page"""
-        Clipboard.copy(text)
-        toast('Copied')
+        pop_height = 1.2*(self.ids.sd_label.height+self.ids.sd_btn.children[0].height)
+        if len(to_addr) > 3:
+            self.height = 0
+            self.height = pop_height
+            self.ids.to_addId.size_hint_y = None
+            self.ids.to_addId.height= 50
+            frmaddbox = ToAddrBoxlayout()
+            frmaddbox.set_toAddress(to_addr)
+            self.ids.to_addId.add_widget(frmaddbox)
+        else:
+            self.height = 0
+            self.height = pop_height/1.5
 
 
 class OneLineListTitle(OneLineListItem):
@@ -2891,3 +2938,12 @@ class OneLineListTitle(OneLineListItem):
         if text_item == 'Copy':
             Clipboard.copy(str(arg[0].text))
         toast(text_item)
+
+
+class ToAddrBoxlayout(BoxLayout):
+    """class for BoxLayout behaviour"""
+    to_addr = StringProperty()
+
+    def set_toAddress(self, to_addr):
+        self.to_addr = to_addr
+        pass

@@ -35,6 +35,14 @@
                     text: root.time_tag
                     halign:'right'
                     font_style:'Caption'
+                    pos_hint: {'center_y': .8}
+                MDChip:
+                    size_hint: (None, None)
+                    label: root.page_type
+                    icon: ''
+                    pos_hint: {'center_x': .94, 'center_y': .3}
+                    radius: 8
+                    height: 18
                 AvatarSampleWidget:
                     source: root.avatarImg
             MDLabel:
