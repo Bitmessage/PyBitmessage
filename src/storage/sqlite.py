@@ -42,8 +42,11 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
     
     def __getitem__(self, hash_):
         with self.lock:
-            if hash_ in self._inventory:
-                return self._inventory[hash_]
+            if isinstance(hash_,memoryview) and bytes(hash_) in self._inventory :
+                    return self._inventory[bytes(hash_)]
+            else:
+                if hash_ in self._inventory:
+                    return self._inventory[hash_]
             rows = sqlQuery(
                 'SELECT objecttype, streamnumber, payload, expirestime, tag'
                 ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
