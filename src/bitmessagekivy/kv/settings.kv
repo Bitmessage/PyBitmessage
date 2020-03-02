@@ -29,6 +29,22 @@
                             halign: 'left'
                             pos_hint: {'center_x': 0, 'center_y': 0.6}
                             disabled: True
+                        BoxLayout:
+                            orientation: 'vertical'
+                            padding: [0, 10, 0, 0]
+                            spacing: 10
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "Interface Language"
+                                halign: 'right'
+                                bold: True
+                            MDDropDownItem:
+                                id: dropdown_item
+                                text: 'italiano'
+                                dropdown_max_height: 150
+                                pos_hint: {'center_x': 0.8, 'center_y': 0}
+                                items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
                     BoxLayout:
                         size_hint_y: None
                         orientation: 'vertical'
@@ -179,28 +195,33 @@
                             text: "Reply below Quote"
                             halign: 'left'
                             pos_hint: {'x': 0, 'y': 0.1}
-                    BoxLayout:
-                        orientation: 'vertical'
-                        spacing: 10
-                        padding: 10
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            text: "Interface Language"
-                            halign: 'left'
-                            bold: True
-                        MDDropDownItem:
-                            id: dropdown_item
-                            # on_select
-                            text: 'italiano'
-                            pos_hint: {'center_x': 0.1, 'center_y': 0}
-                            items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
+                    Widget:
+                        size_hint_y: None
+                        height: 10
+                    # BoxLayout:
+                    #     orientation: 'vertical'
+                    #     spacing: 10
+                    #     padding: 10
+
+                    #     MDLabel:
+                    #         font_style: 'Body1'
+                    #         theme_text_color: 'Primary'
+                    #         text: "Interface Language"
+                    #         halign: 'left'
+                    #         bold: True
+                        # MDDropDownItem:
+                        #     id: dropdown_item
+                        #     # on_select
+                        #     text: 'italiano'
+                        #     dropdown_max_height: 150
+                        #     pos_hint: {'center_x': 0.1, 'center_y': 0}
+                        #     items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
                     BoxLayout:
                         spacing:5
                         orientation: 'horizontal'
                         pos_hint: {'x':.76}
                         MDRaisedButton:
-                            text: 'Cancel'
+                            text: 'Reset'
                         MDRaisedButton:
                             text: 'Ok'
         Tab:
@@ -277,10 +298,8 @@
                             orientation: 'horizontal'
                             MDDropDownItem:
                                 id: dropdown_item
-                                # on_select
                                 dropdown_bg: [1, 1, 1, 1]
                                 text: 'none'
-                                # pos_hint: {'left': 1}
                                 items: [f"{i}" for i in ['System Setting','U.S. English']]
                     BoxLayout:
                         orientation: 'horizontal'
@@ -435,7 +454,7 @@
                         orientation: 'horizontal'
                         pos_hint: {'x':.76}
                         MDRaisedButton:
-                            text: 'Cancel'
+                            text: 'Reset'
                         MDRaisedButton:
                             text: 'Ok'
         Tab:
@@ -502,6 +521,6 @@
                         # pos_hint: {'left': 0}
                         pos_hint: {'x':.75}
                         MDRaisedButton:
-                            text: 'Cancel'
+                            text: 'Reset'
                         MDRaisedButton:
                             text: 'Ok'
