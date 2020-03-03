@@ -1,84 +1,73 @@
 <MailDetail>:
     name: 'mailDetail'
-    # ScrollView:
-    #     do_scroll_x: False
-    #     BoxLayout:
-    #         orientation: 'vertical'
-    #         size_hint_y: None
-    #         height: dp(500) + self.minimum_height
-    #         padding: dp(32)
-    #         MDLabel:
-    #             font_style: 'Subtitle1'
-    #             theme_text_color: 'Primary'
-    #             text: root.subject
-    #             halign: 'left'
-    #             font_size: '20sp'
-    #             CopyTextBtn:
-    #         MDLabel:
-    #             font_style: 'Body1'
-    #             theme_text_color: 'Primary'
-    #             text: "From: " + root.from_addr
-    #             halign: 'left'
-    #             CopyTextBtn:
-    #         MDLabel:
-    #             font_style: 'Body1'
-    #             theme_text_color: 'Primary'
-    #             text: "To: " + root.to_addr
-    #             halign: 'left'
-    #             CopyTextBtn:
-    #         MDLabel:
-    #             font_style: 'Body1'
-    #             theme_text_color: 'Primary'
-    #             text: root.status
-    #             halign: 'left'
-    #         MDLabel:
-    #             font_style: 'Subtitle2'
-    #             theme_text_color: 'Primary'
-    #             text: root.message
-    #             halign: 'left'
-    #             bold: True
-    #             CopyTextBtn:
-    #         BoxLayout:
-    #             orientation: 'vertical'
-    #             size_hint_y: None
-    #             height: dp(100) + self.minimum_height
     ScrollView:
         do_scroll_x: False
         BoxLayout:
             size_hint_y: None
             orientation: 'vertical'
-            height: dp(bod.height) + self.minimum_height
+            # height: dp(bod.height) + self.minimum_height
+            height: self.minimum_height
             padding: dp(20)
-            OneLineListItem:
+            # MDLabel:
+            #     size_hint_y: None
+            #     id: subj
+            #     text: root.subject
+            #     theme_text_color: 'Primary'
+            #     halign: 'left'
+            #     font_style: 'H5'
+            #     height: dp(40)
+            #     on_touch_down: root.allclick(self)
+            OneLineListTitle:
                 id: subj
                 text: root.subject
                 divider: None
-                disabled: True
                 font_style: 'H5'
                 theme_text_color: 'Primary'
+                _no_ripple_effect: True
+                long_press_time: 1
             TwoLineAvatarIconListItem:
                 id: subaft
                 text: root.from_addr
                 secondary_text: 'to ' + root.to_addr
                 divider: None
+                on_press: root.detailedPopup()
                 BadgeText:
                     text: root.time_tag
                     halign:'right'
                     font_style:'Caption'
+                    pos_hint: {'center_y': .8}
+                MDChip:
+                    size_hint: (None, None)
+                    label: root.page_type
+                    icon: ''
+                    pos_hint: {'center_x': .94, 'center_y': .3}
+                    radius: 8
+                    height: 18
                 AvatarSampleWidget:
                     source: root.avatarImg
-            OneLineListItem:
+            MDLabel:
                 text: root.status
-                divider: None
                 disabled: True
                 font_style: 'Body2'
-                theme_text_color: 'Primary'
                 halign:'left'
-            MDLabel:
+                padding_x: 20
+            # MDLabel:
+            #     id: bod
+            #     font_style: 'Subtitle2'
+            #     theme_text_color: 'Primary'
+            #     text: root.message
+            #     halign: 'left'
+            #     height: self.texture_size[1]
+            MyMDTextField:
                 id: bod
+                size_hint_y: None
                 font_style: 'Subtitle2'
-                theme_text_color: 'Primary'
                 text: root.message
-                halign: 'left'
-                height: self.texture_size[1]
+                multiline: True
+                readonly: True
+                line_color_normal: [0,0,0,0]
+                _current_line_color: [0,0,0,0]
+                line_color_focus: [0,0,0,0]
+                markup: True
+                font_size: '15sp'
     Loader:

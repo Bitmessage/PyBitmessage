@@ -144,11 +144,11 @@ class objectProcessor(threading.Thread):
             sqlExecute(
                 'UPDATE sent SET status=?, lastactiontime=?'
                 ' WHERE ackdata=?',
-                'ackreceived', int(time.time()), data[readPosition:])
+                'ackreceived', int(time.time()), bytes(data[readPosition:]))
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata',
                 (
-                    data[readPosition:],
+                    bytes(data[readPosition:]),
                     tr._translate(
                         "MainWindow",
                         "Acknowledgement of the message received %1"

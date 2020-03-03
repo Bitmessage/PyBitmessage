@@ -687,9 +687,14 @@ def _unpack_binary(code, fp, options):
         length = struct.unpack(">I", _read_except(fp, 4))[0]
     else:
         raise Exception("logic error, not binary: 0x%02x" % ord(code))
-
-    return _read_except(fp, length)
-
+    #Added Decode method for python3
+    data = _read_except(fp, length)
+    try:
+        return bytes.decode(data, 'utf-8')
+    except UnicodeDecodeError:
+        if options.get("allow_invalid_utf8"):
+            return InvalidString(data)
+        raise InvalidStringException("unpacked string is invalid utf-8")
 
 def _unpack_ext(code, fp, options):
     if code == b'\xd4':

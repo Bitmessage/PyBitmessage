@@ -44,22 +44,17 @@
         on_press: app.clear_composer()
 
 
-<CopyTextBtn@Button>:
-    id: cpyButton
-    color: 0,0,0,1
-    background_color: (0,0,0,0)
-    center_x: self.parent.center_x * 2 - self.parent.parent.padding[0]/2
-    center_y: self.parent.center_y
-    on_press:app.root.ids.sc14.copy_composer_text(self)
-    Image:
-        source: './images/copy_text.png'
-        center_x: self.parent.center_x
-        center_y: self.parent.center_y
-        size: 20, 20
-
-
 <ToggleBtn>:
-    #size_hint: None, None
+    size_hint: None, None
     size: dp(36), dp(48)
     pos_hint: {'center_x': .95, 'center_y': .4}
-    on_press: app.root.ids.sc10.toggleAction(self)
+    on_active: app.root.ids.sc10.toggleAction(self)
+
+<CustomTwoLineAvatarIconListItem>:
+    canvas:
+        Color:
+            # rgba: 0.5, 0.5, 0.5, 0.5
+            rgba: 0,0,0,0
+        Rectangle: #woohoo!!!
+            size: self.size
+            pos: self.pos

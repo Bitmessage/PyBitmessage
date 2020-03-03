@@ -289,7 +289,7 @@ def isProofOfWorkSufficient(
 
 def CreatePacket(command, payload=''):
     """Construct and return a number of bytes from a payload"""
-    payload = payload if type(payload) in [bytes, bytearray] else payload.encode()
+    payload = payload if type(payload) in [bytes, bytearray,memoryview] else payload.encode()
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
     byte = bytearray(Header.size + payload_length)
@@ -444,7 +444,6 @@ def decryptAndCheckPubkeyPayload(data, address):
             # That sort of address-malleability should have been caught
             # by the UI or API and an error given to the user.
             return 'failed'
-        print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW#################################################")
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
         except:
@@ -455,7 +454,6 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        print("working fine till here#################################################################")    
         publicSigningKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         publicEncryptionKey = '\x04'.encode() + decryptedData[readPosition:readPosition + 64]
@@ -503,7 +501,6 @@ def decryptAndCheckPubkeyPayload(data, address):
         )
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
-        print("successful Insertion of pubkey hurray#################################################")
         return 'successful'
     except varintDecodeError:
         logger.info(

@@ -141,7 +141,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except BMObjectAlreadyHaveError:
                 logger.debug(
                     '%(host)s:%(port)i already got object, skipping',
-                    self.destinaestion._asdict())
+                    self.destination._asdict())
             except struct.error:
                 logger.debug('decoding error, skipping')
             except ValueError:
@@ -409,7 +409,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                self.object.objectType, memoryview(self.object.data)))
+                    self.object.objectType, memoryview(self.object.data)))
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -420,13 +420,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         if self.object.inventoryHash in Inventory()._realInventory and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        [self.object.inventoryHash] = (
-
+        Inventory()._realInventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
             memoryview(self.object.tag)
         )
-        Inventory()[self.object.inventoryHash]
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((
