@@ -9,8 +9,11 @@ class BitmessageTest_NetworkTest(BitmessageTestCase):
 
     def test_network(self):
         """Switch to network window"""
-        QTest.qWait(1000)
-        self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.networkstatus)
-        QTest.qWait(1200)
-        print("\n Test Pass :--> Network Functionality Working Well! \n")
-        return 1
+        try:
+            QTest.qWait(1000)
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.networkstatus)
+            QTest.qWait(1200)
+            print("\n Test Pass :--> Network Functionality Working Well! \n")
+            return 1
+        except:
+            print("\n Test Fail :--> Network Functionality Failed! \n")

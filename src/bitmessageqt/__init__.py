@@ -2514,15 +2514,19 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.textEditMessage.setFocus()
 
     def on_action_MarkAllRead(self):
-        if QtGui.QMessageBox.question(
-                self, "Marking all messages as read?",
-                _translate(
-                    "MainWindow",
-                    "Are you sure you would like to mark all messages read?"
-                ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-        ) != QtGui.QMessageBox.Yes:
-            return
-        tableWidget = self.getCurrentMessagelist()
+        import state
+        if state.qttesting:
+            tableWidget = self.getCurrentMessagelist()
+        else:
+            if QtGui.QMessageBox.question(
+                    self, "Marking all messages as read?",
+                    _translate(
+                        "MainWindow",
+                        "Are you sure you would like to mark all messages read?"
+                    ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
+            ) != QtGui.QMessageBox.Yes:
+                return
+            tableWidget = self.getCurrentMessagelist()
 
         idCount = tableWidget.rowCount()
         if idCount == 0:
@@ -3778,8 +3782,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
         if self.popMenuYourIdentities.isEmpty():
             return
-        self.popMenuYourIdentities.exec_(
-            self.ui.treeWidgetYourIdentities.mapToGlobal(point))
+        if state.qttesting:
+            self.popMenuYourIdentities.move(point.x(), point.y())
+            self.popMenuYourIdentities.show()
+        else:
+            self.popMenuYourIdentities.exec_(
+                self.ui.treeWidgetYourIdentities.mapToGlobal(point))
 
     # TODO make one popMenu
     def on_context_menuChan(self, point):

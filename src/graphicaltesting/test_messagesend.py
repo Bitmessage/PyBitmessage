@@ -20,11 +20,13 @@ class BitmessageTest_MessageTesting(BitmessageTestCase):
             if BMConfigParser().addresses():
                 QTest.qWait(500)
                 self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
-                QTest.qWait(800)
+                QTest.qWait(500)
+
                 self.myapp.ui.comboBoxSendFrom.setCurrentIndex(
                     random.randrange(1, len(BMConfigParser().addresses()) + 1)
                 )
                 QTest.qWait(1000)
+
                 rand_address = choice(BMConfigParser().addresses())
                 random_address = ""
                 for x in range(len(rand_address)):
@@ -32,27 +34,33 @@ class BitmessageTest_MessageTesting(BitmessageTestCase):
                     self.myapp.ui.lineEditTo.setText(random_address)
                     QTest.qWait(1)
                 QTest.qWait(800)
+
                 random_subject = ""
                 for x in range(40):
                     random_subject += choice(ascii_lowercase)
                     self.myapp.ui.lineEditSubject.setText(random_subject)
                     QTest.qWait(1)
                 QTest.qWait(800)
+
                 random_message = ""
                 for x in range(200):
                     random_message += choice(ascii_lowercase)
                     self.myapp.ui.textEditMessage.setText(random_message)
                     QTest.qWait(1)
                 QTest.qWait(800)
+
                 inbox_length = len(sqlQuery("Select msgid from inbox"))
                 QTest.mouseClick(self.myapp.ui.pushButtonSend, Qt.LeftButton)
                 QTest.qWait(600)
+
                 self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
                 print(" .......................... waiting for message .......................... ")
+
                 for x in range(5):
                     QTest.qWait(5000)
                     print("  waiting " + x * ".")
                 self.assertEqual(sqlQuery("Select toaddress,subject from inbox")[-1], (rand_address, random_subject))
+
                 if len(sqlQuery("Select msgid from inbox")) == inbox_length + 1:
                     QTest.qWait(100)
                     print("\n Test Pass :--> Message Received Successfully \n")

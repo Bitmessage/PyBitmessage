@@ -17,7 +17,7 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
     def test_settingwindow(self):
         """Triggers the setting window"""
         self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
-        QTest.qWait(1700)
+        QTest.qWait(1500)
         dialog = dialogs.SettingsDialog(self.myapp, firstrun=self.myapp._firstrun)
         self.language_change(dialog)
         QTest.qWait(300)

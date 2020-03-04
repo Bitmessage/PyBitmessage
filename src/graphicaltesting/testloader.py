@@ -11,7 +11,7 @@ class BitmessageTestCase(unittest.TestCase):
 
     @staticmethod
     def bitmessage_testloader(testcaseclass, myapp=None):
-        """Test Loader"""
+        """Method responsible for loading test"""
         testnames = unittest.TestLoader().getTestCaseNames(testcaseclass)
         suite = unittest.TestSuite()
         for name in testnames:

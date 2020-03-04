@@ -20,24 +20,28 @@ class BitmessageTest_BlackandWhiteList(BitmessageTestCase):
 
     def test_blackwhitelist(self):
         """Tab switch to blacklist and add the address on blacklist and whitelist"""
-        QTest.qWait(500)
-        self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
-        QTest.qWait(500)
         try:
+            QTest.qWait(500)
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
+            QTest.qWait(500)
+
             self.blacklist_obj = blacklist.Blacklist()
             self.dialog = AddAddressDialog(self.myapp)
             blacklistcount = len(sqlQuery("Select * from blacklist"))
+
             self.myapp.ui.blackwhitelist.radioButtonBlacklist.click()
             self.checkblacklist(self.myapp)
             QTest.qWait(500)
             self.assertEqual(blacklistcount + 1, len(sqlQuery("Select * from blacklist")))
             whitelistcount = len(sqlQuery("Select * from whitelist"))
+
             self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
             self.checkblacklist(self.myapp)
             QTest.qWait(500)
             self.assertEqual(whitelistcount + 1, len(sqlQuery("Select * from whitelist")))
+            self.assertTrue(True, " \n Test Pass :-->  Black/WhiteList Functionality Tested Successfully!")
         except:
-            pass
+            self.assertTrue(False, " \n Test Fail :--> Black/WhiteList Functionality Failed!.")
 
     def checkblacklist(self, myapp):
         """fill blacklist and whitelist fields"""
