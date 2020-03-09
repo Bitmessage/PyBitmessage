@@ -73,7 +73,8 @@ KVFILES = [
     'settings', 'popup', 'allmails', 'draft',
     'maildetail', 'common_widgets', 'addressbook',
     'myaddress', 'composer', 'payment', 'sent',
-    'network', 'login', 'credits', 'trash', 'inbox'
+    'network', 'login', 'credits', 'trash', 'inbox',
+    'payment_method'
 ]
 
 
@@ -818,6 +819,10 @@ class DropDownWidget(BoxLayout):
         self.ids.ti.text = self.ids.btn.text
         self.ids.ti.focus = True
 
+    def qrScanner(self):
+        """This method is used for scanning Qr code"""
+        pass
+
 
 class MyTextInput(TextInput):
     """Takes the text input in the field"""
@@ -835,14 +840,14 @@ class MyTextInput(TextInput):
 
     def on_text(self, instance, value):
         """Find all the occurrence of the word"""
-        self.parent.parent.parent.parent.ids.rv.data = []
+        self.parent.parent.parent.parent.parent.ids.rv.data = []
         matches = [self.word_list[i] for i in range(
             len(self.word_list)) if self.word_list[
                 i][:self.starting_no] == value[:self.starting_no]]
         display_data = []
         for i in matches:
             display_data.append({'text': i})
-        self.parent.parent.parent.parent.ids.rv.data = display_data
+        self.parent.parent.parent.parent.parent.ids.rv.data = display_data
         if len(matches) <= 10:
             self.parent.height = (250 + (len(matches) * 20))
         else:
@@ -873,6 +878,9 @@ class Payment(Screen):
             toast('Coins added to your account!')
             state.kivyapp.root.ids.sc18.ids.cred.text = '{0}'.format(
                 state.availabe_credit)
+
+    def move_to_pay_option(self, amount):
+        state.kivyapp.set_toolbar_for_QrCode()
 
 
 class Credits(Screen):
@@ -1579,6 +1587,9 @@ class NavigateApp(MDApp):
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
                 self.root.ids.scr_mngr.current = 'login'
+            elif self.root.ids.scr_mngr.current == 'pay-options':
+                self.set_common_header()
+                self.root.ids.scr_mngr.current = 'payment'
             else:
                 if state.kivyapp.variable_1:
                     self.root.ids.scr_mngr.current = 'inbox'
@@ -1704,7 +1715,8 @@ class NavigateApp(MDApp):
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
             if state.detailPageType else 'myaddress'\
-            if self.root.ids.scr_mngr.current == 'showqrcode' else 'inbox'
+            if self.root.ids.scr_mngr.current == 'showqrcode' else 'payment'\
+            if self.root.ids.scr_mngr.current == 'pay-options' else 'inbox'
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1842,7 +1854,7 @@ class NavigateApp(MDApp):
     def set_identicon(self, text):
         """Show identicon in address spinner"""
         img = identiconGeneration.generate(text)
-        self.root.children[0].children[0].ids.btn.children[1].texture = (img.texture)
+        # self.root.children[0].children[0].ids.btn.children[1].texture = (img.texture)
         # below line is for displaing logo
         self.root.ids.content_drawer.ids.top_box.children[0].texture = (img.texture)
 
@@ -1941,10 +1953,11 @@ class NavigateApp(MDApp):
     def load_selected_Image(self, curerentAddr):
         """This method load the selected image on screen"""
         top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
-        spinner_img_obj = self.root.ids.content_drawer.ids.btn.children[1]
-        spinner_img_obj.source = top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
+        # spinner_img_obj = self.root.ids.content_drawer.ids.btn.children[1]
+        # spinner_img_obj.source = top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
+        top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
         top_box_obj.reload()
-        spinner_img_obj.reload()
+        # spinner_img_obj.reload()
 
     def copy_composer_text(self, text):
         """Copy the data from mail detail page"""
@@ -2093,6 +2106,12 @@ class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
 
 class ToggleBtn(IRightBodyTouch, MDSwitch):
     """Right toggle button widget"""
+    pass
+
+
+class CheckboxLeftSampleWidget(ILeftBodyTouch, MDCheckbox):
+    """Left icon sample widget"""
+
     pass
 
 
@@ -2945,5 +2964,12 @@ class ToAddrBoxlayout(BoxLayout):
     to_addr = StringProperty()
 
     def set_toAddress(self, to_addr):
+        """This method is use to set to address"""
         self.to_addr = to_addr
+
+
+class PaymentMethods(Screen):
+    """PaymentMethods Screen show widgets of page"""
+
+    def redirect_on_web(self, instance):
         pass

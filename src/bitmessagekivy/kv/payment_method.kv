@@ -1,0 +1,57 @@
+<PaymentMethods>:
+    name: 'pay-options'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            # canvas.before:
+            #     Color:
+            #         rgba: .5,.5,.5,.5
+            #     Rectangle:
+            #         pos: self.pos
+            #         size: self.size
+            orientation: 'vertical'
+            padding: [self.width/4, 20, self.width/4, 20]
+            size_hint_y: None
+            spacing: 20
+            height: self.minimum_height
+            # GridLayout:
+            #     cols: 1
+            #     rows: 3
+            #     size_hint_y: None
+            #     # height: self.minimum_height
+            #     # padding: dp(10), dp(10)
+            #     spacing: dp(10)
+            SmartTileWithLabel:
+                # size_hint_y: None
+                size_hint: (None, None)
+                # pos_hint: {'x': .5, 'y': .5}
+                height: 180
+                width: 400
+                id: tile_2
+                mipmap: True
+                source: './images/paymode/download.png'
+                # text: "[size=12]Paypal[/size]"
+                on_press: root.redirect_on_web(self)
+                font_style: 'Subtitle1'
+            SmartTileWithLabel:
+                # size_hint_y: None
+                size_hint: (None, None)
+                height: 180
+                width: 400
+                id: tile_2
+                mipmap: True
+                # text: "[size=12]Crypto wallet[/size]"
+                font_style: 'Subtitle1'
+                source: './images/paymode/bitcoin-logo.jpg'
+                on_press: root.redirect_on_web(self)
+            SmartTileWithLabel:
+                # size_hint_y: None
+                size_hint: (None, None)
+                height: 180
+                width: 400
+                id: tile_2
+                mipmap: True
+                # text: "[size=12]Googgle in app[/size]"
+                font_style: 'Subtitle1'
+                source: './images/paymode/111.webp'
+                on_press: root.redirect_on_web(self)
