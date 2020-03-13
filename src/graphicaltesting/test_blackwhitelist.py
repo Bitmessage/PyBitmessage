@@ -20,49 +20,62 @@ class BitmessageTest_BlackandWhiteList(BitmessageTestCase):
 
     def test_blackwhitelist(self):
         """Tab switch to blacklist and add the address on blacklist and whitelist"""
+        print("=====================Test - Adding Address to Black/WhiteList=====================")
+        self.blacklist_obj = blacklist.Blacklist()
         try:
             QTest.qWait(500)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
             QTest.qWait(500)
-
-            self.blacklist_obj = blacklist.Blacklist()
             self.dialog = AddAddressDialog(self.myapp)
             blacklistcount = len(sqlQuery("Select * from blacklist"))
-
             self.myapp.ui.blackwhitelist.radioButtonBlacklist.click()
-            self.checkblacklist(self.myapp)
+            self.myapp.ui.blackwhitelist.pushButtonAddBlacklist.setStyleSheet(
+                "QPushButton {background-color: #FF5733; color: white;}"
+            )
+            QTest.qWait(50)
+            self.myapp.ui.blackwhitelist.pushButtonAddBlacklist.setStyleSheet("")
+            self.checkblacklist()
+            self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
+            self.myapp.ui.blackwhitelist.radioButtonBlacklist.click()
+            QTest.qWait(500)
+            whitelistcount = len(sqlQuery("Select * from whitelist"))
+            self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
+            self.myapp.ui.blackwhitelist.pushButtonAddBlacklist.setStyleSheet(
+                "QPushButton {background-color: #FF5733; color: white;}"
+            )
+            QTest.qWait(50)
+            self.myapp.ui.blackwhitelist.pushButtonAddBlacklist.setStyleSheet("")
+            self.checkblacklist()
+            self.myapp.ui.blackwhitelist.radioButtonBlacklist.click()
+            self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
             QTest.qWait(500)
             self.assertEqual(blacklistcount + 1, len(sqlQuery("Select * from blacklist")))
-            whitelistcount = len(sqlQuery("Select * from whitelist"))
-
-            self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
-            self.checkblacklist(self.myapp)
-            QTest.qWait(500)
             self.assertEqual(whitelistcount + 1, len(sqlQuery("Select * from whitelist")))
-            self.assertTrue(True, " \n Test Pass :-->  Black/WhiteList Functionality Tested Successfully!")
+            print("Black/WhiteList Functionality Tested Successfully")
+            return 1
         except:
-            self.assertTrue(False, " \n Test Fail :--> Black/WhiteList Functionality Failed!.")
+            print("Black/WhiteList Functionality Failed")
+            return 0
 
-    def checkblacklist(self, myapp):
+    def checkblacklist(self):  # pylint: disable=too-many-statements
         """fill blacklist and whitelist fields"""
-        # pylint: disable=too-many-statements
-        QTest.qWait(1000)
         self.dialog.lineEditLabel.setText("")
         self.dialog.lineEditAddress.setText("")
+        QTest.qWait(350)
         self.dialog.show()
-        QTest.qWait(800)
+        QTest.qWait(750)
         random_label = ""
         for _ in range(30):
             random_label += choice(ascii_lowercase)
             self.dialog.lineEditLabel.setText(random_label)
-            QTest.qWait(5)
+            QTest.qWait(4)
         QTest.qWait(500)
         rand_address = choice(BMConfigParser().addresses())
         random_address = ""
-        for x in range(len(rand_address)):
-            random_address += rand_address[x]
+        for i, _ in enumerate(rand_address):
+            random_address += rand_address[i]
             self.dialog.lineEditAddress.setText(random_address)
-            QTest.qWait(5)
+            QTest.qWait(4)
         QTest.qWait(500)
         QtCore.QTimer.singleShot(0, self.dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
         if self.dialog.labelAddressCheck.text() == _translate("MainWindow", "Address is valid."):
@@ -88,30 +101,23 @@ class BitmessageTest_BlackandWhiteList(BitmessageTestCase):
                     sql = """INSERT INTO blacklist VALUES (?,?,?)"""
                     sqlExecute(sql, *t)
                     black_list_value = sqlQuery("Select address from blacklist where label='" + random_label + "'")[0]
-                    print("\n Test Pass :--> Address Added to the blacklist! \n")
                     self.assertEqual(black_list_value[0], random_address)
-                    return
+                    print("Test Pass:--> Address Added to the blacklist")
+                    return 1
                 else:
                     sql = """INSERT INTO whitelist VALUES (?,?,?)"""
                     sqlExecute(sql, *t)
                     white_list_value = sqlQuery("Select address from whitelist where label='" + random_label + "'")[0]
-                    print("\n Test Pass :--> Address Added to the whitelist! \n")
                     self.assertEqual(white_list_value[0], random_address)
-                    return
+                    print("Test Pass:--> Address Added to the whitelist")
+                    return 1
             else:
-                QTest.qWait(100)
                 print(
-                    "\n Test Fail :--> You cannot add the same address to your list twice."
-                    " Perhaps rename the existing one if you want. \n"
-                )
-                self.assertTrue(
-                    False,
-                    "\n Test Fail :--> You cannot add the same address to your list twice."
-                    " Perhaps rename the existing one if you want.",
+                    "Test Fail:--> You cannot add the same address to your list twice."
+                    "Perhaps rename the existing one if you want"
                 )
                 return 0
         else:
             QTest.qWait(100)
-            print("\n Test Fail :--> The address you entered was invalid. Ignoring it. \n")
-            self.assertTrue(False, " \n Test Fail :--> The address you entered was invalid. Ignoring it.")
+            print("Test Fail:--> The address you entered was invalid. Ignoring it")
             return 0

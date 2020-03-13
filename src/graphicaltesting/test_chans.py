@@ -9,7 +9,8 @@ class BitmessageTest_ChansTest(BitmessageTestCase):
 
     def test_chans(self):
         """Switch to chans window and test"""
+        print("=====================Test - Chans Functionality=====================")
         QTest.qWait(1200)
         self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.chans)
-        print("\n Test Pass :--> Chans Test Passed! \n")
+        print("Test Pass :--> Chans Test Passed")
         return 1

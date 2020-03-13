@@ -16,22 +16,25 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
 
     def test_settingwindow(self):
         """Triggers the setting window"""
-        self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
-        QTest.qWait(1500)
-        dialog = dialogs.SettingsDialog(self.myapp, firstrun=self.myapp._firstrun)
-        self.language_change(dialog)
-        QTest.qWait(300)
-        self.eng_convert(dialog)
-        QTest.qWait(300)
-        self.network_setting_window(dialog)
-        QTest.qWait(300)
-        self.tabresendsexpire_window(dialog)
-        QTest.qWait(300)
+        print("=====================Test - Setting Window=====================")
+        try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
+            QTest.qWait(1500)
+            dialog = dialogs.SettingsDialog(self.myapp, firstrun=self.myapp._firstrun)
+            self.language_change(dialog)
+            self.eng_convert(dialog)
+            self.network_setting_window(dialog)
+            self.tabresendsexpire_window(dialog)
+            return 1
+        except:
+            print("Test Fail:-->Setting Window functionality failed")
+            return 0
 
     def language_change(self, dialog):
         """Function that changes the language of the application"""
+        print("=====================Test - Language Change=====================")
         try:
-            """Change language"""
+            QTest.qWait(500)
             dialog.show()
             dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabUserInterface))
             QTest.qWait(800)
@@ -42,17 +45,17 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             QTest.qWait(1000)
             ok_btn = dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok)
             QTest.mouseClick(ok_btn, Qt.LeftButton)
-            print("\n Test Pass :--> Language Changed Successfully \n")
-            self.assertTrue(True, " \n Test Pass :--> Language Changed Successfully ")
+            print("Test Pass:--> Language Changed Successfully")
             return 1
         except:
-            print("\n Test Fail :--> Error while changing Language! \n")
-            self.assertTrue(False, " \n Test Fail :--> Error while changing Language!")
+            print("Test Fail:--> Error while changing Language")
             return 0
 
     def eng_convert(self, dialog):
         """Convert any language to english, testing just for good readability"""
+        print("=====================Test - Converting Language Back to English=====================")
         try:
+            QTest.qWait(500)
             dialog.show()
             dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabUserInterface))
             QTest.qWait(800)
@@ -63,17 +66,17 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             QTest.qWait(1000)
             ok_btn = dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok)
             QTest.mouseClick(ok_btn, Qt.LeftButton)
-            print("\n Test Pass :--> language changed to English Again \n")
-            self.assertTrue(True, " \n Test Pass :--> language changed to English Again ")
+            print("Test Pass:--> language changed to English Again")
             return 1
         except:
-            print("\n Test Fail :--> Not able to change the language to English Again! Error! \n")
-            self.assertTrue(False, " \n Test Fail :--> Not able to change the language to English Again! Error!")
+            print("Test Fail:--> Not able to change the language to English Again! Error")
             return 0
 
     def network_setting_window(self, dialog):
         """Test for Network setting window"""
+        print("=====================Test - Network Setting Window=====================")
         try:
+            QTest.qWait(500)
             dialog.show()
             QTest.qWait(300)
             dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabNetworkSettings))
@@ -127,17 +130,17 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
                 QTest.qWait(1200)
             ok_btn = dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok)
             QTest.mouseClick(ok_btn, Qt.LeftButton)
-            print("\n Test Pass :--> Successfully tested Network setting window \n")
-            self.assertTrue(True, " \n Test Pass :--> Successfully tested Network setting window ")
+            print("Test Pass:--> Successfully tested Network setting window")
             return 1
         except:
-            print("\n Test Fail :-->  Error while testing Network setting window! \n")
-            self.assertTrue(False, " \n Test Fail :-->  Error while testing Network setting window!")
+            print("Test Fail:--> Error while testing Network setting window")
             return 0
 
     def tabresendsexpire_window(self, dialog):
         """Testing for resend expire window"""
+        print("=====================Test - Tab Resend Expire Window=====================")
         try:
+            QTest.qWait(500)
             dialog.lineEditDays.setText("")
             dialog.lineEditMonths.setText("")
             dialog.show()
@@ -152,10 +155,8 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             QTest.qWait(800)
             ok_btn = dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok)
             QTest.mouseClick(ok_btn, Qt.LeftButton)
-            print("\n Test Pass :--> Test successfull. \n")
-            self.assertTrue(True, " \n Test Pass :--> Test successfull. ")
+            print("Test Pass:--> Test successfull")
             return 1
         except:
-            print("\n Test Fail :--> Tab Resend Exprire! \n")
-            self.assertTrue(False, " \n Test Fail :--> Tab Resend Exprire! ")
+            print("Test Fail:--> Tab Resend Exprire")
             return 0

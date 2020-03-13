@@ -20,6 +20,7 @@ class BitmessageTest_QuitTest(BitmessageTestCase):
 
     def test_quitapplication(self):
         """wait for pow and shutdown the application"""
+        print("=====================Test - Quitting Application=====================")
         if self.myapp.quitAccepted and not self.myapp.wait:
             return
 

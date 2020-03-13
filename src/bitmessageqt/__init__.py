@@ -2514,7 +2514,6 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.textEditMessage.setFocus()
 
     def on_action_MarkAllRead(self):
-        import state
         if state.qttesting:
             tableWidget = self.getCurrentMessagelist()
         else:
@@ -3287,8 +3286,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuAddressBook.addSeparator()
             for plugin in self.menu_plugins['address']:
                 self.popMenuAddressBook.addAction(plugin)
-        self.popMenuAddressBook.exec_(
-            self.ui.tableWidgetAddressBook.mapToGlobal(point))
+        if state.qttesting:
+            self.popMenuAddressBook.move(point.x(), point.y())
+            self.popMenuAddressBook.show()
+        else:
+            self.popMenuAddressBook.exec_(
+                self.ui.tableWidgetAddressBook.mapToGlobal(point))
 
     # Group of functions for the Subscriptions dialog box
     def on_action_SubscriptionsNew(self):
@@ -3368,8 +3371,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
         if self.popMenuSubscriptions.isEmpty():
             return
-        self.popMenuSubscriptions.exec_(
-            self.ui.treeWidgetSubscriptions.mapToGlobal(point))
+        if state.qttesting:
+            self.popMenuSubscriptions.move(point.x(), point.y())
+            self.popMenuSubscriptions.show()
+        else:
+            self.popMenuSubscriptions.exec_(
+                self.ui.treeWidgetSubscriptions.mapToGlobal(point))
 
     def widgetConvert(self, widget):
         if widget == self.ui.tableWidgetInbox:
