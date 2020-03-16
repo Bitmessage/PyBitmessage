@@ -62,9 +62,7 @@ class BitmessageTest_QuitTest(BitmessageTestCase):
                 if curWorkerQueue > 0:
                     self.myapp.updateStatusBar(
                         _translate("MainWindow", "Waiting for PoW to finish... %1%").arg(
-                            50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue
-                        )
-                    )
+                            50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue))
                     time.sleep(0.5)
                     QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
             self.myapp.updateStatusBar(_translate("MainWindow", "Shutting down Pybitmessage... %1%").arg(50))
@@ -77,9 +75,7 @@ class BitmessageTest_QuitTest(BitmessageTestCase):
             while pendingUpload() > 1:
                 self.myapp.updateStatusBar(
                     _translate("MainWindow", "Waiting for objects to be sent... %1%").arg(
-                        int(50 + 20 * (pendingUpload() / maxPendingUpload))
-                    )
-                )
+                        int(50 + 20 * (pendingUpload() / maxPendingUpload))))
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
             QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
@@ -87,7 +83,7 @@ class BitmessageTest_QuitTest(BitmessageTestCase):
         self.myapp.updateStatusBar(_translate("MainWindow", "Saving settings... %1%").arg(70))
         QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         self.myapp.saveSettings()
-        for attr, obj in self.myapp.ui.__dict__.iteritems():
+        for _, obj in self.myapp.ui.__dict__.iteritems():
             if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
                 saveMethod = getattr(obj, "saveSettings", None)
                 if callable(saveMethod):

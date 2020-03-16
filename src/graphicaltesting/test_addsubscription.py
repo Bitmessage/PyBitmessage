@@ -25,8 +25,7 @@ class BitmessageTest_AddSubscription(BitmessageTestCase):
                 self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.subscriptions)
                 QTest.qWait(500)
                 self.myapp.ui.pushButtonAddSubscription.setStyleSheet(
-                    "QPushButton {background-color: #FF5733; color: white;}"
-                )
+                    "QPushButton {background-color: #FF5733; color: white;}")
                 QTest.qWait(50)
                 self.myapp.ui.pushButtonAddSubscription.setStyleSheet("")
                 dialog = dialogs.NewSubscriptionDialog(self.myapp)
@@ -56,8 +55,7 @@ class BitmessageTest_AddSubscription(BitmessageTestCase):
                 if shared.isAddressInMySubscriptionsList(address):
                     print(
                         "Test Fail:--> You cannot add the same address to your subscriptions twice."
-                        " Perhaps rename the existing one if you want"
-                    )
+                        " Perhaps rename the existing one if you want")
                     QTest.qWait(500)
                     return 0
                 self.myapp.addSubscription(address, label)

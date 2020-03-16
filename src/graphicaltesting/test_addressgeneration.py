@@ -73,15 +73,14 @@ class BitmessageTest_AddressGeneration(BitmessageTestCase):
             QTest.qWait(750)
             self.assertEqual(random_password1, random_password2)
             print(" Creating 8 Addresses. Please Wait! ......")
-            QTest.qWait(2500)
+            QTest.qWait(3000)
             print(" Generating ......... ")
-            QTest.qWait(2500)
+            QTest.qWait(3000)
             self.assertEqual(len(BMConfigParser().addresses()), len(bm_addresses) + 8)
             print("Test Pass:--> Address Generated Successfully with passphrase")
             return 1
         except:
             print(
                 "Test Fail:-->  Address Generatation Failed"
-                " with passphrase or Taking too much time to generate address"
-            )
+                " with passphrase or Taking too much time to generate address")
             return 0

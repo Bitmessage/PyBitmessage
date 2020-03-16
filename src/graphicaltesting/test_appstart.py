@@ -8,3 +8,4 @@ def connectme(dialog):
     dialog.show()
     QTest.qWait(1200)
     QtCore.QTimer.singleShot(0, dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
+    return 1
