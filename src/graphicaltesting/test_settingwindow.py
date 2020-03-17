@@ -10,12 +10,15 @@ from PyQt4.QtTest import QTest
 from bitmessageqt import dialogs
 from testloader import BitmessageTestCase
 
+# pylint: disable=no-self-use
+
 
 class BitmessageTest_SettingWindowTest(BitmessageTestCase):
     """Switch to setting tab and test"""
 
     def test_settingwindow(self):
         """Triggers the setting window"""
+        # pylint: disable=protected-access
         print("=====================Test - Setting Window=====================")
         try:
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
@@ -36,9 +39,11 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
         try:
             QTest.qWait(500)
             dialog.show()
-            dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabUserInterface))
+            dialog.tabWidgetSettings.setCurrentIndex(
+                dialog.tabWidgetSettings.indexOf(dialog.tabUserInterface))
             QTest.qWait(800)
-            dialog.languageComboBox.setStyleSheet("QComboBox {background-color: #FF5733; color: white;}")
+            dialog.languageComboBox.setStyleSheet(
+                "QComboBox {background-color: #FF5733; color: white;}")
             QTest.qWait(50)
             dialog.languageComboBox.setStyleSheet("")
             dialog.languageComboBox.setCurrentIndex(random.randint(1, 17))
@@ -53,13 +58,16 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
 
     def eng_convert(self, dialog):
         """Convert any language to english, testing just for good readability"""
-        print("=====================Test - Converting Language Back to English=====================")
+        print(
+            "=====================Test - Converting Language Back to English=====================")
         try:
             QTest.qWait(500)
             dialog.show()
-            dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabUserInterface))
+            dialog.tabWidgetSettings.setCurrentIndex(
+                dialog.tabWidgetSettings.indexOf(dialog.tabUserInterface))
             QTest.qWait(800)
-            dialog.languageComboBox.setStyleSheet("QComboBox {background-color: #FF5733; color: white;}")
+            dialog.languageComboBox.setStyleSheet(
+                "QComboBox {background-color: #FF5733; color: white;}")
             QTest.qWait(50)
             dialog.languageComboBox.setStyleSheet("")
             dialog.languageComboBox.setCurrentIndex(5)
@@ -79,19 +87,11 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             QTest.qWait(500)
             dialog.show()
             QTest.qWait(300)
-            dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabNetworkSettings))
+            dialog.tabWidgetSettings.setCurrentIndex(
+                dialog.tabWidgetSettings.indexOf(dialog.tabNetworkSettings))
             QTest.qWait(500)
 
-            dialog.lineEditSocksHostname.setText("")
-            dialog.lineEditSocksPort.setText("")
-            dialog.lineEditSocksUsername.setText("")
-            dialog.lineEditSocksPassword.setText("")
-            if dialog.checkBoxAuthentication.isChecked():
-                dialog.checkBoxAuthentication.click()
-            if dialog.checkBoxSocksListen.isChecked():
-                dialog.checkBoxSocksListen.click()
-            if dialog.checkBoxOnionOnly.isChecked():
-                dialog.checkBoxOnionOnly.click()
+            self.network_setting_window_preprocess(dialog)
 
             QTest.qWait(500)
             dialog.comboBoxProxyType.setCurrentIndex(random.randint(1, 3))
@@ -112,9 +112,11 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
                 dialog.checkBoxAuthentication.click()
                 QTest.qWait(500)
 
-            dialog.lineEditSocksUsername.setText("".join(choice(ascii_lowercase) for i in range(10)))
+            dialog.lineEditSocksUsername.setText(
+                "".join(choice(ascii_lowercase) for i in range(10)))
             QTest.qWait(500)
-            dialog.lineEditSocksPassword.setText("".join(choice(ascii_lowercase) for i in range(10)))
+            dialog.lineEditSocksPassword.setText(
+                "".join(choice(ascii_lowercase) for i in range(10)))
             QTest.qWait(500)
 
             if dialog.checkBoxSocksListen.isChecked():
@@ -136,6 +138,22 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             print("Test Fail:--> Error while testing Network setting window")
             return 0
 
+    def network_setting_window_preprocess(self, dialog):
+        """Setting text to fields"""
+        try:
+            dialog.lineEditSocksHostname.setText("")
+            dialog.lineEditSocksPort.setText("")
+            dialog.lineEditSocksUsername.setText("")
+            dialog.lineEditSocksPassword.setText("")
+            if dialog.checkBoxAuthentication.isChecked():
+                dialog.checkBoxAuthentication.click()
+            if dialog.checkBoxSocksListen.isChecked():
+                dialog.checkBoxSocksListen.click()
+            if dialog.checkBoxOnionOnly.isChecked():
+                dialog.checkBoxOnionOnly.click()
+        except:
+            pass
+
     def tabresendsexpire_window(self, dialog):
         """Testing for resend expire window"""
         print("=====================Test - Tab Resend Expire Window=====================")
@@ -145,7 +163,8 @@ class BitmessageTest_SettingWindowTest(BitmessageTestCase):
             dialog.lineEditMonths.setText("")
             dialog.show()
             QTest.qWait(300)
-            dialog.tabWidgetSettings.setCurrentIndex(dialog.tabWidgetSettings.indexOf(dialog.tabResendsExpire))
+            dialog.tabWidgetSettings.setCurrentIndex(
+                dialog.tabWidgetSettings.indexOf(dialog.tabResendsExpire))
             QTest.qWait(500)
 
             QTest.qWait(500)

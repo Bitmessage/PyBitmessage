@@ -15,6 +15,8 @@ from helper_sql import sqlExecute, sqlQuery
 from testloader import BitmessageTestCase
 from tr import _translate
 
+# pylint: disable=no-else-return, inconsistent-return-statements, attribute-defined-outside-init
+
 
 class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
     """Inbox TabWidget QTreeWidget popMenu Fucntionality testing"""
@@ -27,11 +29,13 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
             QTest.qWait(500)
             self.treeWidget = self.myapp.ui.treeWidgetYourIdentities
-            self.levelitem = self.treeWidget.topLevelItem(random.randint(1, len(BMConfigParser().addresses()) + 1))
+            self.levelitem = self.treeWidget.topLevelItem(
+                random.randint(1, len(BMConfigParser().addresses()) + 1))
             self.treeWidget.setCurrentItem(self.levelitem)
             self.currentItem = self.myapp.getCurrentItem()
             self.rect = self.treeWidget.visualItemRect(self.levelitem)
-            self.myapp.on_context_menuYourIdentities(QtCore.QPoint(self.rect.x() + 160, self.rect.y() + 200))
+            self.myapp.on_context_menuYourIdentities(
+                QtCore.QPoint(self.rect.x() + 160, self.rect.y() + 200))
             self.myapp.popMenuYourIdentities.hide()
             self.copy_clipboard()
             self.enable_disable()
@@ -47,6 +51,7 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
         """Copy Address to the ClipBoard and test whether the copied test is same or not?"""
         print("=====================Test - Copy Address to the ClipBoard=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
             self.popup_menu(2)
             text_selected = self.currentItem.text(0)
             QTest.qWait(500)
@@ -64,8 +69,10 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
 
     def enable_disable(self):
         """Enable address and disable address"""
-        print("=====================Test - Address Enable-Disable Functionality=====================")
+        print(
+            "=====================Test - Address Enable-Disable Functionality=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
             self.popup_menu(4)
             if self.currentItem.isEnabled:
                 QTest.qWait(500)
@@ -91,15 +98,18 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
         """Tests for special address"""
         print("=====================Test - Address Special Behavior=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
             self.popup_menu(6)
             special_add = dialogs.SpecialAddressBehaviorDialog(self.myapp, BMConfigParser())
             special_add.lineEditMailingListName.setText("")
             QTest.qWait(500)
             special_add.radioButtonBehaviorMailingList.click()
             QTest.qWait(1000)
-            special_add.lineEditMailingListName.setText("".join(choice(ascii_lowercase) for x in range(15)))
+            special_add.lineEditMailingListName.setText(
+                "".join(choice(ascii_lowercase) for x in range(15)))
             QTest.qWait(500)
-            QTest.mouseClick(special_add.buttonBox.button(QtGui.QDialogButtonBox.Ok), Qt.LeftButton)
+            QTest.mouseClick(
+                special_add.buttonBox.button(QtGui.QDialogButtonBox.Ok), Qt.LeftButton)
             print("Test Pass:--> Special Address Behavior Functionality Passed")
             return 1
         except:
@@ -110,6 +120,7 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
         """Test email gateway functionality"""
         print("=====================Test - Email Gateway=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
             self.popup_menu(7)
             QTest.qWait(200)
             email_gateway = dialogs.EmailGatewayDialog(self.myapp, BMConfigParser())
@@ -124,7 +135,8 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
                 + ".com")
             email_gateway.lineEditEmail.setText(email)
             QTest.qWait(500)
-            QTest.mouseClick(email_gateway.buttonBox.button(QtGui.QDialogButtonBox.Ok), Qt.LeftButton)
+            QTest.mouseClick(
+                email_gateway.buttonBox.button(QtGui.QDialogButtonBox.Ok), Qt.LeftButton)
             print("Test Pass:--> Email-Gateway Functionality Passed")
             return 1
         except:
@@ -135,6 +147,7 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
         """Mark all messages as read"""
         print("=====================Test - Mark All as Read Functionality=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.inbox)
             self.popup_menu(11)
             QTest.qWait(500)
             self.myapp.popMenuYourIdentities.actions()[11].trigger()
@@ -148,8 +161,10 @@ class BitmessageTest_Inbox_PopMenu(BitmessageTestCase):
     def popup_menu(self, intval):
         """Display popupmenu and clicking action UI"""
         QTest.qWait(5)
-        self.myapp.popMenuYourIdentities.setActiveAction(self.myapp.popMenuYourIdentities.actions()[intval])
-        self.myapp.popMenuYourIdentities.setStyleSheet("QMenu:selected {background-color:#FF5733}")
+        self.myapp.popMenuYourIdentities.setActiveAction(
+            self.myapp.popMenuYourIdentities.actions()[intval])
+        self.myapp.popMenuYourIdentities.setStyleSheet(
+            "QMenu:selected {background-color: #FF5733; color: white;}")
         self.myapp.popMenuYourIdentities.show()
         QTest.qWait(400)
         self.myapp.popMenuYourIdentities.hide()
@@ -163,8 +178,8 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
         """Show QTreeWidget popmenu"""
         print("-----------------------------------------------------------2")
         try:
-            QTest.qWait(500)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
+            QTest.qWait(500)
             self.treeWidget = self.myapp.ui.tableWidgetAddressBook
             total_sub = sqlQuery("Select address from addressbook")
             QTest.qWait(500)
@@ -176,7 +191,7 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
             QTest.qWait(500)
             self.myapp.on_context_menuAddressBook(QtCore.QPoint(rect.x() + 160, rect.y() + 200))
             QTest.qWait(500)
-            if len(total_sub) > 0:
+            if total_sub:
                 self.treeWidget.item(random.randint(0, self.rand_value), 1)
             else:
                 print("No Address Found.")
@@ -193,10 +208,11 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
 
     def add_new_address(self):
         """Adding New Address to Address Book"""
-        print("=====================Test - Adding New Address to Address Book=====================")
+        print(
+            "=====================Test - Adding New Address to Address Book=====================")
         try:
-            self.popup_menu(6)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
+            self.popup_menu(6)
             self.dialog = dialogs.AddAddressDialog(self.myapp)
             self.dialog.show()
             QTest.qWait(500)
@@ -204,7 +220,8 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
             QTest.qWait(500)
             self.dialog.lineEditAddress.setText(choice(BMConfigParser().addresses()))
             QTest.qWait(500)
-            QtCore.QTimer.singleShot(0, self.dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
+            QtCore.QTimer.singleShot(
+                0, self.dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
             QTest.qWait(500)
             try:
                 address, label = self.dialog.data
@@ -232,6 +249,7 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
         """Test - Send Message to this Address"""
         print("=====================Test - Send Message to this Address=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
             self.popup_menu(0)
             if BMConfigParser().addresses():
                 self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
@@ -278,10 +296,11 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
 
     def copy_clipboard(self):
         """Copy Address to the ClipBoard and test whether the copied test is same or not?"""
-        print("=====================Test - Copy Address Book Address to Clipboard=====================")
+        print(
+            "=====================Test - Copy Address Book Address to Clipboard=====================")
         try:
-            self.popup_menu(1)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
+            self.popup_menu(1)
             # self.current_address = str(self.treeWidget.item(random.randint(0, self.rand_value), 1).text())
             QTest.qWait(500)
             self.myapp.popMenuAddressBook.actions()[1].trigger()
@@ -300,8 +319,8 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
         """Subscribe to This Address"""
         print("=====================Test - Subscribe to This Address=====================")
         try:
-            self.popup_menu(2)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
+            self.popup_menu(2)
             self.treeWidget.setCurrentCell(self.rand_value, 1)
             QTest.qWait(500)
             self.myapp.popMenuAddressBook.actions()[2].trigger()
@@ -325,11 +344,12 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
 
     def delete_addressbook(self):
         """Delete Address from the Address Book"""
-        print("=====================Test - Delete Address from the Address Book=====================")
+        print(
+            "=====================Test - Delete Address from the Address Book=====================")
         try:
             QTest.qWait(100)
-            self.popup_menu(7)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.send)
+            self.popup_menu(7)
             self.treeWidget.setCurrentCell(self.rand_value, 1)
             self.myapp.on_action_AddressBookDelete()
             QTest.qWait(500)
@@ -347,8 +367,10 @@ class BitmessageTest_AddressBox_PopMenu(BitmessageTestCase):
     def popup_menu(self, intval):
         """Display popupmenu and clicking action UI"""
         QTest.qWait(5)
-        self.myapp.popMenuAddressBook.setActiveAction(self.myapp.popMenuAddressBook.actions()[intval])
-        self.myapp.popMenuAddressBook.setStyleSheet("QMenu:selected {background-color:#FF5733}")
+        self.myapp.popMenuAddressBook.setActiveAction(
+            self.myapp.popMenuAddressBook.actions()[intval])
+        self.myapp.popMenuAddressBook.setStyleSheet(
+            "QMenu:selected {background-color: #FF5733; color: white;}")
         self.myapp.popMenuAddressBook.show()
         QTest.qWait(400)
         self.myapp.popMenuAddressBook.hide()
@@ -410,7 +432,8 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
                     random_address += rand_address[i]
                     dialog.lineEditAddress.setText(random_address)
                     QTest.qWait(4)
-                QtCore.QTimer.singleShot(0, dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
+                QtCore.QTimer.singleShot(
+                    0, dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
                 QTest.qWait(500)
                 try:
                     address, label = dialog.data
@@ -421,7 +444,7 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
                     print(
                         "MainWindow",
                         "Error: You cannot add the same address to your subscriptions twice."
-                        " Perhaps rename the existing one if you want.")
+                        " Perhaps rename the existing one if you want.",)
                     self.myapp.updateStatusBar(
                         _translate(
                             "MainWindow",
@@ -443,7 +466,8 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
 
     def enable_disable(self):
         """Enable address and disable address"""
-        print("=====================Test - Address Enable-Disable Functionality=====================")
+        print(
+            "=====================Test - Address Enable-Disable Functionality=====================")
         QTest.qWait(500)
         try:
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.subscriptions)
@@ -469,7 +493,8 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
 
     def copy_clipboard(self):
         """Copy Address to the ClipBoard and test whether the copied test is same or not?"""
-        print("=====================Test - Copy Address Book Address to Clipboard=====================")
+        print(
+            "=====================Test - Copy Address Book Address to Clipboard=====================")
         try:
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.subscriptions)
             self.treeWidget.setCurrentItem(self.levelitem)
@@ -491,6 +516,7 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
         """Test - Send Message to this Address"""
         print("=====================Test - Send Message to this Address=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.subscriptions)
             self.popup_menu(7)
             if BMConfigParser().addresses():
                 inbox_length = len(sqlQuery("Select msgid from inbox"))
@@ -540,6 +566,7 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
         """Mark all messages as read"""
         print("=====================Test - Mark All as Read Functionality=====================")
         try:
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.subscriptions)
             self.popup_menu(8)
             QTest.qWait(550)
             self.myapp.popMenuSubscriptions.actions()[8].trigger()
@@ -552,10 +579,11 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
 
     def del_address_from_sub(self):
         """Method deletes the address from the subscription"""
-        print("=====================Test - Delete Address from the subscription Field=====================")
+        print(
+            "=====================Test - Delete Address from the subscription Field=====================")
         try:
-            self.popup_menu(1)
             self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.subscriptions)
+            self.popup_menu(1)
             self.treeWidget.setCurrentItem(self.levelitem)
             address = self.myapp.getCurrentAccount()
             QTest.qWait(750)
@@ -578,8 +606,10 @@ class BitmessageTest_Subscription_PopMenu(BitmessageTestCase):
     def popup_menu(self, intval):
         """Display popupmenu and clicking action UI"""
         QTest.qWait(5)
-        self.myapp.popMenuSubscriptions.setActiveAction(self.myapp.popMenuSubscriptions.actions()[intval])
-        self.myapp.popMenuSubscriptions.setStyleSheet("QMenu:selected {background-color:#FF5733}")
+        self.myapp.popMenuSubscriptions.setActiveAction(
+            self.myapp.popMenuSubscriptions.actions()[intval])
+        self.myapp.popMenuSubscriptions.setStyleSheet(
+            "QMenu:selected {background-color: #FF5733; color: white;}")
         self.myapp.popMenuSubscriptions.show()
         QTest.qWait(400)
         self.myapp.popMenuSubscriptions.hide()
@@ -593,66 +623,75 @@ class BitmessageTest_BlackWhiteList_PopMenu(BitmessageTestCase):
         """Show QTableWidget Popupmenu"""
         print("-----------------------------------------------------------4")
         try:
-            total_bl = sqlQuery("Select address from blacklist")
-            total_wl = sqlQuery("Select address from whitelist")
-            if len(total_bl) > 0:
-                self.blacklist_obj = blacklist.Blacklist()
-                QTest.qWait(500)
-                self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
-                self.myapp.ui.blackwhitelist.radioButtonBlacklist.click()
-                self.tableWidget = self.myapp.ui.blackwhitelist.tableWidgetBlacklist
-                QTest.qWait(500)
-
-                self.rand_value = random.randint(0, len(total_bl) - 1)
-                self.tableWidget.setCurrentCell(self.rand_value, 1)
-                self.tableWidget.item(self.rand_value, 1).setSelected(True)
-                rect = self.tableWidget.visualItemRect(self.tableWidget.item(self.rand_value, 1))
-                QTest.qWait(500)
-
-                self.blacklist_obj.init_blacklist_popup_menu()
-                self.blacklist_obj.popMenuBlacklist.move(QtCore.QPoint(rect.x(), rect.y() + 290))
-                self.blacklist_obj.popMenuBlacklist.show()
-                QTest.qWait(300)
-                self.blacklist_obj.popMenuBlacklist.hide()
-                self.copy_clipboard()
-                self.enable_blackwhitelist()
-                self.disble_blackwhitelist()
-                self.address_delete()
-                return 1
-            else:
-                print("Test Fail:--> No White list Found")
-                return 0
-            if len(total_wl) > 0:
-                self.blacklist_obj = blacklist.Blacklist()
-
-                QTest.qWait(500)
-                self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
-                self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
-                self.tableWidget = self.myapp.ui.blackwhitelist.tableWidgetBlacklist
-                QTest.qWait(500)
-
-                self.rand_value = random.randint(0, len(total_wl) - 1)
-                self.tableWidget.setCurrentCell(self.rand_value, 1)
-                self.tableWidget.item(self.rand_value, 1).setSelected(True)
-                rect = self.tableWidget.visualItemRect(self.tableWidget.item(self.rand_value, 1))
-                QTest.qWait(500)
-
-                self.blacklist_obj.init_blacklist_popup_menu()
-                self.blacklist_obj.popMenuBlacklist.move(QtCore.QPoint(rect.x(), rect.y() + 290))
-                self.blacklist_obj.popMenuBlacklist.show()
-                QTest.qWait(300)
-                self.blacklist_obj.popMenuBlacklist.hide()
-
-                self.copy_clipboard()
-                self.enable_blackwhitelist()
-                self.disble_blackwhitelist()
-                self.address_delete()
-                return 1
-            else:
-                print("Test Fail:--> No White list Found")
-                return 0
+            self.total_bl = sqlQuery("Select address from blacklist")
+            self.total_wl = sqlQuery("Select address from whitelist")
+            if self.total_bl:
+                self.trigger_blacklist_test()
+            if self.total_wl:
+                self.trigger_whitelist_test()
         except:
             print("Test Fail:--> Getting Error while testing on Black/WhiteList Addresses")
+            return 0
+
+    def trigger_blacklist_test(self):
+        """Triggers blacklist test cases"""
+        try:
+            self.blacklist_obj = blacklist.Blacklist()
+            QTest.qWait(500)
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
+            self.myapp.ui.blackwhitelist.radioButtonBlacklist.click()
+            self.tableWidget = self.myapp.ui.blackwhitelist.tableWidgetBlacklist
+            QTest.qWait(500)
+
+            self.rand_value = random.randint(0, len(self.total_bl) - 1)
+            self.tableWidget.setCurrentCell(self.rand_value, 1)
+            self.tableWidget.item(self.rand_value, 1).setSelected(True)
+            rect = self.tableWidget.visualItemRect(self.tableWidget.item(self.rand_value, 1))
+            QTest.qWait(500)
+
+            self.blacklist_obj.init_blacklist_popup_menu()
+            self.blacklist_obj.popMenuBlacklist.move(QtCore.QPoint(rect.x(), rect.y() + 290))
+            self.blacklist_obj.popMenuBlacklist.show()
+            QTest.qWait(300)
+            self.blacklist_obj.popMenuBlacklist.hide()
+            self.copy_clipboard()
+            self.enable_blackwhitelist()
+            self.disble_blackwhitelist()
+            self.address_delete()
+            return 1
+        except:
+            print("Test Fail:--> Getting Error While Testing Blacklist")
+            return 0
+
+    def trigger_whitelist_test(self):
+        """Triggers whitelist test cases"""
+        try:
+            self.blacklist_obj = blacklist.Blacklist()
+            QTest.qWait(500)
+            self.myapp.ui.tabWidget.setCurrentWidget(self.myapp.ui.blackwhitelist)
+            self.myapp.ui.blackwhitelist.radioButtonWhitelist.click()
+            self.tableWidget = self.myapp.ui.blackwhitelist.tableWidgetBlacklist
+            QTest.qWait(500)
+
+            self.rand_value = random.randint(0, len(self.total_wl) - 1)
+            self.tableWidget.setCurrentCell(self.rand_value, 1)
+            self.tableWidget.item(self.rand_value, 1).setSelected(True)
+            rect = self.tableWidget.visualItemRect(self.tableWidget.item(self.rand_value, 1))
+            QTest.qWait(500)
+
+            self.blacklist_obj.init_blacklist_popup_menu()
+            self.blacklist_obj.popMenuBlacklist.move(QtCore.QPoint(rect.x(), rect.y() + 290))
+            self.blacklist_obj.popMenuBlacklist.show()
+            QTest.qWait(300)
+            self.blacklist_obj.popMenuBlacklist.hide()
+
+            self.copy_clipboard()
+            self.enable_blackwhitelist()
+            self.disble_blackwhitelist()
+            self.address_delete()
+            return 1
+        except:
+            print("Test Fail:--> Getting Error While Testing WhiteList")
             return 0
 
     def address_delete(self):
@@ -712,16 +751,20 @@ class BitmessageTest_BlackWhiteList_PopMenu(BitmessageTestCase):
             self.popup_menu(4)
             currentRow = self.tableWidget.currentRow()
             addressAtCurrentRow = self.tableWidget.item(currentRow, 1).text()
-            self.tableWidget.item(currentRow, 0).setTextColor(QtGui.QApplication.palette().text().color())
-            self.tableWidget.item(currentRow, 1).setTextColor(QtGui.QApplication.palette().text().color())
+            self.tableWidget.item(currentRow, 0).setTextColor(
+                QtGui.QApplication.palette().text().color())
+            self.tableWidget.item(currentRow, 1).setTextColor(
+                QtGui.QApplication.palette().text().color())
             QTest.qWait(500)
             if BMConfigParser().get("bitmessagesettings", "blackwhitelist") == "black":
                 QTest.qWait(500)
-                sqlExecute("""UPDATE blacklist SET enabled=1 WHERE address=?""", str(addressAtCurrentRow))
+                sqlExecute(
+                    """UPDATE blacklist SET enabled=1 WHERE address=?""", str(addressAtCurrentRow))
                 print("Test Pass:--> Enabled the Blacklist address")
             else:
                 QTest.qWait(500)
-                sqlExecute("""UPDATE whitelist SET enabled=1 WHERE address=?""", str(addressAtCurrentRow))
+                sqlExecute(
+                    """UPDATE whitelist SET enabled=1 WHERE address=?""", str(addressAtCurrentRow))
                 print("Test Pass:--> Enabled the Whitelist address")
             return 1
         except:
@@ -740,11 +783,13 @@ class BitmessageTest_BlackWhiteList_PopMenu(BitmessageTestCase):
             QTest.qWait(500)
             if BMConfigParser().get("bitmessagesettings", "blackwhitelist") == "black":
                 QTest.qWait(500)
-                sqlExecute("""UPDATE blacklist SET enabled=0 WHERE address=?""", str(addressAtCurrentRow))
+                sqlExecute(
+                    """UPDATE blacklist SET enabled=0 WHERE address=?""", str(addressAtCurrentRow))
                 print("Test Pass:--> Disabled the Blacklist address")
             else:
                 QTest.qWait(500)
-                sqlExecute("""UPDATE whitelist SET enabled=0 WHERE address=?""", str(addressAtCurrentRow))
+                sqlExecute(
+                    """UPDATE whitelist SET enabled=0 WHERE address=?""", str(addressAtCurrentRow))
                 print("Test Pass:--> Disabled the Blacklist address")
             return 1
         except:
@@ -755,8 +800,10 @@ class BitmessageTest_BlackWhiteList_PopMenu(BitmessageTestCase):
         """Display popupmenu and clicking action UI"""
         try:
             QTest.qWait(5)
-            self.blacklist_obj.popMenuBlacklist.setActiveAction(self.blacklist_obj.popMenuBlacklist.actions()[intval])
-            self.blacklist_obj.popMenuBlacklist.setStyleSheet("QMenu:selected {background-color:#FF5733}")
+            self.blacklist_obj.popMenuBlacklist.setActiveAction(
+                self.blacklist_obj.popMenuBlacklist.actions()[intval])
+            self.blacklist_obj.popMenuBlacklist.setStyleSheet(
+                "QMenu:selected {background-color: #FF5733; color: white;}")
             self.blacklist_obj.popMenuBlacklist.show()
             QTest.qWait(400)
             self.blacklist_obj.popMenuBlacklist.hide()

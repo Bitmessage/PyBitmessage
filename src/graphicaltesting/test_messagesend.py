@@ -13,10 +13,12 @@ from testloader import BitmessageTestCase
 
 class BitmessageTest_MessageTesting(BitmessageTestCase):
     """Test Message Sending functionality"""
+    # pylint: disable= no-else-return
 
     def test_msgsend(self):
         """Auto-fill senders address, receivers address, subject and message and sends the message"""
-        print("=====================Test - Message Send/Receive Functionality=====================")
+        print(
+            "=====================Test - Message Send/Receive Functionality=====================")
         try:
             if BMConfigParser().addresses():
                 inbox_length = len(sqlQuery("Select msgid from inbox"))

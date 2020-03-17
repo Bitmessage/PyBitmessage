@@ -31,6 +31,7 @@ class BitmessageTest_AddSubscription(BitmessageTestCase):
                 dialog = dialogs.NewSubscriptionDialog(self.myapp)
                 dialog.show()
                 QTest.qWait(750)
+
                 random_label = ""
                 for _ in range(30):
                     random_label += choice(ascii_lowercase)
@@ -45,6 +46,7 @@ class BitmessageTest_AddSubscription(BitmessageTestCase):
                     QTest.qWait(4)
                 QTest.qWait(500)
                 QTimer.singleShot(0, dialog.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked)
+
                 try:
                     QTest.qWait(800)
                     address, label = dialog.data
@@ -59,7 +61,8 @@ class BitmessageTest_AddSubscription(BitmessageTestCase):
                     QTest.qWait(500)
                     return 0
                 self.myapp.addSubscription(address, label)
-                sub_add = sqlQuery("select address from subscriptions where label='" + random_label + "'")[0]
+                sub_add = sqlQuery(
+                    "select address from subscriptions where label='" + random_label + "'")[0]
                 self.assertEqual(random_address, sub_add[0])
                 print("Test Pass:-->  Subscription Done Successfully")
                 return 1
