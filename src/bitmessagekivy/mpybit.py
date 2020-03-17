@@ -396,7 +396,10 @@ class MyAddress(Screen):
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,
                 )
-            meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
+            try:
+                meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
+            except Exception as e:
+                meny.canvas.children[9].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
@@ -498,7 +501,10 @@ class MyAddress(Screen):
         BMConfigParser().set(str(address), 'enabled', 'false')
         BMConfigParser().save()
         instance.parent.parent.theme_text_color = 'Primary'
-        instance.parent.parent.canvas.children[6].rgba = [0.5, 0.5, 0.5, 0.5]
+        try:
+            instance.parent.parent.canvas.children[6].rgba = [0.5, 0.5, 0.5, 0.5]
+        except Exception as e:
+            instance.parent.parent.canvas.children[9].rgba = [0.5, 0.5, 0.5, 0.5]
         toast('Address disabled')
         Clock.schedule_once(self.address_permision_callback, 0)
 
@@ -507,7 +513,10 @@ class MyAddress(Screen):
         BMConfigParser().set(address, 'enabled', 'true')
         BMConfigParser().save()
         instance.parent.parent.theme_text_color = 'Custom'
-        instance.parent.parent.canvas.children[6].rgba = [0, 0, 0, 0]
+        try:
+            instance.parent.parent.canvas.children[6].rgba = [0, 0, 0, 0]
+        except Exception as e:
+            instance.parent.parent.canvas.children[9].rgba = [0, 0, 0, 0]
         toast('Address Enabled')
         Clock.schedule_once(self.address_permision_callback, 0)
 
@@ -905,6 +914,7 @@ class Login(Screen):
                  ' choose a weak passphrase and someone on the Internet can brute-force it,'
                  ' they can read your messages and send messages as you')
 
+
 class NetworkStat(Screen):
     """Method used to show network stat"""
 
@@ -1118,15 +1128,21 @@ class Sent(Screen):
         if len(self.ids.ml.children) < 3:
             self.ids.ml.clear_widgets()
             self.loadSent()
-            total_sent = int(state.sent_count) + 1
-            state.sent_count = str(int(state.sent_count) +1)
-            self.set_sentCount(total_sent)
+            if state.association == state.check_sent_acc:
+                total_sent = int(state.sent_count) + 1
+                state.sent_count = str(int(state.sent_count) +1)
+                self.set_sentCount(total_sent)
+            else:
+                total_sent = int(state.sent_count)
         else:
             data = []
             self.sentDataQuery('fromaddress', '', '', 0, 1)
-            total_sent = int(state.sent_count) + 1
-            state.sent_count = str(int(state.sent_count) +1)
-            self.set_sentCount(total_sent)
+            if state.association == state.check_sent_acc:
+                total_sent = int(state.sent_count) + 1
+                state.sent_count = str(int(state.sent_count) +1)
+                self.set_sentCount(total_sent)
+            else:
+                total_sent = int(state.sent_count)
             for mail in self.queryreturn:
                 data.append({
                     'text': mail[1].strip(),
@@ -1740,12 +1756,13 @@ class NavigateApp(MDApp):
 
     def set_message_count(self):
         """Setting message count"""
-        try:
-            msg_counter_objs = (
-                self.root_window.children[0].children[2].children[0].ids)
-        except Exception:
-            msg_counter_objs = (
-                self.root_window.children[2].children[2].children[0].ids)
+        msg_counter_objs = state.kivyapp.root.children[0].children[0].ids
+        # try:
+        #     msg_counter_objs = (
+        #         self.root_window.children[0].children[2].children[0].ids)
+        # except Exception:
+        #     msg_counter_objs = (
+        #         self.root_window.children[2].children[2].children[0].ids)
         self.get_inbox_count()
         self.get_sent_count()
         state.trash_count = str(sqlQuery(
@@ -2230,14 +2247,20 @@ class MailDetail(Screen):
     def inbox_reply(self):
         """Reply inbox messages"""
         data = sqlQuery(
-            "select toaddress, fromaddress, subject, message from inbox where"
+            "select toaddress, fromaddress, subject, message, received from inbox where"
             " msgid = ?;", state.mail_id)
         composer_obj = self.parent.screens[2].children[1].ids
         composer_obj.ti.text = data[0][0]
         composer_obj.btn.text = data[0][0]
         composer_obj.txt_input.text = data[0][1]
-        composer_obj.subject.text = data[0][2]
-        composer_obj.body.text = ''
+        split_subject = data[0][2].split('Re:', 1)
+        composer_obj.subject.text = 'Re: ' +(split_subject[1] if len(split_subject)>1 else split_subject[0])
+        time_obj = datetime.fromtimestamp(int(data[0][4]))
+        time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
+        sender_name = BMConfigParser().get(data[0][1], 'label')
+        composer_obj.body.text = '\n\n ------------------------On '+time_tag+', '+sender_name+' wrote:-----------------------\n' + data[0][3]
+        composer_obj.body.focus = True
+        composer_obj.body.cursor = (0, 0)
         state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
         self.parent.current = 'create'
         state.kivyapp.set_navbar_for_composer()
@@ -2334,8 +2357,8 @@ class AddbookDetailPopup(Popup):
                 "UPDATE addressbook SET label = '{}' WHERE"
                 " address = '{}';".format(
                     str(self.ids.add_label.text), address))
-            self.parent.children[1].ids.sc11.ids.ml.clear_widgets()
-            self.parent.children[1].ids.sc11.loadAddresslist(None, 'All', '')
+            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
+            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.dismiss()
             toast('Saved')
 
