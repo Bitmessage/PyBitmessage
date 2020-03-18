@@ -3,7 +3,6 @@ BMConfigParser class definition and default configuration settings
 """
 # pylint: disable=no-self-use, arguments-differ
 import configparser
-import shutil
 import os
 import shutil
 from datetime import datetime

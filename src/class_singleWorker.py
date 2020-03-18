@@ -873,7 +873,7 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Looking up the receiver\'s public key"))
-                ))                
+                ))
                 self.logger.info('Sending a message.')
                 # self.logger.debug(
                 #     'First 150 characters of message: %s',
@@ -883,13 +883,13 @@ class singleWorker(StoppableThread):
                 # Let us fetch the recipient's public key out of
                 # our database. If the required proof of work difficulty
                 # is too hard then we'll abort.
-                
+
                 queryreturn = sqlQuery(
                     'SELECT transmitdata FROM pubkeys WHERE address=?',
                     toaddress)
                 for row in queryreturn:  # pylint: disable=redefined-outer-name
                     pubkeyPayload, = row
-                
+
                 # The pubkey message is stored with the following items
                 # all appended:
                 #    -address version
@@ -913,7 +913,7 @@ class singleWorker(StoppableThread):
 
                 # if receiver is a mobile device who expects that their
                 # address RIPE is included unencrypted on the front of
-                # the message..                
+                # the message..
                 if protocol.isBitSetWithinBitfield(behaviorBitfield, 30):
                     # if we are Not willing to include the receiver's
                     # RIPE hash on the message..
@@ -951,7 +951,7 @@ class singleWorker(StoppableThread):
                     readPosition:readPosition + 64]
                 readPosition += 64
                 # Let us fetch the amount of work required by the recipient.
-                if toAddressVersionNumber == 2:                    
+                if toAddressVersionNumber == 2:
                     requiredAverageProofOfWorkNonceTrialsPerByte = \
                         defaults.networkDefaultProofOfWorkNonceTrialsPerByte
                     requiredPayloadLengthExtraBytes = \
@@ -965,7 +965,7 @@ class singleWorker(StoppableThread):
                                 "There is no required difficulty for"
                                 " version 2 addresses like this."))
                     ))
-                
+
                 elif toAddressVersionNumber >= 3:
                     requiredAverageProofOfWorkNonceTrialsPerByte, \
                         varintLength = decodeVarint(
@@ -1158,7 +1158,7 @@ class singleWorker(StoppableThread):
                 fullAckPayload = self.generateFullAckMessage(
                     ackdata, toStreamNumber, TTL)
             payload += encodeVarint(len(fullAckPayload))
-            payload += fullAckPayload if isinstance(fullAckPayload,bytes) else fullAckPayload.encode()  
+            payload += fullAckPayload if isinstance(fullAckPayload, bytes) else fullAckPayload.encode()
             dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02'.encode() + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
             signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
@@ -1201,11 +1201,11 @@ class singleWorker(StoppableThread):
             self.logger.info(
                 '(For msg message) Doing proof of work. Total required'
                 ' difficulty: {}. Required small message difficulty: {}.'.format
-                (float(requiredAverageProofOfWorkNonceTrialsPerByte) /
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-                float(requiredPayloadLengthExtraBytes) /
-                defaults.networkDefaultPayloadLengthExtraBytes)
-            )
+                (
+                    float(requiredAverageProofOfWorkNonceTrialsPerByte) /
+                    defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+                    float(requiredPayloadLengthExtraBytes) /
+                    defaults.networkDefaultPayloadLengthExtraBytes))
 
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
@@ -1332,9 +1332,9 @@ class singleWorker(StoppableThread):
             )
             return
         retryNumber = queryReturn[0][0]
-        if addressVersionNumber <= 3:            
+        if addressVersionNumber <= 3:
             state.neededPubkeys[toAddress] = 0
-        elif addressVersionNumber >= 4:            
+        elif addressVersionNumber >= 4:
             # If the user just clicked 'send' then the tag
             # (and other information) will already be in the
             # neededPubkeys dictionary. But if we are recovering

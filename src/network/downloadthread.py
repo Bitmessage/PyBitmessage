@@ -40,7 +40,7 @@ class DownloadThread(StoppableThread):
                 del missingObjects[i]
             self.lastCleaned = time.time()
 
-    def run(self):
+    def run(self):  # pylint: disable=protected-access
         while not self._stopped:
             requested = 0
             connections = BMConnectionPool().establishedConnections()

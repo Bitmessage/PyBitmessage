@@ -96,33 +96,35 @@ def ShowTimeHistoy(act_time):
     action_time = datetime.fromtimestamp(int(act_time))
     crnt_date = datetime.now()
     duration = crnt_date - action_time
-    display_data = (action_time.strftime('%d/%m/%Y')
+    display_data = (
+        action_time.strftime('%d/%m/%Y')
         if duration.days >= 365 else action_time.strftime('%I:%M %p').lstrip('0')
         if duration.days == 0 and crnt_date.strftime('%d/%m/%Y') == action_time.strftime('%d/%m/%Y')
-        else action_time.strftime("%d %b"))
+        else action_time.strftime("%d %b")
+    )
     return display_data
 
 
-def AddTimeWidget(time):
+def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
     """This method is used to create TimeWidget"""
     action_time = BadgeText(
-        size_hint= (None, None),
-        text= f"{ShowTimeHistoy(time)}",
+        size_hint=(None, None),
+        text=str(ShowTimeHistoy(time)),
         halign='right',
         font_style='Caption',
-        size= [65,70])
+        size=[65, 70])
     return action_time
 
 
 def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
-    obj.size_hint= (None, None)
-    obj.label= text
-    obj.icon= ''
-    obj.pos_hint= {'center_x': .96, 'center_y': .2}
-    obj.height= dp(18)
-    obj.radius= 8
+    obj.size_hint = (None, None)
+    obj.label = text
+    obj.icon = ''
+    obj.pos_hint = {'center_x': .96, 'center_y': .2}
+    obj.height = dp(18)
+    obj.radius = 8
     return obj
 
 
@@ -168,12 +170,13 @@ class Inbox(Screen):
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
                 # third_text = mail[3].replace('\n', ' ')
-                body = mail[3].decode() if isinstance(mail[3],bytes) else mail[3]
-                subject  = mail[5].decode() if isinstance(mail[5],bytes) else mail[5]
+                body = mail[3].decode() if isinstance(mail[3], bytes) else mail[3]
+                subject = mail[5].decode() if isinstance(mail[5], bytes) else mail[5]
                 data.append({
                     'text': mail[4].strip(),
                     'secondary_text': (subject[:50] + '........' if len(
-                        subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
+                        subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace(
+                            '\t', '').replace('  ', ''),
                     'msgid': mail[1], 'received': mail[6]})
 
             self.has_refreshed = True
@@ -256,12 +259,12 @@ class Inbox(Screen):
         self.inboxDataQuery('toaddress', where, what, total_message, 5)
         for mail in self.queryreturn:
             # third_text = mail[3].replace('\n', ' ')
-            subject = mail[3].decode() if isinstance(mail[3],bytes) else mail[3]
-            body = mail[5].decode() if isinstance(mail[5],bytes) else mail[5]
+            subject = mail[3].decode() if isinstance(mail[3], bytes) else mail[3]
+            body = mail[5].decode() if isinstance(mail[5], bytes) else mail[5]
             data.append({
                 'text': mail[4].strip(),
                 'secondary_text': body[:50] + '........' if len(
-                   body) >= 50 else (body + ',' +subject.replace(
+                    body) >= 50 else (body + ',' + subject.replace(
                         '\n', ''))[0:50] + '........',
                 'msgid': mail[1]})
         self.set_mdList(data)
@@ -332,6 +335,7 @@ class Inbox(Screen):
 
 
 class CustomTwoLineAvatarIconListItem(TwoLineAvatarIconListItem):
+    """Custom Two Line Avatar Icon List"""
     pass
 
 
@@ -394,11 +398,10 @@ class MyAddress(Screen):
             meny = CustomTwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
-                text_color=NavigateApp().theme_cls.primary_color,
-                )
+                text_color=NavigateApp().theme_cls.primary_color,)
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
-            except Exception as e:
+            except Exception:
                 meny.canvas.children[9].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
@@ -406,13 +409,15 @@ class MyAddress(Screen):
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
             if state.association == item['secondary_text']:
-                meny.add_widget(BadgeText(size_hint= (None, None),
-                                text='Active', halign='right',
-                                font_style='Body1', size= [50,60],
-                                theme_text_color='Custom',
-                                text_color=NavigateApp().theme_cls.primary_color))
+                meny.add_widget(
+                    BadgeText(
+                        size_hint=(None, None),
+                        text='Active', halign='right',
+                        font_style='Body1', size=[50, 60],
+                        theme_text_color='Custom',
+                        text_color=NavigateApp().theme_cls.primary_color))
             else:
-                meny.add_widget(ToggleBtn(active = True if is_enable == 'true' else False))
+                meny.add_widget(ToggleBtn(active=True if is_enable == 'true' else False))
             # carousel = Carousel(direction='right')
             # carousel.height = meny.height
             # carousel.size_hint_y = None
@@ -495,7 +500,6 @@ class MyAddress(Screen):
             return True
         return False
 
-
     def disableAddress(self, address, instance):
         """This method is use for disabling address"""
         BMConfigParser().set(str(address), 'enabled', 'false')
@@ -503,7 +507,7 @@ class MyAddress(Screen):
         instance.parent.parent.theme_text_color = 'Primary'
         try:
             instance.parent.parent.canvas.children[6].rgba = [0.5, 0.5, 0.5, 0.5]
-        except Exception as e:
+        except Exception:
             instance.parent.parent.canvas.children[9].rgba = [0.5, 0.5, 0.5, 0.5]
         toast('Address disabled')
         Clock.schedule_once(self.address_permision_callback, 0)
@@ -515,7 +519,7 @@ class MyAddress(Screen):
         instance.parent.parent.theme_text_color = 'Custom'
         try:
             instance.parent.parent.canvas.children[6].rgba = [0, 0, 0, 0]
-        except Exception as e:
+        except Exception:
             instance.parent.parent.canvas.children[9].rgba = [0, 0, 0, 0]
         toast('Address Enabled')
         Clock.schedule_once(self.address_permision_callback, 0)
@@ -845,7 +849,7 @@ class MyTextInput(TextInput):
     def __init__(self, **kwargs):
         """Getting Text Input."""
         super(MyTextInput, self).__init__(**kwargs)
-        self.__lineBreak__=0
+        self.__lineBreak__ = 0
 
     def on_text(self, instance, value):
         """Find all the occurrence of the word"""
@@ -888,24 +892,25 @@ class Payment(Screen):
             state.kivyapp.root.ids.sc18.ids.cred.text = '{0}'.format(
                 state.availabe_credit)
 
-    def move_to_pay_option(self, amount):
+    def move_to_pay_option(self, amount):  # pylint: disable=no-self-use
+        """Option move to pay"""
         state.kivyapp.set_toolbar_for_QrCode()
 
 
 class Credits(Screen):
     """Credits Method"""
 
-    available_credits = StringProperty(
-        '{0}'.format('€ 0'))
+    available_credits = StringProperty('{0}'.format('€ 0'))
 
 
 class Login(Screen):
     """Login Screeen"""
-    log_text1 = ('You may generate addresses by using either random numbers'
-                ' or by using a passphrase If you use a passphrase, the address'
-                ' is called a deterministic; address The Random Number option is'
-                ' selected by default but deterministic addresses have several pros'
-                ' and cons:')
+    log_text1 = (
+        'You may generate addresses by using either random numbers'
+        ' or by using a passphrase If you use a passphrase, the address'
+        ' is called a deterministic; address The Random Number option is'
+        ' selected by default but deterministic addresses have several pros'
+        ' and cons:')
     log_text2 = ('If talk about pros You can recreate your addresses on any computer'
                  ' from memory, You need-not worry about backing up your keys.dat file'
                  ' as long as you can remember your passphrase and aside talk about cons'
@@ -1058,7 +1063,8 @@ class Sent(Screen):
                 data.append({
                     'text': mail[1].strip(),
                     'secondary_text': (mail[2][:50] + '........' if len(
-                        mail[2]) >= 50 else (mail[2] + ',' + mail[3])[0:50] + '........').replace('\t', '').replace('  ', ''),
+                        mail[2]) >= 50 else (mail[2] + ',' + mail[3])[0:50] + '........').replace(
+                            '\t', '').replace('  ', ''),
                     'ackdata': mail[5], 'senttime': mail[6]},)
             self.set_mdlist(data, 0)
             self.has_refreshed = True
@@ -1094,8 +1100,7 @@ class Sent(Screen):
             meny = TwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color
-                )
+                text_color=NavigateApp().theme_cls.primary_color)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -1130,7 +1135,7 @@ class Sent(Screen):
             self.loadSent()
             if state.association == state.check_sent_acc:
                 total_sent = int(state.sent_count) + 1
-                state.sent_count = str(int(state.sent_count) +1)
+                state.sent_count = str(int(state.sent_count) + 1)
                 self.set_sentCount(total_sent)
             else:
                 total_sent = int(state.sent_count)
@@ -1139,7 +1144,7 @@ class Sent(Screen):
             self.sentDataQuery('fromaddress', '', '', 0, 1)
             if state.association == state.check_sent_acc:
                 total_sent = int(state.sent_count) + 1
-                state.sent_count = str(int(state.sent_count) +1)
+                state.sent_count = str(int(state.sent_count) + 1)
                 self.set_sentCount(total_sent)
             else:
                 total_sent = int(state.sent_count)
@@ -1147,7 +1152,8 @@ class Sent(Screen):
                 data.append({
                     'text': mail[1].strip(),
                     'secondary_text': (mail[2][:50] + '........' if len(
-                        mail[2]) >= 50 else (mail[2] + ',' + mail[3])[0:50] + '........').replace('\t', '').replace('  ', ''),
+                        mail[2]) >= 50 else (mail[2] + ',' + mail[3])[0:50] + '........').replace(
+                            '\t', '').replace('  ', ''),
                     'ackdata': mail[5], 'senttime': mail[6]})
             self.set_mdlist(data, total_sent - 1)
         if state.msg_counter_objs and state.association == (
@@ -1305,8 +1311,8 @@ class Trash(Screen):
         """This method is used to create the mdlist"""
         total_trash_msg = len(self.ids.ml.children)
         for item in self.trash_messages:
-            subject =  item[2].decode() if isinstance(item[2],bytes) else item[2]
-            body = item[3].decode() if isinstance(item[3],bytes) else item[3]
+            subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
+            body = item[3].decode() if isinstance(item[3], bytes) else item[3]
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
                 secondary_text=(item[2][:50] + '........' if len(
@@ -1424,8 +1430,9 @@ class Setting(Screen):
     """Setting the Screen components"""
     exp_text = "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will\
                 send the message again after an additional two days. This will be continued with exponential backoff\
-                forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you\
-                may change that behavior by having Bitmessage give up after a certain number of days or months."
+                forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them.\
+                Here you may change that behavior by having Bitmessage give up after a certain number of days \
+                or months."
 
 
 class NavigateApp(MDApp):
@@ -1490,7 +1497,7 @@ class NavigateApp(MDApp):
         LoadingPopup().open()
         self.set_message_count()
         for nav_obj in self.root.ids.content_drawer.children[
-                            0].children[0].children[0].children:
+                0].children[0].children[0].children:
             nav_obj.active = True if nav_obj.text == 'Inbox' else False
         Clock.schedule_once(self.setCurrentAccountData, 0.5)
 
@@ -1544,7 +1551,7 @@ class NavigateApp(MDApp):
                     BMConfigParser().addresses()[0], android_path))
             else:
                 if not os.path.exists('./images/default_identicon/{}.png'.format(
-                    BMConfigParser().addresses()[0])):
+                        BMConfigParser().addresses()[0])):
                     img.texture.save('./images/default_identicon/{}.png'.format(
                         BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
@@ -1583,7 +1590,7 @@ class NavigateApp(MDApp):
         return False
 
     def on_key(self, window, key, *args):
-        # pylint: disable=inconsistent-return-statements
+        # pylint: disable=inconsistent-return-statements, too-many-branches
         """Method is used for going on previous screen"""
         if key == 27:
             if state.in_search_mode and self.root.ids.scr_mngr.current != (
@@ -1686,7 +1693,6 @@ class NavigateApp(MDApp):
         composer_obj.body.text = ''
         state.in_composer = True
         state.in_sent_method = False
-
 
     def set_navbar_for_composer(self):
         """Clearing toolbar data when composer open"""
@@ -1936,7 +1942,6 @@ class NavigateApp(MDApp):
     def file_manager_open(self):
         """This method open the file manager of local system"""
         from kivymd.uix.filemanager import MDFileManager
-        from kivymd.uix.dialog import MDDialog
 
         self.manager = ModalView(size_hint=(1, 1), auto_dismiss=False)
         self.file_manager = MDFileManager(
@@ -1955,7 +1960,7 @@ class NavigateApp(MDApp):
         from PIL import Image as PilImage
         if not os.path.exists('./images/default_identicon/'):
             os.makedirs('./images/default_identicon/')
-        newImg = PilImage.open(path).resize((300,300))
+        newImg = PilImage.open(path).resize((300, 300))
         newImg.save('./images/default_identicon/{0}.png'.format(state.association))
         self.load_selected_Image(state.association)
         self.exit_manager()
@@ -1972,11 +1977,11 @@ class NavigateApp(MDApp):
         top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
         # spinner_img_obj = self.root.ids.content_drawer.ids.btn.children[1]
         # spinner_img_obj.source = top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
-        top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
+        top_box_obj.source = './images/default_identicon/{0}.png'.format(curerentAddr)
         top_box_obj.reload()
         # spinner_img_obj.reload()
 
-    def copy_composer_text(self, text):
+    def copy_composer_text(self, text):  # pylint: disable=no-self-use
         """Copy the data from mail detail page"""
         Clipboard.copy(text)
         toast('Copied')
@@ -2115,12 +2120,6 @@ class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
     pass
 
 
-class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
-    """Right icon sample widget"""
-
-    pass
-
-
 class ToggleBtn(IRightBodyTouch, MDSwitch):
     """Right toggle button widget"""
     pass
@@ -2132,7 +2131,7 @@ class CheckboxLeftSampleWidget(ILeftBodyTouch, MDCheckbox):
     pass
 
 
-class MailDetail(Screen):
+class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
     """MailDetail Screen uses to show the detail of mails"""
 
     to_addr = StringProperty()
@@ -2169,8 +2168,8 @@ class MailDetail(Screen):
 
     def assign_mail_details(self, data):
         """Assigning mail details"""
-        subject = data[0][2].decode() if isinstance(data[0][2],bytes) else  data[0][2]
-        body = data[0][3].decode() if isinstance(data[0][2],bytes) else  data[0][3]
+        subject = data[0][2].decode() if isinstance(data[0][2], bytes) else data[0][2]
+        body = data[0][3].decode() if isinstance(data[0][2], bytes) else data[0][3]
         self.to_addr = data[0][0] if len(data[0][0]) > 4 else ' '
         self.from_addr = data[0][1]
 
@@ -2180,7 +2179,7 @@ class MailDetail(Screen):
         if len(data[0]) == 7:
             self.status = data[0][4]
         self.time_tag = ShowTimeHistoy(data[0][4]) if state.detailPageType == 'inbox' else ShowTimeHistoy(data[0][6])
-        self.avatarImg= './images/avatar.png' if state.detailPageType == 'draft' else (
+        self.avatarImg = './images/avatar.png' if state.detailPageType == 'draft' else (
             './images/text_images/{0}.png'.format(avatarImageFirstLetter(self.subject.strip())))
         self.timeinseconds = data[0][4] if state.detailPageType == 'inbox' else data[0][6]
 
@@ -2254,11 +2253,13 @@ class MailDetail(Screen):
         composer_obj.btn.text = data[0][0]
         composer_obj.txt_input.text = data[0][1]
         split_subject = data[0][2].split('Re:', 1)
-        composer_obj.subject.text = 'Re: ' +(split_subject[1] if len(split_subject)>1 else split_subject[0])
+        composer_obj.subject.text = 'Re: ' + (split_subject[1] if len(split_subject) > 1 else split_subject[0])
         time_obj = datetime.fromtimestamp(int(data[0][4]))
         time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
         sender_name = BMConfigParser().get(data[0][1], 'label')
-        composer_obj.body.text = '\n\n ------------------------On '+time_tag+', '+sender_name+' wrote:-----------------------\n' + data[0][3]
+        composer_obj.body.text = (
+            '\n\n ------------------------On ' + time_tag + ', '
+            + sender_name + ' wrote:-----------------------\n' + data[0][3])
         composer_obj.body.focus = True
         composer_obj.body.cursor = (0, 0)
         state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
@@ -2282,6 +2283,7 @@ class MailDetail(Screen):
         navApp.set_navbar_for_composer()
 
     def detailedPopup(self):
+        """Detailed popup"""
         obj = SenderDetailPopup()
         obj.open()
         arg = (self.to_addr, self.from_addr, self.timeinseconds)
@@ -2313,7 +2315,7 @@ class MyaddDetailPopup(Popup):
         state.kivyapp.set_navbar_for_composer()
         try:
             window_obj = self.parent.children[2].ids
-        except Exception as e:
+        except Exception:
             window_obj = self.parent.children[1].ids
         window_obj.sc3.children[1].ids.ti.text = self.address
         window_obj.sc3.children[1].ids.btn.text = self.address
@@ -2367,7 +2369,7 @@ class AddbookDetailPopup(Popup):
         state.kivyapp.set_navbar_for_composer()
         try:
             window_obj = self.parent.children[2].ids
-        except Exception as e:
+        except Exception:
             window_obj = self.parent.children[1].ids
         window_obj.sc3.children[1].ids.txt_input.text = self.address
         window_obj.sc3.children[1].ids.ti.text = ''
@@ -2604,7 +2606,8 @@ class Draft(Screen):
                 encoding,
                 BMConfigParser().safeGetInt('bitmessagesettings', 'ttl'))
             state.msg_counter_objs = src_object.children[2].children[0].ids
-            state.draft_count = str(int(state.draft_count) + 1) if state.association == fromAddress else state.draft_count
+            state.draft_count = str(int(state.draft_count) + 1) \
+                if state.association == fromAddress else state.draft_count
             src_object.ids.sc16.clear_widgets()
             src_object.ids.sc16.add_widget(Draft())
             toast('Save draft')
@@ -2688,12 +2691,12 @@ class Allmails(Screen):
         """This method is used to create mdList for allmaills"""
         data_exist = len(self.ids.ml.children)
         for item in self.all_mails:
-            body = item[3].decode() if isinstance(item[3],bytes) else item[3]
-            subject = item[2].decode() if isinstance(item[2],bytes) else item[2]
+            body = item[3].decode() if isinstance(item[3], bytes) else item[3]
+            subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
             meny = TwoLineAvatarIconListItem(
                 text=item[1],
                 secondary_text=(subject[:50] + '........' if len(
-                   subject) >= 50 else (
+                    subject) >= 50 else (
                         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
@@ -2864,6 +2867,7 @@ class NavigationItem(OneLineAvatarIconListItem):
     active = BooleanProperty(False)
 
     def currentlyActive(self):
+        """Currenly active"""
         for nav_obj in self.parent.children:
             nav_obj.active = False
         self.active = True
@@ -2927,22 +2931,23 @@ class SenderDetailPopup(Popup):
         super(SenderDetailPopup, self).__init__(**kwargs)
 
     def assignDetail(self, to_addr, from_addr, timeinseconds):
+        """Detailes assigned"""
         self.to_addr = to_addr
         self.from_addr = from_addr
         time_obj = datetime.fromtimestamp(int(timeinseconds))
         self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
-        pop_height = 1.2*(self.ids.sd_label.height+self.ids.sd_btn.children[0].height)
+        pop_height = 1.2 * (self.ids.sd_label.height + self.ids.sd_btn.children[0].height)
         if len(to_addr) > 3:
             self.height = 0
             self.height = pop_height
             self.ids.to_addId.size_hint_y = None
-            self.ids.to_addId.height= 50
+            self.ids.to_addId.height = 50
             frmaddbox = ToAddrBoxlayout()
             frmaddbox.set_toAddress(to_addr)
             self.ids.to_addId.add_widget(frmaddbox)
         else:
             self.height = 0
-            self.height = pop_height/1.5
+            self.height = pop_height / 1.5
 
 
 class OneLineListTitle(OneLineListItem):
@@ -2951,6 +2956,7 @@ class OneLineListTitle(OneLineListItem):
     long_press_time = NumericProperty(1)
 
     def on_state(self, instance, value):
+        """On state"""
         if value == 'down':
             lpt = self.long_press_time
             self._clockev = Clock.schedule_once(self._do_long_press, lpt)
@@ -2958,9 +2964,11 @@ class OneLineListTitle(OneLineListItem):
             self._clockev.cancel()
 
     def _do_long_press(self, dt):
+        """Do long press"""
         self.dispatch('on_long_press')
 
     def on_long_press(self, *largs):
+        """On long press"""
         self.copymessageTitle(self.text)
 
     def copymessageTitle(self, text):
@@ -2995,4 +3003,5 @@ class PaymentMethods(Screen):
     """PaymentMethods Screen show widgets of page"""
 
     def redirect_on_web(self, instance):
+        """Redirect on web"""
         pass

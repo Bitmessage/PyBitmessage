@@ -15,7 +15,7 @@ class Message(MsgBase):
         # UTF-8 and variable type validator
         if isinstance(data["subject"], str):
             # Unicode is depreciated
-            self.subject =data["subject"]
+            self.subject = data["subject"]
         else:
             # Unicode is depreciated
             self.subject = str(data["subject"])
