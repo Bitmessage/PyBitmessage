@@ -47,7 +47,7 @@
                             size: self.size
                     size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
-                    on_press: root.get_available_credits(self)
+                    on_press: root.get_free_credits(self)
                     MDLabel:
                         font_style: 'H6'
                         text: 'Get Free Credits'
@@ -93,7 +93,6 @@
                             size: self.size
                     size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
-                    on_press: app.root.ids.scr_mngr.current = 'pay-options'
                     on_press: root.move_to_pay_option(py2.text)
                     MDLabel:
                         font_style: 'H6'
@@ -140,7 +139,6 @@
                             size: self.size
                     size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
-                    on_press: app.root.ids.scr_mngr.current = 'pay-options'
                     on_press: root.move_to_pay_option(py3.text)
                     MDLabel:
                         font_style: 'H6'
