@@ -357,7 +357,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if dandelion and not state.dandelion:
             return True    
         for i in map(bytes, items):
-            if i in Inventory()._realInventory and not Dandelion().hasHash(i):
+            if i in Inventory() and not Dandelion().hasHash(i):
                 continue
             if dandelion and not Dandelion().hasHash(i):
                 Dandelion().addHash(i, self)
@@ -417,10 +417,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 del missingObjects[self.object.inventoryHash]
             except KeyError:
                 pass
-
-        if self.object.inventoryHash in Inventory()._realInventory and Dandelion().hasHash(self.object.inventoryHash):
+        if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        Inventory()._realInventory[self.object.inventoryHash] = (
+        Inventory()[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
             memoryview(self.object.tag)

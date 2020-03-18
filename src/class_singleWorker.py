@@ -455,7 +455,7 @@ class singleWorker(StoppableThread):
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        Inventory()._realInventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,
             doubleHashOfAddressData[32:]
         )
@@ -1239,7 +1239,7 @@ class singleWorker(StoppableThread):
             objectType = 2
             inventoryHashlist = (
                 objectType, toStreamNumber,encryptedPayload, embeddedTime, '')
-            Inventory()._realInventory[inventoryHash] = (
+            Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             if BMConfigParser().has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
@@ -1393,9 +1393,8 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(payload, TTL)
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        Inventory()._realInventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
-        # Inventory()._realInventory[inventoryHashlist]
         self.logger.info('sending inv (for the getpubkey message)')
         queues.invQueue.put((streamNumber, inventoryHash))
         # wait 10% past expiration
