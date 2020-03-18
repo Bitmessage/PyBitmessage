@@ -24,8 +24,8 @@ class Inventory():
 
     # cheap inheritance copied from asyncore
     def __getattr__(self, attr):
-        if attr == "__contains__":
-            self.numberOfInventoryLookupsPerformed += 1
+        # if attr == "__contains__":
+        #     self.numberOfInventoryLookupsPerformed += 1
         try:
             realRet = getattr(self._realInventory, attr)
         except AttributeError:
@@ -35,6 +35,15 @@ class Inventory():
             )
         else:
             return realRet
+
+    # on python3 we have separately added __contains__ method
+    def __contains__(self, attr):
+        self.numberOfInventoryLookupsPerformed += 1
+        return getattr(self._realInventory, '__contains__')(attr)
+
+    # on python3 we have separately added __setitem__ method
+    def __setitem__(self, hash_, value):
+        return getattr(self._realInventory,'__setitem__')(hash_,value)
 
     # hint for pylint: this is dictionary like object
     def __getitem__(self, key):
