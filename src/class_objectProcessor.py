@@ -439,8 +439,8 @@ class objectProcessor(threading.Thread):
                 return
 
             # Let us try to decrypt the pubkey
-            toAddress, _ = state.neededPubkeys[bytes(tag)] #check with py2
-            if protocol.decryptAndCheckPubkeyPayload(bytes(data),   toAddress) == \
+            toAddress, _ = state.neededPubkeys[bytes(tag)]  # check with py2
+            if protocol.decryptAndCheckPubkeyPayload(bytes(data), toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
                 # pubkey. This function will command the workerThread

@@ -43,6 +43,7 @@
                                 id: dropdown_item
                                 text: 'italiano'
                                 dropdown_max_height: 150
+                                dropdown_bg: [1, 1, 1, 1]
                                 pos_hint: {'center_x': 0.8, 'center_y': 0}
                                 items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
                     BoxLayout:
@@ -284,26 +285,25 @@
                             halign: 'left'
                             bold: True
 
-                    BoxLayout:
-                        orientation: 'horizontal'
+                    GridLayout:
+                        cols: 2
                         padding: [10, 0, 0, 0]
-                        BoxLayout:
-                            orientation: 'horizontal'
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: "Type:"
-                                halign: 'left'
-                        BoxLayout:
-                            orientation: 'horizontal'
-                            MDDropDownItem:
-                                id: dropdown_item
-                                dropdown_bg: [1, 1, 1, 1]
-                                text: 'none'
-                                items: [f"{i}" for i in ['System Setting','U.S. English']]
+                        MDLabel:
+                            size_hint_x: None
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: "Type:"
+                            halign: 'left'
+                        MDDropDownItem:
+                            id: dropdown_item
+                            dropdown_bg: [1, 1, 1, 1]
+                            text: 'none'
+                            pos_hint: {'x': 0.9, 'y': 0}
+                            items: [f"{i}" for i in ['System Setting','U.S. English']]
                     BoxLayout:
                         orientation: 'horizontal'
                         padding: [30, 0, 0, 0]
+                        spacing: 10
                         BoxLayout:
                             orientation: 'horizontal'
                             MDLabel:
@@ -323,6 +323,14 @@
                                 theme_text_color: 'Primary'
                                 text: "Port:"
                                 halign: 'left'
+                            # TextInput:
+                            #     size_hint: None, None
+                            #     hint_text: '9050'
+                            #     size: dp(app.window_size[0]/4), dp(30)
+                            #     input_filter: "int"
+                            #     readonly: False
+                            #     multiline: False
+                            #     font_size: '15sp'
                             MDTextFieldRect:
                                 size_hint: None, None
                                 size: dp(app.window_size[0]/4), dp(30)
@@ -332,6 +340,7 @@
                     BoxLayout:
                         orientation: 'horizontal'
                         padding: [30, 0, 0, 0]
+                        spacing: 10
                         BoxLayout:
                             orientation: 'horizontal'
                             MDLabel:

@@ -39,11 +39,11 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
                 return False
             self._objects[hash_] = rows[0][0]
             return True
-    
+
     def __getitem__(self, hash_):
         with self.lock:
-            if isinstance(hash_,memoryview) and bytes(hash_) in self._inventory :
-                    return self._inventory[bytes(hash_)]
+            if isinstance(hash_, memoryview) and bytes(hash_) in self._inventory:
+                return self._inventory[bytes(hash_)]
             else:
                 if hash_ in self._inventory:
                     return self._inventory[hash_]
@@ -52,7 +52,7 @@ class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
                 ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
             if not rows:
                 raise KeyError(hash_)
-            return InventoryItem(*rows[0])  
+            return InventoryItem(*rows[0])
 
     def __setitem__(self, hash_, value):
         with self.lock:

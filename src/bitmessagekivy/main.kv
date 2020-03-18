@@ -27,7 +27,8 @@
     #background_color: color_button if self.state == 'down' else color_button_pressed
     #background_down: 'atlas://data/images/defaulttheme/button'
     background_normal: 'atlas://data/images/defaulttheme/textinput_active'
-    background_color: app.theme_cls.primary_color 
+    background_color: app.theme_cls.primary_color
+    # text_autoupdate: True
     color: color_font
 
 <NavigationItem>
@@ -101,7 +102,7 @@
                         id: btn
                         pos_hint:{"x":0,"y":0}
                         option_cls: Factory.get("MySpinnerOption")
-                        font_size: '10.9sp'
+                        font_size: '12.5sp'
                         text: app.getDefaultAccData()
                         #background_color: color_button if self.state == 'normal' else color_button_pressed
                         #background_down: 'atlas://data/images/defaulttheme/spinner'
@@ -111,11 +112,11 @@
                         #background_color: (0.62,0.67,0.72,1)
                         values: app.variable_1
                         on_text:app.getCurrentAccountData(self.text)
-                        Image:
-                            source: app.get_default_image()
-                            x: self.width/6
-                            y: self.parent.y + self.parent.height/4
-                            size: self.parent.height/2, self.parent.height/2
+                        # Image:
+                        #     source: app.get_default_image()
+                        #     x: self.width/6
+                        #     y: self.parent.y + self.parent.height/4
+                        #     size: self.parent.height/2, self.parent.height/2
                         ArrowImg:
                 NavigationItem:
                     id: inbox_cnt

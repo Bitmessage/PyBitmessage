@@ -92,13 +92,13 @@ class InvThread(StoppableThread):
                         connection.append_write_buf(protocol.CreatePacket(
                             'inv',
                             addresses.encodeVarint(
-                                len(fluffs)) + ('').encode().join([x for x in fluffs]))) #compare result with python2
+                                len(fluffs)) + ('').encode().join([x for x in fluffs])))  # compare result with python2
                     if stems:
                         random.shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket(
                             'dinv',
                             addresses.encodeVarint(
-                                len(stems)) + ('').encode().join([x for x in stems]))) #compare result with python2
+                                len(stems)) + ('').encode().join([x for x in stems])))  # compare result with python2
 
             invQueue.iterate()
             for _ in range(len(chunk)):

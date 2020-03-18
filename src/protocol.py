@@ -289,7 +289,7 @@ def isProofOfWorkSufficient(
 
 def CreatePacket(command, payload=''):
     """Construct and return a number of bytes from a payload"""
-    payload = payload if type(payload) in [bytes, bytearray,memoryview] else payload.encode()
+    payload = payload if type(payload) in [bytes, bytearray, memoryview] else payload.encode()
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
     byte = bytearray(Header.size + payload_length)

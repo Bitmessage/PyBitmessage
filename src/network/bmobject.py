@@ -114,9 +114,10 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
         or advertise it unnecessarily)
         """
         # if it's a stem duplicate, pretend we don't have it
+        # pylint: disable=protected-access
         if Dandelion().hasHash(self.inventoryHash):
             return
-        if self.inventoryHash in Inventory()._realInventory:
+        if self.inventoryHash in Inventory():
             raise BMObjectAlreadyHaveError()
 
     def checkObjectByType(self):

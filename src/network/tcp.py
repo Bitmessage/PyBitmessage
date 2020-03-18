@@ -1,7 +1,7 @@
 """
 TCP protocol handler
 """
-# pylint: disable=too-many-ancestors
+# pylint: disable=too-many-ancestors, protected-access
 import logging
 import math
 import random
@@ -211,7 +211,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             # may lock for a long time, but I think it's better than
             # thousands of small locks
             with self.objectsNewToThemLock:
-                for objHash in Inventory()._realInventory.unexpired_hashes_by_stream(stream):
+                for objHash in Inventory().unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
                     if Dandelion().hasHash(objHash):
                         continue

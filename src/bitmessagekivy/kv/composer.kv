@@ -13,7 +13,7 @@
                     hint_text: 'type or select sender address'
                     size_hint_y: None
                     height: 100
-                    font_size: '13sp'
+                    font_size: '15sp'
                     multiline: False
                     required: True
                     helper_text_mode: "on_error"
@@ -26,34 +26,41 @@
                         background_color: app.theme_cls.primary_dark
                         values: app.variable_1
                         on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
-                        option_cls: Factory.get("MySpinnerOption")
+                        option_cls: Factory.get("ComposerSpinnerOption")
                         #background_color: color_button if self.state == 'normal' else color_button_pressed
                         #background_down: 'atlas://data/images/defaulttheme/spinner'
                         background_normal: ''
                         background_color: app.theme_cls.primary_color
                         color: color_font
-                        font_size: '12.5sp'
+                        font_size: '13.5sp'
                         ArrowImg:
                     
             BoxLayout:
-                orientation: 'vertical'
-                txt_input: txt_input
-                rv: rv
-                size : (890, 60)
-                MyTextInput:
-                    id: txt_input
-                    size_hint_y: None
-                    font_size: '13sp'
-                    height: self.parent.height/2
-                    hint_text: 'type, select or scan QR code for recipients address'
-                RV:
-                    id: rv
+                orientation: 'horizontal'
+                BoxLayout:
+                    orientation: 'vertical'
+                    txt_input: txt_input
+                    rv: rv
+                    size : (890, 60)
+                    MyTextInput:
+                        id: txt_input
+                        size_hint_y: None
+                        font_size: '15sp'
+                        height: self.parent.height/2
+                        hint_text: 'type, select or scan QR code for recipients address'
+                    RV:
+                        id: rv
+                MDIconButton:
+                    icon: 'qrcode-scan'
+                    pos_hint: {'center_x': 0, 'center_y': .8}
+                    on_press: root.qrScanner()
+
             MyMDTextField:
                 id: subject
                 hint_text: 'subject'
                 required: True
                 height: 100
-                font_size: '13sp'
+                font_size: '15sp'
                 size_hint_y: None
                 multiline: False
                 helper_text_mode: "on_error"
@@ -63,7 +70,7 @@
                 multiline: True
                 hint_text: 'body'
                 size_hint_y: None
-                font_size: '13sp'
+                font_size: '15sp'
                 required: True
                 helper_text_mode: "on_error"
             BoxLayout:
@@ -107,3 +114,12 @@
     canvas.before:
         Color:
             rgba: (0,0,0,1)
+
+
+<ComposerSpinnerOption@SpinnerOption>:
+    font_size: '13.5sp'
+    #background_color: color_button if self.state == 'down' else color_button_pressed
+    #background_down: 'atlas://data/images/defaulttheme/button'
+    background_normal: 'atlas://data/images/defaulttheme/textinput_active'
+    background_color: app.theme_cls.primary_color
+    color: color_font

@@ -1,7 +1,7 @@
 """
 Bitmessage Protocol
 """
-# pylint: disable=attribute-defined-outside-init, too-few-public-methods, logging-format-interpolation
+# pylint: disable=attribute-defined-outside-init,too-few-public-methods,logging-format-interpolation,protected-access
 import base64
 import hashlib
 import logging
@@ -31,7 +31,7 @@ from network.dandelion import Dandelion
 from network.proxy import ProxyError
 from network.objectracker import missingObjects, ObjectTracker
 from network.node import Node, Peer
-from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
+from queues import objectProcessorQueue, portCheckerQueue, invQueue
 from network.randomtrackingdict import RandomTrackingDict
 
 logger = logging.getLogger('default')
@@ -355,9 +355,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         # ignore dinv if dandelion turned off
         if dandelion and not state.dandelion:
-            return True    
+            return True
         for i in map(bytes, items):
-            if i in Inventory()._realInventory and not Dandelion().hasHash(i):
+            if i in Inventory() and not Dandelion().hasHash(i):
                 continue
             if dandelion and not Dandelion().hasHash(i):
                 Dandelion().addHash(i, self)
@@ -409,7 +409,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                    self.object.objectType, memoryview(self.object.data)))
+                self.object.objectType, memoryview(self.object.data)))
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -417,10 +417,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 del missingObjects[self.object.inventoryHash]
             except KeyError:
                 pass
-
-        if self.object.inventoryHash in Inventory()._realInventory and Dandelion().hasHash(self.object.inventoryHash):
+        if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
-        Inventory()._realInventory[self.object.inventoryHash] = (
+        Inventory()[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
             memoryview(self.payload[objectOffset:]), self.object.expiresTime,
             memoryview(self.object.tag)

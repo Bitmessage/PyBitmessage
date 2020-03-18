@@ -25,7 +25,6 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery
-from pyelliptic import arithmetic
 # pylint: disable=logging-format-interpolation
 
 verbose = 1
