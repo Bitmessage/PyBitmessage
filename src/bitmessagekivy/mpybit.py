@@ -73,8 +73,7 @@ KVFILES = [
     'settings', 'popup', 'allmails', 'draft',
     'maildetail', 'common_widgets', 'addressbook',
     'myaddress', 'composer', 'payment', 'sent',
-    'network', 'login', 'credits', 'trash', 'inbox',
-    'payment_method'
+    'network', 'login', 'credits', 'trash', 'inbox'
 ]
 
 
@@ -878,7 +877,7 @@ class MyTextInput(TextInput):
 class Payment(Screen):
     """Payment module"""
 
-    def get_available_credits(self, instance):
+    def get_free_credits(self, instance):
         """Get the available credits"""
         # pylint: disable=no-self-use
         state.availabe_credit = instance.parent.children[1].text
@@ -894,7 +893,7 @@ class Payment(Screen):
 
     def move_to_pay_option(self, amount):  # pylint: disable=no-self-use
         """Option move to pay"""
-        state.kivyapp.set_toolbar_for_QrCode()
+        pass
 
 
 class Credits(Screen):
@@ -2997,11 +2996,3 @@ class ToAddrBoxlayout(BoxLayout):
     def set_toAddress(self, to_addr):
         """This method is use to set to address"""
         self.to_addr = to_addr
-
-
-class PaymentMethods(Screen):
-    """PaymentMethods Screen show widgets of page"""
-
-    def redirect_on_web(self, instance):
-        """Redirect on web"""
-        pass
