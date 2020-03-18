@@ -67,6 +67,10 @@ function install_python(){
 		echo "Installing vc_redist (2008) for 32 bit "
 		wine vcredist_x86.exe /Q
 	fi
+	# add cert
+	if [ -f /usr/local/share/ca-certificates/bitmessage-proxy.crt ]; then
+		wine python -m pip config set global.cert 'z:\usr\local\share\ca-certificates\bitmessage-proxy.crt'
+	fi
 	echo "Upgrading pip"
 	wine python -m pip install --upgrade pip
 }
