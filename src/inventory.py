@@ -8,7 +8,7 @@ from singleton import Singleton
 
 
 @Singleton
-class Inventory():
+class Inventory(object):
     """
     Inventory singleton class which uses storage backends
     to manage the inventory.

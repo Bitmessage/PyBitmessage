@@ -1,7 +1,7 @@
 """
 TCP protocol handler
 """
-# pylint: disable=too-many-ancestors
+# pylint: disable=too-many-ancestors, protected-access
 import logging
 import math
 import random

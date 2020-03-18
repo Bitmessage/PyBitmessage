@@ -3,16 +3,9 @@ This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
 ( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
-<<<<<<< HEAD
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2020 The Bitmessage developers
 # pylint: disable=too-many-lines,no-self-use,unused-variable,unused-argument
-=======
-# pylint: disable=too-many-locals,too-many-lines,no-self-use,unused-argument
-# pylint: disable=too-many-statements,too-many-public-methods,too-many-branches
-# Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2019 The Bitmessage developers
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
 import base64
 import errno
 import hashlib
@@ -34,7 +27,6 @@ import queues
 import shared
 import shutdown
 import state
-<<<<<<< HEAD
 from addresses import (
     addBMIfNotPresent,
     calculateInventoryHash,
@@ -42,21 +34,13 @@ from addresses import (
     decodeVarint,
     varintDecodeError
 )
-=======
-
-from addresses import addBMIfNotPresent, calculateInventoryHash, decodeAddress, decodeVarint, varintDecodeError
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from network.threads import StoppableThread
-<<<<<<< HEAD
 from version import softwareVersion
-=======
-# pylint: disable=unused-variable
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
 
 str_chan = '[chan]'
 
@@ -275,13 +259,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(9, 'Invalid characters in address: ' + address)
             if status == 'versiontoohigh':
                 raise APIError(
-<<<<<<< HEAD
                     10,
                     'Address version number too high (or zero) in address: ' +
                     address)
-=======
-                    10, 'Address version number too high (or zero) in address: ' + address)
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
             if status == 'varintmalformed':
                 raise APIError(26, 'Malformed varint in address: ' + address)
             raise APIError(
@@ -645,13 +625,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             label = str_chan + ' ' + passphrase
         except BaseException:
             label = str_chan + ' ' + repr(passphrase)
-<<<<<<< HEAD
         status, addressVersionNumber, streamNumber, toRipe = (
             self._verifyAddress(suppliedAddress))
-=======
-        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(
-            suppliedAddress)
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
         queues.apiAddressGeneratorReturnQueue.queue.clear()
         queues.addressGeneratorQueue.put((
@@ -674,13 +649,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need parameters.')
         elif len(params) == 1:
             address, = params
-<<<<<<< HEAD
             status, addressVersionNumber, streamNumber, toRipe = (
                 self._verifyAddress(address))
-=======
-            status, addressVersionNumber, streamNumber, toRipe = \
-                self._verifyAddress(address)
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
         address = addBMIfNotPresent(address)
         if not BMConfigParser().has_section(address):
             raise APIError(
@@ -701,13 +671,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(0, 'I need parameters.')
         elif len(params) == 1:
             address, = params
-<<<<<<< HEAD
         status, addressVersionNumber, streamNumber, toRipe = (
             self._verifyAddress(address))
-=======
-        status, addressVersionNumber, streamNumber, toRipe = \
-            self._verifyAddress(address)
->>>>>>> 86df28c260eb1dd4acae506c1366f3cf136c5840
         address = addBMIfNotPresent(address)
         if not BMConfigParser().has_section(address):
             raise APIError(

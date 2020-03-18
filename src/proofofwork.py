@@ -108,7 +108,6 @@ def _doFastPoW(target, initialHash):
                 logger.debug("Fast PoW done")
                 return result[0], result[1]
         time.sleep(0.2)
-        
 
 
 def _doCPoW(target, initialHash):
