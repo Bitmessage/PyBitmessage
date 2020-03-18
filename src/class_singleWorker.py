@@ -1,7 +1,7 @@
 """
 Thread for performing PoW
 """
-# pylint: disable=protected-access,too-many-branches,too-many-statements
+# pylint: disable=protected-access,too-many-branches,too-many-statements,unused-variable
 # pylint: disable=no-self-use,too-many-lines,too-many-locals,relative-import
 
 
@@ -477,6 +477,7 @@ class singleWorker(StoppableThread):
 
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
+        # pylint: disable=redefined-argument-from-local
         if not peer:  # find own onionhostname
             for peer in state.ownAddresses:
                 if peer.host.endswith('.onion'):
@@ -684,7 +685,7 @@ class singleWorker(StoppableThread):
 
     def sendMsg(self):
         """Send a message-type object (assemble the object, perform PoW and put it to the inv announcement queue)"""
-        # pylint: disable=too-many-nested-blocks
+        # pylint: disable=too-many-nested-blocks,logging-format-interpolation,unused-variable
         # Reset just in case
         sqlExecute(
             '''UPDATE sent SET status='msgqueued' '''
@@ -1238,7 +1239,7 @@ class singleWorker(StoppableThread):
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 2
             inventoryHashlist = (
-                objectType, toStreamNumber,encryptedPayload, embeddedTime, '')
+                objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             if BMConfigParser().has_section(toaddress) or \

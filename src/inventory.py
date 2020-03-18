@@ -43,7 +43,7 @@ class Inventory(object):
 
     # on python3 we have separately added __setitem__ method
     def __setitem__(self, hash_, value):
-        return getattr(self._realInventory,'__setitem__')(hash_,value)
+        return getattr(self._realInventory, '__setitem__')(hash_, value)
 
     # hint for pylint: this is dictionary like object
     def __getitem__(self, key):
