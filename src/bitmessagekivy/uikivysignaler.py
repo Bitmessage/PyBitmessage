@@ -22,6 +22,8 @@ class UIkivySignaler(Thread):
                 # elif command == 'rerenderAddressBook':
                 #     state.kivyapp.obj_1.refreshs()
                 # Need to discuss this
+                elif command == 'writeNewpaymentAddressToTable':
+                    pass
                 elif command == 'updateSentItemStatusByAckdata':
                     state.kivyapp.status_dispatching(data)
             except Exception as e:

@@ -288,7 +288,7 @@ class addressGenerator(StoppableThread):
                 queues.UISignalQueue.put((
                     'updateStatusBar', ""
                 ))
-                queues.UISignalQueue.put(('writeNewAddressToTable', (
+                queues.UISignalQueue.put(('writeNewpaymentAddressToTable', (
                     label, address, streamNumber)))
                 shared.reloadMyAddressHashes()
                 if addressVersionNumber == 3:
