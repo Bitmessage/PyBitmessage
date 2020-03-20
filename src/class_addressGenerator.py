@@ -206,9 +206,98 @@ class addressGenerator(StoppableThread):
                     queues.workerQueue.put((
                         'sendOutOrStoreMyV4Pubkey', address))
 
-            # elif command == 'createDeterministicAddresses' \
-            #         or command == 'getDeterministicAddress' \
-            #         or command == 'createChan' or command == 'joinChan':
+            elif command == 'createPaymentAddress':
+                queues.UISignalQueue.put((
+                    'updateStatusBar', ""
+                ))
+                # This next section is a little bit strange. We're going
+                # to generate keys over and over until we find one
+                # that starts with either \x00 or \x00\x00. Then when
+                # we pack them into a Bitmessage address, we won't store
+                # the \x00 or \x00\x00 bytes thus making the address shorter.
+                startTime = time.time()
+                numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
+                potentialPrivSigningKey = OpenSSL.rand(32)
+                potentialPubSigningKey = highlevelcrypto.pointMult(
+                    potentialPrivSigningKey)
+                while True:
+                    numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
+                    potentialPrivEncryptionKey = OpenSSL.rand(32)
+                    potentialPubEncryptionKey = highlevelcrypto.pointMult(
+                        potentialPrivEncryptionKey)
+                    sha = hashlib.new('sha512')
+                    sha.update(
+                        potentialPubSigningKey + potentialPubEncryptionKey)
+                    ripe = RIPEMD160Hash(sha.digest()).digest()
+                    if (
+                        ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
+                        '\x00'.encode('utf-8') * numberOfNullBytesDemandedOnFrontOfRipeHash
+                    ):
+                        break
+                self.logger.info(
+                    'Generated address with ripe digest: %s', hexlify(ripe))
+                try:
+                    self.logger.info(
+                        'Address generator calculated %s addresses at %s'
+                        ' addresses per second before finding one with'
+                        ' the correct ripe-prefix.',
+                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix,
+                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix
+                        / (time.time() - startTime))
+                except ZeroDivisionError:
+                    # The user must have a pretty fast computer.
+                    # time.time() - startTime equaled zero.
+                    pass
+
+                address = encodeAddress(
+                    addressVersionNumber, streamNumber, ripe)
+
+                # An excellent way for us to store our keys
+                # is in Wallet Import Format. Let us convert now.
+                # https://en.bitcoin.it/wiki/Wallet_import_format
+                privSigningKey = '\x80'.encode('utf-8')[1:] + potentialPrivSigningKey
+                checksum = hashlib.sha256(hashlib.sha256(
+                    privSigningKey).digest()).digest()[0:4]
+                privSigningKeyWIF = arithmetic.changebase(
+                    privSigningKey + checksum, 256, 58)
+
+                privEncryptionKey = '\x80'.encode('utf-8')[1:] + potentialPrivEncryptionKey
+                checksum = hashlib.sha256(hashlib.sha256(
+                    privEncryptionKey).digest()).digest()[0:4]
+                privEncryptionKeyWIF = arithmetic.changebase(
+                    privEncryptionKey + checksum, 256, 58)
+                BMConfigParser().add_section(address)
+                # BMConfigParser().set(address, 'label', label)
+                BMConfigParser().set(address, 'enabled', 'true')
+                BMConfigParser().set(address, 'decoy', 'false')
+                BMConfigParser().set(address, 'noncetrialsperbyte', str(
+                    nonceTrialsPerByte))
+                BMConfigParser().set(address, 'payloadlengthextrabytes', str(
+                    payloadLengthExtraBytes))
+                BMConfigParser().set(
+                    address, 'privsigningkey', privSigningKeyWIF)
+                BMConfigParser().set(
+                    address, 'privencryptionkey', privEncryptionKeyWIF)
+                BMConfigParser().set(address, 'hidden', 'true')
+                BMConfigParser().set(address, 'payment', 'true')
+                BMConfigParser().save()
+
+                # The API and the join and create Chan functionality
+                # both need information back from the address generator.
+                queues.apiAddressGeneratorReturnQueue.put(address)
+                queues.UISignalQueue.put((
+                    'updateStatusBar', ""
+                ))
+                queues.UISignalQueue.put(('writeNewAddressToTable', (
+                    label, address, streamNumber)))
+                shared.reloadMyAddressHashes()
+                if addressVersionNumber == 3:
+                    queues.workerQueue.put((
+                        'sendOutOrStoreMyV3Pubkey', ripe))
+                elif addressVersionNumber == 4:
+                    queues.workerQueue.put((
+                        'sendOutOrStoreMyV4Pubkey', address))
+
             elif command in (
                     'createDeterministicAddresses',
                     'getDeterministicAddress',

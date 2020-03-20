@@ -56,21 +56,23 @@ class BMConfigParser(configparser.ConfigParser):
             raise ValueError("Invalid value %s" % value)
         return configparser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
+    def get(self, section, option, raw=False, vars=None):
+        # import pdb;pdb.set_trace()
         # pylint: disable=unused-argument
+        # import pdb; pdb.set_trace()
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return configparser.ConfigParser.get(
-                    self, section, option, raw=True, vars=variables)
+                    self, section, option, raw=True, vars=vars)
             try:
                 return self._temp[section][option]
             except KeyError:
                 pass
             return configparser.ConfigParser.get(
-                self, section, option, raw=True, vars=variables)
+                self, section, option, raw=True, vars=vars)
         except configparser.InterpolationError:
             return configparser.ConfigParser.get(
-                self, section, option, raw=True, vars=variables)
+                self, section, option, raw=True, vars=vars)
         except (configparser.NoSectionError, configparser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
@@ -86,12 +88,13 @@ class BMConfigParser(configparser.ConfigParser):
 
     def safeGetBoolean(self, section, field):
         """Return value as boolean, False on exceptions"""
-        config = configparser.ConfigParser()
         try:
             # Used in the python2.7
             # return self.getboolean(section, field)
             # Used in the python3.5.2
-            return config.getboolean(section, field)
+            # print(config, section, field)
+            return self.getboolean(section, field)
+            # return config.getboolean(section, field)
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return False
@@ -122,9 +125,14 @@ class BMConfigParser(configparser.ConfigParser):
         but override the "raw" argument to always True"""
         return configparser.ConfigParser.items(self, section, True, variables)
 
-    def addresses(self):
+    def addresses(self, hidden=False):
+
         """Return a list of local bitmessage addresses (from section labels)"""
-        return [x for x in BMConfigParser().sections() if x.startswith('BM-')]
+        return [x for x in BMConfigParser().sections() if x.startswith('BM-') and (hidden or not BMConfigParser().safeGetBoolean(x, 'hidden'))]
+
+    def paymentaddress(self):
+        """Return a list of local payment addresses (from section labels)"""
+        return ''.join([x for x in BMConfigParser().sections() if x.startswith('BM-') and BMConfigParser().safeGetBoolean(x, 'payment')])
 
     def read(self, filenames):
         configparser.ConfigParser.read(self, filenames)

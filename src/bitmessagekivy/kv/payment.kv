@@ -93,10 +93,10 @@
                             size: self.size
                     size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
-                    on_press: root.move_to_pay_option(py2.text)
+                    on_press: root.create_hidden_payment_address(self)
                     MDLabel:
                         font_style: 'H6'
-                        text: 'Get Monthly Credits'
+                        text: 'Buy 100 Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
                         halign: 'center'
@@ -139,10 +139,10 @@
                             size: self.size
                     size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
                     height: dp(40)
-                    on_press: root.move_to_pay_option(py3.text)
+                    on_press: root.create_hidden_payment_address(self)
                     MDLabel:
                         font_style: 'H6'
-                        text: 'Get Yearly Credits'
+                        text: 'Buy 500 Credits'
                         font_size: '13sp'
                         color: (0,0,0,1)
                         halign: 'center'

@@ -891,9 +891,19 @@ class Payment(Screen):
             state.kivyapp.root.ids.sc18.ids.cred.text = '{0}'.format(
                 state.availabe_credit)
 
-    def move_to_pay_option(self, amount):  # pylint: disable=no-self-use
-        """Option move to pay"""
-        pass
+    def create_hidden_payment_address(self, instance):
+        if BMConfigParser().paymentaddress():
+            toast('hidden payment address already exist for buying subscription...')
+        else:
+            streamNumberForAddress = 1
+            eighteenByteRipe = False
+            nonceTrialsPerByte = 1000
+            payloadLengthExtraBytes = 1000
+            queues.addressGeneratorQueue.put((
+                'createPaymentAddress', 4, streamNumberForAddress, '', 1,
+                "", eighteenByteRipe, nonceTrialsPerByte,
+                payloadLengthExtraBytes))
+            toast('hidden payment address Creating for buying subscription....')
 
 
 class Credits(Screen):

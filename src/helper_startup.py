@@ -215,7 +215,7 @@ def updateConfig():
     # Adjust the required POW values for each of this user's addresses
     # to conform to protocol v3 norms.
     if settingsversion == 9:
-        for addressInKeysFile in config.addresses():
+        for addressInKeysFile in config.addresses(hidden=True):
             try:
                 previousTotalDifficulty = float(
                     config.getint(

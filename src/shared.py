@@ -142,7 +142,7 @@ def reloadMyAddressHashes():
     keyfileSecure = checkSensitiveFilePermissions(os.path.join(
         state.appdata, 'keys.dat'))
     hasEnabledKeys = False
-    for addressInKeysFile in BMConfigParser().addresses():
+    for addressInKeysFile in BMConfigParser().addresses(hidden=True):
         isEnabled = BMConfigParser().safeGet(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
