@@ -12,6 +12,7 @@ This is an abandoned package maintained inside of the PyBitmessage.
 from .cipher import Cipher
 from .ecc import ECC
 from .eccblind import ECCBlind
+from .eccblindchain import ECCBlindChain
 from .hash import hmac_sha256, hmac_sha512, pbkdf2
 from .openssl import OpenSSL
 
@@ -21,6 +22,7 @@ __all__ = [
     'OpenSSL',
     'ECC',
     'ECCBlind',
+    'ECCBlindChain',
     'Cipher',
     'hmac_sha256',
     'hmac_sha512',
