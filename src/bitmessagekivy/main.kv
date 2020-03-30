@@ -188,6 +188,7 @@
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'login'
                     on_release: root.parent.set_state()
+                    on_press: app.reset_login_screen()
                 NavigationItem:
                     text: 'Network status'
                     icon: 'server-network'
