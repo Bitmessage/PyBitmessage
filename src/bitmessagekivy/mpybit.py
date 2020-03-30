@@ -979,13 +979,12 @@ class Random(Screen):
 
     def generateaddress(self, navApp):
         """Method for Address Generator"""
-        entered_label = str(self.ids.label.text).strip()
+        entered_label = str(self.ids.add_random_bx.children[0].ids.label.text).strip()
         if not entered_label:
-            self.ids.label.focus = True
+            self.ids.add_random_bx.children[0].ids.label.focus = True
             # self.ids.label.error = True
             # self.ids.label.helper_text = 'This field is required'
         streamNumberForAddress = 1
-        label = self.ids.label.text
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
@@ -994,10 +993,9 @@ class Random(Screen):
         if entered_label and entered_label not in lables:
             toast('Address Creating...')
             queues.addressGeneratorQueue.put((
-                'createRandomAddress', 4, streamNumberForAddress, label, 1,
+                'createRandomAddress', 4, streamNumberForAddress, entered_label, 1,
                 "", eighteenByteRipe, nonceTrialsPerByte,
                 payloadLengthExtraBytes))
-            self.ids.label.text = ''
             self.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.ids.toolbar.disabled = False
             state.kivyapp.loadMyAddressScreen(True)
@@ -1019,19 +1017,20 @@ class Random(Screen):
         lables = [BMConfigParser().get(obj, 'label')
                   for obj in BMConfigParser().addresses()]
         if entered_label in lables:
-            self.ids.label.error = True
-            self.ids.label.helper_text = 'Label name is already exist you'\
+            instance.error = True
+            instance.helper_text = 'Label name is already exist you'\
                 ' can try this Ex. ( {0}_1, {0}_2 )'.format(
                     entered_label)
         elif entered_label:
-            self.ids.label.error = False
+            instance.error = False
         else:
-            self.ids.label.error = False
-            self.ids.label.helper_text = 'This field is required'
+            instance.error = False
+            instance.helper_text = 'This field is required'
 
     def reset_address_label(self):
         """Resetting address labels"""
-        self.ids.label.text = ''
+        if not self.ids.add_random_bx.children:
+            self.ids.add_random_bx.add_widget(RandomBoxlayout())
 
 
 class Sent(Screen):
@@ -1995,6 +1994,10 @@ class NavigateApp(MDApp):
         Clipboard.copy(text)
         toast('Copied')
 
+    def reset_login_screen(self):
+        if self.root.ids.sc7.ids.add_random_bx.children:
+            self.root.ids.sc7.ids.add_random_bx.clear_widgets()
+
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
@@ -2040,9 +2043,9 @@ class GrashofPopup(Popup):
     def checkAddress_valid(self, instance):
         """Checking address is valid or not"""
         # my_addresses = (
-        #     self.parent.children[1].children[2].children[0].ids.btn.values)
+        #     self.parent.children[1].children[0].children[0].ids.btn.values)
         my_addresses = (
-            self.parent.children[1].children[0].children[0].ids.btn.values)
+        state.kivyapp.root.children[0].children[0].ids.btn.values)
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()
@@ -2798,6 +2801,7 @@ class Allmails(Screen):
         nav_lay_obj.sc5.clear_widgets()
         nav_lay_obj.sc5.add_widget(Trash())
         nav_lay_obj.sc17.remove_widget(instance.parent.parent)
+        toast('Deleted')
 
     def refresh_callback(self, *args):
         """Method updates the state of application,
@@ -3006,3 +3010,8 @@ class ToAddrBoxlayout(BoxLayout):
     def set_toAddress(self, to_addr):
         """This method is use to set to address"""
         self.to_addr = to_addr
+
+
+class RandomBoxlayout(BoxLayout):
+    """class for BoxLayout behaviour"""
+    pass
