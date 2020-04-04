@@ -68,6 +68,7 @@ class TLSDispatcher(AdvancedDispatcher):
         self.tlsDone = False
         self.tlsVersion = "N/A"
         self.isSSL = False
+        self.sslSocket = None
 
     def state_tls_init(self):
         """Prepare sockets for TLS handshake"""
@@ -76,28 +77,6 @@ class TLSDispatcher(AdvancedDispatcher):
         self.tlsStarted = True
         # Once the connection has been established,
         # it's safe to wrap the socket.
-        if sys.version_info >= (2, 7, 9):
-            context = ssl.create_default_context(
-                purpose=ssl.Purpose.SERVER_AUTH
-                if self.server_side else ssl.Purpose.CLIENT_AUTH)
-            context.set_ciphers(self.ciphers)
-            context.set_ecdh_curve("secp256k1")
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            # also exclude TLSv1 and TLSv1.1 in the future
-            context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 |\
-                ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE |\
-                ssl.OP_CIPHER_SERVER_PREFERENCE
-            self.sslSocket = context.wrap_socket(
-                self.socket, server_side=self.server_side,
-                do_handshake_on_connect=False)
-        else:
-            self.sslSocket = ssl.wrap_socket(
-                self.socket, server_side=self.server_side,
-                ssl_version=sslProtocolVersion,
-                certfile=self.certfile, keyfile=self.keyfile,
-                ciphers=self.ciphers, do_handshake_on_connect=False)
-        self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
         self.set_state("tls_handshake")
         return False
@@ -127,7 +106,6 @@ class TLSDispatcher(AdvancedDispatcher):
             # during TLS handshake, and after flushing write buffer,
             # return status of last handshake attempt
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                # print "tls readable, %r" % (self.want_read)
                 return self.want_read
             # prior to TLS handshake,
             # receiveDataThread should emulate synchronous behaviour
@@ -145,7 +123,6 @@ class TLSDispatcher(AdvancedDispatcher):
         and normal reads must be ignored.
         """
         try:
-            # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 # logger.debug(
                 #    "%s:%i TLS handshaking (read)", self.destination.host,
@@ -182,9 +159,6 @@ class TLSDispatcher(AdvancedDispatcher):
                 #        self.destination.port)
                 self.tls_handshake()
             else:
-                # logger.debug(
-                #    "%s:%i Not TLS handshaking (write)", self.destination.host,
-                #        self.destination.port)
                 return AdvancedDispatcher.handle_write(self)
         except AttributeError:
             return AdvancedDispatcher.handle_write(self)
@@ -201,8 +175,34 @@ class TLSDispatcher(AdvancedDispatcher):
     def tls_handshake(self):
         """Perform TLS handshake and handle its stages"""
         # wait for flush
+        # self.sslSocket.setblocking(0)
         if self.write_buf:
             return False
+        if not self.sslSocket:
+            self.del_channel()
+            if sys.version_info >= (2, 7, 9):
+                context = ssl.create_default_context(
+                    purpose=ssl.Purpose.SERVER_AUTH
+                    if self.server_side else ssl.Purpose.CLIENT_AUTH)
+                context.set_ciphers(self.ciphers)
+                context.set_ecdh_curve("secp256k1")
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                # also exclude TLSv1 and TLSv1.1 in the future
+                context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 |\
+                    ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE |\
+                    ssl.OP_CIPHER_SERVER_PREFERENCE
+                self.sslSocket = context.wrap_socket(
+                    self.socket, server_side=self.server_side,
+                    do_handshake_on_connect=False)
+            else:
+                self.sslSocket = ssl.wrap_socket(
+                    self.socket, server_side=self.server_side,
+                    ssl_version=sslProtocolVersion,
+                    certfile=self.certfile, keyfile=self.keyfile,
+                    ciphers=self.ciphers, do_handshake_on_connect=False)
+            self.sslSocket.setblocking(0)
+            self.set_socket(self.sslSocket)
         # Perform the handshake.
         try:
             self.sslSocket.do_handshake()
@@ -233,8 +233,6 @@ class TLSDispatcher(AdvancedDispatcher):
                     '%s:%i: TLS handshake success',
                     self.destination.host, self.destination.port)
             # The handshake has completed, so remove this channel and...
-            self.del_channel()
-            self.set_socket(self.sslSocket)
             self.tlsDone = True
 
             self.bm_proto_reset()
