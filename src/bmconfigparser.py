@@ -57,9 +57,7 @@ class BMConfigParser(configparser.ConfigParser):
         return configparser.ConfigParser.set(self, section, option, value)
 
     def get(self, section, option, raw=False, vars=None):
-        # import pdb;pdb.set_trace()
         # pylint: disable=unused-argument
-        # import pdb; pdb.set_trace()
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return configparser.ConfigParser.get(

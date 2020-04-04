@@ -231,7 +231,6 @@ def haveSSL(server=False):
     python < 2.7.9's ssl library does not support ECDSA server due to
     missing initialisation of available curves, but client works ok
     """
-    return False
     if not server:
         return True
     elif sys.version_info >= (2, 7, 9):
