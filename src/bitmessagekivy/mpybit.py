@@ -2268,10 +2268,11 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         composer_obj.subject.text = 'Re: ' + (split_subject[1] if len(split_subject) > 1 else split_subject[0])
         time_obj = datetime.fromtimestamp(int(data[0][4]))
         time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
-        sender_name = BMConfigParser().get(data[0][1], 'label')
+        # sender_name = BMConfigParser().get(data[0][1], 'label')
+        sender_name = data[0][1]
         composer_obj.body.text = (
-            '\n\n ------------------------On ' + time_tag + ', '
-            + sender_name + ' wrote:-----------------------\n' + data[0][3])
+            '\n\n --------------On ' + time_tag + ', '
+            + sender_name + ' wrote:--------------\n' + data[0][3])
         composer_obj.body.focus = True
         composer_obj.body.cursor = (0, 0)
         state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
