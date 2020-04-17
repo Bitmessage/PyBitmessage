@@ -360,7 +360,7 @@ def check_curses():
     # unicode for just the version otherwise we get the repr form which
     # includes the module and class names along with the actual version.
     # logger.info('dialog Utility Version %s', unicode(dialog_util_version))
-    logger.info('dialog Utility Version {}'.format(str(dialog_util_version)))
+    logger.info('dialog Utility Version %s', str(dialog_util_version))
     return True
 
 
