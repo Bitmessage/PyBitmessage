@@ -4,6 +4,10 @@ and suggest how it may be installed
 """
 
 import sys
+import logging
+import os
+import state
+from importlib import import_module
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -14,10 +18,6 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
         % sys.version
     )
 
-import logging
-import os
-from importlib import import_module
-import state
 # We can now use logging so set up a simple configuration
 formatter = logging.Formatter('%(levelname)s: %(message)s')
 handler = logging.StreamHandler(sys.stdout)
@@ -304,7 +304,7 @@ def check_openssl():
                 ' OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC),'
                 ' ECDH, and ECDSA enabled.')
             return False
-        if sys.version_info >=(3,0,0):
+        if sys.version_info >= (3, 0, 0):
             matches = cflags_regex.findall(str(openssl_cflags))
         else:
             matches = cflags_regex.findall(openssl_cflags)
@@ -359,7 +359,8 @@ def check_curses():
     # The pythondialog author does not like Python2 str, so we have to use
     # unicode for just the version otherwise we get the repr form which
     # includes the module and class names along with the actual version.
-    logger.info('dialog Utility Version %s', unicode(dialog_util_version))
+    # logger.info('dialog Utility Version %s', unicode(dialog_util_version))
+    logger.info('dialog Utility Version {}'.format(str(dialog_util_version)))
     return True
 
 

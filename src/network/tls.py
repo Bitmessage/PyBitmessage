@@ -172,7 +172,7 @@ class TLSDispatcher(AdvancedDispatcher):
             self.handle_close()
             return
 
-    def tls_handshake(self):
+    def tls_handshake(self): # pylint:disable=too-many-branches
         """Perform TLS handshake and handle its stages"""
         # wait for flush
         # self.sslSocket.setblocking(0)

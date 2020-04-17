@@ -1011,7 +1011,8 @@ class Random(Screen):
         state.kivyapp.root.ids.sc10.init_ui()
         toast('New address created')
 
-    def add_validation(self, instance):
+    @staticmethod
+    def add_validation(instance):
         """Checking validation at address creation time"""
         entered_label = str(instance.text.strip())
         lables = [BMConfigParser().get(obj, 'label')
@@ -1995,6 +1996,7 @@ class NavigateApp(MDApp):
         toast('Copied')
 
     def reset_login_screen(self):
+        """This method is used for clearing random screen"""
         if self.root.ids.sc7.ids.add_random_bx.children:
             self.root.ids.sc7.ids.add_random_bx.clear_widgets()
 
@@ -2045,7 +2047,7 @@ class GrashofPopup(Popup):
         # my_addresses = (
         #     self.parent.children[1].children[0].children[0].ids.btn.values)
         my_addresses = (
-        state.kivyapp.root.children[0].children[0].ids.btn.values)
+            state.kivyapp.root.children[0].children[0].ids.btn.values)
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()
