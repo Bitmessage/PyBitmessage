@@ -73,7 +73,8 @@ KVFILES = [
     'settings', 'popup', 'allmails', 'draft',
     'maildetail', 'common_widgets', 'addressbook',
     'myaddress', 'composer', 'payment', 'sent',
-    'network', 'login', 'credits', 'trash', 'inbox'
+    'network', 'login', 'credits', 'trash', 'inbox',
+    'chat_room', 'chat_list'
 ]
 
 
@@ -3018,3 +3019,74 @@ class ToAddrBoxlayout(BoxLayout):
 class RandomBoxlayout(BoxLayout):
     """class for BoxLayout behaviour"""
     pass
+
+
+def esc_markup(msg):
+    return (msg.replace('&', '&amp;')
+            .replace('[', '&bl;')
+            .replace(']', '&br;'))
+
+    
+class ChatRoom(Screen):
+    """class for chatroom screen"""
+    def send_msg(self):
+        """This method is for sending message"""
+        msg = self.ids.message.text
+        if msg:
+            self.ids.chat_logs.text += (
+                '[b][color=2980b9]{}:[/color][/b] {}\n'
+                    .format('Me', esc_markup(msg)))
+            # obj = MDChip(label=msg, radius=7)
+            # obj.icon = ''
+            # self.ids.ml.add_widget(obj)
+            self.ids.message.text = ''
+
+
+class ChatList(Screen):
+    """class for showing chat list"""
+    queryreturn = ListProperty()
+    has_refreshed = True
+
+    def __init__(self, *args, **kwargs):
+        """Getting ChatList Details"""
+        super(ChatList, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for method ChatList"""
+        self.loadAddresslist(None, 'All', '')
+        print(dt)
+
+    def loadAddresslist(self, account="", where="", what=""):
+        """Clock Schdule for method ChatList"""
+        self.queryreturn = kivy_helper_search.search_sql(
+            '', account, "addressbook", where, what, False)
+        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        if self.queryreturn:
+            self.set_mdList()
+        else:
+            content = MDLabel(
+                font_style='Caption',
+                theme_text_color='Primary',
+                text="No contact found!",
+                halign='center',
+                size_hint_y=None,
+                valign='top')
+            self.ids.ml.add_widget(content)
+
+    def set_mdList(self):
+        """Creating the mdList"""
+        for item in self.queryreturn:
+            meny = TwoLineAvatarIconListItem(
+                text=item[0], secondary_text=item[1], theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item[0].strip()))))
+            # meny.bind(on_press=self.redirect_on_chat())
+            meny.bind(on_press=partial(
+                self.redirect_on_chat,))
+            self.ids.ml.add_widget(meny)
+
+    def redirect_on_chat(self, *args):
+        self.manager.current = 'chroom'

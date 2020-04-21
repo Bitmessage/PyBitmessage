@@ -155,6 +155,13 @@
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
                     on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
+                NavigationItem:
+                    id: chat_rm
+                    text: 'Chat Room'
+                    icon: 'wechat'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'chlist'
+                    on_release: root.parent.set_state()
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
                     text: "All labels"
@@ -260,6 +267,10 @@ NavigationLayout:
             id:sc19
         Archieve:
             id:sc20
+        ChatRoom:
+            id:sc21
+        ChatList:
+            id:sc22
 
     MDNavigationDrawer:
         id: nav_drawer
