@@ -4,7 +4,12 @@
     name: 'chroom'
     BoxLayout:
         orientation: 'vertical'
-
+        canvas.before:
+            Color:
+                rgba: 1,1,1,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
         ScrollView:
             Label:
                 id: chat_logs

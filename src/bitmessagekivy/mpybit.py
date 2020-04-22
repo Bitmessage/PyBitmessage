@@ -57,6 +57,11 @@ from kivymd.uix.list import (
 # )
 from kivymd.uix.selectioncontrol import MDCheckbox, MDSwitch
 from kivymd.uix.chip import MDChip
+from kivy.uix.screenmanager import (
+    RiseInTransition,
+    SlideTransition,
+    FallOutTransition
+)
 
 import queues
 from semaphores import kivyuisignaler
@@ -1623,6 +1628,16 @@ class NavigateApp(MDApp):
             elif self.root.ids.scr_mngr.current == 'pay-options':
                 self.set_common_header()
                 self.root.ids.scr_mngr.current = 'payment'
+            elif self.root.ids.scr_mngr.current == 'chroom':
+                if state.association:
+                    address_label = self.current_address_label(
+                        BMConfigParser().get(
+                            state.association, 'label'), state.association)
+                    self.root.ids.toolbar.title = address_label
+                self.set_common_header()
+                self.root.ids.scr_mngr.transition = FallOutTransition()
+                self.root.ids.scr_mngr.current = 'chlist'
+                self.root.ids.scr_mngr.transition = SlideTransition()
             else:
                 if state.kivyapp.variable_1:
                     self.root.ids.scr_mngr.current = 'inbox'
@@ -1743,12 +1758,21 @@ class NavigateApp(MDApp):
             self.root.ids.toolbar.title = ''
         else:
             self.set_common_header()
+            if self.root.ids.scr_mngr.current == 'chroom' and state.association:
+                self.root.ids.scr_mngr.transition = FallOutTransition()
+                address_label = self.current_address_label(
+                    BMConfigParser().get(
+                        state.association, 'label'), state.association)
+                self.root.ids.toolbar.title = address_label
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
             if state.detailPageType else 'myaddress'\
             if self.root.ids.scr_mngr.current == 'showqrcode' else 'payment'\
-            if self.root.ids.scr_mngr.current == 'pay-options' else 'inbox'
+            if self.root.ids.scr_mngr.current == 'pay-options' else 'chlist'\
+            if self.root.ids.scr_mngr.current == 'chroom' else 'inbox'
+        if self.root.ids.scr_mngr.current == 'chlist':
+            self.root.ids.scr_mngr.transition = SlideTransition()
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -3083,10 +3107,16 @@ class ChatList(Screen):
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item[0].strip()))))
-            # meny.bind(on_press=self.redirect_on_chat())
-            meny.bind(on_press=partial(
-                self.redirect_on_chat,))
+            meny.bind(on_release=partial(
+                self.redirect_to_chat, item[0], item[1]))
             self.ids.ml.add_widget(meny)
 
-    def redirect_on_chat(self, *args):
+    def redirect_to_chat(self, label, addr, *args):
+        """This method is redirecting on chatroom"""
+        self.manager.transition = RiseInTransition()
+        state.kivyapp.set_toolbar_for_QrCode()
+        label = label[:14].capitalize() + '...' if len(label) > 15 else label.capitalize()
+        addrs = ' (' + addr + ')'
+        self.manager.parent.ids.toolbar.title = label + addrs
+        self.manager.parent.ids.sc21.ids.chat_logs.text
         self.manager.current = 'chroom'
