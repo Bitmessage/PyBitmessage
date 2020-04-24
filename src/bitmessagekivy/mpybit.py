@@ -974,7 +974,19 @@ class NetworkStat(Screen):
 class ContentNavigationDrawer(BoxLayout):
     """Navigate Content Drawer"""
 
-    pass
+    def __init__(self, *args, **kwargs):
+        """Method used for contentNavigationDrawer"""
+        super(ContentNavigationDrawer, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for class contentNavigationDrawer"""
+        self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.ids.btn.is_open:
+            self.ids.btn.is_open = False
 
 
 class Random(Screen):
@@ -1439,6 +1451,12 @@ class Create(Screen):
                 "SELECT label, address from addressbook")]
         widget_1.ids.txt_input.starting_no = 2
         self.add_widget(widget_1)
+        self.children[0].ids.id_scroll.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.children[1].ids.btn.is_open:
+            self.children[1].ids.btn.is_open = False
 
 
 class Setting(Screen):
@@ -1608,14 +1626,20 @@ class NavigateApp(MDApp):
         # pylint: disable=inconsistent-return-statements, too-many-branches
         """Method is used for going on previous screen"""
         if key == 27:
-            if state.in_search_mode and self.root.ids.scr_mngr.current != (
-                    "mailDetail"):
+            if state.in_search_mode and self.root.ids.scr_mngr.current not in [
+                    "mailDetail", "create"]:
                 self.closeSearchScreen()
             elif self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
                 self.back_press()
+                if state.in_search_mode and state.searcing_text:
+                    toolbar_obj = self.root.ids.toolbar
+                    toolbar_obj.left_action_items = [
+                        ['arrow-left', lambda x: self.closeSearchScreen()]]
+                    toolbar_obj.right_action_items = []
+                    self.root.ids.toolbar.title = ''
             elif self.root.ids.scr_mngr.current == "create":
                 self.save_draft()
                 self.set_common_header()
@@ -1644,7 +1668,7 @@ class NavigateApp(MDApp):
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
-        elif key == 13 and state.searcing_text:
+        elif key == 13 and state.searcing_text and not state.in_composer:
             if state.search_screen == 'inbox':
                 self.root.ids.sc1.children[1].active = True
                 Clock.schedule_once(self.search_callback, 0.5)
@@ -1917,6 +1941,11 @@ class NavigateApp(MDApp):
 
     def set_mail_detail_header(self):
         """Setting the details of the page"""
+        if state.association and state.in_search_mode:
+            address_label = self.current_address_label(
+                BMConfigParser().get(
+                    state.association, 'label'), state.association)
+            self.root.ids.toolbar.title = address_label
         toolbar_obj = self.root.ids.toolbar
         toolbar_obj.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
@@ -2284,6 +2313,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def inbox_reply(self):
         """Reply inbox messages"""
+        state.in_composer = True
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message, received from inbox where"
             " msgid = ?;", state.mail_id)
@@ -2850,16 +2880,16 @@ class Allmails(Screen):
 
 def avatarImageFirstLetter(letter_string):
     """This function is used to the first letter for the avatar image"""
-    if letter_string:
+    try:
         if letter_string[0].upper() >= 'A' and letter_string[0].upper() <= 'Z':
             img_latter = letter_string[0].upper()
         elif int(letter_string[0]) >= 0 and int(letter_string[0]) <= 9:
             img_latter = letter_string[0]
         else:
             img_latter = '!'
-    else:
+    except ValueError as e:
         img_latter = '!'
-    return img_latter
+    return img_latter if img_latter else '!'
 
 
 class Starred(Screen):
@@ -3118,5 +3148,5 @@ class ChatList(Screen):
         label = label[:14].capitalize() + '...' if len(label) > 15 else label.capitalize()
         addrs = ' (' + addr + ')'
         self.manager.parent.ids.toolbar.title = label + addrs
-        self.manager.parent.ids.sc21.ids.chat_logs.text
+        self.manager.parent.ids.sc21.ids.chat_logs.text = ''
         self.manager.current = 'chroom'
