@@ -1020,14 +1020,23 @@ class Random(Screen):
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
 
-    @staticmethod
-    def address_created_callback(dt=0):
+    def address_created_callback(self, dt=0):
         """New address created"""
         state.kivyapp.loadMyAddressScreen(False)
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
         state.kivyapp.root.ids.sc10.is_add_created = True
         state.kivyapp.root.ids.sc10.init_ui()
+        self.reset_address_spinner()
         toast('New address created')
+
+    def reset_address_spinner(self):
+        """reseting spinner address and UI"""
+        addresses = [addr for addr in BMConfigParser().addresses()
+                     if BMConfigParser().get(str(addr), 'enabled') == 'true']
+        self.manager.parent.ids.content_drawer.ids.btn.values = []
+        self.manager.parent.ids.sc3.children[1].ids.btn.values = []
+        self.manager.parent.ids.content_drawer.ids.btn.values = addresses
+        self.manager.parent.ids.sc3.children[1].ids.btn.values = addresses
 
     @staticmethod
     def add_validation(instance):
