@@ -473,6 +473,8 @@ class SettingsDialog(QtGui.QDialog):
                 " WHERE status='toodifficult'")
             queues.workerQueue.put(('sendmessage', ''))
 
+        stopResendingDefaults = False
+
         # UI setting to stop trying to send messages after X days/months
         # I'm open to changing this UI to something else if someone has a better idea.
         if self.lineEditDays.text() == '' and self.lineEditMonths.text() == '':
@@ -481,6 +483,7 @@ class SettingsDialog(QtGui.QDialog):
             self.config.set('bitmessagesettings', 'stopresendingafterxdays', '')
             self.config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            stopResendingDefaults = True
 
         try:
             days = float(self.lineEditDays.text())
@@ -493,7 +496,7 @@ class SettingsDialog(QtGui.QDialog):
             self.lineEditMonths.setText("0")
             months = 0.0
 
-        if days >= 0 and months >= 0:
+        if days >= 0 and months >= 0 and not stopResendingDefaults:
             shared.maximumLengthOfTimeToBotherResendingMessages = \
                 days * 24 * 60 * 60 + months * 60 * 60 * 24 * 365 / 12
             if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
