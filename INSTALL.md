@@ -40,6 +40,11 @@ python bitmessagemain.py
 Voilà! Bitmessage is updated!
 
 #### Linux
+_Some recent Linux distributions don't support QT4 anymore, hence PyBitmessage
+won't run with a GUI. However, if you build PyBitmessage as a flatpak, it will
+run in a sandbox which provides QT4. See the **Linux flatpak** instructions 
+in the **Creating a package for installation** section of this document._
+
 To run PyBitmessage from the command-line, you must download the source, then
 run `src/bitmessagemain.py`.
 ```
@@ -96,6 +101,27 @@ puppy.sh - create a package for Puppy Linux
 rpm.sh - create a RPM package
 slack.sh - create a package for Slackware
 ```
+
+#### Linux flatpak
+First make sure you have `flatpak` and `flatpak-builder` installed. Follow the
+instructions for your distribution on [flathub](https://flatpak.org/setup/). The
+instructions there only cover the installation of `flatpak`, but 
+`flatpak-builder` should be the same.
+
+Once you have `flatpak` and `flatpak-builder` installed:
+```
+git clone git://github.com/Bitmessage/PyBitmessage.git
+cd PyBitmessage/
+flatpak-builder --install _flatpak -install-deps-from=flathub --force-clean --user org.bitmessage.PyBitmessage.json
+```
+This will install PyBitmessage to your local flatpak user repository, but it 
+takes a while to compile because QT4 and PyQt4 have to be build, among others.
+
+When done you can launch PyBitmessage via:
+`flatpak run -v org.bitmessage.PyBitmessage`
+
+If you want to free up disk space you can remove the `Sdk` runtime again:
+`flatpak uninstall org.freedesktop.Sdk//18.08`
 
 #### OS X
 Please refer to
