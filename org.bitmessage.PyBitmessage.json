@@ -1,0 +1,89 @@
+{
+  "app-id": "org.bitmessage.PyBitmessage",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "18.08",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "pybitmessage",
+  "finish-args" : [
+    "--share=network",
+    "--socket=x11",
+    "--share=ipc",
+    "--filesystem=xdg-config/PyBitmessage:create"
+  ],
+  "modules": [
+    "shared-modules/python2.7/python-2.7.json",
+    "shared-modules/qt4/qt4-4.8.7-minimal.json",
+    {
+      "name": "python-sip",
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://www.riverbankcomputing.com/static/Downloads/sip/4.19.22/sip-4.19.22.tar.gz",
+          "sha256": "e1b768824ec1a2ee38dd536b6b6b3d06de27b00a2f5f55470d1b512306e3be45"
+        }
+      ],
+      "buildsystem": "simple",
+      "build-commands": [
+        "python configure.py --sip-module PyQt4.sip --no-dist-info",
+        "make",
+        "make install"
+      ]
+    },
+    {
+      "name": "python-qt4",
+      "sources": [
+        {
+          "type": "archive",
+          "url": "http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.12.3/PyQt4_gpl_x11-4.12.3.tar.gz",
+          "sha256": "a00f5abef240a7b5852b7924fa5fdf5174569525dc076cd368a566619e56d472"
+        }
+      ],
+      "buildsystem": "simple",
+      "build-commands": [
+        "python configure.py -w --confirm-license",
+        "make",
+        "make install"
+      ]
+    },
+    {
+      "name" : "PyBitmessage-dependencies",
+      "buildsystem" : "simple",
+      "build-options": {
+        "build-args": [
+          "--share=network"
+        ]
+      },
+      "build-commands": [
+        "pip --version",
+        "pip install setuptools msgpack"
+      ]
+    },
+    {
+      "name" : "PyBitmessage",
+      "buildsystem" : "simple",
+      "build-options": {
+        "build-args": [
+          "--share=network"
+        ]
+      },
+      "build-commands": [
+        "python --version",
+        "python checkdeps.py",
+        "python setup.py install --prefix=/app --exec-prefix=/app",
+        "sed -i 's~/usr/bin/~/app/bin/~' /app/bin/pybitmessage",
+        "cat /app/bin/pybitmessage",
+        "mv /app/share/applications/pybitmessage.desktop /app/share/applications/org.bitmessage.PyBitmessage.desktop",
+        "sed -i 's~Icon=pybitmessage~Icon=org.bitmessage.PyBitmessage~' /app/share/applications/org.bitmessage.PyBitmessage.desktop",
+        "mv /app/share/icons/hicolor/scalable/apps/pybitmessage.svg /app/share/icons/hicolor/scalable/apps/org.bitmessage.PyBitmessage.svg",
+        "mv /app/share/icons/hicolor/24x24/apps/pybitmessage.png /app/share/icons/hicolor/24x24/apps/org.bitmessage.PyBitmessage.png",
+        "which pybitmessage"
+      ],
+      "sources" : [
+        {
+          "type" : "dir",
+          "path" : "."
+        }
+      ]
+    }
+  ]
+}
