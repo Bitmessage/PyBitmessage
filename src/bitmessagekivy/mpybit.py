@@ -2896,7 +2896,7 @@ def avatarImageFirstLetter(letter_string):
             img_latter = letter_string[0]
         else:
             img_latter = '!'
-    except ValueError as e:
+    except ValueError:
         img_latter = '!'
     return img_latter if img_latter else '!'
 
@@ -3085,11 +3085,12 @@ class RandomBoxlayout(BoxLayout):
 
 
 def esc_markup(msg):
+    """this method is for replacing some property"""
     return (msg.replace('&', '&amp;')
             .replace('[', '&bl;')
             .replace(']', '&br;'))
 
-    
+
 class ChatRoom(Screen):
     """class for chatroom screen"""
     def send_msg(self):
