@@ -103,26 +103,7 @@ slack.sh - create a package for Slackware
 ```
 
 #### Linux flatpak
-First make sure you have `flatpak` and `flatpak-builder` installed. Follow the
-instructions for your distribution on [flathub](https://flatpak.org/setup/). The
-instructions there only cover the installation of `flatpak`, but 
-`flatpak-builder` should be the same.
-
-Once you have `flatpak` and `flatpak-builder` installed:
-```
-git clone git://github.com/Bitmessage/PyBitmessage.git
-cd PyBitmessage/
-git submodule add https://github.com/flathub/shared-modules.git
-flatpak-builder --install --user -install-deps-from=flathub --force-clean --state-dir=build/.flatpak-builder build/_flatpak org.bitmessage.PyBitmessage.json
-```
-This will install PyBitmessage to your local flatpak user repository, but it 
-takes a while to compile because QT4 and PyQt4 have to be build, among others.
-
-When done you can launch PyBitmessage via:
-`flatpak run -v org.bitmessage.PyBitmessage`
-
-If you want to free up disk space you can remove the `Sdk` runtime again:
-`flatpak uninstall org.freedesktop.Sdk//18.08`
+See [packages/flatpak/README.md](packages/flatpak/README.md)
 
 #### OS X
 Please refer to
