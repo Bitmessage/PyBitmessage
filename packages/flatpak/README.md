@@ -14,7 +14,7 @@ Once you have `flatpak` and `flatpak-builder` installed:
 ```
 git clone git://github.com/Bitmessage/PyBitmessage.git
 cd PyBitmessage/
-git submodule add https://github.com/flathub/shared-modules.git
+git submodule update --init --recursive
 flatpak-builder --install --user -install-deps-from=flathub --force-clean --state-dir=build/.flatpak-builder build/_flatpak org.bitmessage.PyBitmessage.json
 ```
 This will install PyBitmessage to your local flatpak user repository, but it 
