@@ -77,6 +77,7 @@ a.datas += addUIs()
 
 
 a.binaries += [('libeay32.dll', os.path.join(openSSLPath, 'libeay32.dll'), 'BINARY'),
+         ('msvcr120.dll', os.path.join(msvcrDllPath, 'msvcr120.dll'), 'BINARY'),
          ('python27.dll', os.path.join(pythonDllPath, 'python27.dll'), 'BINARY'),
          (os.path.join('bitmsghash', 'bitmsghash%i.dll' % (arch)), os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % (arch)), 'BINARY'),
          (os.path.join('bitmsghash', 'bitmsghash.cl'), os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
