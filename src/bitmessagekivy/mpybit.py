@@ -57,6 +57,11 @@ from kivymd.uix.list import (
 # )
 from kivymd.uix.selectioncontrol import MDCheckbox, MDSwitch
 from kivymd.uix.chip import MDChip
+from kivy.uix.screenmanager import (
+    RiseInTransition,
+    SlideTransition,
+    FallOutTransition
+)
 
 import queues
 from semaphores import kivyuisignaler
@@ -73,7 +78,8 @@ KVFILES = [
     'settings', 'popup', 'allmails', 'draft',
     'maildetail', 'common_widgets', 'addressbook',
     'myaddress', 'composer', 'payment', 'sent',
-    'network', 'login', 'credits', 'trash', 'inbox'
+    'network', 'login', 'credits', 'trash', 'inbox',
+    'chat_room', 'chat_list'
 ]
 
 
@@ -968,7 +974,19 @@ class NetworkStat(Screen):
 class ContentNavigationDrawer(BoxLayout):
     """Navigate Content Drawer"""
 
-    pass
+    def __init__(self, *args, **kwargs):
+        """Method used for contentNavigationDrawer"""
+        super(ContentNavigationDrawer, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for class contentNavigationDrawer"""
+        self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.ids.btn.is_open:
+            self.ids.btn.is_open = False
 
 
 class Random(Screen):
@@ -1002,14 +1020,23 @@ class Random(Screen):
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
 
-    @staticmethod
-    def address_created_callback(dt=0):
+    def address_created_callback(self, dt=0):
         """New address created"""
         state.kivyapp.loadMyAddressScreen(False)
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
         state.kivyapp.root.ids.sc10.is_add_created = True
         state.kivyapp.root.ids.sc10.init_ui()
+        self.reset_address_spinner()
         toast('New address created')
+
+    def reset_address_spinner(self):
+        """reseting spinner address and UI"""
+        addresses = [addr for addr in BMConfigParser().addresses()
+                     if BMConfigParser().get(str(addr), 'enabled') == 'true']
+        self.manager.parent.ids.content_drawer.ids.btn.values = []
+        self.manager.parent.ids.sc3.children[1].ids.btn.values = []
+        self.manager.parent.ids.content_drawer.ids.btn.values = addresses
+        self.manager.parent.ids.sc3.children[1].ids.btn.values = addresses
 
     @staticmethod
     def add_validation(instance):
@@ -1433,6 +1460,12 @@ class Create(Screen):
                 "SELECT label, address from addressbook")]
         widget_1.ids.txt_input.starting_no = 2
         self.add_widget(widget_1)
+        self.children[0].ids.id_scroll.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.children[1].ids.btn.is_open:
+            self.children[1].ids.btn.is_open = False
 
 
 class Setting(Screen):
@@ -1602,14 +1635,20 @@ class NavigateApp(MDApp):
         # pylint: disable=inconsistent-return-statements, too-many-branches
         """Method is used for going on previous screen"""
         if key == 27:
-            if state.in_search_mode and self.root.ids.scr_mngr.current != (
-                    "mailDetail"):
+            if state.in_search_mode and self.root.ids.scr_mngr.current not in [
+                    "mailDetail", "create"]:
                 self.closeSearchScreen()
             elif self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
                 self.back_press()
+                if state.in_search_mode and state.searcing_text:
+                    toolbar_obj = self.root.ids.toolbar
+                    toolbar_obj.left_action_items = [
+                        ['arrow-left', lambda x: self.closeSearchScreen()]]
+                    toolbar_obj.right_action_items = []
+                    self.root.ids.toolbar.title = ''
             elif self.root.ids.scr_mngr.current == "create":
                 self.save_draft()
                 self.set_common_header()
@@ -1622,13 +1661,23 @@ class NavigateApp(MDApp):
             elif self.root.ids.scr_mngr.current == 'pay-options':
                 self.set_common_header()
                 self.root.ids.scr_mngr.current = 'payment'
+            elif self.root.ids.scr_mngr.current == 'chroom':
+                if state.association:
+                    address_label = self.current_address_label(
+                        BMConfigParser().get(
+                            state.association, 'label'), state.association)
+                    self.root.ids.toolbar.title = address_label
+                self.set_common_header()
+                self.root.ids.scr_mngr.transition = FallOutTransition()
+                self.root.ids.scr_mngr.current = 'chlist'
+                self.root.ids.scr_mngr.transition = SlideTransition()
             else:
                 if state.kivyapp.variable_1:
                     self.root.ids.scr_mngr.current = 'inbox'
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
-        elif key == 13 and state.searcing_text:
+        elif key == 13 and state.searcing_text and not state.in_composer:
             if state.search_screen == 'inbox':
                 self.root.ids.sc1.children[1].active = True
                 Clock.schedule_once(self.search_callback, 0.5)
@@ -1742,12 +1791,21 @@ class NavigateApp(MDApp):
             self.root.ids.toolbar.title = ''
         else:
             self.set_common_header()
+            if self.root.ids.scr_mngr.current == 'chroom' and state.association:
+                self.root.ids.scr_mngr.transition = FallOutTransition()
+                address_label = self.current_address_label(
+                    BMConfigParser().get(
+                        state.association, 'label'), state.association)
+                self.root.ids.toolbar.title = address_label
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
             if state.detailPageType else 'myaddress'\
             if self.root.ids.scr_mngr.current == 'showqrcode' else 'payment'\
-            if self.root.ids.scr_mngr.current == 'pay-options' else 'inbox'
+            if self.root.ids.scr_mngr.current == 'pay-options' else 'chlist'\
+            if self.root.ids.scr_mngr.current == 'chroom' else 'inbox'
+        if self.root.ids.scr_mngr.current == 'chlist':
+            self.root.ids.scr_mngr.transition = SlideTransition()
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1892,6 +1950,11 @@ class NavigateApp(MDApp):
 
     def set_mail_detail_header(self):
         """Setting the details of the page"""
+        if state.association and state.in_search_mode:
+            address_label = self.current_address_label(
+                BMConfigParser().get(
+                    state.association, 'label'), state.association)
+            self.root.ids.toolbar.title = address_label
         toolbar_obj = self.root.ids.toolbar
         toolbar_obj.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
@@ -2259,6 +2322,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def inbox_reply(self):
         """Reply inbox messages"""
+        state.in_composer = True
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message, received from inbox where"
             " msgid = ?;", state.mail_id)
@@ -2825,16 +2889,16 @@ class Allmails(Screen):
 
 def avatarImageFirstLetter(letter_string):
     """This function is used to the first letter for the avatar image"""
-    if letter_string:
+    try:
         if letter_string[0].upper() >= 'A' and letter_string[0].upper() <= 'Z':
             img_latter = letter_string[0].upper()
         elif int(letter_string[0]) >= 0 and int(letter_string[0]) <= 9:
             img_latter = letter_string[0]
         else:
             img_latter = '!'
-    else:
+    except ValueError as e:
         img_latter = '!'
-    return img_latter
+    return img_latter if img_latter else '!'
 
 
 class Starred(Screen):
@@ -3018,3 +3082,80 @@ class ToAddrBoxlayout(BoxLayout):
 class RandomBoxlayout(BoxLayout):
     """class for BoxLayout behaviour"""
     pass
+
+
+def esc_markup(msg):
+    return (msg.replace('&', '&amp;')
+            .replace('[', '&bl;')
+            .replace(']', '&br;'))
+
+    
+class ChatRoom(Screen):
+    """class for chatroom screen"""
+    def send_msg(self):
+        """This method is for sending message"""
+        msg = self.ids.message.text
+        if msg:
+            self.ids.chat_logs.text += (
+                '[b][color=2980b9]{}:[/color][/b] {}\n'
+                    .format('Me', esc_markup(msg)))
+            # obj = MDChip(label=msg, radius=7)
+            # obj.icon = ''
+            # self.ids.ml.add_widget(obj)
+            self.ids.message.text = ''
+
+
+class ChatList(Screen):
+    """class for showing chat list"""
+    queryreturn = ListProperty()
+    has_refreshed = True
+
+    def __init__(self, *args, **kwargs):
+        """Getting ChatList Details"""
+        super(ChatList, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for method ChatList"""
+        self.loadAddresslist(None, 'All', '')
+        print(dt)
+
+    def loadAddresslist(self, account="", where="", what=""):
+        """Clock Schdule for method ChatList"""
+        self.queryreturn = kivy_helper_search.search_sql(
+            '', account, "addressbook", where, what, False)
+        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        if self.queryreturn:
+            self.set_mdList()
+        else:
+            content = MDLabel(
+                font_style='Caption',
+                theme_text_color='Primary',
+                text="No contact found!",
+                halign='center',
+                size_hint_y=None,
+                valign='top')
+            self.ids.ml.add_widget(content)
+
+    def set_mdList(self):
+        """Creating the mdList"""
+        for item in self.queryreturn:
+            meny = TwoLineAvatarIconListItem(
+                text=item[0], secondary_text=item[1], theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item[0].strip()))))
+            meny.bind(on_release=partial(
+                self.redirect_to_chat, item[0], item[1]))
+            self.ids.ml.add_widget(meny)
+
+    def redirect_to_chat(self, label, addr, *args):
+        """This method is redirecting on chatroom"""
+        self.manager.transition = RiseInTransition()
+        state.kivyapp.set_toolbar_for_QrCode()
+        label = label[:14].capitalize() + '...' if len(label) > 15 else label.capitalize()
+        addrs = ' (' + addr + ')'
+        self.manager.parent.ids.toolbar.title = label + addrs
+        self.manager.parent.ids.sc21.ids.chat_logs.text = ''
+        self.manager.current = 'chroom'
