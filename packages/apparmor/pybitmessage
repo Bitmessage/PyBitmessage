@@ -1,0 +1,19 @@
+# Last Modified: Wed Apr 29 21:04:08 2020
+#include <tunables/global>
+
+/usr/bin/pybitmessage {
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/lightdm>
+  #include <abstractions/python>
+  #include <abstractions/user-tmp>
+
+  owner /home/*/.ICEauthority r,
+  owner /home/*/.Xauthority r,
+  owner /home/*/.config/PyBitmessage/ rw,
+  owner /home/*/.config/PyBitmessage/* rwk,
+  owner /home/*/.config/Trolltech.conf rwk,
+  owner /home/*/.config/Trolltech.conf.* rw,
+  owner /proc/*/mounts r,
+
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
 import os
+import platform
 import shutil
 import sys
 
@@ -84,6 +85,21 @@ if __name__ == "__main__":
         except ImportError:
             packages += ['pybitmessage.fallback.umsgpack']
 
+    data_files = [
+        ('share/applications/',
+            ['desktop/pybitmessage.desktop']),
+        ('share/icons/hicolor/scalable/apps/',
+            ['desktop/icons/scalable/pybitmessage.svg']),
+        ('share/icons/hicolor/24x24/apps/',
+            ['desktop/icons/24x24/pybitmessage.png'])
+    ]
+
+    if platform.dist()[0] in ('Debian', 'Ubuntu'):
+        data_files += [
+            ("etc/apparmor.d/",
+                ['packages/apparmor/pybitmessage'])
+        ]
+
     dist = setup(
         name='pybitmessage',
         version=softwareVersion,
@@ -115,14 +131,7 @@ if __name__ == "__main__":
             'translations/*.ts', 'translations/*.qm',
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
-        data_files=[
-            ('share/applications/',
-                ['desktop/pybitmessage.desktop']),
-            ('share/icons/hicolor/scalable/apps/',
-                ['desktop/icons/scalable/pybitmessage.svg']),
-            ('share/icons/hicolor/24x24/apps/',
-                ['desktop/icons/24x24/pybitmessage.png'])
-        ],
+        data_files=data_files,
         ext_modules=[bitmsghash],
         zip_safe=False,
         entry_points={
