@@ -3,34 +3,45 @@
 # INIT
 MACHINE_TYPE=`uname -m`
 BASE_DIR=$(pwd)
-PYTHON_VERSION=2.7.17
+PYTHON_VERSION=2.7.18
 PYQT_VERSION=4-4.11.4-gpl-Py2.7-Qt4.8.7
-OPENSSL_VERSION=1_0_2t
+OPENSSL_VERSION=1_0_2u
 SRCPATH=~/Downloads
 
 #Functions
 function download_sources_32 {
 	if [ ! -d ${SRCPATH} ]; then
 		mkdir -p ${SRCPATH}
+		mkdir -p ${SRCPATH}/vc2008
+		mkdir -p ${SRCPATH}/vc2013
 	fi
 	wget -P ${SRCPATH} -c -nc --content-disposition \
 		https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}.msi \
-		https://download.microsoft.com/download/1/1/1/1116b75a-9ec3-481a-a3c8-1777b5381140/vcredist_x86.exe \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/PyQt${PYQT_VERSION}-x32.exe?raw=true \
-		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win32OpenSSL-${OPENSSL_VERSION}.exe?raw=true \
-		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/pyopencl-2015.1-cp27-none-win32.whl?raw=true
+		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/pyopencl-2015.1-cp27-none-win32.whl?raw=true \
+                https://github.com/openssl/openssl/archive/OpenSSL_${OPENSSL_VERSION}.tar.gz
+        wget -P ${SRCPATH}/vc2008 -c -nc --content-disposition \
+            https://download.microsoft.com/download/1/1/1/1116b75a-9ec3-481a-a3c8-1777b5381140/vcredist_x86.exe
+        #wget -P ${SRCPATH}/vc2013 -c -nc --content-disposition \
+        #    https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x86.exe
 }
 
 function download_sources_64 {
 	if [ ! -d ${SRCPATH} ]; then
 		mkdir -p ${SRCPATH}
+		mkdir -p ${SRCPATH}/vc2008
+		mkdir -p ${SRCPATH}/vc2013
 	fi
 	wget -P ${SRCPATH} -c -nc --content-disposition \
 		http://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}.amd64.msi \
-		https://download.microsoft.com/download/d/2/4/d242c3fb-da5a-4542-ad66-f9661d0a8d19/vcredist_x64.exe \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/PyQt${PYQT_VERSION}-x64.exe?raw=true \
-		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win64OpenSSL-${OPENSSL_VERSION}.exe?raw=true \
-		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/pyopencl-2015.1-cp27-none-win_amd64.whl?raw=true
+		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/pyopencl-2015.1-cp27-none-win_amd64.whl?raw=true \
+                https://github.com/openssl/openssl/archive/OpenSSL_${OPENSSL_VERSION}.tar.gz
+
+        wget -P ${SRCPATH}/vc2008 -c -nc --content-disposition \
+            https://download.microsoft.com/download/d/2/4/d242c3fb-da5a-4542-ad66-f9661d0a8d19/vcredist_x64.exe
+        #wget -P ${SRCPATH}/vc2013  -c -nc --content-disposition \
+        #    https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x64.exe
 }
 
 function download_sources {
@@ -57,15 +68,19 @@ function install_python(){
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
 		echo "Installing Python ${PYTHON_VERSION} 64b"
 		wine msiexec -i python-${PYTHON_VERSION}.amd64.msi /q /norestart
-		echo "Installing vcredist for 64 bit"
-		wine vcredist_x64.exe /q /norestart
+                echo "Installing vcredist (2008) for 64 bit"
+		wine vc2008/vcredist_x64.exe /q /norestart
+                #echo "Installing vcredist (2013) for 64 bit"
+		#wine vc2013/vcredist_x64.exe /q /norestart
 	else
 		echo "Installing Python ${PYTHON_VERSION} 32b"
 		wine msiexec -i python-${PYTHON_VERSION}.msi /q /norestart
 		# MSVCR 2008 required for Windows XP
 		cd ${SRCPATH}
 		echo "Installing vc_redist (2008) for 32 bit "
-		wine vcredist_x86.exe /Q
+		wine vc2008/vcredist_x86.exe /Q /norestart
+		#echo "Installing vc_redist (2013) for 32 bit "
+		#wine vc2013/vcredist_x86.exe /Q /norestart
 	fi
 	# add cert
 	if [ -f /usr/local/share/ca-certificates/bitmessage-proxy.crt ]; then
@@ -86,13 +101,30 @@ function install_pyqt(){
 }
 
 function install_openssl(){
+        rm -rf openssl-OpenSSL_${OPENSSL_VERSION}
+        tar xvzf openssl-OpenSSL_${OPENSSL_VERSION}.tar.gz
+        cd openssl-OpenSSL_${OPENSSL_VERSION}
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
-		echo "Installing OpenSSL ${OPENSSL_VERSION} 64b"
-		wine Win64OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
+		echo "Building OpenSSL ${OPENSSL_VERSION} 64b"
+                export CROSS_COMPILE=x86_64-w64-mingw32-
+                perl Configure --openssldir=${WINEPREFIX}/drive_c/OpenSSL-Win64 shared mingw64
+                make clean && make depend && make && make install
+                cp -f libeay32.dll ${WINEPREFIX}/drive_c/OpenSSL-Win64/lib
+                unset CROSS_COMPILE
+		#wine Win64OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
 	else
-		echo "Installing OpenSSL ${OPENSSL_VERSION} 32b"
-		wine Win32OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
+		echo "Building OpenSSL ${OPENSSL_VERSION} 32b"
+                tar xvzf OpenSSL_${OPENSSL_VERSION}
+                cd openssl-OpenSSL_${OPENSSL_VERSION}
+                export CROSS_COMPILE=i686-w64-mingw32-
+                perl Configure --openssldir=${WINEPREFIX}/drive_c/OpenSSL-Win32 shared mingw
+                make clean && make depend && make && make install
+                cp -f libeay32.dll ${WINEPREFIX}/drive_c/OpenSSL-Win32/lib
+                unset CROSS_COMPILE
+		#wine Win32OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
 	fi
+        cp -f libeay32.dll ${WINEPREFIX}/drive_c/Python27/Lib/site-packages/PyQt4/libeay32.dll
+        cd ..
 }
 
 function install_pyinstaller()
@@ -100,11 +132,12 @@ function install_pyinstaller()
 	cd ${BASE_DIR}
 	echo "Installing PyInstaller"
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
-		wine python -m pip install pyinstaller
+		#wine python -m pip install pyinstaller
+		wine python -m pip install -I pyinstaller==3.3.1
 	else
 		# 3.2.1 is the last version to work on XP
 		# see https://github.com/pyinstaller/pyinstaller/issues/2931
-		wine python -m pip install -I pyinstaller==3.2.1
+		wine python -m pip install -I pyinstaller==3.3.1
 	fi
 }
 
@@ -133,11 +166,11 @@ function build_dll(){
 	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
 		echo "Create dll"
 		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -I/usr/x86_64-w64-mingw32/include -L$HOME/.wine64/drive_c/OpenSSL-Win64/lib -c 	bitmsghash.cpp
-		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native  -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -L$HOME/.wine64/drive_c/OpenSSL-Win64 -L/usr/lib/x86_64-linux-gnu/wine -fPIC -shared -lcrypt32 -leay32 -lwsock32 -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
+		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native  -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -L$HOME/.wine64/drive_c/OpenSSL-Win64/lib -L/usr/lib/x86_64-linux-gnu/wine -fPIC -shared -lcrypt32 -leay32 -lwsock32 -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
 	else
 		echo "Create dll"
 		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native   -I$HOME/.wine32/drive_c/OpenSSL-Win32/include -I/usr/i686-w64-mingw32/include  -L$HOME/.wine32/drive_c/OpenSSL-Win32/lib  -c 	bitmsghash.cpp
-		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native    -I$HOME/.wine32/drive_c/OpenSSL-Win32/include    -L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW -fPIC -shared -lcrypt32 -leay32 -lwsock32  -o bitmsghash32.dll  -Wl,--out-implib,bitmsghash.a 
+		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native    -I$HOME/.wine32/drive_c/OpenSSL-Win32/include    -L$HOME/.wine32/drive_c/OpenSSL-Win32/lib -fPIC -shared -lcrypt32 -leay32 -lwsock32  -o bitmsghash32.dll  -Wl,--out-implib,bitmsghash.a 
 	fi
 }
 

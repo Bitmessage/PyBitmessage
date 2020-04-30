@@ -18,6 +18,10 @@ openSSLPath = os.path.join(cdrivePath, sslName)
 msvcrDllPath = os.path.join(cdrivePath, "windows", "system32")
 pythonDllPath = os.path.join(cdrivePath, "Python27")
 outPath = os.path.join(spec_root, "bitmessagemain")
+libgcc={
+  '32': ["libgcc_s_sjlj-1.dll", "/usr/lib/gcc/i686-w64-mingw32/7.3-win32"],
+  '64': ["libgcc_s_seh-1.dll", "/usr/lib/gcc/x86_64-w64-mingw32/7.3-win32"]
+}
 
 importPath = srcPath 
 sys.path.insert(0,importPath)
@@ -75,6 +79,8 @@ def addUIs():
 a.datas += addTranslations()
 a.datas += addUIs()
 
+if os.path.isdir(libgcc[str(arch)][1]):
+    a.binaries += [(libgcc[str(arch)][0], os.path.join(libgcc[str(arch)][1], libgcc[str(arch)][0]), 'BINARY')]
 
 a.binaries += [('libeay32.dll', os.path.join(openSSLPath, 'libeay32.dll'), 'BINARY'),
          ('python27.dll', os.path.join(pythonDllPath, 'python27.dll'), 'BINARY'),
