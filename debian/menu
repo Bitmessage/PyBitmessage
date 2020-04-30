@@ -1,0 +1,4 @@
+?package(bitmessage): \
+  needs="X11|text|vc|wm" \
+  section="Applications/Office"\
+  title="bitmessage" command="/usr/bin/bitmessage"

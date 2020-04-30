@@ -1,0 +1,20 @@
+Source: bitmessage
+Section: net
+Priority: optional
+Maintainer: citizenadmin <citizenadmin@helicoptarianconstitocracy.org>
+Build-Depends: debhelper (>= 11), dh-python, dh-apparmor, python-all, python-setuptools
+Standards-Version: 4.1.3
+Homepage: https://github.com/Bitmessage/PyBitmessage
+X-Python-Version: >= 2.6
+#Vcs-Browser: https://salsa.debian.org/debian/bitmessage
+Vcs-Git: https://github.com/Bitmessage/PyBitmessage
+#Testsuite: autopkgtest-pkg-python
+
+Package: python-bitmessage
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}, python, openssl, libssl-dev, python-msgpack, python-setuptools
+Suggests: apparmor, tor, python-pyopencl, python-qt4, python-stem
+Description: BitMessage Anonymous Communication Client
+ .
+ Bitmessage is a P2P communication protocol used to send encrypted messages to another person or to many subscribers. It is decentralized and trustless, meaning that you need-not inherently trust any entities like root certificate authorities. It uses strong authentication, which means that the sender of a message cannot be spoofed. BM aims to hide metadata from passive eavesdroppers like those ongoing warrantless wiretapping programs. Hence the sender and receiver of Bitmessages stay anonymous.
+

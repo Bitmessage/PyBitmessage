@@ -1,0 +1,22 @@
+bitmessage for Debian
+--------------------
+
+In order to build the .deb yourself, you'll first have to install the stuff that's neccessary to compile .debs:
+
+
+apt-get install python-minimal python-setuptools python-all \
+    python openssl libssl-dev dh-apparmor debhelper dh-python \
+    python-msgpack python-qt4 git
+
+
+Next make some build directory and clone the newest git repository:
+
+And if I haven't forgotten anything, you can build the .deb package now:
+
+
+dpkg-buildpackage -us -uc
+
+
+I've tried this with Debian Buster, but I'd expect it to work on most if not all recent debian-based distributions. Maybe with some minor changes.
+
+ -- citizenaspirant <citizenadmin@helicoptarianconstitocracy.org>  Wed, 29 Apr 2020 17:53:21 +0000
