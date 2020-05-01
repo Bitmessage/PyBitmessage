@@ -453,7 +453,7 @@ class _OpenSSL(object):
 
         try:
             self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
-        except:
+        except Exception:
             # The above is not compatible with all versions of OSX.
             self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC_SHA1
 
@@ -794,7 +794,7 @@ def loadOpenSSL():
         try:
             OpenSSL = _OpenSSL(library)
             return
-        except:
+        except Exception:
             pass
     raise Exception(
         "Couldn't find and load the OpenSSL library. You must install it.")

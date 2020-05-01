@@ -1,3 +1,6 @@
+"""
+This module setting file is for settings
+"""
 import ConfigParser
 import os
 import sys
@@ -111,7 +114,7 @@ class SettingsDialog(QtGui.QDialog):
                 tempfile.NamedTemporaryFile(
                     dir=paths.lookupExeFolder(), delete=True
                 ).close()  # should autodelete
-            except:
+            except Exception:
                 self.checkBoxPortableMode.setDisabled(True)
 
         if 'darwin' in sys.platform:
@@ -408,14 +411,14 @@ class SettingsDialog(QtGui.QDialog):
             self.config.set(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte',
                 str(int(
-                    float(self.lineEditTotalDifficulty.text()) *
-                    defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                    float(self.lineEditTotalDifficulty.text())
+                    * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
         if float(self.lineEditSmallMessageDifficulty.text()) >= 1:
             self.config.set(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes',
                 str(int(
-                    float(self.lineEditSmallMessageDifficulty.text()) *
-                    defaults.networkDefaultPayloadLengthExtraBytes)))
+                    float(self.lineEditSmallMessageDifficulty.text())
+                    * defaults.networkDefaultPayloadLengthExtraBytes)))
 
         if self.comboBoxOpenCL.currentText().toUtf8() != self.config.safeGet(
                 'bitmessagesettings', 'opencl'):
@@ -427,40 +430,40 @@ class SettingsDialog(QtGui.QDialog):
         acceptableDifficultyChanged = False
 
         if (
-            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or
-            float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
+            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
+            or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
         ):
             if self.config.get(
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
             ) != str(int(
-                float(self.lineEditMaxAcceptableTotalDifficulty.text()) *
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
+                float(self.lineEditMaxAcceptableTotalDifficulty.text())
+                * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
             ):
                 # the user changed the max acceptable total difficulty
                 acceptableDifficultyChanged = True
                 self.config.set(
                     'bitmessagesettings', 'maxacceptablenoncetrialsperbyte',
                     str(int(
-                        float(self.lineEditMaxAcceptableTotalDifficulty.text()) *
-                        defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+                        float(self.lineEditMaxAcceptableTotalDifficulty.text())
+                        * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
                 )
         if (
-            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or
-            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
+            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
+            or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
         ):
             if self.config.get(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
             ) != str(int(
-                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) *
-                defaults.networkDefaultPayloadLengthExtraBytes)
+                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
+                * defaults.networkDefaultPayloadLengthExtraBytes)
             ):
                 # the user changed the max acceptable small message difficulty
                 acceptableDifficultyChanged = True
                 self.config.set(
                     'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
                     str(int(
-                        float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) *
-                        defaults.networkDefaultPayloadLengthExtraBytes))
+                        float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
+                        * defaults.networkDefaultPayloadLengthExtraBytes))
                 )
         if acceptableDifficultyChanged:
             # It might now be possible to send msgs which were previously
@@ -538,8 +541,8 @@ class SettingsDialog(QtGui.QDialog):
         self.parent.updateStartOnLogon()
 
         if (
-            state.appdata != paths.lookupExeFolder() and
-            self.checkBoxPortableMode.isChecked()
+            state.appdata != paths.lookupExeFolder()
+            and self.checkBoxPortableMode.isChecked()
         ):
             # If we are NOT using portable mode now but the user selected
             # that we should...
@@ -557,12 +560,12 @@ class SettingsDialog(QtGui.QDialog):
             try:
                 os.remove(previousAppdataLocation + 'debug.log')
                 os.remove(previousAppdataLocation + 'debug.log.1')
-            except:
+            except Exception:
                 pass
 
         if (
-            state.appdata == paths.lookupExeFolder() and
-            not self.checkBoxPortableMode.isChecked()
+            state.appdata == paths.lookupExeFolder()
+            and not self.checkBoxPortableMode.isChecked()
         ):
             # If we ARE using portable mode now but the user selected
             # that we shouldn't...
@@ -580,5 +583,5 @@ class SettingsDialog(QtGui.QDialog):
             try:
                 os.remove(paths.lookupExeFolder() + 'debug.log')
                 os.remove(paths.lookupExeFolder() + 'debug.log.1')
-            except:
+            except Exception:
                 pass
