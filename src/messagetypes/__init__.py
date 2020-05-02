@@ -20,7 +20,7 @@ class MsgBase(object):  # pylint: disable=too-few-public-methods
 
 def constructObject(data):
     """Constructing an object"""
-    whitelist = ["message"]
+    whitelist = ["message", "chatmsg"]
     if data[""] not in whitelist:
         return None
     try:
