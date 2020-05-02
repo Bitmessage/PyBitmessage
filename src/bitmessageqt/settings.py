@@ -502,16 +502,23 @@ class SettingsDialog(QtGui.QDialog):
             if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
-                QtGui.QMessageBox.about(
-                    self,
-                    _translate("MainWindow", "Will not resend ever"),
-                    _translate(
-                        "MainWindow",
-                        "Note that the time limit you entered is less"
-                        " than the amount of time Bitmessage waits for"
-                        " the first resend attempt therefore your"
-                        " messages will never be resent.")
-                )
+                if state.qttesting:
+                    print(
+                        "Note that the time limit you entered is less than the amount"
+                        " of time Bitmessage waits for the first resend attempt therefore"
+                        " your messages will never be resent."
+                    )
+                else:
+                    QtGui.QMessageBox.about(
+                        self,
+                        _translate("MainWindow", "Will not resend ever"),
+                        _translate(
+                            "MainWindow",
+                            "Note that the time limit you entered is less"
+                            " than the amount of time Bitmessage waits for"
+                            " the first resend attempt therefore your"
+                            " messages will never be resent.")
+                    )
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxdays', '0')
                 self.config.set(
