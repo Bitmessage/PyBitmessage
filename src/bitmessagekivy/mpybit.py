@@ -70,8 +70,10 @@ import state
 from addresses import decodeAddress
 from kivy.uix.modalview import ModalView
 from datetime import datetime
-from kivy.config import Config
-Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+
+if platform != 'android':
+    from kivy.config import Config
+    Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
 
 KVFILES = [
@@ -219,6 +221,7 @@ class Inbox(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad=dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -404,6 +407,7 @@ class MyAddress(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,)
+            meny._txt_right_pad=dp(70)
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
@@ -414,13 +418,15 @@ class MyAddress(Screen):
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
             if state.association == item['secondary_text']:
-                meny.add_widget(
-                    BadgeText(
+                badge_obj = BadgeText(
                         size_hint=(None, None),
                         text='Active', halign='right',
+                        # font_size = '50sp',
                         font_style='Body1', size=[50, 60],
                         theme_text_color='Custom',
-                        text_color=NavigateApp().theme_cls.primary_color))
+                        text_color=NavigateApp().theme_cls.primary_color)
+                badge_obj.font_size = '13sp'
+                meny.add_widget(badge_obj)
             else:
                 meny.add_widget(ToggleBtn(active=True if is_enable == 'true' else False))
             # carousel = Carousel(direction='right')
@@ -1137,6 +1143,7 @@ class Sent(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad=dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -1355,6 +1362,7 @@ class Trash(Screen):
                     subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad=dp(70)
             img_latter = './images/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
@@ -1587,10 +1595,12 @@ class NavigateApp(MDApp):
             if platform == 'android':
                 # android_path = os.path.expanduser
                 # ("~/user/0/org.test.bitapp/files/app/")
-                android_path = os.path.join(
-                    os.environ['ANDROID_PRIVATE'] + '/app/')
-                img.texture.save('{1}/images/default_identicon/{0}.png'.format(
-                    BMConfigParser().addresses()[0], android_path))
+                if not os.path.exists('./images/default_identicon/{}.png'.format(
+                    BMConfigParser().addresses()[0])):
+                    android_path = os.path.join(
+                        os.environ['ANDROID_PRIVATE'] + '/app/')
+                    img.texture.save('{1}/images/default_identicon/{0}.png'.format(
+                        BMConfigParser().addresses()[0], android_path))
             else:
                 if not os.path.exists('./images/default_identicon/{}.png'.format(
                         BMConfigParser().addresses()[0])):
@@ -2018,29 +2028,56 @@ class NavigateApp(MDApp):
         self.manager = ModalView(size_hint=(1, 1), auto_dismiss=False)
         self.file_manager = MDFileManager(
             exit_manager=self.exit_manager,
-            select_path=self.select_path,
+             select_path=self.select_path,
             previous=False,
             ext=['.png', '.jpg']
         )
         self.manager.add_widget(self.file_manager)
-        self.file_manager.show(os.environ["HOME"])
+        # self.file_manager.show(os.environ["HOME"])
+        if platform == 'android':
+            from android.permissions import request_permissions, Permission
+            request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+
+            # from android.storage import app_storage_path
+            # settings_path = app_storage_path()
+            # print('path1................................', settings_path)
+
+            # from android.storage import primary_external_storage_path
+            # primary_ext_storage = primary_external_storage_path()
+            # print('path1................................', primary_ext_storage)
+
+            # from android.storage import secondary_external_storage_path
+            # secondary_ext_storage = secondary_external_storage_path()
+            # print('path1................................', secondary_ext_storage)
+
+        # from kivy.app import user_data_dir
+        # from os.path import dirname, join
+        # out = join(dirname(user_data_dir), 'DCIM')
+        # DCIM = join('/sdcard', 'DCIM')
+        self.file_manager.show(os.getenv('EXTERNAL_STORAGE') if platform == 'android' else os.environ["HOME"])
+        # self.file_manager.show(os.getenv('EXTERNAL_STORAGE'))
         self.manager_open = True
         self.manager.open()
 
     def select_path(self, path):
         """This method is used to save the select image"""
         from PIL import Image as PilImage
-        if not os.path.exists('./images/default_identicon/'):
-            os.makedirs('./images/default_identicon/')
         newImg = PilImage.open(path).resize((300, 300))
-        newImg.save('./images/default_identicon/{0}.png'.format(state.association))
+        if platform == 'android':
+            android_path = os.path.join(
+                    os.environ['ANDROID_PRIVATE'] + '/app/')
+            newImg.save('{1}/images/default_identicon/{0}.png'.format(
+                state.association, android_path))
+        else:
+            if not os.path.exists('./images/default_identicon/'):
+                os.makedirs('./images/default_identicon/')
+            newImg.save('./images/default_identicon/{0}.png'.format(state.association))
         self.load_selected_Image(state.association)
         self.exit_manager()
         toast('Image changed')
 
     def exit_manager(self, *args):
         """Called when the user reaches the root of the directory tree."""
-
         self.manager.dismiss()
         self.manager_open = False
 
@@ -2577,6 +2614,7 @@ class Draft(Screen):
                 text='Draft', secondary_text=item['text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad=dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/avatar.png'))
             meny.bind(on_press=partial(
@@ -2779,6 +2817,7 @@ class Allmails(Screen):
                         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad=dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
@@ -3016,18 +3055,23 @@ class SenderDetailPopup(Popup):
         self.from_addr = from_addr
         time_obj = datetime.fromtimestamp(int(timeinseconds))
         self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
-        pop_height = 1.2 * (self.ids.sd_label.height + self.ids.sd_btn.children[0].height)
+        device_type = 2 if platform == 'android' else 1.5
+        pop_height = device_type * (self.ids.sd_label.height + self.ids.sd_btn.children[0].height)
         if len(to_addr) > 3:
             self.height = 0
             self.height = pop_height
             self.ids.to_addId.size_hint_y = None
             self.ids.to_addId.height = 50
+            self.ids.to_addtitle.add_widget(ToAddressTitle())
             frmaddbox = ToAddrBoxlayout()
             frmaddbox.set_toAddress(to_addr)
             self.ids.to_addId.add_widget(frmaddbox)
         else:
+            self.ids.space_1.height = dp(0)
+            self.ids.space_2.height = dp(0)
+            self.ids.myadd_popup_box.spacing = dp(8 if platform == 'android' else 3)
             self.height = 0
-            self.height = pop_height / 1.5
+            self.height = pop_height / 1.2
 
 
 class OneLineListTitle(OneLineListItem):
@@ -3077,6 +3121,11 @@ class ToAddrBoxlayout(BoxLayout):
     def set_toAddress(self, to_addr):
         """This method is use to set to address"""
         self.to_addr = to_addr
+
+
+class ToAddressTitle(BoxLayout):
+    """class for BoxLayout behaviour"""
+    pass
 
 
 class RandomBoxlayout(BoxLayout):

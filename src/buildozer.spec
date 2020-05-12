@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = bitapp
+title = py3
 
 # (str) Package name
-package.name = bitapp
+package.name = py3
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.test
@@ -37,12 +37,13 @@ version = 0.1
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
 requirements = 
+	python3,
 	openssl, 
 	sqlite3,
-	python2,
 	kivy, 
-	bitmsghash, 
-	kivymd,
+	bitmsghash,
+	#git+https://github.com/surbhicis/KivyMD-1.git,
+	git+https://github.com/surbhicis/KivyMD-1#egg=kivymd,
 	kivy-garden, 
 	qrcode,
 	Pillow,
@@ -206,7 +207,7 @@ android.arch = armeabi-v7a
 #
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
-#p4a.source_dir =
+p4a.source_dir = /home/cis/Music/androidp4a/python-for-android
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
 p4a.local_recipes = /home/cis/navjotrepo/PyBitmessage/src/bitmessagekivy/android/python-for-android/recipes/

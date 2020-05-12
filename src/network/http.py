@@ -19,19 +19,19 @@ class HttpConnection(AdvancedDispatcher):
         self.destination = (host, 80)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.destination)
-        print "connecting in background to %s:%i" % (self.destination[0], self.destination[1])
+        print("connecting in background to %s:%i" % (self.destination[0], self.destination[1]))
 
     def state_init(self):
         self.append_write_buf(
             "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n" % (
                 self.path, self.destination[0]))
-        print "Sending %ib" % (len(self.write_buf))
+        print("Sending %ib" % (len(self.write_buf)))
         self.set_state("http_request_sent", 0)
         return False
 
     def state_http_request_sent(self):
         if self.read_buf:
-            print "Received %ib" % (len(self.read_buf))
+            print("Received %ib" % (len(self.read_buf)))
             self.read_buf = b""
         if not self.connected:
             self.set_state("close", 0)
@@ -63,13 +63,13 @@ if __name__ == "__main__":
     for host in ("bootstrap8080.bitmessage.org", "bootstrap8444.bitmessage.org"):
         proxy = Socks5Resolver(host=host)
         while asyncore.socket_map:
-            print "loop %s, len %i" % (proxy.state, len(asyncore.socket_map))
+            print("loop %s, len %i" % (proxy.state, len(asyncore.socket_map)))
             asyncore.loop(timeout=1, count=1)
         proxy.resolved()
 
         proxy = Socks4aResolver(host=host)
         while asyncore.socket_map:
-            print "loop %s, len %i" % (proxy.state, len(asyncore.socket_map))
+            print("loop %s, len %i" % (proxy.state, len(asyncore.socket_map)))
             asyncore.loop(timeout=1, count=1)
         proxy.resolved()
 

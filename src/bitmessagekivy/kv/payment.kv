@@ -45,7 +45,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
+                    size:  app.window_size[0] - 2*self.parent.parent.padding[0] - dp(10) , 1
                     height: dp(40)
                     on_press: root.get_free_credits(self)
                     MDLabel:
@@ -91,7 +91,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
+                    size: app.window_size[0] - 2*self.parent.parent.padding[0] - dp(10) , 1
                     height: dp(40)
                     on_press: root.create_hidden_payment_address(self)
                     MDLabel:
@@ -137,7 +137,7 @@
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    size:  dp(app.window_size[0] - 2*self.parent.parent.padding[0]) - 10 , 1
+                    size:  app.window_size[0] - 2*self.parent.parent.padding[0] - dp(10) , 1
                     height: dp(40)
                     on_press: root.create_hidden_payment_address(self)
                     MDLabel:
