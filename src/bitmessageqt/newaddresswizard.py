@@ -234,7 +234,7 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
             self.wizard().button(QtGui.QWizard.NextButton).click()
             return
         elif i == 101:
-            print "haha"
+            print("haha")
             return
         self.progressBar.setValue(i)
         if i == 50:
@@ -347,8 +347,8 @@ if __name__ == '__main__':
 
     wizard = Ui_NewAddressWizard(["a", "b", "c", "d"])
     if (wizard.exec_()):
-        print "Email: " + ("yes" if wizard.field("emailAsWell").toBool() else "no")
-        print "BM: " + ("yes" if wizard.field("onlyBM").toBool() else "no")
+        print("Email: " + ("yes" if wizard.field("emailAsWell").toBool() else "no"))
+        print("BM: " + ("yes" if wizard.field("onlyBM").toBool() else "no"))
     else:
-        print "Wizard cancelled"
+        print("Wizard cancelled")
     sys.exit()

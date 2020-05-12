@@ -7,7 +7,7 @@
             orientation: 'vertical'
             # height: dp(bod.height) + self.minimum_height
             height: self.minimum_height
-            padding: dp(20)
+            padding: dp(10)
             # MDLabel:
             #     size_hint_y: None
             #     id: subj
@@ -36,6 +36,7 @@
                     halign:'right'
                     font_style:'Caption'
                     pos_hint: {'center_y': .8}
+                    _txt_right_pad: dp(70)
                 MDChip:
                     size_hint: (None, None)
                     label: root.page_type
