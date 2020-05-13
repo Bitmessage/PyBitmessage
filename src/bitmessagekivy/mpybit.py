@@ -3,6 +3,7 @@ Bitmessage android(mobile) interface
 """
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
+# pylint: disable=protected-access
 import os
 import time
 from bitmessagekivy import identiconGeneration
@@ -118,7 +119,7 @@ def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
         text=str(ShowTimeHistoy(time)),
         font_style='Caption',
         size=[120, 140] if platform == 'android' else [64, 80])
-    action_time.font_size='11sp'
+    action_time.font_size = '11sp'
     return action_time
 
 
@@ -126,7 +127,7 @@ def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
     # obj.size_hint = (None, None)
-    obj.size_hint = (.16 if platform == 'android' else .07 , None)
+    obj.size_hint = (.16 if platform == 'android' else .07, None)
     obj.label = text
     obj.icon = ''
     obj.pos_hint = {'center_x': .91 if platform == 'android' else .94, 'center_y': .3}
@@ -221,7 +222,7 @@ class Inbox(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -407,7 +408,7 @@ class MyAddress(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
@@ -419,12 +420,12 @@ class MyAddress(Screen):
                 self.myadd_detail, item['secondary_text'], item['text']))
             if state.association == item['secondary_text']:
                 badge_obj = BadgeText(
-                        size_hint=(None, None),
-                        text='Active', halign='center',
-                        # font_size = '50sp',
-                        font_style='Body1', size=[85 if platform == 'android' else 50, 60],
-                        theme_text_color='Custom',
-                        text_color=NavigateApp().theme_cls.primary_color)
+                    size_hint=(None, None),
+                    size=[85 if platform == 'android' else 50, 60],
+                    text='Active', halign='center',
+                    font_style='Body1', theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color
+                )
                 badge_obj.font_size = '13sp'
                 meny.add_widget(badge_obj)
             else:
@@ -1127,7 +1128,7 @@ class Sent(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -1346,7 +1347,7 @@ class Trash(Screen):
                     subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             img_latter = './images/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
@@ -1580,7 +1581,7 @@ class NavigateApp(MDApp):
                 # android_path = os.path.expanduser
                 # ("~/user/0/org.test.bitapp/files/app/")
                 if not os.path.exists('./images/default_identicon/{}.png'.format(
-                    BMConfigParser().addresses()[0])):
+                        BMConfigParser().addresses()[0])):
                     android_path = os.path.join(
                         os.environ['ANDROID_PRIVATE'] + '/app/')
                     img.texture.save('{1}/images/default_identicon/{0}.png'.format(
@@ -2012,7 +2013,7 @@ class NavigateApp(MDApp):
         self.manager = ModalView(size_hint=(1, 1), auto_dismiss=False)
         self.file_manager = MDFileManager(
             exit_manager=self.exit_manager,
-             select_path=self.select_path,
+            select_path=self.select_path,
             previous=False,
             ext=['.png', '.jpg']
         )
@@ -2049,7 +2050,7 @@ class NavigateApp(MDApp):
         newImg = PilImage.open(path).resize((300, 300))
         if platform == 'android':
             android_path = os.path.join(
-                    os.environ['ANDROID_PRIVATE'] + '/app/')
+                os.environ['ANDROID_PRIVATE'] + '/app/')
             newImg.save('{1}/images/default_identicon/{0}.png'.format(
                 state.association, android_path))
         else:
@@ -2604,7 +2605,7 @@ class Draft(Screen):
                 text='Draft', secondary_text=item['text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/avatar.png'))
             meny.bind(on_press=partial(
@@ -2807,7 +2808,7 @@ class Allmails(Screen):
                         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
