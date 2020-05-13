@@ -5,7 +5,7 @@
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(400) + self.minimum_height
+            height: dp(450) + self.minimum_height
             padding: dp(10)
             BoxLayout:
                 MDLabel:
@@ -21,6 +21,9 @@
                     text: root.log_text2
                     halign: 'left'
                     color:app.theme_cls.primary_dark
+            Widget:
+                size_hint: (None, None)
+                height: dp(10)
             MDCheckbox:
                 id:            grp_chkbox_1
                 group:        'test'
@@ -55,7 +58,8 @@
             BoxLayout:
                 AnchorLayout:
                     MDRaisedButton:
-                        height: dp(40)
+                        size_hint: (.2, None)
+                        # height: dp(40)
                         on_press: app.root.ids.scr_mngr.current = 'random'
                         on_press: app.root.ids.sc7.reset_address_label()
                         MDLabel:
@@ -68,44 +72,49 @@
 <Random>:
     name: 'random'
     ScrollView:
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height
-            padding: dp(20)
-            spacing: 100
-            MDLabel:
-                font_style: 'Subtitle2'
-                theme_text_color: 'Primary'
-                text: "Random Addresses"
-                halign: 'center'
-                color:app.theme_cls.primary_dark
+        id: add_random_bx
 
-            MDLabel:
-                font_style: 'Subtitle2'
-                theme_text_color: 'Primary'
-                text: "Here you may generate as many addresses as you like, Indeed creating and abandoning addresses is encouraged"
-                halign: 'center'
-                color:app.theme_cls.primary_dark
-            MDTextField:
-                id: label
-                multiline: False
-                hint_text: "Label"
-                required: True
-                helper_text_mode: "on_error"
-                on_text: root.add_validation(self)
-                canvas.before:
-                    Color:
-                        rgba: (0,0,0,1)
-            BoxLayout:
-                AnchorLayout:
-                    MDRaisedButton:
-                        height: dp(40)
-                        on_release: root.generateaddress(app)
-                        opposite_colors: True
-                        MDLabel:
-                            font_style: 'H6'
-                            text: 'next'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
+<RandomBoxlayout>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: self.minimum_height
+    padding: dp(20)
+    spacing: 100
+    MDLabel:
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: "Random Addresses"
+        halign: 'center'
+        color:app.theme_cls.primary_dark
+
+    MDLabel:
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: "Here you may generate as many addresses as you like, Indeed creating and abandoning addresses is encouraged"
+        halign: 'left'
+        color:app.theme_cls.primary_dark
+
+    MDTextField:
+        id: label
+        multiline: False
+        hint_text: "Label"
+        required: True
+        helper_text_mode: "on_error"
+        on_text: app.root.ids.sc7.add_validation(self)
+        canvas.before:
+            Color:
+                rgba: (0,0,0,1)
+
+    BoxLayout:
+        AnchorLayout:
+            MDRaisedButton:
+                size_hint: (.2, None)
+                # height: dp(40)
+                on_release: app.root.ids.sc7.generateaddress(app)
+                opposite_colors: True
+                MDLabel:
+                    font_style: 'H6'
+                    text: 'next'
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'

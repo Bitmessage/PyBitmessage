@@ -85,6 +85,7 @@
                     source: app.get_default_logo()
 
         ScrollView:
+            id: scroll_y
             pos_hint: {"top": 1}
 
             GridLayout:
@@ -97,7 +98,8 @@
                     text: "Accounts"
                     height:"35dp"
                 NavigationItem:
-                    size: 50,50
+                    # size: 50,50
+                    height: dp(48)
                     CustomSpinner:
                         id: btn
                         pos_hint:{"x":0,"y":0}
@@ -155,6 +157,13 @@
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
                     on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
+                NavigationItem:
+                    id: chat_rm
+                    text: 'Chat Room'
+                    icon: 'wechat'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'chlist'
+                    on_release: root.parent.set_state()
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
                     text: "All labels"
@@ -188,6 +197,7 @@
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'login'
                     on_release: root.parent.set_state()
+                    on_press: app.reset_login_screen()
                 NavigationItem:
                     text: 'Network status'
                     icon: 'server-network'
@@ -259,6 +269,10 @@ NavigationLayout:
             id:sc19
         Archieve:
             id:sc20
+        ChatRoom:
+            id:sc21
+        ChatList:
+            id:sc22
 
     MDNavigationDrawer:
         id: nav_drawer
@@ -288,7 +302,7 @@ NavigationLayout:
         orientation: 'vertical'
         size_hint: (None, None)
         pos_hint:{'center_x': .5, 'top': 0.9}
-        size: (app.window_size[0]/2, app.window_size[0]/2)
+        size: (app.window_size[0]/1.8, app.window_size[0]/1.8)
         id: qr
     BoxLayout:
         orientation: 'vertical'
@@ -302,9 +316,9 @@ NavigationLayout:
             line_color_normal: [0,0,0,0]
             _current_line_color: [0,0,0,0]
             line_color_focus: [0,0,0,0]
-            font_size: '18sp'
+            halign: 'center'
+            font_size: dp(15)
             bold: True
-            pos_hint: {'x': .26, 'y': 0.5}
         # MDLabel:
         #     size_hint_y: None
         #     font_style: 'Body1'

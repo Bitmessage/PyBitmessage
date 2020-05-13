@@ -3,6 +3,7 @@ Bitmessage android(mobile) interface
 """
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
+# pylint: disable=protected-access
 import os
 import time
 from bitmessagekivy import identiconGeneration
@@ -57,6 +58,11 @@ from kivymd.uix.list import (
 # )
 from kivymd.uix.selectioncontrol import MDCheckbox, MDSwitch
 from kivymd.uix.chip import MDChip
+from kivy.uix.screenmanager import (
+    RiseInTransition,
+    SlideTransition,
+    FallOutTransition
+)
 
 import queues
 from semaphores import kivyuisignaler
@@ -65,15 +71,18 @@ import state
 from addresses import decodeAddress
 from kivy.uix.modalview import ModalView
 from datetime import datetime
-from kivy.config import Config
-Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+
+if platform != 'android':
+    from kivy.config import Config
+    Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
 
 KVFILES = [
     'settings', 'popup', 'allmails', 'draft',
     'maildetail', 'common_widgets', 'addressbook',
     'myaddress', 'composer', 'payment', 'sent',
-    'network', 'login', 'credits', 'trash', 'inbox'
+    'network', 'login', 'credits', 'trash', 'inbox',
+    'chat_room', 'chat_list'
 ]
 
 
@@ -106,22 +115,22 @@ def ShowTimeHistoy(act_time):
 
 def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
     """This method is used to create TimeWidget"""
-    action_time = BadgeText(
-        size_hint=(None, None),
+    action_time = TimeTagRightSampleWidget(
         text=str(ShowTimeHistoy(time)),
-        halign='right',
         font_style='Caption',
-        size=[65, 70])
+        size=[120, 140] if platform == 'android' else [64, 80])
+    action_time.font_size = '11sp'
     return action_time
 
 
 def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
-    obj.size_hint = (None, None)
+    # obj.size_hint = (None, None)
+    obj.size_hint = (.16 if platform == 'android' else .07, None)
     obj.label = text
     obj.icon = ''
-    obj.pos_hint = {'center_x': .96, 'center_y': .2}
+    obj.pos_hint = {'center_x': .91 if platform == 'android' else .94, 'center_y': .3}
     obj.height = dp(18)
     obj.radius = 8
     return obj
@@ -213,6 +222,7 @@ class Inbox(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -398,6 +408,7 @@ class MyAddress(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,)
+            meny._txt_right_pad = dp(70)
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
@@ -408,31 +419,17 @@ class MyAddress(Screen):
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
             if state.association == item['secondary_text']:
-                meny.add_widget(
-                    BadgeText(
-                        size_hint=(None, None),
-                        text='Active', halign='right',
-                        font_style='Body1', size=[50, 60],
-                        theme_text_color='Custom',
-                        text_color=NavigateApp().theme_cls.primary_color))
+                badge_obj = BadgeText(
+                    size_hint=(None, None),
+                    size=[85 if platform == 'android' else 50, 60],
+                    text='Active', halign='center',
+                    font_style='Body1', theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color
+                )
+                badge_obj.font_size = '13sp'
+                meny.add_widget(badge_obj)
             else:
                 meny.add_widget(ToggleBtn(active=True if is_enable == 'true' else False))
-            # carousel = Carousel(direction='right')
-            # carousel.height = meny.height
-            # carousel.size_hint_y = None
-            # carousel.ignore_perpendicular_swipes = True
-            # carousel.data_index = 0
-            # carousel.min_move = 0.2
-            # del_btn = Button(text='Disable' if is_enable == 'true' else 'Enable')
-            # if is_enable == 'true':
-            #     del_btn.background_normal = ''
-            # del_btn.background_color = (1, 0, 0, 1) if is_enable == 'true' else (0, 1, 0, 1)
-            # del_btn.bind(
-            #     on_press=partial(
-            #         self.disableAddress if is_enable == 'true' else self.enableAddress , item['secondary_text']))
-            # carousel.add_widget(del_btn)
-            # carousel.add_widget(meny)
-            # carousel.index = 1
             self.ids.ml.add_widget(meny)
 
     def check_scroll_y(self, instance, somethingelse):
@@ -968,7 +965,19 @@ class NetworkStat(Screen):
 class ContentNavigationDrawer(BoxLayout):
     """Navigate Content Drawer"""
 
-    pass
+    def __init__(self, *args, **kwargs):
+        """Method used for contentNavigationDrawer"""
+        super(ContentNavigationDrawer, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for class contentNavigationDrawer"""
+        self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.ids.btn.is_open:
+            self.ids.btn.is_open = False
 
 
 class Random(Screen):
@@ -979,13 +988,12 @@ class Random(Screen):
 
     def generateaddress(self, navApp):
         """Method for Address Generator"""
-        entered_label = str(self.ids.label.text).strip()
+        entered_label = str(self.ids.add_random_bx.children[0].ids.label.text).strip()
         if not entered_label:
-            self.ids.label.focus = True
+            self.ids.add_random_bx.children[0].ids.label.focus = True
             # self.ids.label.error = True
             # self.ids.label.helper_text = 'This field is required'
         streamNumberForAddress = 1
-        label = self.ids.label.text
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
         payloadLengthExtraBytes = 1000
@@ -994,44 +1002,54 @@ class Random(Screen):
         if entered_label and entered_label not in lables:
             toast('Address Creating...')
             queues.addressGeneratorQueue.put((
-                'createRandomAddress', 4, streamNumberForAddress, label, 1,
+                'createRandomAddress', 4, streamNumberForAddress, entered_label, 1,
                 "", eighteenByteRipe, nonceTrialsPerByte,
                 payloadLengthExtraBytes))
-            self.ids.label.text = ''
             self.parent.parent.ids.toolbar.opacity = 1
             self.parent.parent.ids.toolbar.disabled = False
             state.kivyapp.loadMyAddressScreen(True)
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
 
-    @staticmethod
-    def address_created_callback(dt=0):
+    def address_created_callback(self, dt=0):
         """New address created"""
         state.kivyapp.loadMyAddressScreen(False)
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
         state.kivyapp.root.ids.sc10.is_add_created = True
         state.kivyapp.root.ids.sc10.init_ui()
+        self.reset_address_spinner()
         toast('New address created')
 
-    def add_validation(self, instance):
+    def reset_address_spinner(self):
+        """reseting spinner address and UI"""
+        addresses = [addr for addr in BMConfigParser().addresses()
+                     if BMConfigParser().get(str(addr), 'enabled') == 'true']
+        self.manager.parent.ids.content_drawer.ids.btn.values = []
+        self.manager.parent.ids.sc3.children[1].ids.btn.values = []
+        self.manager.parent.ids.content_drawer.ids.btn.values = addresses
+        self.manager.parent.ids.sc3.children[1].ids.btn.values = addresses
+
+    @staticmethod
+    def add_validation(instance):
         """Checking validation at address creation time"""
         entered_label = str(instance.text.strip())
         lables = [BMConfigParser().get(obj, 'label')
                   for obj in BMConfigParser().addresses()]
         if entered_label in lables:
-            self.ids.label.error = True
-            self.ids.label.helper_text = 'Label name is already exist you'\
+            instance.error = True
+            instance.helper_text = 'Label name is already exist you'\
                 ' can try this Ex. ( {0}_1, {0}_2 )'.format(
                     entered_label)
         elif entered_label:
-            self.ids.label.error = False
+            instance.error = False
         else:
-            self.ids.label.error = False
-            self.ids.label.helper_text = 'This field is required'
+            instance.error = False
+            instance.helper_text = 'This field is required'
 
     def reset_address_label(self):
         """Resetting address labels"""
-        self.ids.label.text = ''
+        if not self.ids.add_random_bx.children:
+            self.ids.add_random_bx.add_widget(RandomBoxlayout())
 
 
 class Sent(Screen):
@@ -1110,6 +1128,7 @@ class Sent(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -1328,6 +1347,7 @@ class Trash(Screen):
                     subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad = dp(70)
             img_latter = './images/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
@@ -1433,6 +1453,12 @@ class Create(Screen):
                 "SELECT label, address from addressbook")]
         widget_1.ids.txt_input.starting_no = 2
         self.add_widget(widget_1)
+        self.children[0].ids.id_scroll.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.children[1].ids.btn.is_open:
+            self.children[1].ids.btn.is_open = False
 
 
 class Setting(Screen):
@@ -1554,10 +1580,12 @@ class NavigateApp(MDApp):
             if platform == 'android':
                 # android_path = os.path.expanduser
                 # ("~/user/0/org.test.bitapp/files/app/")
-                android_path = os.path.join(
-                    os.environ['ANDROID_PRIVATE'] + '/app/')
-                img.texture.save('{1}/images/default_identicon/{0}.png'.format(
-                    BMConfigParser().addresses()[0], android_path))
+                if not os.path.exists('./images/default_identicon/{}.png'.format(
+                        BMConfigParser().addresses()[0])):
+                    android_path = os.path.join(
+                        os.environ['ANDROID_PRIVATE'] + '/app/')
+                    img.texture.save('{1}/images/default_identicon/{0}.png'.format(
+                        BMConfigParser().addresses()[0], android_path))
             else:
                 if not os.path.exists('./images/default_identicon/{}.png'.format(
                         BMConfigParser().addresses()[0])):
@@ -1602,14 +1630,20 @@ class NavigateApp(MDApp):
         # pylint: disable=inconsistent-return-statements, too-many-branches
         """Method is used for going on previous screen"""
         if key == 27:
-            if state.in_search_mode and self.root.ids.scr_mngr.current != (
-                    "mailDetail"):
+            if state.in_search_mode and self.root.ids.scr_mngr.current not in [
+                    "mailDetail", "create"]:
                 self.closeSearchScreen()
             elif self.root.ids.scr_mngr.current == "mailDetail":
                 self.root.ids.scr_mngr.current = 'sent'\
                     if state.detailPageType == 'sent' else 'inbox' \
                     if state.detailPageType == 'inbox' else 'draft'
                 self.back_press()
+                if state.in_search_mode and state.searcing_text:
+                    toolbar_obj = self.root.ids.toolbar
+                    toolbar_obj.left_action_items = [
+                        ['arrow-left', lambda x: self.closeSearchScreen()]]
+                    toolbar_obj.right_action_items = []
+                    self.root.ids.toolbar.title = ''
             elif self.root.ids.scr_mngr.current == "create":
                 self.save_draft()
                 self.set_common_header()
@@ -1622,13 +1656,23 @@ class NavigateApp(MDApp):
             elif self.root.ids.scr_mngr.current == 'pay-options':
                 self.set_common_header()
                 self.root.ids.scr_mngr.current = 'payment'
+            elif self.root.ids.scr_mngr.current == 'chroom':
+                if state.association:
+                    address_label = self.current_address_label(
+                        BMConfigParser().get(
+                            state.association, 'label'), state.association)
+                    self.root.ids.toolbar.title = address_label
+                self.set_common_header()
+                self.root.ids.scr_mngr.transition = FallOutTransition()
+                self.root.ids.scr_mngr.current = 'chlist'
+                self.root.ids.scr_mngr.transition = SlideTransition()
             else:
                 if state.kivyapp.variable_1:
                     self.root.ids.scr_mngr.current = 'inbox'
             self.root.ids.scr_mngr.transition.direction = 'right'
             self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
             return True
-        elif key == 13 and state.searcing_text:
+        elif key == 13 and state.searcing_text and not state.in_composer:
             if state.search_screen == 'inbox':
                 self.root.ids.sc1.children[1].active = True
                 Clock.schedule_once(self.search_callback, 0.5)
@@ -1742,12 +1786,21 @@ class NavigateApp(MDApp):
             self.root.ids.toolbar.title = ''
         else:
             self.set_common_header()
+            if self.root.ids.scr_mngr.current == 'chroom' and state.association:
+                self.root.ids.scr_mngr.transition = FallOutTransition()
+                address_label = self.current_address_label(
+                    BMConfigParser().get(
+                        state.association, 'label'), state.association)
+                self.root.ids.toolbar.title = address_label
         self.root.ids.scr_mngr.current = 'inbox' \
             if state.in_composer else 'allmails'\
             if state.is_allmail else state.detailPageType\
             if state.detailPageType else 'myaddress'\
             if self.root.ids.scr_mngr.current == 'showqrcode' else 'payment'\
-            if self.root.ids.scr_mngr.current == 'pay-options' else 'inbox'
+            if self.root.ids.scr_mngr.current == 'pay-options' else 'chlist'\
+            if self.root.ids.scr_mngr.current == 'chroom' else 'inbox'
+        if self.root.ids.scr_mngr.current == 'chlist':
+            self.root.ids.scr_mngr.transition = SlideTransition()
         self.root.ids.scr_mngr.transition.direction = 'right'
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         if state.is_allmail or state.detailPageType == 'draft':
@@ -1892,6 +1945,11 @@ class NavigateApp(MDApp):
 
     def set_mail_detail_header(self):
         """Setting the details of the page"""
+        if state.association and state.in_search_mode:
+            address_label = self.current_address_label(
+                BMConfigParser().get(
+                    state.association, 'label'), state.association)
+            self.root.ids.toolbar.title = address_label
         toolbar_obj = self.root.ids.toolbar
         toolbar_obj.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
@@ -1960,24 +2018,51 @@ class NavigateApp(MDApp):
             ext=['.png', '.jpg']
         )
         self.manager.add_widget(self.file_manager)
-        self.file_manager.show(os.environ["HOME"])
+        # self.file_manager.show(os.environ["HOME"])
+        if platform == 'android':
+            from android.permissions import request_permissions, Permission
+            request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+
+            # from android.storage import app_storage_path
+            # settings_path = app_storage_path()
+            # print('path1................................', settings_path)
+
+            # from android.storage import primary_external_storage_path
+            # primary_ext_storage = primary_external_storage_path()
+            # print('path1................................', primary_ext_storage)
+
+            # from android.storage import secondary_external_storage_path
+            # secondary_ext_storage = secondary_external_storage_path()
+            # print('path1................................', secondary_ext_storage)
+
+        # from kivy.app import user_data_dir
+        # from os.path import dirname, join
+        # out = join(dirname(user_data_dir), 'DCIM')
+        # DCIM = join('/sdcard', 'DCIM')
+        self.file_manager.show(os.getenv('EXTERNAL_STORAGE') if platform == 'android' else os.environ["HOME"])
+        # self.file_manager.show(os.getenv('EXTERNAL_STORAGE'))
         self.manager_open = True
         self.manager.open()
 
     def select_path(self, path):
         """This method is used to save the select image"""
         from PIL import Image as PilImage
-        if not os.path.exists('./images/default_identicon/'):
-            os.makedirs('./images/default_identicon/')
         newImg = PilImage.open(path).resize((300, 300))
-        newImg.save('./images/default_identicon/{0}.png'.format(state.association))
+        if platform == 'android':
+            android_path = os.path.join(
+                os.environ['ANDROID_PRIVATE'] + '/app/')
+            newImg.save('{1}/images/default_identicon/{0}.png'.format(
+                state.association, android_path))
+        else:
+            if not os.path.exists('./images/default_identicon/'):
+                os.makedirs('./images/default_identicon/')
+            newImg.save('./images/default_identicon/{0}.png'.format(state.association))
         self.load_selected_Image(state.association)
         self.exit_manager()
         toast('Image changed')
 
     def exit_manager(self, *args):
         """Called when the user reaches the root of the directory tree."""
-
         self.manager.dismiss()
         self.manager_open = False
 
@@ -1994,6 +2079,11 @@ class NavigateApp(MDApp):
         """Copy the data from mail detail page"""
         Clipboard.copy(text)
         toast('Copied')
+
+    def reset_login_screen(self):
+        """This method is used for clearing random screen"""
+        if self.root.ids.sc7.ids.add_random_bx.children:
+            self.root.ids.sc7.ids.add_random_bx.clear_widgets()
 
 
 class GrashofPopup(Popup):
@@ -2040,9 +2130,9 @@ class GrashofPopup(Popup):
     def checkAddress_valid(self, instance):
         """Checking address is valid or not"""
         # my_addresses = (
-        #     self.parent.children[1].children[2].children[0].ids.btn.values)
+        #     self.parent.children[1].children[0].children[0].ids.btn.values)
         my_addresses = (
-            self.parent.children[1].children[0].children[0].ids.btn.values)
+            state.kivyapp.root.children[0].children[0].ids.btn.values)
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()
@@ -2124,6 +2214,12 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
+    """Right icon sample widget"""
+
+    pass
+
+
+class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
     """Right icon sample widget"""
 
     pass
@@ -2254,6 +2350,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def inbox_reply(self):
         """Reply inbox messages"""
+        state.in_composer = True
         data = sqlQuery(
             "select toaddress, fromaddress, subject, message, received from inbox where"
             " msgid = ?;", state.mail_id)
@@ -2265,10 +2362,11 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         composer_obj.subject.text = 'Re: ' + (split_subject[1] if len(split_subject) > 1 else split_subject[0])
         time_obj = datetime.fromtimestamp(int(data[0][4]))
         time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
-        sender_name = BMConfigParser().get(data[0][1], 'label')
+        # sender_name = BMConfigParser().get(data[0][1], 'label')
+        sender_name = data[0][1]
         composer_obj.body.text = (
-            '\n\n ------------------------On ' + time_tag + ', '
-            + sender_name + ' wrote:-----------------------\n' + data[0][3])
+            '\n\n --------------On ' + time_tag + ', '
+            + sender_name + ' wrote:--------------\n' + data[0][3])
         composer_obj.body.focus = True
         composer_obj.body.cursor = (0, 0)
         state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
@@ -2507,6 +2605,7 @@ class Draft(Screen):
                 text='Draft', secondary_text=item['text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/avatar.png'))
             meny.bind(on_press=partial(
@@ -2709,6 +2808,7 @@ class Allmails(Screen):
                         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
@@ -2798,6 +2898,7 @@ class Allmails(Screen):
         nav_lay_obj.sc5.clear_widgets()
         nav_lay_obj.sc5.add_widget(Trash())
         nav_lay_obj.sc17.remove_widget(instance.parent.parent)
+        toast('Deleted')
 
     def refresh_callback(self, *args):
         """Method updates the state of application,
@@ -2818,16 +2919,16 @@ class Allmails(Screen):
 
 def avatarImageFirstLetter(letter_string):
     """This function is used to the first letter for the avatar image"""
-    if letter_string:
+    try:
         if letter_string[0].upper() >= 'A' and letter_string[0].upper() <= 'Z':
             img_latter = letter_string[0].upper()
         elif int(letter_string[0]) >= 0 and int(letter_string[0]) <= 9:
             img_latter = letter_string[0]
         else:
             img_latter = '!'
-    else:
+    except ValueError:
         img_latter = '!'
-    return img_latter
+    return img_latter if img_latter else '!'
 
 
 class Starred(Screen):
@@ -2945,18 +3046,23 @@ class SenderDetailPopup(Popup):
         self.from_addr = from_addr
         time_obj = datetime.fromtimestamp(int(timeinseconds))
         self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
-        pop_height = 1.2 * (self.ids.sd_label.height + self.ids.sd_btn.children[0].height)
+        device_type = 2 if platform == 'android' else 1.5
+        pop_height = device_type * (self.ids.sd_label.height + self.ids.sd_btn.children[0].height)
         if len(to_addr) > 3:
             self.height = 0
             self.height = pop_height
             self.ids.to_addId.size_hint_y = None
             self.ids.to_addId.height = 50
+            self.ids.to_addtitle.add_widget(ToAddressTitle())
             frmaddbox = ToAddrBoxlayout()
             frmaddbox.set_toAddress(to_addr)
             self.ids.to_addId.add_widget(frmaddbox)
         else:
+            self.ids.space_1.height = dp(0)
+            self.ids.space_2.height = dp(0)
+            self.ids.myadd_popup_box.spacing = dp(8 if platform == 'android' else 3)
             self.height = 0
-            self.height = pop_height / 1.5
+            self.height = pop_height / 1.2
 
 
 class OneLineListTitle(OneLineListItem):
@@ -3006,3 +3112,91 @@ class ToAddrBoxlayout(BoxLayout):
     def set_toAddress(self, to_addr):
         """This method is use to set to address"""
         self.to_addr = to_addr
+
+
+class ToAddressTitle(BoxLayout):
+    """class for BoxLayout behaviour"""
+    pass
+
+
+class RandomBoxlayout(BoxLayout):
+    """class for BoxLayout behaviour"""
+    pass
+
+
+def esc_markup(msg):
+    """this method is for replacing some property"""
+    return (msg.replace('&', '&amp;')
+            .replace('[', '&bl;')
+            .replace(']', '&br;'))
+
+
+class ChatRoom(Screen):
+    """class for chatroom screen"""
+    def send_msg(self):
+        """This method is for sending message"""
+        msg = self.ids.message.text
+        if msg:
+            self.ids.chat_logs.text += (
+                '[b][color=2980b9]{}:[/color][/b] {}\n'
+                    .format('Me', esc_markup(msg)))
+            # obj = MDChip(label=msg, radius=7)
+            # obj.icon = ''
+            # self.ids.ml.add_widget(obj)
+            self.ids.message.text = ''
+
+
+class ChatList(Screen):
+    """class for showing chat list"""
+    queryreturn = ListProperty()
+    has_refreshed = True
+
+    def __init__(self, *args, **kwargs):
+        """Getting ChatList Details"""
+        super(ChatList, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for method ChatList"""
+        self.loadAddresslist(None, 'All', '')
+        print(dt)
+
+    def loadAddresslist(self, account="", where="", what=""):
+        """Clock Schdule for method ChatList"""
+        self.queryreturn = kivy_helper_search.search_sql(
+            '', account, "addressbook", where, what, False)
+        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        if self.queryreturn:
+            self.set_mdList()
+        else:
+            content = MDLabel(
+                font_style='Caption',
+                theme_text_color='Primary',
+                text="No contact found!",
+                halign='center',
+                size_hint_y=None,
+                valign='top')
+            self.ids.ml.add_widget(content)
+
+    def set_mdList(self):
+        """Creating the mdList"""
+        for item in self.queryreturn:
+            meny = TwoLineAvatarIconListItem(
+                text=item[0], secondary_text=item[1], theme_text_color='Custom',
+                text_color=NavigateApp().theme_cls.primary_color)
+            meny.add_widget(AvatarSampleWidget(
+                source='./images/text_images/{}.png'.format(
+                    avatarImageFirstLetter(item[0].strip()))))
+            meny.bind(on_release=partial(
+                self.redirect_to_chat, item[0], item[1]))
+            self.ids.ml.add_widget(meny)
+
+    def redirect_to_chat(self, label, addr, *args):
+        """This method is redirecting on chatroom"""
+        self.manager.transition = RiseInTransition()
+        state.kivyapp.set_toolbar_for_QrCode()
+        label = label[:14].capitalize() + '...' if len(label) > 15 else label.capitalize()
+        addrs = ' (' + addr + ')'
+        self.manager.parent.ids.toolbar.title = label + addrs
+        self.manager.parent.ids.sc21.ids.chat_logs.text = ''
+        self.manager.current = 'chroom'

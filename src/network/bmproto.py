@@ -542,15 +542,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 '%(host)s:%(port)i sending version',
                 self.destination._asdict())
         if self.services & protocol.NODE_SSL == protocol.NODE_SSL:
-            # self.isSSL = True
-            pass
+            self.isSSL = True
         if not self.verackReceived:
             return True
-        # self.set_state(
-        #     "tls_init" if self.isSSL else "connection_fully_established",
-        #     length=self.payloadLength, expectBytes=0)
         self.set_state(
-            "connection_fully_established",
+            "tls_init" if self.isSSL else "connection_fully_established",
             length=self.payloadLength, expectBytes=0)
         return False
 

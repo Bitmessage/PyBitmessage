@@ -390,7 +390,24 @@ class sqlThread(threading.Thread):
             logger.debug(
                 'In messages.dat database, done adding address field to the pubkeys table'
                 ' and removing the hash field.')
-            self.cur.execute('''update settings set value=10 WHERE key='version';''')
+            query = '''update settings set value=? WHERE key='version';'''
+            parameters = (10,)
+            self.cur.execute(query, parameters)
+
+        # Add a new table: chat and chatdata for storing chating conversation
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 10:
+            self.cur.execute(
+                '''CREATE TABLE chat'''
+                ''' (msgid blob, senderaddress text, receiveraddress text, message text,'''
+                ''' receivedtime text, image blob, audio blob, reference blob,'''
+                ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (11,)
+            self.cur.execute(item, parameters)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right

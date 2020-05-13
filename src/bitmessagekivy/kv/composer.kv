@@ -1,10 +1,11 @@
 <DropDownWidget>:
     ScrollView:
+        id: id_scroll
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
             height: self.minimum_height + 2 * self.parent.height/4
-            padding: dp(32)
+            padding: dp(20)
             spacing: 15
             BoxLayout:
                 orientation: 'vertical'
@@ -13,7 +14,7 @@
                     hint_text: 'type or select sender address'
                     size_hint_y: None
                     height: 100
-                    font_size: '15sp'
+                    font_size: dp(15)
                     multiline: False
                     required: True
                     helper_text_mode: "on_error"
