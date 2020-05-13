@@ -3,6 +3,7 @@ Bitmessage android(mobile) interface
 """
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
+# pylint: disable=protected-access
 import os
 import time
 from bitmessagekivy import identiconGeneration
@@ -114,22 +115,22 @@ def ShowTimeHistoy(act_time):
 
 def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
     """This method is used to create TimeWidget"""
-    action_time = BadgeText(
-        size_hint=(None, None),
+    action_time = TimeTagRightSampleWidget(
         text=str(ShowTimeHistoy(time)),
-        halign='right',
         font_style='Caption',
-        size=[65, 70])
+        size=[120, 140] if platform == 'android' else [64, 80])
+    action_time.font_size = '11sp'
     return action_time
 
 
 def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
-    obj.size_hint = (None, None)
+    # obj.size_hint = (None, None)
+    obj.size_hint = (.16 if platform == 'android' else .07, None)
     obj.label = text
     obj.icon = ''
-    obj.pos_hint = {'center_x': .96, 'center_y': .2}
+    obj.pos_hint = {'center_x': .91 if platform == 'android' else .94, 'center_y': .3}
     obj.height = dp(18)
     obj.radius = 8
     return obj
@@ -221,7 +222,7 @@ class Inbox(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -407,7 +408,7 @@ class MyAddress(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=NavigateApp().theme_cls.primary_color,)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
@@ -419,32 +420,16 @@ class MyAddress(Screen):
                 self.myadd_detail, item['secondary_text'], item['text']))
             if state.association == item['secondary_text']:
                 badge_obj = BadgeText(
-                        size_hint=(None, None),
-                        text='Active', halign='right',
-                        # font_size = '50sp',
-                        font_style='Body1', size=[50, 60],
-                        theme_text_color='Custom',
-                        text_color=NavigateApp().theme_cls.primary_color)
+                    size_hint=(None, None),
+                    size=[85 if platform == 'android' else 50, 60],
+                    text='Active', halign='center',
+                    font_style='Body1', theme_text_color='Custom',
+                    text_color=NavigateApp().theme_cls.primary_color
+                )
                 badge_obj.font_size = '13sp'
                 meny.add_widget(badge_obj)
             else:
                 meny.add_widget(ToggleBtn(active=True if is_enable == 'true' else False))
-            # carousel = Carousel(direction='right')
-            # carousel.height = meny.height
-            # carousel.size_hint_y = None
-            # carousel.ignore_perpendicular_swipes = True
-            # carousel.data_index = 0
-            # carousel.min_move = 0.2
-            # del_btn = Button(text='Disable' if is_enable == 'true' else 'Enable')
-            # if is_enable == 'true':
-            #     del_btn.background_normal = ''
-            # del_btn.background_color = (1, 0, 0, 1) if is_enable == 'true' else (0, 1, 0, 1)
-            # del_btn.bind(
-            #     on_press=partial(
-            #         self.disableAddress if is_enable == 'true' else self.enableAddress , item['secondary_text']))
-            # carousel.add_widget(del_btn)
-            # carousel.add_widget(meny)
-            # carousel.index = 1
             self.ids.ml.add_widget(meny)
 
     def check_scroll_y(self, instance, somethingelse):
@@ -1143,7 +1128,7 @@ class Sent(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
@@ -1362,7 +1347,7 @@ class Trash(Screen):
                     subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             img_latter = './images/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
@@ -1596,7 +1581,7 @@ class NavigateApp(MDApp):
                 # android_path = os.path.expanduser
                 # ("~/user/0/org.test.bitapp/files/app/")
                 if not os.path.exists('./images/default_identicon/{}.png'.format(
-                    BMConfigParser().addresses()[0])):
+                        BMConfigParser().addresses()[0])):
                     android_path = os.path.join(
                         os.environ['ANDROID_PRIVATE'] + '/app/')
                     img.texture.save('{1}/images/default_identicon/{0}.png'.format(
@@ -2028,7 +2013,7 @@ class NavigateApp(MDApp):
         self.manager = ModalView(size_hint=(1, 1), auto_dismiss=False)
         self.file_manager = MDFileManager(
             exit_manager=self.exit_manager,
-             select_path=self.select_path,
+            select_path=self.select_path,
             previous=False,
             ext=['.png', '.jpg']
         )
@@ -2065,7 +2050,7 @@ class NavigateApp(MDApp):
         newImg = PilImage.open(path).resize((300, 300))
         if platform == 'android':
             android_path = os.path.join(
-                    os.environ['ANDROID_PRIVATE'] + '/app/')
+                os.environ['ANDROID_PRIVATE'] + '/app/')
             newImg.save('{1}/images/default_identicon/{0}.png'.format(
                 state.association, android_path))
         else:
@@ -2229,6 +2214,12 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
+    """Right icon sample widget"""
+
+    pass
+
+
+class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
     """Right icon sample widget"""
 
     pass
@@ -2614,7 +2605,7 @@ class Draft(Screen):
                 text='Draft', secondary_text=item['text'],
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/avatar.png'))
             meny.bind(on_press=partial(
@@ -2817,7 +2808,7 @@ class Allmails(Screen):
                         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
                 text_color=NavigateApp().theme_cls.primary_color)
-            meny._txt_right_pad=dp(70)
+            meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
                 source='./images/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
