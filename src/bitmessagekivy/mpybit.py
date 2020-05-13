@@ -114,22 +114,22 @@ def ShowTimeHistoy(act_time):
 
 def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
     """This method is used to create TimeWidget"""
-    action_time = BadgeText(
-        size_hint=(None, None),
+    action_time = TimeTagRightSampleWidget(
         text=str(ShowTimeHistoy(time)),
-        halign='right',
         font_style='Caption',
-        size=[65, 70])
+        size=[120, 140] if platform == 'android' else [64, 80])
+    action_time.font_size='11sp'
     return action_time
 
 
 def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
-    obj.size_hint = (None, None)
+    # obj.size_hint = (None, None)
+    obj.size_hint = (.16 if platform == 'android' else .07 , None)
     obj.label = text
     obj.icon = ''
-    obj.pos_hint = {'center_x': .96, 'center_y': .2}
+    obj.pos_hint = {'center_x': .91 if platform == 'android' else .94, 'center_y': .3}
     obj.height = dp(18)
     obj.radius = 8
     return obj
@@ -420,31 +420,15 @@ class MyAddress(Screen):
             if state.association == item['secondary_text']:
                 badge_obj = BadgeText(
                         size_hint=(None, None),
-                        text='Active', halign='right',
+                        text='Active', halign='center',
                         # font_size = '50sp',
-                        font_style='Body1', size=[50, 60],
+                        font_style='Body1', size=[85 if platform == 'android' else 50, 60],
                         theme_text_color='Custom',
                         text_color=NavigateApp().theme_cls.primary_color)
                 badge_obj.font_size = '13sp'
                 meny.add_widget(badge_obj)
             else:
                 meny.add_widget(ToggleBtn(active=True if is_enable == 'true' else False))
-            # carousel = Carousel(direction='right')
-            # carousel.height = meny.height
-            # carousel.size_hint_y = None
-            # carousel.ignore_perpendicular_swipes = True
-            # carousel.data_index = 0
-            # carousel.min_move = 0.2
-            # del_btn = Button(text='Disable' if is_enable == 'true' else 'Enable')
-            # if is_enable == 'true':
-            #     del_btn.background_normal = ''
-            # del_btn.background_color = (1, 0, 0, 1) if is_enable == 'true' else (0, 1, 0, 1)
-            # del_btn.bind(
-            #     on_press=partial(
-            #         self.disableAddress if is_enable == 'true' else self.enableAddress , item['secondary_text']))
-            # carousel.add_widget(del_btn)
-            # carousel.add_widget(meny)
-            # carousel.index = 1
             self.ids.ml.add_widget(meny)
 
     def check_scroll_y(self, instance, somethingelse):
@@ -2229,6 +2213,12 @@ class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
+    """Right icon sample widget"""
+
+    pass
+
+
+class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
     """Right icon sample widget"""
 
     pass

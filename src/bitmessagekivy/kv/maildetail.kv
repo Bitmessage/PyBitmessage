@@ -32,18 +32,21 @@
                 divider: None
                 on_press: root.detailedPopup()
                 BadgeText:
+                    size_hint:(None, None)
+                    size:[120, 140] if app.app_platform == 'android' else [64, 80]
                     text: root.time_tag
-                    halign:'right'
+                    halign:'center'
                     font_style:'Caption'
                     pos_hint: {'center_y': .8}
                     _txt_right_pad: dp(70)
+                    font_size: '11sp'
                 MDChip:
-                    size_hint: (None, None)
+                    size_hint: (.16 if app.app_platform == 'android' else .07 , None)
                     label: root.page_type
                     icon: ''
-                    pos_hint: {'center_x': .94, 'center_y': .3}
+                    pos_hint: {'center_x': .91 if app.app_platform == 'android' else .95, 'center_y': .3}
                     radius: 8
-                    height: 18
+                    height: self.parent.height/4
                 AvatarSampleWidget:
                     source: root.avatarImg
             MDLabel:
