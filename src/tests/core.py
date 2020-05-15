@@ -12,15 +12,18 @@ import time
 import unittest
 
 import knownnodes
+import protocol
 import state
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from helper_startup import start_proxyconfig
 from network import asyncore_pollchoose as asyncore
+from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
-from network.node import Peer
+from network.node import Node, Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
+from version import softwareVersion
 
 try:
     import stem.version as stem_version
@@ -215,6 +218,29 @@ class TestCore(unittest.TestCase):
                         'Found non onion hostname %s in outbound connections!'
                         % peer.host)
         self.fail('Failed to connect to at least 3 nodes within 360 sec')
+
+    @staticmethod
+    def _decode_msg(data, pattern):
+        proto = BMProto()
+        proto.bm_proto_reset()
+        proto.payload = data[protocol.Header.size:]
+        return proto.decode_payload_content(pattern)
+
+    def test_version(self):
+        """check encoding/decoding of the version message"""
+        # with single stream
+        msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1])
+        decoded = self._decode_msg(msg, "IQQiiQlsLv")
+        peer, _, ua, streams = self._decode_msg(msg, "IQQiiQlsLv")[4:]
+        self.assertEqual(peer, Node(3, '127.0.0.1', 8444))
+        self.assertEqual(ua, '/PyBitmessage:' + softwareVersion + '/')
+        self.assertEqual(streams, [1])
+        # with multiple streams
+        msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1, 2, 3])
+        decoded = self._decode_msg(msg, "IQQiiQlslv")
+        peer, _, ua = decoded[4:7]
+        streams = decoded[7:]
+        self.assertEqual(streams, [1, 2, 3])
 
 
 def run():
