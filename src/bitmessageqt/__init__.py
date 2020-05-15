@@ -1240,6 +1240,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         if tableWidget == self.ui.tableWidgetInboxSubscriptions:
             xAddress = "fromaddress"
+            if not what:
+                where = _translate("MainWindow", "To")
+                what = str_broadcast_subscribers
         else:
             xAddress = "toaddress"
         if account is not None:
