@@ -441,9 +441,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if (
-                decodedIP and time.time() - seenTime > 0 and
-                seenTime > time.time() - ADDRESS_ALIVE and
-                port > 0
+                decodedIP
+                and time.time() - seenTime > 0
+                and seenTime > time.time() - ADDRESS_ALIVE
+                and port > 0
             ):
                 peer = Peer(decodedIP, port)
                 try:
@@ -541,8 +542,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             logger.debug(
                 '%(host)s:%(port)i sending version',
                 self.destination._asdict())
-        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-                protocol.haveSSL(not self.isOutbound)):
+        if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL)
+           and protocol.haveSSL(not self.isOutbound)):
             self.isSSL = True
         if not self.verackReceived:
             return True
@@ -600,7 +601,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         'Closed connection to %s because we are already'
                         ' connected to that IP.', self.destination)
                     return False
-            except:
+            except Exception:
                 pass
         if not self.isOutbound:
             # incoming from a peer we're connected to as outbound,
