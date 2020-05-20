@@ -512,9 +512,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         Incoming version.
         Parse and log, remember important things, like streams, bitfields, etc.
         """
+        decoded = self.decode_payload_content("IQQiiQlslv")
         (self.remoteProtocolVersion, self.services, self.timestamp,
-         self.sockNode, self.peerNode, self.nonce, self.userAgent,
-         self.streams) = self.decode_payload_content("IQQiiQlsLv")
+         self.sockNode, self.peerNode, self.nonce, self.userAgent
+         ) = decoded[:7]
+        self.streams = decoded[7:]
         self.nonce = struct.pack('>Q', self.nonce)
         self.timeOffset = self.timestamp - int(time.time())
         logger.debug('remoteProtocolVersion: %i', self.remoteProtocolVersion)
