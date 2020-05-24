@@ -3953,7 +3953,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
-        text = str(text)
+        text = text.toUtf8()
         if 0 < len(text) < 3:
             return
         messagelist = self.getCurrentMessagelist()
