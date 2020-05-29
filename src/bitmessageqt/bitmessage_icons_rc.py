@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-
+"""
+Address validator module.
+"""
 # Resource object code
 #
 # Created: Sa 21. Sep 13:45:58 2013
 #      by: The Resource Compiler for PyQt (Qt v4.8.4)
 #
 # WARNING! All changes made in this file will be lost!
-
+# pylint: disable=too-many-lines
 from PyQt4 import QtCore
 
 qt_resource_data = "\
@@ -1666,10 +1668,15 @@ qt_resource_struct = "\
 \x00\x00\x01\xe6\x00\x00\x00\x00\x00\x01\x00\x00\x34\xdf\
 "
 
+
 def qInitResources():
+    """initialization of resources"""
     QtCore.qRegisterResourceData(0x01, qt_resource_struct, qt_resource_name, qt_resource_data)
 
+
 def qCleanupResources():
+    """clean up resources"""
     QtCore.qUnregisterResourceData(0x01, qt_resource_struct, qt_resource_name, qt_resource_data)
+
 
 qInitResources()
