@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-
+"""
+bitmessage qt Ui module.
+"""
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
 # Created: Mon Mar 23 22:18:07 2015
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
-
+# pylint: disable=attribute-defined-outside-init,too-few-public-methods
+# pylint: disable=relative-import,too-many-lines,unused-argument
+# pylint: disable=too-many-instance-attributes,too-many-locals,too-many-statements
 from PyQt4 import QtCore, QtGui
 from bmconfigparser import BMConfigParser
 from foldertree import AddressBookCompleter
@@ -19,29 +23,47 @@ from blacklist import Blacklist
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+
     def _fromUtf8(s):
         return s
 
+
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+
+    def _translate(
+            context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None
+    ):
         if n is None:
             return QtGui.QApplication.translate(context, text, disambig, _encoding)
-        else:
-            return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
+        return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
+
+
 except AttributeError:
-    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+
+    def _translate(
+            context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None
+    ):
         if n is None:
             return QtGui.QApplication.translate(context, text, disambig)
-        else:
-            return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+        return QtGui.QApplication.translate(
+            context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+
 
 class Ui_MainWindow(object):
+    """Ui for MainWindow QT"""
+    # pylint: disable=redefined-outer-name
     def setupUi(self, MainWindow):
+        """setting up attributes for UI"""
+        # pylint: disable=attribute-defined-outside-init
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.resize(885, 580)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off
+        )
         MainWindow.setWindowIcon(icon)
         MainWindow.setTabShape(QtGui.QTabWidget.Rounded)
         self.centralwidget = QtGui.QWidget(MainWindow)
@@ -49,7 +71,9 @@ class Ui_MainWindow(object):
         self.gridLayout_10 = QtGui.QGridLayout(self.centralwidget)
         self.gridLayout_10.setObjectName(_fromUtf8("gridLayout_10"))
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
@@ -72,10 +96,18 @@ class Ui_MainWindow(object):
         self.verticalSplitter_12.setObjectName(_fromUtf8("verticalSplitter_12"))
         self.verticalSplitter_12.setOrientation(QtCore.Qt.Vertical)
         self.treeWidgetYourIdentities = settingsmixin.STreeWidget(self.inbox)
-        self.treeWidgetYourIdentities.setObjectName(_fromUtf8("treeWidgetYourIdentities"))
-        self.treeWidgetYourIdentities.resize(200, self.treeWidgetYourIdentities.height())
+        self.treeWidgetYourIdentities.setObjectName(
+            _fromUtf8("treeWidgetYourIdentities")
+        )
+        self.treeWidgetYourIdentities.resize(
+            200, self.treeWidgetYourIdentities.height()
+        )
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/identities.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon1.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/identities.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off
+        )
         self.treeWidgetYourIdentities.headerItem().setIcon(0, icon1)
         self.verticalSplitter_12.addWidget(self.treeWidgetYourIdentities)
         self.pushButtonNewAddress = QtGui.QPushButton(self.inbox)
@@ -92,7 +124,9 @@ class Ui_MainWindow(object):
         self.verticalSplitter_7.setObjectName(_fromUtf8("verticalSplitter_7"))
         self.verticalSplitter_7.setOrientation(QtCore.Qt.Vertical)
         self.horizontalSplitterSearch = QtGui.QSplitter()
-        self.horizontalSplitterSearch.setObjectName(_fromUtf8("horizontalSplitterSearch"))
+        self.horizontalSplitterSearch.setObjectName(
+            _fromUtf8("horizontalSplitterSearch")
+        )
         self.inboxSearchLineEdit = QtGui.QLineEdit(self.inbox)
         self.inboxSearchLineEdit.setObjectName(_fromUtf8("inboxSearchLineEdit"))
         self.horizontalSplitterSearch.addWidget(self.inboxSearchLineEdit)
@@ -113,7 +147,9 @@ class Ui_MainWindow(object):
         self.tableWidgetInbox = settingsmixin.STableWidget(self.inbox)
         self.tableWidgetInbox.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tableWidgetInbox.setAlternatingRowColors(True)
-        self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.tableWidgetInbox.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection
+        )
         self.tableWidgetInbox.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetInbox.setWordWrap(False)
         self.tableWidgetInbox.setObjectName(_fromUtf8("tableWidgetInbox"))
@@ -155,7 +191,11 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_3.setCollapsible(1, False)
         self.gridLayout.addWidget(self.horizontalSplitter_3)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/inbox.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/inbox.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off
+        )
         self.tabWidget.addTab(self.inbox, icon2, _fromUtf8(""))
         self.send = QtGui.QWidget()
         self.send.setObjectName(_fromUtf8("send"))
@@ -168,15 +208,23 @@ class Ui_MainWindow(object):
         self.verticalSplitter_2.setOrientation(QtCore.Qt.Vertical)
         self.tableWidgetAddressBook = settingsmixin.STableWidget(self.send)
         self.tableWidgetAddressBook.setAlternatingRowColors(True)
-        self.tableWidgetAddressBook.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
-        self.tableWidgetAddressBook.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.tableWidgetAddressBook.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection
+        )
+        self.tableWidgetAddressBook.setSelectionBehavior(
+            QtGui.QAbstractItemView.SelectRows
+        )
         self.tableWidgetAddressBook.setObjectName(_fromUtf8("tableWidgetAddressBook"))
         self.tableWidgetAddressBook.setColumnCount(2)
         self.tableWidgetAddressBook.setRowCount(0)
         self.tableWidgetAddressBook.resize(200, self.tableWidgetAddressBook.height())
         item = QtGui.QTableWidgetItem()
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/addressbook.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon3.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/addressbook.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off
+        )
         item.setIcon(icon3)
         self.tableWidgetAddressBook.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
@@ -193,12 +241,20 @@ class Ui_MainWindow(object):
         self.addressBookCompleterModel = QtGui.QStringListModel()
         self.addressBookCompleter.setModel(self.addressBookCompleterModel)
         self.pushButtonAddAddressBook = QtGui.QPushButton(self.send)
-        self.pushButtonAddAddressBook.setObjectName(_fromUtf8("pushButtonAddAddressBook"))
-        self.pushButtonAddAddressBook.resize(200, self.pushButtonAddAddressBook.height())
+        self.pushButtonAddAddressBook.setObjectName(
+            _fromUtf8("pushButtonAddAddressBook")
+        )
+        self.pushButtonAddAddressBook.resize(
+            200, self.pushButtonAddAddressBook.height()
+        )
         self.verticalSplitter_2.addWidget(self.pushButtonAddAddressBook)
         self.pushButtonFetchNamecoinID = QtGui.QPushButton(self.send)
-        self.pushButtonFetchNamecoinID.resize(200, self.pushButtonFetchNamecoinID.height())
-        self.pushButtonFetchNamecoinID.setObjectName(_fromUtf8("pushButtonFetchNamecoinID"))
+        self.pushButtonFetchNamecoinID.resize(
+            200, self.pushButtonFetchNamecoinID.height()
+        )
+        self.pushButtonFetchNamecoinID.setObjectName(
+            _fromUtf8("pushButtonFetchNamecoinID")
+        )
         self.verticalSplitter_2.addWidget(self.pushButtonFetchNamecoinID)
         self.verticalSplitter_2.setStretchFactor(0, 1)
         self.verticalSplitter_2.setStretchFactor(1, 0)
@@ -271,20 +327,26 @@ class Ui_MainWindow(object):
         self.gridLayout_5.addWidget(self.label_8, 0, 0, 1, 1)
         self.lineEditSubjectBroadcast = QtGui.QLineEdit(self.sendBroadcast)
         self.lineEditSubjectBroadcast.setText(_fromUtf8(""))
-        self.lineEditSubjectBroadcast.setObjectName(_fromUtf8("lineEditSubjectBroadcast"))
+        self.lineEditSubjectBroadcast.setObjectName(
+            _fromUtf8("lineEditSubjectBroadcast")
+        )
         self.gridLayout_5.addWidget(self.lineEditSubjectBroadcast, 1, 1, 1, 1)
         self.label_7 = QtGui.QLabel(self.sendBroadcast)
         self.label_7.setObjectName(_fromUtf8("label_7"))
         self.gridLayout_5.addWidget(self.label_7, 1, 0, 1, 1)
         self.comboBoxSendFromBroadcast = QtGui.QComboBox(self.sendBroadcast)
         self.comboBoxSendFromBroadcast.setMinimumSize(QtCore.QSize(300, 0))
-        self.comboBoxSendFromBroadcast.setObjectName(_fromUtf8("comboBoxSendFromBroadcast"))
+        self.comboBoxSendFromBroadcast.setObjectName(
+            _fromUtf8("comboBoxSendFromBroadcast")
+        )
         self.gridLayout_5.addWidget(self.comboBoxSendFromBroadcast, 0, 1, 1, 1)
         self.gridLayout_5_Widget = QtGui.QWidget()
         self.gridLayout_5_Widget.setLayout(self.gridLayout_5)
         self.verticalSplitter_6.addWidget(self.gridLayout_5_Widget)
         self.textEditMessageBroadcast = MessageCompose(self.sendBroadcast)
-        self.textEditMessageBroadcast.setObjectName(_fromUtf8("textEditMessageBroadcast"))
+        self.textEditMessageBroadcast.setObjectName(
+            _fromUtf8("textEditMessageBroadcast")
+        )
         self.verticalSplitter_6.addWidget(self.textEditMessageBroadcast)
         self.verticalSplitter_6.setStretchFactor(0, 0)
         self.verticalSplitter_6.setStretchFactor(1, 1)
@@ -295,15 +357,21 @@ class Ui_MainWindow(object):
         self.tabWidgetSend.addTab(self.sendBroadcast, _fromUtf8(""))
         self.verticalSplitter.addWidget(self.tabWidgetSend)
         self.tTLContainer = QtGui.QWidget()
-        self.tTLContainer.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        self.tTLContainer.setSizePolicy(
+            QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed
+        )
         self.horizontalLayout_5 = QtGui.QHBoxLayout()
         self.tTLContainer.setLayout(self.horizontalLayout_5)
         self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
         self.pushButtonTTL = QtGui.QPushButton(self.send)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.pushButtonTTL.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.pushButtonTTL.sizePolicy().hasHeightForWidth()
+        )
         self.pushButtonTTL.setSizePolicy(sizePolicy)
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 255))
@@ -328,23 +396,35 @@ class Ui_MainWindow(object):
         self.horizontalSliderTTL.setInvertedAppearance(False)
         self.horizontalSliderTTL.setInvertedControls(False)
         self.horizontalSliderTTL.setObjectName(_fromUtf8("horizontalSliderTTL"))
-        self.horizontalLayout_5.addWidget(self.horizontalSliderTTL, 0, QtCore.Qt.AlignLeft)
+        self.horizontalLayout_5.addWidget(
+            self.horizontalSliderTTL, 0, QtCore.Qt.AlignLeft
+        )
         self.labelHumanFriendlyTTLDescription = QtGui.QLabel(self.send)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(
+            QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.labelHumanFriendlyTTLDescription.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.labelHumanFriendlyTTLDescription.sizePolicy().hasHeightForWidth()
+        )
         self.labelHumanFriendlyTTLDescription.setSizePolicy(sizePolicy)
         self.labelHumanFriendlyTTLDescription.setMinimumSize(QtCore.QSize(45, 0))
-        self.labelHumanFriendlyTTLDescription.setObjectName(_fromUtf8("labelHumanFriendlyTTLDescription"))
-        self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription, 1, QtCore.Qt.AlignLeft)
+        self.labelHumanFriendlyTTLDescription.setObjectName(
+            _fromUtf8("labelHumanFriendlyTTLDescription")
+        )
+        self.horizontalLayout_5.addWidget(
+            self.labelHumanFriendlyTTLDescription, 1, QtCore.Qt.AlignLeft
+        )
         self.pushButtonClear = QtGui.QPushButton(self.send)
         self.pushButtonClear.setObjectName(_fromUtf8("pushButtonClear"))
         self.horizontalLayout_5.addWidget(self.pushButtonClear, 0, QtCore.Qt.AlignRight)
         self.pushButtonSend = QtGui.QPushButton(self.send)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
         self.horizontalLayout_5.addWidget(self.pushButtonSend, 0, QtCore.Qt.AlignRight)
-        self.horizontalSliderTTL.setMaximumSize(QtCore.QSize(105, self.pushButtonSend.height()))
+        self.horizontalSliderTTL.setMaximumSize(
+            QtCore.QSize(105, self.pushButtonSend.height())
+        )
         self.verticalSplitter.addWidget(self.tTLContainer)
         self.tTLContainer.adjustSize()
         self.verticalSplitter.setStretchFactor(1, 0)
@@ -359,7 +439,11 @@ class Ui_MainWindow(object):
         self.horizontalSplitter.setCollapsible(1, False)
         self.gridLayout_7.addWidget(self.horizontalSplitter, 0, 0, 1, 1)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off
+        )
         self.tabWidget.addTab(self.send, icon4, _fromUtf8(""))
         self.subscriptions = QtGui.QWidget()
         self.subscriptions.setObjectName(_fromUtf8("subscriptions"))
@@ -372,17 +456,29 @@ class Ui_MainWindow(object):
         self.verticalSplitter_3.setOrientation(QtCore.Qt.Vertical)
         self.treeWidgetSubscriptions = settingsmixin.STreeWidget(self.subscriptions)
         self.treeWidgetSubscriptions.setAlternatingRowColors(True)
-        self.treeWidgetSubscriptions.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.treeWidgetSubscriptions.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.treeWidgetSubscriptions.setSelectionMode(
+            QtGui.QAbstractItemView.SingleSelection
+        )
+        self.treeWidgetSubscriptions.setSelectionBehavior(
+            QtGui.QAbstractItemView.SelectRows
+        )
         self.treeWidgetSubscriptions.setObjectName(_fromUtf8("treeWidgetSubscriptions"))
         self.treeWidgetSubscriptions.resize(200, self.treeWidgetSubscriptions.height())
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/subscriptions.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon5.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/subscriptions.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off
+        )
         self.treeWidgetSubscriptions.headerItem().setIcon(0, icon5)
         self.verticalSplitter_3.addWidget(self.treeWidgetSubscriptions)
         self.pushButtonAddSubscription = QtGui.QPushButton(self.subscriptions)
-        self.pushButtonAddSubscription.setObjectName(_fromUtf8("pushButtonAddSubscription"))
-        self.pushButtonAddSubscription.resize(200, self.pushButtonAddSubscription.height())
+        self.pushButtonAddSubscription.setObjectName(
+            _fromUtf8("pushButtonAddSubscription")
+        )
+        self.pushButtonAddSubscription.resize(
+            200, self.pushButtonAddSubscription.height()
+        )
         self.verticalSplitter_3.addWidget(self.pushButtonAddSubscription)
         self.verticalSplitter_3.setStretchFactor(0, 1)
         self.verticalSplitter_3.setStretchFactor(1, 0)
@@ -396,28 +492,44 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_2 = QtGui.QSplitter()
         self.horizontalSplitter_2.setObjectName(_fromUtf8("horizontalSplitter_2"))
         self.inboxSearchLineEditSubscriptions = QtGui.QLineEdit(self.subscriptions)
-        self.inboxSearchLineEditSubscriptions.setObjectName(_fromUtf8("inboxSearchLineEditSubscriptions"))
+        self.inboxSearchLineEditSubscriptions.setObjectName(
+            _fromUtf8("inboxSearchLineEditSubscriptions")
+        )
         self.horizontalSplitter_2.addWidget(self.inboxSearchLineEditSubscriptions)
         self.inboxSearchOptionSubscriptions = QtGui.QComboBox(self.subscriptions)
-        self.inboxSearchOptionSubscriptions.setObjectName(_fromUtf8("inboxSearchOptionSubscriptions"))
+        self.inboxSearchOptionSubscriptions.setObjectName(
+            _fromUtf8("inboxSearchOptionSubscriptions")
+        )
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
-        self.inboxSearchOptionSubscriptions.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.inboxSearchOptionSubscriptions.setSizeAdjustPolicy(
+            QtGui.QComboBox.AdjustToContents
+        )
         self.inboxSearchOptionSubscriptions.setCurrentIndex(2)
         self.horizontalSplitter_2.addWidget(self.inboxSearchOptionSubscriptions)
         self.horizontalSplitter_2.handle(1).setEnabled(False)
         self.horizontalSplitter_2.setStretchFactor(0, 1)
         self.horizontalSplitter_2.setStretchFactor(1, 0)
         self.verticalSplitter_4.addWidget(self.horizontalSplitter_2)
-        self.tableWidgetInboxSubscriptions = settingsmixin.STableWidget(self.subscriptions)
-        self.tableWidgetInboxSubscriptions.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.tableWidgetInboxSubscriptions = settingsmixin.STableWidget(
+            self.subscriptions
+        )
+        self.tableWidgetInboxSubscriptions.setEditTriggers(
+            QtGui.QAbstractItemView.NoEditTriggers
+        )
         self.tableWidgetInboxSubscriptions.setAlternatingRowColors(True)
-        self.tableWidgetInboxSubscriptions.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
-        self.tableWidgetInboxSubscriptions.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.tableWidgetInboxSubscriptions.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection
+        )
+        self.tableWidgetInboxSubscriptions.setSelectionBehavior(
+            QtGui.QAbstractItemView.SelectRows
+        )
         self.tableWidgetInboxSubscriptions.setWordWrap(False)
-        self.tableWidgetInboxSubscriptions.setObjectName(_fromUtf8("tableWidgetInboxSubscriptions"))
+        self.tableWidgetInboxSubscriptions.setObjectName(
+            _fromUtf8("tableWidgetInboxSubscriptions")
+        )
         self.tableWidgetInboxSubscriptions.setColumnCount(4)
         self.tableWidgetInboxSubscriptions.setRowCount(0)
         item = QtGui.QTableWidgetItem()
@@ -428,19 +540,29 @@ class Ui_MainWindow(object):
         self.tableWidgetInboxSubscriptions.setHorizontalHeaderItem(2, item)
         item = QtGui.QTableWidgetItem()
         self.tableWidgetInboxSubscriptions.setHorizontalHeaderItem(3, item)
-        self.tableWidgetInboxSubscriptions.horizontalHeader().setCascadingSectionResizes(True)
+        self.tableWidgetInboxSubscriptions.horizontalHeader().setCascadingSectionResizes(
+            True
+        )
         self.tableWidgetInboxSubscriptions.horizontalHeader().setDefaultSectionSize(200)
-        self.tableWidgetInboxSubscriptions.horizontalHeader().setHighlightSections(False)
+        self.tableWidgetInboxSubscriptions.horizontalHeader().setHighlightSections(
+            False
+        )
         self.tableWidgetInboxSubscriptions.horizontalHeader().setMinimumSectionSize(27)
-        self.tableWidgetInboxSubscriptions.horizontalHeader().setSortIndicatorShown(False)
-        self.tableWidgetInboxSubscriptions.horizontalHeader().setStretchLastSection(True)
+        self.tableWidgetInboxSubscriptions.horizontalHeader().setSortIndicatorShown(
+            False
+        )
+        self.tableWidgetInboxSubscriptions.horizontalHeader().setStretchLastSection(
+            True
+        )
         self.tableWidgetInboxSubscriptions.verticalHeader().setVisible(False)
         self.tableWidgetInboxSubscriptions.verticalHeader().setDefaultSectionSize(26)
         self.verticalSplitter_4.addWidget(self.tableWidgetInboxSubscriptions)
         self.textEditInboxMessageSubscriptions = MessageView(self.subscriptions)
         self.textEditInboxMessageSubscriptions.setBaseSize(QtCore.QSize(0, 500))
         self.textEditInboxMessageSubscriptions.setReadOnly(True)
-        self.textEditInboxMessageSubscriptions.setObjectName(_fromUtf8("textEditInboxMessageSubscriptions"))
+        self.textEditInboxMessageSubscriptions.setObjectName(
+            _fromUtf8("textEditInboxMessageSubscriptions")
+        )
         self.verticalSplitter_4.addWidget(self.textEditInboxMessageSubscriptions)
         self.verticalSplitter_4.setStretchFactor(0, 0)
         self.verticalSplitter_4.setStretchFactor(1, 1)
@@ -456,7 +578,11 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_4.setCollapsible(1, False)
         self.gridLayout_3.addWidget(self.horizontalSplitter_4, 0, 0, 1, 1)
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/subscriptions.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon6.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/subscriptions.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off
+        )
         self.tabWidget.addTab(self.subscriptions, icon6, _fromUtf8(""))
         self.chans = QtGui.QWidget()
         self.chans.setObjectName(_fromUtf8("chans"))
@@ -476,7 +602,11 @@ class Ui_MainWindow(object):
         self.treeWidgetChans.setObjectName(_fromUtf8("treeWidgetChans"))
         self.treeWidgetChans.resize(200, self.treeWidgetChans.height())
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon7.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off
+        )
         self.treeWidgetChans.headerItem().setIcon(0, icon7)
         self.verticalSplitter_17.addWidget(self.treeWidgetChans)
         self.pushButtonAddChan = QtGui.QPushButton(self.chans)
@@ -495,7 +625,9 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_6 = QtGui.QSplitter()
         self.horizontalSplitter_6.setObjectName(_fromUtf8("horizontalSplitter_6"))
         self.inboxSearchLineEditChans = QtGui.QLineEdit(self.chans)
-        self.inboxSearchLineEditChans.setObjectName(_fromUtf8("inboxSearchLineEditChans"))
+        self.inboxSearchLineEditChans.setObjectName(
+            _fromUtf8("inboxSearchLineEditChans")
+        )
         self.horizontalSplitter_6.addWidget(self.inboxSearchLineEditChans)
         self.inboxSearchOptionChans = QtGui.QComboBox(self.chans)
         self.inboxSearchOptionChans.setObjectName(_fromUtf8("inboxSearchOptionChans"))
@@ -504,7 +636,9 @@ class Ui_MainWindow(object):
         self.inboxSearchOptionChans.addItem(_fromUtf8(""))
         self.inboxSearchOptionChans.addItem(_fromUtf8(""))
         self.inboxSearchOptionChans.addItem(_fromUtf8(""))
-        self.inboxSearchOptionChans.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.inboxSearchOptionChans.setSizeAdjustPolicy(
+            QtGui.QComboBox.AdjustToContents
+        )
         self.inboxSearchOptionChans.setCurrentIndex(3)
         self.horizontalSplitter_6.addWidget(self.inboxSearchOptionChans)
         self.horizontalSplitter_6.handle(1).setEnabled(False)
@@ -512,10 +646,16 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_6.setStretchFactor(1, 0)
         self.verticalSplitter_8.addWidget(self.horizontalSplitter_6)
         self.tableWidgetInboxChans = settingsmixin.STableWidget(self.chans)
-        self.tableWidgetInboxChans.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.tableWidgetInboxChans.setEditTriggers(
+            QtGui.QAbstractItemView.NoEditTriggers
+        )
         self.tableWidgetInboxChans.setAlternatingRowColors(True)
-        self.tableWidgetInboxChans.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
-        self.tableWidgetInboxChans.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.tableWidgetInboxChans.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection
+        )
+        self.tableWidgetInboxChans.setSelectionBehavior(
+            QtGui.QAbstractItemView.SelectRows
+        )
         self.tableWidgetInboxChans.setWordWrap(False)
         self.tableWidgetInboxChans.setObjectName(_fromUtf8("tableWidgetInboxChans"))
         self.tableWidgetInboxChans.setColumnCount(4)
@@ -540,7 +680,9 @@ class Ui_MainWindow(object):
         self.textEditInboxMessageChans = MessageView(self.chans)
         self.textEditInboxMessageChans.setBaseSize(QtCore.QSize(0, 500))
         self.textEditInboxMessageChans.setReadOnly(True)
-        self.textEditInboxMessageChans.setObjectName(_fromUtf8("textEditInboxMessageChans"))
+        self.textEditInboxMessageChans.setObjectName(
+            _fromUtf8("textEditInboxMessageChans")
+        )
         self.verticalSplitter_8.addWidget(self.textEditInboxMessageChans)
         self.verticalSplitter_8.setStretchFactor(0, 0)
         self.verticalSplitter_8.setStretchFactor(1, 1)
@@ -556,17 +698,25 @@ class Ui_MainWindow(object):
         self.horizontalSplitter_7.setCollapsible(1, False)
         self.gridLayout_4.addWidget(self.horizontalSplitter_7, 0, 0, 1, 1)
         icon8 = QtGui.QIcon()
-        icon8.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon8.addPixmap(
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off
+        )
         self.tabWidget.addTab(self.chans, icon8, _fromUtf8(""))
         self.blackwhitelist = Blacklist()
-        self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
+        self.tabWidget.addTab(
+            self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), ""
+        )
         # Initialize the Blacklist or Whitelist
-        if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
+        if BMConfigParser().get("bitmessagesettings", "blackwhitelist") == "white":
             self.blackwhitelist.radioButtonWhitelist.click()
         self.blackwhitelist.rerenderBlackWhiteList()
 
         self.networkstatus = NetworkStatus()
-        self.tabWidget.addTab(self.networkstatus, QtGui.QIcon(":/newPrefix/images/networkstatus.png"), "")
+        self.tabWidget.addTab(
+            self.networkstatus, QtGui.QIcon(":/newPrefix/images/networkstatus.png"), ""
+        )
         self.gridLayout_10.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
@@ -616,11 +766,15 @@ class Ui_MainWindow(object):
         self.actionRegenerateDeterministicAddresses = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("view-refresh"))
         self.actionRegenerateDeterministicAddresses.setIcon(icon)
-        self.actionRegenerateDeterministicAddresses.setObjectName(_fromUtf8("actionRegenerateDeterministicAddresses"))
+        self.actionRegenerateDeterministicAddresses.setObjectName(
+            _fromUtf8("actionRegenerateDeterministicAddresses")
+        )
         self.actionDeleteAllTrashedMessages = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("user-trash"))
         self.actionDeleteAllTrashedMessages.setIcon(icon)
-        self.actionDeleteAllTrashedMessages.setObjectName(_fromUtf8("actionDeleteAllTrashedMessages"))
+        self.actionDeleteAllTrashedMessages.setObjectName(
+            _fromUtf8("actionDeleteAllTrashedMessages")
+        )
         self.actionJoinChan = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("contact-new"))
         self.actionJoinChan.setIcon(icon)
@@ -639,12 +793,8 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(
-            self.tabWidget.indexOf(self.inbox)
-        )
-        self.tabWidgetSend.setCurrentIndex(
-            self.tabWidgetSend.indexOf(self.sendDirect)
-        )
+        self.tabWidget.setCurrentIndex(self.tabWidget.indexOf(self.inbox))
+        self.tabWidgetSend.setCurrentIndex(self.tabWidgetSend.indexOf(self.sendDirect))
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tableWidgetInbox, self.textEditInboxMessage)
         MainWindow.setTabOrder(self.textEditInboxMessage, self.comboBoxSendFrom)
@@ -662,20 +812,30 @@ class Ui_MainWindow(object):
         self.subscriptionsContextMenuToolbar = QtGui.QToolBar()
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
+        """method to update network switch menu labels"""
         if dontconnect is None:
             dontconnect = BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'dontconnect')
+                "bitmessagesettings", "dontconnect"
+            )
         self.actionNetworkSwitch.setText(
             _translate("MainWindow", "Go online", None)
-            if dontconnect else
-            _translate("MainWindow", "Go offline", None)
+            if dontconnect
+            else _translate("MainWindow", "Go offline", None)
         )
 
     def retranslateUi(self, MainWindow):
+        """ui retransalation"""
+        # pylint: disable=redefined-outer-name
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
-        self.treeWidgetYourIdentities.headerItem().setText(0, _translate("MainWindow", "Identities", None))
-        self.pushButtonNewAddress.setText(_translate("MainWindow", "New Identity", None))
-        self.inboxSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
+        self.treeWidgetYourIdentities.headerItem().setText(
+            0, _translate("MainWindow", "Identities", None)
+        )
+        self.pushButtonNewAddress.setText(
+            _translate("MainWindow", "New Identity", None)
+        )
+        self.inboxSearchLineEdit.setPlaceholderText(
+            _translate("MainWindow", "Search", None)
+        )
         self.inboxSearchOption.setItemText(0, _translate("MainWindow", "All", None))
         self.inboxSearchOption.setItemText(1, _translate("MainWindow", "To", None))
         self.inboxSearchOption.setItemText(2, _translate("MainWindow", "From", None))
@@ -690,40 +850,77 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInbox.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), _translate("MainWindow", "Messages", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.inbox),
+            _translate("MainWindow", "Messages", None)
+        )
         self.tableWidgetAddressBook.setSortingEnabled(True)
         item = self.tableWidgetAddressBook.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Address book", None))
         item = self.tableWidgetAddressBook.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Address", None))
-        self.pushButtonAddAddressBook.setText(_translate("MainWindow", "Add Contact", None))
-        self.pushButtonFetchNamecoinID.setText(_translate("MainWindow", "Fetch Namecoin ID", None))
+        self.pushButtonAddAddressBook.setText(
+            _translate("MainWindow", "Add Contact", None)
+        )
+        self.pushButtonFetchNamecoinID.setText(
+            _translate("MainWindow", "Fetch Namecoin ID", None)
+        )
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label.setText(_translate("MainWindow", "To:", None))
-        #self.textEditMessage.setHtml("")
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None))
+        # self.textEditMessage.setHtml("")
+        self.tabWidgetSend.setTabText(
+            self.tabWidgetSend.indexOf(self.sendDirect),
+            _translate("MainWindow", "Send ordinary Message", None)
+        )
         self.label_8.setText(_translate("MainWindow", "From:", None))
         self.label_7.setText(_translate("MainWindow", "Subject:", None))
-        #self.textEditMessageBroadcast.setHtml("")
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers", None))
+        # self.textEditMessageBroadcast.setHtml("")
+        self.tabWidgetSend.setTabText(
+            self.tabWidgetSend.indexOf(self.sendBroadcast),
+            _translate("MainWindow", "Send Message to your Subscribers", None)
+        )
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
         try:
-            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl')/60/60)
-        except:
+            hours = int(BMConfigParser().getint("bitmessagesettings", "ttl") / 60 / 60)
+        except Exception:
             pass
-        self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))
+        self.labelHumanFriendlyTTLDescription.setText(
+            _translate(
+                "MainWindow",
+                "%n hour(s)",
+                None,
+                QtCore.QCoreApplication.CodecForTr,
+                hours
+            )
+        )
         self.pushButtonClear.setText(_translate("MainWindow", "Clear", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
-        self.treeWidgetSubscriptions.headerItem().setText(0, _translate("MainWindow", "Subscriptions", None))
-        self.pushButtonAddSubscription.setText(_translate("MainWindow", "Add new Subscription", None))
-        self.inboxSearchLineEditSubscriptions.setPlaceholderText(_translate("MainWindow", "Search", None))
-        self.inboxSearchOptionSubscriptions.setItemText(0, _translate("MainWindow", "All", None))
-        self.inboxSearchOptionSubscriptions.setItemText(1, _translate("MainWindow", "From", None))
-        self.inboxSearchOptionSubscriptions.setItemText(2, _translate("MainWindow", "Subject", None))
-        self.inboxSearchOptionSubscriptions.setItemText(3, _translate("MainWindow", "Message", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None)
+        )
+        self.treeWidgetSubscriptions.headerItem().setText(
+            0, _translate("MainWindow", "Subscriptions", None)
+        )
+        self.pushButtonAddSubscription.setText(
+            _translate("MainWindow", "Add new Subscription", None)
+        )
+        self.inboxSearchLineEditSubscriptions.setPlaceholderText(
+            _translate("MainWindow", "Search", None)
+        )
+        self.inboxSearchOptionSubscriptions.setItemText(
+            0, _translate("MainWindow", "All", None)
+        )
+        self.inboxSearchOptionSubscriptions.setItemText(
+            1, _translate("MainWindow", "From", None)
+        )
+        self.inboxSearchOptionSubscriptions.setItemText(
+            2, _translate("MainWindow", "Subject", None)
+        )
+        self.inboxSearchOptionSubscriptions.setItemText(
+            3, _translate("MainWindow", "Message", None)
+        )
         self.tableWidgetInboxSubscriptions.setSortingEnabled(True)
         item = self.tableWidgetInboxSubscriptions.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "To", None))
@@ -733,15 +930,30 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInboxSubscriptions.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), _translate("MainWindow", "Subscriptions", None))
-        self.treeWidgetChans.headerItem().setText(0, _translate("MainWindow", "Chans", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.subscriptions),
+            _translate("MainWindow", "Subscriptions", None)
+        )
+        self.treeWidgetChans.headerItem().setText(
+            0, _translate("MainWindow", "Chans", None)
+        )
         self.pushButtonAddChan.setText(_translate("MainWindow", "Add Chan", None))
-        self.inboxSearchLineEditChans.setPlaceholderText(_translate("MainWindow", "Search", None))
-        self.inboxSearchOptionChans.setItemText(0, _translate("MainWindow", "All", None))
+        self.inboxSearchLineEditChans.setPlaceholderText(
+            _translate("MainWindow", "Search", None)
+        )
+        self.inboxSearchOptionChans.setItemText(
+            0, _translate("MainWindow", "All", None)
+        )
         self.inboxSearchOptionChans.setItemText(1, _translate("MainWindow", "To", None))
-        self.inboxSearchOptionChans.setItemText(2, _translate("MainWindow", "From", None))
-        self.inboxSearchOptionChans.setItemText(3, _translate("MainWindow", "Subject", None))
-        self.inboxSearchOptionChans.setItemText(4, _translate("MainWindow", "Message", None))
+        self.inboxSearchOptionChans.setItemText(
+            2, _translate("MainWindow", "From", None)
+        )
+        self.inboxSearchOptionChans.setItemText(
+            3, _translate("MainWindow", "Subject", None)
+        )
+        self.inboxSearchOptionChans.setItemText(
+            4, _translate("MainWindow", "Message", None)
+        )
         self.tableWidgetInboxChans.setSortingEnabled(True)
         item = self.tableWidgetInboxChans.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "To", None))
@@ -751,11 +963,19 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInboxChans.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans", None)
+        )
         self.blackwhitelist.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), _translate("blacklist", "Blacklist", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.blackwhitelist),
+            _translate("blacklist", "Blacklist", None)
+        )
         self.networkstatus.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("networkstatus", "Network Status", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.networkstatus),
+            _translate("networkstatus", "Network Status", None)
+        )
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
@@ -768,21 +988,24 @@ class Ui_MainWindow(object):
         self.actionSupport.setText(_translate("MainWindow", "Contact support", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
         self.actionSettings.setText(_translate("MainWindow", "Settings", None))
-        self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
-        self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
-        self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
+        self.actionRegenerateDeterministicAddresses.setText(
+            _translate("MainWindow", "Regenerate deterministic addresses", None)
+        )
+        self.actionDeleteAllTrashedMessages.setText(
+            _translate("MainWindow", "Delete all trashed messages", None)
+        )
+        self.actionJoinChan.setText(
+            _translate("MainWindow", "Join / Create chan", None)
+        )
         self.updateNetworkSwitchMenuLabel()
 
 
-import bitmessage_icons_rc
-
 if __name__ == "__main__":
     import sys
-    
+
     app = QtGui.QApplication(sys.argv)
     MainWindow = settingsmixin.SMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-
