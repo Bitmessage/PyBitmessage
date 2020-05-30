@@ -1,4 +1,5 @@
 """Composing support request message functions."""
+# pylint: disable=no-member
 
 import ctypes
 import ssl
@@ -70,7 +71,8 @@ def checkAddressBook(myapp):
     queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
     if queryreturn == []:
         sqlExecute(
-            'INSERT INTO addressbook VALUES (?,?)', SUPPORT_LABEL, SUPPORT_ADDRESS)
+            'INSERT INTO addressbook VALUES (?,?)',
+            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
         myapp.rerenderAddressBook()
 
 
@@ -85,7 +87,9 @@ def checkHasNormalAddress():
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
         queues.addressGeneratorQueue.put((
-            'createRandomAddress', 4, 1, SUPPORT_MY_LABEL, 1, "", False,
+            'createRandomAddress', 4, 1,
+            SUPPORT_MY_LABEL.toUtf8(),
+            1, "", False,
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes
         ))
