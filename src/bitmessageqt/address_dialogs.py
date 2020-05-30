@@ -1,7 +1,7 @@
 """
 Dialogs that work with BM address.
 """
-# pylint: disable=attribute-defined-outside-init,too-few-public-methods
+# pylint: disable=attribute-defined-outside-init,too-few-public-methods,relative-import
 
 import hashlib
 
@@ -191,8 +191,8 @@ class NewSubscriptionDialog(AddressDataDialog):
         else:
             Inventory().flush()
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersion) +
-                encodeVarint(streamNumber) + ripe
+                encodeVarint(addressVersion)
+                + encodeVarint(streamNumber) + ripe
             ).digest()).digest()
             tag = doubleHashOfAddressData[32:]
             self.recent = Inventory().by_type_and_tag(3, tag)
@@ -256,11 +256,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
                     self.radioButtonBehaviorMailingList.click()
                 else:
                     self.radioButtonBehaveNormalAddress.click()
-                try:
-                    mailingListName = config.get(
-                        self.address, 'mailinglistname')
-                except:
-                    mailingListName = ''
+                mailingListName = config.safeGet(self.address, 'mailinglistname', '')
                 self.lineEditMailingListName.setText(
                     unicode(mailingListName, 'utf-8')
                 )
