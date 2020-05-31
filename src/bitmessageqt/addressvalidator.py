@@ -1,14 +1,29 @@
+"""
+Address validator module.
+"""
+# pylint: disable=too-many-branches,too-many-arguments
+
 from PyQt4 import QtGui
 from Queue import Empty
 
-from addresses import decodeAddress, addBMIfNotPresent
 from account import getSortedAccounts
+from addresses import decodeAddress, addBMIfNotPresent
 from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
 from utils import str_chan
 
-class AddressPassPhraseValidatorMixin():
-    def setParams(self, passPhraseObject=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):
+
+class AddressPassPhraseValidatorMixin(object):
+    """Bitmessage address or passphrase validator class for Qt UI"""
+    def setParams(
+            self,
+            passPhraseObject=None,
+            addressObject=None,
+            feedBackObject=None,
+            buttonBox=None,
+            addressMandatory=True,
+    ):
+        """Initialisation"""
         self.addressObject = addressObject
         self.passPhraseObject = passPhraseObject
         self.feedBackObject = feedBackObject
@@ -19,6 +34,7 @@ class AddressPassPhraseValidatorMixin():
         self.okButtonLabel = self.buttonBox.button(QtGui.QDialogButtonBox.Ok).text()
 
     def setError(self, string):
+        """Indicate that the validation is pending or failed"""
         if string is not None and self.feedBackObject is not None:
             font = QtGui.QFont()
             font.setBold(True)
@@ -29,11 +45,14 @@ class AddressPassPhraseValidatorMixin():
         if self.buttonBox:
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setEnabled(False)
             if string is not None and self.feedBackObject is not None:
-                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(_translate("AddressValidator", "Invalid"))
+                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(
+                    _translate("AddressValidator", "Invalid"))
             else:
-                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(_translate("AddressValidator", "Validating..."))
+                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(
+                    _translate("AddressValidator", "Validating..."))
 
     def setOK(self, string):
+        """Indicate that the validation succeeded"""
         if string is not None and self.feedBackObject is not None:
             font = QtGui.QFont()
             font.setBold(False)
@@ -46,12 +65,13 @@ class AddressPassPhraseValidatorMixin():
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(self.okButtonLabel)
 
     def checkQueue(self):
+        """Validator queue loop"""
         gotOne = False
 
         # wait until processing is done
         if not addressGeneratorQueue.empty():
             self.setError(None)
-            return
+            return None
 
         while True:
             try:
@@ -60,25 +80,30 @@ class AddressPassPhraseValidatorMixin():
                 if gotOne:
                     break
                 else:
-                    return
+                    return None
             else:
                 gotOne = True
 
-        if len(addressGeneratorReturnValue) == 0:
+        if not addressGeneratorReturnValue:
             self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
             return (QtGui.QValidator.Intermediate, 0)
         if addressGeneratorReturnValue[0] == 'chan name does not match address':
-            self.setError(_translate("AddressValidator", "Although the Bitmessage address you entered was valid, it doesn\'t match the chan name."))
+            self.setError(
+                _translate(
+                    "AddressValidator",
+                    "Although the Bitmessage address you "
+                    "entered was valid, it doesn't match the chan name."))
             return (QtGui.QValidator.Intermediate, 0)
         self.setOK(_translate("MainWindow", "Passphrase and address appear to be valid."))
 
     def returnValid(self):
+        """Return the value of whether the validation was successful"""
         if self.isValid:
             return QtGui.QValidator.Acceptable
-        else:
-            return QtGui.QValidator.Intermediate
+        return QtGui.QValidator.Intermediate
 
     def validate(self, s, pos):
+        """Top level validator method"""
         if self.addressObject is None:
             address = None
         else:
@@ -105,9 +130,15 @@ class AddressPassPhraseValidatorMixin():
 
             # version too high
             if decodeAddress(address)[0] == 'versiontoohigh':
-                self.setError(_translate("AddressValidator", "Address too new. Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage."))
+                self.setError(
+                    _translate(
+                        "AddressValidator",
+                        "Address too new. Although that Bitmessage"
+                        " address might be valid, its version number"
+                        " is too new for us to handle. Perhaps you need"
+                        " to upgrade Bitmessage."))
                 return (QtGui.QValidator.Intermediate, pos)
-    
+
             # invalid
             if decodeAddress(address)[0] != 'success':
                 self.setError(_translate("AddressValidator", "The Bitmessage address is not valid."))
@@ -122,23 +153,28 @@ class AddressPassPhraseValidatorMixin():
         if address is None:
             addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + str(passPhrase), passPhrase, False))
         else:
-            addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(address), str_chan + ' ' + str(passPhrase), passPhrase, False))
+            addressGeneratorQueue.put(
+                ('joinChan', addBMIfNotPresent(address),
+                 "{} {}".format(str_chan, passPhrase), passPhrase, False))
 
         if self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
             return (self.returnValid(), pos)
-        else:
-            return (QtGui.QValidator.Intermediate, pos)
+        return (QtGui.QValidator.Intermediate, pos)
 
     def checkData(self):
+        """Validator Qt signal interface"""
         return self.validate("", 0)
 
+
 class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
+    """AddressValidator class for Qt UI"""
     def __init__(self, parent=None, passPhraseObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):
         super(AddressValidator, self).__init__(parent)
         self.setParams(passPhraseObject, parent, feedBackObject, buttonBox, addressMandatory)
 
 
 class PassPhraseValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
+    """PassPhraseValidator class for Qt UI"""
     def __init__(self, parent=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=False):
         super(PassPhraseValidator, self).__init__(parent)
         self.setParams(parent, addressObject, feedBackObject, buttonBox, addressMandatory)
