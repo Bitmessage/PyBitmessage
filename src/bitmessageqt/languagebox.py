@@ -1,3 +1,5 @@
+"""Language Box Module for Locale Settings"""
+# pylint: disable=too-few-public-methods,bad-continuation
 import glob
 import os
 
@@ -8,6 +10,7 @@ from bmconfigparser import BMConfigParser
 
 
 class LanguageBox(QtGui.QComboBox):
+    """LanguageBox class for Qt UI"""
     languageName = {
         "system": "System Settings", "eo": "Esperanto",
         "en_pirate": "Pirate English"
@@ -18,6 +21,7 @@ class LanguageBox(QtGui.QComboBox):
         self.populate()
 
     def populate(self):
+        """Populates drop down list with all available languages."""
         self.clear()
         localesPath = os.path.join(paths.codePath(), 'translations')
         self.addItem(QtGui.QApplication.translate(
