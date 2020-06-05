@@ -1,12 +1,14 @@
 """
-src/bitmessageqt/messageview.py
-===============================
+Custom message viewer with support for switching between HTML and plain
+text rendering, HTML sanitization, lazy rendering (as you scroll down),
+zoom and URL click warning popup
 
 """
 
 from PyQt4 import QtCore, QtGui
 
 from safehtmlparser import SafeHTMLParser
+from tr import _translate
 
 
 class MessageView(QtGui.QTextBrowser):
@@ -49,11 +51,12 @@ class MessageView(QtGui.QTextBrowser):
         """Mouse wheel scroll event handler"""
         # super will actually automatically take care of zooming
         super(MessageView, self).wheelEvent(event)
-        if (QtGui.QApplication.queryKeyboardModifiers() &
-                QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
+        if (
+            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
+        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
-            QtGui.QApplication.activeWindow().statusBar().showMessage(
-                QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
+            QtGui.QApplication.activeWindow().statusBar().showMessage(_translate(
+                "MainWindow", "Zoom level %1%").arg(str(zoom)))
 
     def setWrappingWidth(self, width=None):
         """Set word-wrapping width"""
