@@ -1,24 +1,35 @@
 #!/usr/bin/env python2.7
-from PyQt4 import QtCore, QtGui
+"""
+src/bitmessageqt/migrationwizard.py
+===============================
+
+"""
+# pylint: disable=too-few-public-methods,no-self-use,unused-argument
+from PyQt4 import QtGui
+
 
 class MigrationWizardIntroPage(QtGui.QWizardPage):
+    """MigrationWizardIntroPage class for Qt UI"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Migrating configuration")
 
         label = QtGui.QLabel("This wizard will help you to migrate your configuration. "
-            "You can still keep using PyBitMessage once you migrate, the changes are backwards compatible.")
+                             "You can still keep using PyBitMessage once you migrate, "
+                             "the changes are backwards compatible.")
         label.setWordWrap(True)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
-        
+
     def nextId(self):
+        """It returns next id"""
         return 1
-    
+
 
 class MigrationWizardAddressesPage(QtGui.QWizardPage):
+    """MigrationWizardAddressesPage class for Qt Ui"""
     def __init__(self, addresses):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Addresses")
@@ -29,12 +40,14 @@ class MigrationWizardAddressesPage(QtGui.QWizardPage):
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
-        
+
     def nextId(self):
+        """It returns next id"""
         return 10
-    
+
 
 class MigrationWizardGPUPage(QtGui.QWizardPage):
+    """MigrationWizardGPUPage class for Qt Ui"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("GPU")
@@ -45,12 +58,14 @@ class MigrationWizardGPUPage(QtGui.QWizardPage):
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
-        
+
     def nextId(self):
+        """It returns next id"""
         return 10
-    
+
 
 class MigrationWizardConclusionPage(QtGui.QWizardPage):
+    """MigrationWizardConclusionPage class for Qt Ui"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("All done!")
@@ -64,11 +79,12 @@ class MigrationWizardConclusionPage(QtGui.QWizardPage):
 
 
 class Ui_MigrationWizard(QtGui.QWizard):
+    """Ui_MigrationWizard class for Qt Ui"""
     def __init__(self, addresses):
         super(QtGui.QWizard, self).__init__()
 
         self.pages = {}
-        
+
         page = MigrationWizardIntroPage()
         self.setPage(0, page)
         self.setStartId(0)
