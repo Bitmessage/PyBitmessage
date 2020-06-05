@@ -92,8 +92,8 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Object(s) to be synced: %n",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                network.stats.pendingDownload() +
-                network.stats.pendingUpload()))
+                network.stats.pendingDownload()
+                + network.stats.pendingUpload()))
 
     def updateNumberOfMessagesProcessed(self):
         """Update the counter for number of processed messages"""
@@ -203,7 +203,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.item(0, 0).setData(QtCore.Qt.UserRole, destination)
             self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.UserRole, outbound)
         else:
-            if len(BMConnectionPool().inboundConnections) == 0:
+            if not BMConnectionPool().inboundConnections:
                 self.window().setStatusIcon('yellow')
             for i in range(self.tableWidgetConnectionCount.rowCount()):
                 if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
