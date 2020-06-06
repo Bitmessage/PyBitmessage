@@ -1,8 +1,14 @@
 #!/usr/bin/env python2.7
+"""
+New Address Wizard module for Intro Page, Passphrase Page, EmailProvider Page etc .
+"""
+# pylint: disable=too-few-public-methods,no-member,no-self-use,attribute-defined-outside-init
+
 from PyQt4 import QtCore, QtGui
 
 
 class NewAddressWizardIntroPage(QtGui.QWizardPage):
+    """NewAddressWizardIntroPage class for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Creating a new address")
@@ -28,13 +34,14 @@ class NewAddressWizardIntroPage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """It returns next id"""
         if self.emailAsWell.isChecked():
             return 4
-        else:
-            return 1
+        return 1
 
 
 class NewAddressWizardRngPassphrasePage(QtGui.QWizardPage):
+    """NewAddressWizardRngPassphrasePage class for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Random or Passphrase")
@@ -66,13 +73,14 @@ class NewAddressWizardRngPassphrasePage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """It returns next id"""
         if self.randomAddress.isChecked():
             return 2
-        else:
-            return 3
+        return 3
 
 
 class NewAddressWizardRandomPage(QtGui.QWizardPage):
+    """NewAddressWizardRandomPage class for Qt"""
     def __init__(self, addresses):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Random")
@@ -129,10 +137,12 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
 #        self.emailAsWell.setChecked(True)
 
     def nextId(self):
+        """It returns next id"""
         return 6
 
 
 class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
+    """NewAddressWizardPassphrasePage class for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Passphrase")
@@ -175,10 +185,12 @@ class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """It returns next id"""
         return 6
 
 
 class NewAddressWizardEmailProviderPage(QtGui.QWizardPage):
+    """NewAddressWizardEmailProviderPage class for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Choose email provider")
@@ -199,10 +211,12 @@ class NewAddressWizardEmailProviderPage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """It returns next id"""
         return 5
 
 
 class NewAddressWizardEmailAddressPage(QtGui.QWizardPage):
+    """NewAddressWizardEmailAddressPage class for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Email address")
@@ -225,10 +239,12 @@ class NewAddressWizardEmailAddressPage(QtGui.QWizardPage):
         self.setLayout(layout)
 
     def nextId(self):
+        """It returns next id"""
         return 6
 
 
 class NewAddressWizardWaitPage(QtGui.QWizardPage):
+    """NewAddressWizardWaitPage page for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Wait")
@@ -266,8 +282,7 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
         # print "val = " + str(self.progressBar.value())
         if self.progressBar.value() >= 50:
             return True
-        else:
-            return False
+        return False
 
     def initializePage(self):
         if self.field("emailAsWell").toBool():
@@ -291,6 +306,7 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
 
 
 class NewAddressWizardConclusionPage(QtGui.QWizardPage):
+    """NewAddressWizardConclusionPage class for Qt"""
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("All done!")
@@ -304,6 +320,7 @@ class NewAddressWizardConclusionPage(QtGui.QWizardPage):
 
 
 class Ui_NewAddressWizard(QtGui.QWizard):
+    """Ui_NewAddressWizard class for Qt"""
     def __init__(self, addresses):
         super(QtGui.QWizard, self).__init__()
 
@@ -333,6 +350,7 @@ class Ui_NewAddressWizard(QtGui.QWizard):
 
 
 class NewAddressThread(QtCore.QThread):
+    """NewAddressThread class for Qt"""
     def __init__(self):
         QtCore.QThread.__init__(self)
         self.signal = QtCore.SIGNAL("signal")
@@ -341,15 +359,19 @@ class NewAddressThread(QtCore.QThread):
         self.wait()
 
     def createDeterministic(self):
+        """Deterministic Address method"""
         pass
 
     def createPassphrase(self):
+        """Passphrase Creation Method"""
         pass
 
     def broadcastAddress(self):
+        """Broadcast Address method"""
         pass
 
     def registerMailchuck(self):
+        """register for mailchunck"""
         pass
 
     def waitRegistration(self):
