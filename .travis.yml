@@ -6,12 +6,14 @@ addons:
     packages:
       - build-essential
       - libcap-dev
+      - python-qt4
       - tor
+      - xvfb
 install:
   - pip install -r requirements.txt
   - ln -s src pybitmessage  # tests environment
   - python setup.py install
 script:
   - python checkdeps.py
-  - src/bitmessagemain.py -t
+  - xvfb-run src/bitmessagemain.py -t
   - python setup.py test
