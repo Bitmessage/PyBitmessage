@@ -140,13 +140,17 @@ class TCPConnection(BMProto, TLSDispatcher):
         if not self.isOutbound and not self.local:
             state.clientHasReceivedIncomingConnections = True
             UISignalQueue.put(('setStatusIcon', 'green'))
-        UISignalQueue.put(
-            ('updateNetworkStatusTab', (
-                self.isOutbound, True, self.destination)))
+        UISignalQueue.put((
+            'updateNetworkStatusTab', (self.isOutbound, True, self.destination)
+        ))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
-        if self.isOutbound:
+        # The connection having host suitable for knownnodes
+        if self.isOutbound or not self.local and not state.socksIP:
             knownnodes.increaseRating(self.destination)
+            with knownnodes.knownNodesLock:
+                for s in self.streams:
+                    knownnodes.addKnownNode(s, self.destination, time.time())
             Dandelion().maybeAddStem(self)
         self.sendAddr()
         self.sendBigInv()
@@ -254,10 +258,6 @@ class TCPConnection(BMProto, TLSDispatcher):
     def handle_read(self):
         """Callback for reading from a socket"""
         TLSDispatcher.handle_read(self)
-        if self.isOutbound and self.fullyEstablished:
-            for s in self.streams:
-                with knownnodes.knownNodesLock:
-                    knownnodes.addKnownNode(s, self.destination, time.time())
         receiveDataQueue.put(self.destination)
 
     def handle_write(self):
@@ -266,15 +266,20 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def handle_close(self):
         """Callback for connection being closed."""
-        if self.isOutbound and not self.fullyEstablished:
-            knownnodes.decreaseRating(self.destination)
+        host_is_global = self.isOutbound or not self.local and not state.socksIP
         if self.fullyEstablished:
             UISignalQueue.put((
                 'updateNetworkStatusTab',
                 (self.isOutbound, False, self.destination)
             ))
-            if self.isOutbound:
+            if host_is_global:
+                with knownnodes.knownNodesLock:
+                    for s in self.streams:
+                        knownnodes.addKnownNode(
+                            s, self.destination, time.time())
                 Dandelion().maybeRemoveStem(self)
+        elif host_is_global:
+            knownnodes.decreaseRating(self.destination)
         BMProto.handle_close(self)
 
 
