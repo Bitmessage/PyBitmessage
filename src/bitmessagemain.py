@@ -363,11 +363,12 @@ class Main(object):
             while state.shutdown == 0:
                 time.sleep(1)
                 if (
-                    state.testmode and time.time() -
-                    state.last_api_response >= 30
+                    state.testmode
+                    and time.time() - state.last_api_response >= 30
                 ):
                     self.stop()
         elif not state.enableGUI:
+            state.enableGUI = True
             # pylint: disable=relative-import
             from tests import core as test_core
             test_core_result = test_core.run()

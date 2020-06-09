@@ -30,7 +30,6 @@ try:
 except ImportError:
     stem_version = None
 
-
 knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
 
 
@@ -245,7 +244,14 @@ class TestCore(unittest.TestCase):
 
 def run():
     """Starts all tests defined in this module"""
-    loader = unittest.TestLoader()
+    loader = unittest.defaultTestLoader
     loader.sortTestMethodsUsing = None
     suite = loader.loadTestsFromTestCase(TestCore)
+    try:
+        import bitmessageqt.tests
+    except ImportError:
+        pass
+    else:
+        qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
+        suite.addTests(qt_tests)
     return unittest.TextTestRunner(verbosity=2).run(suite)
