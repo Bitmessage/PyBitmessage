@@ -80,8 +80,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         try:
             self.local = (
                 protocol.checkIPAddress(
-                    protocol.encodeHost(self.destination.host), True) and
-                not protocol.checkSocksIP(self.destination.host)
+                    protocol.encodeHost(self.destination.host), True)
+                and not protocol.checkSocksIP(self.destination.host)
             )
         except socket.error:
             # it's probably a hostname
@@ -175,9 +175,9 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # and having positive or neutral rating
                     filtered = [
                         (k, v) for k, v in nodes.iteritems()
-                        if v["lastseen"] > int(time.time()) -
-                        maximumAgeOfNodesThatIAdvertiseToOthers and
-                        v["rating"] >= 0 and len(k.host) <= 22
+                        if v["lastseen"] > int(time.time())
+                        - maximumAgeOfNodesThatIAdvertiseToOthers
+                        and v["rating"] >= 0 and len(k.host) <= 22
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
@@ -408,12 +408,12 @@ class TCPServer(AdvancedDispatcher):
 
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
-            len(connectionpool.BMConnectionPool().inboundConnections) +
-            len(connectionpool.BMConnectionPool().outboundConnections) >
-            BMConfigParser().safeGetInt(
-                'bitmessagesettings', 'maxtotalconnections') +
-            BMConfigParser().safeGetInt(
-                'bitmessagesettings', 'maxbootstrapconnections') + 10
+            len(connectionpool.BMConnectionPool().inboundConnections)
+            + len(connectionpool.BMConnectionPool().outboundConnections)
+            > BMConfigParser().safeGetInt(
+                'bitmessagesettings', 'maxtotalconnections')
+                + BMConfigParser().safeGetInt(
+                    'bitmessagesettings', 'maxbootstrapconnections') + 10
         ):
             # 10 is a sort of buffer, in between it will go through
             # the version handshake and return an error to the peer
