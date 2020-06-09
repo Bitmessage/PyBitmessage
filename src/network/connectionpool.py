@@ -72,6 +72,9 @@ class BMConnectionPool(object):
                 ' trustedpeer=<hostname>:<portnumber>'
             )
 
+    def __len__(self):
+        return len(self.outboundConnections) + len(self.inboundConnections)
+
     def connections(self):
         """
         Shortcut for combined list of connections from

@@ -597,8 +597,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             if (
                 Peer(self.destination.host, self.peerNode.port)
                 in connectionpool.BMConnectionPool().inboundConnections
-                or len(connectionpool.BMConnectionPool().inboundConnections)
-                + len(connectionpool.BMConnectionPool().outboundConnections)
+                or len(connectionpool.BMConnectionPool())
                 > BMConfigParser().safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
                 + BMConfigParser().safeGetInt(

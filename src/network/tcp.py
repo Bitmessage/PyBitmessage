@@ -408,8 +408,7 @@ class TCPServer(AdvancedDispatcher):
 
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
-            len(connectionpool.BMConnectionPool().inboundConnections)
-            + len(connectionpool.BMConnectionPool().outboundConnections)
+            len(connectionpool.BMConnectionPool())
             > BMConfigParser().safeGetInt(
                 'bitmessagesettings', 'maxtotalconnections')
                 + BMConfigParser().safeGetInt(
