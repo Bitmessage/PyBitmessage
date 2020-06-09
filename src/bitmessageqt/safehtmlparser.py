@@ -65,6 +65,8 @@ class SafeHTMLParser(HTMLParser):
         HTMLParser.__init__(self, *args, **kwargs)
         self.reset()
         self.reset_safe()
+        self.has_html = None
+        self.allow_picture = None
 
     def reset_safe(self):
         """Reset runtime variables specific to this class"""
@@ -92,7 +94,7 @@ class SafeHTMLParser(HTMLParser):
                     if url.scheme not in self.src_schemes:
                         val = ""
                 self.sanitised += " " + quote_plus(attr)
-                if not (val is None):
+                if val is not None:
                     self.sanitised += "=\"" + val + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
