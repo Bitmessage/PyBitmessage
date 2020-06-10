@@ -9,13 +9,13 @@ from PyQt4 import QtCore, QtGui
 import widgets
 from addresses import addBMIfNotPresent
 from addressvalidator import AddressValidator, PassPhraseValidator
-from queues import UISignalQueue, addressGeneratorQueue, apiAddressGeneratorReturnQueue
-from retranslateui import RetranslateMixin
+from queues import (
+    addressGeneratorQueue, apiAddressGeneratorReturnQueue, UISignalQueue)
 from tr import _translate
 from utils import str_chan
 
 
-class NewChanDialog(QtGui.QDialog, RetranslateMixin):
+class NewChanDialog(QtGui.QDialog):
     """The `New Chan` dialog"""
     def __init__(self, parent=None):
         super(NewChanDialog, self).__init__(parent)

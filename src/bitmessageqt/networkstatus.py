@@ -1,7 +1,5 @@
 """
-src/bitmessageqt/networkstatus.py
-=================================
-
+Network status tab widget definition.
 """
 
 import time
@@ -11,7 +9,7 @@ from PyQt4 import QtCore, QtGui
 import knownnodes
 import l10n
 import network.stats
-import shared
+import state
 import widgets
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
@@ -34,8 +32,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
 
         self.UISignalThread = UISignaler.get()
         # pylint: disable=no-member
@@ -96,8 +92,8 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Object(s) to be synced: %n",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                network.stats.pendingDownload() +
-                network.stats.pendingUpload()))
+                network.stats.pendingDownload()
+                + network.stats.pendingUpload()))
 
     def updateNumberOfMessagesProcessed(self):
         """Update the counter for number of processed messages"""
@@ -108,7 +104,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Processed %n person-to-person message(s).",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                shared.numberOfMessagesProcessed))
+                state.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
         """Update the counter for the number of processed broadcasts"""
@@ -119,7 +115,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Processed %n broadcast message(s).",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                shared.numberOfBroadcastsProcessed))
+                state.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
         """Update the counter for the number of processed pubkeys"""
@@ -130,7 +126,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "Processed %n public key(s).",
                 None,
                 QtCore.QCoreApplication.CodecForTr,
-                shared.numberOfPubkeysProcessed))
+                state.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):
         """
@@ -207,7 +203,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.item(0, 0).setData(QtCore.Qt.UserRole, destination)
             self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.UserRole, outbound)
         else:
-            if len(BMConnectionPool().inboundConnections) == 0:
+            if not BMConnectionPool().inboundConnections:
                 self.window().setStatusIcon('yellow')
             for i in range(self.tableWidgetConnectionCount.rowCount()):
                 if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
@@ -225,9 +221,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         # FYI: The 'singlelistener' thread sets the icon color to green when it
         # receives an incoming connection, meaning that the user's firewall is
         # configured correctly.
-        if self.tableWidgetConnectionCount.rowCount() and shared.statusIconColor == 'red':
+        if self.tableWidgetConnectionCount.rowCount() and state.statusIconColor == 'red':
             self.window().setStatusIcon('yellow')
-        elif self.tableWidgetConnectionCount.rowCount() == 0 and shared.statusIconColor != "red":
+        elif self.tableWidgetConnectionCount.rowCount() == 0 and state.statusIconColor != "red":
             self.window().setStatusIcon('red')
 
     # timer driven
@@ -240,6 +236,15 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.updateNumberOfObjectsToBeSynced()
 
     def retranslateUi(self):
+        """Conventional Qt Designer method for dynamic l10n"""
         super(NetworkStatus, self).retranslateUi()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
+        self.labelTotalConnections.setText(
+            _translate(
+                "networkstatus", "Total Connections: %1").arg(
+                    str(self.tableWidgetConnectionCount.rowCount())))
+        self.labelStartupTime.setText(_translate(
+            "networkstatus", "Since startup on %1"
+        ).arg(l10n.formatTimestamp(self.startup)))
+        self.updateNumberOfMessagesProcessed()
+        self.updateNumberOfBroadcastsProcessed()
+        self.updateNumberOfPubkeysProcessed()

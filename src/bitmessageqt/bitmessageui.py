@@ -104,6 +104,7 @@ class Ui_MainWindow(object):
         self.inboxSearchOption.addItem(_fromUtf8(""))
         self.inboxSearchOption.addItem(_fromUtf8(""))
         self.inboxSearchOption.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.inboxSearchOption.setCurrentIndex(3)
         self.horizontalSplitterSearch.addWidget(self.inboxSearchOption)
         self.horizontalSplitterSearch.handle(1).setEnabled(False)
         self.horizontalSplitterSearch.setStretchFactor(0, 1)
@@ -403,8 +404,8 @@ class Ui_MainWindow(object):
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
         self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
-        self.inboxSearchOptionSubscriptions.addItem(_fromUtf8(""))
         self.inboxSearchOptionSubscriptions.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.inboxSearchOptionSubscriptions.setCurrentIndex(2)
         self.horizontalSplitter_2.addWidget(self.inboxSearchOptionSubscriptions)
         self.horizontalSplitter_2.handle(1).setEnabled(False)
         self.horizontalSplitter_2.setStretchFactor(0, 1)
@@ -504,6 +505,7 @@ class Ui_MainWindow(object):
         self.inboxSearchOptionChans.addItem(_fromUtf8(""))
         self.inboxSearchOptionChans.addItem(_fromUtf8(""))
         self.inboxSearchOptionChans.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.inboxSearchOptionChans.setCurrentIndex(3)
         self.horizontalSplitter_6.addWidget(self.inboxSearchOptionChans)
         self.horizontalSplitter_6.handle(1).setEnabled(False)
         self.horizontalSplitter_6.setStretchFactor(0, 1)
@@ -719,10 +721,9 @@ class Ui_MainWindow(object):
         self.pushButtonAddSubscription.setText(_translate("MainWindow", "Add new Subscription", None))
         self.inboxSearchLineEditSubscriptions.setPlaceholderText(_translate("MainWindow", "Search", None))
         self.inboxSearchOptionSubscriptions.setItemText(0, _translate("MainWindow", "All", None))
-        self.inboxSearchOptionSubscriptions.setItemText(1, _translate("MainWindow", "To", None))
-        self.inboxSearchOptionSubscriptions.setItemText(2, _translate("MainWindow", "From", None))
-        self.inboxSearchOptionSubscriptions.setItemText(3, _translate("MainWindow", "Subject", None))
-        self.inboxSearchOptionSubscriptions.setItemText(4, _translate("MainWindow", "Message", None))
+        self.inboxSearchOptionSubscriptions.setItemText(1, _translate("MainWindow", "From", None))
+        self.inboxSearchOptionSubscriptions.setItemText(2, _translate("MainWindow", "Subject", None))
+        self.inboxSearchOptionSubscriptions.setItemText(3, _translate("MainWindow", "Message", None))
         self.tableWidgetInboxSubscriptions.setSortingEnabled(True)
         item = self.tableWidgetInboxSubscriptions.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "To", None))
@@ -770,6 +771,8 @@ class Ui_MainWindow(object):
         self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
+        self.updateNetworkSwitchMenuLabel()
+
 
 import bitmessage_icons_rc
 

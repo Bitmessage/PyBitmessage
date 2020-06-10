@@ -40,7 +40,9 @@ else:
     threading.Thread._Thread__bootstrap = _thread_name_hack
 
 
+printLock = threading.Lock()
+
 __all__ = [
     "addressGenerator", "objectProcessor", "singleCleaner", "singleWorker",
-    "sqlThread"
+    "sqlThread", "printLock"
 ]

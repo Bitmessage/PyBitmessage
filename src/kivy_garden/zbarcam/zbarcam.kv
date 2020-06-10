@@ -1,0 +1,26 @@
+#:import XCamera kivy_garden.xcamera.XCamera
+#:import is_android kivy_garden.zbarcam.utils.is_android
+<ZBarCam>:
+    Widget:
+        # invert width/height on rotated Android
+        # https://stackoverflow.com/a/45192295/185510
+        id: proxy
+        XCamera:
+            id: xcamera
+            play: True
+            resolution: root.resolution
+            allow_stretch: True
+            keep_ratio: True
+            center: self.size and proxy.center
+            size:
+                (proxy.height, proxy.width) if is_android() \
+                else (proxy.width, proxy.height)
+            # Android camera rotation workaround, refs:
+            # https://github.com/AndreMiras/garden.zbarcam/issues/3
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: -90 if is_android() else 0
+                    origin: self.center
+            canvas.after:
+                PopMatrix

@@ -13,7 +13,6 @@ import os
 import stat
 import subprocess
 import sys
-import threading
 from binascii import hexlify
 from pyelliptic import arithmetic
 from kivy.utils import platform
@@ -27,19 +26,6 @@ from debug import logger
 from helper_sql import sqlQuery
 # pylint: disable=logging-format-interpolation
 
-verbose = 1
-# This is obsolete with the change to protocol v3
-# but the singleCleaner thread still hasn't been updated
-# so we need this a little longer.
-maximumAgeOfAnObjectThatIAmWillingToAccept = 216000
-# Equals 4 weeks. You could make this longer if you want
-# but making it shorter would not be advisable because
-# there is a very small possibility that it could keep you
-# from obtaining a needed pubkey for a period of time.
-lengthOfTimeToHoldOnToAllPubkeys = 2419200
-maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-
-
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 # The key in this dictionary is the RIPE hash which is encoded
@@ -48,19 +34,6 @@ myAddressesByHash = {}
 # The key in this dictionary is the tag generated from the address.
 myAddressesByTag = {}
 broadcastSendersForWhichImWatching = {}
-printLock = threading.Lock()
-statusIconColor = 'red'
-
-thisapp = None  # singleton lock instance
-
-ackdataForWhichImWatching = {}
-# used by API command clientStatus
-clientHasReceivedIncomingConnections = False
-numberOfMessagesProcessed = 0
-numberOfBroadcastsProcessed = 0
-numberOfPubkeysProcessed = 0
-
-maximumLengthOfTimeToBotherResendingMessages = 0
 
 
 def isAddressInMyAddressBook(address):
@@ -279,11 +252,3 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
-
-
-def openKeysFile():
-    """Open keys file with an external editor"""
-    if 'linux' in sys.platform:
-        subprocess.call(["xdg-open", state.appdata + 'keys.dat'])
-    else:
-        os.startfile(state.appdata + 'keys.dat')

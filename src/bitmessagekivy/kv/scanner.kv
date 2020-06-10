@@ -1,0 +1,37 @@
+#:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
+
+BoxLayout:
+    orientation: 'vertical'
+    ZBarCam:
+        id: zbarcam
+        # optional, by default checks all types
+        code_types: ZBarSymbol.QRCODE, ZBarSymbol.EAN13
+        scan_callback: app._after_scan
+        scanner_line_y_initial: self.size[1]/2 +self.qrwidth/2
+        scanner_line_y_final: self.size[1]/2-self.qrwidth/2
+    
+        canvas:
+            Color:
+                rgba: 0,0,0,.25
+            
+            #left rect
+            Rectangle:
+                pos: self.pos[0], self.pos[1]
+                size: self.size[0]/2-self.qrwidth/2, self.size[1]
+            
+            #right rect
+            Rectangle:
+                pos: self.size[0]/2+self.qrwidth/2, 0
+                size: self.size[0]/2-self.qrwidth/2, self.size[1]
+            
+            #top rect
+            Rectangle:
+                pos: self.size[0]/2-self.qrwidth/2, self.size[1]/2+self.qrwidth/2
+                size: self.qrwidth, self.size[1]/2-self.qrwidth/2
+            
+            #bottom rect
+            Rectangle:
+                pos: self.size[0]/2-self.qrwidth/2, 0
+                size: self.qrwidth, self.size[1]/2-self.qrwidth/2
+            
+    

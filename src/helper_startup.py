@@ -279,18 +279,27 @@ def updateConfig():
     config.save()
 
 
-def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
-    """Check for (mainly XP and Vista) limitations"""
+def adjustHalfOpenConnectionsLimit():
+    """Check and satisfy half-open connections limit (mainly XP and Vista)"""
+    if BMConfigParser().safeGet(
+            'bitmessagesettings', 'socksproxytype', 'none') != 'none':
+        state.maximumNumberOfHalfOpenConnections = 4
+        return
+
+    is_limited = False
     try:
         if sys.platform[0:3] == "win":
+            # Some XP and Vista systems can only have 10 outgoing
+            # connections at a time.
             VER_THIS = StrictVersion(platform.version())
-            return (
+            is_limited = (
                 StrictVersion("5.1.2600") <= VER_THIS and
                 StrictVersion("6.0.6000") >= VER_THIS
             )
-        return False
-    except Exception:
+    except ValueError:
         pass
+
+    state.maximumNumberOfHalfOpenConnections = 9 if is_limited else 64
 
 
 def start_proxyconfig():

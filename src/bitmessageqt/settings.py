@@ -1,3 +1,6 @@
+"""
+This module setting file is for settings
+"""
 import ConfigParser
 import os
 import sys
@@ -11,7 +14,6 @@ import namecoin
 import openclpow
 import paths
 import queues
-import shared
 import state
 import tempfile
 import widgets
@@ -111,7 +113,7 @@ class SettingsDialog(QtGui.QDialog):
                 tempfile.NamedTemporaryFile(
                     dir=paths.lookupExeFolder(), delete=True
                 ).close()  # should autodelete
-            except:
+            except Exception:
                 self.checkBoxPortableMode.setDisabled(True)
 
         if 'darwin' in sys.platform:
@@ -338,7 +340,7 @@ class SettingsDialog(QtGui.QDialog):
 
         proxytype_index = self.comboBoxProxyType.currentIndex()
         if proxytype_index == 0:
-            if self._proxy_type and shared.statusIconColor != 'red':
+            if self._proxy_type and state.statusIconColor != 'red':
                 self.net_restart_needed = True
         elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
@@ -408,14 +410,14 @@ class SettingsDialog(QtGui.QDialog):
             self.config.set(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte',
                 str(int(
-                    float(self.lineEditTotalDifficulty.text()) *
-                    defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                    float(self.lineEditTotalDifficulty.text())
+                    * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
         if float(self.lineEditSmallMessageDifficulty.text()) >= 1:
             self.config.set(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes',
                 str(int(
-                    float(self.lineEditSmallMessageDifficulty.text()) *
-                    defaults.networkDefaultPayloadLengthExtraBytes)))
+                    float(self.lineEditSmallMessageDifficulty.text())
+                    * defaults.networkDefaultPayloadLengthExtraBytes)))
 
         if self.comboBoxOpenCL.currentText().toUtf8() != self.config.safeGet(
                 'bitmessagesettings', 'opencl'):
@@ -427,40 +429,40 @@ class SettingsDialog(QtGui.QDialog):
         acceptableDifficultyChanged = False
 
         if (
-            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or
-            float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
+            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
+            or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
         ):
             if self.config.get(
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
             ) != str(int(
-                float(self.lineEditMaxAcceptableTotalDifficulty.text()) *
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
+                float(self.lineEditMaxAcceptableTotalDifficulty.text())
+                * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
             ):
                 # the user changed the max acceptable total difficulty
                 acceptableDifficultyChanged = True
                 self.config.set(
                     'bitmessagesettings', 'maxacceptablenoncetrialsperbyte',
                     str(int(
-                        float(self.lineEditMaxAcceptableTotalDifficulty.text()) *
-                        defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+                        float(self.lineEditMaxAcceptableTotalDifficulty.text())
+                        * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
                 )
         if (
-            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or
-            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
+            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
+            or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
         ):
             if self.config.get(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
             ) != str(int(
-                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) *
-                defaults.networkDefaultPayloadLengthExtraBytes)
+                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
+                * defaults.networkDefaultPayloadLengthExtraBytes)
             ):
                 # the user changed the max acceptable small message difficulty
                 acceptableDifficultyChanged = True
                 self.config.set(
                     'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
                     str(int(
-                        float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) *
-                        defaults.networkDefaultPayloadLengthExtraBytes))
+                        float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
+                        * defaults.networkDefaultPayloadLengthExtraBytes))
                 )
         if acceptableDifficultyChanged:
             # It might now be possible to send msgs which were previously
@@ -473,6 +475,8 @@ class SettingsDialog(QtGui.QDialog):
                 " WHERE status='toodifficult'")
             queues.workerQueue.put(('sendmessage', ''))
 
+        stopResendingDefaults = False
+
         # UI setting to stop trying to send messages after X days/months
         # I'm open to changing this UI to something else if someone has a better idea.
         if self.lineEditDays.text() == '' and self.lineEditMonths.text() == '':
@@ -480,7 +484,8 @@ class SettingsDialog(QtGui.QDialog):
             # default behavior. The input is blank/blank
             self.config.set('bitmessagesettings', 'stopresendingafterxdays', '')
             self.config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
-            shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            state.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            stopResendingDefaults = True
 
         try:
             days = float(self.lineEditDays.text())
@@ -493,10 +498,10 @@ class SettingsDialog(QtGui.QDialog):
             self.lineEditMonths.setText("0")
             months = 0.0
 
-        if days >= 0 and months >= 0:
-            shared.maximumLengthOfTimeToBotherResendingMessages = \
+        if days >= 0 and months >= 0 and not stopResendingDefaults:
+            state.maximumLengthOfTimeToBotherResendingMessages = \
                 days * 24 * 60 * 60 + months * 60 * 60 * 24 * 365 / 12
-            if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
+            if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
                 QtGui.QMessageBox.about(
@@ -513,7 +518,7 @@ class SettingsDialog(QtGui.QDialog):
                     'bitmessagesettings', 'stopresendingafterxdays', '0')
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxmonths', '0')
-                shared.maximumLengthOfTimeToBotherResendingMessages = 0.0
+                state.maximumLengthOfTimeToBotherResendingMessages = 0.0
             else:
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxdays', str(days))
@@ -535,8 +540,8 @@ class SettingsDialog(QtGui.QDialog):
         self.parent.updateStartOnLogon()
 
         if (
-            state.appdata != paths.lookupExeFolder() and
-            self.checkBoxPortableMode.isChecked()
+            state.appdata != paths.lookupExeFolder()
+            and self.checkBoxPortableMode.isChecked()
         ):
             # If we are NOT using portable mode now but the user selected
             # that we should...
@@ -554,12 +559,12 @@ class SettingsDialog(QtGui.QDialog):
             try:
                 os.remove(previousAppdataLocation + 'debug.log')
                 os.remove(previousAppdataLocation + 'debug.log.1')
-            except:
+            except Exception:
                 pass
 
         if (
-            state.appdata == paths.lookupExeFolder() and
-            not self.checkBoxPortableMode.isChecked()
+            state.appdata == paths.lookupExeFolder()
+            and not self.checkBoxPortableMode.isChecked()
         ):
             # If we ARE using portable mode now but the user selected
             # that we shouldn't...
@@ -577,5 +582,5 @@ class SettingsDialog(QtGui.QDialog):
             try:
                 os.remove(paths.lookupExeFolder() + 'debug.log')
                 os.remove(paths.lookupExeFolder() + 'debug.log.1')
-            except:
+            except Exception:
                 pass

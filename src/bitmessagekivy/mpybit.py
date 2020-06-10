@@ -948,16 +948,15 @@ class NetworkStat(Screen):
     def init_ui(self, dt=0):
         """Clock Schdule for method networkstat screen"""
         import network.stats
-        import shared
         from network import objectracker
         self.text_variable_1 = '{0} :: {1}'.format(
             'Total Connections', str(len(network.stats.connectedHostsList())))
         self.text_variable_2 = 'Processed {0} per-to-per messages'.format(
-            str(shared.numberOfMessagesProcessed))
+            str(state.numberOfMessagesProcessed))
         self.text_variable_3 = 'Processed {0} brodcast messages'.format(
-            str(shared.numberOfBroadcastsProcessed))
+            str(state.numberOfBroadcastsProcessed))
         self.text_variable_4 = 'Processed {0} public keys'.format(
-            str(shared.numberOfPubkeysProcessed))
+            str(state.numberOfPubkeysProcessed))
         self.text_variable_5 = '{0} object to be synced'.format(
             len(objectracker.missingObjects))
 

@@ -4,7 +4,6 @@ import queue as Queue
 import threading
 import time
 
-import shared
 import state
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
@@ -80,9 +79,9 @@ def doCleanShutdown():
             except Queue.Empty:
                 break
 
-    if shared.thisapp.daemon or not state.enableGUI:  # ..fixme:: redundant?
+    if state.thisapp.daemon or not state.enableGUI:
         logger.info('Clean shutdown complete.')
-        shared.thisapp.cleanup()
+        state.thisapp.cleanup()
         os._exit(0)  # pylint: disable=protected-access
     else:
         logger.info('Core shutdown complete.')

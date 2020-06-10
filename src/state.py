@@ -26,6 +26,9 @@ enableSTDIO = False  # enable STDIO threads
 curses = False
 sqlReady = False  # set to true by sqlTread when ready for processing
 maximumNumberOfHalfOpenConnections = 0
+
+maximumLengthOfTimeToBotherResendingMessages = 0
+
 invThread = None
 addrThread = None
 downloadThread = None
@@ -108,3 +111,21 @@ availabe_credit = 0
 in_sent_method = False
 
 in_search_mode = False
+
+clientHasReceivedIncomingConnections = False
+"""used by API command clientStatus"""
+
+numberOfMessagesProcessed = 0
+numberOfBroadcastsProcessed = 0
+numberOfPubkeysProcessed = 0
+
+statusIconColor = 'red'
+"""
+GUI status icon color
+.. note:: bad style, refactor it
+"""
+
+ackdataForWhichImWatching = {}
+
+thisapp = None
+"""Singleton instance"""

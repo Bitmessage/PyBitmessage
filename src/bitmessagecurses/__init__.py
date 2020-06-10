@@ -24,6 +24,7 @@ import network.stats
 import queues
 import shared
 import shutdown
+import state
 
 from addresses import addBMIfNotPresent, decodeAddress
 from bmconfigparser import BMConfigParser
@@ -274,11 +275,11 @@ def drawtab(stdscr):
             # Uptime and processing data
             stdscr.addstr(6, 35, "Since startup on " + l10n.formatTimestamp(startuptime, False))
             stdscr.addstr(7, 40, "Processed " + str(
-                shared.numberOfMessagesProcessed).ljust(4) + " person-to-person messages.")
+                state.numberOfMessagesProcessed).ljust(4) + " person-to-person messages.")
             stdscr.addstr(8, 40, "Processed " + str(
-                shared.numberOfBroadcastsProcessed).ljust(4) + " broadcast messages.")
+                state.numberOfBroadcastsProcessed).ljust(4) + " broadcast messages.")
             stdscr.addstr(9, 40, "Processed " + str(
-                shared.numberOfPubkeysProcessed).ljust(4) + " public keys.")
+                state.numberOfPubkeysProcessed).ljust(4) + " public keys.")
 
             # Inventory data
             stdscr.addstr(11, 35, "Inventory lookups per second: " + str(inventorydata).ljust(3))

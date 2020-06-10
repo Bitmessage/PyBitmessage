@@ -124,8 +124,8 @@ function install_pyopencl()
 	else
 		wine python -m pip install pyopencl-2015.1-cp27-none-win32.whl
 	fi
+        sed -Ei 's/_DEFAULT_INCLUDE_OPTIONS = .*/_DEFAULT_INCLUDE_OPTIONS = [] /' $WINEPREFIX/drive_c/Python27/Lib/site-packages/pyopencl/__init__.py
 }
-
 
 function build_dll(){
 	cd ${BASE_DIR}

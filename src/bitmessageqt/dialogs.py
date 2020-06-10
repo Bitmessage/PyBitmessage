@@ -13,7 +13,6 @@ from address_dialogs import (
     SpecialAddressBehaviorDialog
 )
 from newchandialog import NewChanDialog
-from retranslateui import RetranslateMixin
 from settings import SettingsDialog
 from tr import _translate
 from version import softwareVersion
@@ -27,7 +26,7 @@ __all__ = [
 ]
 
 
-class AboutDialog(QtGui.QDialog, RetranslateMixin):
+class AboutDialog(QtGui.QDialog):
     """The `About` dialog"""
     def __init__(self, parent=None):
         super(AboutDialog, self).__init__(parent)
@@ -55,7 +54,7 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 
-class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
+class IconGlossaryDialog(QtGui.QDialog):
     """The `Icon Glossary` dialog, explaining the status icon colors"""
     def __init__(self, parent=None, config=None):
         super(IconGlossaryDialog, self).__init__(parent)
@@ -71,7 +70,7 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 
-class HelpDialog(QtGui.QDialog, RetranslateMixin):
+class HelpDialog(QtGui.QDialog):
     """The `Help` dialog"""
     def __init__(self, parent=None):
         super(HelpDialog, self).__init__(parent)
@@ -79,7 +78,7 @@ class HelpDialog(QtGui.QDialog, RetranslateMixin):
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 
-class ConnectDialog(QtGui.QDialog, RetranslateMixin):
+class ConnectDialog(QtGui.QDialog):
     """The `Connect` dialog"""
     def __init__(self, parent=None):
         super(ConnectDialog, self).__init__(parent)

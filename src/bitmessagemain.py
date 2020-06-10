@@ -32,9 +32,7 @@ from bmconfigparser import BMConfigParser
 # this should go before any threads
 from debug import logger
 from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections,
-    start_proxyconfig
-)
+    adjustHalfOpenConnectionsLimit, start_proxyconfig)
 from inventory import Inventory
 from knownnodes import readKnownNodes
 # Network objects and threads
@@ -45,9 +43,8 @@ from network import (
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
-    set_thread_name, addressGenerator, objectProcessor, singleCleaner,
-    singleWorker, sqlThread
-)
+    set_thread_name, printLock,
+    addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
 
 app_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(app_dir)
@@ -55,26 +52,6 @@ sys.path.insert(0, app_dir)
 
 depends.check_dependencies()
 
-
-def connectToStream(streamNumber):
-    """Connect to a stream"""
-    state.streamsInWhichIAmParticipating.append(streamNumber)
-
-    if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
-        # Some XP and Vista systems can only have 10 outgoing connections
-        # at a time.
-        state.maximumNumberOfHalfOpenConnections = 9
-    else:
-        state.maximumNumberOfHalfOpenConnections = 64
-    try:
-        # don't overload Tor
-        if BMConfigParser().get(
-                'bitmessagesettings', 'socksproxytype') != 'none':
-            state.maximumNumberOfHalfOpenConnections = 4
-    except:
-        pass
-
-    BMConnectionPool().connectToStream(streamNumber)
 
 
 def _fixSocket():
@@ -157,7 +134,7 @@ def signal_handler(signum, frame):
     logger.error("Got signal %i", signum)
     # there are possible non-UI variants to run bitmessage
     # which should shutdown especially test-mode
-    if shared.thisapp.daemon or not state.enableGUI:
+    if state.thisapp.daemon or not state.enableGUI:
         shutdown.doCleanShutdown()
     else:
         print('# Thread: {}({})'.format(thread.name, thread.ident))
@@ -175,6 +152,7 @@ class Main(object):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
         _fixSocket()
+        adjustHalfOpenConnectionsLimit()
 
         config = BMConfigParser()
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
@@ -236,13 +214,10 @@ class Main(object):
                 ' \'-c\' as a commandline argument.'
             )
         # is the application already running?  If yes then exit.
-        try:
-            shared.thisapp = singleinstance("", daemon)
-        except Exception:
-            pass
+        state.thisapp = singleinstance("", daemon)
 
         if daemon:
-            with shared.printLock:
+            with printLock:
                 print('Running as a daemon. Send TERM signal to end.')
             self.daemonize()
 
@@ -332,7 +307,7 @@ class Main(object):
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            BMConnectionPool()
+            BMConnectionPool().connectToStream(1)
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
@@ -356,7 +331,6 @@ class Main(object):
             state.uploadThread.daemon = True
             state.uploadThread.start()
 
-            connectToStream(1)
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()
@@ -413,7 +387,7 @@ class Main(object):
         try:
             if os.fork():
                 # unlock
-                shared.thisapp.cleanup()
+                state.thisapp.cleanup()
                 # wait until grandchild ready
                 while True:
                     time.sleep(1)
@@ -424,8 +398,7 @@ class Main(object):
             pass
         else:
             parentPid = os.getpid()
-            # relock
-            shared.thisapp.lock()
+            state.thisapp.lock()  # relock
 
         os.umask(0)
         try:
@@ -436,20 +409,17 @@ class Main(object):
         try:
             if os.fork():
                 # unlock
-                shared.thisapp.cleanup()
+                state.thisapp.cleanup()
                 # wait until child ready
                 while True:
                     time.sleep(1)
-                # pylint: disable=protected-access
-                os._exit(0)
+                os._exit(0)  # pylint: disable=protected-access
         except AttributeError:
             # fork not implemented
             pass
         else:
-            # relock
-            shared.thisapp.lock()
-        # indicate we're the final child
-        shared.thisapp.lockPid = None
+            state.thisapp.lock()  # relock
+        state.thisapp.lockPid = None  # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
         if not sys.platform.startswith('win'):
@@ -488,7 +458,7 @@ All parameters are optional.
     @staticmethod
     def stop():
         """Stop main application"""
-        with shared.printLock:
+        with printLock:
             print('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 
@@ -516,4 +486,4 @@ if __name__ == "__main__":
 
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
-# 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
+# 1Hl5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u

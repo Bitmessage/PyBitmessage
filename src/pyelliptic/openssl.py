@@ -10,6 +10,7 @@ needed openssl functionality in class _OpenSSL.
 import ctypes
 from kivy.utils import platform
 import sys
+
 # pylint: disable=protected-access
 
 OpenSSL = None
@@ -97,6 +98,10 @@ class _OpenSSL(object):
         self.BN_free.restype = None
         self.BN_free.argtypes = [ctypes.c_void_p]
 
+        self.BN_clear_free = self._lib.BN_clear_free
+        self.BN_clear_free.restype = None
+        self.BN_clear_free.argtypes = [ctypes.c_void_p]
+
         self.BN_num_bits = self._lib.BN_num_bits
         self.BN_num_bits.restype = ctypes.c_int
         self.BN_num_bits.argtypes = [ctypes.c_void_p]
@@ -104,6 +109,15 @@ class _OpenSSL(object):
         self.BN_bn2bin = self._lib.BN_bn2bin
         self.BN_bn2bin.restype = ctypes.c_int
         self.BN_bn2bin.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+
+        try:
+            self.BN_bn2binpad = self._lib.BN_bn2binpad
+            self.BN_bn2binpad.restype = ctypes.c_int
+            self.BN_bn2binpad.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
+                                          ctypes.c_int]
+        except AttributeError:
+            # optional, we have a workaround
+            pass
 
         self.BN_bin2bn = self._lib.BN_bin2bn
         self.BN_bin2bn.restype = ctypes.c_void_p
@@ -147,6 +161,20 @@ class _OpenSSL(object):
                                                              ctypes.c_void_p,
                                                              ctypes.c_void_p]
 
+        try:
+            self.EC_POINT_get_affine_coordinates = \
+                self._lib.EC_POINT_get_affine_coordinates
+        except AttributeError:
+            # OpenSSL docs say only use this for backwards compatibility
+            self.EC_POINT_get_affine_coordinates = \
+                self._lib.EC_POINT_get_affine_coordinates_GF2m
+        self.EC_POINT_get_affine_coordinates.restype = ctypes.c_int
+        self.EC_POINT_get_affine_coordinates.argtypes = [ctypes.c_void_p,
+                                                         ctypes.c_void_p,
+                                                         ctypes.c_void_p,
+                                                         ctypes.c_void_p,
+                                                         ctypes.c_void_p]
+
         self.EC_KEY_set_private_key = self._lib.EC_KEY_set_private_key
         self.EC_KEY_set_private_key.restype = ctypes.c_int
         self.EC_KEY_set_private_key.argtypes = [ctypes.c_void_p,
@@ -169,6 +197,34 @@ class _OpenSSL(object):
                                                              ctypes.c_void_p,
                                                              ctypes.c_void_p,
                                                              ctypes.c_void_p,
+                                                             ctypes.c_void_p]
+
+        try:
+            self.EC_POINT_set_affine_coordinates = \
+                self._lib.EC_POINT_set_affine_coordinates
+        except AttributeError:
+            # OpenSSL docs say only use this for backwards compatibility
+            self.EC_POINT_set_affine_coordinates = \
+                self._lib.EC_POINT_set_affine_coordinates_GF2m
+        self.EC_POINT_set_affine_coordinates.restype = ctypes.c_int
+        self.EC_POINT_set_affine_coordinates.argtypes = [ctypes.c_void_p,
+                                                         ctypes.c_void_p,
+                                                         ctypes.c_void_p,
+                                                         ctypes.c_void_p,
+                                                         ctypes.c_void_p]
+
+        try:
+            self.EC_POINT_set_compressed_coordinates = \
+                self._lib.EC_POINT_set_compressed_coordinates
+        except AttributeError:
+            # OpenSSL docs say only use this for backwards compatibility
+            self.EC_POINT_set_compressed_coordinates = \
+                self._lib.EC_POINT_set_compressed_coordinates_GF2m
+        self.EC_POINT_set_compressed_coordinates.restype = ctypes.c_int
+        self.EC_POINT_set_compressed_coordinates.argtypes = [ctypes.c_void_p,
+                                                             ctypes.c_void_p,
+                                                             ctypes.c_void_p,
+                                                             ctypes.c_int,
                                                              ctypes.c_void_p]
 
         self.EC_POINT_new = self._lib.EC_POINT_new
@@ -214,10 +270,6 @@ class _OpenSSL(object):
             self._lib.ECDH_set_method.restype = ctypes.c_int
             self._lib.ECDH_set_method.argtypes = [ctypes.c_void_p,
                                                   ctypes.c_void_p]
-
-        self.BN_CTX_new = self._lib.BN_CTX_new
-        self._lib.BN_CTX_new.restype = ctypes.c_void_p
-        self._lib.BN_CTX_new.argtypes = []
 
         self.ECDH_compute_key = self._lib.ECDH_compute_key
         self.ECDH_compute_key.restype = ctypes.c_int
@@ -401,7 +453,7 @@ class _OpenSSL(object):
 
         try:
             self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
-        except:
+        except Exception:
             # The above is not compatible with all versions of OSX.
             self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC_SHA1
 
@@ -477,12 +529,18 @@ class _OpenSSL(object):
         self.BN_cmp.argtypes = [ctypes.c_void_p,
                                 ctypes.c_void_p]
 
+        try:
+            self.BN_is_odd = self._lib.BN_is_odd
+            self.BN_is_odd.restype = ctypes.c_int
+            self.BN_is_odd.argtypes = [ctypes.c_void_p]
+        except AttributeError:
+            # OpenSSL 1.1.0 implements this as a function, but earlier
+            # versions as macro, so we need to workaround
+            self.BN_is_odd = self.BN_is_odd_compatible
+
         self.BN_bn2dec = self._lib.BN_bn2dec
         self.BN_bn2dec.restype = ctypes.c_char_p
         self.BN_bn2dec.argtypes = [ctypes.c_void_p]
-
-        self.BN_CTX_free = self._lib.BN_CTX_free
-        self.BN_CTX_free.argtypes = [ctypes.c_void_p]
 
         self.EC_GROUP_new_by_curve_name = self._lib.EC_GROUP_new_by_curve_name
         self.EC_GROUP_new_by_curve_name.restype = ctypes.c_void_p
@@ -599,6 +657,16 @@ class _OpenSSL(object):
         returns the length of a BN (OpenSSl API)
         """
         return int((self.BN_num_bits(x) + 7) / 8)
+
+    def BN_is_odd_compatible(self, x):
+        """
+        returns if BN is odd
+        we assume big endianness, and that BN is initialised
+        """
+        length = self.BN_num_bytes(x)
+        data = self.malloc(0, length)
+        OpenSSL.BN_bn2bin(x, data)
+        return ord(data[length - 1]) & 1
 
     def get_cipher(self, name):
         """
@@ -735,7 +803,7 @@ def loadOpenSSL():
         try:
             OpenSSL = _OpenSSL(library)
             return
-        except:
+        except Exception:
             pass
     raise Exception(
         "Couldn't find and load the OpenSSL library. You must install it.")
