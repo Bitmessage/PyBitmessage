@@ -8,12 +8,16 @@ import os
 import pickle
 import threading
 import time
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 import state
 from bmconfigparser import BMConfigParser
 from network.node import Peer
 
-knownNodesLock = threading.Lock()
+knownNodesLock = threading.RLock()
 """Thread lock for knownnodes modification"""
 knownNodes = {stream: {} for stream in range(1, 4)}
 """The dict of known nodes for each stream"""
@@ -95,9 +99,17 @@ def saveKnownNodes(dirName=None):
 
 def addKnownNode(stream, peer, lastseen=None, is_self=False):
     """
-    Add a new node to the dict or update lastseen if it already exists
+    Add a new node to the dict or update lastseen if it already exists.
+    Do it for each stream number if *stream* is `Iterable`.
+    Returns True if added a new node.
     """
     # pylint: disable=too-many-branches
+    if isinstance(stream, Iterable):
+        with knownNodesLock:
+            for s in stream:
+                addKnownNode(s, peer, lastseen, is_self)
+        return
+
     rating = 0.0
     if not lastseen:
         # FIXME: maybe about 28 days?

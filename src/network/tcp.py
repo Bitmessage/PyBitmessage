@@ -148,9 +148,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         # The connection having host suitable for knownnodes
         if self.isOutbound or not self.local and not state.socksIP:
             knownnodes.increaseRating(self.destination)
-            with knownnodes.knownNodesLock:
-                for s in self.streams:
-                    knownnodes.addKnownNode(s, self.destination, time.time())
+            knownnodes.addKnownNode(
+                self.streams, self.destination, time.time())
             Dandelion().maybeAddStem(self)
         self.sendAddr()
         self.sendBigInv()
@@ -273,10 +272,8 @@ class TCPConnection(BMProto, TLSDispatcher):
                 (self.isOutbound, False, self.destination)
             ))
             if host_is_global:
-                with knownnodes.knownNodesLock:
-                    for s in self.streams:
-                        knownnodes.addKnownNode(
-                            s, self.destination, time.time())
+                knownnodes.addKnownNode(
+                    self.streams, self.destination, time.time())
                 Dandelion().maybeRemoveStem(self)
         elif host_is_global:
             knownnodes.decreaseRating(self.destination)
