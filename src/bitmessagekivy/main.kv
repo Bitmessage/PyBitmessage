@@ -16,6 +16,7 @@
 #:import MDScrollViewRefreshLayout kivymd.uix.refreshlayout.MDScrollViewRefreshLayout
 #:import MDSpinner kivymd.uix.spinner.MDSpinner
 #:import MDTabsBase kivymd.uix.tab.MDTabsBase
+#:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
 <Tab@BoxLayout+MDTabsBase>
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
@@ -180,8 +181,8 @@
                     on_release: app.root.ids.scr_mngr.current = 'set'
                     on_release: root.parent.set_state()
                 NavigationItem:
-                    text: 'Payment'
-                    icon: 'bell'
+                    text: 'Purchase'
+                    icon: 'shopping'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'payment'
                     on_release: root.parent.set_state()
@@ -273,6 +274,8 @@ NavigationLayout:
             id:sc21
         ChatList:
             id:sc22
+        ScanScreen:
+            id:sc23
 
     MDNavigationDrawer:
         id: nav_drawer
@@ -342,3 +345,9 @@ NavigationLayout:
         color: 0,0,0,1
 
         color: 0,0,0,1
+
+<ScanScreen>:
+    name:'scanscreen'
+
+    
+            

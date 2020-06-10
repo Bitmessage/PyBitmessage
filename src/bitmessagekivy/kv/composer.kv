@@ -54,7 +54,8 @@
                 MDIconButton:
                     icon: 'qrcode-scan'
                     pos_hint: {'center_x': 0, 'center_y': .8}
-                    on_press: root.qrScanner()
+                    on_release:
+                        app.root.ids.scr_mngr.current = 'scanscreen'
 
             MyMDTextField:
                 id: subject

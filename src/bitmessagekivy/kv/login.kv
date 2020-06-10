@@ -1,120 +1,303 @@
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition
 <Login>:
-    name: 'login'
-    ScrollView:
-        do_scroll_x: False
+    name:"login"
+    BoxLayout:
+        orientation: "vertical"
+
+        #buttons-area-outer
         BoxLayout:
-            orientation: 'vertical'
-            size_hint_y: None
-            height: dp(450) + self.minimum_height
-            padding: dp(10)
-            BoxLayout:
-                MDLabel:
-                    font_style: 'Subtitle2'
-                    theme_text_color: 'Primary'
-                    text: root.log_text1
-                    halign: 'left'
-                    color:app.theme_cls.primary_dark
-            BoxLayout:
-                MDLabel:
-                    font_style: 'Subtitle2'
-                    theme_text_color: 'Primary'
-                    text: root.log_text2
-                    halign: 'left'
-                    color:app.theme_cls.primary_dark
-            Widget:
-                size_hint: (None, None)
-                height: dp(10)
-            MDCheckbox:
-                id:            grp_chkbox_1
-                group:        'test'
-                size_hint: None, None
-                size: dp(48), dp(48)
-                pos_hint: {'center_x': .5, 'center_y': .5}
-                active: True
-                allow_no_selection: False
-            MDLabel:
-                font_style: 'Body2'
-                theme_text_color: 'Primary'
-                text: "use a random number generator to make an address"
-                halign: 'center'
-                size_hint_y: None
-                height: self.texture_size[1] + dp(4)
-                color: [0.941, 0, 0,1]
-            MDCheckbox:
-                id:            grp_chkbox_1
-                group:        'test'
-                size_hint: None, None
-                size: dp(48), dp(48)
-                pos_hint: {'center_x': .5, 'center_y': .5}
-                allow_no_selection: False
-            MDLabel:
-                font_style: 'Body2'
-                theme_text_color: 'Primary'
-                text: "use a pseudo number generator to make an address"
-                halign: 'center'
-                size_hint_y: None
-                color: [0.941, 0, 0,1]
-                height: self.texture_size[1] + dp(4)
-            BoxLayout:
-                AnchorLayout:
-                    MDRaisedButton:
-                        size_hint: (.2, None)
-                        # height: dp(40)
-                        on_press: app.root.ids.scr_mngr.current = 'random'
-                        on_press: app.root.ids.sc7.reset_address_label()
-                        MDLabel:
-                            font_style: 'H6'
-                            text: 'proceed'
-                            font_size: '13sp'
-                            color: (1,1,1,1)
-                            halign: 'center'
+            size_hint_y: .53
+            canvas:
+                Color:
+                    rgba: 1,1,1,1 
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            
+            ScreenManager:
+                id: check_screenmgr
+                Screen:
+                    name: "check_screen"
+                    BoxLayout:
+                        orientation: "vertical"
+                        padding: 0, dp(5), 0, dp(5)
+                        spacing: dp(5)
+
+                        #label area
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(50)
+                            MDLabel:
+                                text: "Select method to make an address:"
+                                bold: True
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: .4,.4,.4,1
+
+                        #upper-checkbor-area
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(40)
+                            BoxLayout:
+                                size_hint_x: None
+                                width: self.minimum_width
+
+                                #check-container
+                                AnchorLayout:
+                                    size_hint_x: None
+                                    width: dp(40)
+                                    Check:
+                                        active: True
+
+                                #text-container
+                                AnchorLayout:
+                                    size_hint_x: None
+                                    width: dp(200)
+                                    MDLabel:
+                                        text: "Random Number Generator"
+                        
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(40)
+                            BoxLayout:
+                                size_hint_x: None
+                                width: self.minimum_width
+
+                                #check-container
+                                AnchorLayout:
+                                    size_hint_x: None
+                                    width: dp(40)
+                                    Check:
+
+                                #text-container
+                                AnchorLayout:
+                                    size_hint_x: None
+                                    width: dp(200)
+                                    MDLabel:
+                                        text: "Pseudo Number Generator"
+                        AnchorLayout:
+                            MDFillRoundFlatIconButton:
+                                icon: "chevron-double-right"
+                                text: "Proceed Next"
+                                on_release:
+                                    app.root.ids.scr_mngr.current = 'random'
+                                on_press:
+                                    app.root.ids.sc7.reset_address_label(app)
+
+                
+                Screen:
+                    name: "label_screen"
+                    BoxLayout:
+                        orientation: "vertical"
+                        padding: 0, dp(5), 0, dp(5)
+                        spacing: dp(5)
+
+                        #label area
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(50)
+                            MDLabel:
+                                text: "Enter a label to generate address for:"
+                                bold: True
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: .4,.4,.4,1
+                        
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(40)
+                            MDTextField:
+                                hint_text: "Label"
+                                required: True
+                                size_hint_x: None
+                                width: dp(190)
+                        
+                        AnchorLayout:
+                            MDFillRoundFlatIconButton:
+                                icon: "chevron-double-right"
+                                text: "Proceed Next"
+                        
+                        Widget:
+
+        
+
+        #info-area-outer
+        BoxLayout:
+            size_hint_y: .47
+            padding: dp(7)
+            InfoLayout:
+                orientation:"vertical"
+                padding: 0, dp(5), 0, dp(5)
+                canvas:
+                    Color:
+                        rgba:1,1,1,1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                    Color:
+                        rgba: app.theme_cls.primary_color   
+                    Line:
+                        rounded_rectangle: (self.pos[0]+4, self.pos[1]+4, self.width-8,self.height-8, 10, 10, 10, 10, 50)
+                        width: dp(1)
+                ScreenManager:
+                    id: info_screenmgr
+
+                    Screen:
+                        name: "info1"
+                        ScrollView:
+                            bar_width:0
+                            do_scroll_x: False
+
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint_y: None
+                                height: self.minimum_height
+
+                                #note area
+                                ContentHead:
+                                    section_name: "NOTE:"
+                                ContentBody:
+                                    section_text: ("You may generate addresses by using either random numbers or by using a pass-phrase.If you use a pass-phrase, the address is called a deterministic address. The Random Number option is selected by default but deterministic addresses may have several pros and cons.")
+
+
+                                #pros area
+                                ContentHead:
+                                    section_name: "PROS:"
+                                ContentBody:
+                                    section_text: ("You can re-create your addresses on any computer from memory you need-not-to worry about backing up your keys.dat file as long as you can remember your pass-phrase.")
+
+                                #cons area
+                                ContentHead:
+                                    section_name: "CONS:"
+                                ContentBody:
+                                    section_text: ("You must remember (or write down) your address version number and the stream number along with your pass-phrase.If you choose a weak pass-phrase and someone on the internet can brute-force it, they can read your messages and send messages as you.")
 
 <Random>:
-    name: 'random'
-    ScrollView:
-        id: add_random_bx
+    name:"random"
+    BoxLayout:
+        orientation: "vertical"
+        id:add_random_bx
+        #buttons-area-outer
+        BoxLayout:
+            size_hint_y: .53
+            canvas:
+                Color:
+                    rgba: 1,1,1,1 
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            
+            ScreenManager:
+                id: check_screenmgr
+                Screen:
+                    name: "label_screen"
+                    BoxLayout:
+                        orientation: "vertical"
+                        padding: 0, dp(5), 0, dp(5)
+                        spacing: dp(5)
 
-<RandomBoxlayout>:
-    orientation: 'vertical'
+                        #label area
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(50)
+                            MDLabel:
+                                text: "Enter a label to generate address for:"
+                                bold: True
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: .4,.4,.4,1
+                        
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: dp(40)
+                            MDTextField:
+                                id:lab
+                                hint_text: "Label"
+                                required: True
+                                size_hint_x: None
+                                width: dp(190)
+                                helper_text_mode: "on_error"
+                                helper_text: "Please enter your label name"
+                        
+                        AnchorLayout:
+                            MDFillRoundFlatIconButton:
+                                icon: "chevron-double-right"
+                                text: "Proceed Next"
+                                on_release: app.root.ids.sc7.generateaddress(app)
+                        
+                        Widget:
+
+        
+
+        #info-area-outer
+        BoxLayout:
+            size_hint_y: .47
+            padding: dp(7)
+            InfoLayout:
+                orientation:"vertical"
+                padding: 0, dp(5), 0, dp(5)
+                canvas:
+                    Color:
+                        rgba:1,1,1,1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                    Color:
+                        rgba: app.theme_cls.primary_color   
+                    Line:
+                        rounded_rectangle: (self.pos[0]+4, self.pos[1]+4, self.width-8,self.height-8, 10, 10, 10, 10, 50)
+                        width: dp(1)
+                ScreenManager:
+                    id: info_screenmgr
+
+                    Screen:
+                        name: "info2"
+                        ScrollView:
+                            bar_width:0
+                            do_scroll_x: False
+
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint_y: None
+                                height: self.minimum_height
+
+                                #note area
+                                ContentHead:
+                                    section_name: "NOTE:"
+                                ContentBody:
+                                    section_text: ("Here you may generate as many addresses as you like..Indeed creating and abandoning addresses is not encouraged.")
+
+<Check@MDCheckbox>:
+    group: 'group'
+    size_hint: None, None
+    size: dp(48), dp(48)
+
+<ContentHead@BoxLayout>:
+    section_name: ""
+    orientation: "vertical"
+    size_hint_y: None
+    height: dp(50)
+    padding: dp(20), 0, 0, 0
+    Widget:
+        size_hint_y: None
+        height: dp(25)
+    MDLabel:
+        theme_text_color: "Custom"
+        text_color: .1,.1,.1,.9
+        text: root.section_name
+        bold: True
+        font_style: "Button"
+
+<ContentBody@BoxLayout>:
+    section_text: ""
     size_hint_y: None
     height: self.minimum_height
-    padding: dp(20)
-    spacing: 100
-    MDLabel:
-        font_style: 'Subtitle2'
-        theme_text_color: 'Primary'
-        text: "Random Addresses"
-        halign: 'center'
-        color:app.theme_cls.primary_dark
+    padding: dp(50), 0, dp(10), 0
 
     MDLabel:
-        font_style: 'Subtitle2'
-        theme_text_color: 'Primary'
-        text: "Here you may generate as many addresses as you like, Indeed creating and abandoning addresses is encouraged"
-        halign: 'left'
-        color:app.theme_cls.primary_dark
-
-    MDTextField:
-        id: label
-        multiline: False
-        hint_text: "Label"
-        required: True
-        helper_text_mode: "on_error"
-        on_text: app.root.ids.sc7.add_validation(self)
-        canvas.before:
-            Color:
-                rgba: (0,0,0,1)
-
-    BoxLayout:
-        AnchorLayout:
-            MDRaisedButton:
-                size_hint: (.2, None)
-                # height: dp(40)
-                on_release: app.root.ids.sc7.generateaddress(app)
-                opposite_colors: True
-                MDLabel:
-                    font_style: 'H6'
-                    text: 'next'
-                    font_size: '13sp'
-                    color: (1,1,1,1)
-                    halign: 'center'
+        size_hint_y: None
+        height: self.texture_size[1]+dp(10)
+        theme_text_color: "Custom"
+        text_color: 0.3,0.3,0.3,1
+        font_style: "Body1"
+        text: root.section_text

@@ -79,6 +79,9 @@
             MDRaisedButton:
                 size_hint: 2, None
                 height: dp(40)
+                on_press: root.dismiss()
+                on_release:
+                    app.root.ids.scr_mngr.current = 'scanscreen'
                 MDLabel:
                     font_style: 'H6'
                     text: 'Scan QR code'

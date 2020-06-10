@@ -4,6 +4,71 @@ Bitmessage android(mobile) interface
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
 # pylint: disable=protected-access
+
+
+from sys import platform as _sys_platform
+from os import environ
+
+'''
+We need to check platform and set environ for KIVY_CAMERA, if requires, before importing kivy.
+
+We cannot use sys.platform directly because it returns 'linux' on android devices as well.
+We cannot use kivy.util.platform beacuse it imports kivy beforehand and thus setting environ
+after that doesn't make any sense.
+
+So we needed to copy the `_get_platform` function from kivy.utils
+'''
+
+def _get_platform():
+    # On Android sys.platform returns 'linux2', so prefer to check the
+    # existence of environ variables set during Python initialization
+    kivy_build = environ.get('KIVY_BUILD', '')
+    if kivy_build in {'android', 'ios'}:
+        return kivy_build
+    elif 'P4A_BOOTSTRAP' in environ:
+        return 'android'
+    elif 'ANDROID_ARGUMENT' in environ:
+        # We used to use this method to detect android platform,
+        # leaving it here to be backwards compatible with `pydroid3`
+        # and similar tools outside kivy's ecosystem
+        return 'android'
+    elif _sys_platform in ('win32', 'cygwin'):
+        return 'win'
+    elif _sys_platform == 'darwin':
+        return 'macosx'
+    elif _sys_platform.startswith('linux'):
+        return 'linux'
+    elif _sys_platform.startswith('freebsd'):
+        return 'linux'
+    return 'unknown'
+
+platform= _get_platform()
+
+if platform=='android':
+    from jnius import autoclass, cast
+    from android.runnable import run_on_ui_thread
+    from android import python_act as PythonActivity
+
+    Toast= autoclass('android.widget.Toast')
+    String = autoclass('java.lang.String')
+    CharSequence= autoclass('java.lang.CharSequence')
+    context= PythonActivity.mActivity
+    
+    @run_on_ui_thread
+    def show_toast(text, length):
+        t= Toast.makeText(context, text, length)
+        t.show()
+
+else:
+    '''
+    After tweaking a little bit with opencv camera, it's possible to make camera
+    go on and off as required while the app is still running.
+    
+    Other camera provider such as `gi` has some issue upon closing the camera.
+    by setting KIVY_CAMERA environment variable before importing kivy, we are forcing it to use opencv camera provider.
+    '''
+    environ['KIVY_CAMERA']='opencv'
+
 import os
 import time
 from bitmessagekivy import identiconGeneration
@@ -71,6 +136,11 @@ import state
 from addresses import decodeAddress
 from kivy.uix.modalview import ModalView
 from datetime import datetime
+from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
+from kivymd.uix.bottomsheet import MDCustomBottomSheet
+from kivy.effects.dampedscroll import DampedScrollEffect
+from kivy_garden.zbarcam import ZBarCam
+from pyzbar.pyzbar import ZBarSymbol
 
 if platform != 'android':
     from kivy.config import Config
@@ -832,6 +902,57 @@ class DropDownWidget(BoxLayout):
         """This method is used for scanning Qr code"""
         pass
 
+class ScanScreen(Screen):
+   def on_pre_enter(self):
+       '''
+       on_pre_enter works little better on android
+       It affects screen transition on linux
+       '''
+       if not self.children:
+           tmp= Builder.load_file(os.path.join(os.path.dirname(__file__), "kv/{}.kv").format('scanner'))
+           self.add_widget(tmp)
+       if platform=='android':
+           Clock.schedule_once(self.start_camera, 0)
+   
+   def on_enter(self):
+       '''
+       on_enter works better on linux
+       It creates a black screen on android until camera gets loaded
+       '''
+       #print(self.children)
+       if platform!='android':
+           #pass
+           Clock.schedule_once(self.start_camera, 0)
+   
+   def on_leave(self):
+       #pass
+
+       Clock.schedule_once(self.stop_camera, 0)
+   
+   def start_camera(self, *args):
+       self.xcam= self.children[0].ids.zbarcam.ids.xcamera
+       #pass
+       #self.xxx= self.children[0].ids.zbarcam.ids.xcamera
+       #print(self.cam._device.isOpened())
+       if platform=='android':
+           self.xcam.play= True
+           
+       else:
+           Clock.schedule_once(self.open_cam, 0)
+       
+   
+   def stop_camera(self, *args):
+       #print(self.children[0].ids.zbarcam.ids.xcamera.play)
+       self.xcam.play= False
+       #self.xcam._camera.stop()
+       #self.children[0].ids.zbarcam.stop()
+       if platform != 'android':
+           self.xcam._camera._device.release()
+   
+   def open_cam(self, *args):
+       if not self.xcam._camera._device.isOpened():
+           self.xcam._camera._device.open(self.xcam._camera._index)
+       self.xcam.play= True
 
 class MyTextInput(TextInput):
     """Takes the text input in the field"""
@@ -902,6 +1023,23 @@ class Payment(Screen):
                 payloadLengthExtraBytes))
             toast('hidden payment address Creating for buying subscription....')
 
+class Category(BoxLayout, RectangularElevationBehavior):
+    elevation_normal= .01
+
+class ProductLayout(BoxLayout, RectangularElevationBehavior):
+    elevation_normal= .01
+
+class PaymentMethodLayout(BoxLayout):
+    pass
+
+class ListItemWithLabel(OneLineAvatarIconListItem):
+    pass
+
+class RightLabel(IRightBodyTouch, MDLabel):
+    pass
+
+class HomeScreen(Screen):
+    pass
 
 class Credits(Screen):
     """Credits Method"""
@@ -987,9 +1125,10 @@ class Random(Screen):
 
     def generateaddress(self, navApp):
         """Method for Address Generator"""
-        entered_label = str(self.ids.add_random_bx.children[0].ids.label.text).strip()
+        entered_label = str(self.ids.lab.text).strip()
         if not entered_label:
-            self.ids.add_random_bx.children[0].ids.label.focus = True
+            self.ids.lab.focus = True
+            # self.ids.add_random_bx.children[0].ids.label.focus = True
             # self.ids.label.error = True
             # self.ids.label.helper_text = 'This field is required'
         streamNumberForAddress = 1
@@ -1045,7 +1184,7 @@ class Random(Screen):
             instance.error = False
             instance.helper_text = 'This field is required'
 
-    def reset_address_label(self):
+    def reset_address_label(self, n):
         """Resetting address labels"""
         if not self.ids.add_random_bx.children:
             self.ids.add_random_bx.add_widget(RandomBoxlayout())
@@ -2081,9 +2220,26 @@ class NavigateApp(MDApp):
 
     def reset_login_screen(self):
         """This method is used for clearing random screen"""
-        if self.root.ids.sc7.ids.add_random_bx.children:
-            self.root.ids.sc7.ids.add_random_bx.clear_widgets()
+        # if self.root.ids.sc7.ids.add_random_bx.children:
+        #     self.root.ids.sc7.ids.add_random_bx.clear_widgets()
 
+    def open_payment_layout(self, sku):
+        pml= PaymentMethodLayout()
+        self.product_id= sku
+        self.custom_sheet= MDCustomBottomSheet(screen= pml)
+        self.custom_sheet.open()
+
+    def initiate_purchase(self, method_name):
+        #self.custom_sheet.dismiss()
+        print("Purchasing {} through {}".format(self.product_id, method_name))
+
+    def _after_scan(self, text):
+        if platform=='android':
+            text= cast(CharSequence, String(text))
+            show_toast(text,Toast.LENGTH_SHORT)
+        else:
+            self.root.ids.sc3.children[1].ids.txt_input.text = text
+            self.root.ids.scr_mngr.current = 'create'
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
@@ -2199,6 +2355,8 @@ class GrashofPopup(Popup):
             text = "Some data encoded in the address is malformed."
         return text
 
+class InfoLayout(BoxLayout, RectangularElevationBehavior):
+    pass
 
 class AvatarSampleWidget(ILeftBody, Image):
     """Avatar Sample Widget"""
@@ -2515,7 +2673,7 @@ class ShowQRCode(Screen):
         """Method used for showing QR Code"""
         self.ids.qr.clear_widgets()
         state.kivyapp.set_toolbar_for_QrCode()
-        from kivy.garden.qrcode import QRCodeWidget
+        from kivy_garden.qrcode import QRCodeWidget
         try:
             address = self.manager.get_parent_window().children[0].address
         except Exception:
