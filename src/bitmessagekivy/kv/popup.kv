@@ -6,7 +6,7 @@
         disabled: True
         background_disabled_normal: "White.png"
         Image:
-            source: './images/loader.zip'
+            source: app.image_path + '/loader.zip'
             anim_delay: 0
             #mipmap: True
             size: root.size
@@ -18,7 +18,7 @@
     height: 2*(label.height + address.height) + 10
     width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
     title: 'add contact\'s'
-    background: './images/popup.jpeg'
+    background: app.image_path + '/popup.jpeg'
     title_size: sp(20)
     title_color: 0.4, 0.3765, 0.3451, 1
     auto_dismiss: False
@@ -94,7 +94,7 @@
     size_hint : (None,None)
     height: 4*(add_label.height)
     width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
-    background: './images/popup.jpeg'
+    background: app.image_path + '/popup.jpeg'
     separator_height: 0
     auto_dismiss: False
     BoxLayout:
@@ -190,7 +190,7 @@
     size_hint : (None,None)
     height: 4.5*(myaddr_label.height+ my_add_btn.children[0].height)
     width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
-    background: './images/popup.jpeg'
+    background: app.image_path + '/popup.jpeg'
     auto_dismiss: False
     separator_height: 0 
     BoxLayout:
@@ -276,7 +276,7 @@
     size_hint : (None,None)
     height: 1.3*(popup_label.height+ my_add_btn.children[0].height)
     width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
-    background: './images/popup.jpeg'
+    background: app.image_path + '/popup.jpeg'
     auto_dismiss: False
     separator_height: 0
     BoxLayout:
@@ -337,7 +337,7 @@
     size_hint : (None,None)
     # height: 2*(sd_label.height+ sd_btn.children[0].height)
     width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
-    background: './images/popup.jpeg'
+    background: app.image_path + '/popup.jpeg'
     auto_dismiss: False
     separator_height: 0
     BoxLayout:

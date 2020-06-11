@@ -65,6 +65,7 @@
             height: "200dp"
 
             MDIconButton:
+                id: file_manager
                 icon: "file-image"
                 x: root.parent.x + dp(10)
                 pos_hint: {"top": 1, 'right': 1}
@@ -73,6 +74,8 @@
                 # md_bg_color: app.theme_cls.primary_color
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
+                opacity: 1 if app.current_address_label() else 0
+                disabled: False if app.current_address_label() else True
 
             BoxLayout:
                 id: top_box
@@ -322,6 +325,9 @@ NavigationLayout:
             halign: 'center'
             font_size: dp(15)
             bold: True
+            canvas.before:
+                Color:
+                    rgba: (0,0,0,1)
         # MDLabel:
         #     size_hint_y: None
         #     font_style: 'Body1'
