@@ -48,7 +48,8 @@ requirements =
 	pillow,
 	bitmsghash,
 	#git+https://github.com/surbhicis/KivyMD-1.git,
-	git+https://github.com/surbhicis/KivyMD-1#egg=kivymd,
+	#git+https://github.com/surbhicis/KivyMD-1#egg=kivymd,
+	git+https://github.com/navjotcis/KivyMD#egg=kivymd,
 	kivy-garden, 
 	qrcode,
 	msgpack
@@ -194,6 +195,9 @@ android.sdk = 20
 # (list) Java classes to add as activities to the manifest.
 #android.add_activites = com.example.ExampleActivity
 
+# (str) python-for-android branch to use, defaults to stable
+# p4a.branch = master
+
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
 #android.ouya.category = GAME
@@ -248,10 +252,10 @@ android.arch = arm64-v8a
 p4a.branch = develop
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
-#p4a.source_dir =
+# p4a.source_dir = /home/cis/Music/androidp4a/python-for-android
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-p4a.local_recipes = /home/surbhi/Downloads/peter3/PyBitmessage/src/bitmessagekivy/android/python-for-android/recipes/
+p4a.local_recipes = %(source.dir)s/bitmessagekivy/android/python-for-android/recipes/
 
 # (str) Filename to the hook for p4a
 #p4a.hook =
