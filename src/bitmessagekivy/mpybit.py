@@ -5,7 +5,6 @@ Bitmessage android(mobile) interface
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
 # pylint: disable=protected-access
 
-
 from sys import platform as _sys_platform
 from os import environ
 
@@ -139,10 +138,10 @@ from datetime import datetime
 from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.effects.dampedscroll import DampedScrollEffect
-from kivy_garden.zbarcam import ZBarCam
-from pyzbar.pyzbar import ZBarSymbol
 
 if platform != 'android':
+    from pyzbar.pyzbar import ZBarSymbol
+    from kivy_garden.zbarcam import ZBarCam
     from kivy.config import Config
     Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
@@ -1148,9 +1147,8 @@ class Random(Screen):
         entered_label = str(self.ids.lab.text).strip()
         if not entered_label:
             self.ids.lab.focus = True
-            # self.ids.add_random_bx.children[0].ids.label.focus = True
-            # self.ids.label.error = True
-            # self.ids.label.helper_text = 'This field is required'
+            #self.ids.lab.error = True
+            #self.ids.lab.helper_text = 'This field is required'
         streamNumberForAddress = 1
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
@@ -1766,7 +1764,7 @@ class NavigateApp(MDApp):
                         BMConfigParser().addresses()[0])):
                     android_path = os.path.join(
                         os.environ['ANDROID_PRIVATE'] + '/app/')
-                    img.texture.save('{1}/kivy/default_identicon/{0}.png'.format(
+                    img.texture.save('{1}/images/kivy/default_identicon/{0}.png'.format(
                         BMConfigParser().addresses()[0], android_path))
             else:
                 if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
@@ -2220,7 +2218,7 @@ class NavigateApp(MDApp):
             if platform == 'android':
                 android_path = os.path.join(
                     os.environ['ANDROID_PRIVATE'] + '/app/')
-                newImg.save('{1}/kivy/default_identicon/{0}.png'.format(
+                newImg.save('{1}/images/kivy/default_identicon/{0}.png'.format(
                     state.association, android_path))
             else:
                 if not os.path.exists(state.imageDir + '/default_identicon/'):
