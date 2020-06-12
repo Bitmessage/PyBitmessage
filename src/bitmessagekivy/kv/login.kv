@@ -84,43 +84,6 @@
                                 on_press:
                                     app.root.ids.sc7.reset_address_label(app)
 
-                
-                Screen:
-                    name: "label_screen"
-                    BoxLayout:
-                        orientation: "vertical"
-                        padding: 0, dp(5), 0, dp(5)
-                        spacing: dp(5)
-
-                        #label area
-                        AnchorLayout:
-                            size_hint_y: None
-                            height: dp(50)
-                            MDLabel:
-                                text: "Enter a label to generate address for:"
-                                bold: True
-                                halign: "center"
-                                theme_text_color: "Custom"
-                                text_color: .4,.4,.4,1
-                        
-                        AnchorLayout:
-                            size_hint_y: None
-                            height: dp(40)
-                            MDTextField:
-                                hint_text: "Label"
-                                required: True
-                                size_hint_x: None
-                                width: dp(190)
-                        
-                        AnchorLayout:
-                            MDFillRoundFlatIconButton:
-                                icon: "chevron-double-right"
-                                text: "Proceed Next"
-                        
-                        Widget:
-
-        
-
         #info-area-outer
         BoxLayout:
             size_hint_y: .47
@@ -179,6 +142,9 @@
         id:add_random_bx
         #buttons-area-outer
         BoxLayout:
+            orientation: "vertical"
+            # padding: 0, dp(5), 0, dp(5)
+            # spacing: dp(5)
             size_hint_y: .53
             canvas:
                 Color:
@@ -186,48 +152,37 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-            
-            ScreenManager:
-                id: check_screenmgr
-                Screen:
-                    name: "label_screen"
-                    BoxLayout:
-                        orientation: "vertical"
-                        padding: 0, dp(5), 0, dp(5)
-                        spacing: dp(5)
 
-                        #label area
-                        AnchorLayout:
-                            size_hint_y: None
-                            height: dp(50)
-                            MDLabel:
-                                text: "Enter a label to generate address for:"
-                                bold: True
-                                halign: "center"
-                                theme_text_color: "Custom"
-                                text_color: .4,.4,.4,1
-                        
-                        AnchorLayout:
-                            size_hint_y: None
-                            height: dp(40)
-                            MDTextField:
-                                id:lab
-                                hint_text: "Label"
-                                required: True
-                                size_hint_x: None
-                                width: dp(190)
-                                helper_text_mode: "on_error"
-                                helper_text: "Please enter your label name"
-                        
-                        AnchorLayout:
-                            MDFillRoundFlatIconButton:
-                                icon: "chevron-double-right"
-                                text: "Proceed Next"
-                                on_release: app.root.ids.sc7.generateaddress(app)
-                        
-                        Widget:
+            #label area
+            AnchorLayout:
+                size_hint_y: None
+                height: dp(50)
+                MDLabel:
+                    text: "Enter a label to generate address for:"
+                    bold: True
+                    halign: "center"
+                    theme_text_color: "Custom"
+                    text_color: .4,.4,.4,1
 
-        
+            AnchorLayout:
+                size_hint_y: None
+                height: dp(40)
+                MDTextField:
+                    id:lab
+                    hint_text: "Label"
+                    required: True
+                    size_hint_x: None
+                    width: dp(190)
+                    helper_text_mode: "on_error"
+                    helper_text: "Please enter your label name"
+
+            AnchorLayout:
+                MDFillRoundFlatIconButton:
+                    icon: "chevron-double-right"
+                    text: "Proceed Next"
+                    on_release: app.root.ids.sc7.generateaddress(app)
+
+            Widget:
 
         #info-area-outer
         BoxLayout:

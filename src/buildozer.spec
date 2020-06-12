@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = tor
+title = py3
 
 # (str) Package name
-package.name = tor
+package.name = py3
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.kel
+package.domain = org.test
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -239,7 +239,7 @@ android.sdk = 20
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.arch = arm64-v8a
+android.arch = armeabi-v7a
 
 #
 # Python for android (p4a) specific
