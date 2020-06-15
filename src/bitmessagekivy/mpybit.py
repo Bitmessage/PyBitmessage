@@ -215,10 +215,13 @@ def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
     # obj.size_hint = (None, None)
-    obj.size_hint = (.16 if platform == 'android' else .07, None)
+    obj.size_hint = (0.16 if platform == "android" else 0.07, None)
     obj.label = text
-    obj.icon = ''
-    obj.pos_hint = {'center_x': .91 if platform == 'android' else .94, 'center_y': .3}
+    obj.icon = ""
+    obj.pos_hint = {
+        "center_x": 0.91 if platform == "android" else 0.94,
+        "center_y": 0.3
+    }
     obj.height = dp(18)
     obj.radius = 8
     return obj
@@ -239,7 +242,7 @@ class Inbox(Screen):
     @staticmethod
     def set_defaultAddress():
         """This method set's default address"""
-        if state.association == '':
+        if state.association == "":
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
 
@@ -253,42 +256,51 @@ class Inbox(Screen):
         self.account = state.association
         if state.searcing_text:
             self.children[2].children[0].children[0].scroll_y = 1.0
-            where = ['subject', 'message']
+            where = ["subject", "message"]
             what = state.searcing_text
-        xAddress = 'toaddress'
+        xAddress = "toaddress"
         data = []
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.identi_tag.children[0].text = ""
         self.inboxDataQuery(xAddress, where, what)
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.identi_tag.children[0].text = ""
         if self.queryreturn:
-            self.ids.identi_tag.children[0].text = 'Inbox'
+            self.ids.identi_tag.children[0].text = "Inbox"
             state.kivyapp.get_inbox_count()
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
                 # third_text = mail[3].replace('\n', ' ')
                 body = mail[3].decode() if isinstance(mail[3], bytes) else mail[3]
                 subject = mail[5].decode() if isinstance(mail[5], bytes) else mail[5]
-                data.append({
-                    'text': mail[4].strip(),
-                    'secondary_text': (subject[:50] + '........' if len(
-                        subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace(
-                            '\t', '').replace('  ', ''),
-                    'msgid': mail[1], 'received': mail[6]})
+                data.append(
+                    {
+                        "text": mail[4].strip(),
+                        "secondary_text": (
+                            subject[:50] + "........"
+                            if len(subject) >= 50
+                            else (subject + "," + body)[0:50] + "........"
+                        )
+                        .replace("\t", "")
+                        .replace("  ", ""),
+                        "msgid": mail[1],
+                        "received": mail[6]
+                    }
+                )
 
             self.has_refreshed = True
             self.set_mdList(data)
-            self.children[2].children[0].children[0].bind(
-                scroll_y=self.check_scroll_y)
+            self.children[2].children[0].children[0].bind(scroll_y=self.check_scroll_y)
         else:
-            self.set_inboxCount('0')
+            self.set_inboxCount("0")
             content = MDLabel(
-                font_style='Caption',
-                theme_text_color='Primary',
-                text="No message found!" if state.searcing_text
+                font_style="Caption",
+                theme_text_color="Primary",
+                text="No message found!"
+                if state.searcing_text
                 else "yet no message for this account!!!!!!!!!!!!!",
-                halign='center',
+                halign="center",
                 size_hint_y=None,
-                valign='top')
+                valign="top"
+            )
             self.ids.ml.add_widget(content)
 
     def set_inboxCount(self, msgCnt):  # pylint: disable=no-self-use
