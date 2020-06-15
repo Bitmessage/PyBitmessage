@@ -8,7 +8,7 @@ Bitmessage android(mobile) interface
 from sys import platform as _sys_platform
 from os import environ
 
-'''
+"""
 We need to check platform and set environ for KIVY_CAMERA, if requires, before importing kivy.
 
 We cannot use sys.platform directly because it returns 'linux' on android devices as well.
@@ -16,57 +16,60 @@ We cannot use kivy.util.platform beacuse it imports kivy beforehand and thus set
 after that doesn't make any sense.
 
 So we needed to copy the `_get_platform` function from kivy.utils
-'''
+"""
+
 
 def _get_platform():
     # On Android sys.platform returns 'linux2', so prefer to check the
     # existence of environ variables set during Python initialization
-    kivy_build = environ.get('KIVY_BUILD', '')
-    if kivy_build in {'android', 'ios'}:
+    kivy_build = environ.get("KIVY_BUILD", "")
+    if kivy_build in {"android", "ios"}:
         return kivy_build
-    elif 'P4A_BOOTSTRAP' in environ:
-        return 'android'
-    elif 'ANDROID_ARGUMENT' in environ:
+    elif "P4A_BOOTSTRAP" in environ:
+        return "android"
+    elif "ANDROID_ARGUMENT" in environ:
         # We used to use this method to detect android platform,
         # leaving it here to be backwards compatible with `pydroid3`
         # and similar tools outside kivy's ecosystem
-        return 'android'
-    elif _sys_platform in ('win32', 'cygwin'):
-        return 'win'
-    elif _sys_platform == 'darwin':
-        return 'macosx'
-    elif _sys_platform.startswith('linux'):
-        return 'linux'
-    elif _sys_platform.startswith('freebsd'):
-        return 'linux'
-    return 'unknown'
+        return "android"
+    elif _sys_platform in ("win32", "cygwin"):
+        return "win"
+    elif _sys_platform == "darwin":
+        return "macosx"
+    elif _sys_platform.startswith("linux"):
+        return "linux"
+    elif _sys_platform.startswith("freebsd"):
+        return "linux"
+    return "unknown"
 
-platform= _get_platform()
 
-if platform=='android':
+platform = _get_platform()
+
+if platform == "android":
     from jnius import autoclass, cast
     from android.runnable import run_on_ui_thread
     from android import python_act as PythonActivity
 
-    Toast= autoclass('android.widget.Toast')
-    String = autoclass('java.lang.String')
-    CharSequence= autoclass('java.lang.CharSequence')
-    context= PythonActivity.mActivity
-    
+    Toast = autoclass("android.widget.Toast")
+    String = autoclass("java.lang.String")
+    CharSequence = autoclass("java.lang.CharSequence")
+    context = PythonActivity.mActivity
+
     @run_on_ui_thread
     def show_toast(text, length):
-        t= Toast.makeText(context, text, length)
+        t = Toast.makeText(context, text, length)
         t.show()
 
+
 else:
-    '''
+    """
     After tweaking a little bit with opencv camera, it's possible to make camera
     go on and off as required while the app is still running.
-    
+
     Other camera provider such as `gi` has some issue upon closing the camera.
     by setting KIVY_CAMERA environment variable before importing kivy, we are forcing it to use opencv camera provider.
-    '''
-    environ['KIVY_CAMERA']='opencv'
+    """
+    environ["KIVY_CAMERA"] = "opencv"
 
 import os
 import time
@@ -117,17 +120,14 @@ from kivymd.uix.list import (
     OneLineAvatarIconListItem,
     OneLineListItem
 )
+
 # from kivymd.uix.navigationdrawer import (
 #     MDNavigationDrawer,
 #     NavigationDrawerHeaderBase
 # )
 from kivymd.uix.selectioncontrol import MDCheckbox, MDSwitch
 from kivymd.uix.chip import MDChip
-from kivy.uix.screenmanager import (
-    RiseInTransition,
-    SlideTransition,
-    FallOutTransition
-)
+from kivy.uix.screenmanager import RiseInTransition, SlideTransition, FallOutTransition
 
 import queues
 from semaphores import kivyuisignaler
@@ -139,19 +139,32 @@ from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.effects.dampedscroll import DampedScrollEffect
 
-if platform != 'android':
-    from pyzbar.pyzbar import ZBarSymbol
-    from kivy_garden.zbarcam import ZBarCam
+
+if platform != "android":
     from kivy.config import Config
-    Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+
+    Config.set("input", "mouse", "mouse, multitouch_on_demand")
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
 
 KVFILES = [
-    'settings', 'popup', 'allmails', 'draft',
-    'maildetail', 'common_widgets', 'addressbook',
-    'myaddress', 'composer', 'payment', 'sent',
-    'network', 'login', 'credits', 'trash', 'inbox',
-    'chat_room', 'chat_list'
+    "settings",
+    "popup",
+    "allmails",
+    "draft",
+    "maildetail",
+    "common_widgets",
+    "addressbook",
+    "myaddress",
+    "composer",
+    "payment",
+    "sent",
+    "network",
+    "login",
+    "credits",
+    "trash",
+    "inbox",
+    "chat_room",
+    "chat_list"
 ]
 
 ThemeClsColor = [0.12, 0.58, 0.95, 1]
@@ -161,6 +174,7 @@ def toast(text):
     """Method will display the toast message"""
     # pylint: disable=redefined-outer-name
     from kivymd.toast.kivytoast import toast
+
     toast(text)
     return
 
@@ -176,9 +190,11 @@ def ShowTimeHistoy(act_time):
     crnt_date = datetime.now()
     duration = crnt_date - action_time
     display_data = (
-        action_time.strftime('%d/%m/%Y')
-        if duration.days >= 365 else action_time.strftime('%I:%M %p').lstrip('0')
-        if duration.days == 0 and crnt_date.strftime('%d/%m/%Y') == action_time.strftime('%d/%m/%Y')
+        action_time.strftime("%d/%m/%Y")
+        if duration.days >= 365
+        else action_time.strftime("%I:%M %p").lstrip("0")
+        if duration.days == 0
+        and crnt_date.strftime("%d/%m/%Y") == action_time.strftime("%d/%m/%Y")
         else action_time.strftime("%d %b")
     )
     return display_data
@@ -188,9 +204,10 @@ def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
     """This method is used to create TimeWidget"""
     action_time = TimeTagRightSampleWidget(
         text=str(ShowTimeHistoy(time)),
-        font_style='Caption',
-        size=[120, 140] if platform == 'android' else [64, 80])
-    action_time.font_size = '11sp'
+        font_style="Caption",
+        size=[120, 140] if platform == "android" else [64, 80],
+    )
+    action_time.font_size = "11sp"
     return action_time
 
 
@@ -198,10 +215,13 @@ def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
     # obj.size_hint = (None, None)
-    obj.size_hint = (.16 if platform == 'android' else .07, None)
+    obj.size_hint = (0.16 if platform == "android" else 0.07, None)
     obj.label = text
-    obj.icon = ''
-    obj.pos_hint = {'center_x': .91 if platform == 'android' else .94, 'center_y': .3}
+    obj.icon = ""
+    obj.pos_hint = {
+        "center_x": 0.91 if platform == "android" else 0.94,
+        "center_y": 0.3
+    }
     obj.height = dp(18)
     obj.radius = 8
     return obj
@@ -222,7 +242,7 @@ class Inbox(Screen):
     @staticmethod
     def set_defaultAddress():
         """This method set's default address"""
-        if state.association == '':
+        if state.association == "":
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
 
@@ -236,42 +256,51 @@ class Inbox(Screen):
         self.account = state.association
         if state.searcing_text:
             self.children[2].children[0].children[0].scroll_y = 1.0
-            where = ['subject', 'message']
+            where = ["subject", "message"]
             what = state.searcing_text
-        xAddress = 'toaddress'
+        xAddress = "toaddress"
         data = []
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.identi_tag.children[0].text = ""
         self.inboxDataQuery(xAddress, where, what)
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.identi_tag.children[0].text = ""
         if self.queryreturn:
-            self.ids.identi_tag.children[0].text = 'Inbox'
+            self.ids.identi_tag.children[0].text = "Inbox"
             state.kivyapp.get_inbox_count()
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
                 # third_text = mail[3].replace('\n', ' ')
                 body = mail[3].decode() if isinstance(mail[3], bytes) else mail[3]
                 subject = mail[5].decode() if isinstance(mail[5], bytes) else mail[5]
-                data.append({
-                    'text': mail[4].strip(),
-                    'secondary_text': (subject[:50] + '........' if len(
-                        subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace(
-                            '\t', '').replace('  ', ''),
-                    'msgid': mail[1], 'received': mail[6]})
+                data.append(
+                    {
+                        "text": mail[4].strip(),
+                        "secondary_text": (
+                            subject[:50] + "........"
+                            if len(subject) >= 50
+                            else (subject + "," + body)[0:50] + "........"
+                        )
+                        .replace("\t", "")
+                        .replace("  ", ""),
+                        "msgid": mail[1],
+                        "received": mail[6]
+                    }
+                )
 
             self.has_refreshed = True
             self.set_mdList(data)
-            self.children[2].children[0].children[0].bind(
-                scroll_y=self.check_scroll_y)
+            self.children[2].children[0].children[0].bind(scroll_y=self.check_scroll_y)
         else:
-            self.set_inboxCount('0')
+            self.set_inboxCount("0")
             content = MDLabel(
-                font_style='Caption',
-                theme_text_color='Primary',
-                text="No message found!" if state.searcing_text
+                font_style="Caption",
+                theme_text_color="Primary",
+                text="No message found!"
+                if state.searcing_text
                 else "yet no message for this account!!!!!!!!!!!!!",
-                halign='center',
+                halign="center",
                 size_hint_y=None,
-                valign='top')
+                valign="top"
+            )
             self.ids.ml.add_widget(content)
 
     def set_inboxCount(self, msgCnt):  # pylint: disable=no-self-use
