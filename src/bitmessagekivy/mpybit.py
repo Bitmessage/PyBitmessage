@@ -371,24 +371,27 @@ class Inbox(Screen):
         """This method is used to load more data on scroll down"""
         data = []
         if state.searcing_text:
-            where = ['subject', 'message']
+            where = ["subject", "message"]
             what = state.searcing_text
-        self.inboxDataQuery('toaddress', where, what, total_message, 5)
+        self.inboxDataQuery("toaddress", where, what, total_message, 5)
         for mail in self.queryreturn:
             # third_text = mail[3].replace('\n', ' ')
             subject = mail[3].decode() if isinstance(mail[3], bytes) else mail[3]
             body = mail[5].decode() if isinstance(mail[5], bytes) else mail[5]
-            data.append({
-                'text': mail[4].strip(),
-                'secondary_text': body[:50] + '........' if len(
-                    body) >= 50 else (body + ',' + subject.replace(
-                        '\n', ''))[0:50] + '........',
-                'msgid': mail[1]})
+            data.append(
+                {
+                    "text": mail[4].strip(),
+                    "secondary_text": body[:50] + "........"
+                    if len(body) >= 50
+                    else (body + "," + subject.replace("\n", ""))[0:50] + "........",
+                    "msgid": mail[1]
+                }
+            )
         self.set_mdList(data)
 
     def inbox_detail(self, msg_id, *args):
         """Load inbox page details"""
-        state.detailPageType = 'inbox'
+        state.detailPageType = "inbox"
         state.mail_id = msg_id
         if self.manager:
             src_mng_obj = self.manager
@@ -396,34 +399,34 @@ class Inbox(Screen):
             src_mng_obj = self.parent.parent
         src_mng_obj.screens[13].clear_widgets()
         src_mng_obj.screens[13].add_widget(MailDetail())
-        src_mng_obj.current = 'mailDetail'
+        src_mng_obj.current = "mailDetail"
 
     def delete(self, data_index, instance, *args):
         """Delete inbox mail from inbox listing"""
-        sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
+        sqlExecute("UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
         msg_count_objs = self.parent.parent.ids.content_drawer.ids
         if int(state.inbox_count) > 0:
-            msg_count_objs.inbox_cnt.children[0].children[0].text = showLimitedCnt(int(state.inbox_count) - 1)
-            msg_count_objs.trash_cnt.children[0].children[0].text = showLimitedCnt(int(state.trash_count) + 1)
-            msg_count_objs.allmail_cnt.children[0].children[0].text = showLimitedCnt(int(state.all_count) - 1)
-            state.inbox_count = str(
-                int(state.inbox_count) - 1)
-            state.trash_count = str(
-                int(state.trash_count) + 1)
-            state.all_count = str(
-                int(state.all_count) - 1)
+            msg_count_objs.inbox_cnt.children[0].children[0].text = showLimitedCnt(
+                int(state.inbox_count) - 1
+            )
+            msg_count_objs.trash_cnt.children[0].children[0].text = showLimitedCnt(
+                int(state.trash_count) + 1
+            )
+            msg_count_objs.allmail_cnt.children[0].children[0].text = showLimitedCnt(
+                int(state.all_count) - 1
+            )
+            state.inbox_count = str(int(state.inbox_count) - 1)
+            state.trash_count = str(int(state.trash_count) + 1)
+            state.all_count = str(int(state.all_count) - 1)
             if int(state.inbox_count) <= 0:
-                self.ids.identi_tag.children[0].text = ''
-        self.ids.ml.remove_widget(
-            instance.parent.parent)
-        toast('Deleted')
+                self.ids.identi_tag.children[0].text = ""
+        self.ids.ml.remove_widget(instance.parent.parent)
+        toast("Deleted")
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing"""
-        sqlExecute(
-            "UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
+        sqlExecute("UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
         self.ids.ml.remove_widget(instance.parent.parent)
         self.update_trash()
 
@@ -439,20 +442,23 @@ class Inbox(Screen):
     def refresh_callback(self, *args):
         """Method updates the state of application,
         While the spinner remains on the screen"""
+
         def refresh_callback(interval):
             """Method used for loading the inbox screen data"""
-            state.searcing_text = ''
-            self.children[2].children[1].ids.search_field.text = ''
+            state.searcing_text = ""
+            self.children[2].children[1].ids.search_field.text = ""
             self.ids.ml.clear_widgets()
             self.loadMessagelist(state.association)
             self.has_refreshed = True
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
+
         Clock.schedule_once(refresh_callback, 1)
 
 
 class CustomTwoLineAvatarIconListItem(TwoLineAvatarIconListItem):
     """Custom Two Line Avatar Icon List"""
+
     pass
 
 
