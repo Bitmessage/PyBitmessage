@@ -311,33 +311,39 @@ class Inbox(Screen):
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used for retrieving inbox data"""
         self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, self.account, "inbox", where, what,
-            False, start_indx, end_indx)
+            xAddress, self.account, "inbox", where, what, False, start_indx, end_indx
+        )
 
     def set_mdList(self, data):
         """This method is used to create the mdList"""
         total_message = len(self.ids.ml.children)
         for item in data:
             meny = TwoLineAvatarIconListItem(
-                text=item['text'], secondary_text=item['secondary_text'],
-                theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text=item["text"],
+                secondary_text=item["secondary_text"],
+                theme_text_color="Custom",
+                text_color=NavigateApp().theme_cls.primary_color
+            )
             meny._txt_right_pad = dp(70)
-            meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
-                    avatarImageFirstLetter(item['secondary_text'].strip()))))
-            meny.bind(on_press=partial(self.inbox_detail, item['msgid']))
-            meny.add_widget(AddTimeWidget(item['received']))
-            carousel = Carousel(direction='right')
+            meny.add_widget(
+                AvatarSampleWidget(
+                    source="./images/text_images/{}.png".format(
+                        avatarImageFirstLetter(item["secondary_text"].strip())
+                    )
+                )
+            )
+            meny.bind(on_press=partial(self.inbox_detail, item["msgid"]))
+            meny.add_widget(AddTimeWidget(item["received"]))
+            carousel = Carousel(direction="right")
             carousel.height = meny.height
             carousel.size_hint_y = None
             carousel.ignore_perpendicular_swipes = True
             carousel.data_index = 0
             carousel.min_move = 0.2
-            del_btn = Button(text='Delete')
-            del_btn.background_normal = ''
+            del_btn = Button(text="Delete")
+            del_btn.background_normal = ""
             del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(self.delete, item['msgid']))
+            del_btn.bind(on_press=partial(self.delete, item["msgid"]))
             carousel.add_widget(del_btn)
             carousel.add_widget(meny)
             # ach_btn = Button(text='Achieve')
@@ -351,8 +357,10 @@ class Inbox(Screen):
 
     def check_scroll_y(self, instance, somethingelse):
         """Loads data on scroll"""
-        if self.children[2].children[0].children[
-                0].scroll_y <= -0.0 and self.has_refreshed:
+        if (
+            self.children[2].children[0].children[0].scroll_y <= -0.0
+            and self.has_refreshed
+        ):
             self.children[2].children[0].children[0].scroll_y = 0.06
             total_message = len(self.ids.ml.children)
             self.update_inbox_screen_on_scroll(total_message)
