@@ -88,7 +88,7 @@ def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
         queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, 1,
-            SUPPORT_MY_LABEL.toUtf8(),
+            str(SUPPORT_MY_LABEL.toUtf8()),
             1, "", False,
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes
