@@ -193,8 +193,7 @@ def ShowTimeHistoy(act_time):
         action_time.strftime("%d/%m/%Y")
         if duration.days >= 365
         else action_time.strftime("%I:%M %p").lstrip("0")
-        if duration.days == 0
-        and crnt_date.strftime("%d/%m/%Y") == action_time.strftime("%d/%m/%Y")
+        if duration.days == 0 and crnt_date.strftime("%d/%m/%Y") == action_time.strftime("%d/%m/%Y")
         else action_time.strftime("%d %b")
     )
     return display_data
@@ -358,8 +357,7 @@ class Inbox(Screen):
     def check_scroll_y(self, instance, somethingelse):
         """Loads data on scroll"""
         if (
-            self.children[2].children[0].children[0].scroll_y <= -0.0
-            and self.has_refreshed
+            self.children[2].children[0].children[0].scroll_y <= -0.0 and self.has_refreshed
         ):
             self.children[2].children[0].children[0].scroll_y = 0.06
             total_message = len(self.ids.ml.children)
@@ -2589,8 +2587,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         # sender_name = BMConfigParser().get(data[0][1], 'label')
         sender_name = data[0][1]
         composer_obj.body.text = (
-            '\n\n --------------On ' + time_tag + ', '
-            + sender_name + ' wrote:--------------\n' + data[0][3])
+            '\n\n --------------On ' + time_tag + ', ' + sender_name + ' wrote:--------------\n' + data[0][3])
         composer_obj.body.focus = True
         composer_obj.body.cursor = (0, 0)
         state.kivyapp.root.ids.sc3.children[1].ids.rv.data = ''
