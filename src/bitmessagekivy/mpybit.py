@@ -1080,23 +1080,30 @@ class Payment(Screen):
                 payloadLengthExtraBytes))
             toast('hidden payment address Creating for buying subscription....')
 
+
 class Category(BoxLayout, RectangularElevationBehavior):
-    elevation_normal= .01
+    elevation_normal = .01
+
 
 class ProductLayout(BoxLayout, RectangularElevationBehavior):
-    elevation_normal= .01
+    elevation_normal = .01
+
 
 class PaymentMethodLayout(BoxLayout):
     pass
 
+
 class ListItemWithLabel(OneLineAvatarIconListItem):
     pass
+
 
 class RightLabel(IRightBodyTouch, MDLabel):
     pass
 
+
 class HomeScreen(Screen):
     pass
+
 
 class Credits(Screen):
     """Credits Method"""
@@ -2281,22 +2288,23 @@ class NavigateApp(MDApp):
         #     self.root.ids.sc7.ids.add_random_bx.clear_widgets()
 
     def open_payment_layout(self, sku):
-        pml= PaymentMethodLayout()
-        self.product_id= sku
-        self.custom_sheet= MDCustomBottomSheet(screen= pml)
+        pml = PaymentMethodLayout()
+        self.product_id = sku
+        self.custom_sheet = MDCustomBottomSheet(screen=pml)
         self.custom_sheet.open()
 
     def initiate_purchase(self, method_name):
-        #self.custom_sheet.dismiss()
+        # self.custom_sheet.dismiss()
         print("Purchasing {} through {}".format(self.product_id, method_name))
 
     def _after_scan(self, text):
-        if platform=='android':
-            text= cast(CharSequence, String(text))
-            show_toast(text,Toast.LENGTH_SHORT)
+        if platform == 'android':
+            text = cast(CharSequence, String(text))
+            show_toast(text, Toast.LENGTH_SHORT)
         else:
             self.root.ids.sc3.children[1].ids.txt_input.text = text
             self.root.ids.scr_mngr.current = 'create'
+
 
 class GrashofPopup(Popup):
     """Moule for save contacts and error messages"""
@@ -2412,8 +2420,10 @@ class GrashofPopup(Popup):
             text = "Some data encoded in the address is malformed."
         return text
 
+
 class InfoLayout(BoxLayout, RectangularElevationBehavior):
     pass
+
 
 class AvatarSampleWidget(ILeftBody, Image):
     """Avatar Sample Widget"""
