@@ -15,7 +15,8 @@ import socket
 import subprocess
 import time
 from binascii import hexlify, unhexlify
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler, \
+    SimpleXMLRPCServer
 from struct import pack
 
 import defaults
