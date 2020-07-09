@@ -553,8 +553,9 @@ class MyAddress(Screen):
             my_addresses = len(self.ids.ml.children)
             if my_addresses != len(self.addresses_list):
                 self.update_addressBook_on_scroll(my_addresses)
-            self.has_refreshed = True if my_addresses != len(
-                self.addresses_list) else False
+            self.has_refreshed = (
+                True if my_addresses != len(self.addresses_list) else False
+            )
         else:
             pass
 
@@ -565,16 +566,19 @@ class MyAddress(Screen):
     # @staticmethod
     def myadd_detail(self, fromaddress, label, *args):
         """Load myaddresses details"""
-        if BMConfigParser().get(fromaddress, 'enabled') == 'true':
+        if BMConfigParser().get(fromaddress, "enabled") == "true":
             p = MyaddDetailPopup()
             p.open()
             p.set_address(fromaddress, label)
         else:
-            width = .8 if platform == 'android' else .55
+            width = 0.8 if platform == "android" else 0.55
             msg_dialog = MDDialog(
-                text='Address is not currently active. Please click on Toggle button to active it.',
-                title='', size_hint=(width, .25), text_button_ok='Ok',
-                events_callback=self.callback_for_menu_items)
+                text="Address is not currently active. Please click on Toggle button to active it.",
+                title="",
+                size_hint=(width, 0.25),
+                text_button_ok="Ok",
+                events_callback=self.callback_for_menu_items
+            )
             msg_dialog.open()
 
     @staticmethod
@@ -726,8 +730,9 @@ class AddressBook(Screen):
             exist_addresses = len(self.ids.ml.children)
             if exist_addresses != len(self.queryreturn):
                 self.update_addressBook_on_scroll(exist_addresses)
-            self.has_refreshed = True if exist_addresses != len(
-                self.queryreturn) else False
+            self.has_refreshed = (
+                True if exist_addresses != len(self.queryreturn) else False
+            )
         else:
             pass
 
@@ -754,14 +759,15 @@ class AddressBook(Screen):
         self.ids.ml.remove_widget(instance.parent.parent)
         # if len(self.ids.ml.children) == 0:
         if self.ids.ml.children is not None:
-            self.ids.identi_tag.children[0].text = ''
-        sqlExecute(
-            "DELETE FROM  addressbook WHERE address = '{}';".format(address))
+            self.ids.identi_tag.children[0].text = ""
+        sqlExecute("DELETE FROM  addressbook WHERE address = '{}';".format(address))
 
 
 class SelectableRecycleBoxLayout(
-        FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout):
+    FocusBehavior, LayoutSelectionBehavior, RecycleBoxLayout
+):
     """Adds selection and focus behaviour to the view"""
+
     # pylint: disable = duplicate-bases
 
     pass
@@ -777,8 +783,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
     def refresh_view_attrs(self, rv, index, data):
         """Catch and handle the view changes"""
         self.index = index
-        return super(SelectableLabel, self).refresh_view_attrs(
-            rv, index, data)
+        return super(SelectableLabel, self).refresh_view_attrs(rv, index, data)
 
     def on_touch_down(self, touch):  # pylint: disable=inconsistent-return-statements
         """Add selection on touch down"""
@@ -793,7 +798,8 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         if is_selected:
             print("selection changed to {0}".format(rv.data[index]))
             rv.parent.txt_input.text = rv.parent.txt_input.text.replace(
-                rv.parent.txt_input.text, rv.data[index]['text'])
+                rv.parent.txt_input.text, rv.data[index]["text"]
+            )
 
 
 class RV(RecycleView):
@@ -806,6 +812,7 @@ class RV(RecycleView):
 
 class DropDownWidget(BoxLayout):
     """Adding Dropdown Widget"""
+
     # pylint: disable=too-many-statements
 
     txt_input = ObjectProperty()
@@ -821,13 +828,13 @@ class DropDownWidget(BoxLayout):
         print("message: ", self.ids.body.text)
         sendMessageToPeople = True
         if sendMessageToPeople:
-            if toAddress != '' and subject and message:
-                status, addressVersionNumber, streamNumber, ripe = (
-                    decodeAddress(toAddress))
-                if status == 'success':
+            if toAddress != "" and subject and message:
+                status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                    toAddress
+                )
+                if status == "success":
                     navApp.root.ids.sc3.children[0].active = True
-                    if state.detailPageType == 'draft' \
-                            and state.send_draft_mail:
+                    if state.detailPageType == "draft" and state.send_draft_mail:
                         sqlExecute(
                             "UPDATE sent SET toaddress = ?"
                             ", fromaddress = ? , subject = ?"
@@ -912,15 +919,18 @@ class DropDownWidget(BoxLayout):
         state.kivyapp.root.ids.sc3.children[0].active = False
         state.in_sent_method = True
         state.kivyapp.back_press()
-        toast('sent')
+        toast("sent")
 
     def address_error_message(self, msg):
         """Generates error message"""
-        width = .8 if platform == 'android' else .55
+        width = 0.8 if platform == "android" else 0.55
         msg_dialog = MDDialog(
             text=msg,
-            title='', size_hint=(width, .25), text_button_ok='Ok',
-            events_callback=self.callback_for_menu_items)
+            title="",
+            size_hint=(width, 0.25),
+            text_button_ok="Ok",
+            events_callback=self.callback_for_menu_items
+        )
         msg_dialog.open()
 
     @staticmethod
@@ -930,11 +940,11 @@ class DropDownWidget(BoxLayout):
 
     def reset_composer(self):
         """Method will reset composer"""
-        self.ids.ti.text = ''
-        self.ids.btn.text = 'Select'
-        self.ids.txt_input.text = ''
-        self.ids.subject.text = ''
-        self.ids.body.text = ''
+        self.ids.ti.text = ""
+        self.ids.btn.text = "Select"
+        self.ids.txt_input.text = ""
+        self.ids.subject.text = ""
+        self.ids.body.text = ""
         toast("Reset message")
 
     def auto_fill_fromaddr(self):
@@ -946,57 +956,60 @@ class DropDownWidget(BoxLayout):
         """This method is used for scanning Qr code"""
         pass
 
+
 class ScanScreen(Screen):
-   def on_pre_enter(self):
-       '''
+    def on_pre_enter(self):
+        """
        on_pre_enter works little better on android
        It affects screen transition on linux
-       '''
-       if not self.children:
-           tmp= Builder.load_file(os.path.join(os.path.dirname(__file__), "kv/{}.kv").format('scanner'))
-           self.add_widget(tmp)
-       if platform=='android':
-           Clock.schedule_once(self.start_camera, 0)
-   
-   def on_enter(self):
-       '''
+       """
+        if not self.children:
+            tmp = Builder.load_file(
+                os.path.join(os.path.dirname(__file__), "kv/{}.kv").format("scanner")
+            )
+            self.add_widget(tmp)
+        if platform == "android":
+            Clock.schedule_once(self.start_camera, 0)
+
+    def on_enter(self):
+        """
        on_enter works better on linux
        It creates a black screen on android until camera gets loaded
-       '''
-       #print(self.children)
-       if platform!='android':
-           #pass
-           Clock.schedule_once(self.start_camera, 0)
-   
-   def on_leave(self):
-       #pass
+       """
+        # print(self.children)
+        if platform != "android":
+            # pass
+            Clock.schedule_once(self.start_camera, 0)
 
-       Clock.schedule_once(self.stop_camera, 0)
-   
-   def start_camera(self, *args):
-       self.xcam= self.children[0].ids.zbarcam.ids.xcamera
-       #pass
-       #self.xxx= self.children[0].ids.zbarcam.ids.xcamera
-       #print(self.cam._device.isOpened())
-       if platform=='android':
-           self.xcam.play= True
-           
-       else:
-           Clock.schedule_once(self.open_cam, 0)
-       
-   
-   def stop_camera(self, *args):
-       #print(self.children[0].ids.zbarcam.ids.xcamera.play)
-       self.xcam.play= False
-       #self.xcam._camera.stop()
-       #self.children[0].ids.zbarcam.stop()
-       if platform != 'android':
-           self.xcam._camera._device.release()
-   
-   def open_cam(self, *args):
-       if not self.xcam._camera._device.isOpened():
-           self.xcam._camera._device.open(self.xcam._camera._index)
-       self.xcam.play= True
+    def on_leave(self):
+        # pass
+
+        Clock.schedule_once(self.stop_camera, 0)
+
+    def start_camera(self, *args):
+        self.xcam = self.children[0].ids.zbarcam.ids.xcamera
+        # pass
+        # self.xxx= self.children[0].ids.zbarcam.ids.xcamera
+        # print(self.cam._device.isOpened())
+        if platform == "android":
+            self.xcam.play = True
+
+        else:
+            Clock.schedule_once(self.open_cam, 0)
+
+    def stop_camera(self, *args):
+        # print(self.children[0].ids.zbarcam.ids.xcamera.play)
+        self.xcam.play = False
+        # self.xcam._camera.stop()
+        # self.children[0].ids.zbarcam.stop()
+        if platform != "android":
+            self.xcam._camera._device.release()
+
+    def open_cam(self, *args):
+        if not self.xcam._camera._device.isOpened():
+            self.xcam._camera._device.open(self.xcam._camera._index)
+        self.xcam.play = True
+
 
 class MyTextInput(TextInput):
     """Takes the text input in the field"""
