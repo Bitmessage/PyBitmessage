@@ -15,7 +15,8 @@ import socket
 import subprocess
 import time
 from binascii import hexlify, unhexlify
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler, \
+    SimpleXMLRPCServer
 from struct import pack
 
 import defaults
@@ -1226,7 +1227,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
         with threads.printLock:
-            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
+            print('(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce)
             try:
                 print(
                     'POW took', int(time.time() - powStartTime),
@@ -1245,7 +1246,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             int(time.time()) + TTL, ''
         )
         with threads.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
+            print('Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
@@ -1299,7 +1300,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
         with threads.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
+            print('broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash))
         queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):

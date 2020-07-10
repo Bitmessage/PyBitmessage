@@ -5,7 +5,6 @@ Bitmessage android(mobile) interface
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
 # pylint: disable=protected-access
 
-
 from sys import platform as _sys_platform
 from os import environ
 
@@ -111,6 +110,7 @@ from kivy.utils import platform
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.list import (
     ILeftBody,
     ILeftBodyTouch,
@@ -134,13 +134,11 @@ from semaphores import kivyuisignaler
 
 import state
 from addresses import decodeAddress
-from kivy.uix.modalview import ModalView
 from datetime import datetime
 from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.effects.dampedscroll import DampedScrollEffect
-from kivy_garden.zbarcam import ZBarCam
-from pyzbar.pyzbar import ZBarSymbol
+
 
 if platform != "android":
     from kivy.config import Config
@@ -168,6 +166,8 @@ KVFILES = [
     "chat_room",
     "chat_list"
 ]
+
+ThemeClsColor = [0.12, 0.58, 0.95, 1]
 
 
 def toast(text):
@@ -519,14 +519,14 @@ class MyAddress(Screen):
             meny = CustomTwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
-                text_color=NavigateApp().theme_cls.primary_color,)
+                text_color=ThemeClsColor,)
             meny._txt_right_pad = dp(70)
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
                 meny.canvas.children[9].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
+                source= state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
@@ -536,7 +536,7 @@ class MyAddress(Screen):
                     size=[85 if platform == 'android' else 50, 60],
                     text='Active', halign='center',
                     font_style='Body1', theme_text_color='Custom',
-                    text_color=NavigateApp().theme_cls.primary_color
+                    text_color=ThemeClsColor
                 )
                 badge_obj.font_size = '13sp'
                 meny.add_widget(badge_obj)
@@ -569,20 +569,26 @@ class MyAddress(Screen):
             p.open()
             p.set_address(fromaddress, label)
         else:
-            width = 0.8 if platform == "android" else 0.55
-            msg_dialog = MDDialog(
-                text="Address is not currently active. Please click on Toggle button to active it.",
-                title="",
-                size_hint=(width, 0.25),
-                text_button_ok="Ok",
-                events_callback=self.callback_for_menu_items
-            )
-            msg_dialog.open()
+            width = .8 if platform == 'android' else .55
+            dialog_box=MDDialog(
+            text='Address is not currently active. Please click on Toggle button to active it.',
+            size_hint=(width, .25),
+            buttons=[
+                MDFlatButton(
+                    text="Ok", on_release=lambda x: callback_for_menu_items("Ok")
+                ),
+            ],)
+            dialog_box.open()
 
-    @staticmethod
-    def callback_for_menu_items(text_item, *arg):
-        """Callback of alert box"""
-        toast(text_item)
+        def callback_for_menu_items(text_item, *arg):
+            """Callback of alert box"""
+            dialog_box.dismiss()
+            toast(text_item)
+
+    # @staticmethod
+    # def callback_for_menu_items(text_item, *arg):
+    #     """Callback of alert box"""
+    #     toast(text_item)
 
     def refresh_callback(self, *args):
         """Method updates the state of application,
@@ -700,9 +706,9 @@ class AddressBook(Screen):
         for item in self.queryreturn[start_index:end_index]:
             meny = TwoLineAvatarIconListItem(
                 text=item[0], secondary_text=item[1], theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=ThemeClsColor)
             meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
+                source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item[0].strip()))))
             meny.bind(on_press=partial(
                 self.addBook_detail, item[1], item[0]))
@@ -921,20 +927,27 @@ class DropDownWidget(BoxLayout):
 
     def address_error_message(self, msg):
         """Generates error message"""
-        width = 0.8 if platform == "android" else 0.55
-        msg_dialog = MDDialog(
+        width = .8 if platform == 'android' else .55
+        dialog_box=MDDialog(
             text=msg,
-            title="",
-            size_hint=(width, 0.25),
-            text_button_ok="Ok",
-            events_callback=self.callback_for_menu_items
-        )
-        msg_dialog.open()
+            size_hint=(width, .25),
+            buttons=[
+                MDFlatButton(
+                    text="Ok", on_release=lambda x: callback_for_menu_items("Ok")
+                ),
+            ],)
+        dialog_box.open()
 
-    @staticmethod
-    def callback_for_menu_items(text_item, *arg):
-        """Callback of alert box"""
-        toast(text_item)
+        def callback_for_menu_items(text_item, *arg):
+            """Callback of alert box"""
+            dialog_box.dismiss()
+            toast(text_item)
+
+
+    # @staticmethod
+    # def callback_for_menu_items(text_item, *arg):
+    #     """Callback of alert box"""
+    #     toast(text_item)
 
     def reset_composer(self):
         """Method will reset composer"""
@@ -1190,9 +1203,8 @@ class Random(Screen):
         entered_label = str(self.ids.lab.text).strip()
         if not entered_label:
             self.ids.lab.focus = True
-            # self.ids.add_random_bx.children[0].ids.label.focus = True
-            # self.ids.label.error = True
-            # self.ids.label.helper_text = 'This field is required'
+            #self.ids.lab.error = True
+            #self.ids.lab.helper_text = 'This field is required'
         streamNumberForAddress = 1
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
@@ -1327,10 +1339,10 @@ class Sent(Screen):
             meny = TwoLineAvatarIconListItem(
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=ThemeClsColor)
             meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
+                source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
             meny.bind(on_press=partial(self.sent_detail, item['ackdata']))
             meny.add_widget(AddTimeWidget(item['senttime']))
@@ -1546,9 +1558,9 @@ class Trash(Screen):
                 secondary_text=(item[2][:50] + '........' if len(
                     subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=ThemeClsColor)
             meny._txt_right_pad = dp(70)
-            img_latter = './images/text_images/{}.png'.format(
+            img_latter =state.imageDir + '/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
             meny.add_widget(AddTimeWidget(item[7]))
@@ -1601,22 +1613,34 @@ class Trash(Screen):
     def delete_confirmation(self):
         """Show confirmation delete popup"""
         width = .8 if platform == 'android' else .55
-        delete_msg_dialog = MDDialog(
+        dialog_box=MDDialog(
             text='Are you sure you want to delete this'
             ' message permanently from trash?',
-            title='',
             size_hint=(width, .25),
-            text_button_ok='Yes',
-            text_button_cancel='No',
-            events_callback=self.callback_for_delete_msg)
-        delete_msg_dialog.open()
+            buttons=[
+                MDFlatButton(
+                    text="Yes", on_release=lambda x: callback_for_delete_msg("Yes")
+                ),
+                MDFlatButton(
+                    text="No",on_release=lambda x: callback_for_delete_msg("No"),
+                ),
+            ],)
+        dialog_box.open()
 
-    def callback_for_delete_msg(self, text_item, *arg):
-        """Getting the callback of alert box"""
-        if text_item == 'Yes':
-            self.delete_message_from_trash()
-        else:
-            toast(text_item)
+        def callback_for_delete_msg(text_item, *arg):
+            """Getting the callback of alert box"""
+            if text_item == 'Yes':
+                self.delete_message_from_trash()
+            else:
+                toast(text_item)
+            dialog_box.dismiss()
+
+    # def callback_for_delete_msg(self, text_item, *arg):
+    #     """Getting the callback of alert box"""
+    #     if text_item == 'Yes':
+    #         self.delete_message_from_trash()
+    #     else:
+    #         toast(text_item)
 
     def delete_message_from_trash(self):
         """Deleting message from trash"""
@@ -1687,6 +1711,10 @@ class NavigateApp(MDApp):
     imgstatus = False
     count = 0
     manager_open = False
+    file_manager = None
+    # state.imageDir = os.path.join(os.path.abspath(os.path.join(__file__ ,"../../..")),'images', 'kivy')
+    state.imageDir = os.path.join('./images', 'kivy')
+    image_path = state.imageDir
 
     def build(self):
         """Method builds the widget"""
@@ -1720,7 +1748,7 @@ class NavigateApp(MDApp):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data"""
-        if os.path.exists('./images/default_identicon/{}.png'.format(text)):
+        if os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(text)):
             self.load_selected_Image(text)
         else:
             self.set_identicon(text)
@@ -1734,7 +1762,15 @@ class NavigateApp(MDApp):
         for nav_obj in self.root.ids.content_drawer.children[
                 0].children[0].children[0].children:
             nav_obj.active = True if nav_obj.text == 'Inbox' else False
+        self.fileManagerSetting()
         Clock.schedule_once(self.setCurrentAccountData, 0.5)
+
+    def fileManagerSetting(self):
+        """This method is for file manager setting"""
+        if not self.root.ids.content_drawer.ids.file_manager.opacity and \
+                self.root.ids.content_drawer.ids.file_manager.disabled:
+            self.root.ids.content_drawer.ids.file_manager.opacity = 1
+            self.root.ids.content_drawer.ids.file_manager.disabled = False
 
     def setCurrentAccountData(self, dt=0):
         """This method set the current accout data on all the screens"""
@@ -1776,20 +1812,20 @@ class NavigateApp(MDApp):
         """Getting Default Account Data"""
         if BMConfigParser().addresses():
             img = identiconGeneration.generate(BMConfigParser().addresses()[0])
-            self.createFolder('./images/default_identicon/')
+            self.createFolder(state.imageDir + '/default_identicon/')
             if platform == 'android':
                 # android_path = os.path.expanduser
                 # ("~/user/0/org.test.bitapp/files/app/")
-                if not os.path.exists('./images/default_identicon/{}.png'.format(
+                if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
                         BMConfigParser().addresses()[0])):
                     android_path = os.path.join(
                         os.environ['ANDROID_PRIVATE'] + '/app/')
-                    img.texture.save('{1}/images/default_identicon/{0}.png'.format(
+                    img.texture.save('{1}/images/kivy/default_identicon/{0}.png'.format(
                         BMConfigParser().addresses()[0], android_path))
             else:
-                if not os.path.exists('./images/default_identicon/{}.png'.format(
+                if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
                         BMConfigParser().addresses()[0])):
-                    img.texture.save('./images/default_identicon/{}.png'.format(
+                    img.texture.save(state.imageDir + '/default_identicon/{}.png'.format(
                         BMConfigParser().addresses()[0]))
             return BMConfigParser().addresses()[0]
         return 'Select Address'
@@ -1807,17 +1843,17 @@ class NavigateApp(MDApp):
     def get_default_image():
         """Getting default image on address"""
         if BMConfigParser().addresses():
-            return './images/default_identicon/{}.png'.format(
+            return state.imageDir + '/default_identicon/{}.png'.format(
                 BMConfigParser().addresses()[0])
-        return './images/no_identicons.png'
+        return state.imageDir + '/no_identicons.png'
 
     @staticmethod
     def get_default_logo():
         """Getting default logo image"""
         if BMConfigParser().addresses():
-            return './images/default_identicon/{}.png'.format(
+            return state.imageDir + '/default_identicon/{}.png'.format(
                 BMConfigParser().addresses()[0])
-        return './images/drawer_logo1.png'
+        return state.imageDir + '/drawer_logo1.png'
 
     @staticmethod
     def addressexist():
@@ -2210,68 +2246,57 @@ class NavigateApp(MDApp):
         """This method open the file manager of local system"""
         from kivymd.uix.filemanager import MDFileManager
 
-        self.manager = ModalView(size_hint=(1, 1), auto_dismiss=False)
-        self.file_manager = MDFileManager(
-            exit_manager=self.exit_manager,
-            select_path=self.select_path,
-            previous=False,
-            ext=['.png', '.jpg']
-        )
-        self.manager.add_widget(self.file_manager)
-        # self.file_manager.show(os.environ["HOME"])
+        if not self.file_manager:
+            self.file_manager = MDFileManager(
+                exit_manager=self.exit_manager,
+                select_path=self.select_path,
+                ext=['.png', '.jpg']
+            )
+        self.file_manager.previous = False
+        self.file_manager.current_path = '/'
         if platform == 'android':
-            from android.permissions import request_permissions, Permission
-            request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
-
-            # from android.storage import app_storage_path
-            # settings_path = app_storage_path()
-            # print('path1................................', settings_path)
-
-            # from android.storage import primary_external_storage_path
-            # primary_ext_storage = primary_external_storage_path()
-            # print('path1................................', primary_ext_storage)
-
-            # from android.storage import secondary_external_storage_path
-            # secondary_ext_storage = secondary_external_storage_path()
-            # print('path1................................', secondary_ext_storage)
-
-        # from kivy.app import user_data_dir
-        # from os.path import dirname, join
-        # out = join(dirname(user_data_dir), 'DCIM')
-        # DCIM = join('/sdcard', 'DCIM')
-        self.file_manager.show(os.getenv('EXTERNAL_STORAGE') if platform == 'android' else os.environ["HOME"])
-        # self.file_manager.show(os.getenv('EXTERNAL_STORAGE'))
-        self.manager_open = True
-        self.manager.open()
+            from android.permissions import request_permissions, Permission, check_permission
+            if check_permission(Permission.WRITE_EXTERNAL_STORAGE) and \
+                    check_permission(Permission.READ_EXTERNAL_STORAGE):
+                self.file_manager.show(os.getenv('EXTERNAL_STORAGE'))
+                self.manager_open = True
+            else:
+                request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+        else:
+            self.file_manager.show(os.environ["HOME"])
+            self.manager_open = True
 
     def select_path(self, path):
         """This method is used to save the select image"""
-        from PIL import Image as PilImage
-        newImg = PilImage.open(path).resize((300, 300))
-        if platform == 'android':
-            android_path = os.path.join(
-                os.environ['ANDROID_PRIVATE'] + '/app/')
-            newImg.save('{1}/images/default_identicon/{0}.png'.format(
-                state.association, android_path))
-        else:
-            if not os.path.exists('./images/default_identicon/'):
-                os.makedirs('./images/default_identicon/')
-            newImg.save('./images/default_identicon/{0}.png'.format(state.association))
-        self.load_selected_Image(state.association)
+        try:
+            from PIL import Image as PilImage
+            newImg = PilImage.open(path).resize((300, 300))
+            if platform == 'android':
+                android_path = os.path.join(
+                    os.environ['ANDROID_PRIVATE'] + '/app/')
+                newImg.save('{1}/images/kivy/default_identicon/{0}.png'.format(
+                    state.association, android_path))
+            else:
+                if not os.path.exists(state.imageDir + '/default_identicon/'):
+                    os.makedirs(state.imageDir + '/default_identicon/')
+                newImg.save(state.imageDir + '/default_identicon/{0}.png'.format(state.association))
+            self.load_selected_Image(state.association)
+            toast('Image changed')
+        except Exception:
+            toast('Exit')
         self.exit_manager()
-        toast('Image changed')
 
     def exit_manager(self, *args):
         """Called when the user reaches the root of the directory tree."""
-        self.manager.dismiss()
         self.manager_open = False
+        self.file_manager.close()
 
     def load_selected_Image(self, curerentAddr):
         """This method load the selected image on screen"""
         top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
         # spinner_img_obj = self.root.ids.content_drawer.ids.btn.children[1]
         # spinner_img_obj.source = top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
-        top_box_obj.source = './images/default_identicon/{0}.png'.format(curerentAddr)
+        top_box_obj.source = state.imageDir + '/default_identicon/{0}.png'.format(curerentAddr)
         top_box_obj.reload()
         # spinner_img_obj.reload()
 
@@ -2506,8 +2531,8 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         if len(data[0]) == 7:
             self.status = data[0][4]
         self.time_tag = ShowTimeHistoy(data[0][4]) if state.detailPageType == 'inbox' else ShowTimeHistoy(data[0][6])
-        self.avatarImg = './images/avatar.png' if state.detailPageType == 'draft' else (
-            './images/text_images/{0}.png'.format(avatarImageFirstLetter(self.subject.strip())))
+        self.avatarImg = state.imageDir + '/avatar.png' if state.detailPageType == 'draft' else (
+            state.imageDir + '/text_images/{0}.png'.format(avatarImageFirstLetter(self.subject.strip())))
         self.timeinseconds = data[0][4] if state.detailPageType == 'inbox' else data[0][6]
 
     def delete_mail(self):
@@ -2737,7 +2762,10 @@ class ShowQRCode(Screen):
         """Method used for showing QR Code"""
         self.ids.qr.clear_widgets()
         state.kivyapp.set_toolbar_for_QrCode()
-        from kivy_garden.qrcode import QRCodeWidget
+        try:
+            from kivy.garden.qrcode import QRCodeWidget
+        except Exception as e:
+            from kivy_garden.qrcode import QRCodeWidget
         try:
             address = self.manager.get_parent_window().children[0].address
         except Exception:
@@ -2825,10 +2853,10 @@ class Draft(Screen):
             meny = TwoLineAvatarIconListItem(
                 text='Draft', secondary_text=item['text'],
                 theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=ThemeClsColor)
             meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
-                source='./images/avatar.png'))
+                source=state.imageDir + '/avatar.png'))
             meny.bind(on_press=partial(
                 self.draft_detail, item['ackdata']))
             meny.add_widget(AddTimeWidget(item['senttime']))
@@ -3028,10 +3056,10 @@ class Allmails(Screen):
                     subject) >= 50 else (
                         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
                 theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=ThemeClsColor)
             meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
+                source= state.imageDir +'/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
             meny.bind(on_press=partial(
                 self.mail_detail, item[5], item[4]))
@@ -3310,20 +3338,32 @@ class OneLineListTitle(OneLineListItem):
     def copymessageTitle(self, text):
         """this method is for displaying dialog box"""
         width = .8 if platform == 'android' else .55
-        msg_dialog = MDDialog(
+        dialog_box=MDDialog(
             text=text,
-            title='', size_hint=(width, .25),
-            text_button_cancel='Cancel',
-            text_button_ok='Copy',
-            events_callback=self.callback_for_copy_title)
-        msg_dialog.open()
+            size_hint=(width, .25),
+            buttons=[
+                MDFlatButton(
+                    text="Copy", on_release=lambda x: callback_for_copy_title(text)
+                ),
+                MDFlatButton(
+                    text="Cancel",on_release=lambda x: callback_for_copy_title(text),
+                ),
+            ],)
+        dialog_box.open()
 
-    @staticmethod
-    def callback_for_copy_title(text_item, *arg):
-        """Callback of alert box"""
-        if text_item == 'Copy':
-            Clipboard.copy(str(arg[0].text))
-        toast(text_item)
+        def callback_for_copy_title(text_item, *arg):
+            """Callback of alert box"""
+            if text_item == 'Copy':
+                Clipboard.copy()
+            dialog_box.dismiss()
+            toast(text_item)
+
+    # @staticmethod
+    # def callback_for_copy_title(text_item, *arg):
+    #     """Callback of alert box"""
+    #     if text_item == 'Copy':
+    #         Clipboard.copy(str(arg[0].text))
+    #     toast(text_item)
 
 
 class ToAddrBoxlayout(BoxLayout):
@@ -3404,9 +3444,9 @@ class ChatList(Screen):
         for item in self.queryreturn:
             meny = TwoLineAvatarIconListItem(
                 text=item[0], secondary_text=item[1], theme_text_color='Custom',
-                text_color=NavigateApp().theme_cls.primary_color)
+                text_color=ThemeClsColor)
             meny.add_widget(AvatarSampleWidget(
-                source='./images/text_images/{}.png'.format(
+                source= state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item[0].strip()))))
             meny.bind(on_release=partial(
                 self.redirect_to_chat, item[0], item[1]))

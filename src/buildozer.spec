@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = tor
+title = py3
 
 # (str) Package name
-package.name = tor
+package.name = py3
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.kel
+package.domain = org.test
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -48,7 +48,8 @@ requirements =
 	pillow,
 	bitmsghash,
 	#git+https://github.com/surbhicis/KivyMD-1.git,
-	git+https://github.com/surbhicis/KivyMD-1#egg=kivymd,
+	#git+https://github.com/surbhicis/KivyMD-1#egg=kivymd,
+	git+https://github.com/navjotcis/KivyMD#egg=kivymd,
 	kivy-garden, 
 	qrcode,
 	msgpack
@@ -194,6 +195,9 @@ android.sdk = 20
 # (list) Java classes to add as activities to the manifest.
 #android.add_activites = com.example.ExampleActivity
 
+# (str) python-for-android branch to use, defaults to stable
+# p4a.branch = master
+
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
 #android.ouya.category = GAME
@@ -235,7 +239,7 @@ android.sdk = 20
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.arch = arm64-v8a
+android.arch = armeabi-v7a
 
 #
 # Python for android (p4a) specific
@@ -248,10 +252,10 @@ android.arch = arm64-v8a
 p4a.branch = develop
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
-#p4a.source_dir =
+# p4a.source_dir = /home/cis/Music/androidp4a/python-for-android
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-p4a.local_recipes = /home/surbhi/Downloads/peter3/PyBitmessage/src/bitmessagekivy/android/python-for-android/recipes/
+p4a.local_recipes = %(source.dir)s/bitmessagekivy/android/python-for-android/recipes/
 
 # (str) Filename to the hook for p4a
 #p4a.hook =

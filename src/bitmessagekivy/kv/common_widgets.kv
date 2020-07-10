@@ -1,5 +1,5 @@
 <ArrowImg@Image>:
-    source: './images/down-arrow.png' if self.parent.is_open == True else './images/right-arrow.png'
+    source: app.image_path +('/down-arrow.png' if self.parent.is_open == True else '/right-arrow.png')
     size: 15, 15
     x: self.parent.x + self.parent.width - self.width - 5
     y: self.parent.y + self.parent.height/2 - self.height + 5

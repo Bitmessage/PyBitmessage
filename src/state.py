@@ -129,3 +129,5 @@ ackdataForWhichImWatching = {}
 
 thisapp = None
 """Singleton instance"""
+
+imageDir = None
