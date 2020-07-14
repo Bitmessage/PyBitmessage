@@ -137,90 +137,96 @@
 
 <Random>:
     name:"random"
+    ScrollView:
+        id:add_random_bx
+
+<RandomBoxlayout>:
+    orientation: "vertical"
+    #buttons-area-outer
     BoxLayout:
         orientation: "vertical"
-        id:add_random_bx
-        #buttons-area-outer
-        BoxLayout:
-            orientation: "vertical"
-            # padding: 0, dp(5), 0, dp(5)
-            # spacing: dp(5)
-            size_hint_y: .53
+        # padding: 0, dp(5), 0, dp(5)
+        # spacing: dp(5)
+        size_hint_y: .53
+        canvas:
+            Color:
+                rgba: 1,1,1,1 
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        #label area
+        AnchorLayout:
+            size_hint_y: None
+            height: dp(50)
+            MDLabel:
+                text: "Enter a label to generate address for:"
+                bold: True
+                halign: "center"
+                theme_text_color: "Custom"
+                text_color: .4,.4,.4,1
+
+        AnchorLayout:
+            size_hint_y: None
+            height: dp(40)
+            MDTextField:
+                id:lab
+                hint_text: "Label"
+                required: True
+                size_hint_x: None
+                width: dp(190)
+                helper_text_mode: "on_error"
+                # helper_text: "Please enter your label name"
+                on_text: app.root.ids.sc7.add_validation(self)
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
+
+        AnchorLayout:
+            MDFillRoundFlatIconButton:
+                icon: "chevron-double-right"
+                text: "Proceed Next"
+                on_release: app.root.ids.sc7.generateaddress(app)
+
+        Widget:
+
+    #info-area-outer
+    BoxLayout:
+        size_hint_y: .47
+        padding: dp(7)
+        InfoLayout:
+            orientation:"vertical"
+            padding: 0, dp(5), 0, dp(5)
             canvas:
                 Color:
-                    rgba: 1,1,1,1 
+                    rgba:1,1,1,1
                 Rectangle:
                     pos: self.pos
                     size: self.size
+                Color:
+                    rgba: app.theme_cls.primary_color   
+                Line:
+                    rounded_rectangle: (self.pos[0]+4, self.pos[1]+4, self.width-8,self.height-8, 10, 10, 10, 10, 50)
+                    width: dp(1)
+            ScreenManager:
+                id: info_screenmgr
 
-            #label area
-            AnchorLayout:
-                size_hint_y: None
-                height: dp(50)
-                MDLabel:
-                    text: "Enter a label to generate address for:"
-                    bold: True
-                    halign: "center"
-                    theme_text_color: "Custom"
-                    text_color: .4,.4,.4,1
+                Screen:
+                    name: "info2"
+                    ScrollView:
+                        bar_width:0
+                        do_scroll_x: False
 
-            AnchorLayout:
-                size_hint_y: None
-                height: dp(40)
-                MDTextField:
-                    id:lab
-                    hint_text: "Label"
-                    required: True
-                    size_hint_x: None
-                    width: dp(190)
-                    helper_text_mode: "on_error"
-                    helper_text: "Please enter your label name"
+                        BoxLayout:
+                            orientation: "vertical"
+                            size_hint_y: None
+                            height: self.minimum_height
 
-            AnchorLayout:
-                MDFillRoundFlatIconButton:
-                    icon: "chevron-double-right"
-                    text: "Proceed Next"
-                    on_release: app.root.ids.sc7.generateaddress(app)
-
-            Widget:
-
-        #info-area-outer
-        BoxLayout:
-            size_hint_y: .47
-            padding: dp(7)
-            InfoLayout:
-                orientation:"vertical"
-                padding: 0, dp(5), 0, dp(5)
-                canvas:
-                    Color:
-                        rgba:1,1,1,1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-                    Color:
-                        rgba: app.theme_cls.primary_color   
-                    Line:
-                        rounded_rectangle: (self.pos[0]+4, self.pos[1]+4, self.width-8,self.height-8, 10, 10, 10, 10, 50)
-                        width: dp(1)
-                ScreenManager:
-                    id: info_screenmgr
-
-                    Screen:
-                        name: "info2"
-                        ScrollView:
-                            bar_width:0
-                            do_scroll_x: False
-
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint_y: None
-                                height: self.minimum_height
-
-                                #note area
-                                ContentHead:
-                                    section_name: "NOTE:"
-                                ContentBody:
-                                    section_text: ("Here you may generate as many addresses as you like..Indeed creating and abandoning addresses is not encouraged.")
+                            #note area
+                            ContentHead:
+                                section_name: "NOTE:"
+                            ContentBody:
+                                section_text: ("Here you may generate as many addresses as you like..Indeed creating and abandoning addresses is not encouraged.")
 
 <Check@MDCheckbox>:
     group: 'group'
