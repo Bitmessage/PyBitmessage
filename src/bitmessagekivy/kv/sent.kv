@@ -4,6 +4,7 @@
         orientation: 'vertical'
         spacing: dp(5)
         SearchBar:
+            id: sent_search
         GridLayout:
             id: identi_tag
             padding: [20, 0, 0, 5]
@@ -11,6 +12,7 @@
             size_hint_y: None
             height: self.minimum_height
             MDLabel:
+                id: tag_label
                 text: ''
                 font_style: 'Subtitle2'
         BoxLayout:

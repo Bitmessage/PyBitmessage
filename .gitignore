@@ -21,4 +21,4 @@ build
 pyan/
 .buildozer/
 bin/
-src/images/kivy/default_identicon/*png
+src/images/kivy/default_identicon/*.png

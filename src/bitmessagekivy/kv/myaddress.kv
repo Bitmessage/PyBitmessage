@@ -1,9 +1,11 @@
 <MyAddress>:
     name: 'myaddress'
     BoxLayout:
+        id: main_box
         orientation: 'vertical'
         spacing: dp(5)
         SearchBar:
+            id: search_bar
         GridLayout:
             id: identi_tag
             padding: [20, 0, 0, 5]
@@ -11,6 +13,7 @@
             size_hint_y: None
             height: self.minimum_height
             MDLabel:
+                id: tag_label
                 text: 'My Addresses'
                 font_style: 'Subtitle2'
         FloatLayout:
