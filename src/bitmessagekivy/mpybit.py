@@ -487,7 +487,7 @@ class MyAddress(Screen):
             except Exception:
                 meny.canvas.children[9].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             meny.add_widget(AvatarSampleWidget(
-                source= state.imageDir + '/text_images/{}.png'.format(
+                source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
@@ -528,7 +528,7 @@ class MyAddress(Screen):
         if BMConfigParser().get(fromaddress, 'enabled') == 'true':
             obj = MyaddDetailPopup()
             self.address_label = obj.address_label = label
-            self.text_address = obj.address =fromaddress
+            self.text_address = obj.address = fromaddress
             width = .9 if platform == 'android' else .8
             self.myadddetail_popup = MDDialog(
                 type="custom",
@@ -541,14 +541,14 @@ class MyAddress(Screen):
             # p.set_address(fromaddress, label)
         else:
             width = .8 if platform == 'android' else .55
-            dialog_box=MDDialog(
-            text='Address is not currently active. Please click on Toggle button to active it.',
-            size_hint=(width, .25),
-            buttons=[
-                MDFlatButton(
-                    text="Ok", on_release=lambda x: callback_for_menu_items("Ok")
-                ),
-            ],)
+            dialog_box = MDDialog(
+                text='Address is not currently active. Please click on Toggle button to active it.',
+                size_hint=(width, .25),
+                buttons=[
+                    MDFlatButton(
+                        text="Ok", on_release=lambda x: callback_for_menu_items("Ok")
+                    ),
+                ],)
             dialog_box.open()
 
         def callback_for_menu_items(text_item, *arg):
@@ -738,7 +738,7 @@ class AddressBook(Screen):
             buttons=[
                 MDRaisedButton(
                     text="Send message to",
-                    text_color=state.kivyapp.theme_cls.primary_color, 
+                    text_color=state.kivyapp.theme_cls.primary_color,
                     on_release=self.send_message_to,
                 ),
                 MDRaisedButton(
@@ -961,7 +961,7 @@ class DropDownWidget(BoxLayout):
     def address_error_message(self, msg):
         """Generates error message"""
         width = .8 if platform == 'android' else .55
-        dialog_box=MDDialog(
+        dialog_box = MDDialog(
             text=msg,
             size_hint=(width, .25),
             buttons=[
@@ -975,12 +975,6 @@ class DropDownWidget(BoxLayout):
             """Callback of alert box"""
             dialog_box.dismiss()
             toast(text_item)
-
-
-    # @staticmethod
-    # def callback_for_menu_items(text_item, *arg):
-    #     """Callback of alert box"""
-    #     toast(text_item)
 
     def reset_composer(self):
         """Method will reset composer"""
@@ -1237,8 +1231,6 @@ class Random(Screen):
         entered_label = str(self.ids.add_random_bx.children[0].ids.lab.text).strip()
         if not entered_label:
             self.ids.add_random_bx.children[0].ids.lab.focus = True
-            #self.ids.lab.error = True
-            #self.ids.lab.helper_text = 'This field is required'
         streamNumberForAddress = 1
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
@@ -1594,7 +1586,7 @@ class Trash(Screen):
                 theme_text_color='Custom',
                 text_color=ThemeClsColor)
             meny._txt_right_pad = dp(70)
-            img_latter =state.imageDir + '/text_images/{}.png'.format(
+            img_latter = state.imageDir + '/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
             meny.add_widget(AvatarSampleWidget(source=img_latter))
             meny.add_widget(AddTimeWidget(item[7]))
@@ -1647,7 +1639,7 @@ class Trash(Screen):
     def delete_confirmation(self):
         """Show confirmation delete popup"""
         width = .8 if platform == 'android' else .55
-        dialog_box=MDDialog(
+        dialog_box = MDDialog(
             text='Are you sure you want to delete this'
             ' message permanently from trash?',
             size_hint=(width, .25),
@@ -1656,7 +1648,7 @@ class Trash(Screen):
                     text="Yes", on_release=lambda x: callback_for_delete_msg("Yes")
                 ),
                 MDFlatButton(
-                    text="No",on_release=lambda x: callback_for_delete_msg("No"),
+                    text="No", on_release=lambda x: callback_for_delete_msg("No"),
                 ),
             ],)
         dialog_box.open()
@@ -1733,9 +1725,9 @@ class Setting(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        menu_items = [{"text": f"{i}"} for i in ['System Setting','U.S. English','italiano',
-                        'Esperanto','dansk','Deutsch','Pirate English','francais',
-                        'Nederlands','norsk bokmal','polski','portugues europeu']]
+        menu_items = [{"text": f"{i}"} for i in ['System Setting', 'U.S. English', 'italiano',
+                                                 'Esperanto', 'dansk', 'Deutsch', 'Pirate English', 'francais',
+                                                 'Nederlands', 'norsk bokmal', 'polski', 'portugues europeu']]
         self.menu = MDDropdownMenu(
             caller=self,
             items=menu_items,
@@ -1746,7 +1738,7 @@ class Setting(Screen):
         )
 
     def set_caller(self):
-        self.menu.caller= self.ids.drop_item
+        self.menu.caller = self.ids.drop_item
         # self.menu.use_icon_item = False
         self.menu.target_height = 150
 
@@ -1773,7 +1765,6 @@ class NavigateApp(MDApp):
     count = 0
     manager_open = False
     file_manager = None
-    #state.imageDir = os.path.join(os.path.abspath(os.path.join(__file__ ,"../../..")),'images', 'kivy')
     state.imageDir = os.path.join('./images', 'kivy')
     image_path = state.imageDir
 
@@ -1875,7 +1866,7 @@ class NavigateApp(MDApp):
             buttons=[
                 MDRaisedButton(
                     text="Save",
-                    text_color=self.theme_cls.primary_color, 
+                    text_color=self.theme_cls.primary_color,
                     on_release=self.savecontact,
                 ),
                 MDRaisedButton(
@@ -2517,7 +2508,7 @@ class GrashofPopup(BoxLayout):
             text = (
                 "The address is not typed or copied correctly"
                 # " (the checksum failed)."
-                )
+            )
         elif status == 'versiontoohigh':
             text = (
                 "The version number of this address is higher than this"
@@ -3080,7 +3071,7 @@ class Allmails(Screen):
                 text_color=ThemeClsColor)
             meny._txt_right_pad = dp(70)
             meny.add_widget(AvatarSampleWidget(
-                source= state.imageDir +'/text_images/{}.png'.format(
+                source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
             meny.bind(on_press=partial(
                 self.mail_detail, item[5], item[4]))
@@ -3360,7 +3351,7 @@ class OneLineListTitle(OneLineListItem):
         """this method is for displaying dialog box"""
         self.title_text = title_text
         width = .8 if platform == 'android' else .55
-        self.dialog_box=MDDialog(
+        self.dialog_box = MDDialog(
             text=title_text,
             size_hint=(width, .25),
             buttons=[
@@ -3368,7 +3359,7 @@ class OneLineListTitle(OneLineListItem):
                     text="Copy", on_release=self.callback_for_copy_title
                 ),
                 MDFlatButton(
-                    text="Cancel",on_release=self.callback_for_copy_title,
+                    text="Cancel", on_release=self.callback_for_copy_title,
                 ),
             ],)
         self.dialog_box.open()
@@ -3461,7 +3452,7 @@ class ChatList(Screen):
                 text=item[0], secondary_text=item[1], theme_text_color='Custom',
                 text_color=ThemeClsColor)
             meny.add_widget(AvatarSampleWidget(
-                source= state.imageDir + '/text_images/{}.png'.format(
+                source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item[0].strip()))))
             meny.bind(on_release=partial(
                 self.redirect_to_chat, item[0], item[1]))
