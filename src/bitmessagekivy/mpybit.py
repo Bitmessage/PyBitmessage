@@ -138,7 +138,8 @@ from datetime import datetime
 from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.effects.dampedscroll import DampedScrollEffect
-
+from kivy_garden.zbarcam import ZBarCam
+from pyzbar.pyzbar import ZBarSymbol
 
 if platform != "android":
     from kivy.config import Config
