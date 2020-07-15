@@ -49,7 +49,7 @@ from kivy.uix.textinput import TextInput
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
-from kivymd.uix.button import MDFlatButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.list import (
     ILeftBody,
     ILeftBodyTouch,
@@ -77,6 +77,8 @@ from datetime import datetime
 from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.effects.dampedscroll import DampedScrollEffect
+from kivymd.uix.menu import MDDropdownMenu
+
 from kivy_garden.zbarcam import ZBarCam
 from pyzbar.pyzbar import ZBarSymbol
 
@@ -209,16 +211,17 @@ class Inbox(Screen):
         self.set_defaultAddress()
         self.account = state.association
         if state.searcing_text:
-            self.children[2].children[0].children[0].scroll_y = 1.0
+            # self.children[2].children[0].children[0].scroll_y = 1.0
+            self.ids.scroll_y.scroll_y = 1.0
             where = ["subject", "message"]
             what = state.searcing_text
         xAddress = "toaddress"
         data = []
-        self.ids.identi_tag.children[0].text = ""
+        self.ids.tag_label.text = ""
         self.inboxDataQuery(xAddress, where, what)
-        self.ids.identi_tag.children[0].text = ""
+        self.ids.tag_label.text = ""
         if self.queryreturn:
-            self.ids.identi_tag.children[0].text = "Inbox"
+            self.ids.tag_label.text = "Inbox"
             state.kivyapp.get_inbox_count()
             self.set_inboxCount(state.inbox_count)
             for mail in self.queryreturn:
@@ -242,7 +245,7 @@ class Inbox(Screen):
 
             self.has_refreshed = True
             self.set_mdList(data)
-            self.children[2].children[0].children[0].bind(scroll_y=self.check_scroll_y)
+            self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
         else:
             self.set_inboxCount("0")
             content = MDLabel(
@@ -260,7 +263,7 @@ class Inbox(Screen):
     def set_inboxCount(self, msgCnt):  # pylint: disable=no-self-use
         """This method is used to sent inbox message count"""
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.inbox_cnt
-        src_mng_obj.children[0].children[0].text = showLimitedCnt(int(msgCnt))
+        src_mng_obj.ids.badge_txt.text = showLimitedCnt(int(msgCnt))
 
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used for retrieving inbox data"""
@@ -281,7 +284,7 @@ class Inbox(Screen):
             meny._txt_right_pad = dp(70)
             meny.add_widget(
                 AvatarSampleWidget(
-                    source="./images/text_images/{}.png".format(
+                    source=state.imageDir + "/text_images/{}.png".format(
                         avatarImageFirstLetter(item["secondary_text"].strip())
                     )
                 )
@@ -311,10 +314,8 @@ class Inbox(Screen):
 
     def check_scroll_y(self, instance, somethingelse):
         """Loads data on scroll"""
-        if (
-            self.children[2].children[0].children[0].scroll_y <= -0.0 and self.has_refreshed
-        ):
-            self.children[2].children[0].children[0].scroll_y = 0.06
+        if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
+            self.ids.scroll_y.scroll_y = 0.06
             total_message = len(self.ids.ml.children)
             self.update_inbox_screen_on_scroll(total_message)
         else:
@@ -337,7 +338,8 @@ class Inbox(Screen):
                     "secondary_text": body[:50] + "........"
                     if len(body) >= 50
                     else (body + "," + subject.replace("\n", ""))[0:50] + "........",
-                    "msgid": mail[1]
+                    "msgid": mail[1],
+                    "received": mail[6]
                 }
             )
         self.set_mdList(data)
@@ -359,22 +361,24 @@ class Inbox(Screen):
         sqlExecute("UPDATE inbox SET folder = 'trash' WHERE msgid = ?;", data_index)
         msg_count_objs = self.parent.parent.ids.content_drawer.ids
         if int(state.inbox_count) > 0:
-            msg_count_objs.inbox_cnt.children[0].children[0].text = showLimitedCnt(
+            msg_count_objs.inbox_cnt.ids.badge_txt.text = showLimitedCnt(
                 int(state.inbox_count) - 1
             )
-            msg_count_objs.trash_cnt.children[0].children[0].text = showLimitedCnt(
+            msg_count_objs.trash_cnt.ids.badge_txt.text = showLimitedCnt(
                 int(state.trash_count) + 1
             )
-            msg_count_objs.allmail_cnt.children[0].children[0].text = showLimitedCnt(
+            msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(
                 int(state.all_count) - 1
             )
             state.inbox_count = str(int(state.inbox_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
             if int(state.inbox_count) <= 0:
-                self.ids.identi_tag.children[0].text = ""
-        self.ids.ml.remove_widget(instance.parent.parent)
-        toast("Deleted")
+                # self.ids.identi_tag.children[0].text = ''
+                self.ids.tag_label.text = ''
+        self.ids.ml.remove_widget(
+            instance.parent.parent)
+        toast('Deleted')
         self.update_trash()
 
     def archive(self, data_index, instance, *args):
@@ -418,6 +422,8 @@ class CustomTwoLineAvatarIconListItem(TwoLineAvatarIconListItem):
 class MyAddress(Screen):
     """MyAddress screen uses screen to show widgets of screens"""
 
+    address_label = StringProperty()
+    text_address = StringProperty()
     addresses_list = ListProperty()
     has_refreshed = True
     is_add_created = False
@@ -440,9 +446,9 @@ class MyAddress(Screen):
             ]
             self.addresses_list = filtered_list
         self.addresses_list = [obj for obj in reversed(self.addresses_list)]
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.tag_label.text = ''
         if self.addresses_list:
-            self.ids.identi_tag.children[0].text = 'My Addresses'
+            self.ids.tag_label.text = 'My Addresses'
             self.has_refreshed = True
             self.set_mdList(0, 15)
             self.ids.refresh_layout.bind(scroll_y=self.check_scroll_y)
@@ -519,10 +525,20 @@ class MyAddress(Screen):
     # @staticmethod
     def myadd_detail(self, fromaddress, label, *args):
         """Load myaddresses details"""
-        if BMConfigParser().get(fromaddress, "enabled") == "true":
-            p = MyaddDetailPopup()
-            p.open()
-            p.set_address(fromaddress, label)
+        if BMConfigParser().get(fromaddress, 'enabled') == 'true':
+            obj = MyaddDetailPopup()
+            self.address_label = obj.address_label = label
+            self.text_address = obj.address =fromaddress
+            width = .9 if platform == 'android' else .8
+            self.myadddetail_popup = MDDialog(
+                type="custom",
+                size_hint=(width, .25),
+                content_cls=obj,
+            )
+            self.myadddetail_popup.set_normal_height()
+            self.myadddetail_popup.auto_dismiss = False
+            self.myadddetail_popup.open()
+            # p.set_address(fromaddress, label)
         else:
             width = .8 if platform == 'android' else .55
             dialog_box=MDDialog(
@@ -552,7 +568,7 @@ class MyAddress(Screen):
             """Method used for loading the myaddress screen data"""
             state.searcing_text = ''
             # state.kivyapp.root.ids.sc10.children[2].active = False
-            self.children[2].children[2].ids.search_field.text = ''
+            self.ids.search_bar.ids.search_field.text = ''
             self.has_refreshed = True
             self.ids.ml.clear_widgets()
             self.init_ui()
@@ -618,6 +634,8 @@ class AddressBook(Screen):
 
     queryreturn = ListProperty()
     has_refreshed = True
+    address_label = StringProperty()
+    address = StringProperty()
 
     def __init__(self, *args, **kwargs):
         """Getting AddressBook Details"""
@@ -636,12 +654,12 @@ class AddressBook(Screen):
             where = ['label', 'address']
             what = state.searcing_text
         xAddress = ''
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.tag_label.text = ''
         self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "addressbook", where, what, False)
         self.queryreturn = [obj for obj in reversed(self.queryreturn)]
         if self.queryreturn:
-            self.ids.identi_tag.children[0].text = 'Address Book'
+            self.ids.tag_label.text = 'Address Book'
             self.has_refreshed = True
             self.set_mdList(0, 20)
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
@@ -706,20 +724,80 @@ class AddressBook(Screen):
         # state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
         pass
 
-    @staticmethod
-    def addBook_detail(address, label, *args):
+    # @staticmethod
+    def addBook_detail(self, address, label, *args):
         """Addressbook details"""
-        p = AddbookDetailPopup()
-        p.open()
-        p.set_addbook_data(address, label)
+        obj = AddbookDetailPopup()
+        self.address_label = obj.address_label = label
+        self.address = obj.address = address
+        width = .9 if platform == 'android' else .8
+        self.addbook_popup = MDDialog(
+            type="custom",
+            size_hint=(width, .25),
+            content_cls=obj,
+            buttons=[
+                MDRaisedButton(
+                    text="Send message to",
+                    text_color=state.kivyapp.theme_cls.primary_color, 
+                    on_release=self.send_message_to,
+                ),
+                MDRaisedButton(
+                    text="Save", text_color=state.kivyapp.theme_cls.primary_color,
+                    on_release=self.update_addbook_label,
+                ),
+                MDRaisedButton(
+                    text="Cancel", text_color=state.kivyapp.theme_cls.primary_color,
+                    on_release=self.close_pop,
+                ),
+            ],
+        )
+        self.addbook_popup.set_normal_height()
+        self.addbook_popup.auto_dismiss = False
+        self.addbook_popup.open()
 
     def delete_address(self, address, instance, *args):
         """Delete inbox mail from inbox listing"""
         self.ids.ml.remove_widget(instance.parent.parent)
         # if len(self.ids.ml.children) == 0:
         if self.ids.ml.children is not None:
-            self.ids.identi_tag.children[0].text = ""
-        sqlExecute("DELETE FROM  addressbook WHERE address = '{}';".format(address))
+            self.ids.tag_label.text = ''
+        sqlExecute(
+            "DELETE FROM  addressbook WHERE address = '{}';".format(address))
+
+    def close_pop(self, instance):
+        """Pop is Canceled"""
+        self.addbook_popup.dismiss()
+        toast('Canceled')
+
+    def update_addbook_label(self, instance):
+        """Updating the label of address book address"""
+        address_list = kivy_helper_search.search_sql(folder="addressbook")
+        stored_labels = [labels[0] for labels in address_list]
+        add_dict = dict(address_list)
+        label = str(self.addbook_popup.content_cls.ids.add_label.text)
+        if label in stored_labels and self.address == add_dict[label]:
+            stored_labels.remove(label)
+        if label and label not in stored_labels:
+            sqlExecute(
+                "UPDATE addressbook SET label = '{}' WHERE"
+                " address = '{}';".format(
+                    label, self.addbook_popup.content_cls.address))
+            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
+            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
+            self.addbook_popup.dismiss()
+            toast('Saved')
+
+    def send_message_to(self, instance):
+        """Method used to fill to_address of composer autofield"""
+        state.kivyapp.set_navbar_for_composer()
+        window_obj = state.kivyapp.root.ids
+        window_obj.sc3.children[1].ids.txt_input.text = self.address
+        window_obj.sc3.children[1].ids.ti.text = ''
+        window_obj.sc3.children[1].ids.btn.text = 'Select'
+        window_obj.sc3.children[1].ids.subject.text = ''
+        window_obj.sc3.children[1].ids.body.text = ''
+        window_obj.scr_mngr.current = 'create'
+        self.addbook_popup.dismiss()
 
 
 class SelectableRecycleBoxLayout(
@@ -1155,9 +1233,10 @@ class Random(Screen):
 
     def generateaddress(self, navApp):
         """Method for Address Generator"""
-        entered_label = str(self.ids.lab.text).strip()
+        # entered_label = str(self.ids.lab.text).strip()
+        entered_label = str(self.ids.add_random_bx.children[0].ids.lab.text).strip()
         if not entered_label:
-            self.ids.lab.focus = True
+            self.ids.add_random_bx.children[0].ids.lab.focus = True
             #self.ids.lab.error = True
             #self.ids.lab.helper_text = 'This field is required'
         streamNumberForAddress = 1
@@ -1204,7 +1283,7 @@ class Random(Screen):
                   for obj in BMConfigParser().addresses()]
         if entered_label in lables:
             instance.error = True
-            instance.helper_text = 'Label name is already exist you'\
+            instance.helper_text = 'it is already exist you'\
                 ' can try this Ex. ( {0}_1, {0}_2 )'.format(
                     entered_label)
         elif entered_label:
@@ -1248,10 +1327,10 @@ class Sent(Screen):
             what = state.searcing_text
         xAddress = 'fromaddress'
         data = []
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.tag_label.text = ''
         self.sentDataQuery(xAddress, where, what)
         if self.queryreturn:
-            self.ids.identi_tag.children[0].text = 'Sent'
+            self.ids.tag_label.text = 'Sent'
             self.set_sentCount(state.sent_count)
             for mail in self.queryreturn:
                 data.append({
@@ -1379,18 +1458,18 @@ class Sent(Screen):
                 'secondary_text': mail[2][:50] + '........' if len(
                     mail[2]) >= 50 else (mail[2] + ',' + mail[3].replace(
                         '\n', ''))[0:50] + '........',
-                'ackdata': mail[5]})
+                'ackdata': mail[5], 'senttime': mail[6]})
         self.set_mdlist(data, 0)
 
     @staticmethod
     def set_sentCount(total_sent):
         """Set the total no. of sent message count"""
         src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.send_cnt
+        state.kivyapp.root.ids.content_drawer.ids.send_cnt.ids.badge_txt.text
         if state.association:
-            src_mng_obj.children[0].children[0].text = showLimitedCnt(int(total_sent))
-            # state.kivyapp.get_sent_count()
+            src_mng_obj.ids.badge_txt.text = showLimitedCnt(int(total_sent))
         else:
-            src_mng_obj.children[0].children[0].text = '0'
+            src_mng_obj.ids.badge_txt.text = '0'
 
     def sent_detail(self, ackdata, *args):
         """Load sent mail details"""
@@ -1408,14 +1487,14 @@ class Sent(Screen):
         """Delete sent mail from sent mail listing"""
         msg_count_objs = self.parent.parent.ids.content_drawer.ids
         if int(state.sent_count) > 0:
-            msg_count_objs.send_cnt.children[0].children[0].text = showLimitedCnt(int(state.sent_count) - 1)
-            msg_count_objs.trash_cnt.children[0].children[0].text = showLimitedCnt(int(state.trash_count) + 1)
-            msg_count_objs.allmail_cnt.children[0].children[0].text = showLimitedCnt(int(state.all_count) - 1)
+            msg_count_objs.send_cnt.ids.badge_txt.text = showLimitedCnt(int(state.sent_count) - 1)
+            msg_count_objs.trash_cnt.ids.badge_txt.text = showLimitedCnt(int(state.trash_count) + 1)
+            msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(int(state.all_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1)
             if int(state.sent_count) <= 0:
-                self.ids.identi_tag.children[0].text = ''
+                self.ids.tag_label.text = ''
         sqlExecute(
             "UPDATE sent SET folder = 'trash'"
             " WHERE ackdata = ?;", data_index)
@@ -1463,10 +1542,10 @@ class Trash(Screen):
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.tag_label.text = ''
         self.trashDataQuery(0, 20)
         if self.trash_messages:
-            self.ids.identi_tag.children[0].text = 'Trash'
+            self.ids.tag_label.text = 'Trash'
             # src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             # src_mng_obj.trash_cnt.badge_text = state.trash_count
             self.set_TrashCnt(state.trash_count)
@@ -1500,7 +1579,7 @@ class Trash(Screen):
     def set_TrashCnt(self, Count):  # pylint: disable=no-self-use
         """This method is used to set trash message count"""
         trashCnt_obj = state.kivyapp.root.ids.content_drawer.ids.trash_cnt
-        trashCnt_obj.children[0].children[0].text = showLimitedCnt(int(Count))
+        trashCnt_obj.ids.badge_txt.text = showLimitedCnt(int(Count))
 
     def set_mdList(self):
         """This method is used to create the mdlist"""
@@ -1648,6 +1727,33 @@ class Setting(Screen):
                 Here you may change that behavior by having Bitmessage give up after a certain number of days \
                 or months."
 
+    def __init__(self, *args, **kwargs):
+        """Trash method, delete sent message and add in Trash"""
+        super(Setting, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        menu_items = [{"text": f"{i}"} for i in ['System Setting','U.S. English','italiano',
+                        'Esperanto','dansk','Deutsch','Pirate English','francais',
+                        'Nederlands','norsk bokmal','polski','portugues europeu']]
+        self.menu = MDDropdownMenu(
+            caller=self,
+            items=menu_items,
+            position="auto",
+            callback=self.set_item,
+            width_mult=3,
+            use_icon_item=False,
+        )
+
+    def set_caller(self):
+        self.menu.caller= self.ids.drop_item
+        # self.menu.use_icon_item = False
+        self.menu.target_height = 150
+
+    def set_item(self, instance):
+        self.ids.drop_item.set_item(instance.text)
+        self.menu.dismiss()
+
 
 class NavigateApp(MDApp):
     """Navigation Layout of class"""
@@ -1667,7 +1773,7 @@ class NavigateApp(MDApp):
     count = 0
     manager_open = False
     file_manager = None
-    # state.imageDir = os.path.join(os.path.abspath(os.path.join(__file__ ,"../../..")),'images', 'kivy')
+    #state.imageDir = os.path.join(os.path.abspath(os.path.join(__file__ ,"../../..")),'images', 'kivy')
     state.imageDir = os.path.join('./images', 'kivy')
     image_path = state.imageDir
 
@@ -1757,11 +1863,68 @@ class NavigateApp(MDApp):
             return state.association
         return "Bitmessage Login"
 
-    @staticmethod
-    def addingtoaddressbook():
+    # @staticmethod
+    def addingtoaddressbook(self):
         """Adding to address Book"""
-        p = GrashofPopup()
-        p.open()
+        width = .85 if platform == 'android' else .8
+        self.add_popup = MDDialog(
+            title='add contact\'s',
+            type="custom",
+            size_hint=(width, .25),
+            content_cls=GrashofPopup(),
+            buttons=[
+                MDRaisedButton(
+                    text="Save",
+                    text_color=self.theme_cls.primary_color, 
+                    on_release=self.savecontact,
+                ),
+                MDRaisedButton(
+                    text="Cancel", text_color=self.theme_cls.primary_color,
+                    on_release=self.close_pop,
+                ),
+                MDRaisedButton(
+                    text="Scan QR code", text_color=self.theme_cls.primary_color
+                ),
+            ],
+        )
+        self.add_popup.set_normal_height()
+        self.add_popup.auto_dismiss = False
+        self.add_popup.open()
+        # p = GrashofPopup()
+        # p.open()
+
+    def savecontact(self, instance):
+        """Method is used for saving contacts"""
+        pupup_obj = self.add_popup.content_cls
+        label = pupup_obj.ids.label.text.strip()
+        address = pupup_obj.ids.address.text.strip()
+        if label == '' and address == '':
+            pupup_obj.ids.label.focus = True
+            pupup_obj.ids.address.focus = True
+        elif address == '':
+            pupup_obj.ids.address.focus = True
+        elif label == '':
+            pupup_obj.ids.label.focus = True
+
+        stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
+            folder="addressbook")]
+        stored_labels = [labels[0] for labels in kivy_helper_search.search_sql(
+            folder="addressbook")]
+        if label and address and address not in stored_address \
+                and label not in stored_labels and pupup_obj.valid:
+            # state.navinstance = self.parent.children[1]
+            queues.UISignalQueue.put(('rerenderAddressBook', ''))
+            self.add_popup.dismiss()
+            sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            self.root.ids.sc11.ids.ml.clear_widgets()
+            self.root.ids.sc11.loadAddresslist(None, 'All', '')
+            self.root.ids.scr_mngr.current = 'addressbook'
+            toast('Saved')
+
+    def close_pop(self, instance):
+        """Pop is Canceled"""
+        self.add_popup.dismiss()
+        toast('Canceled')
 
     def getDefaultAccData(self):
         """Getting Default Account Data"""
@@ -2097,32 +2260,36 @@ class NavigateApp(MDApp):
         # pylint: disable=unused-variable
         state.searcing_text = ''
         if state.search_screen == 'inbox':
-            try:
-                self.root.ids.sc1.children[
-                    3].children[2].ids.search_field.text = ''
-            except Exception:
-                self.root.ids.sc1.children[
-                    2].children[2].ids.search_field.text = ''
+            self.root.ids.sc1.ids.inbox_search.ids.search_field.text = ''
+            # try:
+            #     self.root.ids.sc1.children[
+            #         3].children[2].ids.search_field.text = ''
+            # except Exception:
+            #     self.root.ids.sc1.children[
+            #         2].children[2].ids.search_field.text = ''
             self.root.ids.sc1.children[1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         elif state.search_screen == 'addressbook':
-            self.root.ids.sc11.children[
-                2].children[2].ids.search_field.text = ''
+            self.root.ids.sc11.ids.address_search.ids.search_field.text = ''
+            # self.root.ids.sc11.children[
+            #     2].children[2].ids.search_field.text = ''
             self.root.ids.sc11.children[
                 1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         elif state.search_screen == 'myaddress':
-            try:
-                self.root.ids.sc10.children[
-                    1].children[2].ids.search_field.text = ''
-            except Exception:
-                self.root.ids.sc10.children[
-                    2].children[2].ids.search_field.text = ''
+            self.root.ids.sc10.ids.search_bar.ids.search_field.text = ''
+            # try:
+            #     self.root.ids.sc10.children[
+            #         1].children[2].ids.search_field.text = ''
+            # except Exception:
+            #     self.root.ids.sc10.children[
+            #         2].children[2].ids.search_field.text = ''
             self.loadMyAddressScreen(True)
             Clock.schedule_once(self.search_callback, 0.5)
         else:
-            self.root.ids.sc4.children[
-                2].children[2].ids.search_field.text = ''
+            self.root.ids.sc4.ids.sent_search.ids.search_field.text = ''
+            # self.root.ids.sc4.children[
+            #     2].children[2].ids.search_field.text = ''
             self.root.ids.sc4.children[1].active = True
             Clock.schedule_once(self.search_callback, 0.5)
         return
@@ -2262,8 +2429,8 @@ class NavigateApp(MDApp):
 
     def reset_login_screen(self):
         """This method is used for clearing random screen"""
-        # if self.root.ids.sc7.ids.add_random_bx.children:
-        #     self.root.ids.sc7.ids.add_random_bx.clear_widgets()
+        if self.root.ids.sc7.ids.add_random_bx.children:
+            self.root.ids.sc7.ids.add_random_bx.clear_widgets()
 
     def open_payment_layout(self, sku):
         pml = PaymentMethodLayout()
@@ -2284,7 +2451,7 @@ class NavigateApp(MDApp):
             self.root.ids.scr_mngr.current = 'create'
 
 
-class GrashofPopup(Popup):
+class GrashofPopup(BoxLayout):
     """Moule for save contacts and error messages"""
 
     valid = False
@@ -2293,44 +2460,10 @@ class GrashofPopup(Popup):
         """Grash of pop screen settings"""
         super(GrashofPopup, self).__init__(**kwargs)
 
-    def savecontact(self):
-        """Method is used for saving contacts"""
-        label = self.ids.label.text.strip()
-        address = self.ids.address.text.strip()
-        if label == '' and address == '':
-            self.ids.label.focus = True
-            self.ids.address.focus = True
-        elif address == '':
-            self.ids.address.focus = True
-        elif label == '':
-            self.ids.label.focus = True
-
-        stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
-            folder="addressbook")]
-        stored_labels = [labels[0] for labels in kivy_helper_search.search_sql(
-            folder="addressbook")]
-        if label and address and address not in stored_address \
-                and label not in stored_labels and self.valid:
-            # state.navinstance = self.parent.children[1]
-            queues.UISignalQueue.put(('rerenderAddressBook', ''))
-            self.dismiss()
-            sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-            self.parent.children[1].ids.sc11.ids.ml.clear_widgets()
-            self.parent.children[1].ids.sc11.loadAddresslist(None, 'All', '')
-            self.parent.children[1].ids.scr_mngr.current = 'addressbook'
-            toast('Saved')
-
-    @staticmethod
-    def close_pop():
-        """Pop is Canceled"""
-        toast('Canceled')
-
     def checkAddress_valid(self, instance):
         """Checking address is valid or not"""
-        # my_addresses = (
-        #     self.parent.children[1].children[0].children[0].ids.btn.values)
         my_addresses = (
-            state.kivyapp.root.children[0].children[0].ids.btn.values)
+            state.kivyapp.root.ids.content_drawer.ids.btn.values)
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()
@@ -2383,7 +2516,8 @@ class GrashofPopup(Popup):
         elif status == 'checksumfailed':
             text = (
                 "The address is not typed or copied correctly"
-                " (the checksum failed).")
+                # " (the checksum failed)."
+                )
         elif status == 'versiontoohigh':
             text = (
                 "The version number of this address is higher than this"
@@ -2496,24 +2630,20 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         state.searcing_text = ''
         self.children[0].children[0].active = True
         if state.detailPageType == 'sent':
-            state.kivyapp.root.ids.sc4.children[
-                2].children[2].ids.search_field.text = ''
+            state.kivyapp.root.ids.sc4.ids.sent_search.ids.search_field.text = ''
             sqlExecute(
                 "UPDATE sent SET folder = 'trash' WHERE"
                 " ackdata = ?;", state.mail_id)
-            msg_count_objs.send_cnt.children[0].children[0].text = str(int(state.sent_count) - 1)
+            msg_count_objs.send_cnt.ids.badge_txt.text = str(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             self.parent.screens[3].ids.ml.clear_widgets()
             self.parent.screens[3].loadSent(state.association)
         elif state.detailPageType == 'inbox':
-            state.kivyapp.root.ids.sc1.children[
-                2].children[2].ids.search_field.text = ''
-            self.parent.screens[0].children[2].children[
-                2].ids.search_field.text = ''
+            state.kivyapp.root.ids.sc1.ids.inbox_search.ids.search_field.text = ''
             sqlExecute(
                 "UPDATE inbox SET folder = 'trash' WHERE"
                 " msgid = ?;", state.mail_id)
-            msg_count_objs.inbox_cnt.children[0].children[0].text = str(
+            msg_count_objs.inbox_cnt.ids.badge_txt.text = str(
                 int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
@@ -2521,16 +2651,16 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
         elif state.detailPageType == 'draft':
             sqlExecute("DELETE FROM sent WHERE ackdata = ?;", state.mail_id)
-            msg_count_objs.draft_cnt.children[0].children[0].text = str(
+            msg_count_objs.draft_cnt.ids.badge_txt.text = str(
                 int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
             self.parent.screens[15].clear_widgets()
             self.parent.screens[15].add_widget(Draft())
 
         if state.detailPageType != 'draft':
-            msg_count_objs.trash_cnt.children[0].children[0].text = str(
+            msg_count_objs.trash_cnt.ids.badge_txt.text = str(
                 int(state.trash_count) + 1)
-            msg_count_objs.allmail_cnt.children[0].children[0].text = str(
+            msg_count_objs.allmail_cnt.ids.badge_txt.text = str(
                 int(state.all_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
             state.all_count = str(int(state.all_count) - 1) if int(state.all_count) else '0'
@@ -2603,7 +2733,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         toast(text_item)
 
 
-class MyaddDetailPopup(Popup):
+class MyaddDetailPopup(BoxLayout):
     """MyaddDetailPopup pop is used for showing my address detail"""
 
     address_label = StringProperty()
@@ -2613,33 +2743,26 @@ class MyaddDetailPopup(Popup):
         """My Address Details screen setting"""
         super(MyaddDetailPopup, self).__init__(**kwargs)
 
-    def set_address(self, address, label):
-        """Getting address for displaying details on popup"""
-        self.address_label = label
-        self.address = address
-
     def send_message_from(self):
         """Method used to fill from address of composer autofield"""
         state.kivyapp.set_navbar_for_composer()
-        try:
-            window_obj = self.parent.children[2].ids
-        except Exception:
-            window_obj = self.parent.children[1].ids
+        window_obj = state.kivyapp.root.ids
         window_obj.sc3.children[1].ids.ti.text = self.address
         window_obj.sc3.children[1].ids.btn.text = self.address
         window_obj.sc3.children[1].ids.txt_input.text = ''
         window_obj.sc3.children[1].ids.subject.text = ''
         window_obj.sc3.children[1].ids.body.text = ''
         window_obj.scr_mngr.current = 'create'
-        self.dismiss()
+        self.parent.parent.parent.dismiss()
 
-    @staticmethod
-    def close_pop():
+    # @staticmethod
+    def close_pop(self):
         """Pop is Canceled"""
+        self.parent.parent.parent.dismiss()
         toast('Canceled')
 
 
-class AddbookDetailPopup(Popup):
+class AddbookDetailPopup(BoxLayout):
     """AddbookDetailPopup pop is used for showing my address detail"""
 
     address_label = StringProperty()
@@ -2648,49 +2771,6 @@ class AddbookDetailPopup(Popup):
     def __init__(self, **kwargs):
         """Set screen of address detail page"""
         super(AddbookDetailPopup, self).__init__(**kwargs)
-
-    def set_addbook_data(self, address, label):
-        """Getting address book data for detial dipaly"""
-        self.address_label = label
-        self.address = address
-
-    def update_addbook_label(self, address):
-        """Updating the label of address book address"""
-        address_list = kivy_helper_search.search_sql(folder="addressbook")
-        stored_labels = [labels[0] for labels in address_list]
-        add_dict = dict(address_list)
-        label = str(self.ids.add_label.text)
-        if label in stored_labels and self.address == add_dict[label]:
-            stored_labels.remove(label)
-        if label and label not in stored_labels:
-            sqlExecute(
-                "UPDATE addressbook SET label = '{}' WHERE"
-                " address = '{}';".format(
-                    str(self.ids.add_label.text), address))
-            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
-            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
-            self.dismiss()
-            toast('Saved')
-
-    def send_message_to(self):
-        """Method used to fill to_address of composer autofield"""
-        state.kivyapp.set_navbar_for_composer()
-        try:
-            window_obj = self.parent.children[2].ids
-        except Exception:
-            window_obj = self.parent.children[1].ids
-        window_obj.sc3.children[1].ids.txt_input.text = self.address
-        window_obj.sc3.children[1].ids.ti.text = ''
-        window_obj.sc3.children[1].ids.btn.text = 'Select'
-        window_obj.sc3.children[1].ids.subject.text = ''
-        window_obj.sc3.children[1].ids.body.text = ''
-        window_obj.scr_mngr.current = 'create'
-        self.dismiss()
-
-    @staticmethod
-    def close_pop():
-        """Pop is Canceled"""
-        toast('Canceled')
 
     def checkLabel_valid(self, instance):
         """Checking address label is unique of not"""
@@ -2713,7 +2793,7 @@ class ShowQRCode(Screen):
     """ShowQRCode Screen uses to show the detail of mails"""
     address = StringProperty()
 
-    def qrdisplay(self):
+    def qrdisplay(self, instasnce, address):
         """Method used for showing QR Code"""
         self.ids.qr.clear_widgets()
         state.kivyapp.set_toolbar_for_QrCode()
@@ -2721,13 +2801,10 @@ class ShowQRCode(Screen):
             from kivy.garden.qrcode import QRCodeWidget
         except Exception as e:
             from kivy_garden.qrcode import QRCodeWidget
-        try:
-            address = self.manager.get_parent_window().children[0].address
-        except Exception:
-            address = self.manager.get_parent_window().children[1].address
         self.address = address
         self.ids.qr.add_widget(QRCodeWidget(data=address))
         self.ids.qr.children[0].show_border = False
+        instasnce.parent.parent.parent.dismiss()
         toast('Show QR code')
 
 
@@ -2760,12 +2837,12 @@ class Draft(Screen):
     def loadDraft(self, where="", what=""):
         """Load draft list for Draft messages"""
         xAddress = 'fromaddress'
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.tag_label.text = ''
         self.draftDataQuery(xAddress, where, what)
         # if state.msg_counter_objs:
         #     state.msg_counter_objs.draft_cnt.children[0].children[0].text = showLimitedCnt(len(self.queryreturn))
         if self.queryreturn:
-            self.ids.identi_tag.children[0].text = 'Draft'
+            self.ids.tag_label.text = 'Draft'
             self.set_draftCnt(state.draft_count)
             self.set_mdList()
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
@@ -2789,7 +2866,7 @@ class Draft(Screen):
     def set_draftCnt(self, Count):  # pylint: disable=no-self-use
         """This method set the count of draft mails"""
         draftCnt_obj = state.kivyapp.root.ids.content_drawer.ids.draft_cnt
-        draftCnt_obj.children[0].children[0].text = showLimitedCnt(int(Count))
+        draftCnt_obj.ids.badge_txt.text = showLimitedCnt(int(Count))
 
     def set_mdList(self):
         """This method is used to create mdlist"""
@@ -2861,23 +2938,12 @@ class Draft(Screen):
     def delete_draft(self, data_index, instance, *args):
         """Delete draft message permanently"""
         sqlExecute("DELETE FROM sent WHERE ackdata = ?;", data_index)
-        # try:
-        #     msg_count_objs = (
-        #         self.parent.parent.parent.parent.parent.children[
-        #             2].children[0].ids)
-        # except Exception:
-        #     msg_count_objs = (
-        #         self.parent.parent.parent.parent.parent.parent.children[
-        #             2].children[0].ids)
-        #     msg_count_objs = self.parent.parent.parent.parent.parent.children[
-        #         2].children[0].ids
         if int(state.draft_count) > 0:
-            # msg_count_objs.draft_cnt.badge_text = str(
-            #     int(state.draft_count) - 1)
             state.draft_count = str(int(state.draft_count) - 1)
             self.set_draftCnt(state.draft_count)
             if int(state.draft_count) <= 0:
-                self.ids.identi_tag.children[0].text = ''
+                # self.ids.identi_tag.children[0].text = ''
+                self.ids.tag_label.text = ''
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
 
@@ -2959,10 +3025,10 @@ class Allmails(Screen):
     def loadMessagelist(self):
         """Load Inbox, Sent anf Draft list of messages"""
         self.account = state.association
-        self.ids.identi_tag.children[0].text = ''
+        self.ids.tag_label.text = ''
         self.allMessageQuery(0, 20)
         if self.all_mails:
-            self.ids.identi_tag.children[0].text = 'All Mails'
+            self.ids.tag_label.text = 'All Mails'
             state.kivyapp.get_inbox_count()
             state.kivyapp.get_sent_count()
             state.all_count = str(
@@ -2997,7 +3063,7 @@ class Allmails(Screen):
     def set_AllmailCnt(self, Count):  # pylint: disable=no-self-use
         """This method is used to set allmails message count"""
         allmailCnt_obj = state.kivyapp.root.ids.content_drawer.ids.allmail_cnt
-        allmailCnt_obj.children[0].children[0].text = showLimitedCnt(int(Count))
+        allmailCnt_obj.ids.badge_txt.text = showLimitedCnt(int(Count))
 
     def set_mdlist(self):
         """This method is used to create mdList for allmaills"""
@@ -3084,21 +3150,21 @@ class Allmails(Screen):
             msg_count_objs = self.parent.parent.parent.ids.content_drawer.ids
             nav_lay_obj = self.parent.parent.parent.ids
         if folder == 'inbox':
-            msg_count_objs.inbox_cnt.children[0].children[0].text = showLimitedCnt(int(state.inbox_count) - 1)
+            msg_count_objs.inbox_cnt.ids.badge_txt.text = showLimitedCnt(int(state.inbox_count) - 1)
             state.inbox_count = str(int(state.inbox_count) - 1)
             nav_lay_obj.sc1.ids.ml.clear_widgets()
             nav_lay_obj.sc1.loadMessagelist(state.association)
         else:
-            msg_count_objs.send_cnt.children[0].children[0].text = showLimitedCnt(int(state.sent_count) - 1)
+            msg_count_objs.send_cnt.ids.badge_txt.text = showLimitedCnt(int(state.sent_count) - 1)
             state.sent_count = str(int(state.sent_count) - 1)
             nav_lay_obj.sc4.ids.ml.clear_widgets()
             nav_lay_obj.sc4.loadSent(state.association)
-        msg_count_objs.trash_cnt.children[0].children[0].text = showLimitedCnt(int(state.trash_count) + 1)
-        msg_count_objs.allmail_cnt.children[0].children[0].text = showLimitedCnt(int(state.all_count) - 1)
+        msg_count_objs.trash_cnt.ids.badge_txt.text = showLimitedCnt(int(state.trash_count) + 1)
+        msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(int(state.all_count) - 1)
         state.trash_count = str(int(state.trash_count) + 1)
         state.all_count = str(int(state.all_count) - 1)
         if int(state.all_count) <= 0:
-            self.ids.identi_tag.children[0].text = ''
+            self.ids.tag_label.text = ''
         nav_lay_obj.sc5.clear_widgets()
         nav_lay_obj.sc5.add_widget(Trash())
         nav_lay_obj.sc17.remove_widget(instance.parent.parent)
@@ -3251,7 +3317,7 @@ class SenderDetailPopup(Popup):
         time_obj = datetime.fromtimestamp(int(timeinseconds))
         self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
         device_type = 2 if platform == 'android' else 1.5
-        pop_height = device_type * (self.ids.sd_label.height + self.ids.sd_btn.children[0].height)
+        pop_height = device_type * (self.ids.sd_label.height + self.ids.dismiss_btn.height)
         if len(to_addr) > 3:
             self.height = 0
             self.height = pop_height
@@ -3290,35 +3356,29 @@ class OneLineListTitle(OneLineListItem):
         """On long press"""
         self.copymessageTitle(self.text)
 
-    def copymessageTitle(self, text):
+    def copymessageTitle(self, title_text):
         """this method is for displaying dialog box"""
+        self.title_text = title_text
         width = .8 if platform == 'android' else .55
-        dialog_box=MDDialog(
-            text=text,
+        self.dialog_box=MDDialog(
+            text=title_text,
             size_hint=(width, .25),
             buttons=[
                 MDFlatButton(
-                    text="Copy", on_release=lambda x: callback_for_copy_title(text)
+                    text="Copy", on_release=self.callback_for_copy_title
                 ),
                 MDFlatButton(
-                    text="Cancel",on_release=lambda x: callback_for_copy_title(text),
+                    text="Cancel",on_release=self.callback_for_copy_title,
                 ),
             ],)
-        dialog_box.open()
+        self.dialog_box.open()
 
-        def callback_for_copy_title(text_item, *arg):
-            """Callback of alert box"""
-            if text_item == 'Copy':
-                Clipboard.copy()
-            dialog_box.dismiss()
-            toast(text_item)
-
-    # @staticmethod
-    # def callback_for_copy_title(text_item, *arg):
-    #     """Callback of alert box"""
-    #     if text_item == 'Copy':
-    #         Clipboard.copy(str(arg[0].text))
-    #     toast(text_item)
+    def callback_for_copy_title(self, instance):
+        """Callback of alert box"""
+        if instance.text == 'Copy':
+            Clipboard.copy(self.title_text)
+        self.dialog_box.dismiss()
+        toast(instance.text)
 
 
 class ToAddrBoxlayout(BoxLayout):

@@ -204,12 +204,18 @@
                             # halign: 'right'
                             bold: True
                         MDDropDownItem:
-                            id: dropdown_item
+                            id: drop_item
+                            # pos_hint: {'center_x': .5, 'center_y': .5}
                             text: 'italiano'
-                            dropdown_max_height: 150
-                            dropdown_bg: [1, 1, 1, 1]
-                            # pos_hint: {'center_x': 0.5, 'center_y': 0}
-                            items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
+                            on_release: root.menu.open()
+                            on_press: root.set_caller()
+                        # MDDropDownItem:
+                        #     id: dropdown_item
+                        #     text: 'italiano'
+                        #     dropdown_max_height: 150
+                        #     dropdown_bg: [1, 1, 1, 1]
+                        #     # pos_hint: {'center_x': 0.5, 'center_y': 0}
+                        #     items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
                     BoxLayout:
                         spacing:5
                         orientation: 'horizontal'
@@ -292,7 +298,7 @@
                             text: "Type:"
                             halign: 'left'
                         MDDropDownItem:
-                            id: dropdown_item
+                            id: dropdown_item2
                             dropdown_bg: [1, 1, 1, 1]
                             text: 'none'
                             pos_hint: {'x': 0.9, 'y': 0}
