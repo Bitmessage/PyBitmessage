@@ -10,7 +10,6 @@ from PyQt4 import QtCore, QtGui
 
 import debug
 import defaults
-import knownnodes
 import namecoin
 import openclpow
 import paths
@@ -20,6 +19,7 @@ import widgets
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
+from network import knownnodes
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
 

@@ -11,13 +11,12 @@ import string
 import time
 import unittest
 
-import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from helper_startup import start_proxyconfig
-from network import asyncore_pollchoose as asyncore
+from network import asyncore_pollchoose as asyncore, knownnodes
 from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
 from network.node import Node, Peer

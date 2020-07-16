@@ -23,14 +23,13 @@ import gc
 import os
 import time
 
-import knownnodes
 import queues
 import state
 import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
-from network import BMConnectionPool, StoppableThread
+from network import BMConnectionPool, knownnodes, StoppableThread
 
 
 #: Equals 4 weeks. You could make this longer if you want

@@ -17,7 +17,6 @@ import helper_inbox
 import helper_msgcoding
 import helper_random
 import highlevelcrypto
-import knownnodes
 import l10n
 import proofofwork
 import protocol
@@ -31,7 +30,7 @@ from addresses import (
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
-from network import StoppableThread
+from network import knownnodes, StoppableThread
 
 
 def sizeof_fmt(num, suffix='h/s'):

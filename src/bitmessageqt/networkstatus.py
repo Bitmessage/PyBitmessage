@@ -6,13 +6,12 @@ import time
 
 from PyQt4 import QtCore, QtGui
 
-import knownnodes
 import l10n
 import network.stats
 import state
 import widgets
 from inventory import Inventory
-from network import BMConnectionPool
+from network import BMConnectionPool, knownnodes
 from retranslateui import RetranslateMixin
 from tr import _translate
 from uisignaler import UISignaler

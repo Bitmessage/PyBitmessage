@@ -12,13 +12,12 @@ from random import randint
 from urlparse import urlparse
 from xml.dom.minidom import Document, parseString
 
-import knownnodes
 import queues
 import state
 import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
-from network import BMConnectionPool, StoppableThread
+from network import BMConnectionPool, knownnodes, StoppableThread
 from network.node import Peer
 
 

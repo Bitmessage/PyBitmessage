@@ -40,12 +40,12 @@ from debug import logger  # this should go before any threads
 from helper_startup import (
     adjustHalfOpenConnectionsLimit, start_proxyconfig)
 from inventory import Inventory
-from knownnodes import readKnownNodes
 # Network objects and threads
 from network import (
     BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
     InvThread, ReceiveQueueThread, DownloadThread, UploadThread
 )
+from network.knownnodes import readKnownNodes
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (

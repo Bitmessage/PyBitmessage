@@ -17,7 +17,6 @@ import helper_inbox
 import helper_msgcoding
 import helper_sent
 import highlevelcrypto
-import knownnodes
 import l10n
 import protocol
 import queues
@@ -32,7 +31,7 @@ from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
-from network import bmproto
+from network import bmproto, knownnodes
 from network.node import Peer
 # pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
 
