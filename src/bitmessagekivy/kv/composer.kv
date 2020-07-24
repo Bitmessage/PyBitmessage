@@ -51,14 +51,17 @@
                         size_hint_y: None
                         font_size: '15sp'
                         height: self.parent.height/2
-                        hint_text: 'type, select or scan QR code for recipients address'
+                        hint_text: app.tr._('type, select or scan QR code for recipients address')
                     RV:
                         id: rv
                 MDIconButton:
                     icon: 'qrcode-scan'
                     pos_hint: {'center_x': 0, 'center_y': .8}
                     on_release:
-                        app.root.ids.scr_mngr.current = 'scanscreen'
+                        if root.is_camara_attached(): app.root.ids.scr_mngr.current = 'scanscreen'
+                        else: root.camera_alert()
+                    on_press:
+                        app.root.ids.sc23.get_screen('composer')
 
             MyMDTextField:
                 id: subject

@@ -79,11 +79,13 @@ from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.effects.dampedscroll import DampedScrollEffect
 from kivymd.uix.menu import MDDropdownMenu
 
-from kivy_garden.zbarcam import ZBarCam
-from pyzbar.pyzbar import ZBarSymbol
+from kivy.lang import Observable
+import gettext
 
 if platform != "android":
     from kivy.config import Config
+    from kivy_garden.zbarcam import ZBarCam
+    from pyzbar.pyzbar import ZBarSymbol
 
     Config.set("input", "mouse", "mouse, multitouch_on_demand")
 elif platform == "android":
@@ -183,6 +185,44 @@ def chipTag(text):
     return obj
 
 
+class Lang(Observable):
+    observers = []
+    lang = None
+
+    def __init__(self, defaultlang):
+        super(Lang, self).__init__()
+        self.ugettext = None
+        self.lang = defaultlang
+        self.switch_lang(self.lang)
+
+    def _(self, text):
+        return self.ugettext(text)
+
+    def fbind(self, name, func, args, **kwargs):
+        if name == "_":
+            self.observers.append((func, args, kwargs))
+        else:
+            return super(Lang, self).fbind(name, func, *largs, **kwargs)
+
+    def funbind(self, name, func, args, **kwargs):
+        if name == "_":
+            key = (func, args, kwargs)
+            if key in self.observers:
+                self.observers.remove(key)
+        else:
+            return super(Lang, self).funbind(name, func, *args, **kwargs)
+
+    def switch_lang(self, lang):
+        # get the right locales directory, and instanciate a gettext
+        locale_dir = os.path.join(os.path.dirname(__file__), 'data', 'locales')
+        locales = gettext.translation('langapp', locale_dir, languages=[lang])
+        self.ugettext = locales.gettext
+
+        # update all the kv rules attached to this text
+        for func, largs, kwargs in self.observers:
+            func(largs, None, None)
+
+
 class Inbox(Screen):
     """Inbox Screen uses screen to show widgets of screens"""
 
@@ -262,8 +302,13 @@ class Inbox(Screen):
 
     def set_inboxCount(self, msgCnt):  # pylint: disable=no-self-use
         """This method is used to sent inbox message count"""
-        src_mng_obj = state.kivyapp.root.ids.content_drawer.ids.inbox_cnt
-        src_mng_obj.ids.badge_txt.text = showLimitedCnt(int(msgCnt))
+        src_mng_obj = state.kivyapp.root.ids.content_drawer.ids
+        src_mng_obj.inbox_cnt.ids.badge_txt.text = showLimitedCnt(int(msgCnt))
+        state.kivyapp.get_sent_count()
+        state.all_count = str(
+            int(state.sent_count) + int(state.inbox_count))
+        src_mng_obj.allmail_cnt.ids.badge_txt.text = showLimitedCnt(int(state.all_count))
+
 
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used for retrieving inbox data"""
@@ -367,12 +412,14 @@ class Inbox(Screen):
             msg_count_objs.trash_cnt.ids.badge_txt.text = showLimitedCnt(
                 int(state.trash_count) + 1
             )
-            msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(
-                int(state.all_count) - 1
-            )
             state.inbox_count = str(int(state.inbox_count) - 1)
             state.trash_count = str(int(state.trash_count) + 1)
-            state.all_count = str(int(state.all_count) - 1)
+            if int(state.all_count) > 0:
+                msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(
+                    int(state.all_count) - 1
+                )
+                state.all_count = str(int(state.all_count) - 1)
+
             if int(state.inbox_count) <= 0:
                 # self.ids.identi_tag.children[0].text = ''
                 self.ids.tag_label.text = ''
@@ -937,6 +984,9 @@ class DropDownWidget(BoxLayout):
                         state.detailPageType = ''
                         state.send_draft_mail = None
                     self.parent.parent.parent.ids.sc4.update_sent_messagelist()
+                    allmailCnt_obj = state.kivyapp.root.ids.content_drawer.ids.allmail_cnt
+                    allmailCnt_obj.ids.badge_txt.text = showLimitedCnt(int(state.all_count) + 1)
+                    state.all_count = str(int(state.all_count) + 1)
                     Clock.schedule_once(self.callback_for_msgsend, 3)
                     queues.workerQueue.put(('sendmessage', toAddress))
                     print("sqlExecute successfully #######################")
@@ -1000,8 +1050,59 @@ class DropDownWidget(BoxLayout):
         """This method is used for scanning Qr code"""
         pass
 
+    def is_camara_attached(self):
+        self.parent.parent.parent.ids.sc23.check_camera()
+        is_available = self.parent.parent.parent.ids.sc23.camera_avaialbe
+        return is_available
+
+    def camera_alert(self):
+        width = .8 if platform == 'android' else .55
+        altet_txt = 'Currently this feature is not avaialbe!'if platform == 'android' else 'Camera is not available!'
+        dialog_box=MDDialog(
+        text=altet_txt,
+        size_hint=(width, .25),
+        buttons=[
+            MDFlatButton(
+                text="Ok", on_release=lambda x: callback_for_menu_items("Ok")
+            ),
+        ],)
+        dialog_box.open()
+
+        def callback_for_menu_items(text_item, *arg):
+            """Callback of alert box"""
+            dialog_box.dismiss()
+            toast(text_item)
+
 
 class ScanScreen(Screen):
+    camera_avaialbe = BooleanProperty(False)
+    previous_open_screen = StringProperty()
+    pop_up_instance = ObjectProperty()
+
+    def __init__(self, *args, **kwargs):
+        """Getting AddressBook Details"""
+        super(ScanScreen, self).__init__(*args, **kwargs)
+        self.check_camera()
+
+    def check_camera(self):
+        """This method is used for checking camera avaibility"""
+        if platform != "android":
+            import cv2
+            cap = cv2.VideoCapture(0)
+            while(cap.isOpened()):
+                print('Camera is available!')
+                self.camera_avaialbe = True
+                break
+            else:
+                print("Camera is not available!")
+                self.camera_avaialbe = False
+
+    def get_screen(self, screen_name, instance=None):
+        """This method is used for getting previous screen name"""
+        self.previous_open_screen = screen_name
+        if screen_name != 'composer':
+            self.pop_up_instance = instance
+
     def on_pre_enter(self):
         """
        on_pre_enter works little better on android
@@ -1027,7 +1128,6 @@ class ScanScreen(Screen):
 
     def on_leave(self):
         # pass
-
         Clock.schedule_once(self.stop_camera, 0)
 
     def start_camera(self, *args):
@@ -1748,7 +1848,7 @@ class Setting(Screen):
     def set_caller(self):
         self.menu.caller= self.ids.drop_item
         # self.menu.use_icon_item = False
-        self.menu.target_height = 150
+        self.menu.target_height = 250
 
     def set_item(self, instance):
         self.ids.drop_item.set_item(instance.text)
@@ -1776,6 +1876,7 @@ class NavigateApp(MDApp):
     #state.imageDir = os.path.join(os.path.abspath(os.path.join(__file__ ,"../../..")),'images', 'kivy')
     state.imageDir = os.path.join('./images', 'kivy')
     image_path = state.imageDir
+    tr = Lang("en") # for changing in franch replace en with fr
 
     def build(self):
         """Method builds the widget"""
@@ -1883,7 +1984,8 @@ class NavigateApp(MDApp):
                     on_release=self.close_pop,
                 ),
                 MDRaisedButton(
-                    text="Scan QR code", text_color=self.theme_cls.primary_color
+                    text="Scan QR code", text_color=self.theme_cls.primary_color,
+                    on_release=self.scan_qr_code,
                 ),
             ],
         )
@@ -1892,6 +1994,23 @@ class NavigateApp(MDApp):
         self.add_popup.open()
         # p = GrashofPopup()
         # p.open()
+
+    def scan_qr_code(self, instance):
+        """this method is used for showing QR code scanner"""
+        if self.is_camara_attached():
+            self.add_popup.dismiss()
+            self.root.ids.sc23.get_screen(self.root.ids.scr_mngr.current, self.add_popup)
+            self.root.ids.scr_mngr.current = 'scanscreen'
+        else:
+            altet_txt = 'Currently this feature is not avaialbe!' if platform == 'android' else 'Camera is not available!'
+            self.add_popup.dismiss()
+            toast(altet_txt)
+
+    def is_camara_attached(self):
+        """This method is for checking is camera available or not"""
+        self.root.ids.sc23.check_camera()
+        is_available = self.root.ids.sc23.camera_avaialbe
+        return is_available
 
     def savecontact(self, instance):
         """Method is used for saving contacts"""
@@ -1905,6 +2024,9 @@ class NavigateApp(MDApp):
             pupup_obj.ids.address.focus = True
         elif label == '':
             pupup_obj.ids.label.focus = True
+        else:
+            pupup_obj.ids.address.focus = True
+            # pupup_obj.ids.label.focus = True
 
         stored_address = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
@@ -2446,10 +2568,19 @@ class NavigateApp(MDApp):
         if platform == 'android':
             text = cast(CharSequence, String(text))
             show_toast(text, Toast.LENGTH_SHORT)
-        else:
+        elif self.root.ids.sc23.previous_open_screen == 'composer':
             self.root.ids.sc3.children[1].ids.txt_input.text = text
             self.root.ids.scr_mngr.current = 'create'
+        elif self.root.ids.sc23.previous_open_screen:
+            back_screen = self.root.ids.sc23.previous_open_screen
+            self.root.ids.scr_mngr.current = 'inbox' if back_screen == 'scanscreen' else back_screen
+            add_obj = self.root.ids.sc23.pop_up_instance
+            add_obj.content_cls.ids.address.text = text
+            Clock.schedule_once(partial(self.open_popup, add_obj), .5)
 
+    def open_popup(self, instance, dt):
+        """This method is used for opening popup"""
+        instance.open()
 
 class GrashofPopup(BoxLayout):
     """Moule for save contacts and error messages"""
@@ -3159,10 +3290,11 @@ class Allmails(Screen):
             state.sent_count = str(int(state.sent_count) - 1)
             nav_lay_obj.sc4.ids.ml.clear_widgets()
             nav_lay_obj.sc4.loadSent(state.association)
+        if folder != 'inbox':
+            msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(int(state.all_count) - 1)
+            state.all_count = str(int(state.all_count) - 1)
         msg_count_objs.trash_cnt.ids.badge_txt.text = showLimitedCnt(int(state.trash_count) + 1)
-        msg_count_objs.allmail_cnt.ids.badge_txt.text = showLimitedCnt(int(state.all_count) - 1)
         state.trash_count = str(int(state.trash_count) + 1)
-        state.all_count = str(int(state.all_count) - 1)
         if int(state.all_count) <= 0:
             self.ids.tag_label.text = ''
         nav_lay_obj.sc5.clear_widgets()

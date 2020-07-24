@@ -28,7 +28,7 @@
                             size_hint_y: None
                             height: dp(50)
                             MDLabel:
-                                text: "Select method to make an address:"
+                                text: app.tr._("Select method to make an address:")
                                 bold: True
                                 halign: "center"
                                 theme_text_color: "Custom"
@@ -54,7 +54,7 @@
                                     size_hint_x: None
                                     width: dp(200)
                                     MDLabel:
-                                        text: "Random Number Generator"
+                                        text: app.tr._("Random Number Generator")
                         
                         AnchorLayout:
                             size_hint_y: None
@@ -74,11 +74,11 @@
                                     size_hint_x: None
                                     width: dp(200)
                                     MDLabel:
-                                        text: "Pseudo Number Generator"
+                                        text: app.tr._("Pseudo Number Generator")
                         AnchorLayout:
                             MDFillRoundFlatIconButton:
                                 icon: "chevron-double-right"
-                                text: "Proceed Next"
+                                text: app.tr._("Proceed Next")
                                 on_release:
                                     app.root.ids.scr_mngr.current = 'random'
                                 on_press:
@@ -160,7 +160,7 @@
             size_hint_y: None
             height: dp(50)
             MDLabel:
-                text: "Enter a label to generate address for:"
+                text: app.tr._("Enter a label to generate address for:")
                 bold: True
                 halign: "center"
                 theme_text_color: "Custom"
@@ -185,7 +185,7 @@
         AnchorLayout:
             MDFillRoundFlatIconButton:
                 icon: "chevron-double-right"
-                text: "Proceed Next"
+                text: app.tr._("Proceed Next")
                 on_release: app.root.ids.sc7.generateaddress(app)
 
         Widget:
@@ -245,7 +245,7 @@
     MDLabel:
         theme_text_color: "Custom"
         text_color: .1,.1,.1,.9
-        text: root.section_name
+        text: app.tr._(root.section_name)
         bold: True
         font_style: "Button"
 
@@ -261,4 +261,4 @@
         theme_text_color: "Custom"
         text_color: 0.3,0.3,0.3,1
         font_style: "Body1"
-        text: root.section_text
+        text: app.tr._(root.section_text)

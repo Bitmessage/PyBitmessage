@@ -7,7 +7,7 @@
             orientation: 'vertical'
             OneLineListTitle:
                 id: cred
-                text: "Available Credits"
+                text: app.tr._("Available Credits")
                 divider: None
                 theme_text_color: 'Primary'
                 _no_ripple_effect: True
@@ -15,7 +15,7 @@
 
             OneLineListTitle:
                 id: cred
-                text: root.available_credits
+                text: app.tr._(root.available_credits)
                 divider: None
                 font_style: 'H5'
                 theme_text_color: 'Primary'
@@ -24,5 +24,5 @@
             AnchorLayout:
                 MDRaisedButton:
                     height: dp(38)
-                    text: "+Add more credits"
+                    text: app.tr._("+Add more credits")
                     on_press: app.root.ids.scr_mngr.current = 'payment'

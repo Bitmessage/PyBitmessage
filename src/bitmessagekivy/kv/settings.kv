@@ -5,7 +5,7 @@
         tab_display_mode:'text'
 
         Tab:
-            text: "User Interface"
+            text: app.tr._("User Interface")
             ScrollView:
                 do_scroll_x: False
                 BoxLayout:
@@ -27,7 +27,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Start-on-login not yet supported on your OS"
+                            text: app.tr._("Start-on-login not yet supported on your OS")
                             halign: 'left'
                             pos_hint: {'center_x': 0, 'center_y': 0.6}
                             disabled: True
@@ -44,7 +44,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Tray"
+                                text: app.tr._("Tray")
                                 halign: 'left'
                                 bold: True
                         BoxLayout:
@@ -58,7 +58,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Start Bitmessage in the tray(don't show main window)"
+                                text: app.tr._("Start Bitmessage in the tray(don't show main window)")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': .5}
                         BoxLayout:
@@ -72,7 +72,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Minimize to tray"
+                                text: app.tr._("Minimize to tray")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': .5}
                         BoxLayout:
@@ -86,7 +86,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Close to tray"
+                                text: app.tr._("Close to tray")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': .5}
                     BoxLayout:
@@ -104,7 +104,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Hide connection notifications"
+                                text: app.tr._("Hide connection notifications")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0.2}
                         BoxLayout:
@@ -118,7 +118,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Show notification when message received"
+                                text: app.tr._("Show notification when message received")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0.2}
                         BoxLayout:
@@ -132,7 +132,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Run in Portable Mode"
+                                text: app.tr._("Run in Portable Mode")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0.2}
                     BoxLayout:
@@ -140,7 +140,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: 'In portable Mode, messages and config files are stored in the same directory as the program rather then the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.'
+                            text: app.tr._('In portable Mode, messages and config files are stored in the same directory as the program rather then the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.')
                             # text: 'huiiiii'
                             halign: 'left'
                     BoxLayout:
@@ -157,7 +157,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Willingly include unencrypted destination address when sending to a mobile device"
+                                text: app.tr._("Willingly include unencrypted destination address when sending to a mobile device")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0.2}
                         BoxLayout:
@@ -171,7 +171,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Use identicons"
+                                text: app.tr._("Use identicons")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0.2}
                         BoxLayout:
@@ -184,7 +184,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Reply below Quote"
+                                text: app.tr._("Reply below Quote")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0.2}
                     Widget:
@@ -200,7 +200,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Interface Language"
+                            text: app.tr._("Interface Language")
                             # halign: 'right'
                             bold: True
                         MDDropDownItem:
@@ -225,9 +225,9 @@
                             # padding: [0, 10, 0, 0]
                             spacing: 10
                             MDRaisedButton:
-                                text: 'Reset'
+                                text: app.tr._('Reset')
                             MDRaisedButton:
-                                text: 'Ok'
+                                text: app.tr._('Ok')
         Tab:
             text: 'Network Settings'
             ScrollView:
@@ -243,7 +243,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Listening port"
+                            text: app.tr._("Listening port")
                             halign: 'left'
                             bold: True
                     BoxLayout:
@@ -254,14 +254,14 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Listen for connections on port:"
+                                text: app.tr._("Listen for connections on port:")
                                 halign: 'left'
                         BoxLayout:
                             orientation: 'horizontal'
                             MDTextFieldRect:
                                 size_hint: None, None
                                 size: dp(100), dp(30)
-                                text: '8444'
+                                text: app.tr._('8444')
                                 pos_hint: {'center_y': .5, 'center_x': .5}
                                 input_filter: "int"
                         BoxLayout:
@@ -276,7 +276,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "UPnP"
+                                text: app.tr._("UPnP")
                                 halign: 'left'
                                 pos_hint: {'x': 0, 'y': 0}
                     BoxLayout:
@@ -284,7 +284,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Proxy server / Tor"
+                            text: app.tr._("Proxy server / Tor")
                             halign: 'left'
                             bold: True
 
@@ -295,7 +295,7 @@
                             size_hint_x: None
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Type:"
+                            text: app.tr._("Type:")
                             halign: 'left'
                         MDDropDownItem:
                             id: dropdown_item2
@@ -314,19 +314,19 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Server hostname:"
+                                text: app.tr._("Server hostname:")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
                                 size: dp(app.window_size[0]/4), dp(30)
-                                hint_text: 'localhost'
+                                hint_text: app.tr._('localhost')
                                 pos_hint: {'center_y': .5, 'center_x': .5}
                         BoxLayout:
                             orientation: 'horizontal'
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Port:"
+                                text: app.tr._("Port:")
                                 halign: 'left'
                             # TextInput:
                             #     size_hint: None, None
@@ -339,7 +339,7 @@
                             MDTextFieldRect:
                                 size_hint: None, None
                                 size: dp(app.window_size[0]/4), dp(30)
-                                hint_text: '9050'
+                                hint_text: app.tr._('9050')
                                 pos_hint: {'center_y': .5, 'center_x': .5}
                                 input_filter: "int"
                         BoxLayout:
@@ -347,7 +347,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Username:"
+                                text: app.tr._("Username:")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
@@ -358,7 +358,7 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Pass:"
+                                text: app.tr._("Pass:")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
@@ -376,7 +376,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Authentication"
+                            text: app.tr._("Authentication")
                             halign: 'left'
                             pos_hint: {'x': 0, 'y': 0}
                     BoxLayout:
@@ -391,7 +391,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Listen for incoming connections when using proxy"
+                            text: app.tr._("Listen for incoming connections when using proxy")
                             halign: 'left'
                             pos_hint: {'x': 0, 'y': 0}
                     BoxLayout:
@@ -406,7 +406,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Only connect to onion services(*.onion)"
+                            text: app.tr._("Only connect to onion services(*.onion)")
                             halign: 'left'
                             pos_hint: {'x': 0, 'y': 0}
                     BoxLayout:
@@ -414,7 +414,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Bandwidth limit"
+                            text: app.tr._("Bandwidth limit")
                             halign: 'left'
                             bold: True
                     BoxLayout:
@@ -425,7 +425,23 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Maximum download rate (kB/s):[0:unlimited]"
+                            text: app.tr._("Maximum download rate (kB/s):[0:unlimited]")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: app.window_size[0]/2, dp(30)
+                            hint_text: app.tr._('0')
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Maximum upload rate (kB/s):[0:unlimited]")
                             halign: 'left'
                         MDTextFieldRect:
                             size_hint: None, None
@@ -441,23 +457,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Maximum upload rate (kB/s):[0:unlimited]"
-                            halign: 'left'
-                        MDTextFieldRect:
-                            size_hint: None, None
-                            size: app.window_size[0]/2, dp(30)
-                            hint_text: '0'
-                            pos_hint: {'center_y': .5, 'center_x': .5}
-                            input_filter: "int"
-                    BoxLayout:
-                        size_hint_y: None
-                        orientation: 'horizontal'
-                        padding: [30, 0, 0, 0]
-                        height: dp(30) + self.minimum_height
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            text: "Maximum outbound connections:[0:none]"
+                            text: app.tr._("Maximum outbound connections:[0:none]")
                             halign: 'left'
                         MDTextFieldRect:
                             size_hint: None, None
@@ -470,9 +470,9 @@
                         orientation: 'horizontal'
                         # pos_hint: {'x':.76}
                         MDRaisedButton:
-                            text: 'Reset'
+                            text: app.tr._('Reset')
                         MDRaisedButton:
-                            text: 'Ok'
+                            text: app.tr._('Ok')
         Tab:
             text: 'Resends Expire'
             ScrollView:
@@ -491,7 +491,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: root.exp_text
+                            text: app.tr._(root.exp_text)
                             halign: 'left'
                     BoxLayout:
                         id: box2_height
@@ -501,7 +501,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: "Leave these input fields blank for the default behavior."
+                            text: app.tr._("Leave these input fields blank for the default behavior.")
                             halign: 'left'
                     BoxLayout:
                         size_hint_y: None
@@ -513,18 +513,18 @@
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "Give up after"
+                                text: app.tr._("Give up after")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
                                 size: dp(70), dp(30)
-                                text: '0'
+                                text: app.tr._('0')
                                 pos_hint: {'center_y': .5, 'center_x': .5}
                                 input_filter: "int"
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "days and"
+                                text: app.tr._("days and")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
@@ -545,6 +545,6 @@
                         # pos_hint: {'x':.75}
                         height: dp(50) + self.minimum_height
                         MDRaisedButton:
-                            text: 'Reset'
+                            text: app.tr._('Reset')
                         MDRaisedButton:
-                            text: 'Ok'
+                            text: app.tr._('Ok')

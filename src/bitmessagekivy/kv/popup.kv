@@ -25,7 +25,7 @@
         MDTextField:
             id: label
             multiline: False
-            hint_text: "Label"
+            hint_text: app.tr._("Label")
             required: True
             helper_text_mode: "on_error"
             on_text: root.checkLabel_valid(self)
@@ -34,7 +34,7 @@
                     rgba: (0,0,0,1)
         MDTextField:
             id: address
-            hint_text: "Address"
+            hint_text: app.tr._("Address")
             required: True
             helper_text_mode: "on_error"
             multiline: False
@@ -52,7 +52,7 @@
     MDLabel
         font_style: 'Subtitle2'
         theme_text_color: 'Primary'
-        text: "Label"
+        text: app.tr._("Label")
         font_size: '17sp'
         halign: 'left'
     MDTextField:
@@ -60,7 +60,7 @@
         font_style: 'Body1'
         font_size: '15sp'
         halign: 'left'
-        text: root.address_label
+        text: app.tr._(root.address_label)
         theme_text_color: 'Primary'
         required: True
         helper_text_mode: "on_error"
@@ -71,7 +71,7 @@
     MDLabel:
         font_style: 'Subtitle2'
         theme_text_color: 'Primary'
-        text: "Address"
+        text: app.tr._("Address")
         font_size: '17sp'
         halign: 'left'
     Widget:
@@ -83,7 +83,7 @@
             id: address
             font_style: 'Body1'
             theme_text_color: 'Primary'
-            text: root.address
+            text: app.tr._(root.address)
             font_size: '15sp'
             halign: 'left'
         IconRightSampleWidget:
@@ -102,7 +102,7 @@
         id: myaddr_label
         font_style: 'Subtitle2'
         theme_text_color: 'Primary'
-        text: "Label"
+        text: app.tr._("Label")
         font_size: '17sp'
         halign: 'left'
     MDLabel:
@@ -114,7 +114,7 @@
     MDLabel:
         font_style: 'Subtitle2'
         theme_text_color: 'Primary'
-        text: "Address"
+        text: app.tr._("Address")
         font_size: '17sp'
         halign: 'left'
     BoxLayout:
@@ -123,7 +123,7 @@
             id: label_address
             font_style: 'Body1'
             theme_text_color: 'Primary'
-            text: root.address
+            text: app.tr._(root.address)
             font_size: '15sp'
             halign: 'left'
         IconRightSampleWidget:
@@ -142,7 +142,7 @@
             on_press: root.send_message_from()
             MDLabel:
                 font_style: 'H6'
-                text: 'Send message from'
+                text: app.tr._('Send message from')
                 font_size: '13sp'
                 color: (1,1,1,1)
                 halign: 'center'
@@ -153,7 +153,7 @@
             on_press: app.root.ids.sc15.qrdisplay(root, root.address)
             MDLabel:
                 font_style: 'H6'
-                text: 'Show QR code'
+                text: app.tr._('Show QR code')
                 font_size: '13sp'
                 color: (1,1,1,1)
                 halign: 'center'
@@ -163,7 +163,7 @@
             on_press: root.close_pop()
             MDLabel:
                 font_style: 'H6'
-                text: 'Cancel'
+                text: app.tr._('Cancel')
                 font_size: '13sp'
                 color: (1,1,1,1)
                 halign: 'center'
@@ -189,7 +189,7 @@
                 id: popup_label
                 font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
-                text: "Bitmessage isn't connected to the network.\n If you quit now, it may cause delivery delays.\n Wait until connected and the synchronisation finishes?"
+                text: app.tr._("Bitmessage isn't connected to the network.\n If you quit now, it may cause delivery delays.\n Wait until connected and the synchronisation finishes?")
                 font_size: '17sp'
                 halign: 'center'
         BoxLayout:
@@ -203,7 +203,7 @@
                 on_press: app.stop()
                 MDLabel:
                     font_style: 'H6'
-                    text: 'Yes'
+                    text: app.tr._('Yes')
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
@@ -213,7 +213,7 @@
                 on_press: root.closingAction(self.children[0].text)
                 MDLabel:
                     font_style: 'H6'
-                    text: 'No'
+                    text: app.tr._('No')
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
@@ -224,7 +224,7 @@
                 on_press: root.closingAction(self.children[0].text)
                 MDLabel:
                     font_style: 'H6'
-                    text: 'Cancel'
+                    text: app.tr._('Cancel')
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
@@ -248,7 +248,7 @@
                 id: from_add_label
                 font_style: 'Subtitle2'
                 theme_text_color: 'Primary'
-                text: "From :"
+                text: app.tr._("From :")
                 font_size: '15sp'
                 halign: 'left'
         Widget:
@@ -262,7 +262,7 @@
                 id: sd_label
                 font_style: 'Body2'
                 theme_text_color: 'Primary'
-                text: "[b]" + root.from_addr + "[/b]"
+                text: app.tr._("[b]" + root.from_addr + "[/b]")
                 font_size: '15sp'
                 halign: 'left'
                 markup: True
@@ -288,7 +288,7 @@
             MDLabel:
                 font_style: 'Body2'
                 theme_text_color: 'Primary'
-                text: "Date : " + root.time_tag
+                text: app.tr._("Date : " + root.time_tag)
                 font_size: '15sp'
                 halign: 'left'
         BoxLayout:
@@ -301,7 +301,7 @@
                 pos_hint: {'x': 0.8, 'y': 0}
                 MDLabel:
                     font_style: 'H6'
-                    text: 'Cancel'
+                    text: app.tr._('Cancel')
                     font_size: '13sp'
                     color: (1,1,1,1)
                     halign: 'center'
@@ -311,7 +311,7 @@
     MDLabel:
         font_style: 'Body2'
         theme_text_color: 'Primary'
-        text: root.to_addr
+        text: app.tr._(root.to_addr)
         font_size: '15sp'
         halign: 'left'
     IconRightSampleWidget:
