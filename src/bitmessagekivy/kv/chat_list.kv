@@ -11,7 +11,7 @@
         tab_display_mode:'text'
 
         Tab:
-            text: "Chats"
+            text: app.tr._("Chats")
         	BoxLayout:
                 id: chat_box
                 orientation: 'vertical'
@@ -23,7 +23,7 @@
                         MDLabel:
                             font_style: 'Caption'
                             theme_text_color: 'Primary'
-                            text: 'No Chat'
+                            text: app.tr._('No Chat')
                             halign: 'center'
                             size_hint_y: None
                             bold: True
@@ -47,7 +47,7 @@
                     #         ImageLeftWidget:
                     #             source: './images/text_images/A.png'
         Tab:
-            text: "Contacts"
+            text: app.tr._("Contacts")
             BoxLayout:
                 id: contact_box
                 orientation: 'vertical'

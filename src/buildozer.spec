@@ -13,7 +13,7 @@ package.domain = org.test
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,gif,zip, json, css, ttf,java
+source.include_exts = py,png,jpg,kv,atlas,gif,zip, json, css, ttf,java, po, mo
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png, ../images1/*/*.png

@@ -16,7 +16,7 @@
 #:import MDScrollViewRefreshLayout kivymd.uix.refreshlayout.MDScrollViewRefreshLayout
 #:import MDSpinner kivymd.uix.spinner.MDSpinner
 #:import MDTabsBase kivymd.uix.tab.MDTabsBase
-#:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
+##:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
 <Tab@BoxLayout+MDTabsBase>
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
@@ -100,7 +100,8 @@
                 height: self.minimum_height
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
-                    text: "Accounts"
+                    text: app.tr._('Accounts')
+                    #text: app.tr._('Hello World')
                     height:"35dp"
                 NavigationItem:
                     # size: 50,50
@@ -127,7 +128,8 @@
                         ArrowImg:
                 NavigationItem:
                     id: inbox_cnt
-                    text: 'Inbox'
+                    text: app.tr._('Inbox')
+                    #text: app.tr._('Hello World')
                     icon: 'email-open'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'inbox'
@@ -135,28 +137,28 @@
                     on_press: app.load_screen(self)
                 NavigationItem:
                     id: send_cnt
-                    text: 'Sent'
+                    text: app.tr._('Sent')
                     icon: 'send'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'sent'
                     on_release: root.parent.set_state()
                 NavigationItem:
                     id: draft_cnt
-                    text: 'Draft'
+                    text: app.tr._('Draft')
                     icon: 'message-draw'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'draft'
                     on_release: root.parent.set_state()
                 NavigationItem:
                     id: trash_cnt
-                    text: 'Trash'
+                    text: app.tr._('Trash')
                     icon: 'delete'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'trash'
                     on_release: root.parent.set_state()
                 NavigationItem:
                     id: allmail_cnt
-                    text: 'All Mails'
+                    text: app.tr._('All Mails')
                     icon: 'contact-mail'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
@@ -164,53 +166,53 @@
                     on_press: app.load_screen(self)
                 NavigationItem:
                     id: chat_rm
-                    text: 'Chat Room'
+                    text: app.tr._('Chat Room')
                     icon: 'wechat'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'chlist'
                     on_release: root.parent.set_state()
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
-                    text: "All labels"
+                    text: app.tr._("All labels")
                 NavigationItem:
-                    text: 'Address Book'
+                    text: app.tr._('Address Book')
                     icon: 'book-multiple'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'addressbook'
                     on_release: root.parent.set_state()
                 NavigationItem:
-                    text: 'Settings'
+                    text: app.tr._('Settings')
                     icon: 'settings'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'set'
                     on_release: root.parent.set_state()
                 NavigationItem:
-                    text: 'Purchase'
+                    text: app.tr._('Purchase')
                     icon: 'shopping'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'payment'
                     on_release: root.parent.set_state()
                 NavigationItem:
-                    text: 'Credits'
+                    text: app.tr._('Credits')
                     icon: 'wallet'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'credits'
                     on_release: root.parent.set_state()
                 NavigationItem:
-                    text: 'New address'
+                    text: app.tr._('New address')
                     icon: 'account-plus'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'login'
                     on_release: root.parent.set_state()
                     on_press: app.reset_login_screen()
                 NavigationItem:
-                    text: 'Network status'
+                    text: app.tr._('Network status')
                     icon: 'server-network'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'networkstat'
                     on_release: root.parent.set_state()
                 NavigationItem:
-                    text: 'My addresses'
+                    text: app.tr._('My addresses')
                     icon: 'account-multiple'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'myaddress'
@@ -317,7 +319,7 @@ NavigationLayout:
             size_hint_y: None
             font_style: 'Body1'
             theme_text_color: 'Primary'
-            text: root.address
+            text: app.tr._(root.address)
             multiline: True
             readonly: True
             line_color_normal: [0,0,0,0]

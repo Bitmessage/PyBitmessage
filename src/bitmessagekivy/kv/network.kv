@@ -5,7 +5,7 @@
         tab_display_mode:'text'
 
         Tab:
-            text: "Total connections"
+            text: app.tr._("Total connections")
             ScrollView:
                 do_scroll_x: False
                 MDList:
@@ -13,7 +13,7 @@
                     size_hint_y: None
                     height: dp(200)
                     OneLineListItem:
-                        text: "Total Connections"
+                        text: app.tr._("Total Connections")
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -27,12 +27,12 @@
                             pos_hint: {'center_x': .5}
                             MDLabel:
                                 font_style: 'H6'
-                                text: root.text_variable_1
+                                text: app.tr._(root.text_variable_1)
                                 font_size: '13sp'
                                 color: (1,1,1,1)
                                 halign: 'center'
         Tab:
-            text: 'Processes'
+            text: app.tr._('Processes')
             ScrollView:
                 do_scroll_x: False
                 MDList:
@@ -40,7 +40,7 @@
                     size_hint_y: None
                     height: dp(500)
                     OneLineListItem:
-                        text: "person-to-person"
+                        text: app.tr._("person-to-person")
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -54,12 +54,12 @@
                             pos_hint: {'center_x': .5}
                             MDLabel:
                                 font_style: 'H6'
-                                text: root.text_variable_2
+                                text: app.tr._(root.text_variable_2)
                                 font_size: '13sp'
                                 color: (1,1,1,1)
                                 halign: 'center'
                     OneLineListItem:
-                        text: "Brodcast"
+                        text: app.tr._("Brodcast")
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -73,12 +73,12 @@
                             pos_hint: {'center_x': .5}
                             MDLabel:
                                 font_style: 'H6'
-                                text: root.text_variable_3
+                                text: app.tr._(root.text_variable_3)
                                 font_size: '13sp'
                                 color: (1,1,1,1)
                                 halign: 'center'
                     OneLineListItem:
-                        text: "publickeys"
+                        text: app.tr._("publickeys")
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -92,12 +92,12 @@
                             pos_hint: {'center_x': .5}
                             MDLabel:
                                 font_style: 'H6'
-                                text: root.text_variable_4
+                                text: app.tr._(root.text_variable_4)
                                 font_size: '13sp'
                                 color: (1,1,1,1)
                                 halign: 'center'
                     OneLineListItem:
-                        text: "objects"
+                        text: app.tr._("objects")
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -111,7 +111,7 @@
                             pos_hint: {'center_x': .5}
                             MDLabel:
                                 font_style: 'H6'
-                                text: root.text_variable_5
+                                text: app.tr._(root.text_variable_5)
                                 font_size: '13sp'
                                 color: (1,1,1,1)
                                 halign: 'center'
