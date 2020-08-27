@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # INIT
-MACHINE_TYPE=`uname -m`
+MACHINE_TYPE=$(uname -m)
 BASE_DIR=$(pwd)
 PYTHON_VERSION=2.7.17
 PYQT_VERSION=4-4.11.4-gpl-Py2.7-Qt4.8.7
@@ -34,7 +34,7 @@ function download_sources_64 {
 }
 
 function download_sources {
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		download_sources_64
 	else
 		download_sources_32
@@ -43,18 +43,18 @@ function download_sources {
 
 function install_wine {
 	echo "Setting up wine"
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		export WINEPREFIX=${HOME}/.wine64 WINEARCH=win64
 	else
 		export WINEPREFIX=${HOME}/.wine32 WINEARCH=win32
 	fi
-	rm -rf ${WINEPREFIX}
+	rm -rf "${WINEPREFIX}"
 	rm -rf packages/pyinstaller/{build,dist}
 }
 
 function install_python(){
-	cd ${SRCPATH}
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	cd ${SRCPATH} || exit 1
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Installing Python ${PYTHON_VERSION} 64b"
 		wine msiexec -i python-${PYTHON_VERSION}.amd64.msi /q /norestart
 		echo "Installing vcredist for 64 bit"
@@ -63,7 +63,7 @@ function install_python(){
 		echo "Installing Python ${PYTHON_VERSION} 32b"
 		wine msiexec -i python-${PYTHON_VERSION}.msi /q /norestart
 		# MSVCR 2008 required for Windows XP
-		cd ${SRCPATH}
+		cd ${SRCPATH} || exit 1
 		echo "Installing vc_redist (2008) for 32 bit "
 		wine vcredist_x86.exe /Q
 	fi
@@ -75,7 +75,7 @@ function install_python(){
 }
 
 function install_pyqt(){
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Installing PyQt-${PYQT_VERSION} 64b"
 		wine PyQt${PYQT_VERSION}-x64.exe /S /WX
 	else
@@ -85,7 +85,7 @@ function install_pyqt(){
 }
 
 function install_openssl(){
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Installing OpenSSL ${OPENSSL_VERSION} 64b"
 		wine Win64OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
 	else
@@ -96,9 +96,9 @@ function install_openssl(){
 
 function install_pyinstaller()
 {
-	cd ${BASE_DIR}
+	cd "${BASE_DIR}" || exit 1
 	echo "Installing PyInstaller"
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		wine python -m pip install pyinstaller
 	else
 		# 3.2.1 is the last version to work on XP
@@ -109,40 +109,60 @@ function install_pyinstaller()
 
 function install_msgpack()
 {
-	cd ${BASE_DIR}
+	cd "${BASE_DIR}" || exit 1
 	echo "Installing msgpack"
 	wine python -m pip install msgpack-python
 }
 
 function install_pyopencl()
 {
-	cd ${SRCPATH}
+	cd "${SRCPATH}" || exit 1
 	echo "Installing PyOpenCL"
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		wine python -m pip install pyopencl-2015.1-cp27-none-win_amd64.whl
 	else
 		wine python -m pip install pyopencl-2015.1-cp27-none-win32.whl
 	fi
-        sed -Ei 's/_DEFAULT_INCLUDE_OPTIONS = .*/_DEFAULT_INCLUDE_OPTIONS = [] /' $WINEPREFIX/drive_c/Python27/Lib/site-packages/pyopencl/__init__.py
+        sed -Ei 's/_DEFAULT_INCLUDE_OPTIONS = .*/_DEFAULT_INCLUDE_OPTIONS = [] /' \
+            "$WINEPREFIX/drive_c/Python27/Lib/site-packages/pyopencl/__init__.py"
 }
 
 function build_dll(){
-	cd ${BASE_DIR}
-	cd src/bitmsghash
-	if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+	cd "${BASE_DIR}" || exit 1
+	cd src/bitmsghash || exit 1
+	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Create dll"
-		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -I/usr/x86_64-w64-mingw32/include -L$HOME/.wine64/drive_c/OpenSSL-Win64/lib -c 	bitmsghash.cpp
-		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native  -I$HOME/.wine64/drive_c/OpenSSL-Win64/include -L$HOME/.wine64/drive_c/OpenSSL-Win64 -L/usr/lib/x86_64-linux-gnu/wine -fPIC -shared -lcrypt32 -leay32 -lwsock32 -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
+		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native \
+                    "-I$HOME/.wine64/drive_c/OpenSSL-Win64/include" \
+                    -I/usr/x86_64-w64-mingw32/include \
+                    "-L$HOME/.wine64/drive_c/OpenSSL-Win64/lib" \
+                    -c bitmsghash.cpp
+		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
+                    -D_WIN32 -O3 -march=native \
+                    "-I$HOME/.wine64/drive_c/OpenSSL-Win64/include" \
+                    "-L$HOME/.wine64/drive_c/OpenSSL-Win64" \
+                    -L/usr/lib/x86_64-linux-gnu/wine \
+                    -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
+                    -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
 	else
 		echo "Create dll"
-		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native   -I$HOME/.wine32/drive_c/OpenSSL-Win32/include -I/usr/i686-w64-mingw32/include  -L$HOME/.wine32/drive_c/OpenSSL-Win32/lib  -c 	bitmsghash.cpp
-		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o -D_WIN32 -O3 -march=native    -I$HOME/.wine32/drive_c/OpenSSL-Win32/include    -L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW -fPIC -shared -lcrypt32 -leay32 -lwsock32  -o bitmsghash32.dll  -Wl,--out-implib,bitmsghash.a 
+		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native \
+                    "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
+                    -I/usr/i686-w64-mingw32/include \
+                    "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib" \
+                    -c bitmsghash.cpp
+		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
+                    -D_WIN32 -O3 -march=native \
+                    "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
+                    "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW" \
+                    -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
+                    -o bitmsghash32.dll -Wl,--out-implib,bitmsghash.a
 	fi
 }
 
 function build_exe(){
-	cd ${BASE_DIR}
-	cd packages/pyinstaller
+	cd "${BASE_DIR}" || exit 1
+	cd packages/pyinstaller || exit 1
 	wine pyinstaller bitmessagemain.spec
 }
 
