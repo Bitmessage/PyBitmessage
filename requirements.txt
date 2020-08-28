@@ -3,3 +3,4 @@ python_prctl
 psutil
 pycrypto
 six
+xvfbwrapper;platform_system=="Linux"

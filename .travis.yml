@@ -34,5 +34,5 @@ install:
   - export PYTHONWARNINGS=all
 script:
   - python checkdeps.py
-  - xvfb-run src/bitmessagemain.py -t
+  - python src/bitmessagemain.py -t
   - python -bm tests
