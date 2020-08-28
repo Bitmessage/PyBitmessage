@@ -2,3 +2,4 @@ coverage
 python_prctl
 psutil
 pycrypto
+xvfbwrapper;platform_system=="Linux"
