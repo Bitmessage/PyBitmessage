@@ -2,6 +2,7 @@
 TCP protocol handler
 """
 # pylint: disable=too-many-ancestors
+import l10n
 import logging
 import math
 import random
@@ -29,11 +30,13 @@ from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
 from node import Peer
 from queues import invQueue, receiveDataQueue, UISignalQueue
+from tr import _translate
 
 logger = logging.getLogger('default')
 
 
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  #: Equals three hours
+maximumTimeOffsetWrongCount = 3  #: Connections with wrong time offset
 
 
 class TCPConnection(BMProto, TLSDispatcher):
@@ -123,6 +126,22 @@ class TCPConnection(BMProto, TLSDispatcher):
                     'Skipping processing getdata due to missing object'
                     ' for %.2fs', delay)
                 self.skipUntil = time.time() + delay
+
+    def checkTimeOffsetNotification(self):
+        """
+        Check if we have connected to too many nodes which have too high
+        time offset from us
+        """
+        if BMProto.timeOffsetWrongCount > \
+                maximumTimeOffsetWrongCount and \
+                not self.fullyEstablished:
+            UISignalQueue.put((
+                'updateStatusBar',
+                _translate(
+                    "MainWindow",
+                    "The time on your computer, %1, may be wrong. "
+                    "Please verify your settings."
+                ).arg(l10n.formatTimestamp())))
 
     def state_connection_fully_established(self):
         """
@@ -275,8 +294,10 @@ class TCPConnection(BMProto, TLSDispatcher):
                 knownnodes.addKnownNode(
                     self.streams, self.destination, time.time())
                 Dandelion().maybeRemoveStem(self)
-        elif host_is_global:
-            knownnodes.decreaseRating(self.destination)
+        else:
+            self.checkTimeOffsetNotification()
+            if host_is_global:
+                knownnodes.decreaseRating(self.destination)
         BMProto.handle_close(self)
 
 
