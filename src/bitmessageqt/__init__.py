@@ -4244,10 +4244,6 @@ class BitmessageQtApplication(QtWidgets.QApplication):
 
         self.setStyleSheet("QStatusBar::item { border: 0px solid black }")
 
-    def __del__(self):
-        if self.server:
-            self.server.close()
-
     def on_new_connection(self):
         if myapp:
             myapp.appIndicatorShow()
