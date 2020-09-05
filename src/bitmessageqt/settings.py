@@ -342,6 +342,8 @@ class SettingsDialog(QtGui.QDialog):
         if proxytype_index == 0:
             if self._proxy_type and state.statusIconColor != 'red':
                 self.net_restart_needed = True
+        elif state.statusIconColor == 'red' and self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+            self.net_restart_needed = False
         elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
             self.parent.statusbar.clearMessage()
