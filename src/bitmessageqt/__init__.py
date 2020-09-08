@@ -36,6 +36,7 @@ from foldertree import (
 import settingsmixin
 import support
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
+import helper_addressbook
 import helper_search
 import l10n
 from utils import str_broadcast_subscribers, avatarize
@@ -2435,12 +2436,14 @@ class MyForm(settingsmixin.SMainWindow):
             ))
             return
 
-        self.addEntryToAddressBook(address, label)
-
-    def addEntryToAddressBook(self, address, label):
-        if shared.isAddressInMyAddressBook(address):
+        if address in BMConfigParser().addresses():
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Error: You cannot add your own address in the address book."
+            ))
             return
-        sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', label, address)
+
+        helper_addressbook.insert(label=label, address=address)
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
         self.rerenderAddressBook()
