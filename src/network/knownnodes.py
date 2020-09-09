@@ -17,6 +17,9 @@ import state
 from bmconfigparser import BMConfigParser
 from network.node import Peer
 
+
+state.Peer = Peer
+
 knownNodesLock = threading.RLock()
 """Thread lock for knownnodes modification"""
 knownNodes = {stream: {} for stream in range(1, 4)}
