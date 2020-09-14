@@ -104,8 +104,5 @@
    <header>bitmessageqt.settingsmixin</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="bitmessage_icons.qrc"/>
- </resources>
  <connections/>
 </ui>

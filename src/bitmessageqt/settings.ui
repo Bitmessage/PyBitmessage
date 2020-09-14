@@ -1086,9 +1086,6 @@
   <tabstop>checkBoxSocksListen</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
- <resources>
-  <include location="bitmessage_icons.qrc"/>
- </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
