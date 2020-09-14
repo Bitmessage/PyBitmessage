@@ -54,6 +54,8 @@ from statusbar import BMStatusBar
 import sound
 # This is needed for tray icon
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
+import uuid
+import helper_sent
 
 try:
     from plugins.plugin import get_plugin, get_plugins
@@ -2165,10 +2167,9 @@ class MyForm(settingsmixin.SMainWindow):
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         ackdata = genAckPayload(streamNumber, stealthLevel)
-                        t = ()
-                        sqlExecute(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                            '',
+                        msgid = uuid.uuid4().bytes
+                        t = (
+                            msgid,
                             toAddress,
                             ripe,
                             fromAddress,
@@ -2183,8 +2184,8 @@ class MyForm(settingsmixin.SMainWindow):
                             'sent', # folder
                             encoding, # encodingtype
                             BMConfigParser().getint('bitmessagesettings', 'ttl')
-                            )
-
+                        )
+                        helper_sent.insert(t)
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
                                                toAddress)
@@ -2222,7 +2223,8 @@ class MyForm(settingsmixin.SMainWindow):
                 ackdata = genAckPayload(streamNumber, 0)
                 toAddress = str_broadcast_subscribers
                 ripe = ''
-                t = ('', # msgid. We don't know what this will be until the POW is done. 
+                msgid = uuid.uuid4().bytes
+                t = (msgid, # msgid. We don't know what this will be until the POW is done.
                      toAddress, 
                      ripe, 
                      fromAddress, 
@@ -2238,8 +2240,7 @@ class MyForm(settingsmixin.SMainWindow):
                      encoding, # encoding type
                      BMConfigParser().getint('bitmessagesettings', 'ttl')
                      )
-                sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+                helper_sent.insert(t)
 
                 toLabel = str_broadcast_subscribers
 
