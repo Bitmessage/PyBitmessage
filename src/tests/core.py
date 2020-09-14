@@ -231,7 +231,8 @@ class TestCore(unittest.TestCase):
         msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1])
         decoded = self._decode_msg(msg, "IQQiiQlsLv")
         peer, _, ua, streams = self._decode_msg(msg, "IQQiiQlsLv")[4:]
-        self.assertEqual(peer, Node(3, '127.0.0.1', 8444))
+        self.assertEqual(
+            peer, Node(11 if state.dandelion else 3, '127.0.0.1', 8444))
         self.assertEqual(ua, '/PyBitmessage:' + softwareVersion + '/')
         self.assertEqual(streams, [1])
         # with multiple streams
