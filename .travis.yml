@@ -11,9 +11,12 @@ addons:
       - xvfb
 install:
   - pip install -r requirements.txt
-  - ln -s src pybitmessage  # tests environment
   - python setup.py install
 script:
   - python checkdeps.py
+  - git clone -b v0.6.3 https://github.com/Bitmessage/PyBitmessage.git old;
+    cd old; src/bitmessagemain.py -d; sleep 10; cd ..;
+    kill -QUIT $(ps ax | grep bitmessagemain | cut -d ' ' -f 2);
+    sleep 10;
   - xvfb-run src/bitmessagemain.py -t
   - python setup.py test
