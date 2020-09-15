@@ -19,6 +19,7 @@ from textwrap import fill
 from threading import Timer
 
 from dialog import Dialog
+import helper_sent
 import l10n
 import network.stats
 import queues
@@ -32,8 +33,6 @@ from helper_ackPayload import genAckPayload
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 
-import uuid
-import helper_sent
 # pylint: disable=global-statement
 
 
@@ -969,9 +968,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         scrollbox(d, unicode("Because you are not currently connected to the network, "))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(decodeAddress(addr)[2], stealthLevel)
-                    msgid = uuid.uuid4().bytes
                     t = (
-                        msgid,
+                        '',
                         addr,
                         ripe,
                         sender,
@@ -985,7 +983,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         0,      # retryNumber
                         "sent",
                         2,      # encodingType
-                        BMConfigParser().getint('bitmessagesettings', 'ttl')
+                        0
                     )
                     helper_sent.insert(t)
                     queues.workerQueue.put(("sendmessage", addr))
@@ -998,9 +996,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             ackdata = genAckPayload(decodeAddress(addr)[2], 0)
             recv = BROADCAST_STR
             ripe = ""
-            msgid = uuid.uuid4().bytes
             t = (
-                msgid,
+                '',
                 recv,
                 ripe,
                 sender,
@@ -1014,7 +1011,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                 0,      # retryNumber
                 "sent",         # folder
                 2,      # encodingType
-                BMConfigParser().getint('bitmessagesettings', 'ttl')
+                0
             )
             helper_sent.insert(t)
             queues.workerQueue.put(('sendbroadcast', ''))

@@ -54,7 +54,6 @@ from statusbar import BMStatusBar
 import sound
 # This is needed for tray icon
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
-import uuid
 import helper_sent
 
 try:
@@ -2167,9 +2166,8 @@ class MyForm(settingsmixin.SMainWindow):
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         ackdata = genAckPayload(streamNumber, stealthLevel)
-                        msgid = uuid.uuid4().bytes
                         t = (
-                            msgid,
+                            '',
                             toAddress,
                             ripe,
                             fromAddress,
@@ -2183,7 +2181,7 @@ class MyForm(settingsmixin.SMainWindow):
                             0, # retryNumber
                             'sent', # folder
                             encoding, # encodingtype
-                            BMConfigParser().getint('bitmessagesettings', 'ttl')
+                            0
                         )
                         helper_sent.insert(t)
                         toLabel = ''
@@ -2223,8 +2221,7 @@ class MyForm(settingsmixin.SMainWindow):
                 ackdata = genAckPayload(streamNumber, 0)
                 toAddress = str_broadcast_subscribers
                 ripe = ''
-                msgid = uuid.uuid4().bytes
-                t = (msgid, # msgid. We don't know what this will be until the POW is done.
+                t = ('', # msgid. We don't know what this will be until the POW is done.
                      toAddress, 
                      ripe, 
                      fromAddress, 
@@ -2238,7 +2235,7 @@ class MyForm(settingsmixin.SMainWindow):
                      0, # retryNumber
                      'sent', # folder
                      encoding, # encoding type
-                     BMConfigParser().getint('bitmessagesettings', 'ttl')
+                     0
                      )
                 helper_sent.insert(t)
 
