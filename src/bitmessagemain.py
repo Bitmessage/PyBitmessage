@@ -321,9 +321,10 @@ class Main(object):
                 receiveQueueThread = ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()
-            announceThread = AnnounceThread()
-            announceThread.daemon = True
-            announceThread.start()
+            if config.safeGetBoolean('bitmessagesettings', 'udp'):
+                state.announceThread = AnnounceThread()
+                state.announceThread.daemon = True
+                state.announceThread.start()
             state.invThread = InvThread()
             state.invThread.daemon = True
             state.invThread.start()

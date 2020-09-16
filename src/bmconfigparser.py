@@ -19,24 +19,25 @@ BMConfigDefaults = {
         "maxtotalconnections": 200,
         "maxuploadrate": 0,
         "apiinterface": "127.0.0.1",
-        "apiport": 8442
+        "apiport": 8442,
+        "udp": "True"
     },
     "threads": {
         "receive": 3,
     },
     "network": {
-        "bind": '',
+        "bind": "",
         "dandelion": 90,
     },
     "inventory": {
         "storage": "sqlite",
-        "acceptmismatch": False,
+        "acceptmismatch": "False",
     },
     "knownnodes": {
         "maxnodes": 20000,
     },
     "zlib": {
-        'maxsize': 1048576
+        "maxsize": 1048576
     }
 }
 

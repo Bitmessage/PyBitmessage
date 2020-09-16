@@ -19,7 +19,7 @@ import widgets
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
-from network import knownnodes
+from network import knownnodes, AnnounceThread
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
@@ -138,6 +138,8 @@ class SettingsDialog(QtGui.QDialog):
             config.get('bitmessagesettings', 'port')))
         self.checkBoxUPnP.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'upnp'))
+        self.checkBoxUDP.setChecked(
+            config.safeGetBoolean('bitmessagesettings', 'udp'))
         self.checkBoxAuthentication.setChecked(
             config.getboolean('bitmessagesettings', 'socksauthentication'))
         self.checkBoxSocksListen.setChecked(
@@ -326,7 +328,8 @@ class SettingsDialog(QtGui.QDialog):
                 self.lineEditTCPPort.text()):
             self.config.set(
                 'bitmessagesettings', 'port', str(self.lineEditTCPPort.text()))
-            if not self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+            if not self.config.safeGetBoolean(
+                    'bitmessagesettings', 'dontconnect'):
                 self.net_restart_needed = True
 
         if self.checkBoxUPnP.isChecked() != self.config.safeGetBoolean(
@@ -339,11 +342,26 @@ class SettingsDialog(QtGui.QDialog):
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
 
+        udp_enabled = self.checkBoxUDP.isChecked()
+        if udp_enabled != self.config.safeGetBoolean(
+                'bitmessagesettings', 'udp'):
+            self.config.set('bitmessagesettings', 'udp', str(udp_enabled))
+            if udp_enabled:
+                announceThread = AnnounceThread()
+                announceThread.daemon = True
+                announceThread.start()
+            else:
+                try:
+                    state.announceThread.stopThread()
+                except AttributeError:
+                    pass
+
         proxytype_index = self.comboBoxProxyType.currentIndex()
         if proxytype_index == 0:
             if self._proxy_type and state.statusIconColor != 'red':
                 self.net_restart_needed = True
-        elif state.statusIconColor == 'red' and self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+        elif state.statusIconColor == 'red' and self.config.safeGetBoolean(
+                'bitmessagesettings', 'dontconnect'):
             self.net_restart_needed = False
         elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
@@ -369,8 +387,11 @@ class SettingsDialog(QtGui.QDialog):
             self.lineEditSocksPassword.text()))
         self.config.set('bitmessagesettings', 'sockslisten', str(
             self.checkBoxSocksListen.isChecked()))
-        if self.checkBoxOnionOnly.isChecked() \
-                and not self.config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'):
+        if (
+            self.checkBoxOnionOnly.isChecked()
+            and not self.config.safeGetBoolean(
+                'bitmessagesettings', 'onionservicesonly')
+        ):
             self.net_restart_needed = True
         self.config.set('bitmessagesettings', 'onionservicesonly', str(
             self.checkBoxOnionOnly.isChecked()))
@@ -432,8 +453,8 @@ class SettingsDialog(QtGui.QDialog):
         acceptableDifficultyChanged = False
 
         if (
-                float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
-                or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
+            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
+            or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
         ):
             if self.config.get(
                     'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
@@ -449,8 +470,8 @@ class SettingsDialog(QtGui.QDialog):
                         * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
                 )
         if (
-                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
-                or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
+            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
+            or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
         ):
             if self.config.get(
                     'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
@@ -541,8 +562,8 @@ class SettingsDialog(QtGui.QDialog):
         self.parent.updateStartOnLogon()
 
         if (
-                state.appdata != paths.lookupExeFolder()
-                and self.checkBoxPortableMode.isChecked()
+            state.appdata != paths.lookupExeFolder()
+            and self.checkBoxPortableMode.isChecked()
         ):
             # If we are NOT using portable mode now but the user selected
             # that we should...
@@ -564,8 +585,8 @@ class SettingsDialog(QtGui.QDialog):
                 pass
 
         if (
-                state.appdata == paths.lookupExeFolder()
-                and not self.checkBoxPortableMode.isChecked()
+            state.appdata == paths.lookupExeFolder()
+            and not self.checkBoxPortableMode.isChecked()
         ):
             # If we ARE using portable mode now but the user selected
             # that we shouldn't...
