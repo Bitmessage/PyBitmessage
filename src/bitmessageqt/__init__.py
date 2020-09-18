@@ -2684,11 +2684,10 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.updateStatusBar(_translate(
             "MainWindow", "Shutting down PyBitmessage... %1%").arg(0))
-
         if waitForConnection:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for network connection..."))
-            while state.statusIconColor == 'red':
+            while state.statusIconColor == 'red' and not self.quitAccepted:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2700,7 +2699,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while pendingDownload() > 0:
+            while pendingDownload() > 0 and not self.quitAccepted:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2715,7 +2714,7 @@ class MyForm(settingsmixin.SMainWindow):
                 curWorkerQueue = powQueueSize()
                 if curWorkerQueue > maxWorkerQueue:
                     maxWorkerQueue = curWorkerQueue
-                if curWorkerQueue > 0:
+                if curWorkerQueue > 0 and not self.quitAccepted:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Waiting for PoW to finish... %1%"
                     ).arg(50 * (maxWorkerQueue - curWorkerQueue) /
