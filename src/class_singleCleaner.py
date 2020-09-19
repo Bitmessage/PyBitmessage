@@ -179,7 +179,7 @@ class singleCleaner(StoppableThread):
             'Doing work necessary to again attempt to request a public key...'
         ))
         sqlExecute(
-            '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
+            '''UPDATE sent SET status='msgqueued' WHERE toaddress=? AND folder='sent' ''',
             address)
         queues.workerQueue.put(('sendmessage', ''))
 
@@ -190,7 +190,7 @@ class singleCleaner(StoppableThread):
             ' to our msg. Sending again.'
         )
         sqlExecute(
-            '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
+            '''UPDATE sent SET status='msgqueued' WHERE ackdata=? AND folder='sent' ''',
             ackdata)
         queues.workerQueue.put(('sendmessage', ''))
         queues.UISignalQueue.put((

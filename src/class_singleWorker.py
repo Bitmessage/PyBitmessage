@@ -96,7 +96,7 @@ class singleWorker(StoppableThread):
 
         # Initialize the state.ackdataForWhichImWatching data structure
         queryreturn = sqlQuery(
-            '''SELECT ackdata FROM sent WHERE status = 'msgsent' ''')
+            '''SELECT ackdata FROM sent WHERE status = 'msgsent' AND folder = 'sent' ''')
         for row in queryreturn:
             ackdata, = row
             self.logger.info('Watching for ackdata %s', hexlify(ackdata))
@@ -109,7 +109,7 @@ class singleWorker(StoppableThread):
                 newack = '\x00\x00\x00\x02\x01\x01' + oldack
                 state.ackdataForWhichImWatching[newack] = 0
                 sqlExecute(
-                    'UPDATE sent SET ackdata=? WHERE ackdata=?',
+                    'UPDATE sent SET ackdata=? WHERE ackdata=? AND folder = "sent" ',
                     newack, oldack
                 )
                 del state.ackdataForWhichImWatching[oldack]
@@ -522,7 +522,7 @@ class singleWorker(StoppableThread):
         sqlExecute(
             '''UPDATE sent SET status='broadcastqueued' '''
 
-            '''WHERE status = 'doingbroadcastpow' ''')
+            '''WHERE status = 'doingbroadcastpow' AND folder = 'sent' ''')
         queryreturn = sqlQuery(
             '''SELECT fromaddress, subject, message, '''
             ''' ackdata, ttl, encodingtype FROM sent '''
@@ -556,10 +556,12 @@ class singleWorker(StoppableThread):
                 ))
                 continue
 
-            sqlExecute(
+            if not sqlExecute(
                 '''UPDATE sent SET status='doingbroadcastpow' '''
-                ''' WHERE ackdata=? AND status='broadcastqueued' ''',
-                ackdata)
+                ''' WHERE ackdata=? AND status='broadcastqueued' '''
+                ''' AND folder='sent' ''',
+                ackdata):
+                continue
 
             # At this time these pubkeys are 65 bytes long
             # because they include the encoding byte which we won't
@@ -681,7 +683,7 @@ class singleWorker(StoppableThread):
             # a 'broadcastsent' status
             sqlExecute(
                 'UPDATE sent SET msgid=?, status=?, lastactiontime=?'
-                ' WHERE ackdata=?',
+                ' WHERE ackdata=? AND folder="sent" ',
                 inventoryHash, 'broadcastsent', int(time.time()), ackdata
             )
 
@@ -691,7 +693,8 @@ class singleWorker(StoppableThread):
         # Reset just in case
         sqlExecute(
             '''UPDATE sent SET status='msgqueued' '''
-            ''' WHERE status IN ('doingpubkeypow', 'doingmsgpow')''')
+            ''' WHERE status IN ('doingpubkeypow', 'doingmsgpow') '''
+            ''' AND folder='sent' ''')
         queryreturn = sqlQuery(
             '''SELECT toaddress, fromaddress, subject, message, '''
             ''' ackdata, status, ttl, retrynumber, encodingtype FROM '''
@@ -727,11 +730,12 @@ class singleWorker(StoppableThread):
             # we can calculate the needed pubkey using the private keys
             # in our keys.dat file.
             elif BMConfigParser().has_section(toaddress):
-                sqlExecute(
+                if not sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' '''
-                    ''' WHERE toaddress=? AND status='msgqueued' ''',
+                    ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
                     toaddress
-                )
+                ):
+                    continue
                 status = 'doingmsgpow'
             elif status == 'msgqueued':
                 # Let's see if we already have the pubkey in our pubkeys table
@@ -742,11 +746,12 @@ class singleWorker(StoppableThread):
                 # If we have the needed pubkey in the pubkey table already,
                 if queryreturn != []:
                     # set the status of this msg to doingmsgpow
-                    sqlExecute(
+                    if not sqlExecute(
                         '''UPDATE sent SET status='doingmsgpow' '''
-                        ''' WHERE toaddress=? AND status='msgqueued' ''',
+                        ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
                         toaddress
-                    )
+                    ):
+                        continue
                     status = 'doingmsgpow'
                     # mark the pubkey as 'usedpersonally' so that
                     # we don't delete it later. If the pubkey version
@@ -829,7 +834,8 @@ class singleWorker(StoppableThread):
                                         ''' toaddress=? AND '''
                                         ''' (status='msgqueued' or '''
                                         ''' status='awaitingpubkey' or '''
-                                        ''' status='doingpubkeypow')''',
+                                        ''' status='doingpubkeypow') AND '''
+                                        ''' folder='sent' ''',
                                         toaddress)
                                     del state.neededPubkeys[tag]
                                     break
@@ -846,7 +852,7 @@ class singleWorker(StoppableThread):
                             sqlExecute(
                                 '''UPDATE sent SET '''
                                 ''' status='doingpubkeypow' WHERE '''
-                                ''' toaddress=? AND status='msgqueued' ''',
+                                ''' toaddress=? AND status='msgqueued' AND folder='sent' ''',
                                 toaddress
                             )
                             queues.UISignalQueue.put((
@@ -1039,7 +1045,7 @@ class singleWorker(StoppableThread):
                             # we are willing to do.
                             sqlExecute(
                                 '''UPDATE sent SET status='toodifficult' '''
-                                ''' WHERE ackdata=? ''',
+                                ''' WHERE ackdata=? AND folder='sent' ''',
                                 ackdata)
                             queues.UISignalQueue.put((
                                 'updateSentItemStatusByAckdata', (
@@ -1187,7 +1193,7 @@ class singleWorker(StoppableThread):
                 )
             except:
                 sqlExecute(
-                    '''UPDATE sent SET status='badkey' WHERE ackdata=?''',
+                    '''UPDATE sent SET status='badkey' WHERE ackdata=? AND folder='sent' ''',
                     ackdata
                 )
                 queues.UISignalQueue.put((
@@ -1292,13 +1298,12 @@ class singleWorker(StoppableThread):
                 newStatus = 'msgsent'
             # wait 10% past expiration
             sleepTill = int(time.time() + TTL * 1.1)
-            sqlExecute(
+            au = sqlExecute(
                 '''UPDATE sent SET msgid=?, status=?, retrynumber=?, '''
-                ''' sleeptill=?, lastactiontime=? WHERE ackdata=?''',
+                ''' sleeptill=?, lastactiontime=? WHERE ackdata=? AND folder='sent' ''',
                 inventoryHash, newStatus, retryNumber + 1,
                 sleepTill, int(time.time()), ackdata
             )
-
             # If we are sending to ourselves or a chan, let's put
             # the message in our own inbox.
             if BMConfigParser().has_section(toaddress):
@@ -1340,7 +1345,7 @@ class singleWorker(StoppableThread):
         queryReturn = sqlQuery(
             '''SELECT retrynumber FROM sent WHERE toaddress=? '''
             ''' AND (status='doingpubkeypow' OR status='awaitingpubkey') '''
-            ''' LIMIT 1''',
+            ''' AND folder='sent' LIMIT 1''',
             toAddress
         )
         if not queryReturn:
@@ -1426,7 +1431,7 @@ class singleWorker(StoppableThread):
             '''UPDATE sent SET lastactiontime=?, '''
             ''' status='awaitingpubkey', retrynumber=?, sleeptill=? '''
             ''' WHERE toaddress=? AND (status='doingpubkeypow' OR '''
-            ''' status='awaitingpubkey') ''',
+            ''' status='awaitingpubkey') AND folder='sent' ''',
             int(time.time()), retryNumber + 1, sleeptill, toAddress)
 
         queues.UISignalQueue.put((
