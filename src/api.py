@@ -1208,27 +1208,31 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             ) * requiredAverageProofOfWorkNonceTrialsPerByte
         )
         with threads.printLock:
-            print(
+            logger.warning(
                 '(For msg message via API) Doing proof of work.'
-                'Total required difficulty:',
+                'Total required difficulty: %f'
+                'Required small message difficulty: %f',
                 float(
                     requiredAverageProofOfWorkNonceTrialsPerByte
                 ) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-                'Required small message difficulty:',
                 float(
                     requiredPayloadLengthExtraBytes
-                ) / defaults.networkDefaultPayloadLengthExtraBytes,
+                ) / defaults.networkDefaultPayloadLengthExtraBytes
             )
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
         with threads.printLock:
-            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
+            logger.info(
+                "(For msg message via API) Found proof of work %s Nonce: %s",
+                trialValue, nonce
+            )
             try:
-                print(
-                    'POW took', int(time.time() - powStartTime),
-                    'seconds.', nonce / (time.time() - powStartTime),
+                logger.warning(
+                    'POW took %d seconds. %f'
                     'nonce trials per second.',
+                    int(time.time() - powStartTime),
+                    nonce / (time.time() - powStartTime)
                 )
             except BaseException:
                 pass
@@ -1242,7 +1246,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             int(time.time()) + TTL, ''
         )
         with threads.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
+            logger.warning(
+                'Broadcasting inv for msg(API disseminatePreEncryptedMsg command): %s',
+                hexlify(inventoryHash)
+            )
         queues.invQueue.put((toStreamNumber, inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
@@ -1272,10 +1279,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         target = 2 ** 64 / ((
             len(payload) + defaults.networkDefaultPayloadLengthExtraBytes + 8
         ) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message via API) Doing proof of work...'
+        logger.debug('(For pubkey message via API) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
+        logger.debug(
+            '(For pubkey message via API) Found proof of work %s Nonce: %s',
+            trialValue, nonce
+        )
         payload = pack('>Q', nonce) + payload
 
         pubkeyReadPosition = 8  # bypass the nonce
@@ -1296,7 +1306,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
         with threads.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
+            logger.warning(
+                'broadcasting inv within API command disseminatePubkey with hash: %s',
+                hexlify(inventoryHash)
+            )
         queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):
