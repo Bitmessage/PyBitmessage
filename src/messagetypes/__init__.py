@@ -39,8 +39,8 @@ def constructObject(data):
 
 
 if paths.frozen is not None:
-    import messagetypes.message
-    import messagetypes.vote
+    import message
+    import vote
 else:
     for mod in listdir(path.dirname(__file__)):
         if mod == "__init__.py":
