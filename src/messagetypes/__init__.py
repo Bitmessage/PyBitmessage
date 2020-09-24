@@ -39,8 +39,8 @@ def constructObject(data):
 
 
 if paths.frozen is not None:
-    import message
-    import vote
+    import message  # noqa : F401 flake8: disable=unused-import
+    import vote     # noqa : F401 flake8: disable=unused-import
 else:
     for mod in listdir(path.dirname(__file__)):
         if mod == "__init__.py":
