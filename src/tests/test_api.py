@@ -160,14 +160,28 @@ class TestAPI(TestAPIProto):
     def test_send_broadcast(self):
         """API command 'sendBroadcast': ensure it returns ackData"""
         addr = self._add_random_address('random_2')
-        ack = self.api.sendBroadcast(
-            addr, base64.encodestring('test_subject'),
-            base64.encodestring('test message')
-        )
+        msg = base64.encodestring('test message')
+        ackdata = self.api.sendBroadcast(
+            addr, base64.encodestring('test_subject'), msg)
         try:
-            int(ack, 16)
+            int(ackdata, 16)
+            status = self.api.getStatus(ackdata)
+            if status == 'notfound':
+                raise KeyError
+            self.assertIn(
+                status, ('broadcastqueued', 'broadcastsent', 'doingmsgpow'))
+            for m in json.loads(self.api.getAllSentMessages())['sentMessages']:
+                if m['ackData'] == ackdata:
+                    sent_msg = m['message']
+                    break
+            else:
+                raise KeyError
         except ValueError:
             self.fail('sendBroadcast returned error or ackData is not hex')
+        except KeyError:
+            self.fail('Could not find sent broadcast in sent messages')
+        else:
+            self.assertEqual(sent_msg, msg.strip())
         finally:
             self.assertEqual(self.api.deleteAddress(addr), 'success')
 
