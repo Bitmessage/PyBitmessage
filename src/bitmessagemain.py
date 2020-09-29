@@ -51,6 +51,7 @@ from singleinstance import singleinstance
 from threads import (
     set_thread_name, printLock,
     addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
+from helper_test import TestCoreDummy
 
 
 def _fixSocket():
@@ -369,14 +370,22 @@ class Main(object):
                     and time.time() - state.last_api_response >= 30
                 ):
                     self.stop()
-        elif not state.enableGUI:
+        else:
             state.enableGUI = True
             # pylint: disable=relative-import
-            from tests import core as test_core
-            test_core_result = test_core.run()
-            state.enableGUI = True
-            self.stop()
-            test_core.cleanup()
+            test_core_result = TestCoreDummy(errors = 1,failures = 1)
+            try:
+                from tests import core as test_core
+                test_core_result = test_core.run()
+            except:
+                pass
+            finally:
+                state.enableGUI = True
+                self.stop()
+            try:
+                test_core.cleanup()
+            except:
+                pass
             sys.exit(
                 'Core tests failed!'
                 if test_core_result.errors or test_core_result.failures
