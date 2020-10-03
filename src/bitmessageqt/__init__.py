@@ -4099,7 +4099,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def updateStatusBar(self, data):
         try:
-            option, message = data
+            message, option = data
         except ValueError:
             option = 0
             message = data
