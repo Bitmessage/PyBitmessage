@@ -373,7 +373,7 @@ class Main(object):
         else:
             state.enableGUI = True
             # pylint: disable=relative-import
-            test_core_result = TestCoreDummy(errors = 1,failures = 1)
+            test_core_result = TestCoreDummy(errors=1, failures=1)
             try:
                 from tests import core as test_core
                 test_core_result = test_core.run()
