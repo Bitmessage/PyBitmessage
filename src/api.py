@@ -930,7 +930,7 @@ class BMRPCDispatcher(object):
             except IndexError:
                 pass
         queryreturn = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, received, message,"
+            "SELECT msgid, toaddress, fromaddress, subject, received, message,"
             " encodingtype, read FROM inbox WHERE msgid=?", msgid
         )
         try:
