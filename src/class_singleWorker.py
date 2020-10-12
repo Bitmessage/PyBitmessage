@@ -557,10 +557,10 @@ class singleWorker(StoppableThread):
                 continue
 
             if not sqlExecute(
-                '''UPDATE sent SET status='doingbroadcastpow' '''
-                ''' WHERE ackdata=? AND status='broadcastqueued' '''
-                ''' AND folder='sent' ''',
-                ackdata):
+                    '''UPDATE sent SET status='doingbroadcastpow' '''
+                    ''' WHERE ackdata=? AND status='broadcastqueued' '''
+                    ''' AND folder='sent' ''',
+                    ackdata):
                 continue
 
             # At this time these pubkeys are 65 bytes long
@@ -1298,7 +1298,7 @@ class singleWorker(StoppableThread):
                 newStatus = 'msgsent'
             # wait 10% past expiration
             sleepTill = int(time.time() + TTL * 1.1)
-            au = sqlExecute(
+            sqlExecute(
                 '''UPDATE sent SET msgid=?, status=?, retrynumber=?, '''
                 ''' sleeptill=?, lastactiontime=? WHERE ackdata=? AND folder='sent' ''',
                 inventoryHash, newStatus, retryNumber + 1,
