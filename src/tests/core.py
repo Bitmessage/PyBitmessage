@@ -8,6 +8,7 @@ import pickle  # nosec
 import Queue
 import random  # nosec
 import string
+import sys
 import time
 import unittest
 
@@ -250,4 +251,11 @@ def run():
     else:
         qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
         suite.addTests(qt_tests)
+
+    def keep_exc(ex_cls, exc, tb):  # pylint: disable=unused-argument
+        """Own exception hook for test cases"""
+        excQueue.put(('tests', exc))
+
+    sys.excepthook = keep_exc
+
     return unittest.TextTestRunner(verbosity=2).run(suite)
