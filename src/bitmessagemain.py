@@ -371,10 +371,13 @@ class Main(object):
                     self.stop()
         elif not state.enableGUI:
             state.enableGUI = True
-            # pylint: disable=relative-import
-            from tests import core as test_core
+            try:  # pylint: disable=relative-import
+                from tests import core as test_core
+            except ImportError:
+                self.stop()
+                return
+
             test_core_result = test_core.run()
-            state.enableGUI = True
             self.stop()
             test_core.cleanup()
             sys.exit(
