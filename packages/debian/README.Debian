@@ -6,7 +6,7 @@ In order to build the .deb yourself, you'll first have to install the stuff that
 
 apt-get install python-minimal python-setuptools python-all \
     python openssl libssl-dev dh-apparmor debhelper dh-python \
-    python-msgpack python-qt4 git
+    python-qt4 git
 
 
 Next make some build directory and clone the newest git repository:

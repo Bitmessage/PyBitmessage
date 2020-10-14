@@ -7,7 +7,7 @@ export DH_OPTIONS=-v
 export PYBUILD_NAME=bitmessage
 
 %:
-	dh $@ --with python2 --buildsystem=pybuild --sourcedirectory=..
+	dh $@ --with python2 --system=pybuild
 	dh_apparmor --profile-name=pybitmessage -ppython-bitmessage
 
 # If you need to rebuild the Sphinx documentation
