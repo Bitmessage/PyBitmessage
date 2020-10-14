@@ -109,7 +109,7 @@ class singleWorker(StoppableThread):
                 newack = '\x00\x00\x00\x02\x01\x01' + oldack
                 state.ackdataForWhichImWatching[newack] = 0
                 sqlExecute(
-                    'UPDATE sent SET ackdata=? WHERE ackdata=? AND folder = "sent" ',
+                    '''UPDATE sent SET ackdata=? WHERE ackdata=? AND folder = 'sent' ''',
                     newack, oldack
                 )
                 del state.ackdataForWhichImWatching[oldack]
@@ -682,8 +682,8 @@ class singleWorker(StoppableThread):
             # Update the status of the message in the 'sent' table to have
             # a 'broadcastsent' status
             sqlExecute(
-                'UPDATE sent SET msgid=?, status=?, lastactiontime=?'
-                ' WHERE ackdata=? AND folder="sent" ',
+                '''UPDATE sent SET msgid=?, status=?, lastactiontime=? '''
+                ''' WHERE ackdata=? AND folder='sent' ''',
                 inventoryHash, 'broadcastsent', int(time.time()), ackdata
             )
 
@@ -1304,6 +1304,7 @@ class singleWorker(StoppableThread):
                 inventoryHash, newStatus, retryNumber + 1,
                 sleepTill, int(time.time()), ackdata
             )
+
             # If we are sending to ourselves or a chan, let's put
             # the message in our own inbox.
             if BMConfigParser().has_section(toaddress):
