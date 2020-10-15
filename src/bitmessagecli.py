@@ -4,7 +4,7 @@
 # pylint: disable=too-many-nested-blocks,too-many-locals,protected-access,too-many-arguments,too-many-function-args
 # pylint: disable=no-member
 """
-Created by Adam Melton (.dok) referenceing https://bitmessage.org/wiki/API_Reference for API documentation
+Created by Adam Melton (.dok) referencing https://bitmessage.org/wiki/API_Reference for API documentation
 Distributed under the MIT/X11 software license. See http://www.opensource.org/licenses/mit-license.php.
 
 This is an example of a daemon client for PyBitmessage 0.6.2, by .dok (Version 0.3.1) , modified
@@ -448,7 +448,7 @@ def subscribe():
 
 
 def unsubscribe():
-    """Unsusbcribe from an address"""
+    """Unsubscribe from an address"""
     global usrPrompt
 
     while True:
@@ -623,7 +623,7 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
 
 
 def saveFile(fileName, fileData):
-    """Allows attachments and messages/broadcats to be saved"""
+    """Allows attachments and messages/broadcasts to be saved"""
 
     # This section finds all invalid characters and replaces them with ~
     fileName = fileName.replace(" ", "")
@@ -1337,7 +1337,7 @@ def markMessageRead(messageID):
 
 
 def markMessageUnread(messageID):
-    """Mark a mesasge as unread"""
+    """Mark a message as unread"""
 
     global usrPrompt
 
@@ -1541,7 +1541,7 @@ def UI(usrInput):
         usrPrompt = 1
         main()
 
-    elif usrInput == "subscribe":  # Subsribe to an address
+    elif usrInput == "subscribe":  # Subscribe to an address
         subscribe()
         usrPrompt = 1
         main()

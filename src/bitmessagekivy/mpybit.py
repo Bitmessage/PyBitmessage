@@ -157,7 +157,7 @@ class Inbox(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method inbox accounts."""
+        """Clock Schedule for method inbox accounts."""
         self.inboxaccounts()
         print(dt)
 
@@ -208,7 +208,7 @@ class Sent(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method sent accounts."""
+        """Clock Schedule for method sent accounts."""
         self.sentaccounts()
         print(dt)
 
@@ -251,7 +251,7 @@ class Trash(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        """Clock Schdule for method inbox accounts."""
+        """Clock Schedule for method inbox accounts."""
         self.inboxaccounts()
         print(dt)
 
@@ -303,7 +303,7 @@ class Create(Screen):
     def send(self):
         """Send message from one address to another."""
         fromAddress = self.ids.spinner_id.text
-        # For now we are using static address i.e we are not using recipent field value.
+        # For now we are using static address i.e we are not using recipient field value.
         toAddress = "BM-2cWyUfBdY2FbgyuCb7abFZ49JYxSzUhNFe"
         message = self.ids.message.text
         subject = self.ids.subject.text
@@ -350,7 +350,7 @@ class Create(Screen):
                     self.ids.message.text = ''
                     self.ids.spinner_id.text = '<select>'
                     self.ids.subject.text = ''
-                    self.ids.recipent.text = ''
+                    self.ids.recipient.text = ''
                     return None
 
     def cancel(self):
@@ -358,7 +358,7 @@ class Create(Screen):
         self.ids.message.text = ''
         self.ids.spinner_id.text = '<select>'
         self.ids.subject.text = ''
-        self.ids.recipent.text = ''
+        self.ids.recipient.text = ''
         return None
 
 
@@ -386,7 +386,7 @@ class NewIdentity(Screen):
                 nonceTrialsPerByte,
                 payloadLengthExtraBytes)
             )
-            self.manager.current = 'add_sucess'
+            self.manager.current = 'add_success'
 
 
 if __name__ == '__main__':

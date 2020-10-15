@@ -80,7 +80,7 @@ class UPnPError(Exception):
 
 
 class Router:  # pylint: disable=old-style-class
-    """Encapulate routing"""
+    """Encapsulate routing"""
     name = ""
     path = ""
     address = None

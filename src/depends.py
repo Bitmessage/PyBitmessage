@@ -178,7 +178,7 @@ def check_sqlite():
     """Do sqlite check.
 
     Simply check sqlite3 module if exist or not with hexversion
-    support in python version for specifieed platform.
+    support in python version for specified platform.
     """
     if sys.hexversion < 0x020500F0:
         logger.error(
@@ -224,7 +224,7 @@ def check_sqlite():
                 return False
             return True
         except sqlite3.Error:
-            logger.exception('An exception occured while checking sqlite.')
+            logger.exception('An exception occurred while checking sqlite.')
             return False
     finally:
         if conn:
@@ -374,12 +374,12 @@ def check_pyqt():
     passed = True
     if QtCore.PYQT_VERSION < 0x40800:
         logger.error(
-            'This version of PyQt is too old. PyBitmessage requries'
+            'This version of PyQt is too old. PyBitmessage requires'
             ' PyQt 4.8 or later.')
         passed = False
     if QtCore.QT_VERSION < 0x40700:
         logger.error(
-            'This version of Qt is too old. PyBitmessage requries'
+            'This version of Qt is too old. PyBitmessage requires'
             ' Qt 4.7 or later.')
         passed = False
     return passed

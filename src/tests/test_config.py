@@ -13,7 +13,7 @@ class TestConfig(unittest.TestCase):
     """A test case for bmconfigparser"""
 
     def test_safeGet(self):
-        """safeGet retuns provided default for nonexistent option or None"""
+        """safeGet returns provided default for nonexistent option or None"""
         self.assertIs(
             BMConfigParser().safeGet('nonexistent', 'nonexistent'), None)
         self.assertEqual(
@@ -32,7 +32,7 @@ class TestConfig(unittest.TestCase):
                 'nonexistent', 'nonexistent', True)
 
     def test_safeGetInt(self):
-        """safeGetInt retuns provided default for nonexistent option or 0"""
+        """safeGetInt returns provided default for nonexistent option or 0"""
         self.assertEqual(
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent'), 0)
         self.assertEqual(

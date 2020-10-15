@@ -160,7 +160,7 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''INSERT INTO subscriptions VALUES'''
                 '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
-            logger.debug('Commiting.')
+            logger.debug('Committing.')
             self.conn.commit()
             logger.debug('Vacuuming message.dat. You might notice that the file size gets much smaller.')
             self.cur.execute(''' VACUUM ''')
@@ -433,7 +433,7 @@ class sqlThread(threading.Thread):
             else:
                 logger.error(err)
 
-        # Let us check to see the last time we vaccumed the messages.dat file.
+        # Let us check to see the last time we vacuumed the messages.dat file.
         # If it has been more than a month let's do it now.
         item = '''SELECT value FROM settings WHERE key='lastvacuumtime';'''
         parameters = ''

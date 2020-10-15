@@ -599,7 +599,7 @@ class AddressBookCompleter(QtGui.QCompleter):
         else:
             self.cursorPos = self.widget().cursorPosition()
 
-        # Get current prosition
+        # Get current position
         curIndex = self.widget().cursorPosition()
 
         # prev_delimiter_index should actually point at final white space

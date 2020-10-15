@@ -24,7 +24,7 @@ def identiconize(address):
     identicon_lib = BMConfigParser().safeGet(
         'bitmessagesettings', 'identiconlib', 'qidenticon_two_x')
 
-    # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr"
+    # As an 'identiconsuffix' you could put "@bitmessage.ch" or "@bm.addr"
     # to make it compatible with other identicon generators. (Note however,
     # that E-Mail programs might convert the BM-address to lowercase first.)
     # It can be used as a pseudo-password to salt the generation of
@@ -34,7 +34,7 @@ def identiconize(address):
     if identicon_lib[:len('qidenticon')] == 'qidenticon':
         # originally by:
         # :Author:Shin Adachi <shn@glucose.jp>
-        # Licesensed under FreeBSD License.
+        # Licensed under FreeBSD License.
         # stripped from PIL and uses QT instead (by sendiulo, same license)
         import qidenticon
         icon_hash = hashlib.md5(

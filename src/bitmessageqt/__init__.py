@@ -1671,7 +1671,7 @@ class MyForm(settingsmixin.SMainWindow):
                     QtCore.QTimer.singleShot(0, self.appIndicatorHide)
             elif event.oldState() & QtCore.Qt.WindowMinimized:
                 # The window state has just been changed to
-                # Normal/Maximised/FullScreen
+                # Normal/Maximized/FullScreen
                 pass
 
     def __icon_activated(self, reason):

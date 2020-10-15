@@ -120,7 +120,7 @@ class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Passphrase")
 
-        label = QtGui.QLabel("Deterministric address.")
+        label = QtGui.QLabel("Deterministic address.")
         label.setWordWrap(True)
 
         passphraseLabel = QtGui.QLabel("Passphrase")

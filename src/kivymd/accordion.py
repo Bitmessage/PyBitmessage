@@ -28,7 +28,7 @@ class MDAccordionItem(ThemableBehavior, AccordionItem):
     ''' Color for title text and icon if `title_theme_color` is Custom '''
     
     background_color = ListProperty(None, allownone=True)
-    ''' Color for the background of the accordian item title in rgba format. 
+    ''' Color for the background of the accordion item title in rgba format. 
     '''
     
     divider_color = ListProperty(None, allownone=True)

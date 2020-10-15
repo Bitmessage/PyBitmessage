@@ -50,7 +50,7 @@ def getSortedSubscriptions(count=False):
 
     :param count: Whether to count messages for each fromaddress in the inbox
     :type count: bool, default False
-    :retuns: dict keys are addresses, values are dicts containing settings
+    :returns: dict keys are addresses, values are dicts containing settings
     :rtype: dict, default {}
     """
     queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions ORDER BY label COLLATE NOCASE ASC')

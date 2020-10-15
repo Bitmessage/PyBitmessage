@@ -138,7 +138,7 @@ class DonRenderer(IdenticonRendererBase):
         [(0, 0), (4, 0), (4, 4), (0, 4)],
         # [1] right-angled triangle pointing top-left:
         [(0, 0), (4, 0), (0, 4)],
-        # [2] upwardy triangle:
+        # [2] upwardly triangle:
         [(2, 0), (4, 4), (0, 4)],
         # [3] left half of square, standing rectangle:
         [(0, 0), (2, 0), (2, 4), (0, 4)],

@@ -24,7 +24,7 @@ from version import softwareVersion  # pylint: disable=wrong-import-position
 
 
 def get_tool_results(file_list):
-    """Take a list of files and resuln the results of applying the tools"""
+    """Take a list of files and the results of applying the tools"""
 
     results = []
     for path_to_file in file_list:

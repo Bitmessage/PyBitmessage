@@ -1,5 +1,5 @@
 """
-Logging and debuging facility
+Logging and debugging facility
 -----------------------------
 
 Levels:
@@ -46,7 +46,7 @@ import state
 
 helper_startup.loadConfig()
 
-# Now can be overriden from a config file, which uses standard python
+# Now can be overridden from a config file, which uses standard python
 # logging.config.fileConfig interface
 # examples are here:
 # https://bitmessage.org/forum/index.php/topic,4820.msg11163.html#msg11163

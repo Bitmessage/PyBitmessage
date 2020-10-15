@@ -71,7 +71,7 @@ def loadConfig():
         config.set('bitmessagesettings', 'startonlogon', 'false')
         if 'linux' in sys.platform:
             config.set('bitmessagesettings', 'minimizetotray', 'false')
-        # This isn't implimented yet and when True on
+        # This isn't implemented yet and when True on
         # Ubuntu causes Bitmessage to disappear while
         # running when minimized.
         else:
