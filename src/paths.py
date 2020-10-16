@@ -8,6 +8,8 @@ import sys
 from datetime import datetime
 from shutil import move
 
+import state
+
 logger = logging.getLogger('default')
 
 # When using py2exe or py2app, the variable frozen is added to the sys
@@ -29,6 +31,28 @@ def lookupExeFolder():
     else:
         exeFolder = ''
     return exeFolder
+
+
+def set_appdata_folder(path=None):
+    """Changes appdata location. Does not move any files, just where
+       where it's looking when loading/saving later"""
+    if not path:
+        try:
+            # default
+            del os.environ['BITMESSAGE_HOME']
+        except KeyError:
+            pass
+    else:
+        os.environ['BITMESSAGE_HOME'] = path
+
+    state.appdata = lookupAppdataFolder()
+    return state.appdata
+
+
+def get_active_config_folder():
+    """Returns current config directory, workaround for inconsistent
+       imports"""
+    return state.appdata
 
 
 def lookupAppdataFolder():

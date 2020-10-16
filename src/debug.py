@@ -42,7 +42,8 @@ import os
 import sys
 
 import helper_startup
-import state
+
+from paths import get_active_config_folder
 
 helper_startup.loadConfig()
 
@@ -67,7 +68,7 @@ def configureLogging():
     sys.excepthook = log_uncaught_exceptions
     fail_msg = ''
     try:
-        logging_config = os.path.join(state.appdata, 'logging.dat')
+        logging_config = os.path.join(get_active_config_folder(), 'logging.dat')
         logging.config.fileConfig(
             logging_config, disable_existing_loggers=False)
         return (
@@ -103,7 +104,7 @@ def configureLogging():
                 'class': 'logging.handlers.RotatingFileHandler',
                 'formatter': 'default',
                 'level': log_level,
-                'filename': os.path.join(state.appdata, 'debug.log'),
+                'filename': os.path.join(get_active_config_folder(), 'debug.log'),
                 'maxBytes': 2097152,  # 2 MiB
                 'backupCount': 1,
                 'encoding': 'UTF-8',
@@ -140,12 +141,21 @@ def resetLogging():
     """Reconfigure logging in runtime when state.appdata dir changed"""
     # pylint: disable=global-statement, used-before-assignment
     global logger
-    for i in logger.handlers:
-        logger.removeHandler(i)
+    for i in list(logger.handlers):
+        try:
+            logger.removeHandler(i)
+        except ValueError:
+            pass
         i.flush()
         i.close()
     configureLogging()
     logger = logging.getLogger('default')
+
+
+def flush_logs():
+    """Tell handlers to flush"""
+    for i in list(logger.handlers):
+        i.flush()
 
 
 # !

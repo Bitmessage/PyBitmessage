@@ -16,6 +16,7 @@ except ImportError:
 import state
 from bmconfigparser import BMConfigParser
 from network.node import Peer
+from paths import get_active_config_folder
 
 knownNodesLock = threading.RLock()
 """Thread lock for knownnodes modification"""
@@ -91,7 +92,7 @@ def pickle_deserialize_old_knownnodes(source):
 def saveKnownNodes(dirName=None):
     """Save knownnodes to filesystem"""
     if dirName is None:
-        dirName = state.appdata
+        dirName = get_active_config_folder()
     with knownNodesLock:
         with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
             json_serialize_knownnodes(output)
@@ -149,7 +150,9 @@ def createDefaultKnownNodes():
 def readKnownNodes():
     """Load knownnodes from filesystem"""
     try:
-        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
+        with open(os.path.join(get_active_config_folder(),
+                               'knownnodes.dat'),
+                  'rb') as source:
             with knownNodesLock:
                 try:
                     json_deserialize_knownnodes(source)

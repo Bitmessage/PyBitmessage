@@ -7,7 +7,7 @@ import os
 import shutil
 from datetime import datetime
 
-import state
+from paths import get_active_config_folder
 from singleton import Singleton
 
 BMConfigDefaults = {
@@ -124,7 +124,16 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         return [
             x for x in BMConfigParser().sections() if x.startswith('BM-')]
 
+    def _reset(self):
+        """Reset current config. There doesn't appear to be a built in
+           method for this"""
+        sections = self.sections()
+        for x in sections:
+            self.remove_section(x)
+
     def read(self, filenames):
+        """Read config and populate defaults"""
+        self._reset()
         ConfigParser.ConfigParser.read(self, filenames)
         for section in self.sections():
             for option in self.options(section):
@@ -144,7 +153,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
 
     def save(self):
         """Save the runtime config onto the filesystem"""
-        fileName = os.path.join(state.appdata, 'keys.dat')
+        fileName = os.path.join(get_active_config_folder(), 'keys.dat')
         fileNameBak = '.'.join([
             fileName, datetime.now().strftime("%Y%j%H%M%S%f"), 'bak'])
         # create a backup copy to prevent the accidental loss due to

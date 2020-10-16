@@ -17,11 +17,11 @@ from binascii import hexlify
 
 # Project imports.
 import highlevelcrypto
-import state
 from addresses import decodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery
+from paths import get_active_config_folder
 
 from pyelliptic import arithmetic
 
@@ -114,7 +114,7 @@ def reloadMyAddressHashes():
     # myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(os.path.join(
-        state.appdata, 'keys.dat'))
+        get_active_config_folder(), 'keys.dat'))
     hasEnabledKeys = False
     for addressInKeysFile in BMConfigParser().addresses():
         isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
@@ -144,7 +144,7 @@ def reloadMyAddressHashes():
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(os.path.join(
-            state.appdata, 'keys.dat'), hasEnabledKeys)
+            get_active_config_folder(), 'keys.dat'), hasEnabledKeys)
 
 
 def reloadBroadcastSendersForWhichImWatching():
