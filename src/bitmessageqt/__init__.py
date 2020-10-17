@@ -2803,6 +2803,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.appIndicatorHide()
         else:
             # custom quit method
+            self.wait = False
             self.quit()
 
     def on_action_InboxMessageForceHtml(self):
