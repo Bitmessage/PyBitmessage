@@ -206,7 +206,7 @@
                         MDDropDownItem:
                             id: drop_item
                             # pos_hint: {'center_x': .5, 'center_y': .5}
-                            text: 'italiano'
+                            text: 'System Setting'
                             on_release: root.menu.open()
                             on_press: root.set_caller()
                         # MDDropDownItem:
@@ -224,10 +224,11 @@
                             orientation: 'horizontal'
                             # padding: [0, 10, 0, 0]
                             spacing: 10
+                            # MDRaisedButton:
+                            #     text: app.tr._('Cancel')
                             MDRaisedButton:
-                                text: app.tr._('Reset')
-                            MDRaisedButton:
-                                text: app.tr._('Ok')
+                                text: app.tr._('Apply')
+                                on_press: root.change_language()
         Tab:
             text: 'Network Settings'
             ScrollView:
@@ -469,10 +470,10 @@
                         spacing:5
                         orientation: 'horizontal'
                         # pos_hint: {'x':.76}
+                        # MDRaisedButton:
+                        #     text: app.tr._('Cancel')
                         MDRaisedButton:
-                            text: app.tr._('Reset')
-                        MDRaisedButton:
-                            text: app.tr._('Ok')
+                            text: app.tr._('Apply')
         Tab:
             text: 'Resends Expire'
             ScrollView:
@@ -544,7 +545,9 @@
                         # pos_hint: {'left': 0}
                         # pos_hint: {'x':.75}
                         height: dp(50) + self.minimum_height
+                        # MDRaisedButton:
+                        #     text: app.tr._('Cancel')
                         MDRaisedButton:
-                            text: app.tr._('Reset')
-                        MDRaisedButton:
-                            text: app.tr._('Ok')
+                            text: app.tr._('Apply')
+
+    Loader:

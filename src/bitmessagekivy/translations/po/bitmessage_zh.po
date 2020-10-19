@@ -1,0 +1,367 @@
+# Example for an internationalized Kivy app
+# Copyright (C) 2013 Mathieu Virbel
+# This file is distributed under the same license as the Kivy package.
+# Mathieu Virbel <mat@kivy.org>, 2013
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-08-29 21:29+0530\n"
+"PO-Revision-Date: 2013-08-01 15:36+0200\n"
+"Last-Translator: Mathieu Virbel <mat@kivy.org>\n"
+"Language-Team: Mathieu Virbel <mat@kivy.org>\n"
+"Language: Chinese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:103
+msgid "Accounts"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:131
+msgid "Inbox"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:140
+msgid "Sent"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:147
+msgid "Draft"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:154
+msgid "Trash"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:161
+msgid "All Mails"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:176
+msgid "All labels"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:178
+msgid "Address Book"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:184
+msgid "Settings"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:190
+msgid "Purchase"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:202
+msgid "New address"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:209
+msgid "Network status"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/main.kv:215
+msgid "My addresses"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:8
+msgid "User Interface"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:30
+msgid "Start-on-login not yet supported on your OS"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:47
+msgid "Tray"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:61
+msgid "Start Bitmessage in the tray(don't show main window)"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:75
+msgid "Minimize to tray"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:89
+msgid "Close to tray"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:107
+msgid "Hide connection notifications"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:121
+msgid "Show notification when message received"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:135
+msgid "Run in Portable Mode"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:143
+msgid ""
+"In portable Mode, messages and config files are stored in the same directory "
+"as the program rather then the normal application-data folder. This makes it "
+"convenient to run Bitmessage from a USB thumb drive."
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:160
+msgid ""
+"Willingly include unencrypted destination address when sending to a mobile "
+"device"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:174
+msgid "Use identicons"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:187
+msgid "Reply below Quote"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:203
+msgid "Interface Language"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:230
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:476
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:551
+msgid "Apply"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:247
+msgid "Listening port"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:258
+msgid "Listen for connections on port:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:265
+msgid "8444"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:280
+msgid "UPnP"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:288
+msgid "Proxy server / Tor"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:299
+msgid "Type:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:318
+msgid "Server hostname:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:323
+msgid "localhost"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:330
+msgid "Port:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:343
+msgid "9050"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:351
+msgid "Username:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:362
+msgid "Pass:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:380
+msgid "Authentication"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:395
+msgid "Listen for incoming connections when using proxy"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:410
+msgid "Only connect to onion services(*.onion)"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:418
+msgid "Bandwidth limit"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:429
+msgid "Maximum download rate (kB/s):[0:unlimited]"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:434
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:522
+msgid "0"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:445
+msgid "Maximum upload rate (kB/s):[0:unlimited]"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:461
+msgid "Maximum outbound connections:[0:none]"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:505
+msgid "Leave these input fields blank for the default behavior."
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:517
+msgid "Give up after"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/settings.kv:528
+msgid "days and"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:28
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:55
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:105
+msgid "Label"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:37
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:74
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:117
+msgid "Address"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:145
+msgid "Send message from"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:156
+msgid "Show QR code"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:166
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:227
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:304
+msgid "Cancel"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:192
+msgid ""
+"Bitmessage isn't connected to the network.\n"
+" If you quit now, it may cause delivery delays.\n"
+" Wait until connected and the synchronisation finishes?"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:206
+msgid "Yes"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:216
+msgid "No"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:251
+msgid "From :"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:265
+msgid "[b]"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/popup.kv:291
+msgid "Date : "
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/maildetail.kv:31
+msgid "to "
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/myaddress.kv:17
+msgid "My Addresses"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/composer.kv:54
+msgid "type, select or scan QR code for recipients address"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:8
+msgid "Total connections"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:16
+msgid "Total Connections"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:35
+msgid "Processes"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:43
+msgid "person-to-person"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:62
+msgid "Brodcast"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:81
+msgid "publickeys"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/network.kv:100
+msgid "objects"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/login.kv:31
+msgid "Select method to make an address:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/login.kv:57
+msgid "Random Number Generator"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/login.kv:77
+msgid "Pseudo Number Generator"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/login.kv:81
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/login.kv:188
+msgid "Proceed Next"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/login.kv:163
+msgid "Enter a label to generate address for:"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/credits.kv:10
+msgid "Available Credits"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/credits.kv:27
+msgid "+Add more credits"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/chat_room.kv:40
+msgid "Send"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/chat_list.kv:14
+msgid "Chats"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/chat_list.kv:26
+msgid "No Chat"
+msgstr ""
+
+#: /home/cis/py3porting/Chatroom/PyBitmessage/src/bitmessagekivy/kv/chat_list.kv:50
+msgid "Contacts"
+msgstr ""

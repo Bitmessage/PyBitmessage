@@ -81,6 +81,9 @@ from kivymd.uix.menu import MDDropdownMenu
 
 from kivy.lang import Observable
 import gettext
+import l10n
+import locale
+from debug import logger
 
 if platform != "android":
     from kivy.config import Config
@@ -214,7 +217,7 @@ class Lang(Observable):
 
     def switch_lang(self, lang):
         # get the right locales directory, and instanciate a gettext
-        locale_dir = os.path.join(os.path.dirname(__file__), 'data', 'locales')
+        locale_dir = os.path.join(os.path.dirname(__file__), 'translations', 'mo', 'locales')
         locales = gettext.translation('langapp', locale_dir, languages=[lang])
         self.ugettext = locales.gettext
 
@@ -541,7 +544,7 @@ class MyAddress(Screen):
             if state.association == item['secondary_text']:
                 badge_obj = BadgeText(
                     size_hint=(None, None),
-                    size=[85 if platform == 'android' else 50, 60],
+                    size=[90 if platform == 'android' else 50, 60],
                     text='Active', halign='center',
                     font_style='Body1', theme_text_color='Custom',
                     text_color=ThemeClsColor
@@ -1827,22 +1830,66 @@ class Setting(Screen):
                 Here you may change that behavior by having Bitmessage give up after a certain number of days \
                 or months."
 
+    languages = {
+        'ar': 'Arabic',
+        'cs': 'Czech',
+        'da': 'Danish',
+        'de': 'German',
+        'en': 'English',
+        'eo': 'Esperanto',
+        'fr': 'French',
+        'it': 'Italian',
+        'ja': 'Japanese',
+        'nl': 'Dutch',
+        'no': 'Norwegian',
+        'pl': 'Polish',
+        'pt': 'Portuguese',
+        'ru': 'Russian',
+        'sk': 'Slovak',
+        'zh': 'Chinese',
+    }
+    newlocale = None
+
     def __init__(self, *args, **kwargs):
         """Trash method, delete sent message and add in Trash"""
         super(Setting, self).__init__(*args, **kwargs)
+        if self.newlocale is None:
+            self.newlocale = l10n.getTranslationLanguage()
+        lang = locale.normalize(l10n.getTranslationLanguage())
+        langs = [
+            lang.split(".")[0] + "." + l10n.encoding,
+            lang.split(".")[0] + "." + 'UTF-8',
+            lang
+        ]
+        if 'win32' in platform or 'win64' in platform:
+            langs = [l10n.getWindowsLocale(lang)]
+        for lang in langs:
+            try:
+                l10n.setlocale(locale.LC_ALL, lang)
+                if 'win32' not in platform and 'win64' not in platform:
+                    l10n.encoding = locale.nl_langinfo(locale.CODESET)
+                else:
+                    l10n.encoding = locale.getlocale()[1]
+                logger.info("Successfully set locale to %s", lang)
+                break
+            except:
+                logger.error("Failed to set locale to %s", lang, exc_info=True)
+
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
-        menu_items = [{"text": f"{i}"} for i in ['System Setting','U.S. English','italiano',
-                        'Esperanto','dansk','Deutsch','Pirate English','francais',
-                        'Nederlands','norsk bokmal','polski','portugues europeu']]
+        if self.newlocale is None:
+            self.newlocale = l10n.getTranslationLanguage()
+        # state.kivyapp.tr = Lang(self.newlocale)
+        state.kivyapp.tr = Lang(self.newlocale)
+        menu_items = [{"text": f"{i}"} for i in self.languages.values()]
         self.menu = MDDropdownMenu(
             caller=self,
             items=menu_items,
             position="auto",
             callback=self.set_item,
-            width_mult=3,
-            use_icon_item=False,
+            width_mult=3.5,
+            # use_icon_item=False,
         )
 
     def set_caller(self):
@@ -1853,6 +1900,21 @@ class Setting(Screen):
     def set_item(self, instance):
         self.ids.drop_item.set_item(instance.text)
         self.menu.dismiss()
+
+    def change_language(self):
+        lang = self.ids.drop_item.current_item
+        for k,v in self.languages.items():
+            if v == lang:
+                BMConfigParser().set('bitmessagesettings', 'userlocale', k)
+                BMConfigParser().save()
+                state.kivyapp.tr = Lang(k)
+                self.children[0].active = True
+                Clock.schedule_once(partial(self.language_callback, k), 1)
+
+    def language_callback(self, lang, dt=0):
+        self.children[0].active = False
+        state.kivyapp.tr = Lang(lang)
+        toast('Language changed')
 
 
 class NavigateApp(MDApp):

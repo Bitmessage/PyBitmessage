@@ -164,13 +164,13 @@
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
                     on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
-                NavigationItem:
-                    id: chat_rm
-                    text: app.tr._('Chat Room')
-                    icon: 'wechat'
-                    divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'chlist'
-                    on_release: root.parent.set_state()
+                # NavigationItem:
+                #     id: chat_rm
+                #     text: app.tr._('Chat Room')
+                #     icon: 'wechat'
+                #     divider: None
+                #     on_release: app.root.ids.scr_mngr.current = 'chlist'
+                #     on_release: root.parent.set_state()
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
                     text: app.tr._("All labels")
@@ -192,12 +192,12 @@
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'payment'
                     on_release: root.parent.set_state()
-                NavigationItem:
-                    text: app.tr._('Credits')
-                    icon: 'wallet'
-                    divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'credits'
-                    on_release: root.parent.set_state()
+                # NavigationItem:
+                #     text: app.tr._('Credits')
+                #     icon: 'wallet'
+                #     divider: None
+                #     on_release: app.root.ids.scr_mngr.current = 'credits'
+                #     on_release: root.parent.set_state()
                 NavigationItem:
                     text: app.tr._('New address')
                     icon: 'account-plus'
