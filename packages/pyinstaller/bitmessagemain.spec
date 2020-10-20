@@ -7,17 +7,17 @@ if ctypes.sizeof(ctypes.c_voidp) == 4:
   arch=32
 else:
   arch=64
-  
-sslName = 'OpenSSL-Win%s' % ("32" if arch == 32 else "64")
+
 site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
 cdrivePath = site_root[0:3]
 srcPath = os.path.join(spec_root[:-20], "src")
-qtBase = "PyQt4"
-openSSLPath = os.path.join(cdrivePath, sslName)
+sslName = 'OpenSSL-Win%s' % ("32" if arch == 32 else "64")
+openSSLPath = os.getenv('OPENSSL_DIR') or os.path.join(cdrivePath, sslName)
 msvcrDllPath = os.path.join(cdrivePath, "windows", "system32")
 pythonDllPath = os.path.join(cdrivePath, "Python27")
 outPath = os.path.join(spec_root, "bitmessagemain")
+qtBase = "PyQt4"
 
 importPath = srcPath 
 sys.path.insert(0,importPath)
@@ -75,10 +75,18 @@ def addUIs():
 a.datas += addTranslations()
 a.datas += addUIs()
 
+ext_lib = os.path.join('bitmsghash', 'bitmsghash%i.dll' % arch)
+
+if os.path.isfile(ext_lib):
+    ext_lib = (ext_lib, os.path.join(srcPath, ext_lib), 'BINARY')
+else:
+    ext_lib = (
+        os.path.join('bitmsghash', 'bitmsghash.pyd'),
+	os.path.join(srcPath, 'bitmsghash', 'bitmsghash.pyd'), 'EXTENSION')
 
 a.binaries += [('libeay32.dll', os.path.join(openSSLPath, 'libeay32.dll'), 'BINARY'),
          ('python27.dll', os.path.join(pythonDllPath, 'python27.dll'), 'BINARY'),
-         (os.path.join('bitmsghash', 'bitmsghash%i.dll' % (arch)), os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % (arch)), 'BINARY'),
+         ext_lib,
          (os.path.join('bitmsghash', 'bitmsghash.cl'), os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
          (os.path.join('sslkeys', 'cert.pem'), os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
          (os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
