@@ -16,6 +16,7 @@ function download_sources_32 {
 	wget -P ${SRCPATH} -c -nc --content-disposition \
 		https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}.msi \
 		https://download.microsoft.com/download/1/1/1/1116b75a-9ec3-481a-a3c8-1777b5381140/vcredist_x86.exe \
+                https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/PyQt${PYQT_VERSION}-x32.exe?raw=true \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win32OpenSSL-${OPENSSL_VERSION}.exe?raw=true \
 		https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/pyopencl-2015.1-cp27-none-win32.whl?raw=true
@@ -66,6 +67,8 @@ function install_python(){
 		cd ${SRCPATH} || exit 1
 		echo "Installing vc_redist (2008) for 32 bit "
 		wine vcredist_x86.exe /Q
+                echo "Installing vcpython27"
+                wine msiexec -i VCForPython27.msi /qn /norestart
 	fi
         echo "Installing pytools 2020.2"
         # last version compatible with python 2
@@ -88,9 +91,11 @@ function install_openssl(){
 	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Installing OpenSSL ${OPENSSL_VERSION} 64b"
 		wine Win64OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
+		export OPENSSL_DIR="C:\\OpenSSL-Win64"
 	else
 		echo "Installing OpenSSL ${OPENSSL_VERSION} 32b"
 		wine Win32OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
+		export OPENSSL_DIR="C:\\OpenSSL-Win32"
 	fi
 }
 
@@ -130,8 +135,8 @@ function install_pyopencl()
 
 function build_dll(){
 	cd "${BASE_DIR}" || exit 1
-	cd src/bitmsghash || exit 1
 	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
+	        cd src/bitmsghash || exit 1
 		echo "Create dll"
 		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native \
                     "-I$HOME/.wine64/drive_c/OpenSSL-Win64/include" \
@@ -146,18 +151,20 @@ function build_dll(){
                     -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
                     -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
 	else
-		echo "Create dll"
-		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native \
-                    "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
-                    -I/usr/i686-w64-mingw32/include \
-                    "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib" \
-                    -c bitmsghash.cpp
-		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
-                    -D_WIN32 -O3 -march=native \
-                    "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
-                    "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW" \
-                    -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
-                    -o bitmsghash32.dll -Wl,--out-implib,bitmsghash.a
+	    echo "Create pyd"
+	    # FIXME: check for VCPython and build dll if not found
+	    wine python setup.py build_ext --inplace
+		# i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native \
+                #     "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
+                #     -I/usr/i686-w64-mingw32/include \
+                #     "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib" \
+                #     -c bitmsghash.cpp
+		# i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
+                #     -D_WIN32 -O3 -march=native \
+                #     "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
+                #     "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW" \
+                #     -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
+                #     -o bitmsghash32.dll -Wl,--out-implib,bitmsghash.a
 	fi
 }
 
