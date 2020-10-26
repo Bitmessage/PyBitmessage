@@ -2607,6 +2607,18 @@ class MyForm(settingsmixin.SMainWindow):
             dontconnect_option or self.namecoin.test()[0] == 'failed'
         )
 
+    def processing(self):
+        """Processing progress bar"""
+        self.completed = 0
+
+        while self.completed < 100:
+            self.completed += 0.1
+            self.progress.setValue(self.completed)
+
+    def hideprogressBar(self):
+        """Hide progress bar"""
+        self.progress.hide()
+
     # Quit selected from menu or application indicator
     def quit(self):
         """Quit the bitmessageqt application"""
@@ -2623,8 +2635,12 @@ class MyForm(settingsmixin.SMainWindow):
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
         if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
-            reply = QtGui.QMessageBox.question(
-                self, _translate("MainWindow", "Proof of work pending"),
+            self.progress = QtGui.QProgressBar(self)
+            self.progress.setGeometry(550, 555, 250, 20)
+            self.progress.show()
+            messagebox = QtGui.QMessageBox(
+                QtGui.QMessageBox.Question,
+                _translate("MainWindow", "Proof of work pending"),
                 _translate(
                     "MainWindow",
                     "%n object(s) pending proof of work", None,
@@ -2636,17 +2652,28 @@ class MyForm(settingsmixin.SMainWindow):
                     QtCore.QCoreApplication.CodecForTr, pendingUpload()
                 ) + "\n\n" +
                 _translate(
-                    "MainWindow", "Wait until these tasks finish?"),
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-                | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+                    "MainWindow", "Wait until these tasks finish?"), parent=self)
+            messagebox.setStandardButtons(
+                QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+            btnN = messagebox.button(QtGui.QMessageBox.No)
+            btnN.setText("Quit")
+            btnN.clicked.connect(self.processing)
+            btnC = messagebox.button(QtGui.QMessageBox.Cancel)
+            btnC.setText("Don't Quit")
+            btnC.clicked.connect(self.hideprogressBar)
+            reply = messagebox.exec_()
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
         if pendingDownload() > 0:
-            reply = QtGui.QMessageBox.question(
-                self, _translate("MainWindow", "Synchronisation pending"),
+            self.progress = QtGui.QProgressBar(self)
+            self.progress.setGeometry(550, 555, 250, 20)
+            self.progress.show()
+            messagebox = QtGui.QMessageBox(
+                QtGui.QMessageBox.Question,
+                _translate("MainWindow", "Synchronisation pending"),
                 _translate(
                     "MainWindow",
                     "Bitmessage hasn't synchronised with the network,"
@@ -2654,9 +2681,16 @@ class MyForm(settingsmixin.SMainWindow):
                     " it may cause delivery delays. Wait until the"
                     " synchronisation finishes?", None,
                     QtCore.QCoreApplication.CodecForTr, pendingDownload()
-                ),
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-                | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+                ), parent=self)
+            messagebox.setStandardButtons(
+                QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+            btnN = messagebox.button(QtGui.QMessageBox.No)
+            btnN.setText("Quit")
+            btnN.clicked.connect(self.processing)
+            btnC = messagebox.button(QtGui.QMessageBox.Cancel)
+            btnC.setText("Don't Quit")
+            btnC.clicked.connect(self.hideprogressBar)
+            reply = messagebox.exec_()
             if reply == QtGui.QMessageBox.Yes:
                 self.wait = waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
@@ -2664,16 +2698,27 @@ class MyForm(settingsmixin.SMainWindow):
 
         if state.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
-            reply = QtGui.QMessageBox.question(
-                self, _translate("MainWindow", "Not connected"),
+            self.progress = QtGui.QProgressBar(self)
+            self.progress.setGeometry(550, 555, 250, 20)
+            self.progress.show()
+            messagebox = QtGui.QMessageBox(
+                QtGui.QMessageBox.Question,
+                _translate("MainWindow", "Not connected"),
                 _translate(
                     "MainWindow",
                     "Bitmessage isn't connected to the network. If you"
                     " quit now, it may cause delivery delays. Wait until"
                     " connected and the synchronisation finishes?"
-                ),
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-                | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+                ), parent=self)
+            messagebox.setStandardButtons(
+                QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+            btnN = messagebox.button(QtGui.QMessageBox.No)
+            btnN.setText("Quit")
+            btnN.clicked.connect(self.processing)
+            btnC = messagebox.button(QtGui.QMessageBox.Cancel)
+            btnC.setText("Don't Quit")
+            btnC.clicked.connect(self.hideprogressBar)
+            reply = messagebox.exec_()
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
                 self.wait = waitForSync = True
