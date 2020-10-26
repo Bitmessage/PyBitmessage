@@ -279,8 +279,8 @@ class TestAPI(TestAPIProto):
             status = self.api.getStatus(ackdata)
             if status == 'notfound':
                 raise KeyError
-            self.assertIn(
-                status, ('broadcastqueued', 'broadcastsent', 'doingmsgpow'))
+            self.assertIn(status, (
+                'doingbroadcastpow', 'broadcastqueued', 'broadcastsent'))
             # Find the message and its ID in sent
             for m in json.loads(self.api.getAllSentMessages())['sentMessages']:
                 if m['ackData'] == ackdata:
