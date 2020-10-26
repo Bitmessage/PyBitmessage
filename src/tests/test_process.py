@@ -198,6 +198,11 @@ class TestProcess(TestProcessProto):
         """Check PyBitmessage process name"""
         self.assertEqual(self.process.name(), 'PyBitmessage')
 
+    def test_home(self):
+        """Ensure BITMESSAGE_HOME is used by process"""
+        self.assertEqual(
+            self.process.environ().get('BITMESSAGE_HOME'), self.home)
+
     def test_files(self):
         """Check existence of PyBitmessage files"""
         for pfile in self._files:
