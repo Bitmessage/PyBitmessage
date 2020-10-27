@@ -2609,11 +2609,11 @@ class MyForm(settingsmixin.SMainWindow):
 
     def processing(self):
         """Processing progress bar"""
-        self.completed = 0
+        completed = 0
 
-        while self.completed < 100:
-            self.completed += 0.1
-            self.progress.setValue(self.completed)
+        while completed < 100:
+            completed += 0.1
+            self.progress.setValue(completed)
 
     def hideprogressBar(self):
         """Hide progress bar"""
@@ -2654,7 +2654,7 @@ class MyForm(settingsmixin.SMainWindow):
                 _translate(
                     "MainWindow", "Wait until these tasks finish?"), parent=self)
             messagebox.setStandardButtons(
-                QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
             btnN = messagebox.button(QtGui.QMessageBox.No)
             btnN.setText("Quit")
             btnN.clicked.connect(self.processing)
@@ -2683,7 +2683,7 @@ class MyForm(settingsmixin.SMainWindow):
                     QtCore.QCoreApplication.CodecForTr, pendingDownload()
                 ), parent=self)
             messagebox.setStandardButtons(
-                QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
             btnN = messagebox.button(QtGui.QMessageBox.No)
             btnN.setText("Quit")
             btnN.clicked.connect(self.processing)
@@ -2711,7 +2711,7 @@ class MyForm(settingsmixin.SMainWindow):
                     " connected and the synchronisation finishes?"
                 ), parent=self)
             messagebox.setStandardButtons(
-                QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel)
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
             btnN = messagebox.button(QtGui.QMessageBox.No)
             btnN.setText("Quit")
             btnN.clicked.connect(self.processing)
