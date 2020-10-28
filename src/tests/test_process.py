@@ -11,6 +11,8 @@ import unittest
 
 import psutil
 
+from common import cleanup
+
 
 def put_signal_file(path, filename):
     """Creates file, presence of which is a signal about some event."""
@@ -73,11 +75,7 @@ class TestProcessProto(unittest.TestCase):
 
     @classmethod
     def _cleanup_files(cls):
-        for pfile in cls._files:
-            try:
-                os.remove(os.path.join(cls.home, pfile))
-            except OSError:
-                pass
+        cleanup(cls.home, cls._files)
 
     @classmethod
     def tearDownClass(cls):

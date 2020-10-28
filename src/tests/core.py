@@ -24,6 +24,8 @@ from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 from version import softwareVersion
 
+from common import cleanup
+
 try:
     import stem.version as stem_version
 except ImportError:
@@ -46,11 +48,6 @@ def pickle_knownnodes():
             }
             for stream in range(1, 4)  # 3 test streams
         }, dst)
-
-
-def cleanup():
-    """Cleanup application files"""
-    os.remove(knownnodes_file)
 
 
 class TestCore(unittest.TestCase):
@@ -132,7 +129,7 @@ class TestCore(unittest.TestCase):
 
     def test_knownnodes_default(self):
         """test adding default knownnodes if nothing loaded"""
-        cleanup()
+        cleanup(files=('knownnodes.dat',))
         self._wipe_knownnodes()
         knownnodes.readKnownNodes()
         self.assertGreaterEqual(
