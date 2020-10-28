@@ -2,15 +2,16 @@
 Testing the logger configuration
 """
 
-import logging
 import os
 import tempfile
-import unittest
+
+from test_process import TestProcessProto
 
 
-class TestLogger(unittest.TestCase):
-    """A test case for bmconfigparser"""
+class TestLogger(TestProcessProto):
+    """A test case for logger configuration"""
 
+    pattern = r' <===> '
     conf_template = '''
 [loggers]
 keys=root
@@ -35,35 +36,21 @@ level=DEBUG
 handlers=default
 '''
 
+    @classmethod
+    def setUpClass(cls):
+        cls.home = tempfile.mkdtemp()
+        cls._files = cls._files[2:] + ('logging.dat',)
+        cls.log_file = os.path.join(cls.home, 'debug.log')
+
+        with open(os.path.join(cls.home, 'logging.dat'), 'wb') as dst:
+            dst.write(cls.conf_template.format(cls.log_file, cls.pattern))
+
+        super(TestLogger, cls).setUpClass()
+
     def test_fileConfig(self):
-        """Put logging.dat with special pattern and check it was used"""
-        tmp = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
-        log_config = os.path.join(tmp, 'logging.dat')
-        log_file = os.path.join(tmp, 'debug.log')
+        """Check that our logging.dat was used"""
 
-        def gen_log_config(pattern):
-            """A small closure to generate logging.dat with custom pattern"""
-            with open(log_config, 'wb') as dst:
-                dst.write(self.conf_template.format(log_file, pattern))
-
-        pattern = r' o_0 '
-        gen_log_config(pattern)
-
-        try:
-            from pybitmessage.debug import logger, resetLogging
-            if not os.path.isfile(log_file):  # second pass
-                pattern = r' <===> '
-                gen_log_config(pattern)
-                resetLogging()
-        except ImportError:
-            self.fail('There is no package pybitmessage. Things gone wrong.')
-        finally:
-            os.remove(log_config)
-
-        logger_ = logging.getLogger('default')
-
-        self.assertEqual(logger, logger_)
-
-        logger_.info('Testing the logger...')
-
-        self.assertRegexpMatches(open(log_file).read(), pattern)
+        self._stop_process()
+        data = open(self.log_file).read()
+        self.assertRegexpMatches(data, self.pattern)
+        self.assertRegexpMatches(data, 'Loaded logger configuration')
