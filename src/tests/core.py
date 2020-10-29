@@ -204,6 +204,13 @@ class TestCore(unittest.TestCase):
         self.fail(
             'Failed to connect during %s sec' % (time.time() - _started))
 
+    def _check_knownnodes(self):
+        for stream in knownnodes.knownNodes.itervalues():
+            for peer in stream:
+                if peer.host.startswith('bootstrap'):
+                    self.fail(
+                        'Bootstrap server in knownnodes: %s' % peer.host)
+
     def test_dontconnect(self):
         """all connections are closed 5 seconds after setting dontconnect"""
         self._initiate_bootstrap()
@@ -229,6 +236,7 @@ class TestCore(unittest.TestCase):
         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
         self._initiate_bootstrap()
         self._check_connection()
+        self._check_knownnodes()
 
     @unittest.skipIf(tor_port_free, 'no running tor detected')
     def test_bootstrap_tor(self):
@@ -236,6 +244,7 @@ class TestCore(unittest.TestCase):
         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         self._initiate_bootstrap()
         self._check_connection()
+        self._check_knownnodes()
 
     @unittest.skipIf(tor_port_free, 'no running tor detected')
     def test_onionservicesonly(self):
