@@ -1640,6 +1640,7 @@ class MyForm(settingsmixin.SMainWindow):
         dialog = dialogs.ConnectDialog(self)
         if dialog.exec_():
             if dialog.radioButtonConnectNow.isChecked():
+                self.ui.updateNetworkSwitchMenuLabel(False)
                 BMConfigParser().remove_option(
                     'bitmessagesettings', 'dontconnect')
                 BMConfigParser().save()

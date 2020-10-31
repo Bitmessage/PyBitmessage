@@ -49,6 +49,8 @@ class SettingsDialog(QtGui.QDialog):
         self.net_restart_needed = False
         self.timer = QtCore.QTimer()
 
+        if self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+            self.firstrun = False
         try:
             import pkg_resources
         except ImportError:
