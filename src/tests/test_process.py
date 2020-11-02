@@ -28,12 +28,16 @@ class TestProcessProto(unittest.TestCase):
         'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
         '.api_started', 'unittest.lock'
     )
+    home = None
 
     @classmethod
     def setUpClass(cls):
         """Setup environment and start pybitmessage"""
         cls.flag = False
-        cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
+        if not cls.home:
+            cls.home = tempfile.gettempdir()
+            cls._cleanup_files()
+        os.environ['BITMESSAGE_HOME'] = cls.home
         put_signal_file(cls.home, 'unittest.lock')
         subprocess.Popen(
             cls._process_cmd,

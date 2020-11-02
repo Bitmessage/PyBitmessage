@@ -4,6 +4,7 @@ Various tests for config
 
 import os
 import unittest
+import tempfile
 
 from pybitmessage.bmconfigparser import BMConfigParser
 from test_process import TestProcessProto
@@ -41,6 +42,7 @@ class TestConfig(unittest.TestCase):
 
 class TestProcessConfig(TestProcessProto):
     """A test case for keys.dat"""
+    home = tempfile.mkdtemp()
 
     def test_config_defaults(self):
         """Test settings in the generated config"""
