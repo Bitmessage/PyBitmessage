@@ -61,29 +61,26 @@ class TestProcessProto(unittest.TestCase):
             cls._cleanup_files()
         os.environ['BITMESSAGE_HOME'] = cls.home
         put_signal_file(cls.home, 'unittest.lock')
-        starttime = int(time.time())
-        subprocess.Popen(
-            cls._process_cmd,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # nosec
-        timeout = starttime + 30
-        while time.time() <= timeout:
-            try:
-                if os.path.exists(os.path.join(cls.home,
-                                               'singleton.lock')):
-                    pstat = os.stat(os.path.join(cls.home, 'singleton.lock'))
-                    if starttime <= pstat.st_mtime and pstat.st_size > 0:
-                        break
-            except OSError:
-                break
+        starttime = int(time.time()) - 0.5
+        cls.process = psutil.Popen(
+            cls._process_cmd, stderr=subprocess.STDOUT)  # nosec
+
+        pidfile = os.path.join(cls.home, 'singleton.lock')
+        for _ in range(10):
             time.sleep(1)
-        if time.time() >= timeout:
-            raise psutil.TimeoutExpired(
-                "Timeout starting {}".format(cls._process_cmd))
-        # wait a bit for the program to fully start
-        # 10 sec should be enough
-        time.sleep(10)
-        cls.pid = int(cls._get_readline('singleton.lock'))
-        cls.process = psutil.Process(cls.pid)
+            try:
+                pstat = os.stat(pidfile)
+                if starttime <= pstat.st_mtime and pstat.st_size > 0:
+                    break  # the pidfile is suitable
+            except OSError:
+                continue
+
+        try:
+            pid = int(cls._get_readline('singleton.lock'))
+            cls.process = psutil.Process(pid)
+            time.sleep(5)
+        except (psutil.NoSuchProcess, TypeError):
+            cls.flag = True
 
     def setUp(self):
         if self.flag:
@@ -126,9 +123,15 @@ class TestProcessProto(unittest.TestCase):
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
         try:
-            if not cls._stop_process():
-                cls.process.kill()
-        except (psutil.NoSuchProcess, AttributeError):
+            if not cls._stop_process(10):
+                processes = cls.process.children(recursive=True)
+                processes.append(cls.process)
+                for p in processes:
+                    try:
+                        p.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+        except psutil.NoSuchProcess:
             pass
         finally:
             cls._cleanup_files()
@@ -187,18 +190,6 @@ class TestProcessShutdown(TestProcessProto):
         self.assertTrue(
             self._stop_process(20),
             '%s has not stopped in 20 sec' % ' '.join(self._process_cmd))
-
-    @classmethod
-    def tearDownClass(cls):
-        """Special teardown because pybitmessage is already stopped"""
-        try:
-            if cls.process.is_running():
-                cls.process.kill()
-                cls.process.wait(5)
-        except (psutil.TimeoutExpired, psutil.NoSuchProcess):
-            pass
-        finally:
-            cls._cleanup_files()
 
 
 class TestProcess(TestProcessProto):
