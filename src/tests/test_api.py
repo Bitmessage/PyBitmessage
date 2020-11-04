@@ -9,12 +9,14 @@ from .common import skip_python3
 
 skip_python3()
 
+import psutil
+
 try:  # nosec
     from xmlrpclib import ServerProxy, ProtocolError
 except ImportError:
     from xmlrpc.client import ServerProxy, ProtocolError
 
-from .test_process import TestProcessProto, TestProcessShutdown
+from .test_process import TestProcessProto
 
 
 class TestAPIProto(TestProcessProto):
@@ -34,18 +36,16 @@ class TestAPIProto(TestProcessProto):
             time.sleep(1)
 
 
-class TestAPIShutdown(TestAPIProto, TestProcessShutdown):
+class TestAPIShutdown(TestAPIProto):
     """Separate test case for API command 'shutdown'"""
     def test_shutdown(self):
         """Shutdown the pybitmessage"""
         self.assertEqual(self.api.shutdown(), 'done')
-        for _ in range(5):
-            if not self.process.is_running():
-                break
-            time.sleep(2)
-        else:
+        try:
+            self.process.wait(20)
+        except psutil.TimeoutExpired:
             self.fail(
-                '%s has not stopped in 10 sec' % ' '.join(self._process_cmd))
+                '%s has not stopped in 20 sec' % ' '.join(self._process_cmd))
 
 
 # TODO: uncovered API commands
