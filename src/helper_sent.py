@@ -12,10 +12,8 @@ def insert(t):
     if not t[0] or not t[-1]:
         temp = list(t)
         if not t[0]:
-            print('zero index is not available')
             temp[0] = uuid.uuid4().bytes    # if msgid is empty the put uuid
         if not t[-1]:
-            print('Lasr index is not available')
             temp[-1] = BMConfigParser().getint('bitmessagesettings', 'ttl')
         t = tuple(temp)
     sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)

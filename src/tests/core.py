@@ -238,6 +238,43 @@ class TestCore(unittest.TestCase):
         streams = decoded[7:]
         self.assertEqual(streams, [1, 2, 3])
 
+    def test_insert_method(self):
+        """Test insert method of helper_sent module with message sending"""
+        import helper_sent
+        from addresses import decodeAddress
+        from bmconfigparser import BMConfigParser
+        from helper_ackPayload import genAckPayload
+
+        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP' # this address is autoresponder address
+        message = 'test message'
+        subject = 'test subject'
+        fromAddress = 'BM-2cVdyaMNhYfnw8j1SDPW3QBhjzKzP9vtdp' # here use your own address for testing
+
+        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                        toAddress)
+        encoding = 2
+        stealthLevel = BMConfigParser().safeGetInt(
+                            'bitmessagesettings', 'ackstealthlevel')
+        ackdata = genAckPayload(streamNumber, stealthLevel)
+        print('ackdata: ', ackdata)
+        t = ('',
+             toAddress,
+             ripe,
+             fromAddress,
+             subject,
+             message,
+             ackdata,
+             int(time.time()),  # sentTime
+             int(time.time()),  # lastActionTime
+             0,
+             'msgqueued',
+             0,
+             'sent',
+             encoding,
+             0)
+        helper_sent.insert(t)
+        self.assertTrue(True)
+
 
 def run():
     """Starts all tests defined in this module"""
