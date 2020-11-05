@@ -12,8 +12,15 @@ import sys
 import time
 import unittest
 
+import base64
+import json
+import xmlrpclib
 import protocol
 import state
+import helper_sent
+
+from addresses import decodeAddress
+from helper_ackPayload import genAckPayload
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from helper_startup import start_proxyconfig
@@ -240,21 +247,18 @@ class TestCore(unittest.TestCase):
 
     def test_insert_method(self):
         """Test insert method of helper_sent module with message sending"""
-        import helper_sent
-        from addresses import decodeAddress
-        from bmconfigparser import BMConfigParser
-        from helper_ackPayload import genAckPayload
+        api = xmlrpclib.ServerProxy("http://username:password@127.0.0.1:8442/")
+        fromAddress = api.createRandomAddress(base64.encodestring('random_3'))
 
-        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP' # this address is autoresponder address
+        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'  # this address is autoresponder address
         message = 'test message'
         subject = 'test subject'
-        fromAddress = 'BM-2cVdyaMNhYfnw8j1SDPW3QBhjzKzP9vtdp' # here use your own address for testing
 
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                        toAddress)
+        status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
+        print('status: ', status)
+        print('addressVersionNumber: ', addressVersionNumber)
         encoding = 2
-        stealthLevel = BMConfigParser().safeGetInt(
-                            'bitmessagesettings', 'ackstealthlevel')
+        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         print('ackdata: ', ackdata)
         t = ('',
@@ -273,7 +277,9 @@ class TestCore(unittest.TestCase):
              encoding,
              0)
         helper_sent.insert(t)
-        self.assertTrue(True)
+        msg_exist = True if json.loads(
+            api.getSentMessagesByAddress(fromAddress))['sentMessages'] else False
+        self.assertTrue(msg_exist)
 
 
 def run():
