@@ -203,6 +203,13 @@ class TestProcess(TestProcessProto):
         self.assertEqual(
             self.process.environ().get('BITMESSAGE_HOME'), self.home)
 
+    def test_listening(self):
+        """Check that pybitmessage listens on port 8444"""
+        for c in self.process.connections():
+            if c.status == 'LISTEN':
+                self.assertEqual(c.laddr.port, 8444)
+                break
+
     def test_files(self):
         """Check existence of PyBitmessage files"""
         for pfile in self._files:
