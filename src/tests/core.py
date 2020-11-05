@@ -12,15 +12,10 @@ import sys
 import time
 import unittest
 
-import base64
-import json
-import xmlrpclib
 import protocol
 import state
 import helper_sent
 
-from addresses import decodeAddress
-from helper_ackPayload import genAckPayload
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from helper_startup import start_proxyconfig
@@ -245,41 +240,30 @@ class TestCore(unittest.TestCase):
         streams = decoded[7:]
         self.assertEqual(streams, [1, 2, 3])
 
-    def test_insert_method(self):
+    def test_insert_method_msgid(self):
         """Test insert method of helper_sent module with message sending"""
-        api = xmlrpclib.ServerProxy("http://username:password@127.0.0.1:8442/")
-        fromAddress = api.createRandomAddress(base64.encodestring('random_3'))
-
-        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'  # this address is autoresponder address
+        fromAddress = 'BM-2cTrmD22fLRrumi3pPLg1ELJ6PdAaTRTdfg'
+        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWgjdfkj89fdf'
         message = 'test message'
         subject = 'test subject'
-
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(toAddress)
-        print('status: ', status)
-        print('addressVersionNumber: ', addressVersionNumber)
         encoding = 2
-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
-        ackdata = genAckPayload(streamNumber, stealthLevel)
-        print('ackdata: ', ackdata)
-        t = ('',
+        t = ('',  # msgid
              toAddress,
-             ripe,
+             '',  # ripe
              fromAddress,
              subject,
              message,
-             ackdata,
+             '',  # ackdata
              int(time.time()),  # sentTime
              int(time.time()),  # lastActionTime
-             0,
+             0,  # sleeptill
              'msgqueued',
              0,
              'sent',
              encoding,
              0)
-        helper_sent.insert(t)
-        msg_exist = True if json.loads(
-            api.getSentMessagesByAddress(fromAddress))['sentMessages'] else False
-        self.assertTrue(msg_exist)
+        result = helper_sent.insert(t, True)
+        self.assertNotEqual(result[0], '')
 
 
 def run():
