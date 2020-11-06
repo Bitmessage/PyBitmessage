@@ -59,7 +59,7 @@ if __name__ == "__main__":
         libraries=['pthread', 'crypto'],
     )
 
-    installRequires = []
+    installRequires = ['six']
     packages = [
         'pybitmessage',
         'pybitmessage.bitmessageqt',
