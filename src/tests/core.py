@@ -265,6 +265,31 @@ class TestCore(unittest.TestCase):
         result = helper_sent.insert(t, True)
         self.assertNotEqual(result[0], '')
 
+    def test_defalut_insert_values(self):
+        """Test missing values in insert method for message sending"""
+        fromAddress = 'BM-2cTrmD22fLRrumi3pPLg1ELJ6PdAaTRTdfg'
+        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWgjdfkj89fdf'
+        message = 'test message'
+        subject = 'test subject'
+        t = ('',  # msgid
+             toAddress,
+             '',  # ripe
+             fromAddress,
+             subject,
+             message,
+             '',  # ackdata
+             '',  # sentTime
+             '',  # lastActionTime
+             '',  # sleeptill
+             '',  # status
+             '',  # retryNumber
+             '',  # folder
+             '',  # encoding
+             '')  # ttl
+        result = helper_sent.insert(t, True)
+        for index in [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
+            self.assertNotEqual(result[index], '')
+
 
 def run():
     """Starts all tests defined in this module"""
