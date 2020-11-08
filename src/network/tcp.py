@@ -366,16 +366,21 @@ def bootstrap(connection_class):
             """
             BMProto.bm_command_addr(self)
             self._succeed = True
-            # pylint: disable=attribute-defined-outside-init
             self.close_reason = "Thanks for bootstrapping!"
             self.set_state("close")
+
+        def set_connection_fully_established(self):
+            """Only send addr here"""
+            # pylint: disable=attribute-defined-outside-init
+            self.fullyEstablished = True
+            self.sendAddr()
 
         def handle_close(self):
             """
             After closing the connection switch knownnodes.knownNodesActual
             back to False if the bootstrapper failed.
             """
-            self._connection_base.handle_close(self)
+            BMProto.handle_close(self)
             if not self._succeed:
                 knownnodes.knownNodesActual = False
 
