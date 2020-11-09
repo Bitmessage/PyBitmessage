@@ -249,21 +249,21 @@ class TestCore(unittest.TestCase):
         encoding = 2
         result = helper_sent.insert(
             '',  # msgid
-             toAddress,
-             '',  # ripe
-             fromAddress,
-             subject,
-             message,
-             '',  # ackdata
-             int(time.time()),  # sentTime
-             int(time.time()),  # lastActionTime
-             0,  # sleeptill
-             'msgqueued',
-             0,
-             'sent',
-             encoding,
-             0,
-             True)
+            toAddress,
+            '',  # ripe
+            fromAddress,
+            subject,
+            message,
+            '',  # ackdata
+            int(time.time()),  # sentTime
+            int(time.time()),  # lastActionTime
+            0,  # sleeptill
+            'msgqueued',
+            0,
+            'sent',
+            encoding,
+            0,
+            True)
         self.assertNotEqual(result[0], '')
 
     def test_defalut_insert_values(self):
@@ -274,20 +274,21 @@ class TestCore(unittest.TestCase):
         subject = 'test subject'
         result = helper_sent.insert(
             '',  # msgid
-             toAddress,
-             '',  # ripe
-             fromAddress,
-             subject,
-             message,
-             '',  # ackdata
-             '',  # sentTime
-             '',  # lastActionTime
-             '',  # sleeptill
-             '',  # status
-             '',  # retryNumber
-             '',  # folder
-             '',  # encoding
-             '', True)
+            toAddress,
+            '',  # ripe
+            fromAddress,
+            subject,
+            message,
+            '',  # ackdata
+            '',  # sentTime
+            '',  # lastActionTime
+            '',  # sleeptill
+            '',  # status
+            '',  # retryNumber
+            '',  # folder
+            '',  # encoding
+            '',
+            True)
         for index in [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
             self.assertNotEqual(result[index], '')
 
