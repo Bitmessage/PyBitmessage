@@ -755,22 +755,22 @@ class objectProcessor(threading.Thread):
                 # set the TTL for mailing list broadcasts. This is obviously
                 # hard-coded.
                 TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
-                t = ('',
-                     toAddress,
-                     ripe,
-                     fromAddress,
-                     subject,
-                     message,
-                     ackdata,
-                     int(time.time()),  # sentTime (this doesn't change)
-                     int(time.time()),  # lastActionTime
-                     0,
-                     'broadcastqueued',
-                     0,
-                     'sent',
-                     messageEncodingType,
-                     TTL)
-                helper_sent.insert(t)
+                helper_sent.insert(
+                    '',
+                    toAddress,
+                    ripe,
+                    fromAddress,
+                    subject,
+                    message,
+                    ackdata,
+                    int(time.time()),  # sentTime (this doesn't change)
+                    int(time.time()),  # lastActionTime
+                    0,
+                    'broadcastqueued',
+                    0,
+                    'sent',
+                    messageEncodingType,
+                    TTL)
 
                 queues.UISignalQueue.put((
                     'displayNewSentMessage', (

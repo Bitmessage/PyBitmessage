@@ -1116,22 +1116,22 @@ class BMRPCDispatcher(object):
             'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
 
-        t = ('',
-             toAddress,
-             toRipe,
-             fromAddress,
-             subject,
-             message,
-             ackdata,
-             int(time.time()),  # sentTime (this won't change)
-             int(time.time()),  # lastActionTime
-             0,
-             'msgqueued',
-             0,
-             'sent',
-             encodingType,
-             TTL)
-        helper_sent.insert(t)
+        helper_sent.insert(
+            '',
+            toAddress,
+            toRipe,
+            fromAddress,
+            subject,
+            message,
+            ackdata,
+            int(time.time()),  # sentTime (this won't change)
+            int(time.time()),  # lastActionTime
+            0,
+            'msgqueued',
+            0,
+            'sent',
+            encodingType,
+            TTL)
 
         toLabel = ''
         queryreturn = sqlQuery(
@@ -1176,22 +1176,22 @@ class BMRPCDispatcher(object):
         toAddress = str_broadcast_subscribers
         ripe = ''
 
-        t = ('',
-             toAddress,
-             ripe,
-             fromAddress,
-             subject,
-             message,
-             ackdata,
-             int(time.time()),  # sentTime (this doesn't change)
-             int(time.time()),  # lastActionTime
-             0,
-             'broadcastqueued',
-             0,
-             'sent',
-             encodingType,
-             TTL)
-        helper_sent.insert(t)
+        helper_sent.insert(
+            '',
+            toAddress,
+            ripe,
+            fromAddress,
+            subject,
+            message,
+            ackdata,
+            int(time.time()),  # sentTime (this doesn't change)
+            int(time.time()),  # lastActionTime
+            0,
+            'broadcastqueued',
+            0,
+            'sent',
+            encodingType,
+            TTL)
 
         toLabel = str_broadcast_subscribers
         queues.UISignalQueue.put(('displayNewSentMessage', (

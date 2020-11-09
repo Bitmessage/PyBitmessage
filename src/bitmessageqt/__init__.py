@@ -2166,7 +2166,7 @@ class MyForm(settingsmixin.SMainWindow):
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         ackdata = genAckPayload(streamNumber, stealthLevel)
-                        t = (
+                        helper_sent.insert(
                             '',
                             toAddress,
                             ripe,
@@ -2183,7 +2183,6 @@ class MyForm(settingsmixin.SMainWindow):
                             encoding, # encodingtype
                             0
                         )
-                        helper_sent.insert(t)
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
                                                toAddress)
@@ -2221,23 +2220,23 @@ class MyForm(settingsmixin.SMainWindow):
                 ackdata = genAckPayload(streamNumber, 0)
                 toAddress = str_broadcast_subscribers
                 ripe = ''
-                t = ('', # msgid. We don't know what this will be until the POW is done.
-                     toAddress, 
-                     ripe, 
-                     fromAddress, 
-                     subject, 
-                     message, 
-                     ackdata, 
-                     int(time.time()), # sentTime (this will never change)
-                     int(time.time()), # lastActionTime
-                     0, # sleepTill time. This will get set when the POW gets done.
-                     'broadcastqueued', 
-                     0, # retryNumber
-                     'sent', # folder
-                     encoding, # encoding type
-                     0
-                     )
-                helper_sent.insert(t)
+                helper_sent.insert(
+                    '', # msgid. We don't know what this will be until the POW is done.
+                    toAddress,
+                    ripe,
+                    fromAddress,
+                    subject,
+                    message,
+                    ackdata,
+                    int(time.time()), # sentTime (this will never change)
+                    int(time.time()), # lastActionTime
+                    0, # sleepTill time. This will get set when the POW gets done.
+                    'broadcastqueued',
+                    0, # retryNumber
+                    'sent', # folder
+                    encoding, # encoding type
+                    0
+                )
 
                 toLabel = str_broadcast_subscribers
 

@@ -247,7 +247,8 @@ class TestCore(unittest.TestCase):
         message = 'test message'
         subject = 'test subject'
         encoding = 2
-        t = ('',  # msgid
+        result = helper_sent.insert(
+            '',  # msgid
              toAddress,
              '',  # ripe
              fromAddress,
@@ -261,17 +262,18 @@ class TestCore(unittest.TestCase):
              0,
              'sent',
              encoding,
-             0)
-        result = helper_sent.insert(t, True)
+             0,
+             True)
         self.assertNotEqual(result[0], '')
 
     def test_defalut_insert_values(self):
         """Test missing values in insert method for message sending"""
         fromAddress = 'BM-2cTrmD22fLRrumi3pPLg1ELJ6PdAaTRTdfg'
-        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWgjdfkj89fdf'
+        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'  # autoresponder address
         message = 'test message'
         subject = 'test subject'
-        t = ('',  # msgid
+        result = helper_sent.insert(
+            '',  # msgid
              toAddress,
              '',  # ripe
              fromAddress,
@@ -285,8 +287,7 @@ class TestCore(unittest.TestCase):
              '',  # retryNumber
              '',  # folder
              '',  # encoding
-             '')  # ttl
-        result = helper_sent.insert(t, True)
+             '', True)
         for index in [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
             self.assertNotEqual(result[index], '')
 

@@ -968,7 +968,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         scrollbox(d, unicode("Because you are not currently connected to the network, "))
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(decodeAddress(addr)[2], stealthLevel)
-                    t = (
+                    helper_sent.insert(
                         '',
                         addr,
                         ripe,
@@ -985,7 +985,6 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         2,      # encodingType
                         0
                     )
-                    helper_sent.insert(t)
                     queues.workerQueue.put(("sendmessage", addr))
     else:       # Broadcast
         if recv == "":
@@ -996,7 +995,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             ackdata = genAckPayload(decodeAddress(addr)[2], 0)
             recv = BROADCAST_STR
             ripe = ""
-            t = (
+            helper_sent.insert(
                 '',
                 recv,
                 ripe,
@@ -1013,7 +1012,6 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                 2,      # encodingType
                 0
             )
-            helper_sent.insert(t)
             queues.workerQueue.put(('sendbroadcast', ''))
 
 
