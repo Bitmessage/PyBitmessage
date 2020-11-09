@@ -437,9 +437,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # pylint: disable=redefined-outer-name
         addresses = self._decode_addr()
         for seenTime, stream, _, ip, port in addresses:
-            decodedIP = protocol.checkIPAddress(str(ip))
-            if stream not in state.streamsInWhichIAmParticipating:
+            ip = str(ip)
+            if (
+                stream not in state.streamsInWhichIAmParticipating
+                # FIXME: should check against complete list
+                or ip.startswith('bootstrap')
+            ):
                 continue
+            decodedIP = protocol.checkIPAddress(ip)
             if (
                 decodedIP
                 and time.time() - seenTime > 0
