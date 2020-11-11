@@ -247,23 +247,12 @@ class TestCore(unittest.TestCase):
         message = 'test message'
         subject = 'test subject'
         encoding = 2
+        status = 'msgqueued'
         result = helper_sent.insert(
-            '',  # msgid
-            toAddress,
-            '',  # ripe
-            fromAddress,
-            subject,
-            message,
-            '',  # ackdata
-            int(time.time()),  # sentTime
-            int(time.time()),  # lastActionTime
-            0,  # sleeptill
-            'msgqueued',
-            0,
-            'sent',
-            encoding,
-            0,
-            True)
+            msgid='', toAddress=toAddress, fromAddress=fromAddress,
+            subject=subject, message=message, status=status, encoding=encoding,
+            is_testcase=True
+        )
         self.assertNotEqual(result[0], '')
 
     def test_defalut_insert_values(self):
@@ -273,22 +262,8 @@ class TestCore(unittest.TestCase):
         message = 'test message'
         subject = 'test subject'
         result = helper_sent.insert(
-            '',  # msgid
-            toAddress,
-            '',  # ripe
-            fromAddress,
-            subject,
-            message,
-            '',  # ackdata
-            '',  # sentTime
-            '',  # lastActionTime
-            '',  # sleeptill
-            '',  # status
-            '',  # retryNumber
-            '',  # folder
-            '',  # encoding
-            '',
-            True)
+            toAddress=toAddress, fromAddress=fromAddress, subject=subject,
+            message=message, is_testcase=True)
         for index in [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
             self.assertNotEqual(result[index], '')
 

@@ -969,22 +969,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(decodeAddress(addr)[2], stealthLevel)
                     helper_sent.insert(
-                        '',
-                        addr,
-                        ripe,
-                        sender,
-                        subject,
-                        body,
-                        ackdata,
-                        int(time.time()),       # sentTime (this will never change)
-                        int(time.time()),       # lastActionTime
-                        0,      # sleepTill time. This will get set when the POW gets done.
-                        "msgqueued",
-                        0,      # retryNumber
-                        "sent",
-                        2,      # encodingType
-                        0
-                    )
+                        msgid='', toAddress=addr, ripe=ripe, fromAddress=sender, subject=subject,
+                        message=body, ackdata=ackdata)
                     queues.workerQueue.put(("sendmessage", addr))
     else:       # Broadcast
         if recv == "":
@@ -994,24 +980,9 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             # dummy ackdata, no need for stealth
             ackdata = genAckPayload(decodeAddress(addr)[2], 0)
             recv = BROADCAST_STR
-            ripe = ""
             helper_sent.insert(
-                '',
-                recv,
-                ripe,
-                sender,
-                subject,
-                body,
-                ackdata,
-                int(time.time()),       # sentTime (this will never change)
-                int(time.time()),       # lastActionTime
-                0,      # sleepTill time. This will get set when the POW gets done.
-                "broadcastqueued",
-                0,      # retryNumber
-                "sent",         # folder
-                2,      # encodingType
-                0
-            )
+                msgid='', toAddress=recv, fromAddress=sender, subject=subject,
+                message=body, ackdata=ackdata, status='broadcastqueued')
             queues.workerQueue.put(('sendbroadcast', ''))
 
 

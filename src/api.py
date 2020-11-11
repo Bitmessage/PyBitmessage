@@ -1117,21 +1117,9 @@ class BMRPCDispatcher(object):
         ackdata = genAckPayload(streamNumber, stealthLevel)
 
         helper_sent.insert(
-            '',
-            toAddress,
-            toRipe,
-            fromAddress,
-            subject,
-            message,
-            ackdata,
-            int(time.time()),  # sentTime (this won't change)
-            int(time.time()),  # lastActionTime
-            0,
-            'msgqueued',
-            0,
-            'sent',
-            encodingType,
-            TTL)
+            msgid='', toAddress=toAddress, ripe=toRipe, fromAddress=fromAddress,
+            subject=subject, message=message, ackdata=ackdata, encoding=encodingType,
+            ttl=TTL)
 
         toLabel = ''
         queryreturn = sqlQuery(
@@ -1174,24 +1162,11 @@ class BMRPCDispatcher(object):
         streamNumber = decodeAddress(fromAddress)[2]
         ackdata = genAckPayload(streamNumber, 0)
         toAddress = str_broadcast_subscribers
-        ripe = ''
 
         helper_sent.insert(
-            '',
-            toAddress,
-            ripe,
-            fromAddress,
-            subject,
-            message,
-            ackdata,
-            int(time.time()),  # sentTime (this doesn't change)
-            int(time.time()),  # lastActionTime
-            0,
-            'broadcastqueued',
-            0,
-            'sent',
-            encodingType,
-            TTL)
+            msgid='', toAddress=toAddress, fromAddress=fromAddress,
+            status='broadcastqueued', subject=subject, message=message,
+            ackdata=ackdata, encoding=encodingType, ttl=TTL)
 
         toLabel = str_broadcast_subscribers
         queues.UISignalQueue.put(('displayNewSentMessage', (

@@ -756,21 +756,15 @@ class objectProcessor(threading.Thread):
                 # hard-coded.
                 TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
                 helper_sent.insert(
-                    '',
-                    toAddress,
-                    ripe,
-                    fromAddress,
-                    subject,
-                    message,
-                    ackdata,
-                    int(time.time()),  # sentTime (this doesn't change)
-                    int(time.time()),  # lastActionTime
-                    0,
-                    'broadcastqueued',
-                    0,
-                    'sent',
-                    messageEncodingType,
-                    TTL)
+                    msgid='',
+                    toAddress=toAddress,
+                    fromAddress=fromAddress,
+                    status='broadcastqueued',
+                    subject=subject,
+                    message=message,
+                    ackdata=ackdata,
+                    encoding=messageEncodingType,
+                    ttl=TTL)
 
                 queues.UISignalQueue.put((
                     'displayNewSentMessage', (

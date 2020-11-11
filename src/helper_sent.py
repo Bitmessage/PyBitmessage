@@ -11,9 +11,10 @@ from helper_sql import sqlExecute
 
 
 # pylint: disable=too-many-arguments
-def insert(msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
-           sentTime, lastActionTime, sleeptill=0, status='msgqueued',
-           retryNumber=0, folder='sent', encoding=2, ttl=0, is_testcase=False):
+def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=None,
+           status=None, ripe=None, ackdata=None, sentTime=None, lastActionTime=None,
+           sleeptill=None, retryNumber=None, encoding=None, ttl=None, folder='sent',
+           is_testcase=False):
     """Perform an insert into the `sent` table"""
     # pylint: disable=unused-variable
     # pylint: disable-msg=too-many-locals
@@ -31,13 +32,12 @@ def insert(msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
             new_ackdata = genAckPayload(streamNumber, stealthLevel)
             ackdata = new_ackdata
 
-    sentTime = sentTime if sentTime else int(time.time())
+    sentTime = sentTime if sentTime else int(time.time())  # sentTime (this doesn't change)
     lastActionTime = lastActionTime if lastActionTime else int(time.time())
 
-    sleeptill = sleeptill if sleeptill else 0
+    sleeptill = sleeptill if sleeptill else 0  # sleepTill time. This will get set when the POW gets done.
     status = status if status else 'msgqueued'
     retryNumber = retryNumber if retryNumber else 0
-    folder = folder if folder else 'sent'
     encoding = encoding if encoding else 2
 
     ttl = ttl if ttl else BMConfigParser().getint('bitmessagesettings', 'ttl')
