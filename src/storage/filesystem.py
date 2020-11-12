@@ -4,6 +4,7 @@ Module for using filesystem (directory with files) for inventory storage
 import string
 import time
 from binascii import hexlify, unhexlify
+from debug import logger
 from os import listdir, makedirs, path, remove, rmdir
 from threading import RLock
 
@@ -162,7 +163,7 @@ class FilesystemInventory(InventoryStorage):
                     newInventory[streamNumber][hashId] = InventoryItem(
                         objectType, streamNumber, None, expiresTime, tag)
             except KeyError:
-                print "error loading %s" % (hexlify(hashId))
+                logger.warning('error loading %s', hexlify(hashId))
         self._inventory = newInventory
 #        for i, v in self._inventory.items():
 #            print "loaded stream: %s, %i items" % (i, len(v))
