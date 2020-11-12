@@ -13,8 +13,7 @@ from helper_sql import sqlExecute
 # pylint: disable=too-many-arguments
 def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=None,
            status=None, ripe=None, ackdata=None, sentTime=None, lastActionTime=None,
-           sleeptill=None, retryNumber=None, encoding=None, ttl=None, folder='sent',
-           is_testcase=False):
+           sleeptill=0, retryNumber=0, encoding=2, ttl=None, folder='sent'):
     """Perform an insert into the `sent` table"""
     # pylint: disable=unused-variable
     # pylint: disable-msg=too-many-locals
@@ -35,11 +34,7 @@ def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=N
     sentTime = sentTime if sentTime else int(time.time())  # sentTime (this doesn't change)
     lastActionTime = lastActionTime if lastActionTime else int(time.time())
 
-    sleeptill = sleeptill if sleeptill else 0  # sleepTill time. This will get set when the POW gets done.
     status = status if status else 'msgqueued'
-    retryNumber = retryNumber if retryNumber else 0
-    encoding = encoding if encoding else 2
-
     ttl = ttl if ttl else BMConfigParser().getint('bitmessagesettings', 'ttl')
 
     t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
@@ -47,4 +42,4 @@ def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=N
          encoding, ttl)
 
     sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
-    return t if is_testcase else None
+    return msgid

@@ -2167,8 +2167,8 @@ class MyForm(settingsmixin.SMainWindow):
                             'bitmessagesettings', 'ackstealthlevel')
                         ackdata = genAckPayload(streamNumber, stealthLevel)
                         helper_sent.insert(
-                            msgid='', toAddress=toAddress, ripe=ripe, fromAddress=fromAddress,
-                            subject=subject, message=message, ackdata=ackdata, encoding=encoding)
+                            toAddress=toAddress, fromAddress=fromAddress,
+                            subject=subject, message=message, encoding=encoding)
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
                                                toAddress)
@@ -2208,8 +2208,8 @@ class MyForm(settingsmixin.SMainWindow):
 
                 # msgid. We don't know what this will be until the POW is done.
                 helper_sent.insert(
-                    msgid='', toAddress=toAddress, fromAddress=fromAddress,
-                    subject=subject, message=message, ackdata=ackdata,
+                    toAddress=toAddress, fromAddress=fromAddress,
+                    subject=subject, message=message,
                     status='broadcastqueued', encoding=encoding)
 
                 toLabel = str_broadcast_subscribers

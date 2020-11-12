@@ -969,8 +969,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
                     ackdata = genAckPayload(decodeAddress(addr)[2], stealthLevel)
                     helper_sent.insert(
-                        msgid='', toAddress=addr, ripe=ripe, fromAddress=sender, subject=subject,
-                        message=body, ackdata=ackdata)
+                        toAddress=addr, fromAddress=sender, subject=subject, message=body)
                     queues.workerQueue.put(("sendmessage", addr))
     else:       # Broadcast
         if recv == "":
@@ -981,8 +980,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             ackdata = genAckPayload(decodeAddress(addr)[2], 0)
             recv = BROADCAST_STR
             helper_sent.insert(
-                msgid='', toAddress=recv, fromAddress=sender, subject=subject,
-                message=body, ackdata=ackdata, status='broadcastqueued')
+                toAddress=recv, fromAddress=sender, subject=subject,
+                message=body, status='broadcastqueued')
             queues.workerQueue.put(('sendbroadcast', ''))
 
 

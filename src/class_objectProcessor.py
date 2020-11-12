@@ -749,22 +749,14 @@ class objectProcessor(threading.Thread):
 
                 ackdata = genAckPayload(streamNumber, 0)
                 toAddress = '[Broadcast subscribers]'
-                ripe = ''
 
-                # We really should have a discussion about how to
-                # set the TTL for mailing list broadcasts. This is obviously
-                # hard-coded.
-                TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
                 helper_sent.insert(
-                    msgid='',
                     toAddress=toAddress,
                     fromAddress=fromAddress,
                     status='broadcastqueued',
                     subject=subject,
                     message=message,
-                    ackdata=ackdata,
-                    encoding=messageEncodingType,
-                    ttl=TTL)
+                    encoding=messageEncodingType)
 
                 queues.UISignalQueue.put((
                     'displayNewSentMessage', (
