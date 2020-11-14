@@ -25,11 +25,11 @@ import time
 
 import queues
 import state
-import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import BMConnectionPool, knownnodes, StoppableThread
+from tr import _translate
 
 
 #: Equals 4 weeks. You could make this longer if you want
@@ -63,11 +63,8 @@ class singleCleaner(StoppableThread):
             # from the config file.
             state.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
-        # initial wait
-        if state.shutdown == 0:
-            self.stop.wait(singleCleaner.cycleLength)
-
         while state.shutdown == 0:
+            self.stop.wait(self.cycleLength)
             queues.UISignalQueue.put((
                 'updateStatusBar',
                 'Doing housekeeping (Flushing inventory in memory to disk...)'
@@ -81,15 +78,16 @@ class singleCleaner(StoppableThread):
             # FIXME redundant?
             if state.thisapp.daemon or not state.enableGUI:
                 queues.UISignalQueue.queue.clear()
-            if timeWeLastClearedInventoryAndPubkeysTables < \
-                    int(time.time()) - 7380:
-                timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
+
+            tick = int(time.time())
+            if timeWeLastClearedInventoryAndPubkeysTables < tick - 7380:
+                timeWeLastClearedInventoryAndPubkeysTables = tick
                 Inventory().clean()
                 queues.workerQueue.put(('sendOnionPeerObj', ''))
                 # pubkeys
                 sqlExecute(
                     "DELETE FROM pubkeys WHERE time<? AND usedpersonally='no'",
-                    int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys)
+                    tick - lengthOfTimeToHoldOnToAllPubkeys)
 
                 # Let us resend getpubkey objects if we have not yet heard
                 # a pubkey, and also msg objects if we have not yet heard
@@ -98,19 +96,10 @@ class singleCleaner(StoppableThread):
                     "SELECT toaddress, ackdata, status FROM sent"
                     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
                     " AND folder='sent' AND sleeptill<? AND senttime>?)",
-                    int(time.time()), int(time.time())
-                    - state.maximumLengthOfTimeToBotherResendingMessages
+                    tick,
+                    tick - state.maximumLengthOfTimeToBotherResendingMessages
                 )
-                for row in queryreturn:
-                    if len(row) < 2:
-                        self.logger.error(
-                            'Something went wrong in the singleCleaner thread:'
-                            ' a query did not return the requested fields. %r',
-                            row
-                        )
-                        self.stop.wait(3)
-                        break
-                    toAddress, ackData, status = row
+                for toAddress, ackData, status in queryreturn:
                     if status == 'awaitingpubkey':
                         self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
@@ -121,7 +110,6 @@ class singleCleaner(StoppableThread):
                 # while writing it to disk
                 knownnodes.cleanupKnownNodes()
             except Exception as err:
-                # pylint: disable=protected-access
                 if "Errno 28" in str(err):
                     self.logger.fatal(
                         '(while writing knownnodes to disk)'
@@ -129,8 +117,8 @@ class singleCleaner(StoppableThread):
                     )
                     queues.UISignalQueue.put((
                         'alert',
-                        (tr._translate("MainWindow", "Disk full"),
-                         tr._translate(
+                        (_translate("MainWindow", "Disk full"),
+                         _translate(
                              "MainWindow",
                              'Alert: Your disk or data storage volume'
                              ' is full. Bitmessage will now exit.'),
@@ -138,7 +126,7 @@ class singleCleaner(StoppableThread):
                     ))
                     # FIXME redundant?
                     if state.thisapp.daemon or not state.enableGUI:
-                        os._exit(1)
+                        os._exit(1)  # pylint: disable=protected-access
 
             # inv/object tracking
             for connection in BMConnectionPool().connections():
@@ -155,9 +143,6 @@ class singleCleaner(StoppableThread):
             # ..todo:: cleanup pending upload / download
 
             gc.collect()
-
-            if state.shutdown == 0:
-                self.stop.wait(singleCleaner.cycleLength)
 
     def resendPubkeyRequest(self, address):
         """Resend pubkey request for address"""
@@ -179,8 +164,8 @@ class singleCleaner(StoppableThread):
             'Doing work necessary to again attempt to request a public key...'
         ))
         sqlExecute(
-            '''UPDATE sent SET status='msgqueued' WHERE toaddress=? AND folder='sent' ''',
-            address)
+            "UPDATE sent SET status = 'msgqueued'"
+            " WHERE toaddress = ? AND folder = 'sent'", address)
         queues.workerQueue.put(('sendmessage', ''))
 
     def resendMsg(self, ackdata):
@@ -190,8 +175,8 @@ class singleCleaner(StoppableThread):
             ' to our msg. Sending again.'
         )
         sqlExecute(
-            '''UPDATE sent SET status='msgqueued' WHERE ackdata=? AND folder='sent' ''',
-            ackdata)
+            "UPDATE sent SET status = 'msgqueued'"
+            " WHERE ackdata = ? AND folder = 'sent'", ackdata)
         queues.workerQueue.put(('sendmessage', ''))
         queues.UISignalQueue.put((
             'updateStatusBar',
