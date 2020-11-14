@@ -22,7 +22,12 @@ from bmconfigparser import config
 from debug import logger
 from fallback import RIPEMD160Hash
 from helper_sql import sqlExecute
+from network.node import Peer
 from version import softwareVersion
+
+
+#: protocol specification says max 1000 addresses in one addr command
+MAX_ADDR_COUNT = 1000
 
 # Service flags
 #: This is a normal network node
@@ -298,6 +303,28 @@ def CreatePacket(command, payload=b''):
     Header.pack_into(b, 0, 0xE9BEB4D9, command, payload_length, checksum)
     b[Header.size:] = payload
     return bytes(b)
+
+
+def assembleAddrMessage(peerList):
+    """Create address command"""
+    if isinstance(peerList, Peer):
+        peerList = [peerList]
+    if not peerList:
+        return b''
+    retval = b''
+    for i in range(0, len(peerList), MAX_ADDR_COUNT):
+        payload = encodeVarint(len(peerList[i:i + MAX_ADDR_COUNT]))
+        for stream, peer, timestamp in peerList[i:i + MAX_ADDR_COUNT]:
+            # 64-bit time
+            payload += pack('>Q', timestamp)
+            payload += pack('>I', stream)
+            # service bit flags offered by this node
+            payload += pack('>q', 1)
+            payload += encodeHost(peer.host)
+            # remote port
+            payload += pack('>H', peer.port)
+        retval += CreatePacket('addr', payload)
+    return retval
 
 
 def assembleVersionMessage(

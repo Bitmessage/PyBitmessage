@@ -2,7 +2,7 @@
 TCP protocol handler
 """
 # pylint: disable=too-many-ancestors
-import l10n
+
 import logging
 import math
 import random
@@ -10,17 +10,20 @@ import socket
 import time
 
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
 import helper_random
-import knownnodes
+import l10n
 import protocol
 import state
 from bmconfigparser import config
 from helper_random import randomBytes
 from inventory import Inventory
+from queues import invQueue, receiveDataQueue, UISignalQueue
+from tr import _translate
+
+import asyncore_pollchoose as asyncore
+import connectionpool
+import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
-from network.assemble import assemble_addr
 from network.bmproto import BMProto
 from network.constants import MAX_OBJECT_COUNT
 from network.dandelion import Dandelion
@@ -29,8 +32,7 @@ from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
 from node import Peer
-from queues import invQueue, receiveDataQueue, UISignalQueue
-from tr import _translate
+
 
 logger = logging.getLogger('default')
 
@@ -205,7 +207,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
         if templist:
-            self.append_write_buf(assemble_addr(templist))
+            self.append_write_buf(protocol.assembleAddrMessage(templist))
 
     def sendBigInv(self):
         """

@@ -5,7 +5,8 @@ import time
 
 import state
 from bmconfigparser import config
-from network.assemble import assemble_addr
+from protocol import assembleAddrMessage
+
 from network.connectionpool import BMConnectionPool
 from node import Peer
 from threads import StoppableThread
@@ -40,4 +41,4 @@ class AnnounceThread(StoppableThread):
                         config.safeGetInt(
                             'bitmessagesettings', 'port')),
                     time.time())
-                connection.append_write_buf(assemble_addr([addr]))
+                connection.append_write_buf(assembleAddrMessage([addr]))
