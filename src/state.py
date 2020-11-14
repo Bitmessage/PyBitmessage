@@ -40,11 +40,6 @@ maximumNumberOfHalfOpenConnections = 0
 
 maximumLengthOfTimeToBotherResendingMessages = 0
 
-invThread = None
-addrThread = None
-downloadThread = None
-uploadThread = None
-
 ownAddresses = {}
 
 discoveredPeers = {}

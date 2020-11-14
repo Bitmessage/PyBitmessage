@@ -30,6 +30,8 @@ import time
 import traceback
 
 import defaults
+# Network subsystem
+import network
 import shared
 import shutdown
 import state
@@ -40,12 +42,6 @@ from debug import logger  # this should go before any threads
 from helper_startup import (
     adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
 from inventory import Inventory
-# Network objects and threads
-from network import (
-    BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
-    InvThread, ReceiveQueueThread, DownloadThread, UploadThread
-)
-from network.knownnodes import readKnownNodes
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
@@ -175,10 +171,18 @@ class Main(object):
             defaults.networkDefaultPayloadLengthExtraBytes = int(
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
-        readKnownNodes()
+        # Start the SQL thread
+        sqlLookup = sqlThread()
+        # DON'T close the main program even if there are threads left.
+        # The closeEvent should command this thread to exit gracefully.
+        sqlLookup.daemon = False
+        sqlLookup.start()
 
-        # Not needed if objproc is disabled
-        if state.enableObjProc:
+        Inventory()  # init
+
+        if state.enableObjProc:  # Not needed if objproc is disabled
+            shared.reloadMyAddressHashes()
+            shared.reloadBroadcastSendersForWhichImWatching()
 
             # Start the address generation thread
             addressGeneratorThread = addressGenerator()
@@ -192,19 +196,13 @@ class Main(object):
             singleWorkerThread.daemon = True
             singleWorkerThread.start()
 
-        # Start the SQL thread
-        sqlLookup = sqlThread()
-        # DON'T close the main program even if there are threads left.
-        # The closeEvent should command this thread to exit gracefully.
-        sqlLookup.daemon = False
-        sqlLookup.start()
-
-        Inventory()  # init
-        # init, needs to be early because other thread may access it early
-        Dandelion()
-
-        # Enable object processor and SMTP only if objproc enabled
-        if state.enableObjProc:
+            # Start the object processing thread
+            objectProcessorThread = objectProcessor()
+            # DON'T close the main program even if the thread remains.
+            # This thread checks the shutdown variable after processing
+            # each object.
+            objectProcessorThread.daemon = False
+            objectProcessorThread.start()
 
             # SMTP delivery thread
             if daemon and config.safeGet(
@@ -220,25 +218,6 @@ class Main(object):
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
 
-            # Start the thread that calculates POWs
-            objectProcessorThread = objectProcessor()
-            # DON'T close the main program even the thread remains.
-            # This thread checks the shutdown variable after processing
-            # each object.
-            objectProcessorThread.daemon = False
-            objectProcessorThread.start()
-
-        # Start the cleanerThread
-        singleCleanerThread = singleCleaner()
-        # close the main program even if there are threads left
-        singleCleanerThread.daemon = True
-        singleCleanerThread.start()
-
-        # Not needed if objproc disabled
-        if state.enableObjProc:
-            shared.reloadMyAddressHashes()
-            shared.reloadBroadcastSendersForWhichImWatching()
-
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
@@ -247,34 +226,26 @@ class Main(object):
                 singleAPIThread.daemon = True
                 singleAPIThread.start()
 
+        # Start the cleanerThread
+        singleCleanerThread = singleCleaner()
+        # close the main program even if there are threads left
+        singleCleanerThread.daemon = True
+        singleCleanerThread.start()
+
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            BMConnectionPool().connectToStream(1)
-            asyncoreThread = BMNetworkThread()
-            asyncoreThread.daemon = True
-            asyncoreThread.start()
+            network.start()
+
+            # Optional components
             for i in range(config.getint('threads', 'receive')):
-                receiveQueueThread = ReceiveQueueThread(i)
+                receiveQueueThread = network.ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()
             if config.safeGetBoolean('bitmessagesettings', 'udp'):
-                state.announceThread = AnnounceThread()
+                state.announceThread = network.AnnounceThread()
                 state.announceThread.daemon = True
                 state.announceThread.start()
-            state.invThread = InvThread()
-            state.invThread.daemon = True
-            state.invThread.start()
-            state.addrThread = AddrThread()
-            state.addrThread.daemon = True
-            state.addrThread.start()
-            state.downloadThread = DownloadThread()
-            state.downloadThread.daemon = True
-            state.downloadThread.start()
-            state.uploadThread = UploadThread()
-            state.uploadThread.daemon = True
-            state.uploadThread.start()
-
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()
