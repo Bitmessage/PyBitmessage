@@ -1419,9 +1419,9 @@ class BMRPCDispatcher(object):
         """
         Returns the bitmessage status as dict with keys *networkConnections*,
         *numberOfMessagesProcessed*, *numberOfBroadcastsProcessed*,
-        *numberOfPubkeysProcessed*, *networkStatus*,
-        *softwareName*, *softwareVersion*. *networkStatus* will be one
-        of these strings: "notConnected",
+        *numberOfPubkeysProcessed*, *pendingDownload*, *networkStatus*,
+        *softwareName*, *softwareVersion*. *networkStatus* will be one of
+        these strings: "notConnected",
         "connectedButHaveNotReceivedIncomingConnections",
         or "connectedAndReceivingIncomingConnections".
         """
@@ -1438,6 +1438,7 @@ class BMRPCDispatcher(object):
             'numberOfMessagesProcessed': state.numberOfMessagesProcessed,
             'numberOfBroadcastsProcessed': state.numberOfBroadcastsProcessed,
             'numberOfPubkeysProcessed': state.numberOfPubkeysProcessed,
+            'pendingDownload': network.stats.pendingDownload(),
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
