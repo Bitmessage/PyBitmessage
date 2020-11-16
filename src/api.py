@@ -1163,8 +1163,8 @@ class BMRPCDispatcher(object):
         toAddress = str_broadcast_subscribers
 
         helper_sent.insert(
-            toAddress=toAddress, fromAddress=fromAddress,
-            subject=subject, message=message, status='broadcastqueued',
+            fromAddress=fromAddress, subject=subject,
+            message=message, status='broadcastqueued',
             encoding=encodingType)
 
         toLabel = str_broadcast_subscribers

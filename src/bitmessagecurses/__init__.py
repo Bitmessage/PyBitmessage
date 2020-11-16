@@ -966,8 +966,6 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     if not network.stats.connectedHostsList():
                         set_background_title(d, "Not connected warning")
                         scrollbox(d, unicode("Because you are not currently connected to the network, "))
-                    stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
-                    ackdata = genAckPayload(decodeAddress(addr)[2], stealthLevel)
                     helper_sent.insert(
                         toAddress=addr, fromAddress=sender, subject=subject, message=body)
                     queues.workerQueue.put(("sendmessage", addr))
@@ -977,10 +975,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             scrollbox(d, unicode("You must specify an address to send the message from."))
         else:
             # dummy ackdata, no need for stealth
-            ackdata = genAckPayload(decodeAddress(addr)[2], 0)
-            recv = BROADCAST_STR
             helper_sent.insert(
-                toAddress=recv, fromAddress=sender, subject=subject,
+                fromAddress=sender, subject=subject,
                 message=body, status='broadcastqueued')
             queues.workerQueue.put(('sendbroadcast', ''))
 

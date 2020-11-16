@@ -11,9 +11,9 @@ from helper_sql import sqlExecute
 
 
 # pylint: disable=too-many-arguments
-def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=None,
-           status=None, ripe=None, ackdata=None, sentTime=None, lastActionTime=None,
-           sleeptill=0, retryNumber=0, encoding=2, ttl=None, folder='sent'):
+def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, subject=None,
+           message=None, status='msgqueued', ripe=None, ackdata=None, sentTime=None,
+           lastActionTime=None, sleeptill=0, retryNumber=0, encoding=2, ttl=None, folder='sent'):
     """Perform an insert into the `sent` table"""
     # pylint: disable=unused-variable
     # pylint: disable-msg=too-many-locals
@@ -21,7 +21,8 @@ def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=N
     msgid = msgid if msgid else uuid.uuid4().bytes
 
     if not ripe or not ackdata:
-        new_status, addressVersionNumber, streamNumber, new_ripe = decodeAddress(toAddress)
+        addr = fromAddress if toAddress == '[Broadcast subscribers]' else toAddress
+        new_status, addressVersionNumber, streamNumber, new_ripe = decodeAddress(addr)
         if not ripe:
             ripe = new_ripe
 
@@ -34,7 +35,6 @@ def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=N
     sentTime = sentTime if sentTime else int(time.time())  # sentTime (this doesn't change)
     lastActionTime = lastActionTime if lastActionTime else int(time.time())
 
-    status = status if status else 'msgqueued'
     ttl = ttl if ttl else BMConfigParser().getint('bitmessagesettings', 'ttl')
 
     t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
@@ -42,4 +42,4 @@ def insert(msgid=None, toAddress=None, fromAddress=None, subject=None, message=N
          encoding, ttl)
 
     sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
-    return msgid
+    return ackdata

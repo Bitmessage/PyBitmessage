@@ -19,6 +19,7 @@ import helper_sent
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
 from helper_startup import start_proxyconfig
+from helper_sql import sqlQuery
 from network import asyncore_pollchoose as asyncore, knownnodes
 from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
@@ -246,12 +247,13 @@ class TestCore(unittest.TestCase):
         toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWgjdfkj89fdf'
         message = 'test message'
         subject = 'test subject'
-        status = 'msgqueued'
         result = helper_sent.insert(
-            toAddress=toAddress, fromAddress=fromAddress, subject=subject,
-            message=message, status=status,
+            toAddress=toAddress, fromAddress=fromAddress,
+            subject=subject, message=message,
         )
-        self.assertNotEqual(result, '')
+        queryreturn = sqlQuery(
+            '''select msgid from sent where ackdata=?''', result)
+        self.assertNotEqual(queryreturn[0][0], '')
 
 
 def run():

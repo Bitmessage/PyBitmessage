@@ -2208,7 +2208,7 @@ class MyForm(settingsmixin.SMainWindow):
 
                 # msgid. We don't know what this will be until the POW is done.
                 helper_sent.insert(
-                    toAddress=toAddress, fromAddress=fromAddress,
+                    fromAddress=fromAddress,
                     subject=subject, message=message,
                     status='broadcastqueued', encoding=encoding)
 
