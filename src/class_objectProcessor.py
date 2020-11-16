@@ -745,6 +745,8 @@ class objectProcessor(threading.Thread):
                 # We don't actually need the ackdata for acknowledgement
                 # since this is a broadcast message but we can use it to
                 # update the user interface when the POW is done generating.
+                streamNumber = decodeAddress(fromAddress)[2]
+                ackdata = genAckPayload(streamNumber, 0)
                 toAddress = '[Broadcast subscribers]'
 
                 helper_sent.insert(

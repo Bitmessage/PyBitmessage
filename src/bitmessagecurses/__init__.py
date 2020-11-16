@@ -29,7 +29,6 @@ import state
 
 from addresses import addBMIfNotPresent, decodeAddress
 from bmconfigparser import BMConfigParser
-from helper_ackPayload import genAckPayload
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 
@@ -921,7 +920,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
         for addr in recvlist:
             if addr != "":
                 # pylint: disable=redefined-outer-name
-                status, version, stream, ripe = decodeAddress(addr)
+                status, version, stream, ripe = decodeAddress(addr)  # pylint: disable=unused-variable
                 if status != "success":
                     set_background_title(d, "Recipient address error")
                     err = "Could not decode" + addr + " : " + status + "\n\n"

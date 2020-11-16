@@ -2071,6 +2071,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 ).arg(email)
                             )
                             return
+                    # pylint: disable=unused-variable
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
