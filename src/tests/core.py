@@ -253,7 +253,7 @@ class TestCore(unittest.TestCase):
         )
         queryreturn = sqlQuery(
             '''select msgid from sent where ackdata=?''', result)
-        self.assertNotEqual(queryreturn[0][0] if queryreturn else '' , '')
+        self.assertNotEqual(queryreturn[0][0] if queryreturn else '', '')
 
         column_type = sqlQuery(
             '''select typeof(msgid) from sent where ackdata=?''', result)

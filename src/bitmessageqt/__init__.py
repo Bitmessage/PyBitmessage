@@ -2070,8 +2070,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 ).arg(email)
                             )
                             return
-                    status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                        toAddress)
+                    status, addressVersionNumber, streamNumber = decodeAddress(toAddress)[:3]
                     if status != 'success':
                         try:
                             toAddress = unicode(toAddress, 'utf-8', 'ignore')

@@ -919,7 +919,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
         list(set(recvlist))         # Remove exact duplicates
         for addr in recvlist:
             if addr != "":
-                status, version, stream, ripe = decodeAddress(addr)
+                status, version, stream = decodeAddress(addr)[:3]
                 if status != "success":
                     set_background_title(d, "Recipient address error")
                     err = "Could not decode" + addr + " : " + status + "\n\n"

@@ -29,7 +29,6 @@ from addresses import (
 )
 from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
-from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from network import bmproto, knownnodes
 from network.node import Peer
