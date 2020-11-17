@@ -244,7 +244,7 @@ class TestCore(unittest.TestCase):
     def test_insert_method_msgid(self):
         """Test insert method of helper_sent module with message sending"""
         fromAddress = 'BM-2cTrmD22fLRrumi3pPLg1ELJ6PdAaTRTdfg'
-        toAddress = 'BM-2cVWtdUzPwF7UNGDrZftWuHWgjdfkj89fdf'
+        toAddress = 'BM-2cUGaEcGz9Zft1SPAo8FJtfzyADTpEgU9U'
         message = 'test message'
         subject = 'test subject'
         result = helper_sent.insert(
@@ -253,7 +253,11 @@ class TestCore(unittest.TestCase):
         )
         queryreturn = sqlQuery(
             '''select msgid from sent where ackdata=?''', result)
-        self.assertNotEqual(queryreturn[0][0], '')
+        self.assertNotEqual(queryreturn[0][0] if queryreturn else '' , '')
+
+        column_type = sqlQuery(
+            '''select typeof(msgid) from sent where ackdata=?''', result)
+        self.assertEqual(column_type[0][0] if column_type else '', 'text')
 
 
 def run():

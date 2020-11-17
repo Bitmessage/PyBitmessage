@@ -18,11 +18,11 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
     # pylint: disable=unused-variable
     # pylint: disable-msg=too-many-locals
 
-    msgid = msgid if msgid else uuid.uuid4().bytes
-
+    valid_addr = True
     if not ripe or not ackdata:
         addr = fromAddress if toAddress == '[Broadcast subscribers]' else toAddress
         new_status, addressVersionNumber, streamNumber, new_ripe = decodeAddress(addr)
+        valid_addr = True if new_status == 'success' else False
         if not ripe:
             ripe = new_ripe
 
@@ -31,15 +31,18 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
                 'bitmessagesettings', 'ackstealthlevel')
             new_ackdata = genAckPayload(streamNumber, stealthLevel)
             ackdata = new_ackdata
+    if valid_addr:
+        msgid = msgid if msgid else uuid.uuid4().bytes
+        sentTime = sentTime if sentTime else int(time.time())  # sentTime (this doesn't change)
+        lastActionTime = lastActionTime if lastActionTime else int(time.time())
 
-    sentTime = sentTime if sentTime else int(time.time())  # sentTime (this doesn't change)
-    lastActionTime = lastActionTime if lastActionTime else int(time.time())
+        ttl = ttl if ttl else BMConfigParser().getint('bitmessagesettings', 'ttl')
 
-    ttl = ttl if ttl else BMConfigParser().getint('bitmessagesettings', 'ttl')
+        t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
+             sentTime, lastActionTime, sleeptill, status, retryNumber, folder,
+             encoding, ttl)
 
-    t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
-         sentTime, lastActionTime, sleeptill, status, retryNumber, folder,
-         encoding, ttl)
-
-    sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
-    return ackdata
+        sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+        return ackdata
+    else:
+        return None

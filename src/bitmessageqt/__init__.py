@@ -35,7 +35,6 @@ from foldertree import (
     MessageList_TimeWidget)
 import settingsmixin
 import support
-from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_search
 import l10n
@@ -2071,7 +2070,6 @@ class MyForm(settingsmixin.SMainWindow):
                                 ).arg(email)
                             )
                             return
-                    # pylint: disable=unused-variable
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
@@ -2164,10 +2162,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " send the message but it won\'t send until"
                                 " you connect.")
                             )
-                        stealthLevel = BMConfigParser().safeGetInt(
-                            'bitmessagesettings', 'ackstealthlevel')
-                        ackdata = genAckPayload(streamNumber, stealthLevel)
-                        helper_sent.insert(
+                        ackdata = helper_sent.insert(
                             toAddress=toAddress, fromAddress=fromAddress,
                             subject=subject, message=message, encoding=encoding)
                         toLabel = ''
@@ -2203,12 +2198,10 @@ class MyForm(settingsmixin.SMainWindow):
                 # We don't actually need the ackdata for acknowledgement since
                 # this is a broadcast message, but we can use it to update the
                 # user interface when the POW is done generating.
-                streamNumber = decodeAddress(fromAddress)[2]
-                ackdata = genAckPayload(streamNumber, 0)
                 toAddress = str_broadcast_subscribers
 
                 # msgid. We don't know what this will be until the POW is done.
-                helper_sent.insert(
+                ackdata = helper_sent.insert(
                     fromAddress=fromAddress,
                     subject=subject, message=message,
                     status='broadcastqueued', encoding=encoding)

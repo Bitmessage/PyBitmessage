@@ -919,8 +919,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
         list(set(recvlist))         # Remove exact duplicates
         for addr in recvlist:
             if addr != "":
-                # pylint: disable=redefined-outer-name
-                status, version, stream, ripe = decodeAddress(addr)  # pylint: disable=unused-variable
+                status, version, stream, ripe = decodeAddress(addr)
                 if status != "success":
                     set_background_title(d, "Recipient address error")
                     err = "Could not decode" + addr + " : " + status + "\n\n"

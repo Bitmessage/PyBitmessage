@@ -90,7 +90,6 @@ from addresses import (
 )
 from bmconfigparser import BMConfigParser
 from debug import logger
-from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
 from inventory import Inventory
 from network.threads import StoppableThread
@@ -1101,7 +1100,6 @@ class BMRPCDispatcher(object):
             TTL = 28 * 24 * 60 * 60
         toAddress = addBMIfNotPresent(toAddress)
         fromAddress = addBMIfNotPresent(fromAddress)
-        streamNumber, toRipe = self._verifyAddress(toAddress)[2:]
         self._verifyAddress(fromAddress)
         try:
             fromAddressEnabled = self.config.getboolean(
@@ -1112,11 +1110,7 @@ class BMRPCDispatcher(object):
         if not fromAddressEnabled:
             raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
 
-        stealthLevel = self.config.safeGetInt(
-            'bitmessagesettings', 'ackstealthlevel')
-        ackdata = genAckPayload(streamNumber, stealthLevel)
-
-        helper_sent.insert(
+        ackdata = helper_sent.insert(
             toAddress=toAddress, fromAddress=fromAddress,
             subject=subject, message=message, encoding=encodingType)
 
@@ -1158,11 +1152,9 @@ class BMRPCDispatcher(object):
         except BaseException:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
-        streamNumber = decodeAddress(fromAddress)[2]
-        ackdata = genAckPayload(streamNumber, 0)
         toAddress = str_broadcast_subscribers
 
-        helper_sent.insert(
+        ackdata = helper_sent.insert(
             fromAddress=fromAddress, subject=subject,
             message=message, status='broadcastqueued',
             encoding=encodingType)
