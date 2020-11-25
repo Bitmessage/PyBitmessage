@@ -42,7 +42,7 @@ requirements =
 	openssl, 
 	sqlite3,
 	kivy,
-	pyjnius,
+	pyjnius==1.2.1,
 	libiconv,
 	libzbar,
 	pillow,
