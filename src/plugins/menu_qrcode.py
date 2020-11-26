@@ -39,7 +39,7 @@ class Image(qrcode.image.base.BaseImage):  # pylint: disable=abstract-method
             QtCore.Qt.black)
 
 
-class QRCodeDialog(QtGui.QDialog): 
+class QRCodeDialog(QtGui.QDialog):
     """The dialog"""
     def __init__(self, parent):
         super(QRCodeDialog, self).__init__(parent)

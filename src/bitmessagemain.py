@@ -53,7 +53,6 @@ sys.path.insert(0, app_dir)
 depends.check_dependencies()
 
 
-
 def _fixSocket():
     if sys.platform.startswith('linux'):
         socket.SO_BINDTODEVICE = 25

@@ -126,11 +126,13 @@ class BMConfigParser(configparser.ConfigParser):
     def addresses(self, hidden=False):
 
         """Return a list of local bitmessage addresses (from section labels)"""
-        return [x for x in BMConfigParser().sections() if x.startswith('BM-') and (hidden or not BMConfigParser().safeGetBoolean(x, 'hidden'))]
+        return [x for x in BMConfigParser().sections() if x.startswith('BM-') and (
+            hidden or not BMConfigParser().safeGetBoolean(x, 'hidden'))]
 
     def paymentaddress(self):
         """Return a list of local payment addresses (from section labels)"""
-        return ''.join([x for x in BMConfigParser().sections() if x.startswith('BM-') and BMConfigParser().safeGetBoolean(x, 'payment')])
+        return ''.join([x for x in BMConfigParser().sections() if x.startswith(
+            'BM-') and BMConfigParser().safeGetBoolean(x, 'payment')])
 
     def read(self, filenames):
         configparser.ConfigParser.read(self, filenames)

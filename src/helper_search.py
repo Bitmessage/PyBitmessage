@@ -79,7 +79,6 @@ def search_sql(
     return sqlQuery(sqlStatementBase, sqlArguments)
 
 
-
 def check_match(
         toAddress, fromAddress, subject, message, where=None, what=None):
     """
