@@ -2,7 +2,8 @@
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
 # pylint: disable=protected-access
-
+# pylint: disable=import-outside-toplevel,ungrouped-imports,wrong-import-order,unused-import,arguments-differ
+# pylint: disable=invalid-name,unnecessary-comprehension,broad-except,simplifiable-if-expression,no-member
 # pylint: disable=too-many-return-statements
 
 """
@@ -103,6 +104,7 @@ elif platform == "android":
 
     @run_on_ui_thread
     def show_toast(text, length):
+        """Its showing toast on screen"""
         t = Toast.makeText(context, text, length)
         t.show()
 
@@ -138,7 +140,7 @@ def toast(text):
     from kivymd.toast.kivytoast import toast
 
     toast(text)
-    return
+    return None
 
 
 def showLimitedCnt(total_msg):
@@ -227,7 +229,7 @@ class Lang(Observable):
 
 
 class Inbox(Screen):
-    """Inbox Screen uses screen to show widgets of screens"""
+    """Inbox Screen class for kivy Ui"""
 
     queryreturn = ListProperty()
     has_refreshed = True
@@ -365,8 +367,6 @@ class Inbox(Screen):
             self.ids.scroll_y.scroll_y = 0.06
             total_message = len(self.ids.ml.children)
             self.update_inbox_screen_on_scroll(total_message)
-        else:
-            pass
 
     def update_inbox_screen_on_scroll(self, total_message, where="", what=""):
         """This method is used to load more data on scroll down"""
@@ -463,13 +463,11 @@ class Inbox(Screen):
 
 
 class CustomTwoLineAvatarIconListItem(TwoLineAvatarIconListItem):
-    """Custom Two Line Avatar Icon List"""
-
-    pass
+    """CustomTwoLineAvatarIconListItem class for kivy Ui"""
 
 
 class MyAddress(Screen):
-    """MyAddress screen uses screen to show widgets of screens"""
+    """MyAddress screen class for kivy Ui"""
 
     address_label = StringProperty()
     text_address = StringProperty()
@@ -564,8 +562,6 @@ class MyAddress(Screen):
             self.has_refreshed = (
                 True if my_addresses != len(self.addresses_list) else False
             )
-        else:
-            pass
 
     def update_addressBook_on_scroll(self, my_addresses):
         """Loads more data on scroll down"""
@@ -680,7 +676,7 @@ class MyAddress(Screen):
 
 
 class AddressBook(Screen):
-    """AddressBook Screen uses screen to show widgets of screens"""
+    """AddressBook Screen class for kivy Ui"""
 
     queryreturn = ListProperty()
     has_refreshed = True
@@ -760,8 +756,6 @@ class AddressBook(Screen):
             self.has_refreshed = (
                 True if exist_addresses != len(self.queryreturn) else False
             )
-        else:
-            pass
 
     def update_addressBook_on_scroll(self, exist_addresses):
         """Load more data on scroll down"""
@@ -772,7 +766,6 @@ class AddressBook(Screen):
         """Refresh the Widget"""
         # state.navinstance.ids.sc11.ids.ml.clear_widgets()
         # state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
-        pass
 
     # @staticmethod
     def addBook_detail(self, address, label, *args):
@@ -857,8 +850,6 @@ class SelectableRecycleBoxLayout(
 
     # pylint: disable = duplicate-bases
 
-    pass
-
 
 class SelectableLabel(RecycleDataViewBehavior, Label):
     """Add selection support to the Label"""
@@ -890,7 +881,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 
 
 class RV(RecycleView):
-    """Recycling View"""
+    """Recycling View class for kivy Ui"""
 
     def __init__(self, **kwargs):
         """Recycling Method"""
@@ -898,7 +889,7 @@ class RV(RecycleView):
 
 
 class DropDownWidget(BoxLayout):
-    """Adding Dropdown Widget"""
+    """DropDownWidget class for kivy Ui"""
 
     # pylint: disable=too-many-statements
 
@@ -1029,11 +1020,6 @@ class DropDownWidget(BoxLayout):
             dialog_box.dismiss()
             toast(text_item)
 
-    # @staticmethod
-    # def callback_for_menu_items(text_item, *arg):
-    #     """Callback of alert box"""
-    #     toast(text_item)
-
     def reset_composer(self):
         """Method will reset composer"""
         self.ids.ti.text = ""
@@ -1047,10 +1033,6 @@ class DropDownWidget(BoxLayout):
         """Fill the text automatically From Address"""
         self.ids.ti.text = self.ids.btn.text
         self.ids.ti.focus = True
-
-    def qrScanner(self):
-        """This method is used for scanning Qr code"""
-        pass
 
     def is_camara_attached(self):
         self.parent.parent.parent.ids.sc23.check_camera()
@@ -1134,10 +1116,8 @@ class ScanScreen(Screen):
         Clock.schedule_once(self.stop_camera, 0)
 
     def start_camera(self, *args):
+        """Its used for starting camera for scanning qrcode"""
         self.xcam = self.children[0].ids.zbarcam.ids.xcamera
-        # pass
-        # self.xxx= self.children[0].ids.zbarcam.ids.xcamera
-        # print(self.cam._device.isOpened())
         if platform == "android":
             self.xcam.play = True
 
@@ -1145,21 +1125,20 @@ class ScanScreen(Screen):
             Clock.schedule_once(self.open_cam, 0)
 
     def stop_camera(self, *args):
-        # print(self.children[0].ids.zbarcam.ids.xcamera.play)
+        """Its used for stop the camera"""
         self.xcam.play = False
-        # self.xcam._camera.stop()
-        # self.children[0].ids.zbarcam.stop()
         if platform != "android":
             self.xcam._camera._device.release()
 
     def open_cam(self, *args):
+        """It will open up the camera"""
         if not self.xcam._camera._device.isOpened():
             self.xcam._camera._device.open(self.xcam._camera._index)
         self.xcam.play = True
 
 
 class MyTextInput(TextInput):
-    """Takes the text input in the field"""
+    """MyTextInput class for kivy Ui"""
 
     txt_input = ObjectProperty()
     flt_list = ObjectProperty()
@@ -1197,7 +1176,7 @@ class MyTextInput(TextInput):
 
 
 class Payment(Screen):
-    """Payment module"""
+    """Payment Screen class for kivy Ui"""
 
     def get_free_credits(self, instance):
         """Get the available credits"""
@@ -1214,6 +1193,7 @@ class Payment(Screen):
                 state.availabe_credit)
 
     def create_hidden_payment_address(self, instance):
+        """This is basically used for creating hidden address used in payment for purchasing credits"""
         if BMConfigParser().paymentaddress():
             toast('hidden payment address already exist for buying subscription...')
         else:
@@ -1229,37 +1209,39 @@ class Payment(Screen):
 
 
 class Category(BoxLayout, RectangularElevationBehavior):
+    """Category class for kivy Ui"""
     elevation_normal = .01
 
 
 class ProductLayout(BoxLayout, RectangularElevationBehavior):
+    """ProductLayout class for kivy Ui"""
     elevation_normal = .01
 
 
 class PaymentMethodLayout(BoxLayout):
-    pass
+    """PaymentMethodLayout class for kivy Ui"""
 
 
 class ListItemWithLabel(OneLineAvatarIconListItem):
-    pass
+    """ListItemWithLabel class for kivy Ui"""
 
 
 class RightLabel(IRightBodyTouch, MDLabel):
-    pass
+    """RightLabel class for kivy Ui"""
 
 
 class HomeScreen(Screen):
-    pass
+    """HomeScreen class for kivy Ui"""
 
 
 class Credits(Screen):
-    """Credits Method"""
+    """Credits Screen class for kivy Ui"""
 
     available_credits = StringProperty('{0}'.format('€ 0'))
 
 
 class Login(Screen):
-    """Login Screeen"""
+    """Login Screeen class for kivy Ui"""
     log_text1 = (
         'You may generate addresses by using either random numbers'
         ' or by using a passphrase If you use a passphrase, the address'
@@ -1276,7 +1258,7 @@ class Login(Screen):
 
 
 class NetworkStat(Screen):
-    """Method used to show network stat"""
+    """NetworkStat class for kivy Ui"""
 
     text_variable_1 = StringProperty(
         '{0}::{1}'.format('Total Connections', '0'))
@@ -1311,7 +1293,7 @@ class NetworkStat(Screen):
 
 
 class ContentNavigationDrawer(BoxLayout):
-    """Navigate Content Drawer"""
+    """ContentNavigationDrawer class for kivy Uir"""
 
     def __init__(self, *args, **kwargs):
         """Method used for contentNavigationDrawer"""
@@ -1329,7 +1311,7 @@ class ContentNavigationDrawer(BoxLayout):
 
 
 class Random(Screen):
-    """Generates Random Address"""
+    """Random Screen class for Ui"""
 
     is_active = BooleanProperty(False)
     checked = StringProperty("")
@@ -1340,8 +1322,6 @@ class Random(Screen):
         entered_label = str(self.ids.add_random_bx.children[0].ids.lab.text).strip()
         if not entered_label:
             self.ids.add_random_bx.children[0].ids.lab.focus = True
-            # self.ids.lab.error = True
-            # self.ids.lab.helper_text = 'This field is required'
         streamNumberForAddress = 1
         eighteenByteRipe = False
         nonceTrialsPerByte = 1000
@@ -1402,7 +1382,7 @@ class Random(Screen):
 
 
 class Sent(Screen):
-    """Sent Screen uses screen to show widgets of screens"""
+    """Sent Screen class for kivy Ui"""
 
     queryreturn = ListProperty()
     has_refreshed = True
@@ -1545,8 +1525,6 @@ class Sent(Screen):
             self.ids.scroll_y.scroll_y = 0.06
             total_sent_msg = len(self.ids.ml.children)
             self.update_sent_screen_on_scroll(total_sent_msg)
-        else:
-            pass
 
     def update_sent_screen_on_scroll(self, total_sent_msg, where="", what=""):
         """This method is used to load more data on scroll down"""
@@ -1628,7 +1606,7 @@ class Sent(Screen):
 
 
 class Trash(Screen):
-    """Trash Screen uses screen to show widgets of screens"""
+    """Trash Screen class for kivy Ui"""
 
     trash_messages = ListProperty()
     has_refreshed = True
@@ -1726,8 +1704,6 @@ class Trash(Screen):
             self.ids.scroll_y.scroll_y = 0.06
             total_trash_msg = len(self.ids.ml.children)
             self.update_trash_screen_on_scroll(total_trash_msg)
-        else:
-            pass
 
     def update_trash_screen_on_scroll(self, total_trash_msg):
         """Load more data on scroll down"""
@@ -1797,13 +1773,11 @@ class Trash(Screen):
 
 
 class Page(Screen):
-    """Page Screen show widgets of page"""
-
-    pass
+    """Page Screen class for kivy Ui"""
 
 
 class Create(Screen):
-    """Creates the screen widgets"""
+    """Creates Screen class for kivy Ui"""
 
     def __init__(self, **kwargs):
         """Getting Labels and address from addressbook"""
@@ -1823,7 +1797,7 @@ class Create(Screen):
 
 
 class Setting(Screen):
-    """Setting the Screen components"""
+    """Setting Screen for kivy Ui"""
     exp_text = "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will\
                 send the message again after an additional two days. This will be continued with exponential backoff\
                 forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them.\
@@ -1878,6 +1852,7 @@ class Setting(Screen):
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
+        """Initialization for Ui"""
         if self.newlocale is None:
             self.newlocale = l10n.getTranslationLanguage()
         # state.kivyapp.tr = Lang(self.newlocale)
@@ -1893,11 +1868,12 @@ class Setting(Screen):
         )
 
     def set_caller(self):
+        """set_caller module"""
         self.menu.caller = self.ids.drop_item
-        # self.menu.use_icon_item = False
-        self.menu.target_height = 250
+        self.menu.target_height = 150
 
     def set_item(self, instance):
+        """set_item module for menu selection"""
         self.ids.drop_item.set_item(instance.text)
         self.menu.dismiss()
 
@@ -1935,7 +1911,6 @@ class NavigateApp(MDApp):
     count = 0
     manager_open = False
     file_manager = None
-    # state.imageDir = os.path.join(os.path.abspath(os.path.join(__file__ ,"../../..")),'images', 'kivy')
     state.imageDir = os.path.join('./images', 'kivy')
     image_path = state.imageDir
     tr = Lang("en")  # for changing in franch replace en with fr
@@ -2617,13 +2592,14 @@ class NavigateApp(MDApp):
             self.root.ids.sc7.ids.add_random_bx.clear_widgets()
 
     def open_payment_layout(self, sku):
+        """It basically open up a payment layout for kivy Ui"""
         pml = PaymentMethodLayout()
         self.product_id = sku
         self.custom_sheet = MDCustomBottomSheet(screen=pml)
         self.custom_sheet.open()
 
     def initiate_purchase(self, method_name):
-        # self.custom_sheet.dismiss()
+        """initiate_purchase module"""
         print("Purchasing {} through {}".format(self.product_id, method_name))
 
     def _after_scan(self, text):
@@ -2646,7 +2622,7 @@ class NavigateApp(MDApp):
 
 
 class GrashofPopup(BoxLayout):
-    """Moule for save contacts and error messages"""
+    """GrashofPopup class for kivy Ui"""
 
     valid = False
 
@@ -2728,46 +2704,35 @@ class GrashofPopup(BoxLayout):
 
 
 class InfoLayout(BoxLayout, RectangularElevationBehavior):
-    pass
+    """InfoLayout class for kivy Ui"""
 
 
 class AvatarSampleWidget(ILeftBody, Image):
-    """Avatar Sample Widget"""
-
-    pass
+    """AvatarSampleWidget class for kivy Ui"""
 
 
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
-    """Left icon sample widget"""
-
-    pass
+    """IconLeftSampleWidget class for kivy Ui"""
 
 
 class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
-    """Right icon sample widget"""
-
-    pass
+    """IconRightSampleWidget class for kivy Ui"""
 
 
 class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
-    """Right icon sample widget"""
-
-    pass
+    """TimeTagRightSampleWidget class for Ui"""
 
 
 class ToggleBtn(IRightBodyTouch, MDSwitch):
-    """Right toggle button widget"""
-    pass
+    """ToggleBtn class for kivy Ui"""
 
 
 class CheckboxLeftSampleWidget(ILeftBodyTouch, MDCheckbox):
-    """Left icon sample widget"""
-
-    pass
+    """CheckboxLeftSampleWidget class for kivy Ui"""
 
 
 class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
-    """MailDetail Screen uses to show the detail of mails"""
+    """MailDetail Screen class for kivy Ui"""
 
     to_addr = StringProperty()
     from_addr = StringProperty()
@@ -2928,7 +2893,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
 
 class MyaddDetailPopup(BoxLayout):
-    """MyaddDetailPopup pop is used for showing my address detail"""
+    """MyaddDetailPopup class for kivy Ui"""
 
     address_label = StringProperty()
     address = StringProperty()
@@ -2957,7 +2922,7 @@ class MyaddDetailPopup(BoxLayout):
 
 
 class AddbookDetailPopup(BoxLayout):
-    """AddbookDetailPopup pop is used for showing my address detail"""
+    """AddbookDetailPopup class for kivy Ui"""
 
     address_label = StringProperty()
     address = StringProperty()
@@ -2984,7 +2949,7 @@ class AddbookDetailPopup(BoxLayout):
 
 
 class ShowQRCode(Screen):
-    """ShowQRCode Screen uses to show the detail of mails"""
+    """ShowQRCode Screen class for kivy Ui"""
     address = StringProperty()
 
     def qrdisplay(self, instasnce, address):
@@ -2993,7 +2958,7 @@ class ShowQRCode(Screen):
         state.kivyapp.set_toolbar_for_QrCode()
         try:
             from kivy.garden.qrcode import QRCodeWidget
-        except Exception as e:
+        except Exception:
             from kivy_garden.qrcode import QRCodeWidget
         self.address = address
         self.ids.qr.add_widget(QRCodeWidget(data=address))
@@ -3003,7 +2968,7 @@ class ShowQRCode(Screen):
 
 
 class Draft(Screen):
-    """Draft screen is used to show the list of draft messages"""
+    """Draft screen class for kivy Ui"""
 
     data = ListProperty()
     account = StringProperty()
@@ -3109,8 +3074,6 @@ class Draft(Screen):
             self.ids.scroll_y.scroll_y = 0.06
             total_draft_msg = len(self.ids.ml.children)
             self.update_draft_screen_on_scroll(total_draft_msg)
-        else:
-            pass
 
     def update_draft_screen_on_scroll(self, total_draft_msg, where='', what=''):
         """Load more data on scroll down"""
@@ -3187,7 +3150,7 @@ class Draft(Screen):
 
 
 class CustomSpinner(Spinner):
-    """This class is used for setting spinner size"""
+    """CustomSpinner class for kivy Ui"""
 
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner"""
@@ -3196,7 +3159,7 @@ class CustomSpinner(Spinner):
 
 
 class Allmails(Screen):
-    """All mails Screen uses screen to show widgets of screens"""
+    """Allmails Screen for kivy Ui"""
 
     data = ListProperty()
     has_refreshed = True
@@ -3304,8 +3267,6 @@ class Allmails(Screen):
             self.ids.scroll_y.scroll_y = .06
             load_more = len(self.ids.ml.children)
             self.updating_allmail(load_more)
-        else:
-            pass
 
     def updating_allmail(self, load_more):
         """This method is used to update the all mail
@@ -3397,22 +3358,19 @@ def avatarImageFirstLetter(letter_string):
 
 
 class Starred(Screen):
-    """Starred Screen show widgets of page"""
-    pass
+    """Starred Screen class for kivy Ui"""
 
 
 class Archieve(Screen):
-    """Archieve Screen show widgets of page"""
-    pass
+    """Archieve Screen class for kivy Ui"""
 
 
 class Spam(Screen):
-    """Spam Screen show widgets of page"""
-    pass
+    """Spam Screen class for kivy Ui"""
 
 
 class LoadingPopup(Popup):
-    """Class for loading Popup"""
+    """LoadingPopup class for kivy Ui"""
 
     def __init__(self, **kwargs):
         super(LoadingPopup, self).__init__(**kwargs)
@@ -3425,18 +3383,15 @@ class LoadingPopup(Popup):
 
 
 class AddressDropdown(OneLineIconListItem):
-    """AddressDropdown showns all the addresses"""
-
-    pass
+    """AddressDropdown class for kivy Ui"""
 
 
 class BadgeText(IRightBodyTouch, MDLabel):
-    """Class for badgetext"""
-    pass
+    """BadgeText class for kivy Ui"""
 
 
 class NavigationItem(OneLineAvatarIconListItem):
-    """NavigationItem class is for button behaviour"""
+    """NavigationItem class for kivy Ui"""
     badge_text = StringProperty()
     icon = StringProperty()
     active = BooleanProperty(False)
@@ -3478,7 +3433,7 @@ class NavigationDrawerSubheader(OneLineListItem):
 
 
 class AppClosingPopup(Popup):
-    """Class for app closing popup"""
+    """AppClosingPopup class for kivy Ui"""
 
     def __init__(self, **kwargs):
         super(AppClosingPopup, self).__init__(**kwargs)
@@ -3495,7 +3450,7 @@ class AppClosingPopup(Popup):
 
 
 class SenderDetailPopup(Popup):
-    """SenderDetailPopup pop is used for showing my address detail"""
+    """SenderDetailPopup class for kivy Ui"""
 
     to_addr = StringProperty()
     from_addr = StringProperty()
@@ -3531,7 +3486,7 @@ class SenderDetailPopup(Popup):
 
 
 class OneLineListTitle(OneLineListItem):
-    """class for long press behaviour"""
+    """OneLineListTitle class for kivy Ui"""
     __events__ = ('on_long_press', )
     long_press_time = NumericProperty(1)
 
@@ -3577,7 +3532,7 @@ class OneLineListTitle(OneLineListItem):
 
 
 class ToAddrBoxlayout(BoxLayout):
-    """class for BoxLayout behaviour"""
+    """ToAddrBoxlayout class for kivy Ui"""
     to_addr = StringProperty()
 
     def set_toAddress(self, to_addr):
@@ -3586,13 +3541,11 @@ class ToAddrBoxlayout(BoxLayout):
 
 
 class ToAddressTitle(BoxLayout):
-    """class for BoxLayout behaviour"""
-    pass
+    """ToAddressTitle class for BoxLayout behaviour"""
 
 
 class RandomBoxlayout(BoxLayout):
-    """class for BoxLayout behaviour"""
-    pass
+    """RandomBoxlayout class for BoxLayout behaviour"""
 
 
 def esc_markup(msg):
@@ -3603,7 +3556,7 @@ def esc_markup(msg):
 
 
 class ChatRoom(Screen):
-    """class for chatroom screen"""
+    """ChatRoom Screen class for kivy Ui"""
     def send_msg(self):
         """This method is for sending message"""
         msg = self.ids.message.text
@@ -3618,7 +3571,7 @@ class ChatRoom(Screen):
 
 
 class ChatList(Screen):
-    """class for showing chat list"""
+    """ChatList Screen class for kivy Ui"""
     queryreturn = ListProperty()
     has_refreshed = True
 
