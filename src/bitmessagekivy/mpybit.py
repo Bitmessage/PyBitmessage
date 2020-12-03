@@ -2039,7 +2039,8 @@ class NavigateApp(MDApp):
             self.root.ids.sc23.get_screen(self.root.ids.scr_mngr.current, self.add_popup)
             self.root.ids.scr_mngr.current = 'scanscreen'
         else:
-            altet_txt = 'Currently this feature is not avaialbe!' if platform == 'android' else 'Camera is not available!'
+            altet_txt = (
+                'Currently this feature is not avaialbe!' if platform == 'android' else 'Camera is not available!')
             self.add_popup.dismiss()
             toast(altet_txt)
 
