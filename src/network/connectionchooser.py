@@ -31,8 +31,11 @@ def chooseConnection(stream):
     """Returns an appropriate connection"""
     haveOnion = BMConfigParser().safeGet(
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
-    onionOnly = BMConfigParser().safeGetBoolean(
+    onionOnly_deprecated = BMConfigParser().safeGetBoolean(
         "bitmessagesettings", "onionservicesonly")
+    onionOnly = BMConfigParser().safeGet(
+        "bitmessagesettings", "onlynet") == "onion"
+    onionOnly = onionOnly or onionOnly_deprecated
     try:
         retval = portCheckerQueue.get(False)
         portCheckerQueue.task_done()
