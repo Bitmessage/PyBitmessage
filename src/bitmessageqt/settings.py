@@ -358,6 +358,11 @@ class SettingsDialog(QtGui.QDialog):
         if proxytype_index > 2:  # last literal proxytype in ui
             start_proxyconfig()
 
+        onionOnly_deprecated = BMConfigParser().safeGetBoolean(
+            "bitmessagesettings", "onionservicesonly")
+        onionOnly = BMConfigParser().safeGet(
+            "bitmessagesettings", "onlynet") == "onion"
+        onionOnly = onionOnly or onionOnly_deprecated
         self.config.set('bitmessagesettings', 'socksauthentication', str(
             self.checkBoxAuthentication.isChecked()))
         self.config.set('bitmessagesettings', 'sockshostname', str(
@@ -371,10 +376,20 @@ class SettingsDialog(QtGui.QDialog):
         self.config.set('bitmessagesettings', 'sockslisten', str(
             self.checkBoxSocksListen.isChecked()))
         if self.checkBoxOnionOnly.isChecked() \
-                and not self.config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'):
+                and not onionOnly:
             self.net_restart_needed = True
-        self.config.set('bitmessagesettings', 'onionservicesonly', str(
-            self.checkBoxOnionOnly.isChecked()))
+        if self.checkBoxOnionOnly.isChecked():
+            self.config.set('bitmessagesettings', 'onlynet', 'onion')
+        else:
+            try:
+                return self.config.remove_option('bitmessagesettings', 'onlynet')
+            except ConfigParser.NoOptionError:
+                pass
+        #remove deprecated onionservicesonly option if it exists:
+        try:
+            return self.config.remove_option('bitmessagesettings', 'onionservicesonly')
+        except ConfigParser.NoOptionError:
+            pass
         try:
             # Rounding to integers just for aesthetics
             self.config.set('bitmessagesettings', 'maxdownloadrate', str(

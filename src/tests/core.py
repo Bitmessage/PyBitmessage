@@ -194,14 +194,7 @@ class TestCore(unittest.TestCase):
         start_proxyconfig()
         self._check_bootstrap()
 
-    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
-    def test_onionservicesonly(self):  # this should start after bootstrap
-        """
-        set onionservicesonly, wait for 3 connections and check them all
-        are onions
-        """
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
-        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
+    def _check_exclusively_onion_networking(self):
         self._initiate_bootstrap()
         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
         for _ in range(360):
@@ -217,6 +210,25 @@ class TestCore(unittest.TestCase):
                         'Found non onion hostname %s in outbound connections!'
                         % peer.host)
         self.fail('Failed to connect to at least 3 nodes within 360 sec')
+
+    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
+    def test_onionservicesonly(self):  # this should start after bootstrap
+        """
+        set onionservicesonly (deprecated), wait for 3 connections and check
+        that all are onions
+        """
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
+        self._check_exclusively_onion_networking()
+
+    @unittest.skipUnless(stem_version, 'No stem, skipping tor dependent test')
+    def test_onlynetonion(self):  # this should start after bootstrap
+        """
+        set onlynet=onion, wait for 3 connections and check that all are onions
+        """
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+        BMConfigParser().set('bitmessagesettings', 'onlynet', 'onion')
+        self._check_exclusively_onion_networking()
 
     @staticmethod
     def _decode_msg(data, pattern):
