@@ -51,6 +51,12 @@ class BMConnectionPool(object):
             BMConfigParser().safeGetInt(
                 "bitmessagesettings", "maxuploadrate")
         )
+        onionOnly_deprecated = BMConfigParser().safeGetBoolean(
+            "bitmessagesettings", "onionservicesonly")
+        onionOnly = BMConfigParser().safeGet(
+            "bitmessagesettings", "onlynet") == "onion"
+
+        self.onionOnly = onionOnly or onionOnly_deprecated
         self.outboundConnections = {}
         self.inboundConnections = {}
         self.listeningSockets = {}
@@ -205,17 +211,17 @@ class BMConnectionPool(object):
 
     def startBootstrappers(self):
         """Run the process of resolving bootstrap hostnames"""
+        onion_seed = 'quzwelsuziwqgpt2.onion'  # FIXME onion bootstrap server is down
         proxy_type = BMConfigParser().safeGet(
             'bitmessagesettings', 'socksproxytype')
         # A plugins may be added here
         hostname = None
+        port = 8444
+
         if not proxy_type or proxy_type == 'none':
             connection_base = TCPConnection
         elif proxy_type == 'SOCKS5':
             connection_base = Socks5BMConnection
-            hostname = helper_random.randomchoice([
-                'quzwelsuziwqgpt2.onion', None
-            ])
         elif proxy_type == 'SOCKS4a':
             connection_base = Socks4aBMConnection  # FIXME: I cannot test
         else:
@@ -223,12 +229,21 @@ class BMConnectionPool(object):
             # is handled in bitmessagemain before starting the connectionpool
             return
 
-        bootstrapper = bootstrap(connection_base)
-        if not hostname:
+        if self.trustedPeer is not None:
+            hostname = self.trustedPeer.host
+            port = self.trustedPeer.port
+        elif proxy_type == "SOCKS5" or self.onionOnly:
+            if self.onionOnly:
+                hostname = onion_seed
+            else:
+                hostname = helper_random.randomchoice([
+                onion_seed, None])
+
+        if hostname is None:
             port = helper_random.randomchoice([8080, 8444])
             hostname = 'bootstrap%s.bitmessage.org' % port
-        else:
-            port = 8444
+
+        bootstrapper = bootstrap(connection_base)
         self.addConnection(bootstrapper(hostname, port))
 
     def loop(self):  # pylint: disable=too-many-branches,too-many-statements
