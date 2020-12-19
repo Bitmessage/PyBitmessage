@@ -7,6 +7,7 @@ import os
 import pickle  # nosec
 import Queue
 import random  # nosec
+import shutil
 import string
 import sys
 import time
@@ -231,7 +232,8 @@ class TestCore(unittest.TestCase):
         msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1])
         decoded = self._decode_msg(msg, "IQQiiQlsLv")
         peer, _, ua, streams = self._decode_msg(msg, "IQQiiQlsLv")[4:]
-        self.assertEqual(peer, Node(3, '127.0.0.1', 8444))
+        self.assertEqual(
+            peer, Node(11 if state.dandelion else 3, '127.0.0.1', 8444))
         self.assertEqual(ua, '/PyBitmessage:' + softwareVersion + '/')
         self.assertEqual(streams, [1])
         # with multiple streams
@@ -258,6 +260,19 @@ class TestCore(unittest.TestCase):
         column_type = sqlQuery(
             '''select typeof(msgid) from sent where ackdata=?''', result)
         self.assertEqual(column_type[0][0] if column_type else '', 'text')
+
+    def test_old_knownnodes_pickle(self):
+        """Testing old(v.0.6.2) version knownnodes.dat file"""
+        try:
+            old_source_file = os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), 'test_pattern', 'knownnodes.dat')
+            new_destination_file = os.path.join(state.appdata, 'knownnodes.dat')
+            shutil.copyfile(old_source_file, new_destination_file)
+            knownnodes.readKnownNodes()
+        except AttributeError as e:
+            self.fail('Failed to load knownnodes: %s' % e)
+        finally:
+            cleanup(files=('knownnodes.dat',))
 
 
 def run():
