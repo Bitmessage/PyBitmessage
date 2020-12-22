@@ -24,6 +24,17 @@ EXTRAS_REQUIRE = {
     'docs': ['sphinx', 'sphinxcontrib-apidoc', 'm2r']
 }
 
+if sys.version_info[0] == 2:
+    version_dependencies = {
+        'requirements_file': 'requirements.txt',
+        'pybitmessage_file': 'src/pybitmessage'
+    }
+else:
+    version_dependencies = {
+        'requirements_file': 'py3_requirements.txt',
+        'pybitmessage_file': 'src/py3_pybitmessage'
+    }
+
 
 class InstallCmd(install):
     def run(self):
@@ -49,7 +60,7 @@ if __name__ == "__main__":
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
 
-    with open(os.path.join(here, 'requirements.txt'), 'r') as f:
+    with open(os.path.join(here, version_dependencies['requirements_file']), 'r') as f:
         requirements = list(f.readlines())
 
     bitmsghash = Extension(
@@ -61,8 +72,8 @@ if __name__ == "__main__":
     installRequires = []
     packages = [
         'pybitmessage',
-        'pybitmessage.bitmessageqt',
-        'pybitmessage.bitmessagecurses',
+        # 'pybitmessage.bitmessageqt',
+        # 'pybitmessage.bitmessagecurses',
         'pybitmessage.fallback',
         'pybitmessage.messagetypes',
         'pybitmessage.network',
@@ -80,7 +91,6 @@ if __name__ == "__main__":
             "msgpack-python" if msgpack.version[:2] == (0, 4) else "msgpack")
     except ImportError:
         try:
-            import umsgpack
             installRequires.append("umsgpack")
         except ImportError:
             packages += ['pybitmessage.fallback.umsgpack']
@@ -108,11 +118,11 @@ if __name__ == "__main__":
         long_description=README,
         license='MIT',
         # TODO: add author info
-        #author='',
-        #author_email='',
+        # author='',
+        # author_email='',
         url='https://bitmessage.org',
         # TODO: add keywords
-        #keywords='',
+        # keywords='',
         install_requires=installRequires,
         tests_require=requirements,
         extras_require=EXTRAS_REQUIRE,
@@ -127,7 +137,7 @@ if __name__ == "__main__":
         package_dir={'pybitmessage': 'src'},
         packages=packages,
         package_data={'': [
-            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
+            'sslkeys/*.pem',
             'translations/*.ts', 'translations/*.qm',
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
@@ -160,7 +170,7 @@ if __name__ == "__main__":
                 'pybitmessage = pybitmessage.bitmessagemain:main'
             ] if sys.platform[:3] == 'win' else []
         },
-        scripts=['src/pybitmessage'],
+        scripts=[version_dependencies['pybitmessage_file']],
         cmdclass={'install': InstallCmd},
         command_options={
             'build_sphinx': {
