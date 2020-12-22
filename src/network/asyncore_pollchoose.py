@@ -17,9 +17,9 @@ from errno import (
     ECONNRESET, EHOSTUNREACH, EINPROGRESS, EINTR, EINVAL, EISCONN, ENETUNREACH,
     ENOTCONN, ENOTSOCK, EPIPE, ESHUTDOWN, ETIMEDOUT, EWOULDBLOCK, errorcode
 )
-from threading import current_thread
+from pybitmessage import helper_random
 
-import helper_random
+from threading import current_thread
 
 try:
     from errno import WSAEWOULDBLOCK

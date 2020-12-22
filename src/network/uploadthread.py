@@ -3,11 +3,11 @@
 """
 import time
 
-import helper_random
-import protocol
-from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
+from connectionpool import BMConnectionPool
+from dandelion import Dandelion
+from pybitmessage import helper_random
+from pybitmessage import protocol
+from pybitmessage.inventory import Inventory
 from randomtrackingdict import RandomTrackingDict
 from threads import StoppableThread
 

@@ -13,9 +13,9 @@ try:
 except ImportError:
     from collections import Iterable
 
-import state
-from bmconfigparser import BMConfigParser
-from network.node import Peer
+from node import Peer
+from pybitmessage import state
+from pybitmessage.bmconfigparser import BMConfigParser
 
 state.Peer = Peer
 

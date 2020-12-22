@@ -5,7 +5,7 @@ import sqlite3
 import time
 from threading import RLock
 
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
+from pybitmessage.helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from storage import InventoryItem, InventoryStorage
 
 

@@ -4,8 +4,8 @@ Module for tracking objects
 import time
 from threading import RLock
 
-import network.connectionpool
-from network.dandelion import Dandelion
+import connectionpool
+from dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False
@@ -100,7 +100,7 @@ class ObjectTracker(object):
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
-        for i in network.connectionpool.BMConnectionPool().connections():
+        for i in connectionpool.BMConnectionPool().connections():
             if not i.fullyEstablished:
                 continue
             try:

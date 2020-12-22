@@ -4,12 +4,13 @@ Tests for RandomTrackingDict class
 import random
 import unittest
 
-from network import randomtrackingdict
 from time import time
 
 
 class TestRandomTrackingDict(unittest.TestCase):
-    """Main protocol test case"""
+    """
+    Main protocol test case
+    """
 
     @staticmethod
     def randString():
@@ -21,8 +22,12 @@ class TestRandomTrackingDict(unittest.TestCase):
 
     def test_check_randomtrackingdict(self):
         """Check the logic of RandomTrackingDict class"""
+        # from network import RandomTrackingDict
+        # from pybitmessage.network.randomtrackingdict import RandomTrackingDict
+        # from network.randomtrackingdict import RandomTrackingDict
+        from pybitmessage import network
         a = []
-        k = randomtrackingdict.RandomTrackingDict()
+        k = network.randomtrackingdict.RandomTrackingDict()
 
         a.append(time())
         for i in range(50000):

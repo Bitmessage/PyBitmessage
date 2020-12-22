@@ -2,35 +2,35 @@
 TCP protocol handler
 """
 # pylint: disable=too-many-ancestors
-import l10n
 import logging
 import math
 import random
 import socket
 import time
 
-import addresses
 import asyncore_pollchoose as asyncore
 import connectionpool
-import helper_random
 import knownnodes
-import protocol
-import state
-from bmconfigparser import BMConfigParser
-from helper_random import randomBytes
-from inventory import Inventory
-from network.advanceddispatcher import AdvancedDispatcher
-from network.assemble import assemble_addr
-from network.bmproto import BMProto
-from network.constants import MAX_OBJECT_COUNT
-from network.dandelion import Dandelion
-from network.objectracker import ObjectTracker
-from network.socks4a import Socks4aConnection
-from network.socks5 import Socks5Connection
-from network.tls import TLSDispatcher
+from advanceddispatcher import AdvancedDispatcher
+from assemble import assemble_addr
+from bmproto import BMProto
+from constants import MAX_OBJECT_COUNT
+from dandelion import Dandelion
+from objectracker import ObjectTracker
+from socks4a import Socks4aConnection
+from socks5 import Socks5Connection
+from tls import TLSDispatcher
+from pybitmessage import addresses
+from pybitmessage import helper_random
+from pybitmessage import l10n
+from pybitmessage import protocol
+from pybitmessage import state
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_random import randomBytes
+from pybitmessage.inventory import Inventory
+from pybitmessage.queues import invQueue, receiveDataQueue, UISignalQueue
+from pybitmessage.tr import _translate
 from node import Peer
-from queues import invQueue, receiveDataQueue, UISignalQueue
-from tr import _translate
 
 logger = logging.getLogger('default')
 

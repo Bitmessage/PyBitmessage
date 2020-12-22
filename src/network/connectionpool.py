@@ -9,15 +9,15 @@ import sys
 import time
 
 import asyncore_pollchoose as asyncore
-import helper_random
 import knownnodes
-import protocol
-import state
-from bmconfigparser import BMConfigParser
 from connectionchooser import chooseConnection
 from node import Peer
 from proxy import Proxy
-from singleton import Singleton
+from pybitmessage import helper_random
+from pybitmessage import protocol
+from pybitmessage import state
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.singleton import Singleton
 from tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)

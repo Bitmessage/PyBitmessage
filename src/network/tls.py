@@ -7,10 +7,10 @@ import socket
 import ssl
 import sys
 
-import network.asyncore_pollchoose as asyncore
-import paths
-from network.advanceddispatcher import AdvancedDispatcher
-from queues import receiveDataQueue
+import asyncore_pollchoose as asyncore
+from advanceddispatcher import AdvancedDispatcher
+from pybitmessage import paths
+from pybitmessage.queues import receiveDataQueue
 
 logger = logging.getLogger('default')
 

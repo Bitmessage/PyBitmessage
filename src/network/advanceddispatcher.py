@@ -6,8 +6,8 @@ import socket
 import threading
 import time
 
-import network.asyncore_pollchoose as asyncore
-import state
+import asyncore_pollchoose as asyncore
+from pybitmessage import state
 from threads import BusyError, nonBlocking
 
 

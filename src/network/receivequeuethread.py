@@ -5,10 +5,10 @@ import errno
 import Queue
 import socket
 
-import state
-from network.advanceddispatcher import UnknownStateError
-from network.connectionpool import BMConnectionPool
-from queues import receiveDataQueue
+from advanceddispatcher import UnknownStateError
+from connectionpool import BMConnectionPool
+from pybitmessage import state
+from pybitmessage.queues import receiveDataQueue
 from threads import StoppableThread
 
 

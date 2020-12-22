@@ -4,11 +4,11 @@ Module for using filesystem (directory with files) for inventory storage
 import string
 import time
 from binascii import hexlify, unhexlify
-from debug import logger
 from os import listdir, makedirs, path, remove, rmdir
 from threading import RLock
 
-from paths import lookupAppdataFolder
+from pybitmessage.debug import logger
+from pybitmessage.paths import lookupAppdataFolder
 from storage import InventoryItem, InventoryStorage
 
 

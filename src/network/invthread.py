@@ -5,12 +5,12 @@ import Queue
 import random
 from time import time
 
-import addresses
-import protocol
-import state
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
-from queues import invQueue
+from connectionpool import BMConnectionPool
+from dandelion import Dandelion
+from pybitmessage import addresses
+from pybitmessage import protocol
+from pybitmessage import state
+from pybitmessage.queues import invQueue
 from threads import StoppableThread
 
 

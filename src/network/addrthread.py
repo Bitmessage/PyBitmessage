@@ -3,11 +3,11 @@ Announce addresses as they are received from other hosts
 """
 import Queue
 
-import state
-from helper_random import randomshuffle
-from network.assemble import assemble_addr
-from network.connectionpool import BMConnectionPool
-from queues import addrQueue
+from assemble import assemble_addr
+from connectionpool import BMConnectionPool
+from pybitmessage import state
+from pybitmessage.helper_random import randomshuffle
+from pybitmessage.queues import addrQueue
 from threads import StoppableThread
 
 

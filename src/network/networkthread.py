@@ -1,10 +1,10 @@
 """
 A thread to handle network concerns
 """
-import network.asyncore_pollchoose as asyncore
-import state
-from network.connectionpool import BMConnectionPool
-from queues import excQueue
+import asyncore_pollchoose as asyncore
+from connectionpool import BMConnectionPool
+from pybitmessage import state
+from pybitmessage.queues import excQueue
 from threads import StoppableThread
 
 
