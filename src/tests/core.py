@@ -16,6 +16,7 @@ import unittest
 import protocol
 import state
 import helper_sent
+import helper_addressbook
 
 from bmconfigparser import BMConfigParser
 from helper_msgcoding import MsgEncode, MsgDecode
@@ -57,6 +58,7 @@ def pickle_knownnodes():
 
 class TestCore(unittest.TestCase):
     """Test case, which runs in main pybitmessage thread"""
+    addr = 'BM-2cVvkzJuQDsQHLqxRXc6HZGPLZnkBLzEZY'
 
     def test_msgcoding(self):
         """test encoding and decoding (originally from helper_msgcoding)"""
@@ -251,7 +253,7 @@ class TestCore(unittest.TestCase):
         subject = 'test subject'
         result = helper_sent.insert(
             toAddress=toAddress, fromAddress=fromAddress,
-            subject=subject, message=message,
+            subject=subject, message=message
         )
         queryreturn = sqlQuery(
             '''select msgid from sent where ackdata=?''', result)
@@ -273,6 +275,42 @@ class TestCore(unittest.TestCase):
             self.fail('Failed to load knownnodes: %s' % e)
         finally:
             cleanup(files=('knownnodes.dat',))
+
+    @staticmethod
+    def generate_random_address():
+        """Generating random address"""
+        import queues
+        streamNumberForAddress = 1
+        queues.addressGeneratorQueue.put((
+            'createRandomAddress', 4, streamNumberForAddress,
+            "test1", 1, "", False))
+
+    def delete_address_from_database(self):
+        """Deleting random address"""
+        sqlQuery('''delete from addressbook where address=?''', self.addr)
+
+    def test_add_same_address_twice_in_addressbook(self):
+        """checking same address is added twice in addressbook"""
+        self.assertTrue(helper_addressbook.insert(label='test1', address=self.addr))
+        self.assertFalse(helper_addressbook.insert(label='test1', address=self.addr))
+        self.delete_address_from_database()
+
+    def test_is_address_present_in_addressbook(self):
+        """checking is address added in addressbook or not"""
+        helper_addressbook.insert(label='test1', address=self.addr)
+        queryreturn = sqlQuery('''select count(*) from addressbook where address=?''', self.addr)
+        self.assertTrue(bool(queryreturn[0][0]))
+        self.delete_address_from_database()
+
+    def test_is_own_address_add_to_addressbook(self):
+        """Checking own address adding in addressbook"""
+        self.generate_random_address()
+        time.sleep(.5)
+        try:
+            all_addresses = BMConfigParser().addresses()
+            self.assertFalse(helper_addressbook.insert(label='test', address=all_addresses[0]))
+        except IndexError:
+            self.fail("Can't generate addresses")
 
 
 def run():
