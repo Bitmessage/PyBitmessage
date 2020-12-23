@@ -2436,17 +2436,15 @@ class MyForm(settingsmixin.SMainWindow):
             ))
             return
 
-        if address in BMConfigParser().addresses():
+        if helper_addressbook.insert(label=label, address=address):
+            self.rerenderMessagelistFromLabels()
+            self.rerenderMessagelistToLabels()
+            self.rerenderAddressBook()
+        else:
             self.updateStatusBar(_translate(
                 "MainWindow",
                 "Error: You cannot add your own address in the address book."
             ))
-            return
-
-        helper_addressbook.insert(label=label, address=address)
-        self.rerenderMessagelistFromLabels()
-        self.rerenderMessagelistToLabels()
-        self.rerenderAddressBook()
 
     def addSubscription(self, address, label):
         # This should be handled outside of this function, for error displaying
