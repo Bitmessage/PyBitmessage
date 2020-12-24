@@ -2610,8 +2610,8 @@ class MyForm(settingsmixin.SMainWindow):
     def processing(self):
         """Processing progress bar"""
         completed = 0
-
-        while completed < 100:
+        self.progress.show()
+        while completed < 80:
             completed += 0.1
             self.progress.setValue(completed)
 
@@ -2637,7 +2637,7 @@ class MyForm(settingsmixin.SMainWindow):
         if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
             self.progress = QtGui.QProgressBar(self)
             self.progress.setGeometry(550, 555, 250, 20)
-            self.progress.show()
+            # self.progress.show()
             messagebox = QtGui.QMessageBox(
                 QtGui.QMessageBox.Question,
                 _translate("MainWindow", "Proof of work pending"),
@@ -2670,7 +2670,7 @@ class MyForm(settingsmixin.SMainWindow):
         if pendingDownload() > 0:
             self.progress = QtGui.QProgressBar(self)
             self.progress.setGeometry(550, 555, 250, 20)
-            self.progress.show()
+            # self.progress.show()
             messagebox = QtGui.QMessageBox(
                 QtGui.QMessageBox.Question,
                 _translate("MainWindow", "Synchronisation pending"),
@@ -2700,7 +2700,7 @@ class MyForm(settingsmixin.SMainWindow):
                 'bitmessagesettings', 'dontconnect'):
             self.progress = QtGui.QProgressBar(self)
             self.progress.setGeometry(550, 555, 250, 20)
-            self.progress.show()
+            # self.progress.show()
             messagebox = QtGui.QMessageBox(
                 QtGui.QMessageBox.Question,
                 _translate("MainWindow", "Not connected"),
