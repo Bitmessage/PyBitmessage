@@ -832,6 +832,9 @@ class MyForm(settingsmixin.SMainWindow):
             'bitmessagesettings', 'dontconnect')
 
         self._contact_selected = None
+        self.progress = QtGui.QProgressBar(self)
+        self.progress.setGeometry(550, 555, 250, 20)
+        self.progress.hide()
 
     def getContactSelected(self):
         """Returns last selected contact once"""
@@ -2635,9 +2638,6 @@ class MyForm(settingsmixin.SMainWindow):
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
         if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
-            self.progress = QtGui.QProgressBar(self)
-            self.progress.setGeometry(550, 555, 250, 20)
-            # self.progress.show()
             messagebox = QtGui.QMessageBox(
                 QtGui.QMessageBox.Question,
                 _translate("MainWindow", "Proof of work pending"),
@@ -2668,9 +2668,6 @@ class MyForm(settingsmixin.SMainWindow):
                 return
 
         if pendingDownload() > 0:
-            self.progress = QtGui.QProgressBar(self)
-            self.progress.setGeometry(550, 555, 250, 20)
-            # self.progress.show()
             messagebox = QtGui.QMessageBox(
                 QtGui.QMessageBox.Question,
                 _translate("MainWindow", "Synchronisation pending"),
@@ -2698,9 +2695,6 @@ class MyForm(settingsmixin.SMainWindow):
 
         if state.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
-            self.progress = QtGui.QProgressBar(self)
-            self.progress.setGeometry(550, 555, 250, 20)
-            # self.progress.show()
             messagebox = QtGui.QMessageBox(
                 QtGui.QMessageBox.Question,
                 _translate("MainWindow", "Not connected"),
