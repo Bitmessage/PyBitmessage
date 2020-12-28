@@ -22,12 +22,9 @@ class TestRandomTrackingDict(unittest.TestCase):
 
     def test_check_randomtrackingdict(self):
         """Check the logic of RandomTrackingDict class"""
-        # from network import RandomTrackingDict
-        # from pybitmessage.network.randomtrackingdict import RandomTrackingDict
-        # from network.randomtrackingdict import RandomTrackingDict
-        from pybitmessage import network
+        from pybitmessage.randomtrackingdict import RandomTrackingDict
         a = []
-        k = network.randomtrackingdict.RandomTrackingDict()
+        k = RandomTrackingDict()
 
         a.append(time())
         for i in range(50000):
