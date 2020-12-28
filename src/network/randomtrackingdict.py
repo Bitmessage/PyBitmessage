@@ -1,7 +1,6 @@
 """
 Track randomize ordered dict
 """
-import random
 from threading import RLock
 from time import time
 
@@ -128,41 +127,3 @@ class RandomTrackingDict(object):
                 self.pendingLen += 1
             self.lastPoll = time()
             return retval
-
-
-if __name__ == '__main__':
-
-    # pylint: disable=redefined-outer-name
-    def randString():
-        """helper function for tests, generates a random string"""
-        retval = b''
-        for _ in range(32):
-            retval += chr(random.randint(0, 255))
-        return retval
-
-    a = []
-    k = RandomTrackingDict()
-    d = {}
-
-    print "populating random tracking dict"
-    a.append(time())
-    for i in range(50000):
-        k[randString()] = True
-    a.append(time())
-    print "done"
-
-    while k:
-        retval = k.randomKeys(1000)
-        if not retval:
-            print "error getting random keys"
-        try:
-            k.randomKeys(100)
-            print "bad"
-        except KeyError:
-            pass
-        for i in retval:
-            del k[i]
-    a.append(time())
-
-    for x in range(len(a) - 1):
-        print "%i: %.3f" % (x, a[x + 1] - a[x])
