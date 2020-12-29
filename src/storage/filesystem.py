@@ -1,15 +1,17 @@
 """
 Module for using filesystem (directory with files) for inventory storage
 """
+import logging
 import string
 import time
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
 from threading import RLock
 
-from debug import logger
 from paths import lookupAppdataFolder
 from storage import InventoryItem, InventoryStorage
+
+logger = logging.getLogger('default')
 
 
 class FilesystemInventory(InventoryStorage):
@@ -163,7 +165,8 @@ class FilesystemInventory(InventoryStorage):
                     newInventory[streamNumber][hashId] = InventoryItem(
                         objectType, streamNumber, None, expiresTime, tag)
             except KeyError:
-                logger.warning('error loading %s', hexlify(hashId))
+                logger.debug(
+                    'error loading %s', hexlify(hashId), exc_info=True)
         self._inventory = newInventory
 #        for i, v in self._inventory.items():
 #            print "loaded stream: %s, %i items" % (i, len(v))
