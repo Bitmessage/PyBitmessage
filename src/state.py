@@ -34,9 +34,6 @@ enableSTDIO = False
 """enable STDIO threads"""
 curses = False
 
-sqlReady = False
-"""set to true by `.threads.sqlThread` when ready for processing"""
-
 maximumNumberOfHalfOpenConnections = 0
 
 maximumLengthOfTimeToBotherResendingMessages = 0
