@@ -72,6 +72,29 @@ def get_version(library):
     return (version, hexversion, cflags)
 
 
+class BIGNUM(ctypes.Structure):  # pylint: disable=too-few-public-methods
+    """OpenSSL's BIGNUM struct"""
+    _fields_ = [
+        ('d', ctypes.POINTER(ctypes.c_ulong)),
+        ('top', ctypes.c_int),
+        ('dmax', ctypes.c_int),
+        ('neg', ctypes.c_int),
+        ('flags', ctypes.c_int),
+    ]
+
+
+class EC_POINT(ctypes.Structure):  # pylint: disable=too-few-public-methods
+    """OpenSSL's EC_POINT struct"""
+    _fields_ = [
+        ('meth', ctypes.c_void_p),
+        ('curve_name', ctypes.c_int),
+        ('X', ctypes.POINTER(BIGNUM)),
+        ('Y', ctypes.POINTER(BIGNUM)),
+        ('Z', ctypes.POINTER(BIGNUM)),
+        ('Z_is_one', ctypes.c_int),
+    ]
+
+
 class _OpenSSL(object):
     """
     Wrapper for OpenSSL using ctypes
@@ -91,38 +114,38 @@ class _OpenSSL(object):
         self.create_string_buffer = ctypes.create_string_buffer
 
         self.BN_new = self._lib.BN_new
-        self.BN_new.restype = ctypes.c_void_p
+        self.BN_new.restype = ctypes.POINTER(BIGNUM)
         self.BN_new.argtypes = []
 
         self.BN_free = self._lib.BN_free
         self.BN_free.restype = None
-        self.BN_free.argtypes = [ctypes.c_void_p]
+        self.BN_free.argtypes = [ctypes.POINTER(BIGNUM)]
 
         self.BN_clear_free = self._lib.BN_clear_free
         self.BN_clear_free.restype = None
-        self.BN_clear_free.argtypes = [ctypes.c_void_p]
+        self.BN_clear_free.argtypes = [ctypes.POINTER(BIGNUM)]
 
         self.BN_num_bits = self._lib.BN_num_bits
         self.BN_num_bits.restype = ctypes.c_int
-        self.BN_num_bits.argtypes = [ctypes.c_void_p]
+        self.BN_num_bits.argtypes = [ctypes.POINTER(BIGNUM)]
 
         self.BN_bn2bin = self._lib.BN_bn2bin
         self.BN_bn2bin.restype = ctypes.c_int
-        self.BN_bn2bin.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        self.BN_bn2bin.argtypes = [ctypes.POINTER(BIGNUM), ctypes.c_void_p]
 
         try:
             self.BN_bn2binpad = self._lib.BN_bn2binpad
             self.BN_bn2binpad.restype = ctypes.c_int
-            self.BN_bn2binpad.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
+            self.BN_bn2binpad.argtypes = [ctypes.POINTER(BIGNUM), ctypes.c_void_p,
                                           ctypes.c_int]
         except AttributeError:
             # optional, we have a workaround
             pass
 
         self.BN_bin2bn = self._lib.BN_bin2bn
-        self.BN_bin2bn.restype = ctypes.c_void_p
+        self.BN_bin2bn.restype = ctypes.POINTER(BIGNUM)
         self.BN_bin2bn.argtypes = [ctypes.c_void_p, ctypes.c_int,
-                                   ctypes.c_void_p]
+                                   ctypes.POINTER(BIGNUM)]
 
         self.EC_KEY_free = self._lib.EC_KEY_free
         self.EC_KEY_free.restype = None
@@ -156,9 +179,9 @@ class _OpenSSL(object):
             self._lib.EC_POINT_get_affine_coordinates_GFp
         self.EC_POINT_get_affine_coordinates_GFp.restype = ctypes.c_int
         self.EC_POINT_get_affine_coordinates_GFp.argtypes = [ctypes.c_void_p,
-                                                             ctypes.c_void_p,
-                                                             ctypes.c_void_p,
-                                                             ctypes.c_void_p,
+                                                             ctypes.POINTER(EC_POINT),
+                                                             ctypes.POINTER(BIGNUM),
+                                                             ctypes.POINTER(BIGNUM),
                                                              ctypes.c_void_p]
 
         try:
@@ -170,20 +193,20 @@ class _OpenSSL(object):
                 self._lib.EC_POINT_get_affine_coordinates_GF2m
         self.EC_POINT_get_affine_coordinates.restype = ctypes.c_int
         self.EC_POINT_get_affine_coordinates.argtypes = [ctypes.c_void_p,
-                                                         ctypes.c_void_p,
-                                                         ctypes.c_void_p,
-                                                         ctypes.c_void_p,
+                                                         ctypes.POINTER(EC_POINT),
+                                                         ctypes.POINTER(BIGNUM),
+                                                         ctypes.POINTER(BIGNUM),
                                                          ctypes.c_void_p]
 
         self.EC_KEY_set_private_key = self._lib.EC_KEY_set_private_key
         self.EC_KEY_set_private_key.restype = ctypes.c_int
         self.EC_KEY_set_private_key.argtypes = [ctypes.c_void_p,
-                                                ctypes.c_void_p]
+                                                ctypes.POINTER(BIGNUM)]
 
         self.EC_KEY_set_public_key = self._lib.EC_KEY_set_public_key
         self.EC_KEY_set_public_key.restype = ctypes.c_int
         self.EC_KEY_set_public_key.argtypes = [ctypes.c_void_p,
-                                               ctypes.c_void_p]
+                                               ctypes.POINTER(EC_POINT)]
 
         self.EC_KEY_set_group = self._lib.EC_KEY_set_group
         self.EC_KEY_set_group.restype = ctypes.c_int
@@ -194,9 +217,9 @@ class _OpenSSL(object):
             self._lib.EC_POINT_set_affine_coordinates_GFp
         self.EC_POINT_set_affine_coordinates_GFp.restype = ctypes.c_int
         self.EC_POINT_set_affine_coordinates_GFp.argtypes = [ctypes.c_void_p,
-                                                             ctypes.c_void_p,
-                                                             ctypes.c_void_p,
-                                                             ctypes.c_void_p,
+                                                             ctypes.POINTER(EC_POINT),
+                                                             ctypes.POINTER(BIGNUM),
+                                                             ctypes.POINTER(BIGNUM),
                                                              ctypes.c_void_p]
 
         try:
@@ -208,9 +231,9 @@ class _OpenSSL(object):
                 self._lib.EC_POINT_set_affine_coordinates_GF2m
         self.EC_POINT_set_affine_coordinates.restype = ctypes.c_int
         self.EC_POINT_set_affine_coordinates.argtypes = [ctypes.c_void_p,
-                                                         ctypes.c_void_p,
-                                                         ctypes.c_void_p,
-                                                         ctypes.c_void_p,
+                                                         ctypes.POINTER(EC_POINT),
+                                                         ctypes.POINTER(BIGNUM),
+                                                         ctypes.POINTER(BIGNUM),
                                                          ctypes.c_void_p]
 
         try:
@@ -219,38 +242,39 @@ class _OpenSSL(object):
         except AttributeError:
             # OpenSSL docs say only use this for backwards compatibility
             self.EC_POINT_set_compressed_coordinates = \
-                self._lib.EC_POINT_set_compressed_coordinates_GF2m
+                self._lib.EC_POINT_set_compressed_coordinates_GFp
         self.EC_POINT_set_compressed_coordinates.restype = ctypes.c_int
         self.EC_POINT_set_compressed_coordinates.argtypes = [ctypes.c_void_p,
-                                                             ctypes.c_void_p,
-                                                             ctypes.c_void_p,
+                                                             ctypes.POINTER(EC_POINT),
+                                                             ctypes.POINTER(BIGNUM),
                                                              ctypes.c_int,
                                                              ctypes.c_void_p]
 
         self.EC_POINT_new = self._lib.EC_POINT_new
-        self.EC_POINT_new.restype = ctypes.c_void_p
+        self.EC_POINT_new.restype = ctypes.POINTER(EC_POINT)
         self.EC_POINT_new.argtypes = [ctypes.c_void_p]
 
         self.EC_POINT_free = self._lib.EC_POINT_free
         self.EC_POINT_free.restype = None
-        self.EC_POINT_free.argtypes = [ctypes.c_void_p]
+        self.EC_POINT_free.argtypes = [ctypes.POINTER(EC_POINT)]
 
         self.BN_CTX_free = self._lib.BN_CTX_free
         self.BN_CTX_free.restype = None
         self.BN_CTX_free.argtypes = [ctypes.c_void_p]
 
         self.EC_POINT_mul = self._lib.EC_POINT_mul
-        self.EC_POINT_mul.restype = None
+        self.EC_POINT_mul.restype = ctypes.c_int
         self.EC_POINT_mul.argtypes = [ctypes.c_void_p,
-                                      ctypes.c_void_p,
-                                      ctypes.c_void_p,
-                                      ctypes.c_void_p,
+                                      ctypes.POINTER(EC_POINT),
+                                      ctypes.POINTER(BIGNUM),
+                                      ctypes.POINTER(EC_POINT),
+                                      ctypes.POINTER(BIGNUM),
                                       ctypes.c_void_p]
 
         self.EC_KEY_set_private_key = self._lib.EC_KEY_set_private_key
         self.EC_KEY_set_private_key.restype = ctypes.c_int
         self.EC_KEY_set_private_key.argtypes = [ctypes.c_void_p,
-                                                ctypes.c_void_p]
+                                                ctypes.POINTER(BIGNUM)]
 
         if self._hexversion >= 0x10100000 and not self._libreSSL:
             self.EC_KEY_OpenSSL = self._lib.EC_KEY_OpenSSL
@@ -469,70 +493,71 @@ class _OpenSSL(object):
         self.BN_CTX_new.argtypes = []
 
         self.BN_dup = self._lib.BN_dup
-        self.BN_dup.restype = ctypes.c_void_p
-        self.BN_dup.argtypes = [ctypes.c_void_p]
+        self.BN_dup.restype = ctypes.POINTER(BIGNUM)
+        self.BN_dup.argtypes = [ctypes.POINTER(BIGNUM)]
 
         self.BN_rand = self._lib.BN_rand
         self.BN_rand.restype = ctypes.c_int
-        self.BN_rand.argtypes = [ctypes.c_void_p,
+        self.BN_rand.argtypes = [ctypes.POINTER(BIGNUM),
+                                 ctypes.c_int,
                                  ctypes.c_int,
                                  ctypes.c_int]
 
         self.BN_set_word = self._lib.BN_set_word
         self.BN_set_word.restype = ctypes.c_int
-        self.BN_set_word.argtypes = [ctypes.c_void_p,
+        self.BN_set_word.argtypes = [ctypes.POINTER(BIGNUM),
                                      ctypes.c_ulong]
 
         self.BN_mul = self._lib.BN_mul
         self.BN_mul.restype = ctypes.c_int
-        self.BN_mul.argtypes = [ctypes.c_void_p,
-                                ctypes.c_void_p,
-                                ctypes.c_void_p,
+        self.BN_mul.argtypes = [ctypes.POINTER(BIGNUM),
+                                ctypes.POINTER(BIGNUM),
+                                ctypes.POINTER(BIGNUM),
                                 ctypes.c_void_p]
 
         self.BN_mod_add = self._lib.BN_mod_add
         self.BN_mod_add.restype = ctypes.c_int
-        self.BN_mod_add.argtypes = [ctypes.c_void_p,
-                                    ctypes.c_void_p,
-                                    ctypes.c_void_p,
-                                    ctypes.c_void_p,
+        self.BN_mod_add.argtypes = [ctypes.POINTER(BIGNUM),
+                                    ctypes.POINTER(BIGNUM),
+                                    ctypes.POINTER(BIGNUM),
+                                    ctypes.POINTER(BIGNUM),
                                     ctypes.c_void_p]
 
         self.BN_mod_inverse = self._lib.BN_mod_inverse
-        self.BN_mod_inverse.restype = ctypes.c_void_p
-        self.BN_mod_inverse.argtypes = [ctypes.c_void_p,
-                                        ctypes.c_void_p,
-                                        ctypes.c_void_p,
+        self.BN_mod_inverse.restype = ctypes.POINTER(BIGNUM)
+        self.BN_mod_inverse.argtypes = [ctypes.POINTER(BIGNUM),
+                                        ctypes.POINTER(BIGNUM),
+                                        ctypes.POINTER(BIGNUM),
                                         ctypes.c_void_p]
 
         self.BN_mod_mul = self._lib.BN_mod_mul
         self.BN_mod_mul.restype = ctypes.c_int
-        self.BN_mod_mul.argtypes = [ctypes.c_void_p,
-                                    ctypes.c_void_p,
-                                    ctypes.c_void_p,
-                                    ctypes.c_void_p,
+        self.BN_mod_mul.argtypes = [ctypes.POINTER(BIGNUM),
+                                    ctypes.POINTER(BIGNUM),
+                                    ctypes.POINTER(BIGNUM),
+                                    ctypes.POINTER(BIGNUM),
                                     ctypes.c_void_p]
 
         self.BN_lshift = self._lib.BN_lshift
         self.BN_lshift.restype = ctypes.c_int
-        self.BN_lshift.argtypes = [ctypes.c_void_p,
-                                   ctypes.c_void_p,
+        self.BN_lshift.argtypes = [ctypes.POINTER(BIGNUM),
+                                   ctypes.POINTER(BIGNUM),
                                    ctypes.c_int]
 
         self.BN_sub_word = self._lib.BN_sub_word
         self.BN_sub_word.restype = ctypes.c_int
-        self.BN_sub_word.argtypes = [ctypes.c_void_p,
+        self.BN_sub_word.argtypes = [ctypes.POINTER(BIGNUM),
                                      ctypes.c_ulong]
 
         self.BN_cmp = self._lib.BN_cmp
         self.BN_cmp.restype = ctypes.c_int
-        self.BN_cmp.argtypes = [ctypes.c_void_p,
-                                ctypes.c_void_p]
+        self.BN_cmp.argtypes = [ctypes.POINTER(BIGNUM),
+                                ctypes.POINTER(BIGNUM)]
 
         try:
             self.BN_is_odd = self._lib.BN_is_odd
             self.BN_is_odd.restype = ctypes.c_int
-            self.BN_is_odd.argtypes = [ctypes.c_void_p]
+            self.BN_is_odd.argtypes = [ctypes.POINTER(BIGNUM)]
         except AttributeError:
             # OpenSSL 1.1.0 implements this as a function, but earlier
             # versions as macro, so we need to workaround
@@ -540,7 +565,7 @@ class _OpenSSL(object):
 
         self.BN_bn2dec = self._lib.BN_bn2dec
         self.BN_bn2dec.restype = ctypes.c_char_p
-        self.BN_bn2dec.argtypes = [ctypes.c_void_p]
+        self.BN_bn2dec.argtypes = [ctypes.POINTER(BIGNUM)]
 
         self.EC_GROUP_new_by_curve_name = self._lib.EC_GROUP_new_by_curve_name
         self.EC_GROUP_new_by_curve_name.restype = ctypes.c_void_p
@@ -549,43 +574,43 @@ class _OpenSSL(object):
         self.EC_GROUP_get_order = self._lib.EC_GROUP_get_order
         self.EC_GROUP_get_order.restype = ctypes.c_int
         self.EC_GROUP_get_order.argtypes = [ctypes.c_void_p,
-                                            ctypes.c_void_p,
+                                            ctypes.POINTER(BIGNUM),
                                             ctypes.c_void_p]
 
         self.EC_GROUP_get_cofactor = self._lib.EC_GROUP_get_cofactor
         self.EC_GROUP_get_cofactor.restype = ctypes.c_int
         self.EC_GROUP_get_cofactor.argtypes = [ctypes.c_void_p,
-                                               ctypes.c_void_p,
+                                               ctypes.POINTER(BIGNUM),
                                                ctypes.c_void_p]
 
         self.EC_GROUP_get0_generator = self._lib.EC_GROUP_get0_generator
-        self.EC_GROUP_get0_generator.restype = ctypes.c_void_p
+        self.EC_GROUP_get0_generator.restype = ctypes.POINTER(EC_POINT)
         self.EC_GROUP_get0_generator.argtypes = [ctypes.c_void_p]
 
         self.EC_POINT_copy = self._lib.EC_POINT_copy
         self.EC_POINT_copy.restype = ctypes.c_int
-        self.EC_POINT_copy.argtypes = [ctypes.c_void_p,
-                                       ctypes.c_void_p]
+        self.EC_POINT_copy.argtypes = [ctypes.POINTER(EC_POINT),
+                                       ctypes.POINTER(EC_POINT)]
 
         self.EC_POINT_add = self._lib.EC_POINT_add
         self.EC_POINT_add.restype = ctypes.c_int
         self.EC_POINT_add.argtypes = [ctypes.c_void_p,
-                                      ctypes.c_void_p,
-                                      ctypes.c_void_p,
-                                      ctypes.c_void_p,
+                                      ctypes.POINTER(EC_POINT),
+                                      ctypes.POINTER(EC_POINT),
+                                      ctypes.POINTER(EC_POINT),
                                       ctypes.c_void_p]
 
         self.EC_POINT_cmp = self._lib.EC_POINT_cmp
         self.EC_POINT_cmp.restype = ctypes.c_int
         self.EC_POINT_cmp.argtypes = [ctypes.c_void_p,
-                                      ctypes.c_void_p,
-                                      ctypes.c_void_p,
+                                      ctypes.POINTER(EC_POINT),
+                                      ctypes.POINTER(EC_POINT),
                                       ctypes.c_void_p]
 
         self.EC_POINT_set_to_infinity = self._lib.EC_POINT_set_to_infinity
         self.EC_POINT_set_to_infinity.restype = ctypes.c_int
         self.EC_POINT_set_to_infinity.argtypes = [ctypes.c_void_p,
-                                                  ctypes.c_void_p]
+                                                  ctypes.POINTER(EC_POINT)]
 
         self._set_ciphers()
         self._set_curves()
@@ -722,9 +747,9 @@ class _OpenSSL(object):
         if data != 0:
             if sys.version_info.major == 3 and isinstance(data, type('')):
                 data = data.encode()
-            buffer_ = self.create_string_buffer(data, size)
+            buffer_ = self.create_string_buffer(data, size + 1)
         else:
-            buffer_ = self.create_string_buffer(size)
+            buffer_ = self.create_string_buffer(size + 1)
         return buffer_
 
 
