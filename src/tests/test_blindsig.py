@@ -57,7 +57,7 @@ class TestBlindSig(unittest.TestCase):
             x = OpenSSL.BN_new()
             y = OpenSSL.BN_new()
             OpenSSL.EC_POINT_get_affine_coordinates(
-                obj.group, obj.Q, x, y, 0)
+                obj.group, obj.Q, x, y, None)
             self.assertEqual(OpenSSL.BN_is_odd(y),
                              OpenSSL.BN_is_odd_compatible(y))
 
@@ -84,7 +84,7 @@ class TestBlindSig(unittest.TestCase):
                 self.assertEqual(OpenSSL.BN_cmp(y0, y1), 0)
                 self.assertEqual(OpenSSL.BN_cmp(x0, x1), 0)
                 self.assertEqual(OpenSSL.EC_POINT_cmp(obj.group, randompoint,
-                                                      secondpoint, 0), 0)
+                                                      secondpoint, None), 0)
             finally:
                 OpenSSL.BN_free(x0)
                 OpenSSL.BN_free(x1)

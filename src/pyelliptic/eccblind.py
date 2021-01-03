@@ -110,7 +110,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         """
         ECC inversion
         """
-        inverse = OpenSSL.BN_mod_inverse(0, a, self.n, self.ctx)
+        inverse = OpenSSL.BN_mod_inverse(None, a, self.n, self.ctx)
         return inverse
 
     def ec_gen_keypair(self):
@@ -120,7 +120,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         """
         d = self.ec_get_random()
         Q = OpenSSL.EC_POINT_new(self.group)
-        OpenSSL.EC_POINT_mul(self.group, Q, d, 0, 0, 0)
+        OpenSSL.EC_POINT_mul(self.group, Q, d, None, None, None)
         return (d, Q)
 
     def ec_Ftor(self, F):
@@ -140,7 +140,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
             x = OpenSSL.BN_new()
             y = OpenSSL.BN_new()
             OpenSSL.EC_POINT_get_affine_coordinates(
-                self.group, point, x, y, 0)
+                self.group, point, x, y, None)
             y_byte = (OpenSSL.BN_is_odd(y) & Y_BIT) | COMPRESSED_BIT
             l_ = OpenSSL.BN_num_bytes(self.n)
             try:
@@ -161,7 +161,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
     def _ec_point_deserialize(self, data):
         """Make a string into an EC point"""
         y_bit, x_raw = unpack(EC, data)
-        x = OpenSSL.BN_bin2bn(x_raw, OpenSSL.BN_num_bytes(self.n), 0)
+        x = OpenSSL.BN_bin2bn(x_raw, OpenSSL.BN_num_bytes(self.n), None)
         y_bit &= Y_BIT
         retval = OpenSSL.EC_POINT_new(self.group)
         OpenSSL.EC_POINT_set_compressed_coordinates(self.group,
@@ -185,7 +185,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
     def _bn_deserialize(self, data):
         """Make a BigNum out of string"""
-        x = OpenSSL.BN_bin2bn(data, OpenSSL.BN_num_bytes(self.n), 0)
+        x = OpenSSL.BN_bin2bn(data, OpenSSL.BN_num_bytes(self.n), None)
         return x
 
     def _init_privkey(self, privkey):
@@ -262,7 +262,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
         # R = kG
         self.R = OpenSSL.EC_POINT_new(self.group)
-        OpenSSL.EC_POINT_mul(self.group, self.R, self.k, 0, 0, 0)
+        OpenSSL.EC_POINT_mul(self.group, self.R, self.k, None, None, None)
 
         return self._ec_point_serialize(self.R)
 
@@ -287,17 +287,18 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
 
             # F = b^-1 * R...
             self.binv = self.ec_invert(self.b)
-            OpenSSL.EC_POINT_mul(self.group, temp, 0, self.R, self.binv, 0)
+            OpenSSL.EC_POINT_mul(self.group, temp, None, self.R, self.binv,
+                                 None)
             OpenSSL.EC_POINT_copy(self.F, temp)
 
             # ... + a*b^-1 * Q...
             OpenSSL.BN_mul(abinv, self.a, self.binv, self.ctx)
-            OpenSSL.EC_POINT_mul(self.group, temp, 0, self.Q, abinv, 0)
-            OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, 0)
+            OpenSSL.EC_POINT_mul(self.group, temp, None, self.Q, abinv, None)
+            OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, None)
 
             # ... + c*G
-            OpenSSL.EC_POINT_mul(self.group, temp, 0, self.G, self.c, 0)
-            OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, 0)
+            OpenSSL.EC_POINT_mul(self.group, temp, None, self.G, self.c, None)
+            OpenSSL.EC_POINT_add(self.group, self.F, self.F, temp, None)
 
         # F = (x0, y0)
         self.r = self.ec_Ftor(self.F)
@@ -356,10 +357,10 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         lhs = OpenSSL.EC_POINT_new(self.group)
         rhs = OpenSSL.EC_POINT_new(self.group)
 
-        OpenSSL.EC_POINT_mul(self.group, lhs, s, 0, 0, 0)
+        OpenSSL.EC_POINT_mul(self.group, lhs, s, None, None, None)
 
-        OpenSSL.EC_POINT_mul(self.group, rhs, 0, self.Q, self.m, 0)
-        OpenSSL.EC_POINT_mul(self.group, rhs, 0, rhs, self.r, 0)
+        OpenSSL.EC_POINT_mul(self.group, rhs, None, self.Q, self.m, None)
+        OpenSSL.EC_POINT_mul(self.group, rhs, None, rhs, self.r, None)
         OpenSSL.EC_POINT_add(self.group, rhs, rhs, self.F, self.ctx)
 
         retval = OpenSSL.EC_POINT_cmp(self.group, lhs, rhs, self.ctx)

@@ -41,7 +41,13 @@ def hmac_sha256(k, m):
     d = OpenSSL.malloc(m, len(m))
     md = OpenSSL.malloc(0, 32)
     i = OpenSSL.pointer(OpenSSL.c_int(0))
-    OpenSSL.HMAC(OpenSSL.EVP_sha256(), key, len(k), d, len(m), md, i)
+    print("calculating")
+    try:
+        OpenSSL.HMAC(OpenSSL.EVP_sha256(), key, len(k), d, len(m), md, i)
+    except Exception as e:
+        print(e)
+        raise e
+    # print(i.contents)
     return md.raw
 
 
@@ -53,7 +59,9 @@ def hmac_sha512(k, m):
     d = OpenSSL.malloc(m, len(m))
     md = OpenSSL.malloc(0, 64)
     i = OpenSSL.pointer(OpenSSL.c_int(0))
+    print("calculating")
     OpenSSL.HMAC(OpenSSL.EVP_sha512(), key, len(k), d, len(m), md, i)
+    print(i.contents)
     return md.raw
 
 
