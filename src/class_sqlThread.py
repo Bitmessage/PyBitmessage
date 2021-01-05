@@ -47,7 +47,7 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
             self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text)''')
+                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT REPLACE)''')
             self.cur.execute(
                 '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
             self.cur.execute(
@@ -63,7 +63,7 @@ class sqlThread(threading.Thread):
                 '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
-            self.cur.execute('''INSERT INTO settings VALUES('version','10')''')
+            self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
             self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
@@ -388,7 +388,27 @@ class sqlThread(threading.Thread):
             logger.debug(
                 'In messages.dat database, done adding address field to the pubkeys table'
                 ' and removing the hash field.')
-            self.cur.execute('''update settings set value=10 WHERE key='version';''')
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (10,)
+            self.cur.execute(item, parameters)
+
+        # Update the address colunm to unique in addressbook table
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 10:
+            logger.debug(
+                'In messages.dat database, updating address column to UNIQUE'
+                ' in the addressbook table.')
+            self.cur.execute(
+                '''ALTER TABLE addressbook RENAME TO old_addressbook''')
+            self.cur.execute(
+                '''CREATE TABLE addressbook'''
+                ''' (label text, address text, UNIQUE(address) ON CONFLICT REPLACE)''')
+            self.cur.execute(
+                '''INSERT INTO addressbook SELECT label, address FROM old_addressbook;''')
+            self.cur.execute('''update settings set value=11 WHERE key='version';''')
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right
