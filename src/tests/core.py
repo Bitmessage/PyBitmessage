@@ -285,22 +285,22 @@ class TestCore(unittest.TestCase):
             'createRandomAddress', 4, streamNumberForAddress,
             "test1", 1, "", False))
 
-    def delete_address_from_database(self):
-        """Deleting random address"""
-        sqlQuery('''delete from addressbook where address=?''', self.addr)
+    def delete_address_from_database(self, address):
+        """Clean up addressbook"""
+        sqlQuery('''delete from addressbook where address=?''', address)
 
     def test_add_same_address_twice_in_addressbook(self):
         """checking same address is added twice in addressbook"""
         self.assertTrue(helper_addressbook.insert(label='test1', address=self.addr))
         self.assertFalse(helper_addressbook.insert(label='test1', address=self.addr))
-        self.delete_address_from_database()
+        self.delete_address_from_database(self.addr)
 
     def test_is_address_present_in_addressbook(self):
         """checking is address added in addressbook or not"""
         helper_addressbook.insert(label='test1', address=self.addr)
         queryreturn = sqlQuery('''select count(*) from addressbook where address=?''', self.addr)
         self.assertTrue(bool(queryreturn[0][0]))
-        self.delete_address_from_database()
+        self.delete_address_from_database(self.addr)
 
     def test_is_own_address_add_to_addressbook(self):
         """Checking own address adding in addressbook"""
@@ -311,6 +311,15 @@ class TestCore(unittest.TestCase):
             self.assertFalse(helper_addressbook.insert(label='test', address=all_addresses[0]))
         except IndexError:
             self.fail("Can't generate addresses")
+
+    def test_adding_two_same_case_sensitive_addresses(self):
+        """Testing same case sensitive address store in addressbook"""
+        address1 = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'
+        address2 = 'BM-2CvwTDuZpWf7ungdRzFTwUhwIj6XXbPIsp'
+        self.assertTrue(helper_addressbook.insert(label='test1', address=address1))
+        self.assertTrue(helper_addressbook.insert(label='test2', address=address2))
+        self.delete_address_from_database(address1)
+        self.delete_address_from_database(address2)
 
 
 def run():
