@@ -47,7 +47,7 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
             self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT REPLACE)''')
+                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
             self.cur.execute(
                 '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
             self.cur.execute(
@@ -388,9 +388,7 @@ class sqlThread(threading.Thread):
             logger.debug(
                 'In messages.dat database, done adding address field to the pubkeys table'
                 ' and removing the hash field.')
-            item = '''update settings set value=? WHERE key='version';'''
-            parameters = (10,)
-            self.cur.execute(item, parameters)
+            self.cur.execute('''update settings set value=10 WHERE key='version';''')
 
         # Update the address colunm to unique in addressbook table
         item = '''SELECT value FROM settings WHERE key='version';'''
@@ -405,9 +403,10 @@ class sqlThread(threading.Thread):
                 '''ALTER TABLE addressbook RENAME TO old_addressbook''')
             self.cur.execute(
                 '''CREATE TABLE addressbook'''
-                ''' (label text, address text, UNIQUE(address) ON CONFLICT REPLACE)''')
+                ''' (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
             self.cur.execute(
                 '''INSERT INTO addressbook SELECT label, address FROM old_addressbook;''')
+            self.cur.execute('''DROP TABLE old_addressbook''')
             self.cur.execute('''update settings set value=11 WHERE key='version';''')
 
         # Are you hoping to add a new option to the keys.dat file of existing
