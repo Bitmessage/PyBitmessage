@@ -3,21 +3,18 @@ Create random address
 """
 
 import time
-
 import defaults
 import queues
 import state
 
-from bitmessageqt import account
-from bitmessageqt.foldertree import AccountMixin
 from bmconfigparser import BMConfigParser
 
 
 def checkHasNormalAddress():
     """method for checking address"""
-    for address in account.getSortedAccounts():
-        acct = account.accountClass(address)
-        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
+    for address in BMConfigParser().addresses():
+
+        if BMConfigParser().safeGetBoolean(address, 'enabled'):
             return address
     return False
 
@@ -32,6 +29,9 @@ def createAddressIfNeeded(label_text, streamNumberForAddress=1):
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes
         ))
+    start_time = time.time()
     while state.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
+        if int(time.time() - start_time) > 8:
+            break
     return checkHasNormalAddress()
