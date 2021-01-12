@@ -16,6 +16,7 @@ import defaults
 import helper_inbox
 import helper_msgcoding
 import helper_random
+import helper_sql
 import highlevelcrypto
 import l10n
 import proofofwork
@@ -62,8 +63,8 @@ class singleWorker(StoppableThread):
     def run(self):
         # pylint: disable=attribute-defined-outside-init
 
-        while not state.sqlReady and state.shutdown == 0:
-            self.stop.wait(2)
+        while not helper_sql.sql_ready.wait(1.0) and state.shutdown == 0:
+            self.stop.wait(1.0)
         if state.shutdown > 0:
             return
 

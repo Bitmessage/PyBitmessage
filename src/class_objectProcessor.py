@@ -29,7 +29,7 @@ from addresses import (
 )
 from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
+from helper_sql import sql_ready, SqlBulkExecute, sqlExecute, sqlQuery
 from network import bmproto, knownnodes
 from network.node import Peer
 # pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
@@ -50,6 +50,7 @@ class objectProcessor(threading.Thread):
         # objectProcessorQueue. Assuming that Bitmessage wasn't closed
         # forcefully, it should have saved the data in the queue into the
         # objectprocessorqueue table. Let's pull it out.
+        sql_ready.wait()
         queryreturn = sqlQuery(
             '''SELECT objecttype, data FROM objectprocessorqueue''')
         for row in queryreturn:

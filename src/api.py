@@ -1112,7 +1112,7 @@ class BMRPCDispatcher(object):
 
         ackdata = helper_sent.insert(
             toAddress=toAddress, fromAddress=fromAddress,
-            subject=subject, message=message, encoding=encodingType)
+            subject=subject, message=message, encoding=encodingType, ttl=TTL)
 
         toLabel = ''
         queryreturn = sqlQuery(
