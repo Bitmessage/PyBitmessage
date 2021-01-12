@@ -316,6 +316,9 @@ def init():
             except Exception as e:
                 logger.error("Error: %s", e, exc_info=True)
                 bso = None
+        except Exception as e:
+            logger.error("Error: %s", e, exc_info=True)
+            bso = None
     else:
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
