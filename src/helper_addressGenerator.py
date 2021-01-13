@@ -30,8 +30,6 @@ def createAddressIfNeeded(label_text, streamNumberForAddress=1):
             defaults.networkDefaultPayloadLengthExtraBytes
         ))
     start_time = time.time()
-    while state.shutdown == 0 and not checkHasNormalAddress():
+    while int(time.time() - start_time) < 10 and state.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
-        if int(time.time() - start_time) > 8:
-            break
     return checkHasNormalAddress()
