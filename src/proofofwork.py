@@ -291,7 +291,6 @@ def init():
     global bitmsglib, bmpow
 
     openclpow.initCL()
-
     if sys.platform == "win32":
         if ctypes.sizeof(ctypes.c_voidp) == 4:
             bitmsglib = 'bitmsghash32.dll'
@@ -305,8 +304,7 @@ def init():
             bmpow.restype = ctypes.c_ulonglong
             _doCPoW(2**63, "")
             logger.info("Successfully tested C PoW DLL (stdcall) %s", bitmsglib)
-        except:
-            logger.error("C PoW test fail.", exc_info=True)
+        except ValueError:
             try:
                 # MinGW
                 bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
@@ -315,9 +313,12 @@ def init():
                 bmpow.restype = ctypes.c_ulonglong
                 _doCPoW(2**63, "")
                 logger.info("Successfully tested C PoW DLL (cdecl) %s", bitmsglib)
-            except:
-                logger.error("C PoW test fail.", exc_info=True)
+            except Exception as e:
+                logger.error("Error: %s", e, exc_info=True)
                 bso = None
+        except Exception as e:
+            logger.error("Error: %s", e, exc_info=True)
+            bso = None
     else:
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
