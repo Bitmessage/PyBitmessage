@@ -353,8 +353,8 @@ class Main(object):
                 bitmessagecurses.runwrapper()
             elif state.kivy:
                 config.remove_option('bitmessagesettings', 'dontconnect')
-                from bitmessagekivy.mpybit import NavigateApp
-                NavigateApp().run()
+                # from bitmessagekivy.mpybit import NavigateApp
+                # NavigateApp().run()
             else:
                 import bitmessageqt
                 bitmessageqt.run()
