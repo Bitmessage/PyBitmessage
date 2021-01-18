@@ -3,11 +3,14 @@ SOCKS5 proxy module
 """
 # pylint: disable=attribute-defined-outside-init
 
+import logging
 import socket
 import struct
 
 from node import Peer
 from proxy import GeneralProxyError, Proxy, ProxyError
+
+logger = logging.getLogger('default')
 
 
 class Socks5AuthError(ProxyError):
@@ -217,4 +220,5 @@ class Socks5Resolver(Socks5):
         To use this within PyBitmessage, a callback needs to be
         implemented which hasn't been done yet.
         """
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        logger.debug(
+            'Resolved %s as %s', self.host, self.proxy_sock_name())

@@ -122,7 +122,7 @@ class TLSDispatcher(AdvancedDispatcher):
             # during TLS handshake, and after flushing write buffer,
             # return status of last handshake attempt
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                # print "tls readable, %r" % (self.want_read)
+                logger.debug('tls readable, %r', self.want_read)
                 return self.want_read
             # prior to TLS handshake,
             # receiveDataThread should emulate synchronous behaviour
@@ -200,17 +200,17 @@ class TLSDispatcher(AdvancedDispatcher):
             return False
         # Perform the handshake.
         try:
-            # print "handshaking (internal)"
+            logger.debug("handshaking (internal)")
             self.sslSocket.do_handshake()
         except ssl.SSLError as err:
-            # print "%s:%i: handshake fail" % (
-            #    self.destination.host, self.destination.port)
+            logger.debug(
+                '%s:%i: handshake fail', self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                # print "want read"
+                logger.debug("want read")
                 self.want_read = True
             if err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                # print "want write"
+                logger.debug("want write")
                 self.want_write = True
             if not (self.want_write or self.want_read):
                 raise

@@ -2,10 +2,13 @@
 SOCKS4a proxy module
 """
 # pylint: disable=attribute-defined-outside-init
+import logging
 import socket
 import struct
 
 from proxy import GeneralProxyError, Proxy, ProxyError
+
+logger = logging.getLogger('default')
 
 
 class Socks4aError(ProxyError):
@@ -140,4 +143,5 @@ class Socks4aResolver(Socks4a):
         PyBitmessage, a callback needs to be implemented which hasn't
         been done yet.
         """
-        print "Resolved %s as %s" % (self.host, self.proxy_sock_name())
+        logger.debug(
+            'Resolved %s as %s', self.host, self.proxy_sock_name())

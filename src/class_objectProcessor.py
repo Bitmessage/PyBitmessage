@@ -576,7 +576,6 @@ class objectProcessor(threading.Thread):
             decryptedData[readPosition:readPosition + 10])
         readPosition += messageLengthLength
         message = decryptedData[readPosition:readPosition + messageLength]
-        # print 'First 150 characters of message:', repr(message[:150])
         readPosition += messageLength
         ackLength, ackLengthLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])
