@@ -587,8 +587,6 @@ class sqlThread(threading.Thread):
             else:
                 parameters = helper_sql.sqlSubmitQueue.get()
                 rowcount = 0
-                # print 'item', item
-                # print 'parameters', parameters
                 try:
                     self.cur.execute(item, parameters)
                     rowcount = self.cur.rowcount
