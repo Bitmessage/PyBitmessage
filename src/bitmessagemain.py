@@ -351,10 +351,6 @@ class Main(object):
                 print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
-            elif state.kivy:
-                config.remove_option('bitmessagesettings', 'dontconnect')
-                # from bitmessagekivy.mpybit import NavigateApp
-                # NavigateApp().run()
             else:
                 import bitmessageqt
                 bitmessageqt.run()
