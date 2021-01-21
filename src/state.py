@@ -51,10 +51,6 @@ dandelion = 0
 
 testmode = False
 
-kivy = False
-
-association = ''
-
 clientHasReceivedIncomingConnections = False
 """used by API command clientStatus"""
 
