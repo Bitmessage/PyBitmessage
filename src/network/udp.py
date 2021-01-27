@@ -125,9 +125,9 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
 
     def handle_read(self):
         try:
-            (recdata, addr) = self.socket.recvfrom(self._buf_len)
-        except socket.error as e:
-            logger.error("socket error: %s", e)
+            recdata, addr = self.socket.recvfrom(self._buf_len)
+        except socket.error:
+            logger.error("socket error on recvfrom:", exc_info=True)
             return
 
         self.destination = Peer(*addr)
@@ -143,7 +143,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         try:
             retval = self.socket.sendto(
                 self.write_buf, ('<broadcast>', self.port))
-        except socket.error as e:
-            logger.error("socket error on sendto: %s", e)
+        except socket.error:
+            logger.error("socket error on sendto:", exc_info=True)
             retval = len(self.write_buf)
         self.slice_write_buf(retval)
