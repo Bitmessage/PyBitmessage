@@ -18,7 +18,6 @@ logger = logging.getLogger('default')
 class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
     """Bitmessage protocol over UDP (class)"""
     port = 8444
-    announceInterval = 60
 
     def __init__(self, host=None, sock=None, announcing=False):
         # pylint: disable=bad-super-call

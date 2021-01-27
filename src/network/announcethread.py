@@ -7,7 +7,6 @@ import state
 from bmconfigparser import BMConfigParser
 from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
-from network.udp import UDPSocket
 from node import Peer
 from threads import StoppableThread
 
@@ -15,12 +14,13 @@ from threads import StoppableThread
 class AnnounceThread(StoppableThread):
     """A thread to manage regular announcing of this node"""
     name = "Announcer"
+    announceInterval = 60
 
     def run(self):
         lastSelfAnnounced = 0
         while not self._stopped and state.shutdown == 0:
             processed = 0
-            if lastSelfAnnounced < time.time() - UDPSocket.announceInterval:
+            if lastSelfAnnounced < time.time() - self.announceInterval:
                 self.announceSelf()
                 lastSelfAnnounced = time.time()
             if processed == 0:
