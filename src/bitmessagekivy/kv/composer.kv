@@ -4,7 +4,7 @@
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: self.minimum_height + 2 * self.parent.height/4
+            height: self.minimum_height + 3 * self.parent.height/4
             padding: dp(20)
             spacing: 15
             BoxLayout:
@@ -76,17 +76,25 @@
                     Color:
                         rgba: (0,0,0,1)
 
-            MyMDTextField:
-                id: body
-                multiline: True
-                hint_text: 'body'
-                size_hint_y: None
-                font_size: '15sp'
-                required: True
-                helper_text_mode: "on_error"
-                canvas.before:
-                    Color:
-                        rgba: (0,0,0,1)
+            # MyMDTextField:
+            #     id: body
+            #     multiline: True
+            #     hint_text: 'body'
+            #     size_hint_y: None
+            #     font_size: '15sp'
+            #     required: True
+            #     helper_text_mode: "on_error"
+            #     canvas.before:
+            #         Color:
+            #             rgba: (0,0,0,1)
+            ScrollView:
+                id: scrlv
+                TextInput:
+                    id: body
+                    # text: 'srggdfsfhgfg'
+                    hint_text: 'body'
+                    size_hint: 1, None
+                    height: app.window_size[1]/4
             BoxLayout:
                 spacing:50
 
