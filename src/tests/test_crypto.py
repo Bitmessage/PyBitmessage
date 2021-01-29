@@ -6,7 +6,9 @@ import hashlib
 import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify, unhexlify
+
 from pybitmessage.pyelliptic import arithmetic
+
 
 try:
     from Crypto.Hash import RIPEMD

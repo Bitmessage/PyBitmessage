@@ -4,6 +4,10 @@ Tests for common protocol functions
 
 import unittest
 
+from .common import skip_python3
+
+skip_python3()
+
 
 class TestProtocol(unittest.TestCase):
     """Main protocol test case"""
