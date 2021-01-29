@@ -3,6 +3,10 @@ Test for network group
 """
 import unittest
 
+from .common import skip_python3
+
+skip_python3()
+
 
 class TestNetworkGroup(unittest.TestCase):
     """

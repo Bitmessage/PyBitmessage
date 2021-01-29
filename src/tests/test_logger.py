@@ -5,7 +5,7 @@ Testing the logger configuration
 import os
 import tempfile
 
-from test_process import TestProcessProto
+from .test_process import TestProcessProto
 
 
 class TestLogger(TestProcessProto):

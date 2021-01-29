@@ -6,8 +6,8 @@ import os
 import unittest
 import tempfile
 
+from .test_process import TestProcessProto
 from pybitmessage.bmconfigparser import BMConfigParser
-from test_process import TestProcessProto
 
 
 class TestConfig(unittest.TestCase):

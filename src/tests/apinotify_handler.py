@@ -7,7 +7,7 @@ when pybitmessage started in test mode.
 import sys
 import tempfile
 
-from test_process import put_signal_file
+from common import put_signal_file
 
 
 if __name__ == '__main__':

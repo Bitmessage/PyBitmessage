@@ -12,13 +12,10 @@ import unittest
 
 import psutil
 
-from common import cleanup
+from .common import cleanup, put_signal_file, skip_python3
 
 
-def put_signal_file(path, filename):
-    """Creates file, presence of which is a signal about some event."""
-    with open(os.path.join(path, filename), 'wb') as outfile:
-        outfile.write(b'%i' % time.time())
+skip_python3()
 
 
 class TestProcessProto(unittest.TestCase):
