@@ -394,11 +394,29 @@ addr
 Provide information on known nodes of the network. Non-advertised nodes should
 be forgotten after typically 3 hours
 
+Payload:
+
++------------+-------------+-----------+---------------------------------------+
+| Field Size | Description | Data type | Comments                              |
++============+=============+===========+=======================================+
+| 1+         | count       | |var_int| | Number of address entries (max: 1000) |
++------------+-------------+-----------+---------------------------------------+
+| 38         | addr_list   | net_addr  | Address of other nodes on the network.|
++------------+-------------+-----------+---------------------------------------+
+
 inv
 ^^^
 
 Allows a node to advertise its knowledge of one or more objects. Payload
 (maximum payload length: 50000 items):
+
++------------+-------------+------------+-----------------------------+
+| Field Size | Description | Data type  | Comments                    |
++============+=============+============+=============================+
+| ?          | count       | |var_int|  | Number of inventory entries |
++------------+-------------+------------+-----------------------------+
+| 32x?       | inventory   | inv_vect[] | Inventory vectors           |
++------------+-------------+------------+-----------------------------+
 
 
 getdata
@@ -408,6 +426,14 @@ getdata is used in response to an inv message to retrieve the content of a
 specific object after filtering known elements.
 
 Payload (maximum payload length: 50000 entries):
+
++------------+-------------+------------+-----------------------------+
+| Field Size | Description | Data type  | Comments                    |
++============+=============+============+=============================+
+| ?          | count       | |var_int|  | Number of inventory entries |
++------------+-------------+------------+-----------------------------+
+| 32x?       | inventory   | inv_vect[] | Inventory vectors           |
++------------+-------------+------------+-----------------------------+
 
 
 object
