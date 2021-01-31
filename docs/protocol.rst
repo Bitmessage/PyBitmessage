@@ -241,6 +241,47 @@ Bitmessage's 8-bit bytes.
 Pubkey bitfield features
 """"""""""""""""""""""""
 
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Bit
+     - Name
+     - Description
+   * - 0
+     - undefined
+     - The most significant bit at the beginning of the structure. Undefined
+   * - 1
+     - undefined
+     - The next most significant bit. Undefined
+   * - ...
+     - ...
+     - ...
+   * - 27
+     - onion_router
+     - (**Proposal**) Node can be used to onion-route messages. In theory any
+       node can onion route, but since it requires more resources, they may have
+       the functionality disabled. This field will be used to indicate that the
+       node is willing to do this.
+   * - 28
+     - forward_secrecy
+     - (**Proposal**) Receiving node supports a forward secrecy encryption
+       extension. The exact design is pending.
+   * - 29
+     - chat
+     - (**Proposal**) Address if for chatting rather than messaging.
+   * - 30
+     - include_destination
+     - (**Proposal**) Receiving node expects that the RIPE hash encoded in their
+       address preceedes the encrypted message data of msg messages bound for
+       them.
+
+       .. note:: since hardly anyone implements this, this will be redesigned as
+		 `simple recipient verification <https://github.com/Bitmessage/PyBitmessage/pull/808#issuecomment-170189856>`_
+   * - 31
+     - does_ack
+     - If true, the receiving node does send acknowledgements (rather than
+       dropping them).
 
 .. _msg-types:
 
@@ -256,6 +297,81 @@ When a node creates an outgoing connection, it will immediately advertise its
 version. The remote node will respond with its version. No futher communication
 is possible until both peers have exchanged their version.
 
+.. list-table:: Payload
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - 4
+     - version
+     - int32_t
+     - Identifies protocol version being used by the node. Should equal 3.
+       Nodes should disconnect if the remote node's version is lower but
+       continue with the connection if it is higher.
+   * - 8
+     - services
+     - uint64_t
+     - bitfield of features to be enabled for this connection
+   * - 8
+     - timestamp
+     - int64_t
+     - standard UNIX timestamp in seconds
+   * - 26
+     - addr_recv
+     - net_addr
+     - The network address of the node receiving this message (not including the
+       time or stream number)
+   * - 26
+     - addr_from
+     - net_addr
+     - The network address of the node emitting this message (not including the
+       time or stream number and the ip itself is ignored by the receiver)
+   * - 8
+     - nonce
+     - uint64_t
+     - Random nonce used to detect connections to self.
+   * - 1+
+     - user_agent
+     - var_str
+     - :doc:`useragent` (0x00 if string is 0 bytes long). Sending nodes must not
+       include a user_agent longer than 5000 bytes.
+   * - 1+
+     - stream_numbers
+     - var_int_list
+     - The stream numbers that the emitting node is interested in. Sending nodes
+       must not include more than 160000 stream numbers.
+
+A "verack" packet shall be sent if the version packet was accepted. Once you
+have sent and received a verack messages with the remote node, send an addr
+message advertising up to 1000 peers of which you are aware, and one or more
+inv messages advertising all of the valid objects of which you are aware.
+
+.. list-table:: The following services are currently assigned
+   :header-rows: 1
+   :widths: auto
+
+   * - Value
+     - Name
+     - Description
+   * - 1
+     - NODE_NETWORK
+     - This is a normal network node.
+   * - 2
+     - NODE_SSL
+     - This node supports SSL/TLS in the current connect (python < 2.7.9 only
+       supports a SSL client, so in that case it would only have this on when
+       the connection is a client).
+   * - 3
+     - NODE_POW
+     - (**Proposal**) This node may do PoW on behalf of some its peers (PoW
+       offloading/delegating), but it doesn't have to. Clients may have to meet
+       additional requirements (e.g. TLS authentication)
+   * - 4
+     - NODE_DANDELION
+     - Node supports `dandelion <https://github.com/gfanti/bips/blob/master/bip-dandelion.mediawiki>`_
 
 verack
 ^^^^^^
