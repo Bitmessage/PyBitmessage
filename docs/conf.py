@@ -19,7 +19,7 @@ import version  # noqa:E402
 # -- Project information -----------------------------------------------------
 
 project = u'PyBitmessage'
-copyright = u'2019, The Bitmessage Team'  # pylint: disable=redefined-builtin
+copyright = u'2019-2021, The Bitmessage Team'  # pylint: disable=redefined-builtin
 author = u'The Bitmessage Team'
 
 # The short X.Y version
