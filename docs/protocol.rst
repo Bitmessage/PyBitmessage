@@ -199,27 +199,9 @@ Inventory vectors consist of the following data format:
 Encrypted payload
 ^^^^^^^^^^^^^^^^^
 
-Bitmessage uses `ECIES <https://en.wikipedia.org/wiki/Integrated_Encryption_Scheme>`_ to encrypt its messages. For more information see Encryption
+Bitmessage uses `ECIES <https://en.wikipedia.org/wiki/Integrated_Encryption_Scheme>`_ to encrypt its messages. For more information see :doc:`encryption`
 
-+------------+-------------+-----------+--------------------------------------------+
-| Field Size | Description | Data type | Comments                                   |
-+============+=============+===========+============================================+
-| 16         | IV          | uchar[]   | Initialization Vector used for AES-256-CBC |
-+------------+-------------+-----------+--------------------------------------------+
-| 2          | Curve type  | uint16_t  | Elliptic Curve type 0x02CA (714)           |
-+------------+-------------+-----------+--------------------------------------------+
-| 2          | X length    | uint16_t  | Length of X component of public key R      |
-+------------+-------------+-----------+--------------------------------------------+
-| X length   | X           | uchar[]   | X component of public key R                |
-+------------+-------------+-----------+--------------------------------------------+
-| 2          | Y length    | uint16_t  | Length of Y component of public key R      |
-+------------+-------------+-----------+--------------------------------------------+
-| Y length   | Y           | uchar[]   | Y component of public key R                |
-+------------+-------------+-----------+--------------------------------------------+
-| ?          | encrypted   | uchar[]   | Cipher text                                |
-+------------+-------------+-----------+--------------------------------------------+
-| 32         | MAC         | uchar[]   | HMACSHA256 Message Authentication Code     |
-+------------+-------------+-----------+--------------------------------------------+
+.. include:: encrypted_payload.rst
 
 Unencrypted Message Data
 ^^^^^^^^^^^^^^^^^^^^^^^^
