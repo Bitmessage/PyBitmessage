@@ -210,6 +210,34 @@ Unencrypted Message Data
 Message Encodings
 """""""""""""""""
 
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Value
+     - Name
+     - Description
+   * - 0
+     - IGNORE
+     - Any data with this number may be ignored. The sending node might simply
+       be sharing its public key with you.
+   * - 1
+     - TRIVIAL
+     - UTF-8. No 'Subject' or 'Body' sections. Useful for simple strings
+       of data, like URIs or magnet links.
+   * - 2
+     - SIMPLE
+     - UTF-8. Uses 'Subject' and 'Body' sections. No MIME is used.
+       ::
+	  messageToTransmit = 'Subject:' + subject + '\n' + 'Body:' + message
+   * - 3
+     - EXTENDED
+     - See :doc:`extended_encoding`
+
+Further values for the message encodings can be decided upon by the community.
+Any MIME or MIME-like encoding format, should they be used, should make use of
+Bitmessage's 8-bit bytes. 
+
 Pubkey bitfield features
 """"""""""""""""""""""""
 
