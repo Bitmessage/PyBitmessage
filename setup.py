@@ -48,6 +48,9 @@ class InstallCmd(install):
 
 def unittest_discover():
     """Explicit test suite creation"""
+    if sys.hexversion >= 0x3000000:
+        from pybitmessage import pathmagic
+        pathmagic.setup()
     return unittest.TestLoader().discover('pybitmessage.tests')
 
 
