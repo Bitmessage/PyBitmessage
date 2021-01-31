@@ -289,11 +289,52 @@ object
 
 An object is a message which is shared throughout a stream. It is the only
 message which propagates; all others are only between two nodes. Objects have a
-type, like 'msg', or 'broadcast'. To be a valid object, the Proof Of Work must
-be done. The maximum allowable length of an object (not to be confused with the
-objectPayload) is |2^18| bytes.
+type, like 'msg', or 'broadcast'. To be a valid object, the
+:doc:`pow` must be done. The maximum allowable length of an object
+(not to be confused with the ``objectPayload``) is |2^18| bytes.
 
 .. |2^18| replace:: 2\ :sup:`18`\
+
+.. list-table:: Message structure
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - 8
+     - nonce
+     - uint64_t
+     - Random nonce used for the :doc:`pow`
+   * - 8
+     - expiresTime
+     - uint64_t
+     - The "end of life" time of this object (be aware, in version 2 of the
+       protocol this was the generation time). Objects shall be shared with
+       peers until its end-of-life time has been reached. The node should store
+       the inventory vector of that object for some extra period of time to
+       avoid reloading it from another node with a small time delay. The time
+       may be no further than 28 days + 3 hours in the future.
+   * - 4
+     - objectType
+     - uint32_t
+     - Four values are currently defined: 0-"getpubkey", 1-"pubkey", 2-"msg",
+       3-"broadcast". All other values are reserved. Nodes should relay objects
+       even if they use an undefined object type.
+   * - 1+
+     - version
+     - var_int
+     - The object's version. Note that msg objects won't contain a version
+       until Sun, 16 Nov 2014 22:00:00 GMT.
+   * - 1+
+     - stream number
+     - var_int
+     - The stream number in which this object may propagate
+   * - ?
+     - objectPayload
+     - uchar[]
+     - This field varies depending on the object type; see below.
 
 
 Object types
