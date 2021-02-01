@@ -538,7 +538,7 @@ class MyAddress(Screen):
                     avatarImageFirstLetter(item['text'].strip()))))
             meny.bind(on_press=partial(
                 self.myadd_detail, item['secondary_text'], item['text']))
-            if state.association == item['secondary_text']:
+            if state.association == item['secondary_text'] and is_enable == 'true':
                 badge_obj = BadgeText(
                     size_hint=(None, None),
                     size=[90 if platform == 'android' else 50, 60],
@@ -1782,6 +1782,7 @@ class Create(Screen):
     def __init__(self, **kwargs):
         """Getting Labels and address from addressbook"""
         super(Create, self).__init__(**kwargs)
+        Window.softinput_mode = "below_target"
         widget_1 = DropDownWidget()
         widget_1.ids.txt_input.word_list = [
             addr[1] for addr in sqlQuery(
@@ -1951,6 +1952,8 @@ class NavigateApp(MDApp):
             self.load_selected_Image(text)
         else:
             self.set_identicon(text)
+            self.root.ids.content_drawer.ids.reset_image.opacity = 0
+            self.root.ids.content_drawer.ids.reset_image.disabled = True
         address_label = self.current_address_label(
             BMConfigParser().get(text, 'label'), text)
         self.root_window.children[1].ids.toolbar.title = address_label
@@ -2086,26 +2089,30 @@ class NavigateApp(MDApp):
         self.add_popup.dismiss()
         toast('Canceled')
 
-    def getDefaultAccData(self):
+    def getDefaultAccData(self, instance):
         """Getting Default Account Data"""
         if BMConfigParser().addresses():
-            img = identiconGeneration.generate(BMConfigParser().addresses()[0])
-            self.createFolder(state.imageDir + '/default_identicon/')
-            if platform == 'android':
-                # android_path = os.path.expanduser
-                # ("~/user/0/org.test.bitapp/files/app/")
-                if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
-                        BMConfigParser().addresses()[0])):
-                    android_path = os.path.join(
-                        os.environ['ANDROID_PRIVATE'] + '/app/')
-                    img.texture.save('{1}/images/kivy/default_identicon/{0}.png'.format(
-                        BMConfigParser().addresses()[0], android_path))
-            else:
-                if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
-                        BMConfigParser().addresses()[0])):
-                    img.texture.save(state.imageDir + '/default_identicon/{}.png'.format(
-                        BMConfigParser().addresses()[0]))
-            return BMConfigParser().addresses()[0]
+            first_addr = BMConfigParser().addresses()[0]
+            if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
+                img = identiconGeneration.generate(first_addr)
+                # self.createFolder(state.imageDir + '/default_identicon/')
+                # if platform == 'android':
+                #     # android_path = os.path.expanduser
+                #     # ("~/user/0/org.test.bitapp/files/app/")
+                #     if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
+                #             BMConfigParser().addresses()[0])):
+                #         android_path = os.path.join(
+                #             os.environ['ANDROID_PRIVATE'] + '/app/')
+                #         img.texture.save('{1}/images/kivy/default_identicon/{0}.png'.format(
+                #             BMConfigParser().addresses()[0], android_path))
+                # else:
+                #     if not os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(
+                #             BMConfigParser().addresses()[0])):
+                #         img.texture.save(state.imageDir + '/default_identicon/{}.png'.format(
+                #             BMConfigParser().addresses()[0]))
+                instance.parent.parent.parent.parent.parent.ids.top_box.children[0].texture = (
+                    img.texture)
+                return first_addr
         return 'Select Address'
 
     @staticmethod
@@ -2129,8 +2136,10 @@ class NavigateApp(MDApp):
     def get_default_logo():
         """Getting default logo image"""
         if BMConfigParser().addresses():
-            return state.imageDir + '/default_identicon/{}.png'.format(
-                BMConfigParser().addresses()[0])
+            first_addr = BMConfigParser().addresses()[0]
+            if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
+                return state.imageDir + '/default_identicon/{}.png'.format(
+                    first_addr)
         return state.imageDir + '/drawer_logo1.png'
 
     @staticmethod
@@ -2384,6 +2393,8 @@ class NavigateApp(MDApp):
             else:
                 addr = BMConfigParser().addresses()[0]
                 first_name = BMConfigParser().get(addr, 'label')
+                if BMConfigParser().get(addr, 'enabled') != 'true':
+                    return ''
             f_name = first_name.split()
             label = f_name[0][:14].capitalize() + '...' if len(
                 f_name[0]) > 15 else f_name[0].capitalize()
@@ -2579,8 +2590,23 @@ class NavigateApp(MDApp):
         # spinner_img_obj = self.root.ids.content_drawer.ids.btn.children[1]
         # spinner_img_obj.source = top_box_obj.source ='./images/default_identicon/{0}.png'.format(curerentAddr)
         top_box_obj.source = state.imageDir + '/default_identicon/{0}.png'.format(curerentAddr)
+        self.root.ids.content_drawer.ids.reset_image.opacity = 1
+        self.root.ids.content_drawer.ids.reset_image.disabled = False
         top_box_obj.reload()
         # spinner_img_obj.reload()
+
+    def rest_default_avatar_img(self):
+        """set default avatar generated image"""
+        self.set_identicon(state.association)
+        img_path = state.imageDir + '/default_identicon/{}.png'.format(state.association)
+        try:
+            if os.path.exists(img_path):
+                os.remove(img_path)
+                self.root.ids.content_drawer.ids.reset_image.opacity = 0
+                self.root.ids.content_drawer.ids.reset_image.disabled = True
+        except Exception as e:
+            pass
+        toast('Avatar reset')
 
     def copy_composer_text(self, text):  # pylint: disable=no-self-use
         """Copy the data from mail detail page"""

@@ -66,6 +66,20 @@
             height: "200dp"
 
             MDIconButton:
+                id: reset_image
+                icon: "refresh"
+                x: root.parent.x + dp(10)
+                pos_hint: {"top": 1, 'left': 1}
+                color: [1,0,0,1]
+                on_release: app.rest_default_avatar_img()
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                # opacity: 1 if app.current_address_label() else 0
+                # disabled: False if app.current_address_label() else True
+                opacity: 0
+                disabled: True
+
+            MDIconButton:
                 id: file_manager
                 icon: "file-image"
                 x: root.parent.x + dp(10)
@@ -111,7 +125,7 @@
                         pos_hint:{"x":0,"y":0}
                         option_cls: Factory.get("MySpinnerOption")
                         font_size: '12.5sp'
-                        text: app.getDefaultAccData()
+                        text: app.getDefaultAccData(self)
                         #background_color: color_button if self.state == 'normal' else color_button_pressed
                         #background_down: 'atlas://data/images/defaulttheme/spinner'
                         color: color_font
