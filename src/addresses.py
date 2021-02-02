@@ -3,10 +3,12 @@ Operations with addresses
 """
 # pylint: disable=redefined-outer-name,inconsistent-return-statements
 import hashlib
+import logging
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
 
-from debug import logger
+
+logger = logging.getLogger('default')
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -23,8 +25,7 @@ def encodeBase58(num, alphabet=ALPHABET):
     arr = []
     base = len(alphabet)
     while num:
-        rem = num % base
-        num = num // base
+        num, rem = divmod(num, base)
         arr.append(alphabet[rem])
     arr.reverse()
     return ''.join(arr)
@@ -148,16 +149,16 @@ def encodeAddress(version, stream, ripe):
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.'
             )
-        if ripe[:2] == '\x00\x00':
+        if ripe[:2] == b'\x00\x00':
             ripe = ripe[2:]
-        elif ripe[:1] == '\x00':
+        elif ripe[:1] == b'\x00':
             ripe = ripe[1:]
     elif version == 4:
         if len(ripe) != 20:
             raise Exception(
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.')
-        ripe = ripe.lstrip('\x00')
+        ripe = ripe.lstrip(b'\x00')
 
     storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
 
@@ -191,8 +192,8 @@ def decodeAddress(address):
         status = 'invalidcharacters'
         return status, 0, 0, ''
     # after converting to hex, the string will be prepended
-    # with a 0x and appended with a L
-    hexdata = hex(integer)[2:-1]
+    # with a 0x and appended with a L in python2
+    hexdata = hex(integer)[2:].rstrip('L')
 
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
@@ -242,13 +243,13 @@ def decodeAddress(address):
             data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
         if len(embeddedRipeData) == 19:
             return status, addressVersionNumber, streamNumber, \
-                '\x00' + embeddedRipeData
+                b'\x00' + embeddedRipeData
         elif len(embeddedRipeData) == 20:
             return status, addressVersionNumber, streamNumber, \
                 embeddedRipeData
         elif len(embeddedRipeData) == 18:
             return status, addressVersionNumber, streamNumber, \
-                '\x00\x00' + embeddedRipeData
+                b'\x00\x00' + embeddedRipeData
         elif len(embeddedRipeData) < 18:
             return 'ripetooshort', 0, 0, ''
         elif len(embeddedRipeData) > 20:
@@ -257,7 +258,7 @@ def decodeAddress(address):
     elif addressVersionNumber == 4:
         embeddedRipeData = \
             data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
-        if embeddedRipeData[0:1] == '\x00':
+        if embeddedRipeData[0:1] == b'\x00':
             # In order to enforce address non-malleability, encoded
             # RIPE data must have NULL bytes removed from the front
             return 'encodingproblem', 0, 0, ''
@@ -265,7 +266,7 @@ def decodeAddress(address):
             return 'ripetoolong', 0, 0, ''
         elif len(embeddedRipeData) < 4:
             return 'ripetooshort', 0, 0, ''
-        x00string = '\x00' * (20 - len(embeddedRipeData))
+        x00string = b'\x00' * (20 - len(embeddedRipeData))
         return status, addressVersionNumber, streamNumber, \
             x00string + embeddedRipeData
 
