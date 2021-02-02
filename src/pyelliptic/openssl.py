@@ -83,7 +83,7 @@ class _OpenSSL(object):
         """
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
-        self._libreSSL = self._version.startswith("LibreSSL")
+        self._libreSSL = self._version.startswith(b"LibreSSL")
 
         self.pointer = ctypes.pointer
         self.c_int = ctypes.c_int
