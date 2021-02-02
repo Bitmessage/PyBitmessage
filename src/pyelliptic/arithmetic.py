@@ -16,7 +16,7 @@ def inv(a, n):
     lm, hm = 1, 0
     low, high = a % n, n
     while low > 1:
-        r = high / low
+        r = high // low
         nm, new = hm - lm * r, high - low * r
         lm, low, hm, high = nm, new, lm, low
     return lm % n
@@ -43,8 +43,8 @@ def encode(val, base, minlen=0):
     code_string = get_code_string(base)
     result = ""
     while val > 0:
-        result = code_string[val % base] + result
-        val /= base
+        val, i = divmod(val, base)
+        result = code_string[i] + result
     if len(result) < minlen:
         result = code_string[0] * (minlen - len(result)) + result
     return result
@@ -101,10 +101,11 @@ def base10_multiply(a, n):
         return G
     if n == 1:
         return a
-    if (n % 2) == 0:
-        return base10_double(base10_multiply(a, n / 2))
-    if (n % 2) == 1:
-        return base10_add(base10_double(base10_multiply(a, n / 2)), a)
+    n, m = divmod(n, 2)
+    if m == 0:
+        return base10_double(base10_multiply(a, n))
+    if m == 1:
+        return base10_add(base10_double(base10_multiply(a, n)), a)
     return None
 
 

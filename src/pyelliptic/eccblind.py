@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 ECC blind signature functionality based on
 "An Efficient Blind Signature Scheme
@@ -151,7 +150,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
                 # padding manually
                 bx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(x))
                 OpenSSL.BN_bn2bin(x, bx)
-                out = bx.raw.rjust(l_, chr(0))
+                out = bx.raw.rjust(l_, b'\x00')
             return pack(EC, y_byte, out)
 
         finally:
@@ -181,7 +180,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         except AttributeError:
             o = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(bn))
             OpenSSL.BN_bn2bin(bn, o)
-            return o.raw.rjust(l_, chr(0))
+            return o.raw.rjust(l_, b'\x00')
 
     def _bn_deserialize(self, data):
         """Make a BigNum out of string"""

@@ -49,6 +49,6 @@ class TestOpenSSL(unittest.TestCase):
             c = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(a))
             OpenSSL.BN_bn2binpad(a, b, OpenSSL.BN_num_bytes(n))
             OpenSSL.BN_bn2bin(a, c)
-            if b.raw != c.raw.rjust(OpenSSL.BN_num_bytes(n), chr(0)):
+            if b.raw != c.raw.rjust(OpenSSL.BN_num_bytes(n), b'\x00'):
                 bad += 1
         self.assertEqual(bad, 0)

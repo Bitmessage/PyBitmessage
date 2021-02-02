@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Asymmetric cryptography using elliptic curves
 """
@@ -10,9 +8,9 @@ Asymmetric cryptography using elliptic curves
 from hashlib import sha512
 from struct import pack, unpack
 
-from cipher import Cipher
-from hash import equals, hmac_sha256
-from openssl import OpenSSL
+from .cipher import Cipher
+from .hash import equals, hmac_sha256
+from .openssl import OpenSSL
 
 
 class ECC(object):
