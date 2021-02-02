@@ -23,13 +23,20 @@ sample_pubsigningkey = unhexlify(
 sample_pubencryptionkey = unhexlify(
     '044597d59177fc1d89555d38915f581b5ff2286b39d022ca0283d2bdd5c36be5d3c'
     'e7b9b97792327851a562752e4b79475d1f51f5a71352482b241227f45ed36a9')
-sample_privatesigningkey = \
+sample_privsigningkey = \
     '93d0b61371a54b53df143b954035d612f8efa8a3ed1cf842c2186bfd8f876665'
-sample_privateencryptionkey = \
+sample_privencryptionkey = \
     '4b0b73a54e19b059dc274ab69df095fe699f43b17397bca26fdf40f4d7400a3a'
-sample_ripe = '003cd097eb7f35c87b5dc8b4538c22cb55312a9f'
+sample_ripe = b'003cd097eb7f35c87b5dc8b4538c22cb55312a9f'
 # stream: 1, version: 2
 sample_address = 'BM-onkVu1KKL2UaUss5Upg9vXmqd3esTmV79'
+
+sample_factor = 66858749573256452658262553961707680376751171096153613379801854825275240965733
+# G * sample_factor
+sample_point = (
+    33567437183004486938355437500683826356288335339807546987348409590129959362313,
+    94730058721143827257669456336351159718085716196507891067256111928318063085006
+)
 
 _sha = hashlib.new('sha512')
 _sha.update(sample_pubsigningkey + sample_pubencryptionkey)
@@ -71,14 +78,20 @@ class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
 
 class TestAddresses(unittest.TestCase):
     """Test addresses manipulations"""
+    def test_base10_multiply(self):
+        """Test arithmetic.base10_multiply"""
+        self.assertEqual(
+            sample_point,
+            arithmetic.base10_multiply(arithmetic.G, sample_factor))
+
     def test_privtopub(self):
         """Generate public keys and check the result"""
         self.assertEqual(
-            arithmetic.privtopub(sample_privatesigningkey),
+            arithmetic.privtopub(sample_privsigningkey).encode(),
             hexlify(sample_pubsigningkey)
         )
         self.assertEqual(
-            arithmetic.privtopub(sample_privateencryptionkey),
+            arithmetic.privtopub(sample_privencryptionkey).encode(),
             hexlify(sample_pubencryptionkey)
         )
 
