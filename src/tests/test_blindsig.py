@@ -5,9 +5,7 @@ import os
 import unittest
 from hashlib import sha256
 
-from pybitmessage.pyelliptic.eccblind import ECCBlind
-from pybitmessage.pyelliptic.eccblindchain import ECCBlindChain
-from pybitmessage.pyelliptic.openssl import OpenSSL
+from pybitmessage.pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
 
 # pylint: disable=protected-access
 
@@ -36,12 +34,12 @@ class TestBlindSig(unittest.TestCase):
 
         # (3) Signature Generation
         signature_blinded = signer_obj.blind_sign(msg_blinded)
-        assert isinstance(signature_blinded, str)
+        assert isinstance(signature_blinded, bytes)
         self.assertEqual(len(signature_blinded), 32)
 
         # (4) Extraction
         signature = requester_obj.unblind(signature_blinded)
-        assert isinstance(signature, str)
+        assert isinstance(signature, bytes)
         self.assertEqual(len(signature), 65)
 
         self.assertNotEqual(signature, signature_blinded)
@@ -163,7 +161,7 @@ class TestBlindSig(unittest.TestCase):
                 output.extend(pubkey)
             output.extend(signature)
             signer_obj = child_obj
-        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=str(output))
+        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=bytes(output))
         self.assertTrue(verifychain.verify(msg=msg, value=1))
 
     def test_blind_sig_chain_wrong_ca(self):  # pylint: disable=too-many-locals
