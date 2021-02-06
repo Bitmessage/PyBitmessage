@@ -15,7 +15,8 @@ addons:
 install:
   - pip install -r requirements.txt
   - python setup.py install
+  - export PYTHONWARNINGS=all
 script:
   - python checkdeps.py
   - xvfb-run src/bitmessagemain.py -t
-  - python setup.py test
+  - python -bm tests
