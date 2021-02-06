@@ -378,11 +378,7 @@ class Main(object):
             test_core_result = test_core.run()
             self.stop()
             test_core.cleanup()
-            sys.exit(
-                'Core tests failed!'
-                if test_core_result.errors or test_core_result.failures
-                else 0
-            )
+            sys.exit(not test_core_result.wasSuccessful())
 
     @staticmethod
     def daemonize():
