@@ -30,12 +30,12 @@ class UpgradeDB():
         self.parameters = ""
 
         # Switch methods with respect to versions
-        if not version in range(1, 11):
-            # return None when its getting wrong input
-            return None
-        method_name = 'version_' + str(version)
-        method = getattr(self, method_name, lambda: "Invalid version")
-        return method()
+        if version in range(1, 11):
+            method_name = 'version_' + str(version)
+            method = getattr(self, method_name, lambda: "Invalid version")
+            return method()
+        # return None when its getting wrong input
+        return None
 
     def version_1(self):
         """
