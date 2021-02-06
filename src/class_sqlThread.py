@@ -23,9 +23,13 @@ from debug import logger
 class UpgradeDB():
     """Upgrade Db with respect to versions"""
 
-    def __init__(self, cur, version):
+    def __init__(self):
         """ Apply switcher to call methods accordingly """
+        self.cur = None
+        self.parameters = ""
 
+    def switcher(self, cur, version):
+        """ Apply switcher to call methods accordingly """
         self.cur = cur
         self.parameters = ""
 
@@ -439,7 +443,7 @@ class sqlThread(threading.Thread, UpgradeDB):
         self.cur.execute(item, parameters)
         currentVersion = int(self.cur.fetchall()[0][0])
         # Call upgrade class for upgrade DB
-        UpgradeDB(self.cur, currentVersion)
+        self.switcher(self.cur, currentVersion)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right
