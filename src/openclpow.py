@@ -1,16 +1,24 @@
-#!/usr/bin/env python2.7
 """
 Module for Proof of Work using OpenCL
 """
+import logging
 import os
 from struct import pack
 
 import paths
 from bmconfigparser import BMConfigParser
-from debug import logger
 from state import shutdown
 
-libAvailable = True
+try:
+    import numpy
+    import pyopencl as cl
+    libAvailable = True
+except ImportError:
+    libAvailable = False
+
+
+logger = logging.getLogger('default')
+
 ctx = False
 queue = False
 program = False
@@ -19,17 +27,10 @@ enabledGpus = []
 vendors = []
 hash_dt = None
 
-try:
-    import pyopencl as cl
-    import numpy
-except ImportError:
-    libAvailable = False
-
 
 def initCL():
     """Initlialise OpenCL engine"""
-    # pylint: disable=global-statement
-    global ctx, queue, program, hash_dt, libAvailable
+    global ctx, queue, program, hash_dt  # pylint: disable=global-statement
     if libAvailable is False:
         return
     del enabledGpus[:]
