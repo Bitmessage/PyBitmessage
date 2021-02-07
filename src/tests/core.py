@@ -343,15 +343,6 @@ class TestCore(unittest.TestCase):
         self.assertEqual(queryreturn[0][0], 1)
         self.delete_address_from_addressbook(self.addr)
 
-    def test_is_own_address_add_to_addressbook(self):
-        """Checking own address adding in addressbook"""
-        from helper_addressGenerator import createAddressIfNeeded
-        try:
-            address = createAddressIfNeeded('test1')
-            self.assertFalse(helper_addressbook.insert(label='test', address=address))
-        except IndexError:
-            self.fail("Can't generate addresses")
-
     def test_adding_two_same_case_sensitive_addresses(self):
         """Testing same case sensitive address store in addressbook"""
         address1 = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'
