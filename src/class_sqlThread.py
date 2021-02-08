@@ -23,25 +23,53 @@ from debug import logger
 class UpgradeDB():
     """Upgrade Db with respect to versions"""
 
-    def __init__(self):
-        """ Apply switcher to call methods accordingly """
-        self.cur = None
-        self.parameters = ""
-
-    def switcher(self, cur, version):
-        """ Apply switcher to call methods accordingly """
+    def __init__(self, cur):
+        """ init variables globally """
         self.cur = cur
         self.parameters = ""
+        self.current_level = self.get_current_level()
+        self.max_level = 11
 
-        # Switch methods with respect to versions
-        if version in range(1, 11):
-            method_name = 'version_' + str(version)
-            method = getattr(self, method_name, lambda: "Invalid version")
-            return method()
-        # return None when its getting wrong input
-        return None
+    def get_current_level(self):
+        # Upgrade Db with respect to their versions
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        return int(self.cur.fetchall()[0][0])
 
-    def version_1(self):
+    def upgrade_one_level(self, level):
+        """ Apply switcher to call methods accordingly """
+
+        if level != self.get_current_level():
+            return None
+
+        # Migrate Db with level
+        method_name = 'upgrade_schema_data_' + str(level)
+        method = getattr(self, method_name, lambda: "Invalid version")
+        return method()
+
+    def upgrade_to_latest(self, cur):
+        """
+            Initialise upgrade level
+        """
+
+        # Declare variables
+        self.cur = cur
+        self.current_level = self.get_current_level()
+        self.max_level = 11
+
+        # call upgrading level in loop
+        for l in range(self.current_level, self.max_level):
+            self.upgrade_one_level(l)
+            self.upgrade_schema_data_level(l)
+
+    def upgrade_schema_data_level(self, level):
+        print "------------- Call upgrade level ", level
+        item = '''update settings set value=? WHERE key='version';'''
+        parameters = (level + 1,)
+        self.cur.execute(item, parameters)
+
+    def upgrade_schema_data_1(self):
         """
             For version 1 and 3
             Add a new column to the inventory table to store tags.
@@ -53,11 +81,8 @@ class UpgradeDB():
         item = '''ALTER TABLE inventory ADD tag blob DEFAULT '' '''
         parameters = ''
         self.cur.execute(item, parameters)
-        item = '''update settings set value=? WHERE key='version';'''
-        parameters = (4,)
-        self.cur.execute(item, parameters)
 
-    def version_2(self):
+    def upgrade_schema_data_2(self):
         """
             For version 2
             Let's get rid of the first20bytesofencryptedmessage field in the inventory table.
@@ -82,18 +107,16 @@ class UpgradeDB():
             '''INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime'''
             ''' FROM inventory_backup;''')
         self.cur.execute('''DROP TABLE inventory_backup;''')
-        item = '''update settings set value=? WHERE key='version';'''
-        parameters = (3,)
-        self.cur.execute(item, parameters)
 
-    def version_3(self):
+    def upgrade_schema_data_3(self):
         """
             For version 3
             Call method for version 1
         """
-        self.version_1()
 
-    def version_4(self):
+        self.upgrade_schema_data_1()
+
+    def upgrade_schema_data_4(self):
         """
             For version 4
             Add a new column to the pubkeys table to store the address version.
@@ -106,11 +129,8 @@ class UpgradeDB():
             '''usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''')
         self.cur.execute(
             '''delete from inventory where objecttype = 'pubkey';''')
-        item = '''update settings set value=? WHERE key='version';'''
-        parameters = (5,)
-        self.cur.execute(item, parameters)
 
-    def version_5(self):
+    def upgrade_schema_data_5(self):
         """
             For version 5
             Add a new table: objectprocessorqueue with which to hold objects
@@ -121,11 +141,8 @@ class UpgradeDB():
         self.cur.execute(
             '''CREATE TABLE objectprocessorqueue'''
             ''' (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
-        item = '''update settings set value=? WHERE key='version';'''
-        parameters = (6,)
-        self.cur.execute(item, parameters)
 
-    def version_6(self):
+    def upgrade_schema_data_6(self):
         """
             For version 6
             Changes related to protocol v3
@@ -145,13 +162,8 @@ class UpgradeDB():
         self.cur.execute(
             '''CREATE TABLE objectprocessorqueue'''
             ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
-        item = '''update settings set value=? WHERE key='version';'''
-        parameters = (7,)
-        self.cur.execute(item, parameters)
-        logger.debug(
-            'Finished dropping and recreating the inventory table.')
 
-    def version_7(self):
+    def upgrade_schema_data_7(self):
         """
             For version 7
             The format of data stored in the pubkeys table has changed. Let's
@@ -166,33 +178,25 @@ class UpgradeDB():
             '''delete from inventory where objecttype = 1;''')
         self.cur.execute(
             '''delete from pubkeys;''')
-        # Any sending messages for which we *thought* that we had
-        # the pubkey must be rechecked.
         self.cur.execute(
             '''UPDATE sent SET status='msgqueued' WHERE status='doingmsgpow' or status='badkey';''')
-        query = '''update settings set value=? WHERE key='version';'''
-        parameters = (8,)
-        self.cur.execute(query, parameters)
-        logger.debug('Finished clearing currently held pubkeys.')
 
-    def version_8(self):
+    def upgrade_schema_data_8(self):
         """
             For version 8
             Add a new column to the inbox table to store the hash of
             the message signature. We'll use this as temporary message UUID
             in order to detect duplicates.
         """
+
         logger.debug(
             'In messages.dat database, adding sighash field to'
             ' the inbox table.')
         item = '''ALTER TABLE inbox ADD sighash blob DEFAULT '' '''
         parameters = ''
         self.cur.execute(item, parameters)
-        item = '''update settings set value=? WHERE key='version';'''
-        parameters = (9,)
-        self.cur.execute(item, parameters)
 
-    def version_9(self):
+    def upgrade_schema_data_9(self):
         """
             For version 9
             We'll also need a `sleeptill` field and a `ttl` field. Also we
@@ -204,6 +208,7 @@ class UpgradeDB():
             ' combining the pubkeyretrynumber and msgretrynumber'
             ' fields into the retrynumber field and adding the'
             ' sleeptill and ttl fields...')
+
         self.cur.execute(
             '''CREATE TEMPORARY TABLE sent_backup'''
             ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
@@ -227,7 +232,7 @@ class UpgradeDB():
         logger.debug('In messages.dat database, adding address field to the pubkeys table.')
         # We're going to have to calculate the address for each row in the pubkeys
         # table. Then we can take out the hash field.
-        self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
+        self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT ''')
         self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
         queryResult = self.cur.fetchall()
         from addresses import encodeAddress
@@ -257,9 +262,9 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, done adding address field to the pubkeys table'
             ' and removing the hash field.')
-        self.cur.execute('''update settings set value=10 WHERE key='version';''')
+        # self.cur.execute('''update settings set value=10 WHERE key='version';''')
 
-    def version_10(self):
+    def upgrade_schema_data_10(self):
         """
             For version 10
             Update the address colunm to unique in addressbook table
@@ -276,7 +281,7 @@ class UpgradeDB():
         self.cur.execute(
             '''INSERT INTO addressbook SELECT label, address FROM old_addressbook;''')
         self.cur.execute('''DROP TABLE old_addressbook''')
-        self.cur.execute('''update settings set value=11 WHERE key='version';''')
+        # self.cur.execute('''update settings set value=11 WHERE key='version';''')
 
 
 class sqlThread(threading.Thread, UpgradeDB):
@@ -438,12 +443,7 @@ class sqlThread(threading.Thread, UpgradeDB):
         self.conn.commit()
 
         # Upgrade Db with respect to their versions
-        item = '''SELECT value FROM settings WHERE key='version';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
-        currentVersion = int(self.cur.fetchall()[0][0])
-        # Call upgrade class for upgrade DB
-        self.switcher(self.cur, currentVersion)
+        self.upgrade_to_latest(self.cur)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right
