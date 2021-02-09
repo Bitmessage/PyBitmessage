@@ -158,6 +158,8 @@ class UpgradeDB():
         self.cur.execute(
             '''CREATE TABLE objectprocessorqueue'''
             ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+        logger.debug(
+            'Finished dropping and recreating the inventory table.')
 
     def upgrade_schema_data_7(self):
         """
@@ -174,8 +176,11 @@ class UpgradeDB():
             '''delete from inventory where objecttype = 1;''')
         self.cur.execute(
             '''delete from pubkeys;''')
+        # Any sending messages for which we *thought* that we had
+        # the pubkey must be rechecked.
         self.cur.execute(
             '''UPDATE sent SET status='msgqueued' WHERE status='doingmsgpow' or status='badkey';''')
+        logger.debug('Finished clearing currently held pubkeys.')
 
     def upgrade_schema_data_8(self):
         """
@@ -204,7 +209,6 @@ class UpgradeDB():
             ' combining the pubkeyretrynumber and msgretrynumber'
             ' fields into the retrynumber field and adding the'
             ' sleeptill and ttl fields...')
-
         self.cur.execute(
             '''CREATE TEMPORARY TABLE sent_backup'''
             ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
@@ -228,7 +232,7 @@ class UpgradeDB():
         logger.debug('In messages.dat database, adding address field to the pubkeys table.')
         # We're going to have to calculate the address for each row in the pubkeys
         # table. Then we can take out the hash field.
-        self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT ''')
+        self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
         self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
         queryResult = self.cur.fetchall()
         from addresses import encodeAddress
@@ -258,7 +262,6 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, done adding address field to the pubkeys table'
             ' and removing the hash field.')
-        # self.cur.execute('''update settings set value=10 WHERE key='version';''')
 
     def upgrade_schema_data_10(self):
         """
@@ -277,8 +280,6 @@ class UpgradeDB():
         self.cur.execute(
             '''INSERT INTO addressbook SELECT label, address FROM old_addressbook;''')
         self.cur.execute('''DROP TABLE old_addressbook''')
-        # self.cur.execute('''update settings set value=11 WHERE key='version';''')
-
 
 class sqlThread(threading.Thread, UpgradeDB):
     """A thread for all SQL operations"""
@@ -438,7 +439,6 @@ class sqlThread(threading.Thread, UpgradeDB):
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
 
-        # Upgrade Db with respect to their versions
         self.upgrade_to_latest(self.cur)
 
         # Are you hoping to add a new option to the keys.dat file of existing
