@@ -22,13 +22,10 @@ from debug import logger
 
 class UpgradeDB():
     """Upgrade Db with respect to versions"""
-
-    def __init__(self, cur):
-        """ init variables globally """
-        self.cur = cur
-        self.parameters = ""
-        self.current_level = self.get_current_level()
-        self.max_level = 11
+    cur = None
+    parameters = None
+    current_level = None
+    max_level = 11
 
     def get_current_level(self):
         # Upgrade Db with respect to their versions
@@ -64,13 +61,12 @@ class UpgradeDB():
             self.upgrade_schema_data_level(l)
 
     def upgrade_schema_data_level(self, level):
-        print "------------- Call upgrade level ", level
         item = '''update settings set value=? WHERE key='version';'''
         parameters = (level + 1,)
         self.cur.execute(item, parameters)
 
     def upgrade_schema_data_1(self):
-        """
+        """inventory
             For version 1 and 3
             Add a new column to the inventory table to store tags.
         """
