@@ -532,7 +532,10 @@ class MyAddress(Screen):
             try:
                 meny.canvas.children[6].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
-                meny.canvas.children[9].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
+                try:
+                    meny.canvas.children[9].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
+                except Exception as e:
+                    print('Exception: ', e)
             meny.add_widget(AvatarSampleWidget(
                 source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['text'].strip()))))
@@ -620,6 +623,7 @@ class MyAddress(Screen):
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
             self.tick = 0
+            Clock.schedule_once(self.address_permision_callback, 0)
         Clock.schedule_once(refresh_callback, 1)
 
     @staticmethod
@@ -1948,24 +1952,25 @@ class NavigateApp(MDApp):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data"""
-        if os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(text)):
-            self.load_selected_Image(text)
-        else:
-            self.set_identicon(text)
-            self.root.ids.content_drawer.ids.reset_image.opacity = 0
-            self.root.ids.content_drawer.ids.reset_image.disabled = True
-        address_label = self.current_address_label(
-            BMConfigParser().get(text, 'label'), text)
-        self.root_window.children[1].ids.toolbar.title = address_label
-        state.association = text
-        state.searcing_text = ''
-        LoadingPopup().open()
-        self.set_message_count()
-        for nav_obj in self.root.ids.content_drawer.children[
-                0].children[0].children[0].children:
-            nav_obj.active = True if nav_obj.text == 'Inbox' else False
-        self.fileManagerSetting()
-        Clock.schedule_once(self.setCurrentAccountData, 0.5)
+        if text != '':
+            if os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(text)):
+                self.load_selected_Image(text)
+            else:
+                self.set_identicon(text)
+                self.root.ids.content_drawer.ids.reset_image.opacity = 0
+                self.root.ids.content_drawer.ids.reset_image.disabled = True
+            address_label = self.current_address_label(
+                BMConfigParser().get(text, 'label'), text)
+            self.root_window.children[1].ids.toolbar.title = address_label
+            state.association = text
+            state.searcing_text = ''
+            LoadingPopup().open()
+            self.set_message_count()
+            for nav_obj in self.root.ids.content_drawer.children[
+                    0].children[0].children[0].children:
+                nav_obj.active = True if nav_obj.text == 'Inbox' else False
+            self.fileManagerSetting()
+            Clock.schedule_once(self.setCurrentAccountData, 0.5)
 
     def fileManagerSetting(self):
         """This method is for file manager setting"""
@@ -3183,6 +3188,8 @@ class CustomSpinner(Spinner):
         """Method used for setting size of spinner"""
         super(CustomSpinner, self).__init__(*args, **kwargs)
         self.dropdown_cls.max_height = Window.size[1] / 3
+        self.values = list(addr for addr in BMConfigParser().addresses()
+                        if BMConfigParser().get(str(addr), 'enabled') == 'true')
 
 
 class Allmails(Screen):
