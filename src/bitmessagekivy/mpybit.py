@@ -3189,7 +3189,7 @@ class CustomSpinner(Spinner):
         super(CustomSpinner, self).__init__(*args, **kwargs)
         self.dropdown_cls.max_height = Window.size[1] / 3
         self.values = list(addr for addr in BMConfigParser().addresses()
-                        if BMConfigParser().get(str(addr), 'enabled') == 'true')
+                           if BMConfigParser().get(str(addr), 'enabled') == 'true')
 
 
 class Allmails(Screen):
