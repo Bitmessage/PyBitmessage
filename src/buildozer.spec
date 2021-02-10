@@ -41,7 +41,7 @@ requirements =
 	android,
 	openssl, 
 	sqlite3,
-	kivy,
+	kivy==1.11.1,
 	pyjnius==1.2.1,
 	libiconv,
 	libzbar,
