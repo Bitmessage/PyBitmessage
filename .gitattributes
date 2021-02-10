@@ -1,0 +1,3 @@
+# Pickle files (for testing) should always have UNIX line endings.
+# Windows issue like here https://stackoverflow.com/questions/556269
+knownnodes.dat text eol=lf
