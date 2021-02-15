@@ -749,7 +749,7 @@ class dispatcher(object):
     def log_info(self, message, log_type='info'):
         """Conditionally print a message"""
         if log_type not in self.ignore_log_types:
-            print '%s: %s' % (log_type, message)
+            print('%s: %s' % (log_type, message))
 
     def handle_read_event(self):
         """Handle a read event"""
