@@ -849,8 +849,7 @@ class MyForm(settingsmixin.SMainWindow):
         """
         startonlogon = BMConfigParser().safeGetBoolean(
             'bitmessagesettings', 'startonlogon')
-        if 'win32' in sys.platform or 'win64' in sys.platform:
-            # Auto-startup for Windows
+        if sys.platform.startswith('win'):  # Auto-startup for Windows
             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
             settings = QtCore.QSettings(
                 RUN_PATH, QtCore.QSettings.NativeFormat)
@@ -860,8 +859,12 @@ class MyForm(settingsmixin.SMainWindow):
                 settings.setValue("PyBitmessage", sys.argv[0])
             else:
                 settings.remove("PyBitmessage")
-        elif self.desktop:
-            self.desktop.adjust_startonlogon(startonlogon)
+        else:
+            try:  # get desktop plugin if any
+                self.desktop = get_plugin('desktop')()
+                self.desktop.adjust_startonlogon(startonlogon)
+            except (NameError, TypeError):
+                self.desktop = False
 
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
@@ -1428,13 +1431,6 @@ class MyForm(settingsmixin.SMainWindow):
         """
         def _noop_update(*args, **kwargs):
             pass
-
-        # get desktop plugin if any
-        if 'win' not in sys.platform:
-            try:
-                self.desktop = get_plugin('desktop')()
-            except TypeError:
-                self.desktop = False
 
         try:
             self.indicatorUpdate = get_plugin('indicator')(self)
