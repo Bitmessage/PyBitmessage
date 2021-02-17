@@ -195,6 +195,7 @@ class TestProcess(TestProcessProto):
         """Check PyBitmessage process name"""
         self.assertEqual(self.process.name(), 'PyBitmessage')
 
+    @unittest.skipIf(psutil.version_info < (4, 0), 'psutil is too old')
     def test_home(self):
         """Ensure BITMESSAGE_HOME is used by process"""
         self.assertEqual(
@@ -204,7 +205,7 @@ class TestProcess(TestProcessProto):
         """Check that pybitmessage listens on port 8444"""
         for c in self.process.connections():
             if c.status == 'LISTEN':
-                self.assertEqual(c.laddr.port, 8444)
+                self.assertEqual(c.laddr[1], 8444)
                 break
 
     def test_files(self):
