@@ -1413,7 +1413,8 @@ class MyForm(settingsmixin.SMainWindow):
     def notifierInit(self):
         def _simple_notify(
                 title, subtitle, category, label=None, icon=None):
-            self.tray.showMessage(title, subtitle, 1, 2000)
+            self.tray.showMessage(
+                title, subtitle, self.tray.NoIcon, msecs=2000)
 
         self._notifier = _simple_notify
 
