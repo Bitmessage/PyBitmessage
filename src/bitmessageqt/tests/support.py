@@ -31,3 +31,5 @@ class TestSupport(TestBase):
             ui.lineEditSubject.text(), self.SUPPORT_SUBJECT)
         self.assertIn(
             sys.version, ui.textEditMessage.toPlainText())
+
+        self.take_screenshot()
