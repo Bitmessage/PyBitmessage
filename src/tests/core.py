@@ -406,6 +406,9 @@ def run():
         qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
         suite.addTests(qt_tests)
 
+    import plugins.tests
+    suite.addTests(loader.loadTestsFromModule(plugins.tests))
+
     def keep_exc(ex_cls, exc, tb):  # pylint: disable=unused-argument
         """Own exception hook for test cases"""
         excQueue.put(('tests', exc))
