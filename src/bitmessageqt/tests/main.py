@@ -34,7 +34,7 @@ class TestBase(unittest.TestCase):
                 self.fail('Exception in the main thread: %s' % exc)
 
 
-class TestMain(unittest.TestCase):
+class TestMain(TestBase):
     """Test case for main window - basic features"""
 
     def test_translate(self):
@@ -43,6 +43,11 @@ class TestMain(unittest.TestCase):
             _translate("MainWindow", "Test"),
             QtCore.QString
         )
+
+    @unittest.skipIf(bitmessageqt.get_plugins, 'skip plugin absence test')
+    def test_sound(self):
+        """Check if playing sound raises an exception if there is no plugin"""
+        self.window.playSound(bitmessageqt.sound.SOUND_CONNECTED, None)
 
 
 class TestUISignaler(TestBase):
