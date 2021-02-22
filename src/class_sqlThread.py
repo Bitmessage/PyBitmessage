@@ -17,7 +17,7 @@ import state
 import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
-pylint: disable=attribute-defined-outside-init,protected-access
+# pylint: disable=attribute-defined-outside-init,protected-access
 
 
 class UpgradeDB():
@@ -70,7 +70,6 @@ class UpgradeDB():
             For version 1 and 3
             Add a new column to the inventory table to store tags.
         """
-
         logger.debug(
             'In messages.dat database, adding tag field to'
             ' the inventory table.')
