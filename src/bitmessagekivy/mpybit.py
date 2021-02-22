@@ -1937,6 +1937,11 @@ class NavigateApp(MDApp):
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
+    # @staticmethod
+    def clickNavDrawer(self):
+        # import pdb;pdb.set_trace()
+        state.kivyapp.root.ids.nav_drawer.set_state('toggle')
+
     @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown"""
