@@ -8,6 +8,7 @@ import time
 import protocol
 import state
 from bmproto import BMProto
+from constants import MAX_TIME_OFFSET
 from node import Peer
 from objectracker import ObjectTracker
 from queues import receiveDataQueue
@@ -81,8 +82,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if (seenTime < time.time() - self.maxTimeOffset
-                    or seenTime > time.time() + self.maxTimeOffset):
+            if (seenTime < time.time() - MAX_TIME_OFFSET
+                    or seenTime > time.time() + MAX_TIME_OFFSET):
                 continue
             if decodedIP is False:
                 # if the address isn't local, interpret it as
@@ -93,9 +94,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         logger.debug(
             "received peer discovery from %s:%i (port %i):",
             self.destination.host, self.destination.port, remoteport)
-        if self.local:
-            state.discoveredPeers[Peer(self.destination.host, remoteport)] = \
-                time.time()
+        state.discoveredPeers[Peer(self.destination.host, remoteport)] = \
+            time.time()
         return True
 
     def bm_command_portcheck(self):
