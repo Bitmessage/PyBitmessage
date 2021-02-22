@@ -17,7 +17,7 @@ import state
 import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
-# pylint: disable=attribute-defined-outside-init,protected-access
+pylint: disable=attribute-defined-outside-init,protected-access
 
 
 class UpgradeDB():
@@ -308,7 +308,7 @@ class sqlThread(threading.Thread, UpgradeDB):
             self.cur.execute(
                 '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
             self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text''')
+                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
             self.cur.execute(
                 '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
             self.cur.execute(
@@ -324,7 +324,7 @@ class sqlThread(threading.Thread, UpgradeDB):
                 '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
-            self.cur.execute('''INSERT INTO settings VALUES('version','10')''')
+            self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
             self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
