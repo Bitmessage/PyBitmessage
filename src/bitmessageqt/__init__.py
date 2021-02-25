@@ -3,6 +3,7 @@ PyQt based UI for bitmessage, the main module
 """
 
 import hashlib
+import logging
 import os
 import random
 import string
@@ -19,7 +20,6 @@ from PyQt4.QtNetwork import QLocalSocket, QLocalServer
 
 import shared
 import state
-from debug import logger
 from tr import _translate
 from addresses import decodeAddress, addBMIfNotPresent
 from bmconfigparser import BMConfigParser
@@ -57,6 +57,8 @@ try:
     from plugins.plugin import get_plugin, get_plugins
 except ImportError:
     get_plugins = False
+
+logger = logging.getLogger('default')
 
 
 # TODO: rewrite

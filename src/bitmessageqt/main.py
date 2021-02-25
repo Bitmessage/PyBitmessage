@@ -1,3 +1,4 @@
+import logging
 import locale
 import os
 import sys
@@ -8,7 +9,6 @@ import paths
 import settingsmixin
 import widgets
 from bmconfigparser import BMConfigParser
-from debug import logger
 from foldertree import AddressBookCompleter
 from tr import _translate
 
@@ -19,6 +19,8 @@ class Window(settingsmixin.SMainWindow):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
         widgets.load('main.ui', self)
+
+        self.logger = logging.getLogger('default')
 
         self.qmytranslator = self.qsystranslator = None
         self.blackwhitelist.rerenderBlackWhiteList()
@@ -143,7 +145,7 @@ class Window(settingsmixin.SMainWindow):
                     l10n.encoding = locale.nl_langinfo(locale.CODESET)
                 else:
                     l10n.encoding = locale.getlocale()[1]
-                logger.info("Successfully set locale to %s", lang)
+                self.logger.info("Successfully set locale to %s", lang)
                 break
             except:
-                logger.error("Failed to set locale to %s", lang, exc_info=True)
+                self.logger.error("Failed to set locale to %s", lang, exc_info=True)
