@@ -1500,8 +1500,7 @@ class MainWindow(Window):
             "MainWindow",
             "New version of PyBitmessage is available: %1. Download it"
             " from https://github.com/Bitmessage/PyBitmessage/releases/latest"
-            ).arg(self.notifiedNewVersion)
-        )
+        ).arg(self.notifiedNewVersion))
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
         self.updateStatusBar(text)
@@ -1510,17 +1509,25 @@ class MainWindow(Window):
             os._exit(0)
 
     def rerenderMessagelistFromLabels(self):
-        for messagelist in (self.tableWidgetInbox, self.tableWidgetInboxChans, self.tableWidgetInboxSubscriptions):
+        for messagelist in (
+            self.tableWidgetInbox,
+            self.tableWidgetInboxChans,
+            self.tableWidgetInboxSubscriptions
+        ):
             for i in range(messagelist.rowCount()):
                 messagelist.item(i, 1).setLabel()
 
     def rerenderMessagelistToLabels(self):
-        for messagelist in (self.tableWidgetInbox, self.tableWidgetInboxChans, self.tableWidgetInboxSubscriptions):
+        for messagelist in (
+            self.tableWidgetInbox,
+            self.tableWidgetInboxChans,
+            self.tableWidgetInboxSubscriptions
+        ):
             for i in range(messagelist.rowCount()):
                 messagelist.item(i, 0).setLabel()
 
     def rerenderAddressBook(self):
-        def addRow (address, label, type):
+        def addRow(address, label, type):
             self.tableWidgetAddressBook.insertRow(0)
             newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
             self.tableWidgetAddressBook.setItem(0, 0, newItem)
