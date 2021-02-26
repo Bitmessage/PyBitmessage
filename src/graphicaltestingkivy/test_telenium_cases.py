@@ -5,6 +5,7 @@ import string
 import  os
 data=[]
 
+
 class Bitmessage_Create_New_Address(TeleniumTestCase):
     """Generate New Address Functionality Testing"""
 
@@ -57,17 +58,14 @@ class Bitmessage_Select_Address(TeleniumTestCase):
         """Select First Address From Drawer-Box"""
         print("=====================Test - Select First Address From Drawer-Box=======================")
         time.sleep(3)
-        # self.cli.execute('app.root.toggle_nav_drawer()')
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(2)
-        # self.cli.drag("//NavigationDrawerSubheader[@text=\"All labels\"]","//NavigationDrawerIconButton[@text=\"Address Book\"]",2)
         self.cli.drag("//NavigationItem[@text=\"Address Book\"]","//NavigationItem[@text=\"Settings\"]",1)
         time.sleep(2)
-        # self.cli.click_on('//NavigationDrawerIconButton[0]')
         self.cli.click_on('//NavigationItem[0]')
         time.sleep(2)
-        self.cli.click_on('//NDBadgeLabel[1]')
-        # self.cli.click_on('//NavigationItem[0]/CustomSpinner[1]')
+        self.cli.click_on('//MySpinnerOption[0]')
 
     def test_calling_all_methods(self):
         self.test_select_second_address()
@@ -87,51 +85,35 @@ class Bitmessage_Inbox_Screen_Message(TeleniumTestCase):
         time.sleep(3)
         self.cli.click_on('//NavigationItem[0]')
         time.sleep(3)
-        # self.cli.click_on('//NavigationItem[0]/CustomSpinner[0]/ArrowImg[1]')
-        self.cli.click_on('//NDBadgeLabel[2]')
+        self.cli.click_on('//MySpinnerOption[1]')
         time.sleep(2)
 
     def test_show_inbox_message(self):
         """Select First Message from Inbox Screen"""
         print("=====================Test - Select First Message from Inbox Screen=====================")
         time.sleep(1)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(4)
         self.cli.click_on('//TwoLineAvatarIconListItem[0]')
         time.sleep(3)
         self.cli.click_on('//MDIconButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[0]/MDToolbar[0]/BoxLayout[0]/MDIconButton[0]/MDLabel[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[0]/MDIconButton[0]/MDLabel[0]')
         time.sleep(3)
 
     def test_delete_inbox_message(self):
         """Deleting Message From Inbox Screen"""
         print("=====================Test - Deleting Message From Inbox Screen=====================")
-        # time.sleep(4)
-        self.cli.drag('//TwoLineAvatarIconListItem[0]','//Button[@text=\"Delete\"]',1)
-        # self.cli.drag('//Inbox/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]//Button[0]',
-            # '//Inbox/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[0]//TwoLineAvatarIconListItem[0]',1)
-
-        # self.cli.drag('/NavigationLayout/ScreenManager[0]/Inbox[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[0]/TwoLineAvatarIconListItem[0]/BoxLayout[1]',
-        #               '/NavigationLayout/ScreenManager[0]/Inbox[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]', 1)
-        # self.cli.drag(
-        #     '/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[2]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[1]',
-        #     '/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]',1)
+        time.sleep(4)
+        self.cli.drag('//Inbox/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[0]',
+            '//Inbox/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2)
         time.sleep(2)
-        # self.cli.click_on('//Carousel//Button[0]')
-        # self.cli.click_on("//Button[@text=\"Delete\"]")
-        # self.cli.click_on('//Inbox/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]//Carousel//TwoLineAvatarIconListItem[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]')
+        self.cli.click_on('//Inbox/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
         time.sleep(4)
 
     def test_all_inbox_method(self):
         """Calling All The Methods Inbox Class"""
-        # self.test_select_inbox_of_second_address()
-        print('line....................................11117')
-        # self.test_show_inbox_message()
-        print('line....................................11119')
+        self.test_select_inbox_of_second_address()
+        self.test_show_inbox_message()
         self.test_delete_inbox_message()
-        print('line....................................11121')
 
 
 class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
@@ -146,68 +128,49 @@ class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
         print("=====================Test - Sending Message From Inbox Screen=====================")
         time.sleep(2)
         self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         time.sleep(1)
         self.cli.click_on('//NavigationItem[1]')
         time.sleep(1)
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/ComposerButton[0]/MDFloatingActionButton[0]/MDLabel[0]')
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MyMDTextField[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDTextField[0]')
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]')
         time.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]', "text", "second add")
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]',"text","second add")
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]')
         time.sleep(4)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]')
         time.sleep(4)
-        # time.sleep(3)
-        # print('line........................1544444444444444444444444444444')
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(3)
-        # self.cli.click_on('//MDRaisedButton[0]')
         self.cli.click_on('//MDFlatButton[0]')
         time.sleep(5)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         time.sleep(2)
         self.cli.click_on('//MyTextInput[0]')
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]')
         time.sleep(2)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'heyyyyyy')
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]','text','heyyyyyy')
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]')
         time.sleep(4)
         random_label=""
         for char in "how are you this is message body":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]','text',random_label)
-            # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]','text',random_label)
             time.sleep(0.2)
         time.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(3)
-        # self.cli.click_on('//MDRaisedButton[0]')
         self.cli.click_on('//MDFlatButton[0]')
         time.sleep(6)
-        data = ['BM-2cURvaNogjXN48LvbNHZrjLx8QEkTMkETZ']
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',"text",data[0])
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]',"text",data[0])
         time.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(3)
-        # self.cli.click_on('//MDRaisedButton[0]')
         self.cli.click_on('//MDFlatButton[0]')
         time.sleep(3)       
    
@@ -216,37 +179,29 @@ class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
         for testing the search and delete functionality for two messages on the screen"""
         print("=====================Test - Sending Message From Inbox Screen=====================")
         time.sleep(3)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         time.sleep(5)
         self.cli.click_on('//NavigationItem[1]')
         time.sleep(3)
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/ComposerButton[0]/MDFloatingActionButton[0]/MDLabel[0]')
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         time.sleep(2)
         self.cli.click_on('//MyTextInput[0]')
         time.sleep(3)
-        data = ['BM-2cTjZyTDskQXEjJHEP3QFUKBbnojPtAfaC']
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text", data[0])
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]',"text",data[0])
         time.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Second')
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]','text','Second')
         time.sleep(3)
         random_label=""
         for char in "Hey This Is Second Message Body":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]',"text",random_label)
-            # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]','text',random_label)
             time.sleep(0.2)
         time.sleep(2)
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(5)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(3)
         self.cli.click_on('//NavigationItem[2]')
         time.sleep(3)
@@ -256,12 +211,10 @@ class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
         print("=====================Test - Show Sent Screen Message=====================")
         time.sleep(5)
         self.cli.execute('app.clickNavDrawer()')
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         time.sleep(5)
         self.cli.click_on('//NavigationItem[0]')
         time.sleep(5)
-        self.cli.click_on('//NDBadgeLabel[1]')
-        self.cli.click_on('//NavigationItem[0]') #need to remove33 I have only put it because spinner is not workng 
+        self.cli.click_on('//MySpinnerOption[0]')
         time.sleep(6)
         self.cli.click_on('//NavigationItem[2]')
         time.sleep(2)
@@ -271,10 +224,8 @@ class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
         print("=====================Test - Search Message On The Sent Screen=====================")
         time.sleep(1)
         self.cli.click_on('//Sent/BoxLayout[0]/SearchBar[0]/MDTextField[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Sent[0]/BoxLayout[0]/SearchBar[0]/MDTextField[0]')
         time.sleep(2)
         self.cli.setattr('//Sent/BoxLayout[0]/SearchBar[0]/MDTextField[0]', 'text', 'how')
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Sent[0]/BoxLayout[0]/SearchBar[0]/MDTextField[0]','text','how')
         time.sleep(2)
         self.cli.send_keycode('Enter')
         time.sleep(5)
@@ -288,7 +239,6 @@ class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
         self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
         time.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[0]/MDIconButton[0]/MDLabel[0]')
         time.sleep(2)
 
     def test_delete_sent_message_body(self):
@@ -296,23 +246,18 @@ class Bitmessage_Sent_Screen_Message(TeleniumTestCase):
         print("=====================Test - Delete A Message From Message Body=====================")
         time.sleep(2)
         self.cli.click_on('//Sent/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Sent[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[2]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[2]')
         time.sleep(3)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[2]/MDIconButton[0]/MDLabel[0]')
         time.sleep(5)
 
     def test_delete_sent_message_from_list(self):
         """Delete A Message From List Of Messages Of Sent Screen"""
         print("=====================Test - Delete A Message From List Of Messages=====================")
         time.sleep(5)
-        # self.cli.drag('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Sent[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[2]/TwoLineAvatarIconListItem[0]/BoxLayout[1]',
-        #     '/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Sent[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]',1)
         self.cli.drag('//Sent/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[0]',
             '//Sent/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2)
         time.sleep(4)
         self.cli.click_on('//Sent/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Sent[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]')
 
     def test_archive_sent_message_from_list(self):
         """Archive A Message From List Of Messages Of Sent Screen"""
@@ -346,50 +291,40 @@ class Bitmessage_Draft_Screen_Message(TeleniumTestCase):
         # OPEN NAVIGATION-DRAWER
         time.sleep(4)
         self.cli.execute('app.clickNavDrawer()')
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         time.sleep(2)
         # OPEN INBOX SCREEN
-        self.cli.click_on('//MDIconButton[1]')
+        self.cli.click_on('//NavigationItem[1]')
         time.sleep(2)
         # CLICK ON PLUS ICON BUTTON
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/ComposerButton[0]/MDFloatingActionButton[0]/MDLabel[0]')
         time.sleep(3)
         # SELECT - TO ADDRESS
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         time.sleep(2)
         self.cli.click_on('//MyTextInput[0]')
         time.sleep(3)
         # ADD FROM MESSAGE
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]',"text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
         time.sleep(3)
         # CLICK BACK-BUTTON
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[0]/MDIconButton[0]/MDLabel[0]')
         time.sleep(5)
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Inbox[0]/ComposerButton[0]/MDFloatingActionButton[0]/MDLabel[0]')
         time.sleep(3)
         # SELECT - TO ADDRESS
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         time.sleep(1)
         self.cli.click_on('//MyTextInput[0]')
         time.sleep(3)
         # ADD FROM MESSAGE
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]',"text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
         time.sleep(4)
         random_label=""
         for char in "Another Draft message":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', random_label)
-            # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]','text',random_label)
             time.sleep(0.2)
         # CLICK BACK-BUTTON
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[0]/MDIconButton[0]/MDLabel[0]')
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
         time.sleep(4)
    
@@ -398,7 +333,6 @@ class Bitmessage_Draft_Screen_Message(TeleniumTestCase):
             make changes and send it."""
         print("=====================Test - Edit A Message From Draft Screen=====================")
         # OPEN NAVIGATION-DRAWER
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
         time.sleep(4)
         # OPEN DRAFT SCREEN
@@ -409,13 +343,11 @@ class Bitmessage_Draft_Screen_Message(TeleniumTestCase):
         time.sleep(3)
         # CLICK EDIT BUTTON
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[2]/MDIconButton[0]/MDLabel[0]')
         time.sleep(5)
         random_label=""
         for char in "Hey,This is draft Message Body":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
-            # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]','text',random_label)
             time.sleep(0.2)
         time.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
@@ -433,7 +365,6 @@ class Bitmessage_Draft_Screen_Message(TeleniumTestCase):
         self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
         time.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[1]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[2]/MDIconButton[1]/MDLabel[0]')
         time.sleep(2)
     
     def test_all_draft_method(self):
@@ -452,7 +383,6 @@ class Bitmessage_AllMail_Screen_Message(TeleniumTestCase):
         """Show All Messages on Mail Screen/Window"""
         print("=====================Test -Show Messages Of Mail Screen=====================")
         time.sleep(5)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
         time.sleep(4)
         self.cli.click_on('//NavigationItem[5]')
@@ -463,10 +393,8 @@ class Bitmessage_AllMail_Screen_Message(TeleniumTestCase):
         print("=====================Test -Delete Messages Of Mail Screen=====================")
         time.sleep(4)
         self.cli.click_on('//Allmails[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Allmails[0]/Allmails[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]')
         time.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/Toolbar[0]/BoxLayout[2]/MDIconButton[0]/MDLabel[0]')
         time.sleep(3)
 
 class Bitmessage_Trash_Screen_Message(TeleniumTestCase):
@@ -479,17 +407,14 @@ class Bitmessage_Trash_Screen_Message(TeleniumTestCase):
         """Delete Message From List of Message Permanently Of Trash Screen/Window"""
         print("=====================Test -Delete Messages Of Trash Screen=====================")
         time.sleep(6)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
         time.sleep(4)
         self.cli.click_on('//NavigationItem[4]')
         time.sleep(4)
         self.cli.drag('//Trash/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[0]',
             '//Trash/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2)
-        # self.cli.drag('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Trash[0]/Trash[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[1]/AvatarSampleWidget[0]','/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Trash[0]/Trash[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[2]',1)
         time.sleep(4)
         self.cli.click_on('//Trash/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Trash[0]/Trash[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]')
         time.sleep(2)
         self.cli.click_on('//MDDialog/MDCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
         time.sleep(4)
@@ -505,7 +430,6 @@ class Bitmessage_AddressBook_Screen_Message(TeleniumTestCase):
         print("=====================Test -Save Address In Address Book=====================")
         time.sleep(6)
         self.cli.execute('app.clickNavDrawer()')
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         time.sleep(4)
         self.cli.drag("//NavigationItem[@text=\"Sent\"]","//NavigationItem[@text=\"Inbox\"]",1)
         time.sleep(3)
@@ -533,7 +457,6 @@ class Bitmessage_AddressBook_Screen_Message(TeleniumTestCase):
         time.sleep(5)
         self.cli.click_on('//GrashofPopup/BoxLayout[0]/MDTextField[1]')
         time.sleep(3)
-        data = ['BM-2cURvaNogjXN48LvbNHZrjLx8QEkTMkETZ'] # remove it
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]','text',data[0])
         time.sleep(3)
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]','text','')
@@ -553,7 +476,6 @@ class Bitmessage_AddressBook_Screen_Message(TeleniumTestCase):
         time.sleep(3)
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','prachi')
         time.sleep(3)
-        data = ['BM-2cURvaNogjXN48LvbNHZrjLx8QEkTMkETZ'] # remove it
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]','text',data[0])
         time.sleep(3)
         self.cli.click_on('//MDRaisedButton[1]')
@@ -563,23 +485,19 @@ class Bitmessage_AddressBook_Screen_Message(TeleniumTestCase):
         print("=====================Test -Directly Send Message To The User=====================")
         time.sleep(4)
         self.cli.click_on('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/AddressBook[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]')
         time.sleep(3)
         self.cli.click_on('//MDRaisedButton[0]')
         time.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         time.sleep(2)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]')
         time.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Second')
-        # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]','text','Second')
         time.sleep(3)
         random_label=""
         for char in "Hey This is Message From Address Book":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
-            # self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]','text',random_label)
             time.sleep(0.2)
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(2)
@@ -588,16 +506,14 @@ class Bitmessage_AddressBook_Screen_Message(TeleniumTestCase):
         """Delete Address From Address Book"""
         print("=====================Test -Delete Address From Address Book=====================")
         time.sleep(3)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(3)
-        # self.cli.click_on('//NavigationItem[6]')
+        self.cli.click_on('//NavigationItem[6]')
         time.sleep(3)
         self.cli.drag('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[0]',
             '//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2)
-        # self.cli.drag('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/AddressBook[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[1]/AvatarSampleWidget[0]','/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/AddressBook[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[2]',1)
         time.sleep(2)
         self.cli.click_on('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
-        # self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/AddressBook[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]/RelativeLayout[1]/Button[0]')
 
     def test_all_address_book_method(self):
         self.test_save_address()
@@ -615,9 +531,11 @@ class Bitmessage_Setting_Screen(TeleniumTestCase):
         """Show Setting Screen"""
         print("=====================Test -Show Setting Screen=====================")
         time.sleep(4)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(3)
-        self.cli.click_on('//NavigationDrawerIconButton[7]')
+        self.cli.drag("//NavigationItem[@text=\"Sent\"]","//NavigationItem[@text=\"Inbox\"]",1)
+        time.sleep(3)
+        self.cli.click_on('//NavigationItem[7]')
         time.sleep(2)
 
 class Bitmessage_MyAddress_Screen_Message(TeleniumTestCase):
@@ -630,27 +548,40 @@ class Bitmessage_MyAddress_Screen_Message(TeleniumTestCase):
         """Select Address From List of Address"""
         print("=====================Test -Select Address From List of Address=====================")
         time.sleep(4)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(3)
-        self.cli.click_on('//NavigationDrawerIconButton[12]')
+        self.cli.drag("//NavigationItem[@text=\"Sent\"]","//NavigationItem[@text=\"Inbox\"]",1)
+        time.sleep(3)
+        self.cli.click_on('//NavigationItem[11]')
         time.sleep(4)
+
+    def test_show_Qrcode(self):
+        """Show the Qr code of selected address"""
+        print("=====================Test -Show QR code of selected address=====================")
+        time.sleep(4)
+        self.cli.click_on('//MyAddress/BoxLayout[0]/FloatLayout[0]/MDScrollViewRefreshLayout[0]/MDList[0]/CustomTwoLineAvatarIconListItem[0]')
+        time.sleep(3)
+        self.cli.click_on('//MyaddDetailPopup/BoxLayout[1]/MDRaisedButton[1]/MDLabel[0]')
+        time.sleep(3)
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
+        time.sleep(3)
 
     def test_send_message_from(self):
         """Send Message From Send Message From Button"""
         print("=====================Test -Send Message From Send Message From Button=====================")
         time.sleep(4)
-        self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/MyAddress[0]/BoxLayout[0]/FloatLayout[0]/MDScrollViewRefreshLayout[0]/MDList[0]/CustomTwoLineAvatarIconListItem[0]/BoxLayout[0]/MDLabel[1]')
+        self.cli.click_on('//MyAddress/BoxLayout[0]/FloatLayout[0]/MDScrollViewRefreshLayout[0]/MDList[0]/CustomTwoLineAvatarIconListItem[0]')
         time.sleep(4)
-        self.cli.click_on('/MyaddDetailPopup/GridLayout[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[1]/MDRaisedButton[0]/MDLabel[0]')
+        self.cli.click_on('//MyaddDetailPopup/BoxLayout[1]/MDRaisedButton[0]/MDLabel[0]')
         time.sleep(3)
-        self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]',"text",data[1])
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput', "text", data[1])
         time.sleep(3)
-        self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[0]','text','Hey')
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Hey')
         time.sleep(3)
         random_label=""
         for char in "Hey,i am sending message directly from MyAddress book":
             random_label += char
-            self.cli.setattr('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Create[0]/DropDownWidget[0]/ScrollView[0]/BoxLayout[0]/MDTextField[1]','text',random_label)
+            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
             time.sleep(0.2)
         time.sleep(2)
         self.cli.click_on('//MDIconButton[2]')
@@ -666,31 +597,22 @@ class Bitmessage_SubscriptionPayment_Screen(TeleniumTestCase):
         """Select Subscripton From List of Subscriptons"""
         print("=====================Test -Select Subscripton From List of Subscriptons=====================")
         time.sleep(4)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(3)
-        self.cli.click_on('//NavigationDrawerIconButton[8]')
+        self.cli.drag("//NavigationItem[@text=\"Sent\"]","//NavigationItem[@text=\"Inbox\"]",1)
         time.sleep(3)
-        self.cli.drag('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Payment[0]/ScrollView[0]/BoxLayout[0]','/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Payment[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]',1)
+        self.cli.click_on('//NavigationItem[8]')
+        time.sleep(3)
+        self.cli.drag('//Payment/BoxLayout[0]/ScrollView[0]/BoxLayout[0]/ProductCategoryLayout[0]/ProductLayout[1]',
+            '//Payment/BoxLayout[0]/ScrollView[0]/BoxLayout[0]/ProductCategoryLayout[0]/ProductLayout[0]', 1)
         time.sleep(2)
-        self.cli.drag('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Payment[0]/ScrollView[0]/BoxLayout[0]','/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Payment[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[2]',1)
+        self.cli.click_on('//MDRaisedButton[3]')
         time.sleep(2)
-        self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/Payment[0]/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDRaisedButton[0]/MDLabel[0]')
+        self.cli.click_on('//ListItemWithLabel[0]')
+        time.sleep(2)
+        self.cli.click_on('//MDRaisedButton[3]')
         time.sleep(2)
 
-class Bitmessage_Credits_Screen(TeleniumTestCase):
-    """Credits Screen Functionality Testing"""
-
-    def runTest(self):
-        print(self,"-------------Welcome To Kivy Testing Application Eleventh Page-------------")
-
-    def test_check_credits(self):
-        """Show Added Credits"""
-        print("=====================Test -Select Credits From List of Credits=====================")
-        time.sleep(4)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
-        time.sleep(3)
-        self.cli.click_on('//NavigationDrawerIconButton[9]')
-        time.sleep(2)
 
 class Bitmessage_NetwrokStatus_Screen(TeleniumTestCase):
     """NetwrokStatus Screen Functionality Testing"""
@@ -702,9 +624,11 @@ class Bitmessage_NetwrokStatus_Screen(TeleniumTestCase):
         """Show NetwrokStatus"""
         print("=====================Test -Show NetwrokStatus=====================")
         time.sleep(4)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(3)
-        self.cli.click_on('//NavigationDrawerIconButton[11]')
+        self.cli.drag("//NavigationItem[@text=\"Sent\"]","//NavigationItem[@text=\"Inbox\"]",1)
+        time.sleep(3)
+        self.cli.click_on('//NavigationItem[10]')
         time.sleep(4)
-        self.cli.click_on('/NavigationLayout/BoxLayout[1]/FloatLayout[0]/BoxLayout[0]/ScreenManager[0]/NetworkStat[0]/MDTabbedPanel[0]/ScrollView[0]/MDTabBar[0]/MDTabHeader[1]/MDLabel[0]')
+        self.cli.click_on('//NetworkStat/MDTabs[0]/MDTabsBar[0]/MDTabsScrollView[0]/MDGridLayout[0]/MDTabsLabel[1]')
         time.sleep(4)

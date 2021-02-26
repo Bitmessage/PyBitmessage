@@ -1939,7 +1939,6 @@ class NavigateApp(MDApp):
 
     # @staticmethod
     def clickNavDrawer(self):
-        # import pdb;pdb.set_trace()
         state.kivyapp.root.ids.nav_drawer.set_state('toggle')
 
     @staticmethod
@@ -1966,6 +1965,7 @@ class NavigateApp(MDApp):
                 self.root.ids.content_drawer.ids.reset_image.disabled = True
             address_label = self.current_address_label(
                 BMConfigParser().get(text, 'label'), text)
+
             self.root_window.children[1].ids.toolbar.title = address_label
             state.association = text
             state.searcing_text = ''
@@ -2089,9 +2089,13 @@ class NavigateApp(MDApp):
             queues.UISignalQueue.put(('rerenderAddressBook', ''))
             self.add_popup.dismiss()
             sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-            self.root.ids.sc11.ids.ml.clear_widgets()
-            self.root.ids.sc11.loadAddresslist(None, 'All', '')
-            self.root.ids.scr_mngr.current = 'addressbook'
+            try:
+                rootIds = self.root.ids
+            except Exception as e:
+                rootIds = state.kivyapp.root.ids
+            rootIds.sc11.ids.ml.clear_widgets()
+            rootIds.sc11.loadAddresslist(None, 'All', '')
+            rootIds.scr_mngr.current = 'addressbook'
             toast('Saved')
 
     def close_pop(self, instance):
