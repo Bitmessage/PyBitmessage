@@ -1657,288 +1657,108 @@ p, li { white-space: pre-wrap; }
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>quit()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionNetworkSwitch</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>network_switch</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionRegenerateDeterministicAddresses</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionRegenerateDeterministicAddresses</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionDeleteAllTrashedMessages</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionDeleteAllTrashedMessages</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionManageKeys</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionManageKeys</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSettings</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionSettings</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAbout</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionAbout</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSupport</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionSupport</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionHelp</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionHelp</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonNewAddress</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_NewAddressDialog</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonAddAddressBook</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonAddAddressBook</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonFetchNamecoinID</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonFetchNamecoinID</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonAddSubscription</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonAddSubscription</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonAddChan</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_actionJoinChan</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonTTL</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonTTL</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonClear</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonClear</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonSend</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonSend</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>pushButtonStatusIcon</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>click_pushButtonStatusIcon</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tableWidgetInbox</sender>
@@ -1961,336 +1781,126 @@ p, li { white-space: pre-wrap; }
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuInbox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tableWidgetInboxChans</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuInbox()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetYourIdentities</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuYourIdentities()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tableWidgetAddressBook</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuAddressBook()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetSubscriptions</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuSubscriptions()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetChans</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuChan()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionReply</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxReply</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionReplyChan</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxReplyChan</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddSenderToAddressBook</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxAddSenderToAddressBook</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddSenderToBlackList</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxAddSenderToBlackList</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionTrashInboxMessage</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxTrash</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionUndeleteTrashedMessage</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_TrashUndelete</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionForceHtml</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxMessageForceHtml</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSaveMessageAs</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxSaveMessageAs</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionMarkUnread</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_InboxMarkUnread</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionNew</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_YourIdentitiesNew</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionDelete</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_YourIdentitiesDelete</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionEnable</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_Enable</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionDisable</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_Disable</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSetAvatar</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_TreeWidgetSetAvatar</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionClipboard</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_Clipboard</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSend</sender>
@@ -2303,352 +1913,132 @@ p, li { white-space: pre-wrap; }
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SpecialAddressBehaviorDialog</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionNewYourIdentities</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_YourIdentitiesNew</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionEnableYourIdentities</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_Enable</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionDisableYourIdentities</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_Disable</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSetAvatarYourIdentities</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_TreeWidgetSetAvatar</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionClipboardYourIdentities</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_Clipboard</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSpecialAddressBehaviorYourIdentities</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SpecialAddressBehaviorDialog</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionEmailGateway</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_EmailGatewayDialog</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionMarkAllRead</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_MarkAllRead</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookSend</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookSend</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookClipboard</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookClipboard</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookSubscribe</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookSubscribe</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookSetAvatar</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookSetAvatar</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookSetSound</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookSetSound</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookNew</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookNew</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionAddressBookDelete</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_AddressBookDelete</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsNew</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SubscriptionsNew</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsDelete</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SubscriptionsDelete</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsClipboard</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SubscriptionsClipboard</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsEnable</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SubscriptionsEnable</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsDisable</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SubscriptionsDisable</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsSetAvatar</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_TreeWidgetSetAvatar</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionsubscriptionsSend</sender>
@@ -2661,48 +2051,18 @@ p, li { white-space: pre-wrap; }
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SentTrash</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSentClipboard</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_SentClipboard</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionForceSend</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>on_action_ForceSend</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>actionSentReply</sender>
@@ -2715,96 +2075,36 @@ p, li { white-space: pre-wrap; }
    <signal>returnPressed()</signal>
    <receiver>MainWindow</receiver>
    <slot>inboxSearchLineEditReturnPressed</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>inboxSearchLineEditSubscriptions</sender>
    <signal>returnPressed()</signal>
    <receiver>MainWindow</receiver>
    <slot>inboxSearchLineEditReturnPressed</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>inboxSearchLineEditChans</sender>
    <signal>returnPressed()</signal>
    <receiver>MainWindow</receiver>
    <slot>inboxSearchLineEditReturnPressed</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>inboxSearchLineEdit</sender>
    <signal>textChanged(QString)</signal>
    <receiver>MainWindow</receiver>
    <slot>inboxSearchLineEditUpdated</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>inboxSearchLineEditSubscriptions</sender>
    <signal>textChanged(QString)</signal>
    <receiver>MainWindow</receiver>
    <slot>inboxSearchLineEditUpdated</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>inboxSearchLineEditChans</sender>
    <signal>textChanged(QString)</signal>
    <receiver>MainWindow</receiver>
    <slot>inboxSearchLineEditUpdated</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tableWidgetAddressBook</sender>
@@ -2827,176 +2127,66 @@ p, li { white-space: pre-wrap; }
    <signal>itemSelectionChanged()</signal>
    <receiver>MainWindow</receiver>
    <slot>tableWidgetInboxItemClicked</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tableWidgetInboxSubscriptions</sender>
    <signal>itemSelectionChanged()</signal>
    <receiver>MainWindow</receiver>
    <slot>tableWidgetInboxItemClicked</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tableWidgetInboxChans</sender>
    <signal>itemSelectionChanged()</signal>
    <receiver>MainWindow</receiver>
    <slot>tableWidgetInboxItemClicked</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetYourIdentities</sender>
    <signal>itemSelectionChanged()</signal>
    <receiver>MainWindow</receiver>
    <slot>treeWidgetItemClicked</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetSubscriptions</sender>
    <signal>itemSelectionChanged()</signal>
    <receiver>MainWindow</receiver>
    <slot>treeWidgetItemClicked</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetChans</sender>
    <signal>itemSelectionChanged()</signal>
    <receiver>MainWindow</receiver>
    <slot>treeWidgetItemClicked</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetYourIdentities</sender>
    <signal>itemChanged(QTreeWidgetItem*,int)</signal>
    <receiver>MainWindow</receiver>
    <slot>treeWidgetItemChanged</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetSubscriptions</sender>
    <signal>itemChanged(QTreeWidgetItem*,int)</signal>
    <receiver>MainWindow</receiver>
    <slot>treeWidgetItemChanged</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>treeWidgetChans</sender>
    <signal>itemChanged(QTreeWidgetItem*,int)</signal>
    <receiver>MainWindow</receiver>
    <slot>treeWidgetItemChanged</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>tabWidget</sender>
    <signal>currentChanged(int)</signal>
    <receiver>MainWindow</receiver>
    <slot>tabWidgetCurrentChanged</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
   <connection>
    <sender>horizontalSliderTTL</sender>
    <signal>valueChanged(int)</signal>
    <receiver>MainWindow</receiver>
    <slot>updateTTL</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
   </connection>
  </connections>
 </ui>
