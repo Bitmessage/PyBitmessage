@@ -366,6 +366,10 @@ def run():
         qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
         suite.addTests(qt_tests)
 
+    import sql
+    sql_tests = loader.loadTestsFromModule(sql)
+    suite.addTest(sql_tests)
+
     def keep_exc(ex_cls, exc, tb):  # pylint: disable=unused-argument
         """Own exception hook for test cases"""
         excQueue.put(('tests', exc))

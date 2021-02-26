@@ -10,12 +10,10 @@ import random
 import threading
 import time
 from binascii import hexlify
-from subprocess import call  # nosec
 
 import helper_bitcoin
-import helper_inbox
 import helper_msgcoding
-import helper_sent
+import helper_db
 import highlevelcrypto
 import l10n
 import protocol
@@ -29,10 +27,10 @@ from addresses import (
 )
 from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
+from helper_ackPayload import genAckPayload
 from helper_sql import sql_ready, SqlBulkExecute, sqlExecute, sqlQuery
 from network import bmproto, knownnodes
 from network.node import Peer
-# pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
 
 logger = logging.getLogger('default')
 
@@ -343,24 +341,7 @@ class objectProcessor(threading.Thread):
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
-
-            queryreturn = sqlQuery(
-                "SELECT usedpersonally FROM pubkeys WHERE address=?"
-                " AND usedpersonally='yes'", address)
-            # if this pubkey is already in our database and if we have
-            # used it personally:
-            if queryreturn != []:
-                logger.info(
-                    'We HAVE used this pubkey personally. Updating time.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'yes')
-            else:
-                logger.info(
-                    'We have NOT used this pubkey personally. Inserting'
-                    ' in database.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'no')
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
+            helper_db.put_pubkey(address, addressVersion, dataToStore)
             self.possibleNewPubkey(address)
         if addressVersion == 3:
             if len(data) < 170:  # sanity check.
@@ -408,23 +389,7 @@ class objectProcessor(threading.Thread):
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
-            queryreturn = sqlQuery(
-                "SELECT usedpersonally FROM pubkeys WHERE address=?"
-                " AND usedpersonally='yes'", address)
-            # if this pubkey is already in our database and if we have
-            # used it personally:
-            if queryreturn != []:
-                logger.info(
-                    'We HAVE used this pubkey personally. Updating time.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'yes')
-            else:
-                logger.info(
-                    'We have NOT used this pubkey personally. Inserting'
-                    ' in database.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'no')
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
+            helper_db.put_pubkey(address, addressVersion, dataToStore)
             self.possibleNewPubkey(address)
 
         if addressVersion == 4:
@@ -623,13 +588,10 @@ class objectProcessor(threading.Thread):
 
         # Let's store the public key in case we want to reply to this
         # person.
-        sqlExecute(
-            '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-            fromAddress,
-            sendersAddressVersionNumber,
-            decryptedData[:endOfThePublicKeyPosition],
-            int(time.time()),
-            'yes')
+        helper_db.put_pubkey(
+            fromAddress, sendersAddressVersionNumber,
+            decryptedData[:endOfThePublicKeyPosition], True
+        )
 
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
@@ -693,78 +655,56 @@ class objectProcessor(threading.Thread):
         subject = decodedMessage.subject
         body = decodedMessage.body
 
-        # Let us make sure that we haven't already received this message
-        if helper_inbox.isMessageAlreadyInInbox(sigHash):
-            logger.info('This msg is already in our inbox. Ignoring it.')
-            blockMessage = True
-        if not blockMessage:
-            if messageEncodingType != 0:
-                t = (inventoryHash, toAddress, fromAddress, subject,
-                     int(time.time()), body, 'inbox', messageEncodingType,
-                     0, sigHash)
-                helper_inbox.insert(t)
+        if helper_db.put_inbox(
+            toAddress, fromAddress, subject, body, inventoryHash, sigHash,
+            encoding=messageEncodingType
+        ) is False:
+            # logger.info('This msg is already in our inbox. Ignoring it.')
+            return
 
-                queues.UISignalQueue.put(('displayNewInboxMessage', (
-                    inventoryHash, toAddress, fromAddress, subject, body)))
+        # Let us now check and see whether our receiving address is
+        # behaving as a mailing list
+        if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist'):
+            mailingListName = BMConfigParser().safeGet(
+                toAddress, 'mailinglistname', '')
 
-            # If we are behaving as an API then we might need to run an
-            # outside command to let some program know that a new message
-            # has arrived.
-            if BMConfigParser().safeGetBoolean(
-                    'bitmessagesettings', 'apienabled'):
-                try:
-                    apiNotifyPath = BMConfigParser().get(
-                        'bitmessagesettings', 'apinotifypath')
-                except:
-                    apiNotifyPath = ''
-                if apiNotifyPath != '':
-                    call([apiNotifyPath, "newMessage"])
+            # Let us send out this message as a broadcast
+            subject = self.addMailingListNameToSubject(
+                subject, mailingListName)
+            # Let us now send this message out as a broadcast
+            message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
+            )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
+            # The fromAddress for the broadcast that we are about to
+            # send is the toAddress (my address) for the msg message
+            # we are currently processing.
+            fromAddress = toAddress
+            # We don't actually need the ackdata for acknowledgement
+            # since this is a broadcast message but we can use it to
+            # update the user interface when the POW is done generating.
+            streamNumber = decodeAddress(fromAddress)[2]
 
-            # Let us now check and see whether our receiving address is
-            # behaving as a mailing list
-            if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') \
-                    and messageEncodingType != 0:
-                try:
-                    mailingListName = BMConfigParser().get(
-                        toAddress, 'mailinglistname')
-                except:
-                    mailingListName = ''
-                # Let us send out this message as a broadcast
-                subject = self.addMailingListNameToSubject(
-                    subject, mailingListName)
-                # Let us now send this message out as a broadcast
-                message = time.strftime(
-                    "%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime()
-                ) + '   Message ostensibly from ' + fromAddress \
-                    + ':\n\n' + body
-                # The fromAddress for the broadcast that we are about to
-                # send is the toAddress (my address) for the msg message
-                # we are currently processing.
-                fromAddress = toAddress
-                # We don't actually need the ackdata for acknowledgement
-                # since this is a broadcast message but we can use it to
-                # update the user interface when the POW is done generating.
-                toAddress = '[Broadcast subscribers]'
+            ackdata = genAckPayload(streamNumber, 0)
+            toAddress = toLabel = '[Broadcast subscribers]'
 
-                ackdata = helper_sent.insert(
-                    fromAddress=fromAddress,
-                    status='broadcastqueued',
-                    subject=subject,
-                    message=message,
-                    encoding=messageEncodingType)
+            # We really should have a discussion about how to
+            # set the TTL for mailing list broadcasts. This is obviously
+            # hard-coded.
+            TTL = 2 * 7 * 24 * 60 * 60  # 2 weeks
+            helper_db.put_sent(
+                toAddress, fromAddress, subject, message, ackdata,
+                'broadcastqueued', messageEncodingType, ttl=TTL
+            )
 
-                queues.UISignalQueue.put((
-                    'displayNewSentMessage', (
-                        toAddress, '[Broadcast subscribers]', fromAddress,
-                        subject, message, ackdata)
-                ))
-                queues.workerQueue.put(('sendbroadcast', ''))
+            queues.UISignalQueue.put((
+                'displayNewSentMessage',
+                (toAddress, toLabel, fromAddress, subject, message, ackdata)
+            ))
+            queues.workerQueue.put(('sendbroadcast', ''))
 
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
         if (
             self.ackDataHasAValidHeader(ackData) and not blockMessage and
-            messageEncodingType != 0 and
             not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and
             not BMConfigParser().safeGetBoolean(toAddress, 'chan')
         ):
@@ -975,12 +915,11 @@ class objectProcessor(threading.Thread):
         logger.info('fromAddress: %s', fromAddress)
 
         # Let's store the public key in case we want to reply to this person.
-        sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-                   fromAddress,
-                   sendersAddressVersion,
-                   decryptedData[:endOfPubkeyPosition],
-                   int(time.time()),
-                   'yes')
+        helper_db.put_pubkey(
+            fromAddress, sendersAddressVersion,
+            decryptedData[:endOfPubkeyPosition],
+            True
+        )
 
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
@@ -1000,27 +939,12 @@ class objectProcessor(threading.Thread):
         body = decodedMessage.body
 
         toAddress = '[Broadcast subscribers]'
-        if helper_inbox.isMessageAlreadyInInbox(sigHash):
-            logger.info('This broadcast is already in our inbox. Ignoring it.')
+        if helper_db.put_inbox(
+            toAddress, fromAddress, subject, body, inventoryHash, sigHash,
+            encoding=messageEncodingType
+        ) is False:
+            # logger.info('This broadcast is already in inbox. Ignoring it.')
             return
-        t = (inventoryHash, toAddress, fromAddress, subject, int(
-            time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
-        helper_inbox.insert(t)
-
-        queues.UISignalQueue.put(('displayNewInboxMessage', (
-            inventoryHash, toAddress, fromAddress, subject, body)))
-
-        # If we are behaving as an API then we might need to run an
-        # outside command to let some program know that a new message
-        # has arrived.
-        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-            try:
-                apiNotifyPath = BMConfigParser().get(
-                    'bitmessagesettings', 'apinotifypath')
-            except:
-                apiNotifyPath = ''
-            if apiNotifyPath != '':
-                call([apiNotifyPath, "newBroadcast"])
 
         # Display timing data
         logger.info(

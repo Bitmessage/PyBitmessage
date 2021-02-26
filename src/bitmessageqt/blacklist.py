@@ -1,10 +1,11 @@
 from PyQt4 import QtCore, QtGui
 
+import helper_db
 import widgets
 from addresses import addBMIfNotPresent
 from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
-from helper_sql import sqlExecute, sqlQuery
+from helper_sql import sqlExecute
 from queues import UISignalQueue
 from retranslateui import RetranslateMixin
 from tr import _translate
@@ -61,16 +62,14 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                     _translate("MainWindow", "Address is valid."):
                 address = addBMIfNotPresent(str(
                     self.NewBlacklistDialogInstance.lineEditAddress.text()))
-                # First we must check to see if the address is already in the
-                # address book. The user cannot add it again or else it will
-                # cause problems when updating and deleting the entry.
-                t = (address,)
-                if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
-                    sql = '''select * from blacklist where address=?'''
-                else:
-                    sql = '''select * from whitelist where address=?'''
-                queryreturn = sqlQuery(sql,*t)
-                if queryreturn == []:
+                label = str(self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8())
+                if helper_db.put_addresslist(
+                    label, address,
+                    group='blacklist'
+                    if BMConfigParser().get(
+                        'bitmessagesettings', 'blackwhitelist') == 'black'
+                    else 'whitelist'
+                ):
                     self.tableWidgetBlacklist.setSortingEnabled(False)
                     self.tableWidgetBlacklist.insertRow(0)
                     newItem = QtGui.QTableWidgetItem(unicode(
@@ -82,12 +81,6 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                     self.tableWidgetBlacklist.setItem(0, 1, newItem)
                     self.tableWidgetBlacklist.setSortingEnabled(True)
-                    t = (str(self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8()), address, True)
-                    if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
-                        sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
-                    else:
-                        sql = '''INSERT INTO whitelist VALUES (?,?,?)'''
-                    sqlExecute(sql, *t)
                 else:
                     UISignalQueue.put((
                         'updateStatusBar',
@@ -158,19 +151,18 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
 
     def rerenderBlackWhiteList(self):
         tabs = self.parent().parent()
-        if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
-            tabs.setTabText(tabs.indexOf(self), _translate('blacklist', 'Blacklist'))
-        else:
-            tabs.setTabText(tabs.indexOf(self), _translate('blacklist', 'Whitelist'))
+        list_type = BMConfigParser().get(
+            'bitmessagesettings', 'blackwhitelist')
+        tabs.setTabText(
+            tabs.indexOf(self),
+            _translate('blacklist', 'Blacklist') if list_type == 'black'
+            else _translate('blacklist', 'Whitelist'))
+
         self.tableWidgetBlacklist.setRowCount(0)
-        listType = BMConfigParser().get('bitmessagesettings', 'blackwhitelist')
-        if listType == 'black':
-            queryreturn = sqlQuery('''SELECT label, address, enabled FROM blacklist''')
-        else:
-            queryreturn = sqlQuery('''SELECT label, address, enabled FROM whitelist''')
         self.tableWidgetBlacklist.setSortingEnabled(False)
-        for row in queryreturn:
-            label, address, enabled = row
+        for label, address, enabled in helper_db.get_addresslist(
+            group='blacklist' if list_type == 'black' else 'whiteslist'
+        ):
             self.tableWidgetBlacklist.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:

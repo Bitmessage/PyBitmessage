@@ -10,10 +10,9 @@ import hashlib
 import time
 from binascii import hexlify, unhexlify
 from struct import pack
-from subprocess import call  # nosec
 
 import defaults
-import helper_inbox
+import helper_db
 import helper_msgcoding
 import helper_random
 import helper_sql
@@ -1312,25 +1311,11 @@ class singleWorker(StoppableThread):
                 # Used to detect and ignore duplicate messages in our inbox
                 sigHash = hashlib.sha512(hashlib.sha512(
                     signature).digest()).digest()[32:]
-                t = (inventoryHash, toaddress, fromaddress, subject, int(
-                    time.time()), message, 'inbox', encoding, 0, sigHash)
-                helper_inbox.insert(t)
 
-                queues.UISignalQueue.put(('displayNewInboxMessage', (
-                    inventoryHash, toaddress, fromaddress, subject, message)))
-
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if BMConfigParser().safeGetBoolean(
-                        'bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = BMConfigParser().get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newMessage"])
+                helper_db.put_inbox(
+                    toaddress, fromaddress, subject, message, inventoryHash, sigHash,
+                    encoding=encoding
+                )
 
     def requestPubKey(self, toAddress):
         """Send a getpubkey object"""

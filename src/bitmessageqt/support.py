@@ -10,6 +10,7 @@ from PyQt4 import QtCore
 
 import account
 import defaults
+import helper_db
 import network.stats
 import paths
 import proofofwork
@@ -17,7 +18,7 @@ import queues
 import state
 from bmconfigparser import BMConfigParser
 from foldertree import AccountMixin
-from helper_sql import sqlExecute, sqlQuery
+from helper_sql import sqlExecute
 from l10n import getTranslationLanguage
 from openclpow import openclEnabled
 from pyelliptic.openssl import OpenSSL
@@ -67,12 +68,8 @@ Connected hosts: {}
 
 
 def checkAddressBook(myapp):
-    sqlExecute('DELETE from addressbook WHERE address=?', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
-    if queryreturn == []:
-        sqlExecute(
-            'INSERT INTO addressbook VALUES (?,?)',
-            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
+    sqlExecute('DELETE FROM addressbook WHERE address=?', OLD_SUPPORT_ADDRESS)
+    if helper_db.put_addressbook(SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS):
         myapp.rerenderAddressBook()
 
 
