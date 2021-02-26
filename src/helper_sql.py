@@ -16,7 +16,12 @@ SQLite objects can only be used from one thread.
    or isn't thread-safe.
 """
 
-import Queue
+# import Queue
+try:
+    import queue as Queue #python2
+except ImportError:
+    import Queue #python3
+
 import threading
 
 sqlSubmitQueue = Queue.Queue()

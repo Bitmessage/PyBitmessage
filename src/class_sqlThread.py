@@ -444,6 +444,56 @@ class sqlThread(threading.Thread, UpgradeDB):
         # Bitmessage users or modify the SQLite database? Add it right
         # above this line!
 
+        self.add_new_option()
+
+        # try:
+        #     testpayload = '\x00\x00'
+        #     t = ('1234', 1, testpayload, '12345678', 'no')
+        #     self.cur.execute('''INSERT INTO pubkeys VALUES(?,?,?,?,?)''', t)
+        #     self.conn.commit()
+        #     self.cur.execute(
+        #         '''SELECT transmitdata FROM pubkeys WHERE address='1234' ''')
+        #     queryreturn = self.cur.fetchall()
+        #     for row in queryreturn:
+        #         transmitdata, = row
+        #     self.cur.execute('''DELETE FROM pubkeys WHERE address='1234' ''')
+        #     self.conn.commit()
+        #     if transmitdata == '':
+        #         logger.fatal(
+        #             'Problem: The version of SQLite you have cannot store Null values.'
+        #             ' Please download and install the latest revision of your version of Python'
+        #             ' (for example, the latest Python 2.7 revision) and try again.\n')
+        #         logger.fatal(
+        #             'PyBitmessage will now exit very abruptly.'
+        #             ' You may now see threading errors related to this abrupt exit'
+        #             ' but the problem you need to solve is related to SQLite.\n\n')
+        #         os._exit(0)
+        # except Exception as err:
+        #     if str(err) == 'database or disk is full':
+        #         logger.fatal(
+        #             '(While null value test) Alert: Your disk or data storage volume is full.'
+        #             ' sqlThread will now exit.')
+        #         queues.UISignalQueue.put((
+        #             'alert', (
+        #                 tr._translate(
+        #                     "MainWindow",
+        #                     "Disk full"),
+        #                 tr._translate(
+        #                     "MainWindow",
+        #                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
+        #                 True)))
+        #         os._exit(0)
+        #     else:
+        #         logger.error(err)
+
+        # Let us check to see the last time we vaccumed the messages.dat file.
+        # If it has been more than a month let's do it now.
+
+        self.check_vaccumed()
+
+
+    def add_new_option(self):
+        print("start func -=-=-=-=-=-=-=-=")
         try:
             testpayload = '\x00\x00'
             t = ('1234', 1, testpayload, '12345678', 'no')
@@ -484,8 +534,9 @@ class sqlThread(threading.Thread, UpgradeDB):
             else:
                 logger.error(err)
 
-        # Let us check to see the last time we vaccumed the messages.dat file.
-        # If it has been more than a month let's do it now.
+
+    def check_vaccumed(self):
+        print(" chec vaccumed start")
         item = '''SELECT value FROM settings WHERE key='lastvacuumtime';'''
         parameters = ''
         self.cur.execute(item, parameters)
