@@ -4,6 +4,7 @@ PyQt based UI for bitmessage, the main module
 
 import hashlib
 import locale
+import logging
 import os
 import random
 import string
@@ -17,47 +18,49 @@ from sqlite3 import register_adapter
 
 from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork
 
+# This is needed for tray icon
+import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
+import dialogs
+import helper_addressbook
+import helper_search
+import helper_sent
+import l10n
+import namecoin
+import paths
+import queues
+import settingsmixin
 import shared
+import shutdown
+import sound
 import state
-from debug import logger
-from tr import _translate
+import support
+from account import (
+    getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
+    GatewayAccount, MailchuckAccount, AccountColor)
 from addresses import decodeAddress, addBMIfNotPresent
 from bitmessageui import Ui_MainWindow
 from bmconfigparser import BMConfigParser
-import namecoin
-from messageview import MessageView
 from foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress,
     MessageList_TimeWidget)
-import settingsmixin
-import support
-from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
-import helper_addressbook
-import helper_search
-import l10n
-from utils import str_broadcast_subscribers, avatarize
-from account import (
-    getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
-    GatewayAccount, MailchuckAccount, AccountColor)
-import dialogs
+from helper_sql import (
+    sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure)
+from messageview import MessageView
 from network.stats import pendingDownload, pendingUpload
-from uisignaler import UISignaler
-import paths
 from proofofwork import getPowType
-import queues
-import shutdown
 from statusbar import BMStatusBar
-import sound
-# This is needed for tray icon
-import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
-import helper_sent
+from tr import _translate
+from uisignaler import UISignaler
+from utils import str_broadcast_subscribers, avatarize
 
 try:
     from plugins.plugin import get_plugin, get_plugins
 except ImportError:
     get_plugins = False
+
+logger = logging.getLogger('default')
 
 
 # TODO: rewrite
