@@ -28,7 +28,6 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         # .. todo:: sort out streams
         self.streams = [1]
         self.fullyEstablished = True
-        self.connectedAt = 0
         self.skipUntil = 0
         if sock is None:
             if host is None:

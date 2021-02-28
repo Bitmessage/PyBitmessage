@@ -51,7 +51,6 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.verackSent = False
         self.streams = [0]
         self.fullyEstablished = False
-        self.connectedAt = 0
         self.skipUntil = 0
         if address is None and sock is not None:
             self.destination = Peer(*sock.getpeername())

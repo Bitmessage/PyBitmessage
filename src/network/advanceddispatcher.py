@@ -31,6 +31,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def __init__(self, sock=None):
         if not hasattr(self, '_map'):
             asyncore.dispatcher.__init__(self, sock)
+        self.connectedAt = 0
         self.close_reason = None
         self.read_buf = bytearray()
         self.write_buf = bytearray()

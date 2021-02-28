@@ -113,7 +113,6 @@ class Proxy(AdvancedDispatcher):
         self.destination = address
         self.isOutbound = True
         self.fullyEstablished = False
-        self.connectedAt = 0
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         if BMConfigParser().safeGetBoolean(
                 "bitmessagesettings", "socksauthentication"):
@@ -145,6 +144,5 @@ class Proxy(AdvancedDispatcher):
 
     def state_proxy_handshake_done(self):
         """Handshake is complete at this point"""
-        # pylint: disable=attribute-defined-outside-init
         self.connectedAt = time.time()
         return False
