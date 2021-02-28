@@ -1,7 +1,6 @@
 """
 Improved version of asyncore dispatcher
 """
-# pylint: disable=attribute-defined-outside-init
 import socket
 import threading
 import time
@@ -43,6 +42,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.readLock = threading.RLock()
         self.writeLock = threading.RLock()
         self.processingLock = threading.RLock()
+        self.uploadChunk = self.downloadChunk = 0
 
     def append_write_buf(self, data):
         """Append binary data to the end of stream write buffer."""
