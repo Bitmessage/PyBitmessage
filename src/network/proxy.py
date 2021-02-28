@@ -61,9 +61,9 @@ class Proxy(AdvancedDispatcher):
     @proxy.setter
     def proxy(self, address):
         """Set proxy IP and port"""
-        if (not isinstance(address, tuple) or len(address) < 2 or
-                not isinstance(address[0], str) or
-                not isinstance(address[1], int)):
+        if (not isinstance(address, tuple) or len(address) < 2
+                or not isinstance(address[0], str)
+                or not isinstance(address[1], int)):
             raise ValueError
         self.__class__._proxy = address
 
