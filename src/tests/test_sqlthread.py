@@ -198,7 +198,7 @@ class TestSqlThread(unittest.TestCase):
 
         # Assertion
         self.cur.execute('''select * from inventory where objecttype = 'pubkey';''')
-        self.assertNotEqual(self.cur.fetchone(), 1, "Table knownnodes not deleted in versioning 5")
+        self.assertNotEqual(self.cur.fetchone(), 1, "Table inventory not deleted in versioning 4")
 
     def test_sql_thread_version_3(self):
         """
@@ -214,4 +214,4 @@ class TestSqlThread(unittest.TestCase):
 
         # Assertion
         self.cur.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='inventory_backup' ''')
-        self.assertNotEqual(self.cur.fetchone(), 1, "Table inventory_backup not deleted in versioning 5")
+        self.assertNotEqual(self.cur.fetchone(), 1, "Table inventory_backup not deleted in versioning 2")
