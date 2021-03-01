@@ -2,7 +2,13 @@
 BMConfigParser class definition and default configuration settings
 """
 
-import ConfigParser
+# import ConfigParser
+try:
+    from configparser import ConfigParser
+except ImportError:
+    import ConfigParser
+
+
 import os
 import shutil
 from datetime import datetime
