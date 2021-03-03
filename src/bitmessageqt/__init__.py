@@ -1272,7 +1272,7 @@ class MainWindow(Window):
         if event.type() == QtCore.QEvent.LanguageChange:
             # FIXME: it's called very often
             self.retranslateUi()
-            self.init_identities_popup_menu(False)
+            self.init_identities_popup_menu()
             self.blackwhitelist.init_blacklist_popup_menu()
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
