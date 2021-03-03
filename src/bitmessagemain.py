@@ -235,17 +235,8 @@ class Main(object):
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            network.start()
+            network.start(config, state)
 
-            # Optional components
-            for i in range(config.getint('threads', 'receive')):
-                receiveQueueThread = network.ReceiveQueueThread(i)
-                receiveQueueThread.daemon = True
-                receiveQueueThread.start()
-            if config.safeGetBoolean('bitmessagesettings', 'udp'):
-                state.announceThread = network.AnnounceThread()
-                state.announceThread.daemon = True
-                state.announceThread.start()
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()

@@ -2,46 +2,42 @@
 Network subsystem package
 """
 
-from announcethread import AnnounceThread
-from connectionpool import BMConnectionPool
-from receivequeuethread import ReceiveQueueThread
-from threads import StoppableThread
+from .connectionpool import BMConnectionPool
+from .threads import StoppableThread
 
 
-__all__ = [
-    "AnnounceThread", "BMConnectionPool",
-    "ReceiveQueueThread", "StoppableThread"
-    # "AddrThread", "AnnounceThread", "BMNetworkThread", "Dandelion",
-    # "DownloadThread", "InvThread", "UploadThread",
-]
+__all__ = ["BMConnectionPool", "StoppableThread"]
 
 
-def start():
+def start(config, state):
     """Start network threads"""
-    from addrthread import AddrThread
-    from dandelion import Dandelion
-    from downloadthread import DownloadThread
-    from invthread import InvThread
-    from networkthread import BMNetworkThread
-    from knownnodes import readKnownNodes
-    from uploadthread import UploadThread
+    from .addrthread import AddrThread
+    from .announcethread import AnnounceThread
+    from .dandelion import Dandelion
+    from .downloadthread import DownloadThread
+    from .invthread import InvThread
+    from .networkthread import BMNetworkThread
+    from .knownnodes import readKnownNodes
+    from .receivequeuethread import ReceiveQueueThread
+    from .uploadthread import UploadThread
 
     readKnownNodes()
     # init, needs to be early because other thread may access it early
     Dandelion()
     BMConnectionPool().connectToStream(1)
-    asyncoreThread = BMNetworkThread()
-    asyncoreThread.daemon = True
-    asyncoreThread.start()
-    invThread = InvThread()
-    invThread.daemon = True
-    invThread.start()
-    addrThread = AddrThread()
-    addrThread.daemon = True
-    addrThread.start()
-    downloadThread = DownloadThread()
-    downloadThread.daemon = True
-    downloadThread.start()
-    uploadThread = UploadThread()
-    uploadThread.daemon = True
-    uploadThread.start()
+    for thread in (
+        BMNetworkThread(), InvThread(), AddrThread(),
+        DownloadThread(), UploadThread()
+    ):
+        thread.daemon = True
+        thread.start()
+
+    # Optional components
+    for i in range(config.getint('threads', 'receive')):
+        thread = ReceiveQueueThread(i)
+        thread.daemon = True
+        thread.start()
+    if config.safeGetBoolean('bitmessagesettings', 'udp'):
+        state.announceThread = AnnounceThread()
+        state.announceThread.daemon = True
+        state.announceThread.start()
