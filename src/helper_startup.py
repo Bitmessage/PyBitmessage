@@ -33,6 +33,7 @@ def loadConfig():
     """Load the config"""
     config = BMConfigParser()
 
+    print('state.appdata//////////////////////////////////................(36)', state.appdata)
     if state.appdata:
         config.read(state.appdata + 'keys.dat')
         # state.appdata must have been specified as a startup option.
