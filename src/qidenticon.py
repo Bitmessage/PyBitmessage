@@ -10,9 +10,10 @@ Return a PIL Image class instance which have generated identicon image.
 ``size`` specifies `patch size`. Generated image size is 3 * ``size``.
 """
 
-from PyQt4 import QtGui
-from PyQt4.QtCore import QPointF, QSize, Qt
-from PyQt4.QtGui import QPainter, QPixmap, QPolygonF
+try:
+    from PyQt5 import QtCore, QtGui
+except ImportError:
+    from PyQt4 import QtCore, QtGui
 
 
 class IdenticonRendererBase(object):
@@ -37,10 +38,12 @@ class IdenticonRendererBase(object):
         """
 
         # decode the code
-        middle, corner, side, foreColor, secondColor, swap_cross = self.decode(self.code, twoColor)
+        middle, corner, side, foreColor, secondColor, swap_cross = \
+            self.decode(self.code, twoColor)
 
         # make image
-        image = QPixmap(QSize(size * 3 + penwidth, size * 3 + penwidth))
+        image = QtGui.QPixmap(
+            QtCore.QSize(size * 3 + penwidth, size * 3 + penwidth))
 
         # fill background
         backColor = QtGui.QColor(255, 255, 255, opacity)
@@ -54,26 +57,28 @@ class IdenticonRendererBase(object):
             'backColor': backColor}
 
         # middle patch
-        image = self.drawPatchQt((1, 1), middle[2], middle[1], middle[0], **kwds)
+        image = self.drawPatchQt(
+            (1, 1), middle[2], middle[1], middle[0], **kwds)
 
         # side patch
         kwds['foreColor'] = foreColor
         kwds['patch_type'] = side[0]
-        for i in xrange(4):
+        for i in range(4):
             pos = [(1, 0), (2, 1), (1, 2), (0, 1)][i]
             image = self.drawPatchQt(pos, side[2] + 1 + i, side[1], **kwds)
 
         # corner patch
         kwds['foreColor'] = secondColor
         kwds['patch_type'] = corner[0]
-        for i in xrange(4):
+        for i in range(4):
             pos = [(0, 0), (2, 0), (2, 2), (0, 2)][i]
             image = self.drawPatchQt(pos, corner[2] + 1 + i, corner[1], **kwds)
 
         return image
 
-    def drawPatchQt(self, pos, turn, invert, patch_type, image, size, foreColor,
-                    backColor, penwidth):  # pylint: disable=unused-argument
+    def drawPatchQt(
+            self, pos, turn, invert, patch_type, image, size, foreColor,
+            backColor, penwidth):  # pylint: disable=unused-argument
         """
         :param size: patch size
         """
@@ -83,39 +88,43 @@ class IdenticonRendererBase(object):
             invert = not invert
             path = [(0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.)]
 
-        polygon = QPolygonF([QPointF(x * size, y * size) for x, y in path])
+        polygon = QtGui.QPolygonF([
+            QtCore.QPointF(x * size, y * size) for x, y in path])
 
         rot = turn % 4
-        rect = [QPointF(0., 0.), QPointF(size, 0.), QPointF(size, size), QPointF(0., size)]
+        rect = [
+            QtCore.QPointF(0., 0.), QtCore.QPointF(size, 0.),
+            QtCore.QPointF(size, size), QtCore.QPointF(0., size)]
         rotation = [0, 90, 180, 270]
 
-        nopen = QtGui.QPen(foreColor, Qt.NoPen)
-        foreBrush = QtGui.QBrush(foreColor, Qt.SolidPattern)
+        nopen = QtGui.QPen(foreColor, QtCore.Qt.NoPen)
+        foreBrush = QtGui.QBrush(foreColor, QtCore.Qt.SolidPattern)
         if penwidth > 0:
             pen_color = QtGui.QColor(255, 255, 255)
-            pen = QtGui.QPen(pen_color, Qt.SolidPattern)
+            pen = QtGui.QPen(pen_color, QtCore.Qt.SolidPattern)
             pen.setWidth(penwidth)
 
-        painter = QPainter()
+        painter = QtGui.QPainter()
         painter.begin(image)
         painter.setPen(nopen)
 
-        painter.translate(pos[0] * size + penwidth / 2, pos[1] * size + penwidth / 2)
+        painter.translate(
+            pos[0] * size + penwidth / 2, pos[1] * size + penwidth / 2)
         painter.translate(rect[rot])
         painter.rotate(rotation[rot])
 
         if invert:
             # subtract the actual polygon from a rectangle to invert it
-            poly_rect = QPolygonF(rect)
+            poly_rect = QtGui.QPolygonF(rect)
             polygon = poly_rect.subtracted(polygon)
         painter.setBrush(foreBrush)
         if penwidth > 0:
             # draw the borders
             painter.setPen(pen)
-            painter.drawPolygon(polygon, Qt.WindingFill)
+            painter.drawPolygon(polygon, QtCore.Qt.WindingFill)
         # draw the fill
         painter.setPen(nopen)
-        painter.drawPolygon(polygon, Qt.WindingFill)
+        painter.drawPolygon(polygon, QtCore.Qt.WindingFill)
 
         painter.end()
 
@@ -123,7 +132,6 @@ class IdenticonRendererBase(object):
 
     def decode(self, code, twoColor):
         """virtual functions"""
-
         raise NotImplementedError
 
 
@@ -166,13 +174,14 @@ class DonRenderer(IdenticonRendererBase):
         [(0, 0), (2, 0), (0, 2)],
         # [15] empty:
         []]
-    # get the [0] full square, [4] square standing on diagonale, [8] small centered square, or [15] empty tile:
+    # get the [0] full square, [4] square standing on diagonale,
+    # [8] small centered square, or [15] empty tile:
     MIDDLE_PATCH_SET = [0, 4, 8, 15]
 
     # modify path set
-    for idx in xrange(len(PATH_SET)):
-        if PATH_SET[idx]:
-            p = [(vec[0] / 4.0, vec[1] / 4.0) for vec in PATH_SET[idx]]
+    for idx, path in enumerate(PATH_SET):
+        if path:
+            p = [(vec[0] / 4.0, vec[1] / 4.0) for vec in path]
             PATH_SET[idx] = p + p[:1]
 
     def decode(self, code, twoColor):
@@ -215,7 +224,8 @@ class DonRenderer(IdenticonRendererBase):
         foreColor = QtGui.QColor(*foreColor)
 
         if twoColor:
-            secondColor = (second_blue << 3, second_green << 3, second_red << 3)
+            secondColor = (
+                second_blue << 3, second_green << 3, second_red << 3)
             secondColor = QtGui.QColor(*secondColor)
         else:
             secondColor = foreColor
@@ -226,9 +236,9 @@ class DonRenderer(IdenticonRendererBase):
             foreColor, secondColor, swap_cross
 
 
-def render_identicon(code, size, twoColor=False, opacity=255, penwidth=0, renderer=None):
+def render_identicon(
+        code, size, twoColor=False, opacity=255, penwidth=0, renderer=None):
     """Render an image"""
-
     if not renderer:
         renderer = DonRenderer
     return renderer(code).render(size, twoColor, opacity, penwidth)
