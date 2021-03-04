@@ -174,7 +174,7 @@ class namecoinConnection(object):
                 message = ('failed', tr._translate("MainWindow", 'Couldn\'t understand NMControl.'))
 
             else:
-                print "Unsupported Namecoin type"
+                print ("Unsupported Namecoin type")
                 sys.exit(1)
 
             return message

@@ -9,15 +9,28 @@ import sys
 import threading
 import time
 
-import helper_sql
-import helper_startup
-import paths
-import queues
-import state
-import tr
-from bmconfigparser import BMConfigParser
-from debug import logger
-# pylint: disable=attribute-defined-outside-init,protected-access
+if sys.version_info[0] == 3:
+    from . import helper_sql
+    from . import helper_startup
+    from . import paths
+    from . import queues
+    from . import state
+    from . import tr
+    from .bmconfigparser import BMConfigParser
+    from .debug import logger
+    # pylint: disable=attribute-defined-outside-init,protected-access
+    from .addresses import encodeAddress
+else:
+    import helper_sql
+    import helper_startup
+    import paths
+    import queues
+    import state
+    import tr
+    from bmconfigparser import BMConfigParser
+    from debug import logger
+    # pylint: disable=attribute-defined-outside-init,protected-access
+    from addresses import encodeAddress
 
 
 class sqlThread(threading.Thread):
@@ -34,6 +47,9 @@ class sqlThread(threading.Thread):
         self.cur = self.conn.cursor()
 
         self.cur.execute('PRAGMA secure_delete = true')
+
+        # call create_function for encode address
+        self.create_function()
 
         try:
             self.cur.execute(
@@ -325,6 +341,7 @@ class sqlThread(threading.Thread):
 
         # We'll also need a `sleeptill` field and a `ttl` field. Also we
         # can combine the pubkeyretrynumber and msgretrynumber into one.
+
         item = '''SELECT value FROM settings WHERE key='version';'''
         parameters = ''
         self.cur.execute(item, parameters)
@@ -358,16 +375,11 @@ class sqlThread(threading.Thread):
             logger.debug('In messages.dat database, adding address field to the pubkeys table.')
             # We're going to have to calculate the address for each row in the pubkeys
             # table. Then we can take out the hash field.
-            self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
-            self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
-            queryResult = self.cur.fetchall()
-            from addresses import encodeAddress
-            for row in queryResult:
-                addressHash, addressVersion = row
-                address = encodeAddress(addressVersion, 1, hash)
-                item = '''UPDATE pubkeys SET address=? WHERE hash=?;'''
-                parameters = (address, addressHash)
-                self.cur.execute(item, parameters)
+            self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ;''')
+
+            # replica for loop to update hashed address
+            self.cur.execute('''UPDATE pubkeys SET address=(enaddr(pubkeys.addressversion, 1, hash)); ''')
+
             # Now we can remove the hash field from the pubkeys table.
             self.cur.execute(
                 '''CREATE TEMPORARY TABLE pubkeys_backup'''
@@ -622,3 +634,12 @@ class sqlThread(threading.Thread):
 
                 helper_sql.sqlReturnQueue.put((self.cur.fetchall(), rowcount))
                 # helper_sql.sqlSubmitQueue.task_done()
+
+    def create_function(self):
+        # create_function
+        try:
+            self.conn.create_function("enaddr", 3, func=encodeAddress, deterministic=True)
+        except (TypeError, sqlite3.NotSupportedError) as err:
+            logger.debug(
+                "Got error while pass deterministic in sqlite create function {}, Passing 3 params".format(err))
+            self.conn.create_function("enaddr", 3, encodeAddress)

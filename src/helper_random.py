@@ -2,8 +2,11 @@
 
 import os
 import random
-
-from pyelliptic.openssl import OpenSSL
+import sys
+if sys.version_info[0] == 3:
+    from .pyelliptic.openssl import OpenSSL
+else:
+    from pyelliptic.openssl import OpenSSL
 
 NoneType = type(None)
 

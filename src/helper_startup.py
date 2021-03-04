@@ -10,11 +10,19 @@ import sys
 import time
 from distutils.version import StrictVersion
 
-import defaults
-import helper_random
-import paths
-import state
-from bmconfigparser import BMConfigParser
+import sys
+if sys.version_info[0] == 3:
+    from . import defaults
+    from . import helper_random
+    from . import paths
+    from . import state
+    from .bmconfigparser import BMConfigParser
+else:
+    import defaults
+    import helper_random
+    import paths
+    import state
+    from bmconfigparser import BMConfigParser
 
 try:
     from plugins.plugin import get_plugin

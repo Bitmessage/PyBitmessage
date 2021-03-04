@@ -5,6 +5,9 @@ import random
 import unittest
 
 from time import time
+from .common import skip_python3
+
+skip_python3()
 
 
 class TestRandomTrackingDict(unittest.TestCase):

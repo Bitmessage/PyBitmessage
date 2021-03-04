@@ -3,7 +3,11 @@ Translating text
 """
 import os
 
-import state
+import sys
+if sys.version_info[0] == 3:
+    from . import state
+else:
+    import state
 
 
 class translateClass:
@@ -40,12 +44,12 @@ def translateText(context, text, n=None):
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
-            print 'PyBitmessage requires PyQt unless you want to run it as a daemon'\
+            print ('PyBitmessage requires PyQt unless you want to run it as a daemon'\
                 ' and interact with it using the API.'\
                 ' You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download'\
                 ' or by searching Google for \'PyQt Download\'.'\
-                ' If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
-            print 'Error message:', err
+                ' If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
+            print('Error message:', err)
             os._exit(0)  # pylint: disable=protected-access
         if n is None:
             return QtGui.QApplication.translate(context, text)

@@ -3,10 +3,18 @@ A queue with multiple internal subqueues.
 Elements are added into a random subqueue, and retrieval rotates
 """
 
-import Queue
+import sys
+if sys.version_info[0] == 3:
+    import queue as Queue
+else:
+    import Queue
+
 from collections import deque
 
-import helper_random
+if sys.version_info[0] == 3:
+    from . import helper_random
+else:
+    import helper_random
 
 
 class MultiQueue(Queue.Queue):

@@ -35,14 +35,26 @@ Logging is thread-safe so you don't have to worry about locks,
 just import and log.
 """
 
-import ConfigParser
+# import ConfigParser
+import sys
+if sys.version_info[0] == 3:
+    # python 3
+    import configparser as ConfigParser
+else:
+    # python 2
+    import ConfigParser
+
 import logging
 import logging.config
 import os
 import sys
 
-import helper_startup
-import state
+if sys.version_info[0] == 3:
+    from . import helper_startup
+    from . import state
+else:
+    import helper_startup
+    import state
 
 helper_startup.loadConfig()
 
@@ -74,7 +86,7 @@ def configureLogging():
             False,
             'Loaded logger configuration from %s' % logging_config
         )
-    except (OSError, ConfigParser.NoSectionError):
+    except (OSError, ConfigParser.NoSectionError, KeyError):
         if os.path.isfile(logging_config):
             fail_msg = \
                 'Failed to load logger configuration from %s, using default' \
@@ -149,6 +161,7 @@ def resetLogging():
 
 
 # !
+
 preconfigured, msg = configureLogging()
 logger = logging.getLogger('default')
 if msg:

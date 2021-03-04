@@ -2,6 +2,7 @@
 Operations with addresses
 """
 # pylint: disable=redefined-outer-name,inconsistent-return-statements
+import sys
 import hashlib
 import logging
 from binascii import hexlify, unhexlify
@@ -149,18 +150,31 @@ def encodeAddress(version, stream, ripe):
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.'
             )
-        if ripe[:2] == b'\x00\x00':
-            ripe = ripe[2:]
-        elif ripe[:1] == b'\x00':
-            ripe = ripe[1:]
+
+        if isinstance(ripe, str):
+            if ripe[:2] == '\x00\x00':
+                ripe = ripe[2:]
+            elif ripe[:1] == '\x00':
+                ripe = ripe[1:]
+        else:
+            if ripe[:2] == b'\x00\x00':
+                ripe = ripe[2:]
+            elif ripe[:1] == b'\x00':
+                ripe = ripe[1:]
     elif version == 4:
         if len(ripe) != 20:
             raise Exception(
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.')
-        ripe = ripe.lstrip(b'\x00')
+        ripe = ripe.lstrip('\x00')
 
-    storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
+    if sys.version_info[0] == 3:
+        if isinstance(ripe, str):
+            storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe.encode('utf-8')
+        else:
+            storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
+    else:
+        storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
 
     # Generate the checksum
     sha = hashlib.new('sha512')
