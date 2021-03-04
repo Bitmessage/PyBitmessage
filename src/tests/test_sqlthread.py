@@ -76,6 +76,7 @@ class TestSqlThread(unittest.TestCase):
             # Test versions
             upgrade_db = UpgradeDB()
             upgrade_db.cur = self.cur
+            upgrade_db.conn = self.conn
             getattr(upgrade_db, "upgrade_schema_data_{}".format(version))()
             ret = func(*args)
             return ret  # <-- use (self, ...)

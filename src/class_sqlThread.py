@@ -17,7 +17,10 @@ import state
 import tr
 from bmconfigparser import BMConfigParser
 from debug import logger
+from addresses import encodeAddress
+
 # pylint: disable=attribute-defined-outside-init,protected-access
+root_path = os.path.dirname(os.path.dirname(__file__))
 
 
 class UpgradeDB():
@@ -26,6 +29,7 @@ class UpgradeDB():
     parameters = None
     current_level = None
     max_level = 11
+    conn = None
 
     def get_current_level(self):
         # Upgrade Db with respect to their versions
@@ -45,16 +49,49 @@ class UpgradeDB():
         method = getattr(self, method_name, lambda: "Invalid version")
         return method()
 
-    def upgrade_to_latest(self, cur):
+    def run_migrations(self, file):
+        try:
+            print"-=-=-=-"
+            print(file)
+            print"-=-=-=-"
+            root_path = os.path.dirname(os.path.dirname(__file__))
+            sql_file = open(os.path.join(root_path, "src/sql/init_version_{}.sql".format(file)))
+            sql_as_string = sql_file.read()
+            self.cur.executescript(sql_as_string)
+            # self.conn.commit()
+        except Exception as err:
+            if str(err) == 'table inbox already exists':
+                return "table inbox already exists"
+            else:
+                sys.stderr.write(
+                    'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
+                os._exit(0)
+
+    def versioning(func):
+        def wrapper(*args):
+            self = args[0]
+            func_name = func.__name__
+            version = func_name.rsplit('_', 1)[-1]
+
+            self.run_migrations(version)
+            ret = func(*args)
+            return ret  # <-- use (self, ...)
+        return wrapper
+
+    def upgrade_to_latest(self, cur, conn):
         """
             Initialise upgrade level
         """
 
         # Declare variables
+        self.conn = conn
         self.cur = cur
         self.current_level = self.get_current_level()
         self.max_level = 11
 
+        print("self.current_level")
+        print(self.current_level)
+        print("self.current_level")
         # call upgrading level in loop
         for l in range(self.current_level, self.max_level):
             self.upgrade_one_level(l)
@@ -65,18 +102,27 @@ class UpgradeDB():
         parameters = (level + 1,)
         self.cur.execute(item, parameters)
 
+    @versioning
     def upgrade_schema_data_1(self):
         """inventory
             For version 1 and 3
             Add a new column to the inventory table to store tags.
         """
+        print("in level 1")
         logger.debug(
             'In messages.dat database, adding tag field to'
             ' the inventory table.')
-        item = '''ALTER TABLE inventory ADD tag blob DEFAULT '' '''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        # root_path = os.path.dirname(os.path.dirname(__file__))
+        # sql_file = open(os.path.join(root_path, "src/sql/init_version_{}.sql".format(1)))
+        # sql_as_string = sql_file.read()
+        # self.cur.executescript(sql_as_string)
+        # self.conn.commit()
+        #
+        # item = '''ALTER TABLE inventory ADD tag blob DEFAULT '' '''
+        # parameters = ''
+        # self.cur.execute(item, parameters)
 
+    @versioning    
     def upgrade_schema_data_2(self):
         """
             For version 2
@@ -86,22 +132,22 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, removing an obsolete field from'
             ' the inventory table.')
-        self.cur.execute(
-            '''CREATE TEMPORARY TABLE inventory_backup'''
-            '''(hash blob, objecttype text, streamnumber int, payload blob,'''
-            ''' receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE);''')
-        self.cur.execute(
-            '''INSERT INTO inventory_backup SELECT hash, objecttype, streamnumber, payload, receivedtime'''
-            ''' FROM inventory;''')
-        self.cur.execute('''DROP TABLE inventory''')
-        self.cur.execute(
-            '''CREATE TABLE inventory'''
-            ''' (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer,'''
-            ''' UNIQUE(hash) ON CONFLICT REPLACE)''')
-        self.cur.execute(
-            '''INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime'''
-            ''' FROM inventory_backup;''')
-        self.cur.execute('''DROP TABLE inventory_backup;''')
+        # self.cur.execute(
+        #     '''CREATE TEMPORARY TABLE inventory_backup'''
+        #     '''(hash blob, objecttype text, streamnumber int, payload blob,'''
+        #     ''' receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE);''')
+        # self.cur.execute(
+        #     '''INSERT INTO inventory_backup SELECT hash, objecttype, streamnumber, payload, receivedtime'''
+        #     ''' FROM inventory;''')
+        # self.cur.execute('''DROP TABLE inventory''')
+        # self.cur.execute(
+        #     '''CREATE TABLE inventory'''
+        #     ''' (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer,'''
+        #     ''' UNIQUE(hash) ON CONFLICT REPLACE)''')
+        # self.cur.execute(
+        #     '''INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime'''
+        #     ''' FROM inventory_backup;''')
+        # self.cur.execute('''DROP TABLE inventory_backup;''')
 
     def upgrade_schema_data_3(self):
         """
@@ -111,6 +157,7 @@ class UpgradeDB():
 
         self.upgrade_schema_data_1()
 
+    @versioning    
     def upgrade_schema_data_4(self):
         """
             For version 4
@@ -118,13 +165,14 @@ class UpgradeDB():
             We're going to trash all of our pubkeys and let them be redownloaded.
         """
 
-        self.cur.execute('''DROP TABLE pubkeys''')
-        self.cur.execute(
-            '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int,'''
-            '''usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''')
-        self.cur.execute(
-            '''delete from inventory where objecttype = 'pubkey';''')
+        # self.cur.execute('''DROP TABLE pubkeys''')
+        # self.cur.execute(
+        #     '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int,'''
+        #     '''usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''')
+        # self.cur.execute(
+        #     '''delete from inventory where objecttype = 'pubkey';''')
 
+    @versioning    
     def upgrade_schema_data_5(self):
         """
             For version 5
@@ -132,11 +180,12 @@ class UpgradeDB():
             That have yet to be processed if the user shuts down Bitmessage.
         """
 
-        self.cur.execute('''DROP TABLE knownnodes''')
-        self.cur.execute(
-            '''CREATE TABLE objectprocessorqueue'''
-            ''' (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+        # self.cur.execute('''DROP TABLE knownnodes''')
+        # self.cur.execute(
+        #     '''CREATE TABLE objectprocessorqueue'''
+        #     ''' (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
 
+    @versioning    
     def upgrade_schema_data_6(self):
         """
             For version 6
@@ -148,18 +197,19 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, dropping and recreating'
             ' the inventory table.')
-        self.cur.execute('''DROP TABLE inventory''')
-        self.cur.execute(
-            '''CREATE TABLE inventory'''
-            ''' (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer,'''
-            ''' tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
-        self.cur.execute('''DROP TABLE objectprocessorqueue''')
-        self.cur.execute(
-            '''CREATE TABLE objectprocessorqueue'''
-            ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+        # self.cur.execute('''DROP TABLE inventory''')
+        # self.cur.execute(
+        #     '''CREATE TABLE inventory'''
+        #     ''' (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer,'''
+        #     ''' tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
+        # self.cur.execute('''DROP TABLE objectprocessorqueue''')
+        # self.cur.execute(
+        #     '''CREATE TABLE objectprocessorqueue'''
+        #     ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
         logger.debug(
             'Finished dropping and recreating the inventory table.')
 
+    @versioning    
     def upgrade_schema_data_7(self):
         """
             For version 7
@@ -171,16 +221,17 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, clearing pubkeys table'
             ' because the data format has been updated.')
-        self.cur.execute(
-            '''delete from inventory where objecttype = 1;''')
-        self.cur.execute(
-            '''delete from pubkeys;''')
-        # Any sending messages for which we *thought* that we had
-        # the pubkey must be rechecked.
-        self.cur.execute(
-            '''UPDATE sent SET status='msgqueued' WHERE status='doingmsgpow' or status='badkey';''')
+        # self.cur.execute(
+        #     '''delete from inventory where objecttype = 1;''')
+        # self.cur.execute(
+        #     '''delete from pubkeys;''')
+        # # Any sending messages for which we *thought* that we had
+        # # the pubkey must be rechecked.
+        # self.cur.execute(
+        #     '''UPDATE sent SET status='msgqueued' WHERE status='doingmsgpow' or status='badkey';''')
         logger.debug('Finished clearing currently held pubkeys.')
 
+    @versioning    
     def upgrade_schema_data_8(self):
         """
             For version 8
@@ -192,10 +243,11 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, adding sighash field to'
             ' the inbox table.')
-        item = '''ALTER TABLE inbox ADD sighash blob DEFAULT '' '''
-        parameters = ''
-        self.cur.execute(item, parameters)
+        # item = '''ALTER TABLE inbox ADD sighash blob DEFAULT '' '''
+        # parameters = ''
+        # self.cur.execute(item, parameters)
 
+    @versioning    
     def upgrade_schema_data_9(self):
         """
             For version 9
@@ -208,60 +260,114 @@ class UpgradeDB():
             ' combining the pubkeyretrynumber and msgretrynumber'
             ' fields into the retrynumber field and adding the'
             ' sleeptill and ttl fields...')
-        self.cur.execute(
-            '''CREATE TEMPORARY TABLE sent_backup'''
-            ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
-            ''' ackdata blob, lastactiontime integer, status text, retrynumber integer,'''
-            ''' folder text, encodingtype int)''')
-        self.cur.execute(
-            '''INSERT INTO sent_backup SELECT msgid, toaddress, toripe, fromaddress,'''
-            ''' subject, message, ackdata, lastactiontime,'''
-            ''' status, 0, folder, encodingtype FROM sent;''')
-        self.cur.execute('''DROP TABLE sent''')
-        self.cur.execute(
-            '''CREATE TABLE sent'''
-            ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
-            ''' ackdata blob, senttime integer, lastactiontime integer, sleeptill int, status text,'''
-            ''' retrynumber integer, folder text, encodingtype int, ttl int)''')
-        self.cur.execute(
-            '''INSERT INTO sent SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata,'''
-            ''' lastactiontime, lastactiontime, 0, status, 0, folder, encodingtype, 216000 FROM sent_backup;''')
-        self.cur.execute('''DROP TABLE sent_backup''')
+        # self.cur.execute(
+        #     '''CREATE TEMPORARY TABLE sent_backup'''
+        #     ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
+        #     ''' ackdata blob, lastactiontime integer, status text, retrynumber integer,'''
+        #     ''' folder text, encodingtype int)''')
+        # self.cur.execute(
+        #     '''INSERT INTO sent_backup SELECT msgid, toaddress, toripe, fromaddress,'''
+        #     ''' subject, message, ackdata, lastactiontime,'''
+        #     ''' status, 0, folder, encodingtype FROM sent;''')
+        # self.cur.execute('''DROP TABLE sent''')
+        # self.cur.execute(
+        #     '''CREATE TABLE sent'''
+        #     ''' (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text,'''
+        #     ''' ackdata blob, senttime integer, lastactiontime integer, sleeptill int, status text,'''
+        #     ''' retrynumber integer, folder text, encodingtype int, ttl int)''')
+        # self.cur.execute(
+        #     '''INSERT INTO sent SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata,'''
+        #     ''' lastactiontime, lastactiontime, 0, status, 0, folder, encodingtype, 216000 FROM sent_backup;''')
+        # self.cur.execute('''DROP TABLE sent_backup''')
         logger.info('In messages.dat database, finished making TTL-related changes.')
         logger.debug('In messages.dat database, adding address field to the pubkeys table.')
         # We're going to have to calculate the address for each row in the pubkeys
         # table. Then we can take out the hash field.
+        print("-=-=- 9 runned")
         self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
-        self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
-        queryResult = self.cur.fetchall()
-        from addresses import encodeAddress
-        for row in queryResult:
-            addressHash, addressVersion = row
-            address = encodeAddress(addressVersion, 1, hash)
-            item = '''UPDATE pubkeys SET address=? WHERE hash=?;'''
-            parameters = (address, addressHash)
-            self.cur.execute(item, parameters)
+
+        # self.cur.execute('''ALTER TABLE pubkeys ADD hash blob DEFAULT '11111111111111111111' ''')
+
+        self.cur.execute('''INSERT INTO pubkeys (addressversion,TIME,usedpersonally, hash) VALUES ( 4, 12121203, 'NULL', '22222222222222222222' ); ''')
+        self.cur.execute('''INSERT INTO pubkeys (addressversion,TIME,usedpersonally, hash) VALUES ( 4, 12121203, 'NULL', '33333333333333333333' ); ''')
+
+        # self.cur.execute('''UPDATE 'pubkeys' SET `hash`='11111111111111111111'; ''')
+
+        # self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
+        # queryResult = self.cur.fetchall()
+
+        # conn.create_function(addressVersion, 1, _sign)
+        # self.cur.create_function("sign", 1, encodeAddress)
+
+        # self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
+        # queryResult = self.cur.fetchall()
+        #
+        # print('queryResult')
+        # print(queryResult)
+        # print(type(queryResult))
+        # print('queryResult')
+        # self.conn.create_function("enaddr", 3, encodeAddress)
+        # item = '''UPDATE pubkeys SET address=(select enaddr(pubkeys.addressversion, 1, pubkeys.hash)) WHERE hash=pubkeys.hash;  '''
+        # parameters = (addressVersion, 1, addressHash, addressHash)
+
+        # create_function
+        self.conn.create_function("enaddr", 3, encodeAddress)
+
+        res = self.cur.execute('''UPDATE pubkeys SET address=(select enaddr(pubkeys.addressversion, 1, pubkeys.hash)) WHERE hash=pubkeys.hash;  ''')
+        print("-------------------------------")
+        print(res)
+        print(type(res))
+        # print(res.fetchall())
+        print("-------------------------------")
+
+
+        # for row in queryResult:
+        #     # self.cur.execute(item, parameters)
+        #     addressHash, addressVersion = row
+        #     item = '''UPDATE pubkeys as pk SET address=(select enaddr(pk.addressversion, 1, pk.hash)) WHERE hash=pk.hash;  '''
+        #     # parameters = (addressVersion, 1, addressHash, addressHash)
+        #     res = self.cur.execute(item)
+        #     print("-------------------------")
+        #     print(res)
+        #     print("-------------------------")
+        #
+        #     self.cur = self.conn.cursor()
+        #     self.cur.execute("select enaddr(?, ?, ?)", (addressVersion, 1, addressHash))
+        #     print(self.cur.fetchone()[0])
+        #     print("self.conn-=-=")
+        #     # print("------------", hash)
+        #     addressHash, addressVersion = row
+        #     print("addressHash", addressHash, addressVersion)
+        #     address = encodeAddress(addressVersion, 1, addressHash)
+        #     print("-=-=-=-=-", address)
+        #     item = '''UPDATE pubkeys SET address=? WHERE hash=?;'''
+        #     parameters = (address, addressHash)
+        #     self.cur.execute(item, parameters)
         # Now we can remove the hash field from the pubkeys table.
-        self.cur.execute(
-            '''CREATE TEMPORARY TABLE pubkeys_backup'''
-            ''' (address text, addressversion int, transmitdata blob, time int,'''
-            ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
-        self.cur.execute(
-            '''INSERT INTO pubkeys_backup'''
-            ''' SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys;''')
-        self.cur.execute('''DROP TABLE pubkeys''')
-        self.cur.execute(
-            '''CREATE TABLE pubkeys'''
-            ''' (address text, addressversion int, transmitdata blob, time int, usedpersonally text,'''
-            ''' UNIQUE(address) ON CONFLICT REPLACE)''')
-        self.cur.execute(
-            '''INSERT INTO pubkeys SELECT'''
-            ''' address, addressversion, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
-        self.cur.execute('''DROP TABLE pubkeys_backup''')
+        print("-=-=- start 9_1")
+        self.run_migrations("9_1")
+
+        # self.cur.execute(
+        #     '''CREATE TEMPORARY TABLE pubkeys_backup'''
+        #     ''' (address text, addressversion int, transmitdata blob, time int,'''
+        #     ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
+        # self.cur.execute(
+        #     '''INSERT INTO pubkeys_backup'''
+        #     ''' SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys;''')
+        # self.cur.execute('''DROP TABLE pubkeys''')
+        # self.cur.execute(
+        #     '''CREATE TABLE pubkeys'''
+        #     ''' (address text, addressversion int, transmitdata blob, time int, usedpersonally text,'''
+        #     ''' UNIQUE(address) ON CONFLICT REPLACE)''')
+        # self.cur.execute(
+        #     '''INSERT INTO pubkeys SELECT'''
+        #     ''' address, addressversion, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
+        # self.cur.execute('''DROP TABLE pubkeys_backup''')
         logger.debug(
             'In messages.dat database, done adding address field to the pubkeys table'
             ' and removing the hash field.')
 
+    @versioning
     def upgrade_schema_data_10(self):
         """
             For version 10
@@ -271,14 +377,14 @@ class UpgradeDB():
         logger.debug(
             'In messages.dat database, updating address column to UNIQUE'
             ' in the addressbook table.')
-        self.cur.execute(
-            '''ALTER TABLE addressbook RENAME TO old_addressbook''')
-        self.cur.execute(
-            '''CREATE TABLE addressbook'''
-            ''' (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
-        self.cur.execute(
-            '''INSERT INTO addressbook SELECT label, address FROM old_addressbook;''')
-        self.cur.execute('''DROP TABLE old_addressbook''')
+        # self.cur.execute(
+        #     '''ALTER TABLE addressbook RENAME TO old_addressbook''')
+        # self.cur.execute(
+        #     '''CREATE TABLE addressbook'''
+        #     ''' (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
+        # self.cur.execute(
+        #     '''INSERT INTO addressbook SELECT label, address FROM old_addressbook;''')
+        # self.cur.execute('''DROP TABLE old_addressbook''')
 
 class sqlThread(threading.Thread, UpgradeDB):
     """A thread for all SQL operations"""
@@ -296,45 +402,59 @@ class sqlThread(threading.Thread, UpgradeDB):
         self.cur.execute('PRAGMA secure_delete = true')
 
         try:
-            self.cur.execute(
-                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
-                ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
-                ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
-            self.cur.execute(
-                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
-                ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
-                ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
-            self.cur.execute(
-                '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
-            self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
-            self.cur.execute(
-                '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
-            self.cur.execute(
-                '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
-            self.cur.execute(
-                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
-                ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
-            self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
-                ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
-            self.cur.execute(
-                '''INSERT INTO subscriptions VALUES'''
-                '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
-            self.cur.execute(
-                '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
-            self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
+            # self.cur.execute(
+            #     '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
+            #     ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
+            #     ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
+            print(2)
+            # self.cur.execute(
+            #     '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
+            #     ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
+            #     ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
+            print(3)
+            # self.cur.execute(
+            #     '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
+            print(4)
+            # self.cur.execute(
+            #     '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
+            print(5)
+            # # self.cur.execute(
+            # #     '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
+            # print(6)
+            # self.cur.execute(
+            #     '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
+            # print(7)
+            # self.cur.execute(
+            #     '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
+            #     ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
+            # print(8)
+            # self.cur.execute(
+            #     '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
+            #     ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
+            # print(9)
+            # self.cur.execute(
+            #     '''INSERT INTO subscriptions VALUES'''
+            #     '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
+            # print(10)
+            # self.cur.execute(
+            #     '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
+            print(11)
+            self.cur.execute('''INSERT INTO settings VALUES('version','9')''')
+            print(12)
             self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
-            self.cur.execute(
-                '''CREATE TABLE objectprocessorqueue'''
-                ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+            print(13)
+            # self.cur.execute(
+            #     '''CREATE TABLE objectprocessorqueue'''
+            #     ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+            print(14)
             self.conn.commit()
+            print(15)
             logger.info('Created messages database file')
+            print(16)
         except Exception as err:
             if str(err) == 'table inbox already exists':
                 logger.debug('Database file already exists.')
-
             else:
                 sys.stderr.write(
                     'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
@@ -438,53 +558,13 @@ class sqlThread(threading.Thread, UpgradeDB):
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
 
-        self.upgrade_to_latest(self.cur)
+        self.upgrade_to_latest(self.cur, self.conn)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right
         # above this line!
 
         self.add_new_option()
-
-        # try:
-        #     testpayload = '\x00\x00'
-        #     t = ('1234', 1, testpayload, '12345678', 'no')
-        #     self.cur.execute('''INSERT INTO pubkeys VALUES(?,?,?,?,?)''', t)
-        #     self.conn.commit()
-        #     self.cur.execute(
-        #         '''SELECT transmitdata FROM pubkeys WHERE address='1234' ''')
-        #     queryreturn = self.cur.fetchall()
-        #     for row in queryreturn:
-        #         transmitdata, = row
-        #     self.cur.execute('''DELETE FROM pubkeys WHERE address='1234' ''')
-        #     self.conn.commit()
-        #     if transmitdata == '':
-        #         logger.fatal(
-        #             'Problem: The version of SQLite you have cannot store Null values.'
-        #             ' Please download and install the latest revision of your version of Python'
-        #             ' (for example, the latest Python 2.7 revision) and try again.\n')
-        #         logger.fatal(
-        #             'PyBitmessage will now exit very abruptly.'
-        #             ' You may now see threading errors related to this abrupt exit'
-        #             ' but the problem you need to solve is related to SQLite.\n\n')
-        #         os._exit(0)
-        # except Exception as err:
-        #     if str(err) == 'database or disk is full':
-        #         logger.fatal(
-        #             '(While null value test) Alert: Your disk or data storage volume is full.'
-        #             ' sqlThread will now exit.')
-        #         queues.UISignalQueue.put((
-        #             'alert', (
-        #                 tr._translate(
-        #                     "MainWindow",
-        #                     "Disk full"),
-        #                 tr._translate(
-        #                     "MainWindow",
-        #                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
-        #                 True)))
-        #         os._exit(0)
-        #     else:
-        #         logger.error(err)
 
         # Let us check to see the last time we vaccumed the messages.dat file.
         # If it has been more than a month let's do it now.
@@ -493,7 +573,6 @@ class sqlThread(threading.Thread, UpgradeDB):
 
 
     def add_new_option(self):
-        print("start func -=-=-=-=-=-=-=-=")
         try:
             testpayload = '\x00\x00'
             t = ('1234', 1, testpayload, '12345678', 'no')
@@ -534,9 +613,7 @@ class sqlThread(threading.Thread, UpgradeDB):
             else:
                 logger.error(err)
 
-
     def check_vaccumed(self):
-        print(" chec vaccumed start")
         item = '''SELECT value FROM settings WHERE key='lastvacuumtime';'''
         parameters = ''
         self.cur.execute(item, parameters)
