@@ -37,10 +37,12 @@ def lookupAppdataFolder():
     """Returns path of the folder where application data is stored"""
     APPNAME = "PyBitmessage"
     dataFolder = os.environ.get('BITMESSAGE_HOME')
+    print('path...........................40', dataFolder)
     if dataFolder:
         if dataFolder[-1] not in (os.path.sep, os.path.altsep):
             dataFolder += os.path.sep
     elif sys.platform == 'darwin':
+        print('path...........................45', os.environ['HOME'])
         try:
             dataFolder = os.path.join(
                 os.environ['HOME'],
@@ -61,8 +63,11 @@ def lookupAppdataFolder():
     else:
         try:
             dataFolder = os.path.join(os.environ['XDG_CONFIG_HOME'], APPNAME)
+            print('path...........................66', os.environ['HOME'])
         except KeyError:
             dataFolder = os.path.join(os.environ['HOME'], '.config', APPNAME)
+        print('path...........................69', dataFolder)
+        print('path...........................70', os.environ['HOME'])
 
         # Migrate existing data to the proper location
         # if this is an existing install

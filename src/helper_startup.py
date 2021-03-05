@@ -32,8 +32,9 @@ StoreConfigFilesInSameDirectoryAsProgramByDefault = False
 def loadConfig():
     """Load the config"""
     config = BMConfigParser()
-
-    print('state.appdata//////////////////////////////////................(36)', state.appdata)
+    # import tempfile
+    # state.appdata = tempfile.gettempdir()
+    print('state.appdata(helper_startup)......................(36)', state.appdata)
     if state.appdata:
         config.read(state.appdata + 'keys.dat')
         # state.appdata must have been specified as a startup option.
@@ -44,13 +45,20 @@ def loadConfig():
                 'Loading config files from directory specified'
                 ' on startup: %s', state.appdata)
     else:
+        print('line...............................48', paths.lookupExeFolder())
         config.read(paths.lookupExeFolder() + 'keys.dat')
         try:
+            print('inside try.................................51')
             config.get('bitmessagesettings', 'settingsversion')
+            print('inside try.................................53')
             logger.info('Loading config files from same directory as program.')
+            print('inside try..................................55')
             needToCreateKeysFile = False
+            print('inside try..................................57')
             state.appdata = paths.lookupExeFolder()
+            print('pass try.......................................59')
         except:
+            print('fail try.......................................', paths.lookupAppdataFolder())
             # Could not load the keys.dat file in the program directory.
             # Perhaps it is in the appdata directory.
             state.appdata = paths.lookupAppdataFolder()
@@ -61,6 +69,7 @@ def loadConfig():
                 logger.info(
                     'Loading existing config files from %s', state.appdata)
 
+    print('state.appdata(helper_startup)......................(64)', state.appdata)            
     if needToCreateKeysFile:
 
         # This appears to be the first time running the program; there is

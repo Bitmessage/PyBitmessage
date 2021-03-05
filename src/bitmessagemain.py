@@ -152,7 +152,7 @@ class Main(object):
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
         # import tempfile
         # state.appdata = tempfile.gettempdir()
-        print('line..........................153(state.appdata)...', state.appdata)
+        # print('line BABAL..........................153(state.appdata)...', state.appdata)
         _fixSocket()
         adjustHalfOpenConnectionsLimit()
 
@@ -261,7 +261,7 @@ class Main(object):
         # Start the SQL thread
         # import tempfile
         # state.appdata = tempfile.gettempdir()
-        print('state.appdata..........................(258)', state.appdata)
+        print('state.appdata (bitmessagemain)..........................(258)', state.appdata)
         sqlLookup = sqlThread()
         # DON'T close the main program even if there are threads left.
         # The closeEvent should command this thread to exit gracefully.

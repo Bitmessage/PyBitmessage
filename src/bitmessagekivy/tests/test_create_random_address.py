@@ -1,25 +1,18 @@
-import state
+# import state
 import os
 import tempfile
-state.appdata = tempfile.gettempdir()
+# state.appdata = tempfile.gettempdir()
 import time
 from random import choice
 from string import ascii_lowercase
-from telenium.tests import TeleniumTestCase
-from tests.test_process import TestProcessProto, TestProcessShutdown
+from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 
 
-class CreateRandomAddress(TestProcessProto, TeleniumTestCase):
-    cmd_entrypoint = ['/home/cis/py3porting/Chatroom/PyBitmessage/src/main.py']
+class CreateRandomAddress(TeleniumTestProcess):
 
-    # @classmethod
-    # def setUpClass(cls):
-    # 	print('inside class Method..............................................9')
-    # 	pass
-
-    def test_runTest(self):
-        """Test Run Method."""
-        print(self,"=====================Welcome To Kivy Testing Application=====================")
+    @classmethod
+    def setUpClass(cls):
+        super(CreateRandomAddress, cls).setUpClass()
     
     def test_login_screen(self):
         """Clicking on Proceed Button to Proceed to Next Screen."""
@@ -81,13 +74,11 @@ class CreateRandomAddress(TestProcessProto, TeleniumTestCase):
 
 if __name__ == '__main__':
     """Start Application"""
-    TeleniumTestCase.start_process()
     obj = CreateRandomAddress()
-    obj.setUpClass()
-    print(state.appdata, '===================================^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', os.environ['BITMESSAGE_HOME'])
-    obj.test_runTest()
+    obj.setUpClass() # this is for showing another process running error
     obj.test_login_screen()
     obj.test_random_screen()
     obj.test_create_new_address()
     obj.test_random_screen()
     obj.test_select_address()
+    obj.remove_temp_data()

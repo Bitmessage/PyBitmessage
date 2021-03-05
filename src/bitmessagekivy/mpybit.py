@@ -1,4 +1,6 @@
 import state
+# import tempfile
+# state.appdata = tempfile.gettempdir()
 print('state.appdata (mpybit.py line no. (1))....................................', state.appdata)
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
@@ -19,6 +21,7 @@ from bitmessagekivy import identiconGeneration
 from bitmessagekivy import kivy_helper_search
 from bitmessagekivy.uikivysignaler import UIkivySignaler
 from bmconfigparser import BMConfigParser
+from debug import logger
 from functools import partial
 from helper_sql import sqlExecute, sqlQuery
 from kivymd.app import MDApp
@@ -85,7 +88,6 @@ from kivy.lang import Observable
 import gettext
 import l10n
 import locale
-from debug import logger
 
 if platform != "android":
     from kivy.config import Config
@@ -1944,6 +1946,8 @@ class NavigateApp(MDApp):
 
     # @staticmethod
     def clickNavDrawer(self):
+        # import tempfile
+        # state.appdata = tempfile.gettempdir()
         state.kivyapp.root.ids.nav_drawer.set_state('toggle')
 
     @staticmethod

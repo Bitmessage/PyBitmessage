@@ -1,12 +1,9 @@
 import time
-from telenium.tests import TeleniumTestCase
+from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 
 
-class DraftMessage(TeleniumTestCase):
+class DraftMessage(TeleniumTestProcess):
     """Draft Screen Functionality Testing"""
-
-    def runTest(self):
-        print(self,"-------------Welcome To Kivy Testing Application Fourth Page-------------")
 
     def test_select_draft_message(self):
         """Select A Draft Screen From Navigaion-Drawer-Box Then
@@ -100,10 +97,6 @@ class DraftMessage(TeleniumTestCase):
 
 if __name__ == '__main__':
     """Start Application"""
-    import tempfile
-    import state
-    state.appdata = tempfile.gettempdir()
-    print('state.appdata..........................(105)', state.appdata)
-    TeleniumTestCase.start_process()
     obj = DraftMessage()
+    obj.setUpClass()
     obj.test_all_draft_method()

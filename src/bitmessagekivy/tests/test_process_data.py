@@ -13,8 +13,7 @@ import unittest
 
 import psutil
 
-from .common import cleanup, put_signal_file, skip_python3
-
+from .common_data import cleanup, put_signal_file, skip_python3
 
 skip_python3()
 
@@ -55,14 +54,22 @@ class TestProcessProto(unittest.TestCase):
         """Setup environment and start pybitmessage"""
         print('setUpClass.........................................(pass)', state.appdata)
         # print('os.environ["BITMESSAGE_HOME"](test_process file)57...........................', os.environ['BITMESSAGE_HOME'])
-        # import pdb;pdb.set_trace()
         print(__file__, 'cls.home..................................', cls.home)
+        cls.flag = False
+        # if os.environ.get('BITMESSAGE_HOME'):
+        #     cls._cleanup_files()
+        #     cls.home = os.environ.get('BITMESSAGE_HOME')
+        # else:
+        #     if not cls.home:
+        #         cls.home = tempfile.gettempdir()
+        #         cls._cleanup_files()
+        #     os.environ['BITMESSAGE_HOME'] = cls.home
         cls.flag = False
         if not cls.home:
             cls.home = tempfile.gettempdir()
             cls._cleanup_files()
         os.environ['BITMESSAGE_HOME'] = cls.home
-        # print("blabla {}".format(__file__))
+
         print('os.environ["BITMESSAGE_HOME"](test_process file)65...........................', os.environ['BITMESSAGE_HOME'])
         put_signal_file(cls.home, 'unittest.lock')
         starttime = int(time.time()) - 0.5
@@ -192,49 +199,5 @@ class TestProcessProto(unittest.TestCase):
             self._threads_count_max,
             msg)
 
-
-class TestProcessShutdown(TestProcessProto):
-    """Separate test case for SIGTERM"""
-    def test_shutdown(self):
-        """Send to pybitmessage SIGTERM and ensure it stopped"""
-        # longer wait time because it's not a benchmark
-        print('test_shutdown.........................................(pass)')
-        self.assertTrue(
-            self._stop_process(20),
-            '%s has not stopped in 20 sec' % ' '.join(self._process_cmd))
-
-
-class TestProcess(TestProcessProto):
-    """A test case for pybitmessage process"""
-    def test_process_name(self):
-        """Check PyBitmessage process name"""
-        self.assertEqual(self.process.name(), 'PyBitmessage')
-
-    @unittest.skipIf(psutil.version_info < (4, 0), 'psutil is too old')
-    def test_home(self):
-        """Ensure BITMESSAGE_HOME is used by process"""
-        print('test1......................', self.process.environ().get('BITMESSAGE_HOME'))
-        print('test2......................', self.home)
-        self.assertEqual(
-            self.process.environ().get('BITMESSAGE_HOME'), self.home)
-
-    def test_listening(self):
-        """Check that pybitmessage listens on port 8444"""
-        for c in self.process.connections():
-            if c.status == 'LISTEN':
-                self.assertEqual(c.laddr[1], 8444)
-                break
-
-    def test_files(self):
-        """Check existence of PyBitmessage files"""
-        for pfile in self._files:
-            if pfile.startswith('.'):
-                continue
-            self.assertIsNot(
-                self._get_readline(pfile), None,
-                'Failed to read file %s' % pfile
-            )
-
-    def test_threads(self):
-        """Testing PyBitmessage threads"""
-        self._test_threads()
+    def remove_temp_data(self):
+        cleanup()

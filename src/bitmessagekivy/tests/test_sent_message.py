@@ -1,20 +1,36 @@
+import os
+import queues
+import shutil
+import tempfile
 import time
+
+from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 from bmconfigparser import BMConfigParser
-from telenium.tests import TeleniumTestCase
 
 
-class SendMessage(TeleniumTestCase):
+class SendMessage(TeleniumTestProcess):
     """Sent Screen Functionality Testing"""
 
-    def runTest(self):
-        print(self,"-------------Welcome To Kivy Testing Application Thirds Page-------------")
+    def __init__(self):
+        print('you are inside telenium init...................................................................................')
+        # import pdb;pdb.set_trace()
+        old_source_file = os.path.join(
+            os.path.abspath(os.path.dirname(__file__)), 'sampleData', 'keys.dat')
+        # new_destination_file =  os.path.join(tempfile.gettempdir(), 'keys.dat')
+        if not os.path.exists(os.environ['BITMESSAGE_HOME']):
+            os.mkdir(os.environ['BITMESSAGE_HOME'])
+        new_destination_file =  os.path.join(os.environ['BITMESSAGE_HOME'], 'keys.dat')
+        shutil.copyfile(old_source_file, new_destination_file)
+        self.data = BMConfigParser().addresses()
+        # print(__file__, '...............................addreses in configfile', BMConfigParser().addresses())
 
     def test_select_sent(self):
         """Sending Message From Inbox Screen
         opens a pop-up(screen)which send message from sender to reciever"""
         print("=====================Test - Sending Message From Inbox Screen=====================")
         time.sleep(2)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(1)
         self.cli.click_on('//NavigationItem[1]')
         time.sleep(1)
@@ -54,7 +70,7 @@ class SendMessage(TeleniumTestCase):
         time.sleep(3)
         self.cli.click_on('//MDFlatButton[0]')
         time.sleep(6)
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',"text",data[0])
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',"text",self.data[0])
         time.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(3)
@@ -66,7 +82,8 @@ class SendMessage(TeleniumTestCase):
         for testing the search and delete functionality for two messages on the screen"""
         print("=====================Test - Sending Message From Inbox Screen=====================")
         time.sleep(3)
-        self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
+        self.cli.execute('app.clickNavDrawer()')
         time.sleep(5)
         self.cli.click_on('//NavigationItem[1]')
         time.sleep(3)
@@ -77,7 +94,7 @@ class SendMessage(TeleniumTestCase):
         self.cli.click_on('//MyTextInput[0]')
         time.sleep(3)
         data = BMConfigParser().addresses()
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text", data[0])
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text", self.data[0])
         time.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Second')
         time.sleep(3)
@@ -97,7 +114,8 @@ class SendMessage(TeleniumTestCase):
 
 if __name__ == '__main__':
     """Start Application"""
-    TeleniumTestCase.start_process()
     obj = SendMessage()
+    obj.setUpClass()
     obj.test_select_sent()
     obj.test_sent_multiple_message()
+    obj.remove_temp_data()
