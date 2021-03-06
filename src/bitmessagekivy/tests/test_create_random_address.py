@@ -1,7 +1,5 @@
-# import state
 import os
 import tempfile
-# state.appdata = tempfile.gettempdir()
 import time
 from random import choice
 from string import ascii_lowercase
@@ -9,10 +7,6 @@ from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 
 
 class CreateRandomAddress(TeleniumTestProcess):
-
-    @classmethod
-    def setUpClass(cls):
-        super(CreateRandomAddress, cls).setUpClass()
     
     def test_login_screen(self):
         """Clicking on Proceed Button to Proceed to Next Screen."""
@@ -64,21 +58,14 @@ class CreateRandomAddress(TeleniumTestProcess):
         time.sleep(2)
         self.cli.click_on('//MySpinnerOption[0]')
 
-    # def test_export_csv(self):
-    #     self.cli.wait_click("//SaveButton")
-    #     self.cli.wait_click("//CascadeSaveButton")
-    #     self.cli.wait_click("//SaveCSVButton")
-    #     self.assertExists("//Label[@text~=\"Export to CSV\"]", timeout=2)
-    #     self.cli.wait_click("//FitButton[@text=\"Close\"]", timeout=2)
-    #     self.assertNotExists("//Label[@text~=\"Export to CSV\"]", timeout=2)
 
 if __name__ == '__main__':
     """Start Application"""
     obj = CreateRandomAddress()
-    obj.setUpClass() # this is for showing another process running error
+    obj.setUpClass(True) # this is for showing another process running error
     obj.test_login_screen()
     obj.test_random_screen()
     obj.test_create_new_address()
     obj.test_random_screen()
     obj.test_select_address()
-    obj.remove_temp_data()
+    # obj.remove_temp_data()

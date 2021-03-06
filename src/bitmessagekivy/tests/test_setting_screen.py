@@ -26,3 +26,4 @@ if __name__ == '__main__':
     obj = SettingScreen()
     obj.setUpClass()
     obj.test_setting_screen()
+    # obj.tearDownClass()
