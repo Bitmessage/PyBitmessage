@@ -9,7 +9,7 @@ import sys
 from ..state import appdata
 from ..helper_sql import sqlStoredProcedure
 from ..class_sqlThread import (sqlThread, UpgradeDB)
-
+from ..addresses import encodeAddress
 
 class TestSqlThread(unittest.TestCase):
     """
@@ -83,6 +83,7 @@ class TestSqlThread(unittest.TestCase):
         return wrapper
 
     def change_state(self):
+        print("change state called")
         self.normalize_version("1")
 
     @versioning
@@ -216,3 +217,23 @@ class TestSqlThread(unittest.TestCase):
         # Assertion
         self.cur.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='inventory_backup' ''')
         self.assertNotEqual(self.cur.fetchone(), 1, "Table inventory_backup not deleted in versioning 2")
+
+    def test_create_function(self):
+        try:
+            self.conn.create_function("enaddr", 3, func=encodeAddress, deterministic=True)
+        except Exception as err:
+            print("Got error while pass deterministic in sqlite create function {}, So called function directly".format(err))
+            self.conn.create_function("enaddr", 3, encodeAddress)
+
+        self.cur.execute('''CREATE TABLE testhash (addressversion int, hash blob, address text, UNIQUE(address) ON CONFLICT IGNORE) ''')
+
+        self.conn.execute('''INSERT INTO testhash (addressversion, hash) VALUES(1, "21122112211221122112"); ''')
+
+        # call function in query
+        self.cur.execute('''UPDATE testhash SET address=(select enaddr(testhash.addressversion, 1, testhash.hash)) WHERE hash=testhash.hash;  ''')
+
+        # Assertion
+        self.cur.execute('''select address from testhash;''')
+        hsh = self.cur.fetchone()[0]
+        self.assertNotEqual(hsh, 1, "test case fail for create_function")
+        self.conn.execute('''DROP TABLE testhash;''')
