@@ -853,3 +853,84 @@ which, in turn, is used when the sender's address version is >=4.
        algorithm itself.
 
 Unencrypted data format:
+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - 1+
+     - broadcast version
+     - var_int
+     - The version number of this broadcast protocol message which is equal
+       to 2 or 3. This is included here so that it can be signed. This is
+       no longer included in protocol v3
+   * - 1+
+     - address version
+     - var_int
+     - The sender's address version
+   * - 1+
+     - stream number
+     - var_int
+     - The sender's stream number
+   * - 4
+     - behavior bitfield
+     - uint32_t
+     - A bitfield of optional behaviors and features that can be expected from
+       the owner of this pubkey.
+   * - 64
+     - public signing key
+     - uchar[]
+     - The ECC public key used for signing (uncompressed format;
+       normally prepended with \x04)
+   * - 64
+     - public encryption key
+     - uchar[]
+     - The ECC public key used for encryption (uncompressed format;
+       normally prepended with \x04)
+   * - 1+
+     - nonce_trials_per_byte
+     - var_int
+     - Used to calculate the difficulty target of messages accepted by this
+       node. The higher this value, the more difficult the Proof of Work must
+       be before this individual will accept the message. This number is the
+       average number of nonce trials a node will have to perform to meet the
+       Proof of Work requirement. 1000 is the network minimum so any lower
+       values will be automatically raised to 1000. This field is new and is
+       only included when the address_version >= 3.
+   * - 1+
+     - extra_bytes
+     - var_int
+     - Used to calculate the difficulty target of messages accepted by this
+       node. The higher this value, the more difficult the Proof of Work must
+       be before this individual will accept the message. This number is added
+       to the data length to make sending small messages more difficult.
+       1000 is the network minimum so any lower values will be automatically
+       raised to 1000. This field is new and is only included when the
+       address_version >= 3.
+   * - 1+
+     - encoding
+     - var_int
+     - The encoding type of the message
+   * - 1+
+     - messageLength
+     - var_int
+     - The message length in bytes
+   * - messageLength
+     - message
+     - uchar[]
+     - The message
+   * - 1+
+     - sig_length
+     - var_int
+     - Length of the signature
+   * - sig_length
+     - signature
+     - uchar[]
+     - The signature which did cover the unencrypted data from the broadcast
+       version down through the message. In protocol v3, it covers the
+       unencrypted object header starting with the time, all appended with
+       the decrypted data.
