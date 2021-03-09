@@ -206,6 +206,103 @@ Bitmessage uses `ECIES <https://en.wikipedia.org/wiki/Integrated_Encryption_Sche
 Unencrypted Message Data
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - 1+
+     - msg_version
+     - var_int
+     - Message format version. **This field is not included after the
+       protocol v3 upgrade period**.
+   * - 1+
+     - address_version
+     - var_int
+     - Sender's address version number. This is needed in order to calculate
+       the sender's address to show in the UI, and also to allow for forwards
+       compatible changes to the public-key data included below.
+   * - 1+
+     - stream
+     - var_int
+     - Sender's stream number
+   * - 4
+     - behavior bitfield
+     - uint32_t
+     - A bitfield of optional behaviors and features that can be expected from
+       the node with this pubkey included in this msg message (the sender's
+       pubkey).
+   * - 64
+     - public signing key
+     - uchar[]
+     - The ECC public key used for signing (uncompressed format;
+       normally prepended with \x04)
+   * - 64
+     - public encryption key
+     - uchar[]
+     - The ECC public key used for encryption (uncompressed format;
+       normally prepended with \x04)
+   * - 1+
+     - nonce_trials_per_byte
+     - var_int
+     - Used to calculate the difficulty target of messages accepted by this
+       node. The higher this value, the more difficult the Proof of Work must
+       be before this individual will accept the message. This number is the
+       average number of nonce trials a node will have to perform to meet the
+       Proof of Work requirement. 1000 is the network minimum so any lower
+       values will be automatically raised to 1000. **This field is new and is
+       only included when the address_version >= 3**.
+   * - 1+
+     - extra_bytes
+     - var_int
+     - Used to calculate the difficulty target of messages accepted by this
+       node. The higher this value, the more difficult the Proof of Work must
+       be before this individual will accept the message. This number is added
+       to the data length to make sending small messages more difficult.
+       1000 is the network minimum so any lower values will be automatically
+       raised to 1000. **This field is new and is only included when the
+       address_version >= 3**.
+   * - 20
+     - destination ripe
+     - uchar[]
+     - The ripe hash of the public key of the receiver of the message
+   * - 1+
+     - encoding
+     - var_int
+     - :ref:`Message Encoding <msg-encodings>` type
+   * - 1+
+     - message_length
+     - var_int
+     - Message Length
+   * - message_length
+     - message
+     - uchar[]
+     - The message.
+   * - 1+
+     - ack_length
+     - var_int
+     - Length of the acknowledgement data
+   * - ack_length
+     - ack_data
+     - uchar[]
+     - The acknowledgement data to be transmitted. This takes the form of a
+       Bitmessage protocol message, like another msg message. The POW therein
+       must already be completed.
+   * - 1+
+     - sig_length
+     - var_int
+     - Length of the signature
+   * - sig_length
+     - signature
+     - uchar[]
+     - The ECDSA signature which covers the object header starting with the
+       time, appended with the data described in this table down to the
+       ack_data.
+
+.. _msg-encodings:
 
 Message Encodings
 """""""""""""""""
@@ -702,6 +799,20 @@ msg
 Used for person-to-person messages. Note that msg objects won't contain a
 version in the object header until Sun, 16 Nov 2014 22:00:00 GMT.
 
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - ?
+     - encrypted
+     - uchar[]
+     - Encrypted data. See `Encrypted payload`_.
+       See also `Unencrypted Message Data`_
+
 broadcast
 ^^^^^^^^^
 
@@ -711,12 +822,34 @@ their inbox. Broadcasts are version 4 or 5.
 Pubkey objects and v5 broadcast objects are encrypted the same way: The data
 encoded in the sender's Bitmessage address is hashed twice. The first 32 bytes
 of the resulting hash constitutes the "private" encryption key and the last
-32 bytes constitute a tag so that anyone listening can easily decide if this
-particular message is interesting. The sender calculates the public key from
-the private key and then encrypts the object with this public key. Thus anyone
-who knows the Bitmessage address of the sender of a broadcast or pubkey object
-can decrypt it.
+32 bytes constitute a **tag** so that anyone listening can easily decide if
+this particular message is interesting. The sender calculates the public key
+from the private key and then encrypts the object with this public key. Thus
+anyone who knows the Bitmessage address of the sender of a broadcast or pubkey
+object can decrypt it.
 
 The version of broadcast objects was previously 2 or 3 but was changed to 4 or
 5 for protocol v3. Having a broadcast version of 5 indicates that a tag is used
 which, in turn, is used when the sender's address version is >=4.
+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - 32
+     - tag
+     - uchar[]
+     - The tag. This field is new and only included when the broadcast version
+       is >= 5. Changed in protocol v3
+   * - ?
+     - encrypted
+     - uchar[]
+     - Encrypted broadcast data. The keys are derived as described in the
+       paragraph above. See Encrypted payload for details about the encryption
+       algorithm itself.
+
+Unencrypted data format:
