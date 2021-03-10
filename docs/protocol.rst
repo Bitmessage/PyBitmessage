@@ -473,10 +473,10 @@ inv messages advertising all of the valid objects of which you are aware.
 verack
 ^^^^^^
 
-The verack message is sent in reply to version. This message consists of only a
-message header with the command string "verack". The TCP timeout starts out at
-20 seconds; after verack messages are exchanged, the timeout is raised to
-10 minutes.
+The *verack* message is sent in reply to *version*. This message consists of
+only a :ref:`message header <Message structure>` with the command string
+"verack". The TCP timeout starts out at 20 seconds; after verack messages are
+exchanged, the timeout is raised to 10 minutes.
 
 If both sides announce that they support SSL, they MUST perform a SSL handshake
 immediately after they both send and receive verack. During this SSL handshake,
