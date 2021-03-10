@@ -335,6 +335,8 @@ Further values for the message encodings can be decided upon by the community.
 Any MIME or MIME-like encoding format, should they be used, should make use of
 Bitmessage's 8-bit bytes. 
 
+.. _behavior-bitfield:
+
 Pubkey bitfield features
 """"""""""""""""""""""""
 
@@ -631,7 +633,7 @@ A version 2 pubkey. This is still in use and supported by current clients but
      - Data type
      - Comments
    * - 4
-     - behavior bitfield
+     - |behavior_bitfield|
      - uint32_t
      - A bitfield of optional behaviors and features that can be expected from
        the node receiving the message.
@@ -655,7 +657,7 @@ A version 2 pubkey. This is still in use and supported by current clients but
      - Data type
      - Comments
    * - 4
-     - behavior bitfield
+     - |behavior_bitfield|
      - uint32_t
      - A bitfield of optional behaviors and features that can be expected from
        the node receiving the message.
@@ -750,7 +752,7 @@ python code below:
      - Data type
      - Comments
    * - 4
-     - behavior bitfield
+     - |behavior_bitfield|
      - uint32_t
      - A bitfield of optional behaviors and features that can be expected from
        the node receiving the message.
@@ -877,7 +879,7 @@ Unencrypted data format:
      - var_int
      - The sender's stream number
    * - 4
-     - behavior bitfield
+     - |behavior_bitfield|
      - uint32_t
      - A bitfield of optional behaviors and features that can be expected from
        the owner of this pubkey.
@@ -934,3 +936,5 @@ Unencrypted data format:
        version down through the message. In protocol v3, it covers the
        unencrypted object header starting with the time, all appended with
        the decrypted data.
+
+.. |behavior_bitfield| replace:: :ref:`behavior bitfield <behavior-bitfield>`
