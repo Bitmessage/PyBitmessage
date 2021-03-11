@@ -91,16 +91,3 @@ class DraftMessage(TeleniumTestProcess):
         time.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[1]')
         time.sleep(2)
-    
-    # def test_all_draft_method(self):
-    #     """Calling All The Methods Draft Class"""
-    #     self.test_select_draft_message()
-    #     self.test_edit_draft_messgae()
-    #     self.test_delete_draft_message()
-
-
-# if __name__ == '__main__':
-#     """Start Application"""
-#     obj = DraftMessage()
-#     obj.setUpClass()
-#     obj.test_all_draft_method()

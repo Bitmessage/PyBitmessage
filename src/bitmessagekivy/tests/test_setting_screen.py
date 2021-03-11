@@ -19,10 +19,3 @@ class SettingScreen(TeleniumTestProcess):
         time.sleep(3)
         self.cli.click_on('//NavigationItem[7]')
         time.sleep(2)
-
-# if __name__ == '__main__':
-#     """Start Application"""
-#     obj = SettingScreen()
-#     obj.setUpClass()
-#     obj.test_setting_screen()
-    # obj.tearDownClass()

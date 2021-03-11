@@ -20,10 +20,3 @@ class TrashMessage(TeleniumTestProcess):
         time.sleep(2)
         self.cli.click_on('//MDDialog/MDCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
         time.sleep(4)
-
-
-# if __name__ == '__main__':
-#     """Start Application"""
-#     obj = TrashMessage()
-#     obj.setUpClass()
-#     obj.test_delete_trash_message()

@@ -1,9 +1,8 @@
-import os, signal 
-import psutil
+import os
 import shutil
 import tempfile
+
 from telenium.tests import TeleniumTestCase
-from threads import addressGenerator, sqlThread
 
 
 _files = (
@@ -22,15 +21,13 @@ def cleanup(home=None, files=_files):
         home = tempfile.gettempdir()
     for pfile in files:
         try:
-            # import pdb;pdb.set_trace()
             os.remove(os.path.join(home, pfile))
-            print(__file__,'.........................................(clean)', pfile)
         except OSError:
-            # print('error............................................')
             pass
 
 
 def set_temp_data():
+    """Set temp data in tmp directory"""
     for file in tmp_db_file:
         old_source_file = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), 'sampleData', file)
@@ -44,7 +41,7 @@ class TeleniumTestProcess(TeleniumTestCase):
 
     @classmethod
     def setUpClass(cls):
-        print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', __file__)
+        """Setupclass is for setting temp environment"""
         os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
         set_temp_data()
         super(TeleniumTestProcess, cls).setUpClass()
@@ -52,34 +49,14 @@ class TeleniumTestProcess(TeleniumTestCase):
     @classmethod
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
-        # super(TeleniumTestProcess, cls).tearDownClass()
-        print('tearDownClass.........................................(pass)', os.getpid())
         cleanup()
-        pid = os.getpid()
-        os.kill(int(pid), signal.SIGKILL)
-        # import pdb;pdb.set_trace()
-
-    #     # os.kill()
-    #     # import psutil
-    #     # cnt = 0
-    #     # # print('total count=========================================', len(psutil.process_iter()))
-    #     # for proc in psutil.process_iter():
-    #     #     print('line...................................62', proc.name(), proc.pid)
-    #     #     cnt = cnt +1
-    #     #     if proc.name() == 'python':
-    #     #         print('line........................69', proc.pid)
-    #     #         # os.kill(int(pid), signal.SIGKILL)
-    #     #         print('total cnt.............................', cnt)
-    #     #         # cleanup()
-    #     #         proc.kill()
-    #     #         # os.kill(int(proc.pid), signal.SIGKILL)
+        cls.cli.app_quit()
+        cls.process.kill()
 
     @classmethod
     def setUp(self):
-        # self.widget = Widget('The widget')
-        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&7setup')
+        pass
 
     @classmethod
     def tearDown(self):
-        print('###############################################tearDown')
-        # self.widget.dispose()
+        pass

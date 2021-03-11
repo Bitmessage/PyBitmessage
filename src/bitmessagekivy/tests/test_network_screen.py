@@ -17,10 +17,3 @@ class NetwrokStatusScreen(TeleniumTestProcess):
         time.sleep(4)
         self.cli.click_on('//NetworkStat/MDTabs[0]/MDTabsBar[0]/MDTabsScrollView[0]/MDGridLayout[0]/MDTabsLabel[1]')
         time.sleep(4)
-
-
-# if __name__ == '__main__':
-#     """Start Application"""
-#     obj = NetwrokStatusScreen()
-#     obj.setUpClass()
-#     obj.test_network_status()
