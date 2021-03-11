@@ -1,5 +1,5 @@
 """
-    Test for sqlThread blind signatures
+    Test for sqlThread
 """
 
 import os
@@ -7,9 +7,10 @@ import unittest
 import sqlite3
 import sys
 from ..state import appdata
-from ..helper_sql import sqlStoredProcedure
+from ..helper_sql import sqlStoredProcedure, sql_ready
 from ..class_sqlThread import (sqlThread, UpgradeDB)
 from ..addresses import encodeAddress
+
 
 class TestSqlThread(unittest.TestCase):
     """
@@ -20,12 +21,16 @@ class TestSqlThread(unittest.TestCase):
     conn.text_factory = str
     cur = conn.cursor()
 
+    # query file path
+    root_path = os.path.dirname(os.path.dirname(__file__))
+
     @classmethod
     def setUpClass(cls):
         # Start SQL thread
         sqlLookup = sqlThread()
         sqlLookup.daemon = False
         sqlLookup.start()
+        sql_ready.wait()
 
     @classmethod
     def setUp(cls):
@@ -41,12 +46,12 @@ class TestSqlThread(unittest.TestCase):
         # Stop sql thread
         sqlStoredProcedure('exit')
 
-    def normalize_version(self, file):
+    def initialise_database(self, file):
+        """
+            Initialise DB
+        """
         try:
-            root_path = os.path.dirname(os.path.dirname(__file__))
-            sql_file_path = os.path.join(root_path, 'tests/sql/')
-            sql_file_path = os.path.join(sql_file_path, "init_version_{}.sql".format(file))
-            sql_file = open(sql_file_path)
+            sql_file = open(os.path.join(self.root_path, "tests/sql/{}.sql".format(file)))
             sql_as_string = sql_file.read()
             self.cur.executescript(sql_as_string)
             self.conn.commit()
@@ -71,7 +76,7 @@ class TestSqlThread(unittest.TestCase):
             version = func_name.rsplit('_', 1)[-1]
 
             # Update versions DB mocking
-            self.normalize_version(version)
+            self.initialise_database("init_version_{}".format(version))
 
             # Test versions
             upgrade_db = UpgradeDB()
@@ -225,15 +230,17 @@ class TestSqlThread(unittest.TestCase):
             print("Got error while pass deterministic in sqlite create function {}, So called function directly".format(err))
             self.conn.create_function("enaddr", 3, encodeAddress)
 
-        self.cur.execute('''CREATE TABLE testhash (addressversion int, hash blob, address text, UNIQUE(address) ON CONFLICT IGNORE) ''')
+        encoded_str = encodeAddress(1, 1, "21122112211221122112")
 
-        self.conn.execute('''INSERT INTO testhash (addressversion, hash) VALUES(1, "21122112211221122112"); ''')
+        # Initialise Database
+        self.initialise_database("create_function")      
 
         # call function in query
-        self.cur.execute('''UPDATE testhash SET address=(select enaddr(testhash.addressversion, 1, testhash.hash)) WHERE hash=testhash.hash;  ''')
+        self.cur.execute('''UPDATE testhash SET address=(select enaddr(testhash.addressversion, 1, hash)) WHERE hash=testhash.hash;  ''')
 
         # Assertion
         self.cur.execute('''select address from testhash;''')
         hsh = self.cur.fetchone()[0]
         self.assertNotEqual(hsh, 1, "test case fail for create_function")
+        self.assertEqual(hsh, encoded_str, "test case fail for create_function")
         self.conn.execute('''DROP TABLE testhash;''')

@@ -207,18 +207,18 @@ class UpgradeDB():
         # table. Then we can take out the hash field.
         self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
 
-        # item = '''UPDATE 'pubkeys' SET `hash`='87788778877887788787' where hash=''; '''
-        # self.cur.execute(item)
+        item = '''UPDATE 'pubkeys' SET `hash`='87788778877887788787' where hash=''; '''
+        self.cur.execute(item)
 
+        # create_function
         try:
             self.conn.create_function("enaddr", 3, func=encodeAddress, deterministic=True)
-        except Exception as err:
-            logger.error("Got error while pass deterministic in sqlite create function {}".format(err))
-            print("Got error while pass deterministic in sqlite create function {}".format(err))
+        except (TypeError, sqlite3.NotSupportedError) as err:
+            logger.error("Got error while pass deterministic in sqlite create function {}, Passing 3 params".format(err))
             self.conn.create_function("enaddr", 3, encodeAddress)
 
         # replica for loop to update hashed address
-        self.cur.execute(''' UPDATE pubkeys SET address=(select enaddr(pubkeys.addressversion, 1, pubkeys.hash)) WHERE hash=pubkeys.hash; ''')
+        self.cur.execute('''UPDATE pubkeys SET address=(select enaddr(pubkeys.addressversion, 1, hash)) WHERE hash=pubkeys.hash; ''')
 
         self.run_migrations("9_1")
 
