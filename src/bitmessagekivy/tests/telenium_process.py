@@ -3,6 +3,7 @@ import shutil
 import tempfile
 
 from telenium.tests import TeleniumTestCase
+from threads import addressGenerator, sqlThread
 
 
 _files = (

@@ -1,106 +1,101 @@
-import os
-import queues
-import shutil
-import tempfile
-import time
-
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 from bmconfigparser import BMConfigParser
 from .common import ordered
 
 data = BMConfigParser().addresses()
 
+
 class SendMessage(TeleniumTestProcess):
     """Sent Screen Functionality Testing"""
 
     @ordered
-    def test_send_message_to_same_address(self):
+    def test_send_message_and_validation(self):
         """
             Sending Message From Inbox Screen
             opens a pop-up(screen)which send message from sender to reciever
         """
         print("=====================Test - Sending Message From Inbox Screen=====================")
-        time.sleep(2)
+        self.cli.sleep(2)
         # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
-        time.sleep(1)
+        self.cli.sleep(2)
         self.cli.click_on('//NavigationItem[1]')
-        time.sleep(1)
+        self.cli.sleep(2)
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MyMDTextField[0]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]', "text", "second add")
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]')
-        time.sleep(4)
+        self.cli.sleep(4)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]')
-        time.sleep(4)
+        self.cli.sleep(4)
         self.cli.click_on('//MDIconButton[2]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//MDFlatButton[0]')
-        time.sleep(5)
+        self.cli.sleep(5)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        time.sleep(2)
+        self.cli.sleep(2)
         self.cli.click_on('//MyTextInput[0]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]')
-        time.sleep(2)
+        self.cli.sleep(2)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'heyyyyyy')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]')
-        time.sleep(4)
+        self.cli.sleep(4)
         random_label=""
         for char in "how are you this is message body":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]','text',random_label)
-            time.sleep(0.2)
-        time.sleep(3)
+            self.cli.sleep(0.2)
+        self.cli.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//MDFlatButton[0]')
-        time.sleep(6)
+        self.cli.sleep(6)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',"text", data[0])
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//MDFlatButton[0]')
-        time.sleep(3)       
+        self.cli.sleep(3)
 
     @ordered   
-    def test_sent_multiple_message(self):
+    def test_sent_multiple_messages(self):
         """
             Sending Second Message From Inbox Screen
             for testing the search and delete functionality for two messages on the screen
         """
         print("=====================Test - Sending Message From Inbox Screen=====================")
-        time.sleep(3)
+        self.cli.sleep(3)
         # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
-        time.sleep(5)
+        self.cli.sleep(5)
         self.cli.click_on('//NavigationItem[1]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        time.sleep(2)
+        self.cli.sleep(2)
         self.cli.click_on('//MyTextInput[0]')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text", data[0])
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Second')
-        time.sleep(3)
+        self.cli.sleep(3)
         random_label=""
         for char in "Hey This Is Second Message Body":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]',"text",random_label)
-            time.sleep(0.2)
-        time.sleep(2)
+            self.cli.sleep(0.2)
+        self.cli.sleep(2)
         self.cli.click_on('//MDIconButton[2]')
-        time.sleep(5)
+        self.cli.sleep(5)
         self.cli.execute('app.clickNavDrawer()')
-        time.sleep(3)
+        self.cli.sleep(3)
         self.cli.click_on('//NavigationItem[2]')
-        time.sleep(3)
+        self.cli.sleep(3)
