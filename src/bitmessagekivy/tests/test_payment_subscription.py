@@ -26,8 +26,8 @@ class PaymentScreen(TeleniumTestProcess):
         time.sleep(2)
 
 
-if __name__ == '__main__':
-    """Start Application"""
-    obj = PaymentScreen()
-    obj.setUpClass()
-    obj.test_select_subscripton()
+# if __name__ == '__main__':
+#     """Start Application"""
+#     obj = PaymentScreen()
+#     obj.setUpClass()
+#     obj.test_select_subscripton()

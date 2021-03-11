@@ -1,10 +1,15 @@
 import time
+from bmconfigparser import BMConfigParser
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
+from .common import ordered
+
+data = BMConfigParser().addresses()
 
 
 class MyAddressScreen(TeleniumTestProcess):
     """MyAddress Screen Functionality Testing"""
 
+    @ordered
     def test_select_myaddress_list(self):
         """Select Address From List of Address"""
         print("=====================Test -Select Address From List of Address=====================")
@@ -16,6 +21,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.click_on('//NavigationItem[11]')
         time.sleep(4)
 
+    @ordered
     def test_show_Qrcode(self):
         """Show the Qr code of selected address"""
         print("=====================Test -Show QR code of selected address=====================")
@@ -27,6 +33,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
         time.sleep(3)
 
+    @ordered
     def test_send_message_from(self):
         """Send Message From Send Message From Button"""
         print("=====================Test -Send Message From Send Message From Button=====================")
@@ -47,12 +54,3 @@ class MyAddressScreen(TeleniumTestProcess):
         time.sleep(2)
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(2)
-
-
-if __name__ == '__main__':
-    """Start Application"""
-    obj = MyAddressScreen()
-    obj.setUpClass()
-    obj.test_select_myaddress_list()
-    obj.test_show_Qrcode()
-    obj.test_send_message_from()

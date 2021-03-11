@@ -1,10 +1,12 @@
 import time
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
+from .common import ordered
 
 
 class DraftMessage(TeleniumTestProcess):
     """Draft Screen Functionality Testing"""
 
+    @ordered
     def test_select_draft_message(self):
         """Select A Draft Screen From Navigaion-Drawer-Box Then
            Send a drafted message """
@@ -49,6 +51,7 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
         time.sleep(4)
    
+    @ordered
     def test_edit_draft_messgae(self):
         """Select A Message From List of Messages Then
             make changes and send it."""
@@ -74,6 +77,7 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(5)
         
+    @ordered
     def test_delete_draft_message(self):
         """Delete A Message From List of Messages"""
         print("=====================Test - Delete A Message From List of Messages=====================")
@@ -88,15 +92,15 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[1]')
         time.sleep(2)
     
-    def test_all_draft_method(self):
-        """Calling All The Methods Draft Class"""
-        self.test_select_draft_message()
-        self.test_edit_draft_messgae()
-        self.test_delete_draft_message()
+    # def test_all_draft_method(self):
+    #     """Calling All The Methods Draft Class"""
+    #     self.test_select_draft_message()
+    #     self.test_edit_draft_messgae()
+    #     self.test_delete_draft_message()
 
 
-if __name__ == '__main__':
-    """Start Application"""
-    obj = DraftMessage()
-    obj.setUpClass()
-    obj.test_all_draft_method()
+# if __name__ == '__main__':
+#     """Start Application"""
+#     obj = DraftMessage()
+#     obj.setUpClass()
+#     obj.test_all_draft_method()

@@ -22,8 +22,8 @@ class TrashMessage(TeleniumTestProcess):
         time.sleep(4)
 
 
-if __name__ == '__main__':
-    """Start Application"""
-    obj = TrashMessage()
-    obj.setUpClass()
-    obj.test_delete_trash_message()
+# if __name__ == '__main__':
+#     """Start Application"""
+#     obj = TrashMessage()
+#     obj.setUpClass()
+#     obj.test_delete_trash_message()

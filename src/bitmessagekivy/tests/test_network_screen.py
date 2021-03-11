@@ -19,8 +19,8 @@ class NetwrokStatusScreen(TeleniumTestProcess):
         time.sleep(4)
 
 
-if __name__ == '__main__':
-    """Start Application"""
-    obj = NetwrokStatusScreen()
-    obj.setUpClass()
-    obj.test_network_status()
+# if __name__ == '__main__':
+#     """Start Application"""
+#     obj = NetwrokStatusScreen()
+#     obj.setUpClass()
+#     obj.test_network_status()

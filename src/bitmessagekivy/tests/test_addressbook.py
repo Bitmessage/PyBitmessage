@@ -1,10 +1,15 @@
 import time
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
+from bmconfigparser import BMConfigParser
+from .common import ordered
+
+data = BMConfigParser().addresses()
 
 
 class AddressBook(TeleniumTestProcess):
     """AddressBook Screen Functionality Testing"""
 
+    @ordered
     def test_save_address(self):
         """Save Address On Address Book Screen/Window"""
         print("=====================Test -Save Address In Address Book=====================")
@@ -48,6 +53,7 @@ class AddressBook(TeleniumTestProcess):
         self.cli.click_on('//MDRaisedButton[0]')
         time.sleep(4)
 
+    @ordered
     def test_cancel_address(self):
         """Cancel Address"""
         print("=====================Test -Cancel Address=====================")
@@ -60,6 +66,7 @@ class AddressBook(TeleniumTestProcess):
         time.sleep(3)
         self.cli.click_on('//MDRaisedButton[1]')
 
+    @ordered
     def test_send_message_to_addressbook(self):
         """Directly Send Message To The User"""
         print("=====================Test -Directly Send Message To The User=====================")
@@ -82,6 +89,7 @@ class AddressBook(TeleniumTestProcess):
         self.cli.click_on('//MDIconButton[2]')
         time.sleep(2)
 
+    @ordered
     def test_delete_address_from_address_contact(self):
         """Delete Address From Address Book"""
         print("=====================Test -Delete Address From Address Book=====================")
@@ -94,16 +102,3 @@ class AddressBook(TeleniumTestProcess):
             '//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2)
         time.sleep(2)
         self.cli.click_on('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
-
-    def test_all_address_book_method(self):
-        self.test_save_address()
-        self.test_cancel_address()
-        self.test_send_message_to_addressbook()
-        self.test_delete_address_from_address_contact()
-
-
-if __name__ == '__main__':
-    """Start Application"""
-    obj = AddressBook()
-    obj.setUpClass()
-    obj.test_all_address_book_method()

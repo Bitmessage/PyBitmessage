@@ -1,9 +1,9 @@
-import os
+import os, signal 
 import psutil
 import shutil
 import tempfile
 from telenium.tests import TeleniumTestCase
-from bitmessagekivy.tests.test_process_data import TestProcessProto
+from threads import addressGenerator, sqlThread
 
 
 _files = (
@@ -26,7 +26,7 @@ def cleanup(home=None, files=_files):
             os.remove(os.path.join(home, pfile))
             print(__file__,'.........................................(clean)', pfile)
         except OSError:
-            print('error............................................')
+            # print('error............................................')
             pass
 
 
@@ -40,45 +40,46 @@ def set_temp_data():
 
 class TeleniumTestProcess(TeleniumTestCase):
     """Setting Screen Functionality Testing"""
-    cmd_entrypoint = ['/home/cis/py3porting/Chatroom/PyBitmessage/src/main.py']
+    cmd_entrypoint = ['/home/cis/py3porting/Chatroom/PyBitmessage/src/main_mock_test.py']
 
     @classmethod
-    def setUpClass(cls, is_login_screen=None):
-        print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', is_login_screen)
+    def setUpClass(cls):
+        print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', __file__)
         os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
-        if is_login_screen:
-            cleanup()
-        else:
-            set_temp_data()
+        set_temp_data()
         super(TeleniumTestProcess, cls).setUpClass()
 
-    # @classmethod
-    # def tearDownClass(cls):
-    #     """Ensures that pybitmessage stopped and removes files"""
-    #     print('tearDownClass.........................................(pass)')
-    #     try:
-    #         if not cls._stop_process(1):
-    #             processes = cls.process.children(recursive=True)
-    #             processes.append(cls.process)
-    #             for p in processes:
-    #                 try:
-    #                     p.kill()
-    #                 except psutil.NoSuchProcess:
-    #                     pass
-    #     except psutil.NoSuchProcess:
-    #         pass
-    #     finally:
-    #         # import pdb;pdb.set_trace()
-    #         cleanup()
-    #         # cls._cleanup_files()
+    @classmethod
+    def tearDownClass(cls):
+        """Ensures that pybitmessage stopped and removes files"""
+        # super(TeleniumTestProcess, cls).tearDownClass()
+        print('tearDownClass.........................................(pass)', os.getpid())
+        cleanup()
+        pid = os.getpid()
+        os.kill(int(pid), signal.SIGKILL)
+        # import pdb;pdb.set_trace()
 
-    # @classmethod
-    # def _stop_process(cls, timeout=5):
-    #     print('_stop_process.........................................(pass)')
-    #     import signal
-    #     cls.process.send_signal(signal.SIGTERM)
-    #     try:
-    #         cls.process.wait(timeout)
-    #     except psutil.TimeoutExpired:
-    #         return False
-    #     return True
+    #     # os.kill()
+    #     # import psutil
+    #     # cnt = 0
+    #     # # print('total count=========================================', len(psutil.process_iter()))
+    #     # for proc in psutil.process_iter():
+    #     #     print('line...................................62', proc.name(), proc.pid)
+    #     #     cnt = cnt +1
+    #     #     if proc.name() == 'python':
+    #     #         print('line........................69', proc.pid)
+    #     #         # os.kill(int(pid), signal.SIGKILL)
+    #     #         print('total cnt.............................', cnt)
+    #     #         # cleanup()
+    #     #         proc.kill()
+    #     #         # os.kill(int(proc.pid), signal.SIGKILL)
+
+    @classmethod
+    def setUp(self):
+        # self.widget = Widget('The widget')
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&7setup')
+
+    @classmethod
+    def tearDown(self):
+        print('###############################################tearDown')
+        # self.widget.dispose()

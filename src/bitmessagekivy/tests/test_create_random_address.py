@@ -1,13 +1,23 @@
 import os
 import tempfile
 import time
+
+from bitmessagekivy.tests.telenium_process import TeleniumTestProcess, cleanup
+from .common import ordered
 from random import choice
 from string import ascii_lowercase
-from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 
 
 class CreateRandomAddress(TeleniumTestProcess):
     
+    @classmethod
+    def setUpClass(cls):
+        print('ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ', __file__)
+        os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
+        cleanup()
+        super(TeleniumTestProcess, cls).setUpClass()
+
+    @ordered
     def test_login_screen(self):
         """Clicking on Proceed Button to Proceed to Next Screen."""
         print("=====================Test - Login Screen=====================")
@@ -15,6 +25,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.wait_click('//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[0]')
         time.sleep(3)
 
+    @ordered
     def test_random_screen(self):
         """Creating New Adress For New User."""
         print("=====================Test - Create New Address=====================")
@@ -33,6 +44,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[2]/MDFillRoundFlatIconButton[0]')
         time.sleep(5)
 
+    @ordered
     def test_create_new_address(self):
         """Clicking on Navigation Drawer To Open New Address"""
         print("=====================Test - Create New Address=====================")
@@ -44,7 +56,9 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.click_on('//NavigationItem[9]')
         time.sleep(4)
         self.cli.wait_click('//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[0]')
+        self.test_random_screen()
 
+    @ordered
     def test_select_address(self):
         """Select First Address From Drawer-Box"""
         print("=====================Test - Select First Address From Drawer-Box=======================")
@@ -57,15 +71,3 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.click_on('//NavigationItem[0]')
         time.sleep(2)
         self.cli.click_on('//MySpinnerOption[0]')
-
-
-if __name__ == '__main__':
-    """Start Application"""
-    obj = CreateRandomAddress()
-    obj.setUpClass(True) # this is for showing another process running error
-    obj.test_login_screen()
-    obj.test_random_screen()
-    obj.test_create_new_address()
-    obj.test_random_screen()
-    obj.test_select_address()
-    # obj.remove_temp_data()
