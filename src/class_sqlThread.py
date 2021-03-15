@@ -51,11 +51,9 @@ class UpgradeDB():
 
     def run_migrations(self, file):
         try:
-            # root_path = os.path.dirname(os.path.dirname(__file__))
             sql_file = open(os.path.join(root_path, "src/sql/init_version_{}.sql".format(file)))
             sql_as_string = sql_file.read()
             self.cur.executescript(sql_as_string)
-            # self.conn.commit()
         except Exception as err:
             if str(err) == 'table inbox already exists':
                 return "table inbox already exists"
@@ -210,13 +208,6 @@ class UpgradeDB():
         item = '''UPDATE 'pubkeys' SET `hash`='87788778877887788787' where hash=''; '''
         self.cur.execute(item)
 
-        # create_function
-        try:
-            self.conn.create_function("enaddr", 3, func=encodeAddress, deterministic=True)
-        except (TypeError, sqlite3.NotSupportedError) as err:
-            logger.error("Got error while pass deterministic in sqlite create function {}, Passing 3 params".format(err))
-            self.conn.create_function("enaddr", 3, encodeAddress)
-
         # replica for loop to update hashed address
         self.cur.execute('''UPDATE pubkeys SET address=(select enaddr(pubkeys.addressversion, 1, hash)) WHERE hash=pubkeys.hash; ''')
 
@@ -253,44 +244,54 @@ class sqlThread(threading.Thread, UpgradeDB):
 
         self.cur.execute('PRAGMA secure_delete = true')
 
-        try:
-            sql_file = open(os.path.join(root_path, "src/sql/{}.sql".format("run")))
-            sql_as_string = sql_file.read()
-            self.cur.executescript(sql_as_string)
+        # call create_function for encode address
+        self.create_function()
 
-            # self.cur.execute(
-            #     '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
-            #     ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
-            #     ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
-            #     ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
-            #     ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
-            #     ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
-            #     ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
-            # self.cur.execute(
-            #     '''INSERT INTO subscriptions VALUES'''
-            #     '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
-            # self.cur.execute(
-            #     '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
+        try:
+            # sql_file = open(os.path.join(root_path, "src/sql/{}.sql".format("run")))
+            # sql_as_string = sql_file.read()
+            # self.cur.executescript(sql_as_string)
             # self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
-            # self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
-            #     int(time.time()),))
+            # self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (int(time.time()),))
             # self.cur.execute(
             #     '''CREATE TABLE objectprocessorqueue'''
             #     ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+            # self.conn.commit()
+            # logger.info('Created messages database file')
+
+            self.cur.execute(
+                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
+                ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
+                ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
+            self.cur.execute(
+                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
+                ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
+                ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
+            self.cur.execute(
+                '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
+            self.cur.execute(
+                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
+            self.cur.execute(
+                '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
+            self.cur.execute(
+                '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
+            self.cur.execute(
+                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
+                ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
+            self.cur.execute(
+                '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
+                ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
+            self.cur.execute(
+                '''INSERT INTO subscriptions VALUES'''
+                '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
+            self.cur.execute(
+                '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
+            self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
+            self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
+                int(time.time()),))
+            self.cur.execute(
+                '''CREATE TABLE objectprocessorqueue'''
+                ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
             self.conn.commit()
             logger.info('Created messages database file')
         except Exception as err:
@@ -622,3 +623,12 @@ class sqlThread(threading.Thread, UpgradeDB):
 
                 helper_sql.sqlReturnQueue.put((self.cur.fetchall(), rowcount))
                 # helper_sql.sqlSubmitQueue.task_done()
+
+    def create_function(self):
+        # create_function
+        try:
+            self.conn.create_function("enaddr", 3, func=encodeAddress, deterministic=True)
+        except (TypeError, sqlite3.NotSupportedError) as err:
+            logger.error(
+                "Got error while pass deterministic in sqlite create function {}, Passing 3 params".format(err))
+            self.conn.create_function("enaddr", 3, encodeAddress)
