@@ -69,3 +69,4 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.click_on('//NavigationItem[0]')
         self.cli.sleep(2)
         self.cli.click_on('//MySpinnerOption[0]')
+        self.cli.sleep(3)

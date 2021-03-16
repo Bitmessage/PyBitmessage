@@ -1,11 +1,10 @@
+"""This module is for thread start."""
 import state
 from bitmessagekivy.mpybit import NavigateApp
 from threads import addressGenerator, sqlThread     
 
 def main():
     if state.enableObjProc:
-        print('....................................................line(8)(sqlThread)')
-
         # Start the address generation thread
         addressGeneratorThread = addressGenerator()
         # close the main program even if there are threads left
@@ -20,3 +19,8 @@ def main():
 
     state.kivyapp = NavigateApp()
     state.kivyapp.run()
+
+
+
+if __name__ == '__main__':
+    main()

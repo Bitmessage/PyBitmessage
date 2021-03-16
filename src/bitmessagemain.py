@@ -150,9 +150,6 @@ class Main(object):
     def start(self):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
-        # import tempfile
-        # state.appdata = tempfile.gettempdir()
-        # print('line BABAL..........................153(state.appdata)...', state.appdata)
         _fixSocket()
         adjustHalfOpenConnectionsLimit()
 
@@ -168,7 +165,6 @@ class Main(object):
             self.usage()
             sys.exit(2)
 
-        print('opts......................', opts)
         for opt, _ in opts:
             if opt in ("-h", "--help"):
                 self.usage()
@@ -259,9 +255,6 @@ class Main(object):
             singleWorkerThread.start()
 
         # Start the SQL thread
-        # import tempfile
-        # state.appdata = tempfile.gettempdir()
-        print('state.appdata (bitmessagemain)..........................(258)', state.appdata)
         sqlLookup = sqlThread()
         # DON'T close the main program even if there are threads left.
         # The closeEvent should command this thread to exit gracefully.

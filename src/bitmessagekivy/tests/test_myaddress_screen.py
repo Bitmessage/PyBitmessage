@@ -29,7 +29,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.sleep(3)
         self.cli.click_on('//MyaddDetailPopup/BoxLayout[1]/MDRaisedButton[1]/MDLabel[0]')
         self.cli.sleep(3)
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(3)
 
     @ordered
@@ -51,5 +51,5 @@ class MyAddressScreen(TeleniumTestProcess):
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(2)
-        self.cli.click_on('//MDIconButton[2]')
-        self.cli.sleep(2)
+        self.cli.click_on('//MDActionTopAppBarButton[2]')
+        self.cli.sleep(4)

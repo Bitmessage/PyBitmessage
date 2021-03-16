@@ -1,7 +1,3 @@
-import state
-# import tempfile
-# state.appdata = tempfile.gettempdir()
-print('state.appdata (mpybit.py line no. (1))....................................', state.appdata)
 # pylint: disable=too-many-lines,import-error,no-name-in-module,unused-argument
 # pylint: disable=too-many-ancestors,too-many-locals,useless-super-delegation
 # pylint: disable=protected-access
@@ -25,10 +21,6 @@ from debug import logger
 from functools import partial
 from helper_sql import sqlExecute, sqlQuery
 from kivymd.app import MDApp
-import kivy
-import kivymd
-print('kivy version......................................', kivy.__version__)
-print('kivymd version......................................', kivymd.__version__)
 from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
@@ -910,8 +902,6 @@ class DropDownWidget(BoxLayout):
 
     def send(self, navApp):
         """Send message from one address to another"""
-        print('in send check state.appdata................................')
-        print('state.appdata....................................', state.appdata)
         fromAddress = self.ids.ti.text.strip()
         toAddress = self.ids.txt_input.text.strip()
         subject = self.ids.subject.text.strip()
@@ -1333,8 +1323,6 @@ class Random(Screen):
     def generateaddress(self, navApp):
         """Method for Address Generator"""
         # entered_label = str(self.ids.lab.text).strip()
-        print('address creation.........999999999999999999999999999')
-        print('state.appdata....................................', state.appdata)
         entered_label = str(self.ids.add_random_bx.children[0].ids.lab.text).strip()
         if not entered_label:
             self.ids.add_random_bx.children[0].ids.lab.focus = True

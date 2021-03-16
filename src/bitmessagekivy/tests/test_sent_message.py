@@ -15,7 +15,7 @@ class SendMessage(TeleniumTestProcess):
             opens a pop-up(screen)which send message from sender to reciever
         """
         print("=====================Test - Sending Message From Inbox Screen=====================")
-        self.cli.sleep(2)
+        self.cli.sleep(3)
         # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
         self.cli.sleep(2)
@@ -61,7 +61,7 @@ class SendMessage(TeleniumTestProcess):
         self.cli.sleep(3)
         self.cli.click_on('//MDIconButton[2]')
         self.cli.sleep(3)
-        self.cli.click_on('//MDFlatButton[0]')
+        self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(3)
 
     @ordered   
@@ -93,7 +93,7 @@ class SendMessage(TeleniumTestProcess):
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]',"text",random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(2)
-        self.cli.click_on('//MDIconButton[2]')
+        self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(5)
         self.cli.execute('app.clickNavDrawer()')
         self.cli.sleep(3)

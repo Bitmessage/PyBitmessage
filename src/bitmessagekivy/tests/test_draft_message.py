@@ -29,7 +29,7 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
         self.cli.sleep(3)
         # CLICK BACK-BUTTON
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(5)
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
         self.cli.sleep(3)
@@ -47,7 +47,7 @@ class DraftMessage(TeleniumTestProcess):
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', random_label)
             self.cli.sleep(0.2)
         # CLICK BACK-BUTTON
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDIconButton[0]')
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(4)
    
     @ordered
@@ -65,7 +65,7 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
         self.cli.sleep(3)
         # CLICK EDIT BUTTON
-        self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[0]')
+        self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[0]')
         self.cli.sleep(5)
         random_label=""
         for char in "Hey,This is draft Message Body":
@@ -73,7 +73,7 @@ class DraftMessage(TeleniumTestProcess):
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(3)
-        self.cli.click_on('//MDIconButton[2]')
+        self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(5)
         
     @ordered
@@ -88,5 +88,5 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.sleep(5)
         self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
         self.cli.sleep(5)
-        self.cli.click_on('//MDToolbar/BoxLayout[2]/MDIconButton[1]')
+        self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]')
         self.cli.sleep(2)

@@ -86,7 +86,7 @@ class AddressBook(TeleniumTestProcess):
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
             self.cli.sleep(0.2)
-        self.cli.click_on('//MDIconButton[2]')
+        self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(2)
 
     @ordered
@@ -102,3 +102,4 @@ class AddressBook(TeleniumTestProcess):
             '//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2)
         self.cli.sleep(2)
         self.cli.click_on('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
+        self.cli.sleep(2)
