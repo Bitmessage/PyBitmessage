@@ -41,11 +41,12 @@
                     _txt_right_pad: dp(70)
                     font_size: '11sp'
                 MDChip:
-                    size_hint: (.16 if app.app_platform == 'android' else .07 , None)
-                    label: app.tr._(root.page_type)
+                    size_hint: (.16 if app.app_platform == 'android' else .08 , None)
+                    text: app.tr._(root.page_type)
                     icon: ''
+                    text_color: (1,1,1,1)
                     pos_hint: {'center_x': .91 if app.app_platform == 'android' else .95, 'center_y': .3}
-                    radius: 8
+                    radius: [8]
                     height: self.parent.height/4
                 AvatarSampleWidget:
                     source: root.avatarImg

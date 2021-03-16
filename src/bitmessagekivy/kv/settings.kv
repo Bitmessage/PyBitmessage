@@ -204,18 +204,11 @@
                             # halign: 'right'
                             bold: True
                         MDDropDownItem:
-                            id: drop_item
-                            # pos_hint: {'center_x': .5, 'center_y': .5}
-                            text: 'System Setting'
+                            id: dropdown_item
+                            text: "System Setting"
+                            # pos_hint: {"center_x": .5, "center_y": .6}
+                            # current_item: "Item 0"
                             on_release: root.menu.open()
-                            on_press: root.set_caller()
-                        # MDDropDownItem:
-                        #     id: dropdown_item
-                        #     text: 'italiano'
-                        #     dropdown_max_height: 150
-                        #     dropdown_bg: [1, 1, 1, 1]
-                        #     # pos_hint: {'center_x': 0.5, 'center_y': 0}
-                        #     items: [f"{i}" for i in ['System Setting','U.S. English','italiano','Esperanto','dansk','Deutsch','Pirate English','francais','Nederlands','norsk bokmal','polski','portugues europeu']]
                     BoxLayout:
                         spacing:5
                         orientation: 'horizontal'

@@ -25,6 +25,10 @@ from debug import logger
 from functools import partial
 from helper_sql import sqlExecute, sqlQuery
 from kivymd.app import MDApp
+import kivy
+import kivymd
+print('kivy version......................................', kivy.__version__)
+print('kivymd version......................................', kivymd.__version__)
 from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
@@ -181,15 +185,16 @@ def chipTag(text):
     """This method is used for showing chip tag"""
     obj = MDChip()
     # obj.size_hint = (None, None)
-    obj.size_hint = (0.16 if platform == "android" else 0.07, None)
-    obj.label = text
+    obj.size_hint = (0.16 if platform == "android" else 0.08, None)
+    obj.text = text
     obj.icon = ""
     obj.pos_hint = {
         "center_x": 0.91 if platform == "android" else 0.94,
         "center_y": 0.3
     }
     obj.height = dp(18)
-    obj.radius = 8
+    obj.text_color = (1,1,1,1)
+    obj.radius =[8]
     return obj
 
 
@@ -580,7 +585,7 @@ class MyAddress(Screen):
             obj = MyaddDetailPopup()
             self.address_label = obj.address_label = label
             self.text_address = obj.address = fromaddress
-            width = .9 if platform == 'android' else .8
+            width = .9 if platform == 'android' else .6
             self.myadddetail_popup = MDDialog(
                 type="custom",
                 size_hint=(width, .25),
@@ -1871,26 +1876,20 @@ class Setting(Screen):
         state.kivyapp.tr = Lang(self.newlocale)
         menu_items = [{"text": f"{i}"} for i in self.languages.values()]
         self.menu = MDDropdownMenu(
-            caller=self,
+            caller=self.ids.dropdown_item,
             items=menu_items,
             position="auto",
-            callback=self.set_item,
             width_mult=3.5,
-            # use_icon_item=False,
         )
+        self.menu.bind(on_release=self.set_item)
 
-    def set_caller(self):
-        """set_caller module"""
-        self.menu.caller = self.ids.drop_item
-        self.menu.target_height = 150
-
-    def set_item(self, instance):
-        """set_item module for menu selection"""
-        self.ids.drop_item.set_item(instance.text)
-        self.menu.dismiss()
+    def set_item(self, instance_menu, instance_menu_item):
+        # import pdb;pdb.set_trace()
+        self.ids.dropdown_item.set_item(instance_menu_item.text)
+        instance_menu.dismiss()
 
     def change_language(self):
-        lang = self.ids.drop_item.current_item
+        lang = self.ids.dropdown_item.current_item
         for k, v in self.languages.items():
             if v == lang:
                 BMConfigParser().set('bitmessagesettings', 'userlocale', k)
@@ -1944,10 +1943,8 @@ class NavigateApp(MDApp):
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
-    # @staticmethod
-    def clickNavDrawer(self):
-        # import tempfile
-        # state.appdata = tempfile.gettempdir()
+    @staticmethod
+    def clickNavDrawer():
         state.kivyapp.root.ids.nav_drawer.set_state('toggle')
 
     @staticmethod
@@ -2030,20 +2027,19 @@ class NavigateApp(MDApp):
         self.add_popup = MDDialog(
             title='add contact\'s',
             type="custom",
-            size_hint=(width, .25),
+            size_hint=(width, .23),
             content_cls=GrashofPopup(),
             buttons=[
                 MDRaisedButton(
                     text="Save",
-                    text_color=self.theme_cls.primary_color,
                     on_release=self.savecontact,
                 ),
                 MDRaisedButton(
-                    text="Cancel", text_color=self.theme_cls.primary_color,
+                    text="Cancel",
                     on_release=self.close_pop,
                 ),
                 MDRaisedButton(
-                    text="Scan QR code", text_color=self.theme_cls.primary_color,
+                    text="Scan QR code",
                     on_release=self.scan_qr_code,
                 ),
             ],
@@ -2136,34 +2132,9 @@ class NavigateApp(MDApp):
                 instance.parent.parent.parent.parent.parent.ids.top_box.children[0].texture = (
                     img.texture)
                 return first_addr
+        instance.parent.parent.parent.parent.parent.ids.top_box.children[0].source = (
+            state.imageDir + '/drawer_logo1.png')
         return 'Select Address'
-
-    @staticmethod
-    def createFolder(directory):
-        """Create directory when app starts"""
-        try:
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-        except OSError:
-            print('Error: Creating directory. ' + directory)
-
-    @staticmethod
-    def get_default_image():
-        """Getting default image on address"""
-        if BMConfigParser().addresses():
-            return state.imageDir + '/default_identicon/{}.png'.format(
-                BMConfigParser().addresses()[0])
-        return state.imageDir + '/no_identicons.png'
-
-    @staticmethod
-    def get_default_logo():
-        """Getting default logo image"""
-        if BMConfigParser().addresses():
-            first_addr = BMConfigParser().addresses()[0]
-            if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
-                return state.imageDir + '/default_identicon/{}.png'.format(
-                    first_addr)
-        return state.imageDir + '/drawer_logo1.png'
 
     @staticmethod
     def addressexist():
@@ -2589,8 +2560,10 @@ class NavigateApp(MDApp):
             newImg = PilImage.open(path).resize((300, 300))
             if platform == 'android':
                 android_path = os.path.join(
-                    os.environ['ANDROID_PRIVATE'] + '/app/')
-                newImg.save('{1}/images/kivy/default_identicon/{0}.png'.format(
+                    os.environ['ANDROID_PRIVATE'] + '/app' + '/images' + '/kivy/')
+                if not os.path.exists(android_path + '/default_identicon/'):
+                    os.makedirs(android_path + '/default_identicon/')
+                newImg.save('{1}/default_identicon/{0}.png'.format(
                     state.association, android_path))
             else:
                 if not os.path.exists(state.imageDir + '/default_identicon/'):
@@ -3519,7 +3492,7 @@ class SenderDetailPopup(Popup):
         time_obj = datetime.fromtimestamp(int(timeinseconds))
         self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
         device_type = 2 if platform == 'android' else 1.5
-        pop_height = device_type * (self.ids.sd_label.height + self.ids.dismiss_btn.height)
+        pop_height = 1.2 * device_type * (self.ids.sd_label.height + self.ids.dismiss_btn.height)
         if len(to_addr) > 3:
             self.height = 0
             self.height = pop_height
