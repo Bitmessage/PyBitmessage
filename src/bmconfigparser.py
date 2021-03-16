@@ -2,13 +2,22 @@
 BMConfigParser class definition and default configuration settings
 """
 
-import ConfigParser
+import sys
+if sys.version_info[0] == 3:
+    # python 3
+    import configparser as ConfigParser
+    SafeConfigParser = ConfigParser.ConfigParser
+else:
+    # python 2
+    import ConfigParser
+    SafeConfigParser = ConfigParser.SafeConfigParser
+
+import state
+from singleton import Singleton
 import os
 import shutil
 from datetime import datetime
 
-import state
-from singleton import Singleton
 
 BMConfigDefaults = {
     "bitmessagesettings": {
@@ -43,7 +52,8 @@ BMConfigDefaults = {
 
 
 @Singleton
-class BMConfigParser(ConfigParser.SafeConfigParser):
+class BMConfigParser(SafeConfigParser):
+
     """
     Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
     with additional methods specific to bitmessage config.
@@ -60,26 +70,47 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
-        # pylint: disable=arguments-differ
-        try:
-            if section == "bitmessagesettings" and option == "timeformat":
+    def get(self, section, option, raw=False, vars=None):
+        if sys.version_info[0] == 3:
+            # pylint: disable=arguments-differ
+           try:
+                if section == "bitmessagesettings" and option == "timeformat":
+                    return ConfigParser.ConfigParser.get(
+                        self, section, option)
+                try:
+                    return self._temp[section][option]
+                except KeyError:
+                    pass
                 return ConfigParser.ConfigParser.get(
-                    self, section, option, raw, variables)
+                    self, section, option)
+           except ConfigParser.InterpolationError:
+                return ConfigParser.ConfigParser.get(
+                    self, section, option)
+           except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+                try:
+                    return BMConfigDefaults[section][option]
+                except (KeyError, ValueError, AttributeError):
+                    raise e
+        else:
+            # pylint: disable=arguments-differ
             try:
-                return self._temp[section][option]
-            except KeyError:
-                pass
-            return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
-        except ConfigParser.InterpolationError:
-            return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
-            try:
-                return BMConfigDefaults[section][option]
-            except (KeyError, ValueError, AttributeError):
-                raise e
+                if section == "bitmessagesettings" and option == "timeformat":
+                    return ConfigParser.ConfigParser.get(
+                        self, section, option, raw, vars)
+                try:
+                    return self._temp[section][option]
+                except KeyError:
+                    pass
+                return ConfigParser.ConfigParser.get(
+                    self, section, option, True, vars)
+            except ConfigParser.InterpolationError:
+                return ConfigParser.ConfigParser.get(
+                    self, section, option, True, vars)
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+                try:
+                    return BMConfigDefaults[section][option]
+                except (KeyError, ValueError, AttributeError):
+                    raise e
 
     def setTemp(self, section, option, value=None):
         """Temporary set option to value, not saving."""
@@ -191,3 +222,4 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         if value < 0 or value > 8:
             return False
         return True
+
