@@ -1,3 +1,5 @@
+# pylint: disable=too-few-public-methods
+
 """
 Class BMProto defines bitmessage's network protocol workflow.
 """
@@ -68,6 +70,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.network_group = None
         # userAgent initialization
         self.userAgent = ''
+        self.close_reason = None
+        self.expectBytes = None
 
     def bm_proto_reset(self):
         """Reset the bitmessage object parser"""

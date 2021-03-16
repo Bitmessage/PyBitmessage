@@ -1,0 +1,26 @@
+<Sent>:
+    name: 'sent'
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(5)
+        SearchBar:
+            id: sent_search
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                id: tag_label
+                text: ''
+                font_style: 'Subtitle2'
+        BoxLayout:
+            orientation:'vertical'
+            ScrollView:
+                id: scroll_y
+                do_scroll_x: False
+                MDList:
+                    id: ml
+    Loader:
+    ComposerButton:

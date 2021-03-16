@@ -14,6 +14,8 @@ RUN add-apt-repository ppa:deadsnakes/ppa
 
 RUN apt-get -y install sudo
 
+RUN apt-get -y install git
+
 RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     # travis xenial bionic
     python-setuptools libssl-dev libpq-dev python-prctl python-dev \
@@ -61,4 +63,6 @@ ENV LC_ALL en_US.UTF-8
 
 WORKDIR /home/builder/src
 
-ENTRYPOINT /usr/local/bin/travis2bash.sh
+
+# ENTRYPOINT /usr/local/bin/travis2bash.sh
+ENTRYPOINT ["/usr/local/bin/travis2bash.sh", ".travis-kivy.yml"]

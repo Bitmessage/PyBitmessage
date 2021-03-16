@@ -113,15 +113,19 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         return True
 
     def handle_connect(self):
+        """handle_connect method"""
         return
 
     def writable(self):
+        """writable method"""
         return self.write_buf
 
     def readable(self):
+        """readable method"""
         return len(self.read_buf) < self._buf_len
 
     def handle_read(self):
+        """handle_read method"""
         try:
             recdata, addr = self.socket.recvfrom(self._buf_len)
         except socket.error:
@@ -138,6 +142,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         receiveDataQueue.put(self.listening)
 
     def handle_write(self):
+        """handle_write method"""
         try:
             retval = self.socket.sendto(
                 self.write_buf, ('<broadcast>', self.port))
