@@ -5,6 +5,7 @@ Class BMProto defines bitmessage's network protocol workflow.
 import base64
 import hashlib
 import logging
+import re
 import socket
 import struct
 import time
@@ -535,6 +536,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return True
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
+        ua_valid = re.match(
+            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent)
+        if not ua_valid:
+            self.userAgent = '/INVALID:0/'
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
