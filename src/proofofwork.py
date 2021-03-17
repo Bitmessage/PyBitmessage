@@ -7,6 +7,7 @@ import ctypes
 import hashlib
 import os
 import sys
+import tempfile
 import time
 from struct import pack, unpack
 from subprocess import call
@@ -21,6 +22,42 @@ from debug import logger
 
 bitmsglib = 'bitmsghash.so'
 bmpow = None
+
+
+class LogOutput(object):  # pylint: disable=too-few-public-methods
+    """
+    A context manager that block stdout for its scope
+    and appends it's content to log before exit. Usage::
+
+    with LogOutput():
+        os.system('ls -l')
+
+    https://stackoverflow.com/questions/5081657
+    """
+
+    def __init__(self, prefix='PoW'):
+        self.prefix = prefix
+        sys.stdout.flush()
+        self._stdout = sys.stdout
+        self._stdout_fno = os.dup(sys.stdout.fileno())
+        self._dst, self._filepath = tempfile.mkstemp()
+
+    def __enter__(self):
+        stdout = os.dup(1)
+        os.dup2(self._dst, 1)
+        os.close(self._dst)
+        sys.stdout = os.fdopen(stdout, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._stdout
+        sys.stdout.flush()
+        os.dup2(self._stdout_fno, 1)
+
+        with open(self._filepath) as out:
+            for line in out:
+                logger.info('%s: %s', self.prefix, line)
+        os.remove(self._filepath)
 
 
 def _set_idle():
@@ -109,12 +146,14 @@ def _doFastPoW(target, initialHash):
 
 
 def _doCPoW(target, initialHash):
-    h = initialHash
-    m = target
-    out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
-    out_m = ctypes.c_ulonglong(m)
-    logger.debug("C PoW start")
-    nonce = bmpow(out_h, out_m)
+    with LogOutput():
+        h = initialHash
+        m = target
+        out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
+        out_m = ctypes.c_ulonglong(m)
+        logger.debug("C PoW start")
+        nonce = bmpow(out_h, out_m)
+
     trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     if state.shutdown != 0:
         raise StopIteration("Interrupted")
