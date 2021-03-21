@@ -54,7 +54,7 @@ class BMConfigParser(configparser.ConfigParser):
 
     def set(self, section, option, value=None):
         if self._optcre is self.OPTCRE or value:
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 raise TypeError("option values must be strings")
         if not self.validate(section, option, value):
             raise ValueError("Invalid value %s" % value)
@@ -92,7 +92,7 @@ class BMConfigParser(configparser.ConfigParser):
         """Return value as boolean, False on exceptions"""
         try:
             return self.getboolean(section, field)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+        except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return False
 
@@ -101,7 +101,7 @@ class BMConfigParser(configparser.ConfigParser):
         0 if default missing"""
         try:
             return self.getint(section, field)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+        except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
@@ -109,7 +109,7 @@ class BMConfigParser(configparser.ConfigParser):
         """Return value as is, default on exceptions, None if default missing"""
         try:
             return self.get(section, option)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+        except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
@@ -168,7 +168,7 @@ class BMConfigParser(configparser.ConfigParser):
             # didn't exist before.
             fileNameExisted = False
         # write the file
-        with open(fileName, 'wb') as configfile:
+        with open(fileName, 'w') as configfile:
             self.write(configfile)
         # delete the backup
         if fileNameExisted:

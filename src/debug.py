@@ -74,7 +74,7 @@ def configureLogging():
             False,
             'Loaded logger configuration from %s' % logging_config
         )
-    except (OSError, configparser.NoSectionError):
+    except (OSError, configparser.NoSectionError, KeyError):
         if os.path.isfile(logging_config):
             fail_msg = \
                 'Failed to load logger configuration from %s, using default' \
