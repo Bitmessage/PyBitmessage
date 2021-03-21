@@ -65,15 +65,15 @@ if time_format != DEFAULT_TIME_FORMAT:
     try:
         # Check day names
         for i in range(7):
-            unicode(time.strftime(time_format, (0, 0, 0, 0, 0, 0, i, 0, 0)), encoding)
+            time.strftime(time_format, (0, 0, 0, 0, 0, 0, i, 0, 0))
         # Check month names
         for i in range(1, 13):
-            unicode(time.strftime(time_format, (0, i, 0, 0, 0, 0, 0, 0, 0)), encoding)
+            time.strftime(time_format, (0, i, 0, 0, 0, 0, 0, 0, 0))
         # Check AM/PM
-        unicode(time.strftime(time_format, (0, 0, 0, 11, 0, 0, 0, 0, 0)), encoding)
-        unicode(time.strftime(time_format, (0, 0, 0, 13, 0, 0, 0, 0, 0)), encoding)
+        time.strftime(time_format, (0, 0, 0, 11, 0, 0, 0, 0, 0))
+        time.strftime(time_format, (0, 0, 0, 13, 0, 0, 0, 0, 0))
         # Check DST
-        unicode(time.strftime(time_format, (0, 0, 0, 0, 0, 0, 0, 0, 1)), encoding)
+        time.strftime(time_format, (0, 0, 0, 0, 0, 0, 0, 0, 1))
     except:
         logger.exception('Could not decode locale formatted timestamp')
         time_format = DEFAULT_TIME_FORMAT
@@ -110,8 +110,6 @@ def formatTimestamp(timestamp=None, as_unicode=True):
         except ValueError:
             timestring = time.strftime(time_format)
 
-    if as_unicode:
-        return unicode(timestring, encoding)
     return timestring
 
 
