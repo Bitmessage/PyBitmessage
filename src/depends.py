@@ -301,7 +301,7 @@ def check_openssl():
                 ' OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC),'
                 ' ECDH, and ECDSA enabled.')
             return False
-        matches = cflags_regex.findall(openssl_cflags)
+        matches = cflags_regex.findall(openssl_cflags.decode())
         if matches:
             logger.error(
                 'This OpenSSL library is missing the following required'
