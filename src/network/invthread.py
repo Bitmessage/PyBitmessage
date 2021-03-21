@@ -1,7 +1,7 @@
 """
 Thread to send inv annoucements
 """
-import Queue
+import queue
 import random
 from time import time
 
@@ -59,7 +59,7 @@ class InvThread(StoppableThread):
                     # locally generated
                     if len(data) == 2 or data[2] is None:
                         self.handleLocallyGenerated(data[0], data[1])
-                except Queue.Empty:
+                except queue.Empty:
                     break
 
             if chunk:
