@@ -1,7 +1,7 @@
 """
 Network subsystem packages
 """
-from addrthread import AddrThread
+from network.addrthread import AddrThread
 from announcethread import AnnounceThread
 from connectionpool import BMConnectionPool
 from dandelion import Dandelion

@@ -8,13 +8,13 @@ import socket
 import sys
 import time
 
-import asyncore_pollchoose as asyncore
+import network.asyncore_pollchoose as asyncore
 import helper_random
-import knownnodes
+import network.knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from connectionchooser import chooseConnection
+from network.connectionchooser import chooseConnection
 from node import Peer
 from proxy import Proxy
 from singleton import Singleton
