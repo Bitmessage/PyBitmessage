@@ -1,7 +1,7 @@
 """
 Announce addresses as they are received from other hosts
 """
-import Queue
+import queue
 
 import state
 from helper_random import randomshuffle
@@ -22,7 +22,7 @@ class AddrThread(StoppableThread):
                 try:
                     data = addrQueue.get(False)
                     chunk.append(data)
-                except Queue.Empty:
+                except queue.Empty:
                     break
 
             if chunk:
