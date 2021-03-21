@@ -7,10 +7,10 @@ import time
 
 import protocol
 import state
-from bmproto import BMProto
-from constants import MAX_TIME_OFFSET
-from node import Peer
-from objectracker import ObjectTracker
+from network.bmproto import BMProto
+from network.constants import MAX_TIME_OFFSET
+from network.node import Peer
+from network.objectracker import ObjectTracker
 from queues import receiveDataQueue
 
 logger = logging.getLogger('default')

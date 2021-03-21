@@ -31,7 +31,8 @@ from addresses import (
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
-from network import knownnodes, StoppableThread
+import network.knownnodes
+from network.threads import StoppableThread
 
 
 def sizeof_fmt(num, suffix='h/s'):

@@ -42,8 +42,11 @@ from helper_startup import (
     adjustHalfOpenConnectionsLimit, start_proxyconfig)
 from inventory import Inventory
 # Network objects and threads
+from network.addrthread import AddrThread
+from network.connectionpool import BMConnectionPool
+from network.dandelion import Dandelion
 from network import (
-    BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
+    AnnounceThread, BMNetworkThread,
     InvThread, ReceiveQueueThread, DownloadThread, UploadThread
 )
 from network.knownnodes import readKnownNodes

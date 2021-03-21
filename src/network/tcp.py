@@ -10,10 +10,10 @@ import socket
 import time
 
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
+import network.asyncore_pollchoose as asyncore
+import network.connectionpool
 import helper_random
-import knownnodes
+import network.knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
@@ -28,7 +28,7 @@ from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
-from node import Peer
+from network.node import Peer
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 

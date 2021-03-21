@@ -6,7 +6,7 @@ import logging
 import socket
 import struct
 
-from proxy import GeneralProxyError, Proxy, ProxyError
+from network.proxy import GeneralProxyError, Proxy, ProxyError
 
 logger = logging.getLogger('default')
 

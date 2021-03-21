@@ -29,7 +29,9 @@ import tr
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
-from network import BMConnectionPool, knownnodes, StoppableThread
+import network.knownnodes
+from network.connectionpool import BMConnectionPool
+from network.threads import StoppableThread
 
 
 #: Equals 4 weeks. You could make this longer if you want

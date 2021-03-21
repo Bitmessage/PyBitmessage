@@ -8,7 +8,7 @@ import state
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from inventory import Inventory
-from network import StoppableThread
+from network.threads import StoppableThread
 from network.knownnodes import saveKnownNodes
 from queues import (
     addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)

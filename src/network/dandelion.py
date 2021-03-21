@@ -7,7 +7,7 @@ from random import choice, expovariate, sample
 from threading import RLock
 from time import time
 
-import connectionpool
+import network.connectionpool
 import state
 from queues import invQueue
 from singleton import Singleton

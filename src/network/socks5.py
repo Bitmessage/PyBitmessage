@@ -7,8 +7,8 @@ import logging
 import socket
 import struct
 
-from node import Peer
-from proxy import GeneralProxyError, Proxy, ProxyError
+from network.node import Peer
+from network.proxy import GeneralProxyError, Proxy, ProxyError
 
 logger = logging.getLogger('default')
 
