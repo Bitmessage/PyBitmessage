@@ -11,8 +11,8 @@ import time
 from binascii import hexlify
 
 import addresses
-import connectionpool
-import knownnodes
+import network.connectionpool
+import network.knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser

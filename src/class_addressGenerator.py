@@ -14,7 +14,7 @@ import tr
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
-from network import StoppableThread
+from network.threads import StoppableThread
 from pyelliptic import arithmetic
 from pyelliptic.openssl import OpenSSL
 

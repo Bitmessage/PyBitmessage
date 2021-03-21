@@ -15,8 +15,8 @@ import protocol
 import state
 from bmconfigparser import BMConfigParser
 from network.connectionchooser import chooseConnection
-from node import Peer
-from proxy import Proxy
+from network.node import Peer
+from network.proxy import Proxy
 from singleton import Singleton
 from tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
