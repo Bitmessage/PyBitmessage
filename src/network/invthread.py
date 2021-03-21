@@ -11,7 +11,7 @@ import state
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from queues import invQueue
-from threads import StoppableThread
+from network.threads import StoppableThread
 
 
 def handleExpiredDandelion(expired):

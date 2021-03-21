@@ -6,11 +6,11 @@ import time
 import addresses
 import helper_random
 import protocol
-from dandelion import Dandelion
+from network.dandelion import Dandelion
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-from objectracker import missingObjects
-from threads import StoppableThread
+from network.objectracker import missingObjects
+from network.threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):

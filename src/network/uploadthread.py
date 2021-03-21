@@ -9,7 +9,7 @@ from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
-from threads import StoppableThread
+from network.threads import StoppableThread
 
 
 class UploadThread(StoppableThread):
