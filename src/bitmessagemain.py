@@ -45,10 +45,12 @@ from inventory import Inventory
 from network.addrthread import AddrThread
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
-from network import (
-    AnnounceThread, BMNetworkThread,
-    InvThread, ReceiveQueueThread, DownloadThread, UploadThread
-)
+from network.announcethread import AnnounceThread
+from network.networkthread import BMNetworkThread
+from network.invthread import InvThread
+from network.receivequeuethread import ReceiveQueueThread
+from network.downloadthread import DownloadThread
+from network.uploadthread import UploadThread
 from network.knownnodes import readKnownNodes
 from singleinstance import singleinstance
 # Synchronous threads

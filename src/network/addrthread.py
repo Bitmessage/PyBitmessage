@@ -8,7 +8,7 @@ from helper_random import randomshuffle
 from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
 from queues import addrQueue
-from threads import StoppableThread
+from network.threads import StoppableThread
 
 
 class AddrThread(StoppableThread):

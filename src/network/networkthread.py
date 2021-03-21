@@ -2,10 +2,10 @@
 A thread to handle network concerns
 """
 import network.asyncore_pollchoose as asyncore
-import state
 from network.connectionpool import BMConnectionPool
+from network.threads import StoppableThread
 from queues import excQueue
-from threads import StoppableThread
+import state
 
 
 class BMNetworkThread(StoppableThread):

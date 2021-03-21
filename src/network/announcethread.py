@@ -7,8 +7,8 @@ import state
 from bmconfigparser import BMConfigParser
 from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
-from node import Peer
-from threads import StoppableThread
+from network.node import Peer
+from network.threads import StoppableThread
 
 
 class AnnounceThread(StoppableThread):
