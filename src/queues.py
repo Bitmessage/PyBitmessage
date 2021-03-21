@@ -1,19 +1,19 @@
 """Most of the queues used by bitmessage threads are defined here."""
 
-import Queue
+import queue
 import threading
 import time
 
 from multiqueue import MultiQueue
 
 
-class ObjectProcessorQueue(Queue.Queue):
+class ObjectProcessorQueue(queue.Queue):
     """Special queue class using lock for `.threads.objectProcessor`"""
 
     maxSize = 32000000
 
     def __init__(self):
-        Queue.Queue.__init__(self)
+        queue.Queue.__init__(self)
         self.sizeLock = threading.Lock()
         #: in Bytes. We maintain this to prevent nodes from flooding us
         #: with objects which take up too much memory. If this gets
@@ -25,27 +25,27 @@ class ObjectProcessorQueue(Queue.Queue):
             time.sleep(1)
         with self.sizeLock:
             self.curSize += len(item[1])
-        Queue.Queue.put(self, item, block, timeout)
+        queue.queue.put(self, item, block, timeout)
 
     def get(self, block=True, timeout=None):
-        item = Queue.Queue.get(self, block, timeout)
+        item = queue.queue.get(self, block, timeout)
         with self.sizeLock:
             self.curSize -= len(item[1])
         return item
 
 
-workerQueue = Queue.Queue()
-UISignalQueue = Queue.Queue()
-addressGeneratorQueue = Queue.Queue()
+workerQueue = queue.Queue()
+UISignalQueue = queue.Queue()
+addressGeneratorQueue = queue.Queue()
 #: `.network.ReceiveQueueThread` instances dump objects they hear
 #: on the network into this queue to be processed.
 objectProcessorQueue = ObjectProcessorQueue()
 invQueue = MultiQueue()
 addrQueue = MultiQueue()
-portCheckerQueue = Queue.Queue()
-receiveDataQueue = Queue.Queue()
+portCheckerQueue = queue.Queue()
+receiveDataQueue = queue.Queue()
 #: The address generator thread uses this queue to get information back
 #: to the API thread.
-apiAddressGeneratorReturnQueue = Queue.Queue()
+apiAddressGeneratorReturnQueue = queue.Queue()
 #: for exceptions
-excQueue = Queue.Queue()
+excQueue = queue.Queue()
