@@ -2,7 +2,7 @@
 Process data incoming from network
 """
 import errno
-import Queue
+import queue
 import socket
 
 import state
@@ -22,7 +22,7 @@ class ReceiveQueueThread(StoppableThread):
         while not self._stopped and state.shutdown == 0:
             try:
                 dest = receiveDataQueue.get(block=True, timeout=1)
-            except Queue.Empty:
+            except queue.Empty:
                 continue
 
             if self._stopped or state.shutdown:
