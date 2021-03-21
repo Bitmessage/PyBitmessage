@@ -2,7 +2,7 @@
 BMConfigParser class definition and default configuration settings
 """
 
-import ConfigParser
+import configparser
 import os
 import shutil
 from datetime import datetime
@@ -43,9 +43,9 @@ BMConfigDefaults = {
 
 
 @Singleton
-class BMConfigParser(ConfigParser.SafeConfigParser):
+class BMConfigParser(configparser.ConfigParser):
     """
-    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    Singleton class inherited from :class:`configparser.ConfigParser`
     with additional methods specific to bitmessage config.
     """
     # pylint: disable=too-many-ancestors
@@ -58,24 +58,24 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 raise TypeError("option values must be strings")
         if not self.validate(section, option, value):
             raise ValueError("Invalid value %s" % value)
-        return ConfigParser.ConfigParser.set(self, section, option, value)
+        return configparser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
+    def get(self, section, option, raw=False, vars=None, fallback=None):
         # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
-                return ConfigParser.ConfigParser.get(
-                    self, section, option, raw, variables)
+                return configparser.ConfigParser.get(
+                    self, section, option, raw = raw, vars = vars)
             try:
                 return self._temp[section][option]
             except KeyError:
                 pass
-            return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
-        except ConfigParser.InterpolationError:
-            return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+            return configparser.ConfigParser.get(
+                self, section, option, raw = True, vars = vars)
+        except configparser.InterpolationError:
+            return configparser.ConfigParser.get(
+                self, section, option, raw = True, vars = vars)
+        except (configparser.NoSectionError, configparser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
             except (KeyError, ValueError, AttributeError):
@@ -117,7 +117,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         """Return section variables as parent,
         but override the "raw" argument to always True"""
         # pylint: disable=arguments-differ
-        return ConfigParser.ConfigParser.items(self, section, True, variables)
+        return configparser.ConfigParser.items(self, section, True, variables)
 
     @staticmethod
     def addresses():
@@ -135,21 +135,21 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     def read(self, filenames):
         """Read config and populate defaults"""
         self._reset()
-        ConfigParser.ConfigParser.read(self, filenames)
+        configparser.ConfigParser.read(self, filenames)
         for section in self.sections():
             for option in self.options(section):
                 try:
                     if not self.validate(
                         section, option,
-                        ConfigParser.ConfigParser.get(self, section, option)
+                        configparser.ConfigParser.get(self, section, option)
                     ):
                         try:
                             newVal = BMConfigDefaults[section][option]
                         except KeyError:
                             continue
-                        ConfigParser.ConfigParser.set(
+                        configparser.ConfigParser.set(
                             self, section, option, newVal)
-                except ConfigParser.InterpolationError:
+                except configparser.InterpolationError:
                     continue
 
     def save(self):
