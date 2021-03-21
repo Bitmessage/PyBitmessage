@@ -64,10 +64,10 @@ else:
 if time_format != DEFAULT_TIME_FORMAT:
     try:
         # Check day names
-        for i in xrange(7):
+        for i in range(7):
             unicode(time.strftime(time_format, (0, 0, 0, 0, 0, 0, i, 0, 0)), encoding)
         # Check month names
-        for i in xrange(1, 13):
+        for i in range(1, 13):
             unicode(time.strftime(time_format, (0, i, 0, 0, 0, 0, 0, 0, 0)), encoding)
         # Check AM/PM
         unicode(time.strftime(time_format, (0, 0, 0, 11, 0, 0, 0, 0, 0)), encoding)
