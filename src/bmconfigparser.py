@@ -2,7 +2,11 @@
 BMConfigParser class definition and default configuration settings
 """
 
-import ConfigParser
+try:
+	import ConfigParser
+except ModuleNotFoundError:
+	import configparser as ConfigParser
+	ConfigParser.SafeConfigParser = ConfigParser.ConfigParser
 import os
 import shutil
 from datetime import datetime

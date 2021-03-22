@@ -58,7 +58,11 @@ For further examples please reference `.tests.test_api`.
 """
 
 import base64
-import ConfigParser
+try:
+	import ConfigParser
+except ModuleNotFoundError:
+	import configparser as ConfigParser
+	ConfigParser.SafeConfigParser = ConfigParser.ConfigParser
 import errno
 import hashlib
 import httplib

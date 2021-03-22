@@ -10,7 +10,11 @@ Bitmessage commandline interface
 #     * python2-pythondialog
 #  * dialog
 
-import ConfigParser
+try:
+	import ConfigParser
+except ModuleNotFoundError:
+	import configparser as ConfigParser
+	ConfigParser.SafeConfigParser = ConfigParser.ConfigParser
 import curses
 import os
 import sys

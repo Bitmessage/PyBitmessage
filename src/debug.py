@@ -35,7 +35,11 @@ Logging is thread-safe so you don't have to worry about locks,
 just import and log.
 """
 
-import ConfigParser
+try:
+	import ConfigParser
+except ModuleNotFoundError:
+	import configparser as ConfigParser
+	ConfigParser.SafeConfigParser = ConfigParser.ConfigParser
 import logging
 import logging.config
 import os
