@@ -68,8 +68,12 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
-                return ConfigParser.ConfigParser.get(
-                    self, section, option, raw=raw, vars=vars, fallback=fallback)
+                try:
+                    return ConfigParser.ConfigParser.get(
+                        self, section, option, raw=raw, vars=vars, fallback=fallback)
+                except TypeError:
+                    return ConfigParser.ConfigParser.get(
+                        self, section, option, raw=raw, vars=vars)
             try:
                 return self._temp[section][option]
             except KeyError:
