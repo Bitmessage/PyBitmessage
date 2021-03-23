@@ -64,21 +64,21 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, variables=None):
+    def get(self, section, option, raw=False, vars=None, fallback=None):
         # pylint: disable=arguments-differ
         try:
             if section == "bitmessagesettings" and option == "timeformat":
                 return ConfigParser.ConfigParser.get(
-                    self, section, option, raw, variables)
+                    self, section, option, raw=raw, vars=vars, fallback=fallback)
             try:
                 return self._temp[section][option]
             except KeyError:
                 pass
             return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
+                self, section, option, raw=True, vars=vars, fallback=fallback)
         except ConfigParser.InterpolationError:
             return ConfigParser.ConfigParser.get(
-                self, section, option, True, variables)
+                self, section, option, raw=True, vars=vars, fallback=fallback)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
