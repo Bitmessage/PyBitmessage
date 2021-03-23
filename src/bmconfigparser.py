@@ -74,11 +74,19 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 return self._temp[section][option]
             except KeyError:
                 pass
-            return ConfigParser.ConfigParser.get(
-                self, section, option, raw=True, vars=vars, fallback=fallback)
+            try:
+	            return ConfigParser.ConfigParser.get(
+                    self, section, option, raw=True, vars=vars, fallback=fallback)
+            except TypeError:
+	            return ConfigParser.ConfigParser.get(
+                    self, section, option, raw=True, vars=vars)
         except ConfigParser.InterpolationError:
-            return ConfigParser.ConfigParser.get(
-                self, section, option, raw=True, vars=vars, fallback=fallback)
+            try:
+                return ConfigParser.ConfigParser.get(
+                    self, section, option, raw=True, vars=vars, fallback=fallback)
+            except TypeError:
+                return ConfigParser.ConfigParser.get(
+                    self, section, option, raw=True, vars=vars)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
