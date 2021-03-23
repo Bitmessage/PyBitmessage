@@ -128,6 +128,8 @@ def loadConfig():
 def updateConfig():
     """Save the config"""
     config = BMConfigParser()
+    if not config.has_option('bitmessagesettings', 'settingsversion'):
+        config.set('bitmessagesettings', 'settingsversion', 1)
     settingsversion = config.getint('bitmessagesettings', 'settingsversion')
     if settingsversion == 1:
         config.set('bitmessagesettings', 'socksproxytype', 'none')
