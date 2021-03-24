@@ -161,7 +161,10 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
             if stream == prev['stream']:
                 if lastseen - prev['lastseen'] > 3600 * 24:
                     # more than a day ago, this should be port change
-                    del knownNodes[stream][Peer(peer.host, prev['port'])]
+                    try:
+                        del knownNodes[stream][Peer(peer.host, prev['port'])]
+                    except KeyError:
+                        pass
                     outages[peer.host]['port'] = peer.port
                 else:
                     rating = -0.2
