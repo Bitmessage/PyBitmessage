@@ -73,7 +73,8 @@ class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
     """RIPEMD160 test case for Crypto"""
     @staticmethod
     def _hashdigest(data):
-        return RIPEMD.RIPEMD160Hash(data).digest()
+        from pybitmessage.fallback import RIPEMD160Hash
+        return RIPEMD160Hash(data).digest()
 
 
 class TestAddresses(unittest.TestCase):
