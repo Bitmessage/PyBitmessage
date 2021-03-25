@@ -7,10 +7,10 @@ import sys
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
-if not hasattr(sys, 'hexversion'):
+if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     sys.exit(
         'Python version: %s\n'
-        'PyBitmessage requires Python 2.7.4 or greater'
+        'PyBitmessage requires Python 2.7.4 or greater (but not Python 3)'
         % sys.version
     )
 
@@ -410,12 +410,19 @@ def check_dependencies(verbose=False, optional=False):
 
     # Python 2.7.4 is the required minimum.
     # (https://bitmessage.org/forum/index.php?topic=4081.0)
+    # Python 3+ is not supported, but it is still useful to provide
+    # information about our other requirements.
     logger.info('Python version: %s', sys.version)
     if sys.hexversion < 0x20704F0:
         logger.error(
             'PyBitmessage requires Python 2.7.4 or greater'
             ' (but not Python 3+)')
         has_all_dependencies = False
+    if sys.hexversion >= 0x3000000:
+        logger.error(
+            'PyBitmessage does not support Python 3+. Python 2.7.4'
+            ' or greater is required. Python 2.7.18 is recommended.')
+        sys.exit()
 
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:
