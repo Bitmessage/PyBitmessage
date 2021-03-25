@@ -60,9 +60,15 @@ class TestAPIShutdown(TestAPIProto, TestProcessShutdown):
 
 class TestAPI(TestAPIProto):
     """Main API test case"""
-    _seed = base64.encodestring(
-        'TIGER, tiger, burning bright. In the forests of the night'
-    )
+    try:
+        _seed = base64.encodestring(
+            'TIGER, tiger, burning bright. In the forests of the night'
+        )
+    except TypeError:
+        _seed = base64.encodestring(
+            b'TIGER, tiger, burning bright. In the forests of the night'
+        )
+
 
     def _add_random_address(self, label):
         return self.api.createRandomAddress(base64.encodestring(label))
@@ -172,10 +178,16 @@ class TestAPI(TestAPIProto):
             []
         )
         # Add known address
-        self.api.addAddressBookEntry(
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
-            base64.encodestring('tiger_4')
-        )
+        try:
+            self.api.addAddressBookEntry(
+                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
+                base64.encodestring('tiger_4')
+            )
+        except TypeError:
+            self.api.addAddressBookEntry(
+                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
+                base64.encodestring(b'tiger_4')
+            )
         # Check addressbook entry
         entries = json.loads(
             self.api.listAddressBookEntries()).get('addresses')[0]
@@ -216,8 +228,12 @@ class TestAPI(TestAPIProto):
         """Test message sending"""
         # self.api.createDeterministicAddresses(self._seed, 1, 4)
         addr = self._add_random_address('random_2')
-        msg = base64.encodestring('test message')
-        msg_subject = base64.encodestring('test_subject')
+        try:
+            msg = base64.encodestring('test message')
+            msg_subject = base64.encodestring('test_subject')
+        except TypeError:
+            msg = base64.encodestring(b'test message')
+            msg_subject = base64.encodestring(b'test_subject')
         ackdata = self.api.sendMessage(
             'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK', addr, msg_subject, msg)
         try:
@@ -274,10 +290,16 @@ class TestAPI(TestAPIProto):
 
     def test_send_broadcast(self):
         """Test broadcast sending"""
-        addr = self._add_random_address('random_2')
-        msg = base64.encodestring('test broadcast')
-        ackdata = self.api.sendBroadcast(
-            addr, base64.encodestring('test_subject'), msg)
+        try:
+            addr = self._add_random_address('random_2')
+            msg = base64.encodestring('test broadcast')
+            ackdata = self.api.sendBroadcast(
+                addr, base64.encodestring('test_subject'), msg)
+        except TypeError:
+            addr = self._add_random_address(b'random_2')
+            msg = base64.encodestring(b'test broadcast')
+            ackdata = self.api.sendBroadcast(
+                addr, base64.encodestring(b'test_subject'), msg)
         try:
             int(ackdata, 16)
             status = self.api.getStatus(ackdata)
