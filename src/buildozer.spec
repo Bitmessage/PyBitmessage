@@ -46,9 +46,10 @@ requirements =
 	libiconv,
 	libzbar,
 	pillow,
-	bitmsghash,
+	#bitmsghash,
 	#git+https://github.com/navjotcis/KivyMD#egg=kivymd,
-	kivymd,
+	#git+https://github.com/kivymd/KivyMD#egg=kivymd,
+	#kivymd,
 	kivy-garden, 
 	qrcode,
 	msgpack

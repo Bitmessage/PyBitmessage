@@ -10,7 +10,8 @@ Kivy==1.11.1
 Kivy-Garden==0.1.4
 kivy-garden.qrcode==2019.914
 #-e git+https://github.com/surbhicis/KivyMD-1#egg=kivymd
--e git+https://github.com/navjotcis/KivyMD#egg=kivymd
+#-e git+https://github.com/navjotcis/KivyMD#egg=kivymd
+-e git+https://github.com/kivymd/KivyMD.git
 lazy-object-proxy==1.4.3
 mccabe==0.6.1
 numpy==1.18.4

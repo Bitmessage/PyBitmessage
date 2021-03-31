@@ -30,7 +30,7 @@ class AddressBook(TeleniumTestProcess):
         self.cli.sleep(4)
         self.cli.click_on('//GrashofPopup/BoxLayout[0]/MDTextField[0]')
         self.cli.sleep(3)
-        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','peter')
+        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','test1')
         self.cli.sleep(3)
         self.cli.click_on('//MDRaisedButton[0]')
         self.cli.sleep(4)
@@ -54,13 +54,13 @@ class AddressBook(TeleniumTestProcess):
         self.cli.sleep(4)
 
     @ordered
-    def test_cancel_address(self):
+    def test_cancel_addressbook_popup(self):
         """Cancel Address"""
-        print("=====================Test -Cancel Address=====================")
+        print("=====================Test -Cancel Address Add Popup=====================")
         self.cli.sleep(3)
         self.cli.execute('app.addingtoaddressbook()')
         self.cli.sleep(3)
-        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','prachi')
+        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','test2')
         self.cli.sleep(3)
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]','text',data[0])
         self.cli.sleep(3)

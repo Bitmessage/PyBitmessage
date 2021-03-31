@@ -208,20 +208,17 @@
                             text: "System Setting"
                             # pos_hint: {"center_x": .5, "center_y": .6}
                             # current_item: "Item 0"
-                            on_release: root.menu.open()
+                            # on_release: root.menu.open()
                     BoxLayout:
                         spacing:5
                         orientation: 'horizontal'
                         # pos_hint: {'x':.76}
                         BoxLayout:
                             orientation: 'horizontal'
-                            # padding: [0, 10, 0, 0]
                             spacing: 10
-                            # MDRaisedButton:
-                            #     text: app.tr._('Cancel')
                             MDRaisedButton:
                                 text: app.tr._('Apply')
-                                on_press: root.change_language()
+                                # on_press: root.change_language()
         Tab:
             text: 'Network Settings'
             ScrollView:

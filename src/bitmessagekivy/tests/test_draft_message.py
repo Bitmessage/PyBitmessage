@@ -89,4 +89,4 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
         self.cli.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]')
-        self.cli.sleep(2)
+        self.cli.sleep(5)
