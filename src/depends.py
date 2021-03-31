@@ -4,6 +4,10 @@ and suggest how it may be installed
 """
 
 import sys
+import logging
+import os
+from importlib import import_module
+from pybitmessage import state
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -13,10 +17,6 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
         'PyBitmessage requires Python 2.7.4 or greater (but not Python 3)'
         % sys.version
     )
-
-import logging
-import os
-from importlib import import_module
 
 # We can now use logging so set up a simple configuration
 formatter = logging.Formatter('%(levelname)s: %(message)s')
@@ -250,8 +250,11 @@ def check_openssl():
         if getattr(sys, 'frozen', False):
             import os.path
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
+    elif state.kivy:
+        return True
     else:
         paths = ['libcrypto.so', 'libcrypto.so.1.0.0']
+
     if sys.platform == 'darwin':
         paths.extend([
             'libcrypto.dylib',
@@ -274,7 +277,8 @@ def check_openssl():
 
     cflags_regex = re.compile(r'(?:OPENSSL_NO_)(AES|EC|ECDH|ECDSA)(?!\w)')
 
-    import pyelliptic.openssl
+    from pybitmessage.pyelliptic import openssl
+    # import pyelliptic.openssl
 
     for path in paths:
         logger.info('Checking OpenSSL at %s', path)
@@ -285,7 +289,7 @@ def check_openssl():
         logger.info('OpenSSL Name: %s', library._name)
         try:
             openssl_version, openssl_hexversion, openssl_cflags = \
-                pyelliptic.openssl.get_version(library)
+                openssl.get_version(library)
         except AttributeError:  # sphinx chokes
             return True
         if not openssl_version:
@@ -301,7 +305,10 @@ def check_openssl():
                 ' OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC),'
                 ' ECDH, and ECDSA enabled.')
             return False
-        matches = cflags_regex.findall(openssl_cflags)
+        if sys.version_info >= (3, 0, 0):
+            matches = cflags_regex.findall(str(openssl_cflags))
+        else:
+            matches = cflags_regex.findall(openssl_cflags)
         if matches:
             logger.error(
                 'This OpenSSL library is missing the following required'
@@ -353,7 +360,8 @@ def check_curses():
     # The pythondialog author does not like Python2 str, so we have to use
     # unicode for just the version otherwise we get the repr form which
     # includes the module and class names along with the actual version.
-    logger.info('dialog Utility Version %s', unicode(dialog_util_version))
+    # logger.info('dialog Utility Version %s', unicode(dialog_util_version))
+    logger.info('dialog Utility Version %s', str(dialog_util_version))
     return True
 
 
@@ -363,6 +371,7 @@ def check_pyqt():
     Here we are checking for PyQt4 with its version, as for it require
     PyQt 4.8 or later.
     """
+
     QtCore = try_import(
         'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
 
@@ -418,16 +427,15 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage requires Python 2.7.4 or greater'
             ' (but not Python 3+)')
         has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required. Python 2.7.18 is recommended.')
-        sys.exit()
+    # if sys.hexversion >= 0x3000000:
+    #     logger.error(
+    #         'PyBitmessage does not support Python 3+. Python 2.7.4'
+    #         ' or greater is required.')
+    #     has_all_dependencies = False
 
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:
         check_functions.extend([check_msgpack, check_pyqt, check_curses])
-
     # Unexpected exceptions are handled here
     for check in check_functions:
         try:

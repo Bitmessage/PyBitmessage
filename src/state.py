@@ -68,3 +68,5 @@ ackdataForWhichImWatching = {}
 
 thisapp = None
 """Singleton instance"""
+
+kivy = False
