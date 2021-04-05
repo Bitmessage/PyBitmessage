@@ -5,7 +5,7 @@ Various tests for config
 import os
 import tempfile
 
-from test_process import TestProcessProto
+from .test_process import TestProcessProto
 from pybitmessage.bmconfigparser import BMConfigParser
 
 
