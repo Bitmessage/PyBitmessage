@@ -16,13 +16,15 @@ SQLite objects can only be used from one thread.
    or isn't thread-safe.
 """
 
+
 # import Queue
 try:
-    import queue as Queue #python2
+    import queue as Queue #python3
 except ImportError:
-    import Queue #python3
+    import Queue #python2
 
 import threading
+
 
 sqlSubmitQueue = Queue.Queue()
 """the queue for SQL"""
@@ -108,6 +110,15 @@ def sqlExecute(sql_statement, *args):
     sqlSubmitQueue.put('commit')
     sql_lock.release()
     return rowcount
+
+
+def sqlExecuteScript(sql_statement):
+    """Execute SQL script statement"""
+
+    statements = sql_statement.split(";")
+    with SqlBulkExecute() as sql:
+        for q in statements:
+            sql.execute("{}".format(q))
 
 
 def sqlStoredProcedure(procName):

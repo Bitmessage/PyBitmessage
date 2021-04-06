@@ -23,13 +23,25 @@ from addresses import encodeAddress
 root_path = os.path.dirname(os.path.dirname(__file__))
 
 
+def connection_build():
+    conn = sqlite3.connect(state.appdata + 'messages.dat')
+    conn.text_factory = str
+    cur = conn.cursor()
+    return conn, cur
+
+
 class UpgradeDB():
     """Upgrade Db with respect to versions"""
-    cur = None
+    # cur = None
     parameters = None
     current_level = None
     max_level = 11
     conn = None
+    conn, cur = connection_build()
+
+    def __index__(self):
+        self.conn = conn
+        self.cur = cur
 
     def get_current_level(self):
         # Upgrade Db with respect to their versions
@@ -51,10 +63,15 @@ class UpgradeDB():
 
     def run_migrations(self, file):
         try:
+            print("----------file", file)
             sql_file = open(os.path.join(root_path, "src/sql/init_version_{}.sql".format(file)))
             sql_as_string = sql_file.read()
+            # self.cur.executescript(sql_as_string)
             self.cur.executescript(sql_as_string)
         except Exception as err:
+            print("err")
+            print(err)
+            print("err")
             if str(err) == 'table inbox already exists':
                 return "table inbox already exists"
             else:
@@ -238,9 +255,13 @@ class sqlThread(threading.Thread, UpgradeDB):
     def run(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         helper_sql.sql_available = True
-        self.conn = sqlite3.connect(state.appdata + 'messages.dat')
-        self.conn.text_factory = str
-        self.cur = self.conn.cursor()
+        # self.conn = sqlite3.connect(state.appdata + 'messages.dat')
+        # self.conn.text_factory = str
+        # self.cur = self.conn.cursor()
+        conn, cur = connection_build()
+
+        self.conn = conn
+        self.cur = cur
 
         self.cur.execute('PRAGMA secure_delete = true')
 
@@ -248,50 +269,38 @@ class sqlThread(threading.Thread, UpgradeDB):
         self.create_function()
 
         try:
-            # sql_file = open(os.path.join(root_path, "src/sql/{}.sql".format("run")))
-            # sql_as_string = sql_file.read()
-            # self.cur.executescript(sql_as_string)
-            # self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
-            # self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (int(time.time()),))
             # self.cur.execute(
-            #     '''CREATE TABLE objectprocessorqueue'''
-            #     ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
-            # self.conn.commit()
-            # logger.info('Created messages database file')
-
-            self.cur.execute(
-                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
-                ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
-                ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
-            self.cur.execute(
-                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
-                ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
-                ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
-            self.cur.execute(
-                '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
-            self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
-            self.cur.execute(
-                '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
-            self.cur.execute(
-                '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
-            self.cur.execute(
-                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
-                ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
-            self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
-                ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
-            self.cur.execute(
-                '''INSERT INTO subscriptions VALUES'''
-                '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
+            #     '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text,'''
+            #     ''' received text, message text, folder text, encodingtype int, read bool, sighash blob,'''
+            #     ''' UNIQUE(msgid) ON CONFLICT REPLACE)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text,'''
+            #     ''' message text, ackdata blob, senttime integer, lastactiontime integer,'''
+            #     ''' sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''')
+            #     '''CREATE TABLE subscriptions (label text, address text, enabled bool)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE addressbook (label text, address text, UNIQUE(address) ON CONFLICT IGNORE)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE blacklist (label text, address text, enabled bool)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE whitelist (label text, address text, enabled bool)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int,'''
+            #     ''' usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob,'''
+            #     ''' expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''')
+            # self.cur.execute(
+            #     '''INSERT INTO subscriptions VALUES'''
+            #     '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
             self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
             self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
-            self.cur.execute(
-                '''CREATE TABLE objectprocessorqueue'''
-                ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
+            # self.cur.execute(
+            #     '''CREATE TABLE objectprocessorqueue'''
+            #     ''' (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''')
             self.conn.commit()
             logger.info('Created messages database file')
         except Exception as err:
