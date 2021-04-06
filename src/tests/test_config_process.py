@@ -4,18 +4,20 @@ Various tests for config
 
 import os
 import tempfile
-
-from .test_process import TestProcessProto
 from pybitmessage.bmconfigparser import BMConfigParser
+from .test_process import TestProcessProto
 
 
 class TestProcessConfig(TestProcessProto):
     """A test case for keys.dat"""
     home = tempfile.mkdtemp()
 
+
     def test_config_defaults(self):
         """Test settings in the generated config"""
         config = BMConfigParser()
+        self._stop_process()
+        self._kill_process()
         config.read(os.path.join(self.home, 'keys.dat'))
 
         self.assertEqual(config.safeGetInt(
