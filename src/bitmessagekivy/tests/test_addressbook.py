@@ -1,9 +1,11 @@
 import time
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
-from bmconfigparser import BMConfigParser
 from .common import ordered
 
-data = BMConfigParser().addresses()
+data = [
+    'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h',
+    'BM-2cVpswZo8rWLXDVtZEUNcDQvnvHJ6TLRYr'
+]
 
 
 class AddressBook(TeleniumTestProcess):
@@ -60,7 +62,7 @@ class AddressBook(TeleniumTestProcess):
         self.cli.sleep(3)
         self.cli.execute('app.addingtoaddressbook()')
         self.cli.sleep(3)
-        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','test2')
+        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]','text','test2 ')
         self.cli.sleep(3)
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]','text',data[0])
         self.cli.sleep(3)

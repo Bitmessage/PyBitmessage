@@ -1,12 +1,13 @@
 """This module is for thread start."""
 import state
 from bitmessagekivy.mpybit import NavigateApp
-from threads import addressGenerator, sqlThread     
+from fake_addressGenerator import FakeAddressGenerator
+from threads import sqlThread
 
 def main():
     if state.enableObjProc:
         # Start the address generation thread
-        addressGeneratorThread = addressGenerator()
+        addressGeneratorThread = FakeAddressGenerator()
         # close the main program even if there are threads left
         addressGeneratorThread.daemon = True
         addressGeneratorThread.start()

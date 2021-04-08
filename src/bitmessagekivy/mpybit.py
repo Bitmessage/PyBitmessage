@@ -476,6 +476,7 @@ class NavigateApp(MDApp):
                 state.in_composer = False
                 self.root.ids.scr_mngr.current = 'inbox'
             elif self.root.ids.scr_mngr.current == "showqrcode":
+                self.set_common_header()
                 self.root.ids.scr_mngr.current = 'myaddress'
             elif self.root.ids.scr_mngr.current == "random":
                 self.root.ids.scr_mngr.current = 'login'

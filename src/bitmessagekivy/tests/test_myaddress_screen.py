@@ -1,8 +1,10 @@
-from bmconfigparser import BMConfigParser
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 from .common import ordered
 
-data = BMConfigParser().addresses()
+data = [
+    'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h',
+    'BM-2cVpswZo8rWLXDVtZEUNcDQvnvHJ6TLRYr'
+]
 
 
 class MyAddressScreen(TeleniumTestProcess):
