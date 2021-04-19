@@ -13,7 +13,12 @@ from kivymd.uix.list import (
 from kivy.uix.image import Image
 from kivymd.uix.label import MDLabel
 from bitmessagekivy.get_platform import platform
+from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
+from kivy.properties import (
+    NumericProperty,
+    StringProperty
+)
 
 
 ThemeClsColor = [0.12, 0.58, 0.95, 1]
@@ -127,3 +132,10 @@ class AvatarSampleWidget(ILeftBody, Image):
 class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
     """TimeTagRightSampleWidget class for Ui"""
 
+
+class SwipeToDeleteItem(MDCardSwipe):
+    text = StringProperty()
+    # cla = Window.size[0]/2
+    cla = 800
+    swipe_distance = NumericProperty(cla)
+    opening_time = NumericProperty(0.5)

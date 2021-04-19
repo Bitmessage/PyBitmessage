@@ -342,3 +342,24 @@ MDNavigationLayout:
         on_press: app.root.ids.scr_mngr.current = 'create'
         on_press: app.clear_composer()
 
+
+<SwipeToDeleteItem>:
+    size_hint_y: None
+    height: content.height
+
+    MDCardSwipeLayerBox:
+        padding: "8dp"
+
+        MDIconButton:
+            id: delete_msg
+            icon: "trash-can"
+            pos_hint: {"center_y": .5}
+            md_bg_color: (1, 0, 0, 1)
+            disabled: True
+
+    MDCardSwipeFrontBox:
+
+        TwoLineAvatarIconListItem:
+            id: content
+            text: root.text
+            _no_ripple_effect: True

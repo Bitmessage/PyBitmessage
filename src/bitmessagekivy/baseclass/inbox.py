@@ -20,7 +20,8 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, avatarImageFirstLetter,
-    AddTimeWidget, ThemeClsColor, AvatarSampleWidget, toast
+    AddTimeWidget, ThemeClsColor, AvatarSampleWidget,
+    toast, SwipeToDeleteItem
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 from bitmessagekivy.baseclass.trash import Trash
@@ -122,40 +123,25 @@ class Inbox(Screen):
         """This method is used to create the mdList"""
         total_message = len(self.ids.ml.children)
         for item in data:
-            meny = TwoLineAvatarIconListItem(
-                text=item["text"],
-                secondary_text=item["secondary_text"],
-                theme_text_color="Custom",
-                text_color=ThemeClsColor
+            message_row = SwipeToDeleteItem(
+                text = item["text"],
             )
-            meny._txt_right_pad = dp(70)
-            meny.add_widget(
+            listItem = message_row.ids.content
+            listItem.secondary_text = item["secondary_text"]
+            listItem.theme_text_color = "Custom"
+            listItem.text_color = ThemeClsColor
+            listItem._txt_right_pad = dp(70)
+            listItem.add_widget(
                 AvatarSampleWidget(
                     source=state.imageDir + "/text_images/{}.png".format(
                         avatarImageFirstLetter(item["secondary_text"].strip())
                     )
                 )
             )
-            meny.bind(on_press=partial(self.inbox_detail, item["msgid"]))
-            meny.add_widget(AddTimeWidget(item["received"]))
-            carousel = Carousel(direction="right")
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text="Delete")
-            del_btn.background_normal = ""
-            del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(self.delete, item["msgid"]))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            # ach_btn = Button(text='Achieve')
-            # ach_btn.background_color = (0, 1, 0, 1)
-            # ach_btn.bind(on_press=partial(self.archive, item['msgid']))
-            # carousel.add_widget(ach_btn)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel)
+            listItem.bind(on_release=partial(self.inbox_detail, item["msgid"], message_row))
+            listItem.add_widget(AddTimeWidget(item["received"]))
+            message_row.ids.delete_msg.bind(on_press=partial(self.delete, item["msgid"]))
+            self.ids.ml.add_widget(message_row)
         update_message = len(self.ids.ml.children)
         self.has_refreshed = True if total_message != update_message else False
 
@@ -189,17 +175,22 @@ class Inbox(Screen):
             )
         self.set_mdList(data)
 
-    def inbox_detail(self, msg_id, *args):
+    def inbox_detail(self, msg_id, instance,*args):
         """Load inbox page details"""
-        state.detailPageType = "inbox"
-        state.mail_id = msg_id
-        if self.manager:
-            src_mng_obj = self.manager
+        if instance.state == 'closed':
+            instance.ids.delete_msg.disabled = True
+            if instance.open_progress == 0.0:
+                state.detailPageType = "inbox"
+                state.mail_id = msg_id
+                if self.manager:
+                    src_mng_obj = self.manager
+                else:
+                    src_mng_obj = self.parent.parent
+                src_mng_obj.screens[11].clear_widgets()
+                src_mng_obj.screens[11].add_widget(MailDetail())
+                src_mng_obj.current = "mailDetail"
         else:
-            src_mng_obj = self.parent.parent
-        src_mng_obj.screens[11].clear_widgets()
-        src_mng_obj.screens[11].add_widget(MailDetail())
-        src_mng_obj.current = "mailDetail"
+            instance.ids.delete_msg.disabled = False
 
     def delete(self, data_index, instance, *args):
         """Delete inbox mail from inbox listing"""

@@ -25,7 +25,7 @@ from bitmessagekivy.baseclass.common import (
 
 from bitmessagekivy.baseclass.common import (
     toast, showLimitedCnt, ThemeClsColor, chipTag,
-    AddTimeWidget, AvatarSampleWidget
+    AddTimeWidget, AvatarSampleWidget, SwipeToDeleteItem
 )
 
 
@@ -92,35 +92,32 @@ class Trash(Screen):
         for item in self.trash_messages:
             subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
             body = item[3].decode() if isinstance(item[3], bytes) else item[3]
-            meny = TwoLineAvatarIconListItem(
-                text=item[1],
-                secondary_text=(item[2][:50] + '........' if len(
-                    subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
-                theme_text_color='Custom',
-                text_color=ThemeClsColor)
-            meny._txt_right_pad = dp(70)
+            message_row = SwipeToDeleteItem(
+                text = item[1],
+            )
+            message_row.bind(on_swipe_complete=partial(self.on_swipe_complete, message_row))
+            listItem = message_row.ids.content
+            listItem.secondary_text = (item[2][:50] + '........' if len(
+                subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', '')
+            listItem.theme_text_color = "Custom"
+            listItem.text_color = ThemeClsColor
+            # meny._txt_right_pad = dp(70)
             img_latter = state.imageDir + '/text_images/{}.png'.format(
                 subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
-            meny.add_widget(AvatarSampleWidget(source=img_latter))
-            meny.add_widget(AddTimeWidget(item[7]))
-            meny.add_widget(chipTag('inbox 'if 'inbox' in item[4] else 'sent'))
-            carousel = Carousel(direction='right')
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text='Delete')
-            del_btn.background_normal = ''
-            del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(
-                self.delete_permanently, item[5], item[4]))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel)
+            listItem.add_widget(AvatarSampleWidget(source=img_latter))
+            listItem.add_widget(AddTimeWidget(item[7]))
+            listItem.add_widget(chipTag('inbox 'if 'inbox' in item[4] else 'sent'))
+            message_row.ids.delete_msg.bind(on_press=partial(
+                                            self.delete_permanently, item[5], item[4]))
+            self.ids.ml.add_widget(message_row)
         self.has_refreshed = True if total_trash_msg != len(
             self.ids.ml.children) else False
+
+    def on_swipe_complete(self, instance, *args):
+        if instance.state == 'closed':
+            instance.ids.delete_msg.disabled = True
+        else:
+            instance.ids.delete_msg.disabled = False
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll"""

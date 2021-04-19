@@ -19,7 +19,7 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     AvatarSampleWidget, avatarImageFirstLetter, toast,
-    ThemeClsColor, 
+    ThemeClsColor, SwipeToDeleteItem
 )
 from bitmessagekivy.baseclass.popup import AddbookDetailPopup
 
@@ -72,28 +72,20 @@ class AddressBook(Screen):
     def set_mdList(self, start_index, end_index):
         """Creating the mdList"""
         for item in self.queryreturn[start_index:end_index]:
-            meny = TwoLineAvatarIconListItem(
-                text=item[0], secondary_text=item[1], theme_text_color='Custom',
-                text_color=ThemeClsColor)
-            meny.add_widget(AvatarSampleWidget(
-                source=state.imageDir + '/text_images/{}.png'.format(
+            message_row = SwipeToDeleteItem(
+                text = item[0],
+            )
+            listItem = message_row.ids.content
+            listItem.secondary_text = item[1]
+            listItem.theme_text_color = "Custom"
+            listItem.text_color = ThemeClsColor
+            listItem.add_widget(AvatarSampleWidget(
+                        source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item[0].strip()))))
-            meny.bind(on_press=partial(
-                self.addBook_detail, item[1], item[0]))
-            carousel = Carousel(direction='right')
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text='Delete')
-            del_btn.background_normal = ''
-            del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(self.delete_address, item[1]))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel)
+            listItem.bind(on_release=partial(
+                self.addBook_detail, item[1], item[0], message_row))
+            message_row.ids.delete_msg.bind(on_press=partial(self.delete_address, item[1]))
+            self.ids.ml.add_widget(message_row)
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll"""
@@ -117,34 +109,39 @@ class AddressBook(Screen):
         # state.navinstance.ids.sc11.loadAddresslist(None, 'All', '')
 
     # @staticmethod
-    def addBook_detail(self, address, label, *args):
+    def addBook_detail(self, address, label, instance, *args):
         """Addressbook details"""
-        obj = AddbookDetailPopup()
-        self.address_label = obj.address_label = label
-        self.address = obj.address = address
-        width = .9 if platform == 'android' else .8
-        self.addbook_popup = MDDialog(
-            type="custom",
-            size_hint=(width, .25),
-            content_cls=obj,
-            buttons=[
-                MDRaisedButton(
-                    text="Send message to",
-                    on_release=self.send_message_to,
-                ),
-                MDRaisedButton(
-                    text="Save",
-                    on_release=self.update_addbook_label,
-                ),
-                MDRaisedButton(
-                    text="Cancel",
-                    on_release=self.close_pop,
-                ),
-            ],
-        )
-        # self.addbook_popup.set_normal_height()
-        self.addbook_popup.auto_dismiss = False
-        self.addbook_popup.open()
+        if instance.state == 'closed':
+            instance.ids.delete_msg.disabled = True
+            if instance.open_progress == 0.0:
+                obj = AddbookDetailPopup()
+                self.address_label = obj.address_label = label
+                self.address = obj.address = address
+                width = .9 if platform == 'android' else .8
+                self.addbook_popup = MDDialog(
+                    type="custom",
+                    size_hint=(width, .25),
+                    content_cls=obj,
+                    buttons=[
+                        MDRaisedButton(
+                            text="Send message to",
+                            on_release=self.send_message_to,
+                        ),
+                        MDRaisedButton(
+                            text="Save",
+                            on_release=self.update_addbook_label,
+                        ),
+                        MDRaisedButton(
+                            text="Cancel",
+                            on_release=self.close_pop,
+                        ),
+                    ],
+                )
+                # self.addbook_popup.set_normal_height()
+                self.addbook_popup.auto_dismiss = False
+                self.addbook_popup.open()
+        else:
+            instance.ids.delete_msg.disabled = False
 
     def delete_address(self, address, instance, *args):
         """Delete inbox mail from inbox listing"""

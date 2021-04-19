@@ -21,7 +21,8 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
-    AddTimeWidget, AvatarSampleWidget
+    AddTimeWidget, AvatarSampleWidget,
+    SwipeToDeleteItem
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 
@@ -101,30 +102,21 @@ class Draft(Screen):
                             third_text) > 25 else third_text,
                 'ackdata': mail[5], 'senttime': mail[6]})
         for item in data:
-            meny = TwoLineAvatarIconListItem(
-                text='Draft', secondary_text=item['text'],
-                theme_text_color='Custom',
-                text_color=ThemeClsColor)
-            meny._txt_right_pad = dp(70)
-            meny.add_widget(AvatarSampleWidget(
+            message_row = SwipeToDeleteItem(
+                text = 'Draft',
+            )
+            listItem = message_row.ids.content
+            listItem.secondary_text = item["text"]
+            listItem.theme_text_color = "Custom"
+            listItem.text_color = ThemeClsColor
+            # meny._txt_right_pad = dp(70)
+            listItem.add_widget(AvatarSampleWidget(
                 source=state.imageDir + '/avatar.png'))
-            meny.bind(on_press=partial(
-                self.draft_detail, item['ackdata']))
-            meny.add_widget(AddTimeWidget(item['senttime']))
-            carousel = Carousel(direction='right')
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text='Delete')
-            del_btn.background_normal = ''
-            del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(self.delete_draft, item['ackdata']))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel)
+            listItem.bind(on_release=partial(
+                self.draft_detail, item['ackdata'], message_row))
+            listItem.add_widget(AddTimeWidget(item['senttime']))
+            message_row.ids.delete_msg.bind(on_press=partial(self.delete_draft, item['ackdata']))
+            self.ids.ml.add_widget(message_row)
         updated_msg = len(self.ids.ml.children)
         self.has_refreshed = True if total_draft_msg != updated_msg else False
 
@@ -140,17 +132,22 @@ class Draft(Screen):
         self.draftDataQuery('fromaddress', where, what, total_draft_msg, 5)
         self.set_mdList()
 
-    def draft_detail(self, ackdata, *args):
+    def draft_detail(self, ackdata, instance, *args):
         """Show draft Details"""
-        state.detailPageType = 'draft'
-        state.mail_id = ackdata
-        if self.manager:
-            src_mng_obj = self.manager
+        if instance.state == 'closed':
+            instance.ids.delete_msg.disabled = True
+            if instance.open_progress == 0.0:
+                state.detailPageType = 'draft'
+                state.mail_id = ackdata
+                if self.manager:
+                    src_mng_obj = self.manager
+                else:
+                    src_mng_obj = self.parent.parent
+                src_mng_obj.screens[11].clear_widgets()
+                src_mng_obj.screens[11].add_widget(MailDetail())
+                src_mng_obj.current = 'mailDetail'
         else:
-            src_mng_obj = self.parent.parent
-        src_mng_obj.screens[11].clear_widgets()
-        src_mng_obj.screens[11].add_widget(MailDetail())
-        src_mng_obj.current = 'mailDetail'
+            instance.ids.delete_msg.disabled = False
 
     def delete_draft(self, data_index, instance, *args):
         """Delete draft message permanently"""

@@ -19,7 +19,7 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, ThemeClsColor, avatarImageFirstLetter,
-    AddTimeWidget, AvatarSampleWidget, toast
+    AddTimeWidget, AvatarSampleWidget, toast, SwipeToDeleteItem
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 
@@ -96,34 +96,22 @@ class Sent(Screen):
         """This method is used to create the mdList"""
         total_sent_msg = len(self.ids.ml.children)
         for item in data:
-            meny = TwoLineAvatarIconListItem(
-                text=item['text'], secondary_text=item['secondary_text'],
-                theme_text_color='Custom',
-                text_color=ThemeClsColor)
-            meny._txt_right_pad = dp(70)
-            meny.add_widget(AvatarSampleWidget(
+            message_row = SwipeToDeleteItem(
+                text = item["text"],
+            )
+            listItem = message_row.ids.content
+            listItem.secondary_text = item["secondary_text"]
+            listItem.theme_text_color = "Custom"
+            listItem.text_color = ThemeClsColor
+            listItem.add_widget(AvatarSampleWidget(
                 source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item['secondary_text'].strip()))))
-            meny.bind(on_press=partial(self.sent_detail, item['ackdata']))
-            meny.add_widget(AddTimeWidget(item['senttime']))
-            carousel = Carousel(direction='right')
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text='Delete')
-            del_btn.background_normal = ''
-            del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(self.delete, item['ackdata']))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            # ach_btn = Button(text='Achieve')
-            # ach_btn.background_color = (0, 1, 0, 1)
-            # ach_btn.bind(on_press=partial(self.archive, item['ackdata']))
-            # carousel.add_widget(ach_btn)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel, index=set_index)
+
+            listItem.bind(on_release=partial(self.sent_detail, item['ackdata'], message_row))
+            listItem.add_widget(AddTimeWidget(item['senttime']))
+            message_row.ids.delete_msg.bind(on_press=partial(self.delete, item["ackdata"]))
+            self.ids.ml.add_widget(message_row, index=set_index)
+
         updated_msgs = len(self.ids.ml.children)
         self.has_refreshed = True if total_sent_msg != updated_msgs else False
 
@@ -195,17 +183,22 @@ class Sent(Screen):
         else:
             src_mng_obj.ids.badge_txt.text = '0'
 
-    def sent_detail(self, ackdata, *args):
+    def sent_detail(self, ackdata, instance, *args):
         """Load sent mail details"""
-        state.detailPageType = 'sent'
-        state.mail_id = ackdata
-        if self.manager:
-            src_mng_obj = self.manager
+        if instance.state == 'closed':
+            instance.ids.delete_msg.disabled = True
+            if instance.open_progress == 0.0:
+                state.detailPageType = 'sent'
+                state.mail_id = ackdata
+                if self.manager:
+                    src_mng_obj = self.manager
+                else:
+                    src_mng_obj = self.parent.parent
+                src_mng_obj.screens[11].clear_widgets()
+                src_mng_obj.screens[11].add_widget(MailDetail())
+                src_mng_obj.current = 'mailDetail'
         else:
-            src_mng_obj = self.parent.parent
-        src_mng_obj.screens[11].clear_widgets()
-        src_mng_obj.screens[11].add_widget(MailDetail())
-        src_mng_obj.current = 'mailDetail'
+            instance.ids.delete_msg.disabled = False
 
     def delete(self, data_index, instance, *args):
         """Delete sent mail from sent mail listing"""

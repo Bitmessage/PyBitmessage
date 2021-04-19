@@ -18,7 +18,8 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
-    chipTag, avatarImageFirstLetter, AddTimeWidget, AvatarSampleWidget
+    chipTag, avatarImageFirstLetter, AddTimeWidget,
+    AvatarSampleWidget, SwipeToDeleteItem
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 from bitmessagekivy.baseclass.trash import Trash
@@ -94,36 +95,27 @@ class Allmails(Screen):
         for item in self.all_mails:
             body = item[3].decode() if isinstance(item[3], bytes) else item[3]
             subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
-            meny = TwoLineAvatarIconListItem(
-                text=item[1],
-                secondary_text=(subject[:50] + '........' if len(
-                    subject) >= 50 else (
-                        subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', ''),
-                theme_text_color='Custom',
-                text_color=ThemeClsColor)
-            meny._txt_right_pad = dp(70)
-            meny.add_widget(AvatarSampleWidget(
+            message_row = SwipeToDeleteItem(
+                text = item[1],
+            )
+            listItem = message_row.ids.content
+            secondary_text = (subject[:50] + '........' if len(
+                subject) >= 50 else (
+                    subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', '')
+            listItem.secondary_text = secondary_text
+            listItem.theme_text_color = "Custom"
+            listItem.text_color = ThemeClsColor
+
+            listItem.add_widget(AvatarSampleWidget(
                 source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(body.strip()))))
-            meny.bind(on_press=partial(
-                self.mail_detail, item[5], item[4]))
-            meny.add_widget(AddTimeWidget(item[7]))
-            meny.add_widget(chipTag(item[4]))
-            carousel = Carousel(direction='right')
-            carousel.height = meny.height
-            carousel.size_hint_y = None
-            carousel.ignore_perpendicular_swipes = True
-            carousel.data_index = 0
-            carousel.min_move = 0.2
-            del_btn = Button(text='Delete')
-            del_btn.background_normal = ''
-            del_btn.background_color = (1, 0, 0, 1)
-            del_btn.bind(on_press=partial(
+            listItem.bind(on_release=partial(
+                self.mail_detail, item[5], item[4], message_row))
+            listItem.add_widget(AddTimeWidget(item[7]))
+            listItem.add_widget(chipTag(item[4]))
+            message_row.ids.delete_msg.bind(on_press=partial(
                 self.swipe_delete, item[5], item[4]))
-            carousel.add_widget(del_btn)
-            carousel.add_widget(meny)
-            carousel.index = 1
-            self.ids.ml.add_widget(carousel)
+            self.ids.ml.add_widget(message_row)
         updated_data = len(self.ids.ml.children)
         self.has_refreshed = True if data_exist != updated_data else False
 
@@ -140,18 +132,23 @@ class Allmails(Screen):
         self.allMessageQuery(load_more, 5)
         self.set_mdlist()
 
-    def mail_detail(self, unique_id, folder, *args):
+    def mail_detail(self, unique_id, folder, instance, *args):
         """Load sent and inbox mail details"""
-        state.detailPageType = folder
-        state.is_allmail = True
-        state.mail_id = unique_id
-        if self.manager:
-            src_mng_obj = self.manager
+        if instance.state == 'closed':
+            instance.ids.delete_msg.disabled = True
+            if instance.open_progress == 0.0:
+                state.detailPageType = folder
+                state.is_allmail = True
+                state.mail_id = unique_id
+                if self.manager:
+                    src_mng_obj = self.manager
+                else:
+                    src_mng_obj = self.parent.parent
+                src_mng_obj.screens[11].clear_widgets()
+                src_mng_obj.screens[11].add_widget(MailDetail())
+                src_mng_obj.current = 'mailDetail'
         else:
-            src_mng_obj = self.parent.parent
-        src_mng_obj.screens[11].clear_widgets()
-        src_mng_obj.screens[11].add_widget(MailDetail())
-        src_mng_obj.current = 'mailDetail'
+            instance.ids.delete_msg.disabled = False
 
     def swipe_delete(self, unique_id, folder, instance, *args):
         """Delete inbox mail from all mail listing"""
