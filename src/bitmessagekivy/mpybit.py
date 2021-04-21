@@ -812,6 +812,12 @@ class NavigateApp(MDApp):
                 self.root.ids.sc17.children[1].active = True
             except Exception:
                 self.root.ids.sc17.children[0].children[1].active = True
+        elif instance.text == 'Trash':
+            self.root.ids.scr_mngr.current = 'trash'
+            try:
+                self.root.ids.sc5.children[1].active = True
+            except Exception as e:
+                self.root.ids.sc5.children[0].children[1].active = False
         Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
 
     def load_screen_callback(self, instance, dt=0):
@@ -821,18 +827,21 @@ class NavigateApp(MDApp):
             self.root.ids.sc1.loadMessagelist(state.association)
             self.root.ids.sc1.children[1].active = False
         elif instance.text == 'All Mails':
-            # if len(self.root.ids.sc17.ids.ml.children) <= 2:
-            #     self.root.ids.sc17.clear_widgets()
-            #     self.root.ids.sc17.add_widget(Allmails())
-            # else:
-            #     self.root.ids.sc17.ids.ml.clear_widgets()
-            #     self.root.ids.sc17.loadMessagelist()
             self.root.ids.sc17.clear_widgets()
             self.root.ids.sc17.add_widget(Allmails())
             try:
                 self.root.ids.sc17.children[1].active = False
             except Exception:
                 self.root.ids.sc17.children[0].children[1].active = False
+        elif instance.text == 'Trash':
+            # self.root.ids.sc5.ids.ml.clear_widgets()
+            self.root.ids.sc5.init_ui(0)
+            # self.root.ids.sc5.clear_widgets()
+            # self.root.ids.sc5.add_widget(Trash())
+            try:
+                self.root.ids.sc5.children[1].active = False
+            except Exception as e:
+                self.root.ids.sc5.children[0].children[1].active = False
 
     def on_request_close(self, *args):  # pylint: disable=no-self-use
         """This method is for app closing request"""

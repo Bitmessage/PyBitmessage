@@ -160,7 +160,8 @@
                     icon: 'delete'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'trash'
-                    on_release: root.parent.set_state()
+                    on_press: root.parent.set_state()
+                    on_press: app.load_screen(self)
                 NavigationItem:
                     id: allmail_cnt
                     text: app.tr._('All Mails')

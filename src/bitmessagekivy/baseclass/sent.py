@@ -217,7 +217,6 @@ class Sent(Screen):
             " WHERE ackdata = ?;", data_index)
         self.ids.ml.remove_widget(instance.parent.parent)
         toast('Deleted')
-        self.update_trash()
 
     def archive(self, data_index, instance, *args):
         """Archive sent mail from sent mail listing"""
@@ -232,10 +231,10 @@ class Sent(Screen):
         try:
             self.parent.screens[3].clear_widgets()
             self.parent.screens[3].add_widget(Factory.Trash())
-            self.parent.screens[14].clear_widgets()
-            self.parent.screens[14].add_widget(Factory.Allmails())
+            # self.parent.screens[14].clear_widgets()
+            # self.parent.screens[14].add_widget(Factory.Allmails())
         except Exception:
             self.parent.parent.screens[3].clear_widgets()
             self.parent.parent.screens[3].add_widget(Factory.Trash())
-            self.parent.parent.screens[14].clear_widgets()
-            self.parent.parent.screens[14].add_widget(Factory.Allmails())
+            # self.parent.parent.screens[14].clear_widgets()
+            # self.parent.parent.screens[14].add_widget(Factory.Allmails())

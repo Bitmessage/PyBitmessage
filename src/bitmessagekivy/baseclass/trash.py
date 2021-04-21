@@ -44,18 +44,23 @@ class Trash(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method trash screen"""
+        print('clearing data....................................', len(self.ids.ml.children))
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
         self.ids.tag_label.text = ''
         self.trashDataQuery(0, 20)
-        if self.trash_messages:
+        print('count messages.....................', len(self.trash_messages))
+        if len(self.trash_messages) and len(self.trash_messages) != len(self.ids.ml.children):
+            self.ids.ml.clear_widgets()
             self.ids.tag_label.text = 'Trash'
             # src_mng_obj = state.kivyapp.root.children[2].children[0].ids
             # src_mng_obj.trash_cnt.badge_text = state.trash_count
             self.set_TrashCnt(state.trash_count)
             self.set_mdList()
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
+        elif len(self.trash_messages):
+            self.ids.tag_label.text = 'Trash'
         else:
             self.set_TrashCnt('0')
             content = MDLabel(

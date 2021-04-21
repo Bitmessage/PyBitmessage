@@ -184,8 +184,8 @@ class Allmails(Screen):
         state.trash_count = str(int(state.trash_count) + 1)
         if int(state.all_count) <= 0:
             self.ids.tag_label.text = ''
-        nav_lay_obj.sc5.clear_widgets()
-        nav_lay_obj.sc5.add_widget(Trash())
+        # nav_lay_obj.sc5.clear_widgets()
+        # nav_lay_obj.sc5.add_widget(Trash())
         nav_lay_obj.sc17.remove_widget(instance.parent.parent)
         toast('Deleted')
 

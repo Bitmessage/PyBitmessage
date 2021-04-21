@@ -217,7 +217,7 @@ class Inbox(Screen):
         self.ids.ml.remove_widget(
             instance.parent.parent)
         toast('Deleted')
-        self.update_trash()
+        # self.update_trash()
 
     def archive(self, data_index, instance, *args):
         """Archive inbox mail from inbox listing"""
