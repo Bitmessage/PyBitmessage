@@ -18,8 +18,8 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
-    chipTag, avatarImageFirstLetter, AddTimeWidget,
-    AvatarSampleWidget, SwipeToDeleteItem
+    avatarImageFirstLetter,CutsomSwipeToDeleteItem,
+    ShowTimeHistoy
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 from bitmessagekivy.baseclass.trash import Trash
@@ -95,9 +95,10 @@ class Allmails(Screen):
         for item in self.all_mails:
             body = item[3].decode() if isinstance(item[3], bytes) else item[3]
             subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
-            message_row = SwipeToDeleteItem(
+            message_row = CutsomSwipeToDeleteItem(
                 text = item[1],
             )
+
             listItem = message_row.ids.content
             secondary_text = (subject[:50] + '........' if len(
                 subject) >= 50 else (
@@ -105,16 +106,34 @@ class Allmails(Screen):
             listItem.secondary_text = secondary_text
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
-
-            listItem.add_widget(AvatarSampleWidget(
-                source=state.imageDir + '/text_images/{}.png'.format(
-                    avatarImageFirstLetter(body.strip()))))
+            img_latter = state.imageDir + '/text_images/{}.png'.format(
+                avatarImageFirstLetter(body.strip()))
+            message_row.ids.avater_img.source = img_latter
             listItem.bind(on_release=partial(
                 self.mail_detail, item[5], item[4], message_row))
-            listItem.add_widget(AddTimeWidget(item[7]))
-            listItem.add_widget(chipTag(item[4]))
+            message_row.ids.time_tag.text = str(ShowTimeHistoy(item[7]))
+            message_row.ids.chip_tag.text = item[4]
+
+
+            # listItem = message_row.ids.content
+            # secondary_text = (subject[:50] + '........' if len(
+            #     subject) >= 50 else (
+            #         subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', '')
+            # listItem.secondary_text = secondary_text
+            # listItem.theme_text_color = "Custom"
+            # listItem.text_color = ThemeClsColor
+
+            # listItem.add_widget(AvatarSampleWidget(
+            #     source=state.imageDir + '/text_images/{}.png'.format(
+            #         avatarImageFirstLetter(body.strip()))))
+            # listItem.bind(on_release=partial(
+            #     self.mail_detail, item[5], item[4], message_row))
+            # listItem.add_widget(AddTimeWidget(item[7]))
+            # listItem.add_widget(chipTag(item[4]))
             message_row.ids.delete_msg.bind(on_press=partial(
                 self.swipe_delete, item[5], item[4]))
+
+
             self.ids.ml.add_widget(message_row)
         updated_data = len(self.ids.ml.children)
         self.has_refreshed = True if data_exist != updated_data else False

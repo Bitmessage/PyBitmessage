@@ -20,8 +20,8 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, avatarImageFirstLetter,
-    AddTimeWidget, ThemeClsColor, AvatarSampleWidget,
-    toast, SwipeToDeleteItem
+    ThemeClsColor, toast, SwipeToDeleteItem,
+    ShowTimeHistoy
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 from bitmessagekivy.baseclass.trash import Trash
@@ -131,15 +131,11 @@ class Inbox(Screen):
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             listItem._txt_right_pad = dp(70)
-            listItem.add_widget(
-                AvatarSampleWidget(
-                    source=state.imageDir + "/text_images/{}.png".format(
-                        avatarImageFirstLetter(item["secondary_text"].strip())
-                    )
-                )
-            )
+            image = state.imageDir + "/text_images/{}.png".format(
+                        avatarImageFirstLetter(item["secondary_text"].strip()))
+            message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(self.inbox_detail, item["msgid"], message_row))
-            listItem.add_widget(AddTimeWidget(item["received"]))
+            message_row.ids.time_tag.text = str(ShowTimeHistoy(item["received"]))
             message_row.ids.delete_msg.bind(on_press=partial(self.delete, item["msgid"]))
             self.ids.ml.add_widget(message_row)
         update_message = len(self.ids.ml.children)

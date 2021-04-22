@@ -19,7 +19,8 @@ import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, ThemeClsColor, avatarImageFirstLetter,
-    AddTimeWidget, AvatarSampleWidget, toast, SwipeToDeleteItem
+    AddTimeWidget, AvatarSampleWidget, toast, SwipeToDeleteItem,
+    ShowTimeHistoy
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 
@@ -103,12 +104,11 @@ class Sent(Screen):
             listItem.secondary_text = item["secondary_text"]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
-            listItem.add_widget(AvatarSampleWidget(
-                source=state.imageDir + '/text_images/{}.png'.format(
-                    avatarImageFirstLetter(item['secondary_text'].strip()))))
-
+            image = state.imageDir + '/text_images/{}.png'.format(
+                        avatarImageFirstLetter(item['secondary_text'].strip()))
+            message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(self.sent_detail, item['ackdata'], message_row))
-            listItem.add_widget(AddTimeWidget(item['senttime']))
+            message_row.ids.time_tag.text = str(ShowTimeHistoy(item['senttime']))
             message_row.ids.delete_msg.bind(on_press=partial(self.delete, item["ackdata"]))
             self.ids.ml.add_widget(message_row, index=set_index)
 

@@ -19,13 +19,9 @@ from kivy.uix.screenmanager import Screen
 import state
 
 from bitmessagekivy.baseclass.common import (
-    showLimitedCnt, avatarImageFirstLetter,
-    AddTimeWidget, ThemeClsColor, AvatarSampleWidget
-)
-
-from bitmessagekivy.baseclass.common import (
-    toast, showLimitedCnt, ThemeClsColor, chipTag,
-    AddTimeWidget, AvatarSampleWidget, SwipeToDeleteItem
+    toast, showLimitedCnt, ThemeClsColor,
+    CutsomSwipeToDeleteItem, ShowTimeHistoy,
+    avatarImageFirstLetter
 )
 
 
@@ -44,14 +40,12 @@ class Trash(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method trash screen"""
-        print('clearing data....................................', len(self.ids.ml.children))
         if state.association == '':
             if BMConfigParser().addresses():
                 state.association = BMConfigParser().addresses()[0]
         self.ids.tag_label.text = ''
         self.trashDataQuery(0, 20)
-        print('count messages.....................', len(self.trash_messages))
-        if len(self.trash_messages) and len(self.trash_messages) != len(self.ids.ml.children):
+        if len(self.trash_messages):
             self.ids.ml.clear_widgets()
             self.ids.tag_label.text = 'Trash'
             # src_mng_obj = state.kivyapp.root.children[2].children[0].ids
@@ -59,8 +53,6 @@ class Trash(Screen):
             self.set_TrashCnt(state.trash_count)
             self.set_mdList()
             self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
-        elif len(self.trash_messages):
-            self.ids.tag_label.text = 'Trash'
         else:
             self.set_TrashCnt('0')
             content = MDLabel(
@@ -97,7 +89,7 @@ class Trash(Screen):
         for item in self.trash_messages:
             subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
             body = item[3].decode() if isinstance(item[3], bytes) else item[3]
-            message_row = SwipeToDeleteItem(
+            message_row = CutsomSwipeToDeleteItem(
                 text = item[1],
             )
             message_row.bind(on_swipe_complete=partial(self.on_swipe_complete, message_row))
@@ -106,12 +98,11 @@ class Trash(Screen):
                 subject) >= 50 else (subject + ',' + body)[0:50] + '........').replace('\t', '').replace('  ', '')
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
-            # meny._txt_right_pad = dp(70)
             img_latter = state.imageDir + '/text_images/{}.png'.format(
-                subject[0].upper() if (subject[0].upper() >= 'A' and subject[0].upper() <= 'Z') else '!')
-            listItem.add_widget(AvatarSampleWidget(source=img_latter))
-            listItem.add_widget(AddTimeWidget(item[7]))
-            listItem.add_widget(chipTag('inbox 'if 'inbox' in item[4] else 'sent'))
+                avatarImageFirstLetter(subject[0].strip()))
+            message_row.ids.avater_img.source = img_latter
+            message_row.ids.time_tag.text = str(ShowTimeHistoy(item[7]))
+            message_row.ids.chip_tag.text = 'inbox 'if 'inbox' in item[4] else 'sent'
             message_row.ids.delete_msg.bind(on_press=partial(
                                             self.delete_permanently, item[5], item[4]))
             self.ids.ml.add_widget(message_row)

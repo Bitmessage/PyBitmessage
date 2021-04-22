@@ -364,3 +364,59 @@ MDNavigationLayout:
             id: content
             text: root.text
             _no_ripple_effect: True
+
+            AvatarSampleWidget:
+                id: avater_img
+                # source: './images/kivy/avatar.png'
+                source: None
+
+            TimeTagRightSampleWidget:
+                id: time_tag
+                text: ''
+                font_size: "11sp"
+                font_style: "Caption"
+                size: [120, 140] if app.app_platform == "android" else [64, 80]
+
+
+<CutsomSwipeToDeleteItem>:
+    size_hint_y: None
+    height: content.height
+
+    MDCardSwipeLayerBox:
+        padding: "8dp"
+
+        MDIconButton:
+            id: delete_msg
+            icon: "trash-can"
+            pos_hint: {"center_y": .5}
+            md_bg_color: (1, 0, 0, 1)
+            disabled: True
+
+    MDCardSwipeFrontBox:
+
+        TwoLineAvatarIconListItem:
+            id: content
+            text: root.text
+            _no_ripple_effect: True
+
+            AvatarSampleWidget:
+                id: avater_img
+                # source: './images/kivy/avatar.png'
+                source: None
+
+            TimeTagRightSampleWidget:
+                id: time_tag
+                text: 'time'
+                font_size: "11sp"
+                font_style: "Caption"
+                size: [120, 140] if app.app_platform == "android" else [64, 80]
+            MDChip:
+                id: chip_tag
+                size_hint: (0.16 if app.app_platform == "android" else 0.08, None)
+                text: 'test'
+                icon: ""
+                pos_hint: {"center_x": 0.91 if app.app_platform == "android" else 0.94, "center_y": 0.3}
+                # height: dp(18)
+                height: '18dp'
+                text_color: (1,1,1,1)
+                radius: [8]

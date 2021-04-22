@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivymd.uix.list import (
@@ -135,7 +136,14 @@ class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
 
 class SwipeToDeleteItem(MDCardSwipe):
     text = StringProperty()
-    # cla = Window.size[0]/2
-    cla = 800
+    cla = Window.size[0]/2
+    # cla = 800
+    swipe_distance = NumericProperty(cla)
+    opening_time = NumericProperty(0.5)
+
+
+class CutsomSwipeToDeleteItem(MDCardSwipe):
+    text = StringProperty()
+    cla = Window.size[0]/2
     swipe_distance = NumericProperty(cla)
     opening_time = NumericProperty(0.5)
