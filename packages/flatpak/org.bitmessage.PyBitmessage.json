@@ -1,0 +1,48 @@
+{
+    "app-id": "org.bitmessage.PyBitmessage",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "19.08",
+    "branch": "stable",
+    "sdk": "org.freedesktop.Sdk",
+    "base": "org.bitmessage.BaseApp",
+    "command": "pybitmessage",
+    "base-version":"stable",
+    "finish-args" : [
+      "--share=network",
+      "--socket=x11",
+      "--share=ipc",
+      "--filesystem=xdg-config/PyBitmessage:create"
+    ],
+    "modules": [
+      {
+        "name" : "PyBitmessage",
+        "buildsystem" : "simple",
+        "build-options": {
+          "build-args": [
+            "--share=network"
+          ]
+        },
+        "build-commands": [
+          "python --version",
+          "pwd",
+          "ls",
+          "python checkdeps.py",
+          "python setup.py install --prefix=/app --exec-prefix=/app",
+          "sed -i 's~/usr/bin/~/app/bin/~' /app/bin/pybitmessage",
+          "cat /app/bin/pybitmessage",
+          "mv /app/share/applications/pybitmessage.desktop /app/share/applications/org.bitmessage.PyBitmessage.desktop",
+          "sed -i 's~Icon=pybitmessage~Icon=org.bitmessage.PyBitmessage~' /app/share/applications/org.bitmessage.PyBitmessage.desktop",
+          "mv /app/share/icons/hicolor/scalable/apps/pybitmessage.svg /app/share/icons/hicolor/scalable/apps/org.bitmessage.PyBitmessage.svg",
+          "mv /app/share/icons/hicolor/24x24/apps/pybitmessage.png /app/share/icons/hicolor/24x24/apps/org.bitmessage.PyBitmessage.png",
+          "which pybitmessage"
+        ],
+        "sources" : [
+          {
+            "type" : "dir",
+            "path" : "../../"
+          }
+        ]
+      }
+    ]
+  }
+  
