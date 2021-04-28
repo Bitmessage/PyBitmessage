@@ -23,13 +23,6 @@
           ]
         },
         "build-commands": [
-          "python --version",
-          "pwd",
-          "ls",
-          "python checkdeps.py",
-          "python setup.py install --prefix=/app --exec-prefix=/app",
-          "sed -i 's~/usr/bin/~/app/bin/~' /app/bin/pybitmessage",
-          "cat /app/bin/pybitmessage",
           "mv /app/share/applications/pybitmessage.desktop /app/share/applications/org.bitmessage.PyBitmessage.desktop",
           "sed -i 's~Icon=pybitmessage~Icon=org.bitmessage.PyBitmessage~' /app/share/applications/org.bitmessage.PyBitmessage.desktop",
           "mv /app/share/icons/hicolor/scalable/apps/pybitmessage.svg /app/share/icons/hicolor/scalable/apps/org.bitmessage.PyBitmessage.svg",
