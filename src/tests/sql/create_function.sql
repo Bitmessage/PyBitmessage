@@ -1,4 +1,4 @@
-CREATE TABLE `testhash` (
+    CREATE TABLE `testhash` (
     `addressversion` int DEFAULT NULL,
     `hash` blob DEFAULT NULL,
     `address` text DEFAULT NULL,
