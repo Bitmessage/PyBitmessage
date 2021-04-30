@@ -1,19 +1,17 @@
 """Most of the queues used by bitmessage threads are defined here."""
 
-import sys
-if sys.version_info[0] == 3:
-    import queue as Queue
-else:
-    import Queue
-
 import threading
 import time
+try:
+    import queue as Queue
+except ImportError:
+    import Queue
 
-import sys
-if sys.version_info[0] == 3:
-    from .multiqueue import MultiQueue
-else:
+try:
     from multiqueue import MultiQueue
+except ImportError:
+    from .multiqueue import MultiQueue
+
 
 class ObjectProcessorQueue(Queue.Queue):
     """Special queue class using lock for `.threads.objectProcessor`"""
