@@ -50,8 +50,8 @@ Place the `_flatpak_repo/` repo directory in the same directory as the dockerfil
 Build and run the docker image
 
 ```
-docker build -t repo-server:latest .
-docker run -d -p 5000:5000 repo-server
+sudo docker build -t repo-server:latest .
+sudo docker run -d -p 5000:5000 repo-server
 ```
 
 ## Installing PyBitmessage from repo-server
