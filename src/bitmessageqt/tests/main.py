@@ -2,6 +2,7 @@
 
 import Queue
 import sys
+import os
 import unittest
 
 from PyQt4 import QtCore, QtGui
@@ -22,6 +23,22 @@ class TestBase(unittest.TestCase):
         if not self.window:
             self.window = bitmessageqt.MyForm()
             self.window.appIndicatorInit(self.app)
+
+    def take_screenshot(self, window=None):
+        """Take a screenshot of the *window* or main window if not set"""
+        def save_screenshot():
+            """Save screenshot and quit app clause"""
+            screenshot = QtGui.QPixmap.grabWindow(
+                self.app.desktop().winId())
+            screenshot.save(os.path.join(
+                bitmessageqt.state.appdata, '%s.png' % self.id()))
+            self.app.quit()
+
+        timer = QtCore.QTimer()
+        timer.timeout.connect(save_screenshot)
+        timer.start(200)
+        (window or self.window).show()
+        self.app.exec_()
 
     def tearDown(self):
         # self.app.deleteLater()
@@ -55,6 +72,4 @@ class TestUISignaler(TestBase):
                 _translate("test", "Testing updateStatusBar..."), 1)
         ))
 
-        QtCore.QTimer.singleShot(60, self.app.quit)
-        self.app.exec_()
-        # self.app.processEvents(QtCore.QEventLoop.AllEvents, 60)
+        self.take_screenshot()

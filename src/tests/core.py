@@ -3,6 +3,7 @@ Tests for core and those that do not work outside
 (because of import error for example)
 """
 
+import atexit
 import os
 import pickle  # nosec
 import Queue
@@ -398,8 +399,9 @@ def run():
     suite = loader.loadTestsFromTestCase(TestCore)
     try:
         import bitmessageqt.tests
+        from xvfbwrapper import Xvfb
     except ImportError:
-        pass
+        Xvfb = None
     else:
         qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
         suite.addTests(qt_tests)
@@ -410,4 +412,8 @@ def run():
 
     sys.excepthook = keep_exc
 
+    if Xvfb:
+        vdisplay = Xvfb(width=1024, height=768)
+        vdisplay.start()
+        atexit.register(vdisplay.stop)
     return unittest.TextTestRunner(verbosity=2).run(suite)
