@@ -12,6 +12,21 @@ addons:
       - python-qt4
       - tor
       - xvfb
+jobs:
+  include:
+    - dist: bionic
+    - dist: bionic
+      if: type = pull_request
+      python: "2.7_with_system_site_packages"
+      install:
+        - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python debhelper libssl-dev wine-stable winetricks wine32 wine64 mingw-w64 xvfb
+        - python setup.py sdist
+        - export VERSION=$(python setup.py --version)
+        - python setup.py --command-packages=stdeb.command bdist_deb
+        - export WINDIST=$HOME/build/$TRAVIS_REPO_SLUG/packages/pyinstaller/dist/
+        - xvfb-run i386 buildscripts/winbuild.sh
+      script:
+        - wine $WINDIST/Bitmessage_x86_$VERSION.exe -t
 install:
   - pip install -r requirements.txt
   - python setup.py install
