@@ -1,0 +1,8 @@
+#!/bin/sh
+
+SELF_DIR="$(dirname "$(readlink -f "$0")")"
+LD_LIBRARY_PATH="/opt/openssl-compat-bitcoin/lib/" >> ~/.bashrc && source ~/.bashrc
+
+export LD_LIBRARY_PATH
+
+exec "$SELF_DIR/src/bitmessagemain.py"
