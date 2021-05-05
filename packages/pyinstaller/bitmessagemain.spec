@@ -34,7 +34,7 @@ a = Analysis(
     ],
     hookspath=None,
     runtime_hooks=None,
-    excludes=['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter']
+    excludes=['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter', 'tests']
 )
 
 os.rename(
