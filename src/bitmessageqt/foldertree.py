@@ -121,14 +121,12 @@ class AccountMixin(object):
 
     def defaultLabel(self):
         """Default label (in case no label is set manually)"""
-        queryreturn = None
-        retval = None
+        queryreturn = retval = None
         if self.type in (
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                retval = unicode(
-                    BMConfigParser().get(self.address, 'label'), 'utf-8')
+                retval = BMConfigParser().get(self.address, 'label')
             except Exception:
                 queryreturn = sqlQuery(
                     'SELECT label FROM addressbook WHERE address=?',
@@ -139,15 +137,12 @@ class AccountMixin(object):
                 'SELECT label FROM subscriptions WHERE address=?',
                 self.address
             )
-        if queryreturn is not None:
-            if queryreturn != []:
-                for row in queryreturn:
-                    retval, = row
-                    retval = unicode(retval, 'utf-8')
+        if queryreturn:
+            retval = queryreturn[-1][0]
         elif self.address is None or self.type == AccountMixin.ALL:
             return _translate("MainWindow", "All accounts")
 
-        return retval or unicode(self.address, 'utf-8')
+        return (retval or self.address).decode('utf-8')
 
 
 class BMTreeWidgetItem(QtWidgets.QTreeWidgetItem, AccountMixin):
@@ -241,13 +236,12 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
     def _getLabel(self):
         if self.address is None:
             return _translate("MainWindow", "All accounts")
-        else:
-            try:
-                return unicode(
-                    BMConfigParser().get(self.address, 'label'),
-                    'utf-8', 'ignore')
-            except:
-                return unicode(self.address, 'utf-8')
+
+        try:
+            return BMConfigParser().get(
+                self.address, 'label').decode('utf-8', 'ignore')
+        except:
+            return self.address.decode('utf-8')
 
     def _getAddressBracket(self, unreadCount=False):
         ret = "" if self.isExpanded() \
@@ -318,11 +312,9 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         queryreturn = sqlQuery(
             'SELECT label FROM subscriptions WHERE address=?',
             self.address)
-        if queryreturn != []:
-            for row in queryreturn:
-                retval, = row
-            return unicode(retval, 'utf-8', 'ignore')
-        return unicode(self.address, 'utf-8')
+        if queryreturn:
+            return queryreturn[-1][0].decode('utf-8', 'ignore')
+        return self.address.decode('utf-8')
 
     def setType(self):
         """Set account type"""
@@ -412,9 +404,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                newLabel = unicode(
-                    BMConfigParser().get(self.address, 'label'),
-                    'utf-8', 'ignore')
+                newLabel = BMConfigParser().get(self.address, 'label')
             except:
                 queryreturn = sqlQuery(
                     'SELECT label FROM addressbook WHERE address=?',
@@ -424,10 +414,9 @@ class MessageList_AddressWidget(BMAddressWidget):
                 'SELECT label FROM subscriptions WHERE address=?',
                 self.address)
         if queryreturn:
-            for row in queryreturn:
-                newLabel = unicode(row[0], 'utf-8', 'ignore')
+            newLabel = queryreturn[-1][0]
 
-        self.label = newLabel
+        self.label = newLabel.decode('utf-8', 'ignore')
 
     def data(self, role):
         """Return object data (QT UI)"""
@@ -536,8 +525,6 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                 sqlExecute(
                     'UPDATE subscriptions SET label=? WHERE address=?',
                     self.label, self.address)
-            else:
-                pass
         return super(Ui_AddressBookWidgetItem, self).setData(role, value)
 
     def __lt__(self, other):
