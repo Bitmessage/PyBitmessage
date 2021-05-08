@@ -525,9 +525,10 @@ class MyForm(settingsmixin.SMainWindow):
 
         # get number of (unread) messages
         total = 0
-        queryreturn = sqlQuery('SELECT toaddress, folder, count(msgid) as cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
-        for row in queryreturn:
-            toaddress, folder, cnt = row
+        queryreturn = sqlQuery(
+            'SELECT toaddress, folder, count(msgid) as cnt'
+            ' FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
+        for toaddress, folder, cnt in queryreturn:
             total += cnt
             if toaddress in db and folder in db[toaddress]:
                 db[toaddress][folder] = cnt
@@ -1236,7 +1237,7 @@ class MyForm(settingsmixin.SMainWindow):
         for row in queryreturn:
             toAddress, fromAddress, subject, _, msgid, received, read = row
             self.addMessageListItemInbox(
-                tableWidget, toAddress, fromAddress, unicode(subject, 'utf-8'),
+                tableWidget, toAddress, fromAddress, subject.decode('utf-8'),
                 msgid, received, read)
 
         tableWidget.horizontalHeader().setSortIndicator(
@@ -1446,8 +1447,7 @@ class MyForm(settingsmixin.SMainWindow):
     def notifierShow(
             self, title, subtitle, category, label=None, icon=None):
         self.playSound(category, label)
-        self._notifier(
-            unicode(title), unicode(subtitle), category, label, icon)
+        self._notifier(title, subtitle, category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -1949,16 +1949,18 @@ class MyForm(settingsmixin.SMainWindow):
             oldRows[item.address] = [item.label, item.type, i]
 
         if self.ui.tableWidgetAddressBook.rowCount() == 0:
-            self.ui.tableWidgetAddressBook.horizontalHeader().setSortIndicator(0, QtCore.Qt.AscendingOrder)
+            self.ui.tableWidgetAddressBook.horizontalHeader(
+            ).setSortIndicator(0, QtCore.Qt.AscendingOrder)
         if self.ui.tableWidgetAddressBook.isSortingEnabled():
             self.ui.tableWidgetAddressBook.setSortingEnabled(False)
 
         newRows = {}
         # subscriptions
-        queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
-        for row in queryreturn:
-            label, address = row
-            newRows[address] = [unicode(label, 'utf-8'), AccountMixin.SUBSCRIPTION]
+        queryreturn = sqlQuery(
+            'SELECT label, address FROM subscriptions WHERE enabled = 1')
+        for label, address in queryreturn:
+            newRows[address] = [
+                label.decode('utf-8'), AccountMixin.SUBSCRIPTION]
         # chans
         addresses = getSortedAccounts()
         for address in addresses:
@@ -1969,10 +1971,9 @@ class MyForm(settingsmixin.SMainWindow):
             ):
                 newRows[address] = [account.getLabel(), AccountMixin.CHAN]
         # normal accounts
-        queryreturn = sqlQuery('SELECT * FROM addressbook')
-        for row in queryreturn:
-            label, address = row
-            newRows[address] = [unicode(label, 'utf-8'), AccountMixin.NORMAL]
+        queryreturn = sqlQuery('SELECT label, address FROM addressbook')
+        for label, address in queryreturn:
+            newRows[address] = [label.decode('utf-8'), AccountMixin.NORMAL]
 
         completerList = []
         for address in sorted(
@@ -2117,14 +2118,13 @@ class MyForm(settingsmixin.SMainWindow):
                             ).format(email))
                             return
                     status, addressVersionNumber, streamNumber = \
-                      decodeAddress(toAddress)[:3]
+                        decodeAddress(toAddress)[:3]
                     if status != 'success':
                         try:
-                            toAddress_value = unicode(
-                                toAddress, 'utf-8', 'ignore')
-                        except:
+                            toAddress_value = toAddress.decode('utf-8')
+                        except UnicodeDecodeError:
                             logger.warning(
-                                "Failed unicode(toAddress ):", exc_info=True)
+                                "Failed decoding toAddress ):", exc_info=True)
                         logger.error(
                             'Error: Could not decode recipient address %s: %s',
                             toAddress_value, status)
@@ -2331,13 +2331,15 @@ class MyForm(settingsmixin.SMainWindow):
         for addressInKeysFile in getSortedAccounts():
             isEnabled = BMConfigParser().getboolean(
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-            isMaillinglist = BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist')
+            isMaillinglist = BMConfigParser().safeGetBoolean(
+                addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
-                label = unicode(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
-                if label == "":
-                    label = addressInKeysFile
-                self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
-#        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
+                label = (
+                    BMConfigParser().get(addressInKeysFile, 'label').decode(
+                        'utf-8', 'ignore').strip() or addressInKeysFile)
+                self.ui.comboBoxSendFrom.addItem(
+                    avatarize(addressInKeysFile), label, addressInKeysFile)
+        # self.ui.comboBoxSendFrom.model().sort(1, QtCore.Qt.AscendingOrder)
         for i in range(self.ui.comboBoxSendFrom.count()):
             address = self.ui.comboBoxSendFrom.itemData(
                 i, QtCore.Qt.UserRole)
@@ -2345,7 +2347,7 @@ class MyForm(settingsmixin.SMainWindow):
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ForegroundRole)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
-        if(self.ui.comboBoxSendFrom.count() == 2):
+        if self.ui.comboBoxSendFrom.count() == 2:
             self.ui.comboBoxSendFrom.setCurrentIndex(1)
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
@@ -2357,10 +2359,11 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
             isChan = BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                label = unicode(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
-                if label == "":
-                    label = addressInKeysFile
-                self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
+                label = (
+                    BMConfigParser().get(addressInKeysFile, 'label').decode(
+                        'utf-8', 'ignore').strip() or addressInKeysFile)
+                self.ui.comboBoxSendFromBroadcast.addItem(
+                    avatarize(addressInKeysFile), label, addressInKeysFile)
         for i in range(self.ui.comboBoxSendFromBroadcast.count()):
             address = self.ui.comboBoxSendFromBroadcast.itemData(
                 i, QtCore.Qt.UserRole)
@@ -2880,33 +2883,32 @@ class MyForm(settingsmixin.SMainWindow):
         if not msgid:
             return
         queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
-        if queryreturn != []:
-            for row in queryreturn:
-                messageText, = row
+            'SELECT message FROM inbox WHERE msgid=?', msgid)
+        try:
+            lines = queryreturn[-1][0].split('\n')
+        except IndexError:
+            lines = ''
 
-        lines = messageText.split('\n')
         totalLines = len(lines)
-        for i in xrange(totalLines):
+        for i in range(totalLines):
             if 'Message ostensibly from ' in lines[i]:
                 lines[i] = (
                     '<p style="font-size: 12px; color: grey;">%s</span></p>' %
                     lines[i]
                 )
             elif (
-                lines[i] ==
-                '------------------------------------------------------'
+                lines[i]
+                == '------------------------------------------------------'
             ):
                 lines[i] = '<hr>'
             elif (
-                lines[i] == '' and (i + 1) < totalLines and
-                lines[i + 1] !=
-                '------------------------------------------------------'
+                lines[i] == '' and (i + 1) < totalLines and lines[i + 1]
+                != '------------------------------------------------------'
             ):
                 lines[i] = '<br><br>'
         content = ' '.join(lines)  # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
-        content = unicode(content, 'utf-8')
+        content = content.decode('utf-8')
         textEdit.setHtml(content)
 
     def on_action_InboxMarkUnread(self):
@@ -3090,7 +3092,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
 
         quotedText = self.quoted_text(
-            unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
+            messageAtCurrentInboxRow.decode('utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ('Re:', 'RE:'):
             widget['subject'].setText(
@@ -3717,7 +3719,6 @@ class MyForm(settingsmixin.SMainWindow):
             text = tableWidget.item(currentRow, currentColumn).label
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
-        # text = unicode(str(text), 'utf-8', 'ignore')
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(text)
 
@@ -3833,10 +3834,10 @@ class MyForm(settingsmixin.SMainWindow):
         self.setAddressSound(widget.item(widget.currentRow(), 0).text())
 
     def setAddressSound(self, addr):
-        filters = [unicode(_translate(
+        filters = [_translate(
             "MainWindow", "Sound files (%s)" %
             ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
-        ))]
+        )]
         sourcefile = QtWidgets.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set notification sound..."),
             filter=';;'.join(filters)
@@ -3846,7 +3847,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
 
         destdir = os.path.join(state.appdata, 'sounds')
-        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
+        destfile = addr.decode('utf-8') + os.path.splitext(sourcefile)[-1]
         destination = os.path.join(destdir, destfile)
 
         if sourcefile == destination:
@@ -4093,16 +4094,16 @@ class MyForm(settingsmixin.SMainWindow):
         folder = self.getCurrentFolder()
         if msgid:
             queryreturn = sqlQuery(
-                '''SELECT message FROM %s WHERE %s=?''' % (
+                'SELECT message FROM %s WHERE %s=?' % (
                     ('sent', 'ackdata') if folder == 'sent'
                     else ('inbox', 'msgid')
                 ), msgid
             )
 
         try:
-            message = unicode(queryreturn[-1][0], 'utf-8')
+            message = queryreturn[-1][0].decode('utf-8')
         except NameError:
-            message = u""
+            message = u''
         except IndexError:
             # _translate() often returns unicode, no redefinition here!
             # pylint: disable=redefined-variable-type
@@ -4118,7 +4119,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.updateUnreadStatus(tableWidget, currentRow, msgid)
             # propagate
             if folder != 'sent' and sqlExecute(
-                '''UPDATE inbox SET read=1 WHERE msgid=? AND read=0''',
+                'UPDATE inbox SET read=1 WHERE msgid=? AND read=0',
                 msgid
             ) > 0:
                 self.propagateUnreadCount()
@@ -4134,8 +4135,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
         for i in range(len(completerList)):
-            if unicode(completerList[i]).endswith(" <" + item.address + ">"):
-                completerList[i] = item.label + " <" + item.address + ">"
+            address_block = " <" + item.address + ">"
+            if completerList[i].endswith(address_block):
+                completerList[i] = item.label + address_block
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def tabWidgetCurrentChanged(self, n):
