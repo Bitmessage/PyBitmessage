@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PyBitmessage
+GenericName=Bitmessage Client
+Comment=Send encrypted messages
+Exec=pybitmessage %F
+Icon=pybitmessage
+Terminal=false
+Categories=Office;Email;Network;

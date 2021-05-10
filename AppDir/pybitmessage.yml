@@ -1,0 +1,15 @@
+app: PyBitmessage
+binpatch: true
+
+ingredients:
+  dist: bionic
+  sources:
+    - wget -c https://www.riverbankcomputing.com/static/Downloads/sip/4.19.25/sip-4.19.25.tar.gz
+    - wget -c http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.12.3/PyQt4_gpl_x11-4.12.3.tar.gz
+
+script:
+  -  mv /app/share/applications/pybitmessage.desktop /app/share/applications/org.bitmessage.PyBitmessage.desktop
+  -  sed -i 's~Icon=pybitmessage~Icon=org.bitmessage.PyBitmessage~' /app/share/applications/org.bitmessage.PyBitmessage.desktop
+  -  mv /app/share/icons/hicolor/scalable/apps/pybitmessage.svg /app/share/icons/hicolor/scalable/apps/org.bitmessage.PyBitmessage.svg
+  -  mv /app/share/icons/hicolor/24x24/apps/pybitmessage.png /app/share/icons/hicolor/24x24/apps/org.bitmessage.PyBitmessage.png
+  -  which pybitmessage
