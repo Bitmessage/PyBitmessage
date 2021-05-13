@@ -16,14 +16,14 @@ Once you have downloaded the package and have `dpkg` and `appimagetool` installe
 
 You can start to build the appimage
 
-# Clone the source code
+### Clone the source code
 ```
 git clone git://github.com/Bitmessage/PyBitmessage.git
 ```
 This will install the base app to your local flatpak user repository, it 
 takes a while to compile because QT4 and PyQt4 have to be build, among others. But this is only required once.
 
-# Build
+### Build
 
 Run build.sh
 Usage:  ./build.sh "path to deb package"
