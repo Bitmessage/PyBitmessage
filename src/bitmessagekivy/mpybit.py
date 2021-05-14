@@ -817,7 +817,7 @@ class NavigateApp(MDApp):
             try:
                 self.root.ids.sc5.children[1].active = True
             except Exception as e:
-                self.root.ids.sc5.children[0].children[1].active = False
+                self.root.ids.sc5.children[0].children[1].active = True
         Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
 
     def load_screen_callback(self, instance, dt=0):
@@ -835,9 +835,9 @@ class NavigateApp(MDApp):
                 self.root.ids.sc17.children[0].children[1].active = False
         elif instance.text == 'Trash':
             # self.root.ids.sc5.ids.ml.clear_widgets()
-            self.root.ids.sc5.init_ui(0)
-            # self.root.ids.sc5.clear_widgets()
-            # self.root.ids.sc5.add_widget(Trash())
+            # self.root.ids.sc5.init_ui(0)
+            self.root.ids.sc5.clear_widgets()
+            self.root.ids.sc5.add_widget(Trash())
             try:
                 self.root.ids.sc5.children[1].active = False
             except Exception as e:

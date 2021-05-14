@@ -46,14 +46,13 @@ requirements =
 	libiconv,
 	libzbar,
 	pillow,
-	#bitmsghash,
+	bitmsghash,
 	#git+https://github.com/navjotcis/KivyMD#egg=kivymd,
 	git+https://github.com/kivymd/KivyMD#egg=kivymd,
 	#kivymd,
-	kivy-garden, 
+	kivy-garden,
 	qrcode,
 	msgpack
-
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -66,9 +65,9 @@ garden_requirements = qrcode
 #presplash.filename = %(source.dir)s/data/presplash.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/logo.png
+#icon.filename = %(source.dir)s/data/icon.png
 
-# (str) Supported orientation (one of landscape, portrait or all)
+# (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
 
 # (list) List of service to declare
@@ -140,7 +139,7 @@ android.sdk = 20
 # agreements. This is intended for automation only. If set to False,
 # the default, you will be shown the license when first running
 # buildozer.
-# android.accept_sdk_license = False
+# android.accept_sdk_license = True
 
 # (str) Android entry point, default is ok for Kivy-based app
 #android.entrypoint = org.renpy.android.PythonActivity
@@ -161,11 +160,11 @@ android.sdk = 20
 # their classes. Don't add jars that you do not need, since extra jars can slow
 # down the build process. Allows wildcards matching, for example:
 # OUYA-ODK/libs/*.jar
-#android.add_jars = libs/*.jar
+#android.add_jars = foo.jar,bar.jar,path/to/more/*.jar
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-#android.add_src = Config.java
+#android.add_src =
 
 # (list) Android AAR archives to add (currently works only with sdl2_gradle
 # bootstrap)
@@ -194,9 +193,6 @@ android.sdk = 20
 
 # (list) Java classes to add as activities to the manifest.
 #android.add_activites = com.example.ExampleActivity
-
-# (str) python-for-android branch to use, defaults to stable
-# p4a.branch = master
 
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled
@@ -252,7 +248,7 @@ android.arch = armeabi-v7a
 p4a.branch = develop
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
-# p4a.source_dir = /home/cis/Music/androidp4a/python-for-android
+#p4a.source_dir =
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
 p4a.local_recipes = %(source.dir)s/bitmessagekivy/android/python-for-android/recipes/
