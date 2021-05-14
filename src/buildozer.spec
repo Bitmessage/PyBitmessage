@@ -39,7 +39,7 @@ version = 0.1
 requirements = 
 	python3,
 	android,
-	openssl, 
+	openssl,
 	sqlite3,
 	kivy,
 	pyjnius==1.2.1,
@@ -51,6 +51,7 @@ requirements =
 	git+https://github.com/kivymd/KivyMD#egg=kivymd,
 	#kivymd,
 	kivy-garden,
+	kivy_garden.graph,
 	qrcode,
 	msgpack
 
@@ -59,7 +60,7 @@ requirements =
 # requirements.source.kivy = ../../kivy
 
 # (list) Garden requirements
-garden_requirements = qrcode
+# garden_requirements = qrcode
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/data/presplash.png

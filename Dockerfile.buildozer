@@ -1,0 +1,45 @@
+FROM ubuntu:20.04
+
+RUN apt-get update
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -qq --yes --no-install-recommends \
+    autoconf \
+    automake \
+    build-essential \
+    ccache \
+    cmake \
+    gettext \
+    git \
+	libncurses5-dev \ 
+	libncursesw5-dev \
+	libtinfo5 \
+    libffi-dev \
+    libltdl-dev \
+    libssl-dev \
+    libtool \
+    openjdk-13-jdk \
+    patch \
+    pkg-config \
+    python3-pip \
+    python3-setuptools \
+    python3-venv \
+    sudo \
+    unzip \
+    zip \
+    zlib1g-dev
+
+RUN pip3 install cython buildozer
+# RUN pip3 install "cython==0.29.15"
+# RUN pip3 install "buildozer==1.0"
+
+RUN mkdir -p /buildozer
+
+WORKDIR /buildozer
+
+COPY src /buildozer
+
+RUN rm -rf bin bitmessagecurses bitmessageqt sslkeys tests translations
+
+RUN rm -rf ./.buildozer/
+
+RUN yes | buildozer android debug
