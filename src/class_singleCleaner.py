@@ -149,6 +149,9 @@ class singleCleaner(StoppableThread):
                     connection.destination.host)
                 # remove peers with same host and other ports from knownnodes
                 for stream in connection.streams:
+                    if stream == 0:  # FIXME: stream 0 is a protocol violation
+                        knownnodes.decreaseRating(connection.destination)
+                        continue
                     for node in [
                         node for node in knownnodes.knownNodes[stream]
                         if node.host == connection.destination.host
