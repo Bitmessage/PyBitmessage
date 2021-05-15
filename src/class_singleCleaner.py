@@ -140,9 +140,22 @@ class singleCleaner(StoppableThread):
                     if state.thisapp.daemon or not state.enableGUI:
                         os._exit(1)
 
-            # inv/object tracking
             for connection in BMConnectionPool().connections():
-                connection.clean()
+                connection.clean()  # inv/object tracking
+                if not connection.fullyEstablished:
+                    continue
+                self.logger.warning(
+                    'Cleaning up duplicate ports for host %s',
+                    connection.destination.host)
+                # remove peers with same host and other ports from knownnodes
+                for stream in connection.streams:
+                    for node in [
+                        node for node in knownnodes.knownNodes[stream]
+                        if node.host == connection.destination.host
+                        and node.port != connection.destination.port
+                    ]:
+                        self.logger.warning('port %s', node.port)
+                        del knownnodes.knownNodes[stream][node]
 
             # discovery tracking
             exp = time.time() - singleCleaner.expireDiscoveredPeers
