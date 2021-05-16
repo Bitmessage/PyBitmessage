@@ -3,11 +3,10 @@ Translating text
 """
 import os
 
-import sys
-if sys.version_info[0] == 3:
-    from . import state
-else:
+try:
     import state
+except ImportError:
+    from . import state
 
 
 class translateClass:
