@@ -1,8 +1,17 @@
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
-RUN apt-get update
+# configures locale
+RUN apt update -qq > /dev/null && \
+    apt install -qq --yes --no-install-recommends \
+    locales && \
+    locale-gen en_US.UTF-8
+ENV LANG="en_US.UTF-8" \
+    LANGUAGE="en_US.UTF-8" \
+    LC_ALL="en_US.UTF-8"
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -qq --yes --no-install-recommends \
+
+# system requirements to build most of the recipes
+RUN apt install -qq --yes --no-install-recommends \
     autoconf \
     automake \
     build-essential \
@@ -10,27 +19,27 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -qq --yes --no-install-recomm
     cmake \
     gettext \
     git \
-	libncurses5-dev \ 
-	libncursesw5-dev \
-	libtinfo5 \
     libffi-dev \
     libltdl-dev \
     libssl-dev \
     libtool \
-    openjdk-13-jdk \
+    openjdk-8-jdk \
     patch \
     pkg-config \
+    python2.7 \
     python3-pip \
-    python3-setuptools \
     python3-venv \
+    python3-setuptools \
     sudo \
     unzip \
     zip \
-    zlib1g-dev
+    zlib1g-dev \
+    libncurses5-dev \
+	libncursesw5-dev \
+	libtinfo5
 
-RUN pip3 install cython buildozer
-# RUN pip3 install "cython==0.29.15"
-# RUN pip3 install "buildozer==1.0"
+RUN pip3 install "cython==0.28.6"
+RUN pip3 install "buildozer==1.0"
 
 RUN mkdir -p /buildozer
 

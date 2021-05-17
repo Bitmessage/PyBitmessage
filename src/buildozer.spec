@@ -50,8 +50,6 @@ requirements =
 	#git+https://github.com/navjotcis/KivyMD#egg=kivymd,
 	git+https://github.com/kivymd/KivyMD#egg=kivymd,
 	#kivymd,
-	kivy-garden,
-	kivy_garden.graph,
 	qrcode,
 	msgpack
 
@@ -60,7 +58,7 @@ requirements =
 # requirements.source.kivy = ../../kivy
 
 # (list) Garden requirements
-# garden_requirements = qrcode
+garden_requirements = qrcode
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/data/presplash.png
