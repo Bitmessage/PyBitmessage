@@ -9,13 +9,8 @@ import sys
 import tempfile
 import time
 import unittest
-
 import psutil
-
-from .common import cleanup, put_signal_file, skip_python3
-
-
-skip_python3()
+from .common import cleanup, put_signal_file
 
 
 class TestProcessProto(unittest.TestCase):

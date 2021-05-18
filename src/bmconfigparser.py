@@ -10,8 +10,15 @@ from datetime import datetime
 from six import string_types
 from six.moves import configparser
 
-import state
-from singleton import Singleton
+try:
+    import state
+except ImportError:
+    from . import state
+
+try:
+    from singleton import Singleton
+except ImportError:
+    from .singleton import Singleton
 
 SafeConfigParser = configparser.SafeConfigParser
 

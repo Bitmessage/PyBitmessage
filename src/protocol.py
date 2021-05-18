@@ -13,16 +13,46 @@ import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
 
-import defaults
-import highlevelcrypto
-import state
-from addresses import (
-    encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-from bmconfigparser import BMConfigParser
-from debug import logger
-from fallback import RIPEMD160Hash
-from helper_sql import sqlExecute
-from version import softwareVersion
+try:
+    import defaults
+except ImportError:
+    from . import defaults
+try:
+    import highlevelcrypto
+except ImportError:
+    from . import highlevelcrypto
+
+try:
+    import state
+except ImportError:
+    from . import state
+
+try:
+    from addresses import (
+        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+except ImportError:
+    from .addresses import (
+        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+try:
+    from bmconfigparser import BMConfigParser
+except ImportError:
+    from .bmconfigparser import BMConfigParser
+try:
+    from debug import logger
+except ImportError:
+    from .debug import logger
+try:
+    from fallback import RIPEMD160Hash
+except ImportError:
+    from .fallback import RIPEMD160Hash
+try:
+    from .helper_sql import sqlExecute
+except ImportError:
+    from .helper_sql import sqlExecute
+try:
+    from version import softwareVersion
+except ImportError:
+    from .version import softwareVersion
 
 # Service flags
 #: This is a normal network node
@@ -100,8 +130,12 @@ def encodeHost(host):
         return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
     elif host.find(':') == -1:
-        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-            socket.inet_aton(host)
+        if sys.version_info[0] == 3:
+            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+            str(socket.inet_aton(host))
+        else:
+            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+                   socket.inet_aton(host)
     return socket.inet_pton(socket.AF_INET6, host)
 
 

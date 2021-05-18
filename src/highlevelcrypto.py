@@ -9,10 +9,25 @@ High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
 
 from binascii import hexlify
 
-import pyelliptic
-from bmconfigparser import BMConfigParser
-from pyelliptic import OpenSSL
-from pyelliptic import arithmetic as a
+try:
+    import pyelliptic
+except ImportError:
+    from . import pyelliptic
+
+try:
+    from bmconfigparser import BMConfigParser
+except ImportError:
+    from .bmconfigparser import BMConfigParser
+
+try:
+    from pyelliptic import OpenSSL
+except ImportError:
+    from .pyelliptic import OpenSSL
+
+try:
+    from pyelliptic import arithmetic as a
+except ImportError:
+    from .pyelliptic import arithmetic as a
 
 
 def makeCryptor(privkey):
