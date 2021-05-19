@@ -16,6 +16,7 @@ fake_addresses = [
     'BM-2cW2a5R1KidMGNByqPKn6nJDDnHtazoere'
 ]
 
+
 class FakeAddressGenerator(StoppableThread):
     """A thread for creating fake addresses"""
     name = "addressGenerator"
@@ -25,7 +26,7 @@ class FakeAddressGenerator(StoppableThread):
             queues.addressGeneratorQueue.put(("stopThread", "data"))
         except:
             pass
-        super(addressGenerator, self).stopThread()
+        super(FakeAddressGenerator, self).stopThread()
 
     def run(self):
         """

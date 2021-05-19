@@ -3,7 +3,6 @@ import state
 from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
-from bitmessagekivy.baseclass.common import ThemeClsColor
 
 
 class NetworkStat(Screen):

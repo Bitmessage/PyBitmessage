@@ -9,9 +9,7 @@ from kivy.uix.screenmanager import Screen
 
 import state
 
-from bitmessagekivy.baseclass.common import (
-    toast, ThemeClsColor
-)
+from bitmessagekivy.baseclass.common import toast
 
 
 class Login(Screen):
@@ -108,5 +106,3 @@ class InfoLayout(BoxLayout, RectangularElevationBehavior):
 
 class RandomBoxlayout(BoxLayout):
     """RandomBoxlayout class for BoxLayout behaviour"""
-
-

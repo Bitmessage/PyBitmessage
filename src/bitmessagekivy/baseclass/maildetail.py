@@ -17,7 +17,6 @@ from kivymd.uix.list import (
     OneLineListItem,
     IRightBodyTouch
 )
-from kivymd.uix.label import MDLabel
 from kivy.uix.screenmanager import Screen
 
 import state

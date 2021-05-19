@@ -1,4 +1,3 @@
-from bitmessagekivy.get_platform import platform
 # from bitmessagekivy import identiconGeneration
 from bitmessagekivy import kivy_helper_search
 from bmconfigparser import BMConfigParser
@@ -6,21 +5,16 @@ from functools import partial
 from helper_sql import sqlExecute
 from kivy.clock import Clock
 from kivy.factory import Factory
-from kivy.metrics import dp
 from kivy.properties import StringProperty, ListProperty
 
-from kivy.uix.button import Button
-from kivy.uix.carousel import Carousel
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineAvatarIconListItem
 
 import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, ThemeClsColor, avatarImageFirstLetter,
-    AddTimeWidget, AvatarSampleWidget, toast, SwipeToDeleteItem,
-    ShowTimeHistoy
+    toast, SwipeToDeleteItem, ShowTimeHistoy
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
 
@@ -98,14 +92,14 @@ class Sent(Screen):
         total_sent_msg = len(self.ids.ml.children)
         for item in data:
             message_row = SwipeToDeleteItem(
-                text = item["text"],
+                text=item["text"],
             )
             listItem = message_row.ids.content
             listItem.secondary_text = item["secondary_text"]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             image = state.imageDir + '/text_images/{}.png'.format(
-                        avatarImageFirstLetter(item['secondary_text'].strip()))
+                avatarImageFirstLetter(item['secondary_text'].strip()))
             message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(self.sent_detail, item['ackdata'], message_row))
             message_row.ids.time_tag.text = str(ShowTimeHistoy(item['senttime']))

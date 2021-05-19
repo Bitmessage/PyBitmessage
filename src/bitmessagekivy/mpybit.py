@@ -81,8 +81,7 @@ elif platform == "android":
         t.show()
 
 
-with open(os.path.join(os.path.dirname(__file__), "screens_data.json")
-    ) as read_file:
+with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
     all_data = ast.literal_eval(read_file.read())
     data_screens = list(all_data.keys())
 

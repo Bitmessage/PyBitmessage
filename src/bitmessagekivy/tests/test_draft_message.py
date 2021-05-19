@@ -21,12 +21,14 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
         self.cli.sleep(3)
         # SELECT - TO ADDRESS
-        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
+        self.cli.click_on(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         self.cli.sleep(2)
         self.cli.click_on('//MyTextInput[0]')
         self.cli.sleep(3)
         # ADD FROM MESSAGE
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',
+                         "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
         self.cli.sleep(3)
         # CLICK BACK-BUTTON
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
@@ -34,14 +36,16 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
         self.cli.sleep(3)
         # SELECT - TO ADDRESS
-        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
+        self.cli.click_on(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
         self.cli.sleep(1)
         self.cli.click_on('//MyTextInput[0]')
         self.cli.sleep(3)
         # ADD FROM MESSAGE
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text",'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',
+                         "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
         self.cli.sleep(4)
-        random_label=""
+        random_label = ""
         for char in "Another Draft message":
             random_label += char
             self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', random_label)
@@ -49,7 +53,7 @@ class DraftMessage(TeleniumTestProcess):
         # CLICK BACK-BUTTON
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(4)
-   
+
     @ordered
     def test_edit_and_resend_draft_messgae(self):
         """Select A Message From List of Messages Then
@@ -67,15 +71,16 @@ class DraftMessage(TeleniumTestProcess):
         # CLICK EDIT BUTTON
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[0]')
         self.cli.sleep(5)
-        random_label=""
+        random_label = ""
         for char in "Hey,This is draft Message Body":
             random_label += char
-            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
+            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]',
+                             'text', random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(3)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(5)
-        
+
     @ordered
     def test_delete_draft_message(self):
         """Delete A Message From List of Messages"""

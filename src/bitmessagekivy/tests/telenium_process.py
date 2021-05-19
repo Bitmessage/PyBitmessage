@@ -3,8 +3,7 @@ import shutil
 import tempfile
 
 from telenium.tests import TeleniumTestCase
-from threads import sqlThread
-
+# from threads import sqlThread
 
 
 _files = (
@@ -33,7 +32,7 @@ def set_temp_data():
     for file in tmp_db_file:
         old_source_file = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), 'sampleData', file)
-        new_destination_file =  os.path.join(os.environ['BITMESSAGE_HOME'], file)
+        new_destination_file = os.path.join(os.environ['BITMESSAGE_HOME'], file)
         shutil.copyfile(old_source_file, new_destination_file)
 
 

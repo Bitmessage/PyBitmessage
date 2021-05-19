@@ -1,28 +1,23 @@
-from bitmessagekivy import kivy_helper_search
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from functools import partial
 from kivy.clock import Clock
-from kivy.metrics import dp
 from kivy.properties import (
     ListProperty,
     StringProperty
 )
-from kivy.uix.button import Button
-from kivy.uix.carousel import Carousel
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineAvatarIconListItem
 
 import state
 
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
-    avatarImageFirstLetter,CutsomSwipeToDeleteItem,
+    avatarImageFirstLetter, CutsomSwipeToDeleteItem,
     ShowTimeHistoy
 )
 from bitmessagekivy.baseclass.maildetail import MailDetail
-from bitmessagekivy.baseclass.trash import Trash
+# from bitmessagekivy.baseclass.trash import Trash
 
 
 class Allmails(Screen):
@@ -96,7 +91,7 @@ class Allmails(Screen):
             body = item[3].decode() if isinstance(item[3], bytes) else item[3]
             subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
             message_row = CutsomSwipeToDeleteItem(
-                text = item[1],
+                text=item[1],
             )
 
             listItem = message_row.ids.content
@@ -113,8 +108,6 @@ class Allmails(Screen):
                 self.mail_detail, item[5], item[4], message_row))
             message_row.ids.time_tag.text = str(ShowTimeHistoy(item[7]))
             message_row.ids.chip_tag.text = item[4]
-
-
             # listItem = message_row.ids.content
             # secondary_text = (subject[:50] + '........' if len(
             #     subject) >= 50 else (
@@ -132,8 +125,6 @@ class Allmails(Screen):
             # listItem.add_widget(chipTag(item[4]))
             message_row.ids.delete_msg.bind(on_press=partial(
                 self.swipe_delete, item[5], item[4]))
-
-
             self.ids.ml.add_widget(message_row)
         updated_data = len(self.ids.ml.children)
         self.has_refreshed = True if data_exist != updated_data else False

@@ -6,16 +6,12 @@ from helper_sql import sqlExecute
 from functools import partial
 from addresses import decodeAddress
 from kivy.clock import Clock
-from kivy.metrics import dp
 from kivy.properties import (
     ListProperty,
     StringProperty
 )
-from kivy.uix.button import Button
-from kivy.uix.carousel import Carousel
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineAvatarIconListItem
 
 import state
 
@@ -102,13 +98,12 @@ class Draft(Screen):
                 'ackdata': mail[5], 'senttime': mail[6]})
         for item in data:
             message_row = SwipeToDeleteItem(
-                text = 'Draft',
+                text='Draft',
             )
             listItem = message_row.ids.content
             listItem.secondary_text = item["text"]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
-            # meny._txt_right_pad = dp(70)
             message_row.ids.avater_img.source = state.imageDir + '/avatar.png'
             listItem.bind(on_release=partial(
                 self.draft_detail, item['ackdata'], message_row))

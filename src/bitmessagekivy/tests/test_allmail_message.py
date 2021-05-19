@@ -14,7 +14,7 @@ class AllMailMessage(TeleniumTestProcess):
         self.cli.sleep(4)
         self.cli.click_on('//NavigationItem[5]')
         self.cli.sleep(4)
-    
+
     @ordered
     def test_delete_message_from_allmail_list(self):
         """Delete Message From Message body of Mail Screen/Window"""

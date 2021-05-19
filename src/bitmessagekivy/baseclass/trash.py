@@ -3,17 +3,13 @@ from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from functools import partial
 from kivy.clock import Clock
-from kivy.metrics import dp
 from kivy.properties import (
     ListProperty,
     StringProperty
 )
-from kivy.uix.button import Button
 from kivymd.uix.button import MDFlatButton
-from kivy.uix.carousel import Carousel
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineAvatarIconListItem
 from kivy.uix.screenmanager import Screen
 
 import state
@@ -90,7 +86,7 @@ class Trash(Screen):
             subject = item[2].decode() if isinstance(item[2], bytes) else item[2]
             body = item[3].decode() if isinstance(item[3], bytes) else item[3]
             message_row = CutsomSwipeToDeleteItem(
-                text = item[1],
+                text=item[1],
             )
             message_row.bind(on_swipe_complete=partial(self.on_swipe_complete, message_row))
             listItem = message_row.ids.content

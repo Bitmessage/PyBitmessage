@@ -8,7 +8,7 @@ from string import ascii_lowercase
 
 
 class CreateRandomAddress(TeleniumTestProcess):
-    
+
     @classmethod
     def setUpClass(cls):
         os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
@@ -20,7 +20,9 @@ class CreateRandomAddress(TeleniumTestProcess):
         """Clicking on Proceed Button to Proceed to Next Screen."""
         print("=====================Test - Login Screen=====================")
         self.cli.sleep(3)
-        self.cli.wait_click('//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[0]')
+        self.cli.wait_click(
+            '''//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]'''
+            '''/MDFillRoundFlatIconButton[0]''')
         self.cli.sleep(3)
 
     @ordered
@@ -49,11 +51,13 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.sleep(5)
         self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.sleep(2)
-        self.cli.drag("//NavigationItem[@text=\"Sent\"]","//NavigationItem[@text=\"Inbox\"]",1)
+        self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
         self.cli.sleep(3)
         self.cli.click_on('//NavigationItem[9]')
         self.cli.sleep(4)
-        self.cli.wait_click('//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[0]')
+        self.cli.wait_click(
+            '''//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]'''
+            '''/MDFillRoundFlatIconButton[0]''')
         self.test_random_screen()
 
     @ordered
@@ -64,7 +68,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
         self.cli.execute('app.clickNavDrawer()')
         self.cli.sleep(2)
-        self.cli.drag("//NavigationItem[@text=\"Address Book\"]","//NavigationItem[@text=\"Settings\"]",1)
+        self.cli.drag("//NavigationItem[@text=\"Address Book\"]", "//NavigationItem[@text=\"Settings\"]", 1)
         self.cli.sleep(2)
         self.cli.click_on('//NavigationItem[0]')
         self.cli.sleep(2)

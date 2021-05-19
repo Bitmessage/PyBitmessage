@@ -13,5 +13,6 @@ def make_ordered_test():
 
     return ordered, compare
 
+
 ordered, compare = make_ordered_test()
 unittest.defaultTestLoader.sortTestMethodsUsing = compare

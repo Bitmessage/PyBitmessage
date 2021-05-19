@@ -6,10 +6,6 @@ from kivy.metrics import dp
 from kivymd.uix.list import (
     ILeftBody,
     IRightBodyTouch,
-    TwoLineAvatarIconListItem,
-    OneLineIconListItem,
-    OneLineAvatarIconListItem,
-    OneLineListItem
 )
 from kivy.uix.image import Image
 from kivymd.uix.label import MDLabel
@@ -32,8 +28,8 @@ data_screens = {
         "name_screen": "mailDetail",
         "object": 0,
         "Import": "from bitmessagekivy.baseclass.maildetail import MailDetail",
-    }
-,}
+    },
+}
 
 
 def chipTag(text):
@@ -48,8 +44,8 @@ def chipTag(text):
         "center_y": 0.3
     }
     obj.height = dp(18)
-    obj.text_color = (1,1,1,1)
-    obj.radius =[8]
+    obj.text_color = (1, 1, 1, 1)
+    obj.radius = [8]
     return obj
 
 
@@ -71,6 +67,7 @@ def initailize_detail_page(manager):
         data_screens['MailDetail']["object"] = screen_object
         manager.add_widget(screen_object)
     manager.current = data_screens['MailDetail']["name_screen"]
+
 
 def toast(text):
     """Method will display the toast message"""
@@ -136,7 +133,7 @@ class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
 
 class SwipeToDeleteItem(MDCardSwipe):
     text = StringProperty()
-    cla = Window.size[0]/2
+    cla = Window.size[0] / 2
     # cla = 800
     swipe_distance = NumericProperty(cla)
     opening_time = NumericProperty(0.5)
@@ -144,6 +141,6 @@ class SwipeToDeleteItem(MDCardSwipe):
 
 class CutsomSwipeToDeleteItem(MDCardSwipe):
     text = StringProperty()
-    cla = Window.size[0]/2
+    cla = Window.size[0] / 2
     swipe_distance = NumericProperty(cla)
     opening_time = NumericProperty(0.5)

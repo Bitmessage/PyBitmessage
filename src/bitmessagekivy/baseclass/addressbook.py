@@ -7,12 +7,9 @@ from kivy.properties import (
     ListProperty,
     StringProperty
 )
-from kivy.uix.button import Button
 from kivymd.uix.button import MDRaisedButton
-from kivy.uix.carousel import Carousel
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineAvatarIconListItem
 from kivy.uix.screenmanager import Screen
 
 import state
@@ -73,14 +70,14 @@ class AddressBook(Screen):
         """Creating the mdList"""
         for item in self.queryreturn[start_index:end_index]:
             message_row = SwipeToDeleteItem(
-                text = item[0],
+                text=item[0],
             )
             listItem = message_row.ids.content
             listItem.secondary_text = item[1]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             listItem.add_widget(AvatarSampleWidget(
-                        source=state.imageDir + '/text_images/{}.png'.format(
+                source=state.imageDir + '/text_images/{}.png'.format(
                     avatarImageFirstLetter(item[0].strip()))))
             listItem.bind(on_release=partial(
                 self.addBook_detail, item[1], item[0], message_row))

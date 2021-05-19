@@ -20,7 +20,7 @@ from kivy.uix.screenmanager import Screen
 import state
 
 from bitmessagekivy.baseclass.common import (
-    avatarImageFirstLetter, AvatarSampleWidget,ThemeClsColor,
+    avatarImageFirstLetter, AvatarSampleWidget, ThemeClsColor,
     toast
 )
 from bitmessagekivy.baseclass.popup import MyaddDetailPopup
@@ -123,7 +123,6 @@ class MyAddress(Screen):
             else:
                 meny.add_widget(ToggleBtn(active=True if is_enable == 'true' else False))
             self.ids.ml.add_widget(meny)
-
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll down"""

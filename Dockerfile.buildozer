@@ -33,10 +33,7 @@ RUN apt install -qq --yes --no-install-recommends \
     sudo \
     unzip \
     zip \
-    zlib1g-dev \
-    libncurses5-dev \
-	libncursesw5-dev \
-	libtinfo5
+    zlib1g-dev
 
 RUN pip3 install "cython==0.28.6"
 RUN pip3 install "buildozer==1.0"

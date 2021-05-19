@@ -230,4 +230,3 @@ class ToAddrBoxlayout(BoxLayout):
 
 class ToAddressTitle(BoxLayout):
     """ToAddressTitle class for BoxLayout behaviour"""
-

@@ -10,11 +10,8 @@ from kivy.properties import (
     ListProperty,
     StringProperty
 )
-from kivy.uix.button import Button
-from kivy.uix.carousel import Carousel
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineAvatarIconListItem
 
 import state
 
@@ -124,7 +121,7 @@ class Inbox(Screen):
         total_message = len(self.ids.ml.children)
         for item in data:
             message_row = SwipeToDeleteItem(
-                text = item["text"],
+                text=item["text"],
             )
             listItem = message_row.ids.content
             listItem.secondary_text = item["secondary_text"]
@@ -132,7 +129,7 @@ class Inbox(Screen):
             listItem.text_color = ThemeClsColor
             listItem._txt_right_pad = dp(70)
             image = state.imageDir + "/text_images/{}.png".format(
-                        avatarImageFirstLetter(item["secondary_text"].strip()))
+                avatarImageFirstLetter(item["secondary_text"].strip()))
             message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(self.inbox_detail, item["msgid"], message_row))
             message_row.ids.time_tag.text = str(ShowTimeHistoy(item["received"]))
@@ -171,7 +168,7 @@ class Inbox(Screen):
             )
         self.set_mdList(data)
 
-    def inbox_detail(self, msg_id, instance,*args):
+    def inbox_detail(self, msg_id, instance, *args):
         """Load inbox page details"""
         if instance.state == 'closed':
             instance.ids.delete_msg.disabled = True

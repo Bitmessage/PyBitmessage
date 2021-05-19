@@ -4,6 +4,7 @@ from bitmessagekivy.mpybit import NavigateApp
 from fake_addressGenerator import FakeAddressGenerator
 from threads import sqlThread
 
+
 def main():
     if state.enableObjProc:
         # Start the address generation thread
@@ -20,7 +21,6 @@ def main():
 
     state.kivyapp = NavigateApp()
     state.kivyapp.run()
-
 
 
 if __name__ == '__main__':
