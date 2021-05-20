@@ -3,8 +3,6 @@ import shutil
 import tempfile
 
 from telenium.tests import TeleniumTestCase
-# from threads import sqlThread
-
 
 _files = (
     'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
@@ -53,11 +51,3 @@ class TeleniumTestProcess(TeleniumTestCase):
         cleanup()
         cls.cli.app_quit()
         cls.process.kill()
-
-    @classmethod
-    def setUp(self):
-        pass
-
-    @classmethod
-    def tearDown(self):
-        pass

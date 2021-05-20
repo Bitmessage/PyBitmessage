@@ -1,3 +1,4 @@
+
 from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
 from .common import ordered
 
@@ -72,7 +73,8 @@ class AddressBook(TeleniumTestProcess):
         """Directly Send Message To The User"""
         print("=====================Test -Directly Send Message To The User=====================")
         self.cli.sleep(4)
-        self.cli.click_on('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]')
+        self.cli.click_on(
+            '//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/SwipeToDeleteItem[0]')
         self.cli.sleep(3)
         self.cli.click_on('//MDRaisedButton[0]')
         self.cli.sleep(3)
@@ -102,10 +104,9 @@ class AddressBook(TeleniumTestProcess):
         self.cli.click_on('//NavigationItem[6]')
         self.cli.sleep(3)
         self.cli.drag(
-            '''//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//'''
-            '''TwoLineAvatarIconListItem[0]/BoxLayout[0]''',
-            '''//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//'''
-            '''TwoLineAvatarIconListItem[0]/BoxLayout[2]''', 2)
+            '//MDList[0]/SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
+            '//MDList[0]/SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 1)
+        self.cli.click_on('//MDList[0]/SwipeToDeleteItem[0]')
         self.cli.sleep(2)
-        self.cli.click_on('//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]//Button[0]')
+        self.cli.click_on('//MDList[0]/SwipeToDeleteItem[0]//MDIconButton[0]')
         self.cli.sleep(2)

@@ -76,9 +76,12 @@ class AddressBook(Screen):
             listItem.secondary_text = item[1]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
-            listItem.add_widget(AvatarSampleWidget(
-                source=state.imageDir + '/text_images/{}.png'.format(
-                    avatarImageFirstLetter(item[0].strip()))))
+            # listItem.add_widget(AvatarSampleWidget(
+            #     source=state.imageDir + '/text_images/{}.png'.format(
+            #         avatarImageFirstLetter(item[0].strip()))))
+            image = state.imageDir + "/text_images/{}.png".format(
+                avatarImageFirstLetter(item[0].strip()))
+            message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(
                 self.addBook_detail, item[1], item[0], message_row))
             message_row.ids.delete_msg.bind(on_press=partial(self.delete_address, item[1]))

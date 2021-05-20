@@ -13,4 +13,4 @@ class SettingScreen(TeleniumTestProcess):
         self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
         self.cli.sleep(3)
         self.cli.click_on('//NavigationItem[7]')
-        self.cli.sleep(2)
+        self.cli.sleep(4)

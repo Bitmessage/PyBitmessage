@@ -20,7 +20,8 @@ class AllMailMessage(TeleniumTestProcess):
         """Delete Message From Message body of Mail Screen/Window"""
         print("=====================Test -Delete Messages Of Mail Screen=====================")
         self.cli.sleep(4)
-        self.cli.click_on('//Allmails[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/Carousel[0]')
+        self.cli.click_on(
+            '//Allmails[0]/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/CutsomSwipeToDeleteItem[0]')
         self.cli.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]')
         self.cli.sleep(5)

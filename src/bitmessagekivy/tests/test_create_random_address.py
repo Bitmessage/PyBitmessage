@@ -21,8 +21,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         print("=====================Test - Login Screen=====================")
         self.cli.sleep(3)
         self.cli.wait_click(
-            '''//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]'''
-            '''/MDFillRoundFlatIconButton[0]''')
+            '//ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[0]')
         self.cli.sleep(3)
 
     @ordered

@@ -66,7 +66,8 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//NavigationItem[3]')
         self.cli.sleep(4)
         # SHOW DRAFT MESSAGE AND SELECT FIRST MESSAGE
-        self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
+        # self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
+        self.cli.click_on('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]')
         self.cli.sleep(3)
         # CLICK EDIT BUTTON
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[0]')
@@ -91,7 +92,8 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.sleep(4)
         self.cli.click_on('//NavigationItem[3]')
         self.cli.sleep(5)
-        self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
+        self.cli.click_on('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]')
+        # self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
         self.cli.sleep(5)
         self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]')
         self.cli.sleep(5)
