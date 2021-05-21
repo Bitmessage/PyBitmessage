@@ -14,6 +14,7 @@ from bitmessagekivy.baseclass.common import toast
 
 class Login(Screen):
     """Login Screeen class for kivy Ui"""
+    # pylint: disable=too-few-public-methods
     log_text1 = (
         'You may generate addresses by using either random numbers'
         ' or by using a passphrase If you use a passphrase, the address'
@@ -35,7 +36,7 @@ class Random(Screen):
     is_active = BooleanProperty(False)
     checked = StringProperty("")
 
-    def generateaddress(self, navApp):
+    def generateaddress(self):
         """Method for Address Generator"""
         # entered_label = str(self.ids.lab.text).strip()
         entered_label = str(self.ids.add_random_bx.children[0].ids.lab.text).strip()
@@ -59,7 +60,7 @@ class Random(Screen):
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
 
-    def address_created_callback(self, dt=0):
+    def address_created_callback(self, dt=0): # pylint: disable=unused-argument
         """New address created"""
         state.kivyapp.loadMyAddressScreen(False)
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()
@@ -94,7 +95,7 @@ class Random(Screen):
             instance.error = False
             instance.helper_text = 'This field is required'
 
-    def reset_address_label(self, n):
+    def reset_address_label(self):
         """Resetting address labels"""
         if not self.ids.add_random_bx.children:
             self.ids.add_random_bx.add_widget(RandomBoxlayout())
@@ -102,7 +103,9 @@ class Random(Screen):
 
 class InfoLayout(BoxLayout, RectangularElevationBehavior):
     """InfoLayout class for kivy Ui"""
+    # pylint: disable=too-few-public-methods
 
 
 class RandomBoxlayout(BoxLayout):
     """RandomBoxlayout class for BoxLayout behaviour"""
+    # pylint: disable=too-few-public-methods

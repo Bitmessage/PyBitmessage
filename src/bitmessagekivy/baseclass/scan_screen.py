@@ -36,6 +36,9 @@ from kivy.uix.screenmanager import Screen
 
 
 class ScanScreen(Screen):
+    """ScanScreen is for scaning Qr code"""
+    # pylint: disable=unused-argument
+    # pylint: disable=W0212
     camera_avaialbe = BooleanProperty(False)
     previous_open_screen = StringProperty()
     pop_up_instance = ObjectProperty()
@@ -88,6 +91,7 @@ class ScanScreen(Screen):
             Clock.schedule_once(self.start_camera, 0)
 
     def on_leave(self):
+        """this methos will call on leave"""
         # pass
         Clock.schedule_once(self.stop_camera, 0)
 

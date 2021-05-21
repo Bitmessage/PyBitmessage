@@ -48,7 +48,7 @@ class Create(Screen):
         self.add_widget(widget_1)
         self.children[0].ids.id_scroll.bind(scroll_y=self.check_scroll_y)
 
-    def check_scroll_y(self, instance, somethingelse):
+    def check_scroll_y(self, instance, somethingelse): # pylint: disable=unused-argument
         """show data on scroll down"""
         if self.children[1].ids.btn.is_open:
             self.children[1].ids.btn.is_open = False
@@ -177,14 +177,15 @@ class DropDownWidget(BoxLayout):
             self.address_error_message(msg)
 
     @staticmethod
-    def callback_for_msgsend(dt=0):
+    def callback_for_msgsend(dt=0): # pylint: disable=unused-argument
         """Callback method for messagesend"""
         state.kivyapp.root.ids.sc3.children[0].active = False
         state.in_sent_method = True
         state.kivyapp.back_press()
         toast("sent")
 
-    def address_error_message(self, msg):
+    @staticmethod
+    def address_error_message(msg):
         """Generates error message"""
         width = .8 if platform == 'android' else .55
         dialog_box = MDDialog(
@@ -217,11 +218,14 @@ class DropDownWidget(BoxLayout):
         self.ids.ti.focus = True
 
     def is_camara_attached(self):
+        """Checks the camera availability in device"""
         self.parent.parent.parent.ids.sc23.check_camera()
         is_available = self.parent.parent.parent.ids.sc23.camera_avaialbe
         return is_available
 
-    def camera_alert(self):
+    @staticmethod
+    def camera_alert():
+        """Show camera availability alert message"""
         width = .8 if platform == 'android' else .55
         altet_txt = 'Currently this feature is not avaialbe!'if platform == 'android' else 'Camera is not available!'
         dialog_box = MDDialog(
@@ -255,7 +259,7 @@ class MyTextInput(TextInput):
         super(MyTextInput, self).__init__(**kwargs)
         self.__lineBreak__ = 0
 
-    def on_text(self, instance, value):
+    def on_text(self, instance, value): # pylint: disable=unused-argument
         """Find all the occurrence of the word"""
         self.parent.parent.parent.parent.parent.ids.rv.data = []
         matches = [self.word_list[i] for i in range(

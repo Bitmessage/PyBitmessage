@@ -1,7 +1,5 @@
-from pythonforandroid.toolchain import Recipe, shprint, shutil, current_directory
+from pythonforandroid.toolchain import Recipe, shprint, current_directory
 from os.path import exists, join
-import os
-import sys
 from multiprocessing import cpu_count
 import sh
 
@@ -46,5 +44,6 @@ class BitmsghashRecipe(Recipe):
             shprint(sh.make, '-j', str(cpu_count()), _env=env)
             self.install_libs(arch, '{}/libbitmsghash.so'.format(dst_dir),
                                     'libbitmsghash.so')
+
 
 recipe = BitmsghashRecipe()

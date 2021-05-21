@@ -15,7 +15,7 @@ from kivy.uix.screenmanager import Screen
 import state
 
 from bitmessagekivy.baseclass.common import (
-    AvatarSampleWidget, avatarImageFirstLetter, toast,
+    avatarImageFirstLetter, toast,
     ThemeClsColor, SwipeToDeleteItem
 )
 from bitmessagekivy.baseclass.popup import AddbookDetailPopup

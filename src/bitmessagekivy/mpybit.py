@@ -51,9 +51,9 @@ import state
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 
 from kivy.lang import Observable
-import gettext
-import l10n
-import locale
+# import gettext
+# import l10n
+# import locale
 import ast
 
 from bitmessagekivy.baseclass.common import toast
@@ -234,8 +234,8 @@ class NavigateApp(MDApp):
             Builder.load_file(
                 os.path.join(
                     os.path.dirname(__file__),
-                    "kv",
-                    f"{all_data[kv]['kv_string']}.kv",
+                    'kv',
+                    f'{all_data[kv]["kv_string"]}.kv',
                 )
             )
         # self.obj_1 = AddressBook()

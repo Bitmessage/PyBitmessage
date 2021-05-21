@@ -8,6 +8,7 @@ from string import ascii_lowercase
 
 
 class CreateRandomAddress(TeleniumTestProcess):
+    """This is for testing randrom address creation"""
 
     @classmethod
     def setUpClass(cls):
