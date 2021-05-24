@@ -34,3 +34,8 @@ class TestConfig(unittest.TestCase):
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent'), 0)
         self.assertEqual(
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
+
+    def test_reset(self):
+        """Reset current config"""
+        bm = BMConfigParser()
+        self.assertEqual(bm._reset(), None)
