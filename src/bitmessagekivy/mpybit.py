@@ -58,11 +58,11 @@ import ast
 
 from bitmessagekivy.baseclass.common import toast
 
+from kivy_garden.zbarcam import ZBarCam
+from pyzbar.pyzbar import ZBarSymbol
+
 if platform != "android":
     from kivy.config import Config
-    from kivy_garden.zbarcam import ZBarCam
-    from pyzbar.pyzbar import ZBarSymbol
-
     Config.set("input", "mouse", "mouse, multitouch_on_demand")
 elif platform == "android":
     from jnius import autoclass, cast
@@ -944,10 +944,10 @@ class NavigateApp(MDApp):
         print("Purchasing {} through {}".format(self.product_id, method_name))
 
     def _after_scan(self, text):
-        if platform == 'android':
-            text = cast(CharSequence, String(text))
-            show_toast(text, Toast.LENGTH_SHORT)
-        elif self.root.ids.sc23.previous_open_screen == 'composer':
+        # if platform == 'android':
+        #     toast_txt = cast(CharSequence, String(text))
+        #     show_toast(toast_txt, Toast.LENGTH_SHORT)
+        if self.root.ids.sc23.previous_open_screen == 'composer':
             self.root.ids.sc3.children[1].ids.txt_input.text = text
             self.root.ids.scr_mngr.current = 'create'
         elif self.root.ids.sc23.previous_open_screen:

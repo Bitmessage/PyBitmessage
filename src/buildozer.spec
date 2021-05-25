@@ -46,10 +46,9 @@ requirements =
 	libiconv,
 	libzbar,
 	pillow,
+	pyzbar,
 	bitmsghash,
-	#git+https://github.com/navjotcis/KivyMD#egg=kivymd,
 	git+https://github.com/kivymd/KivyMD#egg=kivymd,
-	#kivymd,
 	qrcode,
 	msgpack
 
@@ -100,7 +99,7 @@ fullscreen = 0
 #android.presplash_color = #FFFFFF
 
 # (list) Permissions
-android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
+android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, CAMERA
 
 # (int) Target Android API, should be as high as possible.
 android.api = 29

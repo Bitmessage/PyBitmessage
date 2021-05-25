@@ -60,6 +60,8 @@ class ScanScreen(Screen):
             else:
                 print("Camera is not available!")
                 self.camera_avaialbe = False
+        else:
+            self.camera_avaialbe = True
 
     def get_screen(self, screen_name, instance=None):
         """This method is used for getting previous screen name"""
@@ -74,7 +76,8 @@ class ScanScreen(Screen):
        """
         if not self.children:
             tmp = Builder.load_file(
-                os.path.join(os.path.dirname(__file__), "kv/{}.kv").format("scanner")
+                os.path.join(
+                    os.path.dirname(os.path.dirname(__file__)), "kv/{}.kv").format("scanner")
             )
             self.add_widget(tmp)
         if platform == "android":
