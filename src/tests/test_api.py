@@ -5,9 +5,9 @@ Tests using API.
 import base64
 import json
 import time
-from .common import skip_python3
+# from .common import skip_python3
 
-skip_python3()
+# skip_python3()
 
 try:  # nosec
     from xmlrpclib import ServerProxy, ProtocolError

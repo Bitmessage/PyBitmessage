@@ -4,7 +4,8 @@ Track randomize ordered dict
 from threading import RLock
 from time import time
 
-import helper_random
+# import helper_random
+from pybitmessage import helper_random
 
 
 class RandomTrackingDict(object):
