@@ -39,4 +39,3 @@ class TestConfig(unittest.TestCase):
         """Reset current config"""
         bm = BMConfigParser()
         self.assertEqual(bm._reset(), None)
-        
