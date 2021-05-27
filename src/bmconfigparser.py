@@ -172,6 +172,13 @@ class BMConfigParser(SafeConfigParser):
             return [x for x in BMConfigParser().sections() if x.startswith('BM-') and (
                     hidden or not BMConfigParser().safeGetBoolean(x, 'hidden'))]
 
+        def _reset(self):
+            """Reset current config. There doesn't appear to be a built in
+               method for this"""
+            sections = self.sections()
+            for x in sections:
+                self.remove_section(x)
+
         def read(self, filenames):
             SafeConfigParser.read(self, filenames)
             for section in self.sections():
