@@ -9,28 +9,22 @@ import sys
 import threading
 import time
 
-if sys.version_info[0] == 3:
-    from . import helper_sql
-    from . import helper_startup
-    from . import paths
-    from . import queues
-    from . import state
-    from . import tr
-    from .bmconfigparser import BMConfigParser
-    from .debug import logger
-    # pylint: disable=attribute-defined-outside-init,protected-access
-    from .addresses import encodeAddress
-else:
+try:
     import helper_sql
     import helper_startup
     import paths
     import queues
     import state
-    import tr
+    from addresses import encodeAddress
     from bmconfigparser import BMConfigParser
     from debug import logger
-    # pylint: disable=attribute-defined-outside-init,protected-access
-    from addresses import encodeAddress
+    from tr import _translate
+except ImportError:
+    from . import helper_sql, helper_startup, paths, queues, state
+    from .addresses import encodeAddress
+    from .bmconfigparser import BMConfigParser
+    from .debug import logger
+    from .tr import _translate
 
 
 class sqlThread(threading.Thread):
@@ -454,10 +448,10 @@ class sqlThread(threading.Thread):
                     ' sqlThread will now exit.')
                 queues.UISignalQueue.put((
                     'alert', (
-                        tr._translate(
+                        _translate(
                             "MainWindow",
                             "Disk full"),
-                        tr._translate(
+                        _translate(
                             "MainWindow",
                             'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                         True)))
@@ -484,10 +478,10 @@ class sqlThread(threading.Thread):
                             ' sqlThread will now exit.')
                         queues.UISignalQueue.put((
                             'alert', (
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "Disk full"),
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                                 True)))
@@ -510,10 +504,10 @@ class sqlThread(threading.Thread):
                             ' sqlThread will now exit.')
                         queues.UISignalQueue.put((
                             'alert', (
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "Disk full"),
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                                 True)))
@@ -535,10 +529,10 @@ class sqlThread(threading.Thread):
                             ' sqlThread will now exit.')
                         queues.UISignalQueue.put((
                             'alert', (
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "Disk full"),
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                                 True)))
@@ -561,10 +555,10 @@ class sqlThread(threading.Thread):
                             ' sqlThread will now exit.')
                         queues.UISignalQueue.put((
                             'alert', (
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "Disk full"),
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                                 True)))
@@ -588,10 +582,10 @@ class sqlThread(threading.Thread):
                             ' sqlThread will now exit.')
                         queues.UISignalQueue.put((
                             'alert', (
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "Disk full"),
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                                 True)))
@@ -609,10 +603,10 @@ class sqlThread(threading.Thread):
                             ' sqlThread will now exit.')
                         queues.UISignalQueue.put((
                             'alert', (
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "Disk full"),
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'),
                                 True)))
