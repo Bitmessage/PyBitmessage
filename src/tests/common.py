@@ -22,6 +22,15 @@ def cleanup(home=None, files=_files):
             pass
 
 
+def checkup():
+    """Checkup files in the src dir"""
+    src_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir))
+    for f in _files:
+        if os.path.isfile(os.path.join(src_dir, f)):
+            return 'Found application file %s in src dir' % f
+
+
 def skip_python3():
     """Raise unittest.SkipTest() if detected python3"""
     if sys.hexversion >= 0x3000000:

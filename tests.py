@@ -18,5 +18,17 @@ def unittest_discover():
 
 
 if __name__ == "__main__":
-    result = unittest.TextTestRunner(verbosity=2).run(unittest_discover())
-    sys.exit(not result.wasSuccessful())
+    success = unittest.TextTestRunner(verbosity=2).run(
+        unittest_discover()).wasSuccessful()
+    try:
+        from src.tests import common
+    except ImportError:
+        checkup = False
+        print('ImportError from src.tests')
+    else:
+        checkup = common.checkup()
+
+    if checkup and not success:
+        print(checkup)
+
+    sys.exit(not success or checkup)
