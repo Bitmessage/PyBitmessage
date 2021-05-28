@@ -5,16 +5,10 @@ Tests using API.
 import base64
 import json
 import time
-from .common import skip_python3
 
-skip_python3()
+from six.moves import xmlrpc_client  # nosec
 
 import psutil
-
-try:  # nosec
-    from xmlrpclib import ServerProxy, ProtocolError
-except ImportError:
-    from xmlrpc.client import ServerProxy, ProtocolError
 
 from .test_process import TestProcessProto
 
@@ -28,7 +22,7 @@ class TestAPIProto(TestProcessProto):
         """Setup XMLRPC proxy for pybitmessage API"""
         super(TestAPIProto, cls).setUpClass()
         cls.addresses = []
-        cls.api = ServerProxy(
+        cls.api = xmlrpc_client.ServerProxy(
             "http://username:password@127.0.0.1:8442/")
         for _ in range(5):
             if cls._get_readline('.api_started'):
@@ -72,8 +66,9 @@ class TestAPI(TestAPIProto):
 
     def test_user_password(self):
         """Trying to connect with wrong username/password"""
-        api_wrong = ServerProxy("http://test:wrong@127.0.0.1:8442/")
-        with self.assertRaises(ProtocolError):
+        api_wrong = xmlrpc_client.ServerProxy(
+            "http://test:wrong@127.0.0.1:8442/")
+        with self.assertRaises(xmlrpc_client.ProtocolError):
             api_wrong.clientStatus()
 
     def test_connection(self):
