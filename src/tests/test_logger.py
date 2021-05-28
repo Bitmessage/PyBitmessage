@@ -1,11 +1,14 @@
+# pylint: disable=E1101
 """
 Testing the logger configuration
 """
 
 import os
 import tempfile
+import sys
 
 from .test_process import TestProcessProto
+PY3 = sys.version_info[0] >= 3
 
 
 class TestLogger(TestProcessProto):
@@ -43,7 +46,10 @@ handlers=default
         cls.log_file = os.path.join(cls.home, 'debug.log')
 
         with open(os.path.join(cls.home, 'logging.dat'), 'wb') as dst:
-            dst.write(cls.conf_template.format(cls.log_file, cls.pattern))
+            if PY3:
+                dst.write(bytes(cls.conf_template.format(cls.log_file, cls.pattern), 'utf-8'))
+            else:
+                dst.write(cls.conf_template.format(cls.log_file, cls.pattern))
 
         super(TestLogger, cls).setUpClass()
 
@@ -52,5 +58,9 @@ handlers=default
 
         self._stop_process()
         data = open(self.log_file).read()
-        self.assertRegexpMatches(data, self.pattern)
-        self.assertRegexpMatches(data, 'Loaded logger configuration')
+        if PY3:
+            self.assertRegex(data, self.pattern)
+            self.assertRegex(data, 'Loaded logger configuration')
+        else:
+            self.assertRegexpMatches(data, self.pattern)
+            self.assertRegexpMatches(data, 'Loaded logger configuration')
