@@ -1,15 +1,20 @@
 """Tests for SQL thread"""
-
+# flake8: noqa:E402
 import os
 import tempfile
 import threading
 import unittest
 
-os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()  # noqa:E402
+from .common import skip_python3
 
-from pybitmessage.helper_sql import sqlQuery, sql_ready, sqlStoredProcedure
-from pybitmessage.class_sqlThread import sqlThread
-from pybitmessage.addresses import encodeAddress
+skip_python3()
+
+os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
+
+from pybitmessage.helper_sql import (
+    sqlQuery, sql_ready, sqlStoredProcedure)  # noqa:E402
+from pybitmessage.class_sqlThread import sqlThread  # noqa:E402
+from pybitmessage.addresses import encodeAddress  # noqa:E402
 
 
 class TestSqlThread(unittest.TestCase):
