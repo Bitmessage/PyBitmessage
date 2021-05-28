@@ -276,6 +276,7 @@ class TestAPI(TestAPIProto):
         msg = base64.encodestring('test broadcast')
         ackdata = self.api.sendBroadcast(
             addr, base64.encodestring('test_subject'), msg)
+
         try:
             int(ackdata, 16)
             status = self.api.getStatus(ackdata)
@@ -283,6 +284,15 @@ class TestAPI(TestAPIProto):
                 raise KeyError
             self.assertIn(status, (
                 'doingbroadcastpow', 'broadcastqueued', 'broadcastsent'))
+
+            start = time.time()
+            while status == 'doingbroadcastpow':
+                spent = int(time.time() - start)
+                if spent > 30:
+                    self.fail('PoW is taking too much time: %ss' % spent)
+                time.sleep(1)  # wait for PoW to get final msgid on next step
+                status = self.api.getStatus(ackdata)
+
             # Find the message and its ID in sent
             for m in json.loads(self.api.getAllSentMessages())['sentMessages']:
                 if m['ackData'] == ackdata:
