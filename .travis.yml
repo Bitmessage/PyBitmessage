@@ -26,6 +26,7 @@ jobs:
         - export WINDIST=$HOME/build/$TRAVIS_REPO_SLUG/packages/pyinstaller/dist/
         - xvfb-run i386 buildscripts/winbuild.sh
       script:
+        - python src/bitmessagemain.py -t
         - wine $WINDIST/Bitmessage_x86_$VERSION.exe -t
 install:
   - pip install -r requirements.txt
