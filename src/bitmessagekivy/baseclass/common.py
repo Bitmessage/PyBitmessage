@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from kivy.core.window import Window
 from kivy.lang import Builder
@@ -10,6 +9,7 @@ from kivymd.uix.list import (
 from kivy.uix.image import Image
 from kivymd.uix.label import MDLabel
 from bitmessagekivy.get_platform import platform
+from kivymd.toast import kivytoast
 from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
 from kivy.properties import (
@@ -49,34 +49,29 @@ def chipTag(text):
     return obj
 
 
-def initailize_detail_page(manager):
-    if not manager.has_screen(
-        data_screens['MailDetail']["name_screen"]
-    ):
-        Builder.load_file(
-            os.path.join(
-                # os.environ["KITCHEN_SINK_ROOT"],
-                os.path.dirname(os.path.dirname(__file__)),
-                "kv",
-                "maildetail.kv",
-            )
-        )
-        if "Import" in data_screens['MailDetail']:
-            exec(data_screens['MailDetail']["Import"])
-        screen_object = eval(data_screens['MailDetail']["Factory"])
-        data_screens['MailDetail']["object"] = screen_object
-        manager.add_widget(screen_object)
-    manager.current = data_screens['MailDetail']["name_screen"]
+# def initailize_detail_page(manager):
+#     if not manager.has_screen(
+#         data_screens['MailDetail']["name_screen"]
+#     ):
+#         Builder.load_file(
+#             os.path.join(
+#                 # os.environ["KITCHEN_SINK_ROOT"],
+#                 os.path.dirname(os.path.dirname(__file__)),
+#                 "kv",
+#                 "maildetail.kv",
+#             )
+#         )
+#         if "Import" in data_screens['MailDetail']:
+#             exec(data_screens['MailDetail']["Import"])
+#         screen_object = eval(data_screens['MailDetail']["Factory"])
+#         data_screens['MailDetail']["object"] = screen_object
+#         manager.add_widget(screen_object)
+#     manager.current = data_screens['MailDetail']["name_screen"]
 
 
 def toast(text):
     """Method will display the toast message"""
-    # pylint: disable=redefined-outer-name
-    from kivymd.toast.kivytoast import toast
-
-    toast(text)
-    return None
-
+    kivytoast.toast(text)
 
 def showLimitedCnt(total_msg):
     """This method set the total count limit in badge_text"""
@@ -97,7 +92,7 @@ def avatarImageFirstLetter(letter_string):
     return img_latter if img_latter else '!'
 
 
-def AddTimeWidget(time):  # pylint: disable=redefined-outer-name
+def AddTimeWidget(time):  # pylint: disable=redefined-outer-name, W0201
     """This method is used to create TimeWidget"""
     action_time = TimeTagRightSampleWidget(
         text=str(ShowTimeHistoy(time)),
@@ -123,6 +118,7 @@ def ShowTimeHistoy(act_time):
     return display_data
 
 
+# pylint: disable=too-few-public-methods
 class AvatarSampleWidget(ILeftBody, Image):
     """AvatarSampleWidget class for kivy Ui"""
 
@@ -132,6 +128,7 @@ class TimeTagRightSampleWidget(IRightBodyTouch, MDLabel):
 
 
 class SwipeToDeleteItem(MDCardSwipe):
+    """Swipe delete class for App UI"""
     text = StringProperty()
     cla = Window.size[0] / 2
     # cla = 800
@@ -140,6 +137,7 @@ class SwipeToDeleteItem(MDCardSwipe):
 
 
 class CutsomSwipeToDeleteItem(MDCardSwipe):
+    """Custom swipe delete class for App UI"""
     text = StringProperty()
     cla = Window.size[0] / 2
     swipe_distance = NumericProperty(cla)

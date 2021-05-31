@@ -11,10 +11,10 @@ from kivymd.uix.list import (
     OneLineAvatarIconListItem
 )
 
-from bmconfigparser import BMConfigParser
+# from bmconfigparser import BMConfigParser
 from bitmessagekivy.baseclass.common import toast
 
-import queues
+# import queues
 import state
 
 

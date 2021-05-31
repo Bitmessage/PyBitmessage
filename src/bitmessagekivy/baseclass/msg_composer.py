@@ -48,7 +48,7 @@ class Create(Screen):
         self.add_widget(widget_1)
         self.children[0].ids.id_scroll.bind(scroll_y=self.check_scroll_y)
 
-    def check_scroll_y(self, instance, somethingelse): # pylint: disable=unused-argument
+    def check_scroll_y(self, instance, somethingelse):  # pylint: disable=unused-argument
         """show data on scroll down"""
         if self.children[1].ids.btn.is_open:
             self.children[1].ids.btn.is_open = False
@@ -84,100 +84,94 @@ class DropDownWidget(BoxLayout):
         toAddress = self.ids.txt_input.text.strip()
         subject = self.ids.subject.text.strip()
         message = self.ids.body.text.strip()
-        encoding = 3
         print("message: ", self.ids.body.text)
-        sendMessageToPeople = True
-        if sendMessageToPeople:
-            if toAddress != "" and subject and message:
-                status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                    toAddress
-                )
-                if status == "success":
-                    navApp.root.ids.sc3.children[0].active = True
-                    if state.detailPageType == "draft" and state.send_draft_mail:
-                        sqlExecute(
-                            "UPDATE sent SET toaddress = ?"
-                            ", fromaddress = ? , subject = ?"
-                            ", message = ?, folder = 'sent'"
-                            ", senttime = ?, lastactiontime = ?"
-                            " WHERE ackdata = ?;",
-                            toAddress,
-                            fromAddress,
-                            subject,
-                            message,
-                            int(time.time()),
-                            int(time.time()),
-                            state.send_draft_mail)
-                        self.parent.parent.screens[13].clear_widgets()
-                        self.parent.parent.screens[13].add_widget(Factory.Draft())
-                        # state.detailPageType = ''
-                        # state.send_draft_mail = None
-                    else:
-                        from addresses import addBMIfNotPresent
-                        toAddress = addBMIfNotPresent(toAddress)
-                        statusIconColor = 'red'
-                        if (addressVersionNumber > 4) or (
-                                addressVersionNumber <= 1):
-                            print(
-                                "addressVersionNumber > 4"
-                                " or addressVersionNumber <= 1")
-                        if streamNumber > 1 or streamNumber == 0:
-                            print("streamNumber > 1 or streamNumber == 0")
-                        if statusIconColor == 'red':
-                            print("shared.statusIconColor == 'red'")
-                        stealthLevel = BMConfigParser().safeGetInt(
-                            'bitmessagesettings', 'ackstealthlevel')
-                        from helper_ackPayload import genAckPayload
-                        ackdata = genAckPayload(streamNumber, stealthLevel)
-                        # t = ()
-                        sqlExecute(
-                            '''INSERT INTO sent VALUES
-                            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                            '',
-                            toAddress,
-                            ripe,
-                            fromAddress,
-                            subject,
-                            message,
-                            ackdata,
-                            int(time.time()),
-                            int(time.time()),
-                            0,
-                            'msgqueued',
-                            0,
-                            'sent',
-                            encoding,
-                            BMConfigParser().safeGetInt(
-                                'bitmessagesettings', 'ttl'))
-                    state.check_sent_acc = fromAddress
-                    # state.msg_counter_objs = self.parent.parent.parent.parent\
-                    #     .parent.parent.children[2].children[0].ids
-                    if state.detailPageType == 'draft' \
-                            and state.send_draft_mail:
-                        state.draft_count = str(int(state.draft_count) - 1)
-                        # state.msg_counter_objs.draft_cnt.badge_text = (
-                        #     state.draft_count)
-                        state.detailPageType = ''
-                        state.send_draft_mail = None
-                    self.parent.parent.parent.ids.sc4.update_sent_messagelist()
-                    allmailCnt_obj = state.kivyapp.root.ids.content_drawer.ids.allmail_cnt
-                    allmailCnt_obj.ids.badge_txt.text = showLimitedCnt(int(state.all_count) + 1)
-                    state.all_count = str(int(state.all_count) + 1)
-                    Clock.schedule_once(self.callback_for_msgsend, 3)
-                    queues.workerQueue.put(('sendmessage', toAddress))
-                    print("sqlExecute successfully #######################")
-                    state.in_composer = True
-                    return
+        if toAddress != "" and subject and message:
+            status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                toAddress
+            )
+            if status == "success":
+                navApp.root.ids.sc3.children[0].active = True
+                if state.detailPageType == "draft" and state.send_draft_mail:
+                    sqlExecute(
+                        "UPDATE sent SET toaddress = ?"
+                        ", fromaddress = ? , subject = ?"
+                        ", message = ?, folder = 'sent'"
+                        ", senttime = ?, lastactiontime = ?"
+                        " WHERE ackdata = ?;",
+                        toAddress,
+                        fromAddress,
+                        subject,
+                        message,
+                        int(time.time()),
+                        int(time.time()),
+                        state.send_draft_mail)
+                    self.parent.parent.screens[13].clear_widgets()
+                    self.parent.parent.screens[13].add_widget(Factory.Draft())
+                    # state.detailPageType = ''
+                    # state.send_draft_mail = None
                 else:
-                    msg = 'Enter a valid recipients address'
-            elif not toAddress:
-                msg = 'Please fill the form completely'
+                    from addresses import addBMIfNotPresent
+                    # toAddress = addBMIfNotPresent(toAddress)
+                    if (addressVersionNumber > 4) or (
+                            addressVersionNumber <= 1):
+                        print(
+                            "addressVersionNumber > 4"
+                            " or addressVersionNumber <= 1")
+                    if streamNumber > 1 or streamNumber == 0:
+                        print("streamNumber > 1 or streamNumber == 0")
+                    stealthLevel = BMConfigParser().safeGetInt(
+                        'bitmessagesettings', 'ackstealthlevel')
+                    from helper_ackPayload import genAckPayload
+                    # ackdata = genAckPayload(streamNumber, stealthLevel)
+                    # t = ()
+                    sqlExecute(
+                        '''INSERT INTO sent VALUES
+                        (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                        '',
+                        addBMIfNotPresent(toAddress),
+                        ripe,
+                        fromAddress,
+                        subject,
+                        message,
+                        genAckPayload(streamNumber, stealthLevel),  #ackdata
+                        int(time.time()),
+                        int(time.time()),
+                        0,
+                        'msgqueued',
+                        0,
+                        'sent',
+                        3,  #encoding
+                        BMConfigParser().safeGetInt(
+                            'bitmessagesettings', 'ttl'))
+                state.check_sent_acc = fromAddress
+                # state.msg_counter_objs = self.parent.parent.parent.parent\
+                #     .parent.parent.children[2].children[0].ids
+                if state.detailPageType == 'draft' \
+                        and state.send_draft_mail:
+                    state.draft_count = str(int(state.draft_count) - 1)
+                    # state.msg_counter_objs.draft_cnt.badge_text = (
+                    #     state.draft_count)
+                    state.detailPageType = ''
+                    state.send_draft_mail = None
+                self.parent.parent.parent.ids.sc4.update_sent_messagelist()
+                allmailCnt_obj = state.kivyapp.root.ids.content_drawer.ids.allmail_cnt
+                allmailCnt_obj.ids.badge_txt.text = showLimitedCnt(int(state.all_count) + 1)
+                state.all_count = str(int(state.all_count) + 1)
+                Clock.schedule_once(self.callback_for_msgsend, 3)
+                queues.workerQueue.put(('sendmessage', addBMIfNotPresent(toAddress)))
+                print("sqlExecute successfully #######################")
+                state.in_composer = True
+                return
             else:
-                msg = 'Please fill the form completely'
-            self.address_error_message(msg)
+                msg = 'Enter a valid recipients address'
+        elif not toAddress:
+            msg = 'Please fill the form completely'
+        else:
+            msg = 'Please fill the form completely'
+        self.address_error_message(msg)
 
     @staticmethod
-    def callback_for_msgsend(dt=0): # pylint: disable=unused-argument
+    def callback_for_msgsend(dt=0):  # pylint: disable=unused-argument
         """Callback method for messagesend"""
         state.kivyapp.root.ids.sc3.children[0].active = False
         state.in_sent_method = True
@@ -259,7 +253,7 @@ class MyTextInput(TextInput):
         super(MyTextInput, self).__init__(**kwargs)
         self.__lineBreak__ = 0
 
-    def on_text(self, instance, value): # pylint: disable=unused-argument
+    def on_text(self, instance, value):  # pylint: disable=unused-argument
         """Find all the occurrence of the word"""
         self.parent.parent.parent.parent.parent.ids.rv.data = []
         matches = [self.word_list[i] for i in range(

@@ -32,6 +32,7 @@ class AddressBook(Screen):
     def __init__(self, *args, **kwargs):
         """Getting AddressBook Details"""
         super(AddressBook, self).__init__(*args, **kwargs)
+        self.addbook_popup = None
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):

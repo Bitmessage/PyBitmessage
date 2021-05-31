@@ -60,7 +60,7 @@ class Random(Screen):
             self.manager.current = 'myaddress'
             Clock.schedule_once(self.address_created_callback, 6)
 
-    def address_created_callback(self, dt=0): # pylint: disable=unused-argument
+    def address_created_callback(self, dt=0):  # pylint: disable=unused-argument
         """New address created"""
         state.kivyapp.loadMyAddressScreen(False)
         state.kivyapp.root.ids.sc10.ids.ml.clear_widgets()

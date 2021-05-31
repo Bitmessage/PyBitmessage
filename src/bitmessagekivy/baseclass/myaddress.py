@@ -2,7 +2,7 @@ from bitmessagekivy.get_platform import platform
 from functools import partial
 from bmconfigparser import BMConfigParser
 from kivy.clock import Clock
-from kivy.metrics import dp
+# from kivy.metrics import dp
 from kivy.properties import (
     ListProperty,
     StringProperty
@@ -100,7 +100,7 @@ class MyAddress(Screen):
                 text=item['text'], secondary_text=item['secondary_text'],
                 theme_text_color='Custom' if is_enable == 'true' else 'Primary',
                 text_color=ThemeClsColor,)
-            meny._txt_right_pad = dp(70)
+            # meny._txt_right_pad = dp(70)
             try:
                 meny.canvas.children[3].rgba = [0, 0, 0, 0] if is_enable == 'true' else [0.5, 0.5, 0.5, 0.5]
             except Exception:
@@ -191,7 +191,7 @@ class MyAddress(Screen):
             self.ids.ml.clear_widgets()
             self.init_ui()
             self.ids.refresh_layout.refresh_done()
-            self.tick = 0
+            # self.tick = 0
             Clock.schedule_once(self.address_permision_callback, 0)
         Clock.schedule_once(refresh_callback, 1)
 

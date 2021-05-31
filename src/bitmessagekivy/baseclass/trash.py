@@ -26,7 +26,7 @@ class Trash(Screen):
 
     trash_messages = ListProperty()
     has_refreshed = True
-    # delete_index = StringProperty()
+    delete_index = None
     table_name = StringProperty()
 
     def __init__(self, *args, **kwargs):
@@ -106,10 +106,8 @@ class Trash(Screen):
             self.ids.ml.children) else False
 
     def on_swipe_complete(self, instance, *args):
-        if instance.state == 'closed':
-            instance.ids.delete_msg.disabled = True
-        else:
-            instance.ids.delete_msg.disabled = False
+        """call on swipe left"""
+        instance.ids.delete_msg.disabled = bool(instance.state == 'closed')
 
     def check_scroll_y(self, instance, somethingelse):
         """Load data on scroll"""

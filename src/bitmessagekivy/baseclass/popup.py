@@ -203,7 +203,6 @@ class SenderDetailPopup(Popup):
         device_type = 2 if platform == 'android' else 1.5
         pop_height = 1.2 * device_type * (self.ids.sd_label.height + self.ids.dismiss_btn.height)
         if len(to_addr) > 3:
-            self.height = 0
             self.height = pop_height
             self.ids.to_addId.size_hint_y = None
             self.ids.to_addId.height = 50
@@ -215,7 +214,6 @@ class SenderDetailPopup(Popup):
             self.ids.space_1.height = dp(0)
             self.ids.space_2.height = dp(0)
             self.ids.myadd_popup_box.spacing = dp(8 if platform == 'android' else 3)
-            self.height = 0
             self.height = pop_height / 1.2
 
 

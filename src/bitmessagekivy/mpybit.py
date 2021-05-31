@@ -235,7 +235,8 @@ class NavigateApp(MDApp):
                 os.path.join(
                     os.path.dirname(__file__),
                     'kv',
-                    f'{all_data[kv]["kv_string"]}.kv',
+                    # f'{all_data[kv]["kv_string"]}.kv',
+                    '{0}.kv'.format(all_data[kv]["kv_string"]),
                 )
             )
         # self.obj_1 = AddressBook()
@@ -957,7 +958,8 @@ class NavigateApp(MDApp):
             add_obj.content_cls.ids.address.text = text
             Clock.schedule_once(partial(self.open_popup, add_obj), .5)
 
-    def open_popup(self, instance, dt):
+    @staticmethod
+    def open_popup(instance, dt):
         """This method is used for opening popup"""
         instance.open()
 
