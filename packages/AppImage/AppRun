@@ -1,5 +1,4 @@
 #!/bin/sh
 
 SELF_DIR="$(dirname "$(readlink -f "$0")")"
-cd "$SELF_DIR/usr/bin/"
-exec "pybitmessage"
+python "$SELF_DIR"/usr/lib/python2.7/dist-packages/pybitmessage/bitmessagemain.py "$@"

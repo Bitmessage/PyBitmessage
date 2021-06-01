@@ -4,7 +4,7 @@
 First make sure you have `dpkg` and `appimagetool` installed.
 From packages/AppImage/ Dir run `install.sh` to install the appimagetool.
 ```
-sudo ./install.sh
+./install.sh
 ```
 
 ## Build and Install
