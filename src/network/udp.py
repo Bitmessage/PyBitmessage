@@ -21,7 +21,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
     port = 8444
 
     def __init__(self, host=None, sock=None, announcing=False):
-        # pylint: disable=bad-super-call
+        # pylint: disable=bad-super-call, access-member-before-definition
         super(BMProto, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
@@ -97,22 +97,30 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             time.time()
         return True
 
+    # override the protocol do ignore the following commands on UDP
+    # we do this mainly for security reasons
     def bm_command_portcheck(self):
+        # pylint: disable=no-self-use
         return True
 
     def bm_command_ping(self):
+        # pylint: disable=no-self-use
         return True
 
     def bm_command_pong(self):
+        # pylint: disable=no-self-use
         return True
 
     def bm_command_verack(self):
+        # pylint: disable=no-self-use
         return True
 
     def bm_command_version(self):
+        # pylint: disable=no-self-use
         return True
 
     def handle_connect(self):
+        # pylint: disable=no-self-use
         return
 
     def writable(self):
