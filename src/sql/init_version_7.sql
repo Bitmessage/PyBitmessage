@@ -9,3 +9,5 @@ DELETE FROM inventory WHERE objecttype = 1;
 DELETE FROM pubkeys;
 
 UPDATE sent SET status='msgqueued' WHERE status='doingmsgpow' or status='badkey';
+
+UPDATE settings SET value = 8 WHERE key = 'version';

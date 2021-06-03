@@ -15,3 +15,5 @@ CREATE TABLE `pubkeys` (
 ) ;
 
 DELETE FROM inventory WHERE objecttype = 'pubkey';
+
+UPDATE settings SET value = 5 WHERE key = 'version';

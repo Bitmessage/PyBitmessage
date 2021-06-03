@@ -10,3 +10,5 @@ CREATE TABLE `objectprocessorqueue` (
     `data` blob,
     UNIQUE(objecttype, data) ON CONFLICT REPLACE
 ) ;
+
+UPDATE settings SET value = 6 WHERE key = 'version';

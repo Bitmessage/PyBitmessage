@@ -5,3 +5,5 @@
 --
 
 ALTER TABLE inbox ADD sighash blob DEFAULT '';
+
+UPDATE settings SET value = 9 WHERE key = 'version';
