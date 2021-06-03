@@ -1,15 +1,11 @@
 """
 Startup operations.
 """
-# pylint: disable=too-many-branches,too-many-statements
-
 import logging
 import os
 import platform
-import sys
 import time
 from distutils.version import StrictVersion
-
 import sys
 if sys.version_info[0] == 3:
     from . import defaults
@@ -28,6 +24,8 @@ try:
     from plugins.plugin import get_plugin
 except ImportError:
     get_plugin = None
+
+# pylint: disable=too-many-branches,too-many-statements
 
 
 logger = logging.getLogger('default')
