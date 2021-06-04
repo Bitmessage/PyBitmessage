@@ -1,5 +1,5 @@
 """
-Tests for RandomTrackingDict class
+Tests for RandomTrackingDict Class
 """
 import random
 import unittest
