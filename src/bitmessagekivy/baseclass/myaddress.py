@@ -240,6 +240,7 @@ class MyAddress(Screen):
                      if BMConfigParser().get(str(addr), 'enabled') == 'true']
         self.parent.parent.ids.content_drawer.ids.btn.values = addresses
         self.parent.parent.ids.sc3.children[1].ids.btn.values = addresses
+        state.kivyapp.variable_1 = addresses
 
     def toggleAction(self, instance):
         """This method is used for enable or disable address"""

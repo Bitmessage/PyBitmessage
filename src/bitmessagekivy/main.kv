@@ -74,8 +74,8 @@
                 on_release: app.rest_default_avatar_img()
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
-                opacity: 1 if app.current_address_label() else 0
-                disabled: False if app.current_address_label() else True
+                # opacity: 1 if app.current_address_label() else 0
+                # disabled: False if app.current_address_label() else True
                 opacity: 0
                 disabled: True
 
@@ -89,8 +89,8 @@
                 # md_bg_color: app.theme_cls.primary_color
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
-                opacity:  0
-                disabled: True
+                opacity: 1 if app.current_address_label() else 0
+                disabled: False if app.current_address_label() else True
 
             BoxLayout:
                 id: top_box
@@ -100,8 +100,8 @@
                 x: root.parent.x
                 pos_hint: {"top": 1}
                 Image:
-                    source: './images/drawer_logo1.png'
-                    # source: app.get_default_logo()
+                    #source: './images/drawer_logo1.png'
+                    source: app.get_default_logo(self)
 
         ScrollView:
             id: scroll_y

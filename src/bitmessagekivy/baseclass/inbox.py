@@ -40,8 +40,8 @@ class Inbox(Screen):
     def set_defaultAddress():
         """This method set's default address"""
         if state.association == "":
-            if BMConfigParser().addresses():
-                state.association = BMConfigParser().addresses()[0]
+            if state.kivyapp.variable_1:
+                state.association = state.kivyapp.variable_1[0]
 
     def init_ui(self, dt=0):
         """Clock schdule for method inbox accounts"""

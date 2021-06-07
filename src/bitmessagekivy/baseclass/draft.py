@@ -34,8 +34,8 @@ class Draft(Screen):
         """Method used for storing draft messages"""
         super(Draft, self).__init__(*args, **kwargs)
         if state.association == '':
-            if BMConfigParser().addresses():
-                state.association = BMConfigParser().addresses()[0]
+            if state.kivyapp.variable_1:
+                state.association = state.kivyapp.variable_1[0]
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):

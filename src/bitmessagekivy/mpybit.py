@@ -11,7 +11,7 @@ Bitmessage android(mobile) interface
 
 from bitmessagekivy.get_platform import platform
 import os
-# from bitmessagekivy import identiconGeneration
+from bitmessagekivy import identiconGeneration
 from bitmessagekivy import kivy_helper_search
 from bitmessagekivy.uikivysignaler import UIkivySignaler
 from bmconfigparser import BMConfigParser
@@ -274,7 +274,7 @@ class NavigateApp(MDApp):
             if os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(text)):
                 self.load_selected_Image(text)
             else:
-                # self.set_identicon(text)
+                self.set_identicon(text)
                 self.root.ids.content_drawer.ids.reset_image.opacity = 0
                 self.root.ids.content_drawer.ids.reset_image.disabled = True
             address_label = self.current_address_label(
@@ -295,8 +295,8 @@ class NavigateApp(MDApp):
         """This method is for file manager setting"""
         if not self.root.ids.content_drawer.ids.file_manager.opacity and \
                 self.root.ids.content_drawer.ids.file_manager.disabled:
-            self.root.ids.content_drawer.ids.file_manager.opacity = 0
-            self.root.ids.content_drawer.ids.file_manager.disabled = True
+            self.root.ids.content_drawer.ids.file_manager.opacity = 1
+            self.root.ids.content_drawer.ids.file_manager.disabled = False
 
     def setCurrentAccountData(self, dt=0):
         """This method set the current accout data on all the screens"""
@@ -418,10 +418,11 @@ class NavigateApp(MDApp):
 
     def getDefaultAccData(self, instance):
         """Getting Default Account Data"""
-        if BMConfigParser().addresses():
-            first_addr = BMConfigParser().addresses()[0]
-            if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
+        if self.variable_1:
+            state.association = first_addr = self.variable_1[0]
+            # if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
                 # img = identiconGeneration.generate(first_addr)
+                # print('line...........................................426')
                 # self.createFolder(state.imageDir + '/default_identicon/')
                 # if platform == 'android':
                 #     # android_path = os.path.expanduser
@@ -439,10 +440,23 @@ class NavigateApp(MDApp):
                 #             BMConfigParser().addresses()[0]))
                 # instance.parent.parent.parent.parent.parent.ids.top_box.children[0].texture = (
                     # img.texture)
-                return first_addr
-        # instance.parent.parent.parent.parent.parent.ids.top_box.children[0].source = (
-            # state.imageDir + '/drawer_logo1.png')
+            return first_addr
         return 'Select Address'
+
+    def get_default_logo(self, instance):
+        """Getting default logo image"""
+        if self.variable_1:
+            first_addr = self.variable_1[0]
+            if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
+                if os.path.exists(
+                    state.imageDir + '/default_identicon/{}.png'.format(first_addr)):
+                    return state.imageDir + '/default_identicon/{}.png'.format(
+                            first_addr)
+                else:
+                    img = identiconGeneration.generate(first_addr)
+                    instance.texture = img.texture
+                    return
+        return state.imageDir + '/drawer_logo1.png'
 
     @staticmethod
     def addressexist():
@@ -689,12 +703,14 @@ class NavigateApp(MDApp):
     @staticmethod
     def current_address_label(current_add_label=None, current_addr=None):
         """Getting current address labels"""
-        if BMConfigParser().addresses():
+        addresses = [addr for addr in BMConfigParser().addresses()
+                        if BMConfigParser().get(str(addr), 'enabled') == 'true']
+        if addresses:
             if current_add_label:
                 first_name = current_add_label
                 addr = current_addr
             else:
-                addr = BMConfigParser().addresses()[0]
+                addr = addresses[0]
                 first_name = BMConfigParser().get(addr, 'label')
                 if BMConfigParser().get(addr, 'enabled') != 'true':
                     return ''
@@ -770,10 +786,10 @@ class NavigateApp(MDApp):
 
     def set_identicon(self, text):
         """Show identicon in address spinner"""
-        # img = identiconGeneration.generate(text)
+        img = identiconGeneration.generate(text)
         # self.root.children[0].children[0].ids.btn.children[1].texture = (img.texture)
         # below line is for displaing logo
-        # self.root.ids.content_drawer.ids.top_box.children[0].texture = (img.texture)
+        self.root.ids.content_drawer.ids.top_box.children[0].texture = (img.texture)
 
     def set_mail_detail_header(self):
         """Setting the details of the page"""
@@ -911,7 +927,7 @@ class NavigateApp(MDApp):
 
     def rest_default_avatar_img(self):
         """set default avatar generated image"""
-        # self.set_identicon(state.association)
+        self.set_identicon(state.association)
         img_path = state.imageDir + '/default_identicon/{}.png'.format(state.association)
         try:
             if os.path.exists(img_path):
