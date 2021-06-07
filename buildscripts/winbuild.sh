@@ -167,6 +167,14 @@ function build_exe(){
 	wine pyinstaller bitmessagemain.spec
 }
 
+function dryrun_exe(){
+       cd "${BASE_DIR}" || exit 1
+       if [ ! "${MACHINE_TYPE}" == 'x86_64' ]; then
+	   local VERSION=$(python setup.py --version)
+	   wine packages/pyinstaller/dist/Bitmessage_x86_$VERSION.exe -t
+       fi
+}
+
 # prepare on ubuntu
 # dpkg --add-architecture i386
 # apt update
@@ -187,3 +195,4 @@ install_msgpack
 install_pyinstaller
 build_dll
 build_exe
+dryrun_exe
