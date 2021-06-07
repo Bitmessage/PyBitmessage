@@ -1,0 +1,33 @@
+<MyAddress>:
+    name: 'myaddress'
+    BoxLayout:
+        id: main_box
+        orientation: 'vertical'
+        spacing: dp(5)
+        SearchBar:
+            id: search_bar
+        GridLayout:
+            id: identi_tag
+            padding: [20, 0, 0, 5]
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            MDLabel:
+                id: tag_label
+                text: app.tr._('My Addresses')
+                font_style: 'Subtitle2'
+        FloatLayout:
+            MDScrollViewRefreshLayout:
+                id: refresh_layout
+                refresh_callback: root.refresh_callback
+                root_layout: root
+                MDList:
+                    id: ml
+    Loader:
+
+
+<ToggleBtn>:
+    size_hint: None, None
+    size: dp(36), dp(48)
+    pos_hint: {'center_x': .95, 'center_y': .4}
+    on_active: app.root.ids.sc10.toggleAction(self)

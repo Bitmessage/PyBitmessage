@@ -1,0 +1,28 @@
+<Credits>:
+    name: 'credits'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            OneLineListTitle:
+                id: cred
+                text: app.tr._("Available Credits")
+                divider: None
+                theme_text_color: 'Primary'
+                _no_ripple_effect: True
+                long_press_time: 1
+
+            OneLineListTitle:
+                id: cred
+                text: app.tr._(root.available_credits)
+                divider: None
+                font_style: 'H5'
+                theme_text_color: 'Primary'
+                _no_ripple_effect: True
+                long_press_time: 1
+            AnchorLayout:
+                MDRaisedButton:
+                    height: dp(38)
+                    text: app.tr._("+Add more credits")
+                    on_press: app.root.ids.scr_mngr.current = 'payment'

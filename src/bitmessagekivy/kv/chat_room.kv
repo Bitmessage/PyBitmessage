@@ -1,0 +1,45 @@
+#:import C kivy.utils.get_color_from_hex
+
+<ChatRoom>:
+    name: 'chroom'
+    BoxLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: 1,1,1,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        ScrollView:
+            Label:
+                id: chat_logs
+                text: ''
+                color: C('#101010')
+                text_size: (self.width, None)
+                halign: 'left'
+                valign: 'top'
+                padding: (0, 0)  # fixed in Kivy 1.8.1
+                size_hint: (1, None)
+                height: self.texture_size[1]
+                markup: True
+                font_size: sp(20)
+        BoxLayout:
+            height: 50
+            orientation: 'horizontal'
+            padding: 0
+            size_hint: (1, None)
+
+            TextInput:
+                id: message
+                size_hint: (1, 1)
+                multiline: False
+                font_size: sp(20)
+                on_text_validate: root.send_msg()
+
+            MDRaisedButton:
+                text: app.tr._("Send")
+                elevation_normal: 2
+                opposite_colors: True
+                size_hint: (0.3, 1)
+                pos_hint: {"center_x": .5}
+                on_press: root.send_msg()

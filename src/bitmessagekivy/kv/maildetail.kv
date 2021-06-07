@@ -1,0 +1,87 @@
+<MailDetail>:
+    name: 'mailDetail'
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            # height: dp(bod.height) + self.minimum_height
+            height: self.minimum_height
+            padding: dp(10)
+            # MDLabel:
+            #     size_hint_y: None
+            #     id: subj
+            #     text: root.subject
+            #     theme_text_color: 'Primary'
+            #     halign: 'left'
+            #     font_style: 'H5'
+            #     height: dp(40)
+            #     on_touch_down: root.allclick(self)
+            OneLineListTitle:
+                id: subj
+                text: app.tr._(root.subject)
+                divider: None
+                font_style: 'H5'
+                theme_text_color: 'Primary'
+                _no_ripple_effect: True
+                long_press_time: 1
+            TwoLineAvatarIconListItem:
+                id: subaft
+                text: app.tr._(root.from_addr)
+                secondary_text: app.tr._('to ' + root.to_addr)
+                divider: None
+                on_press: root.detailedPopup()
+                BadgeText:
+                    size_hint:(None, None)
+                    size:[120, 140] if app.app_platform == 'android' else [64, 80]
+                    text: app.tr._(root.time_tag)
+                    halign:'center'
+                    font_style:'Caption'
+                    pos_hint: {'center_y': .8}
+                    _txt_right_pad: dp(70)
+                    font_size: '11sp'
+                MDChip:
+                    size_hint: (.16 if app.app_platform == 'android' else .08 , None)
+                    text: app.tr._(root.page_type)
+                    icon: ''
+                    text_color: (1,1,1,1)
+                    pos_hint: {'center_x': .91 if app.app_platform == 'android' else .95, 'center_y': .3}
+                    radius: [8]
+                    height: self.parent.height/4
+                AvatarSampleWidget:
+                    source: root.avatarImg
+            MDLabel:
+                text: root.status
+                disabled: True
+                font_style: 'Body2'
+                halign:'left'
+                padding_x: 20
+            # MDLabel:
+            #     id: bod
+            #     font_style: 'Subtitle2'
+            #     theme_text_color: 'Primary'
+            #     text: root.message
+            #     halign: 'left'
+            #     height: self.texture_size[1]
+            MyMDTextField:
+                id: bod
+                size_hint_y: None
+                font_style: 'Subtitle2'
+                text: root.message
+                multiline: True
+                readonly: True
+                line_color_normal: [0,0,0,0]
+                _current_line_color: [0,0,0,0]
+                line_color_focus: [0,0,0,0]
+                markup: True
+                font_size: '15sp'
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
+    Loader:
+
+
+<MyMDTextField@MDTextField>:
+    canvas.before:
+        Color:
+            rgba: (0,0,0,1)
