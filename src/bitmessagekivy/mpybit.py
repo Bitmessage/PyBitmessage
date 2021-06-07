@@ -229,7 +229,6 @@ class NavigateApp(MDApp):
 
     def build(self):
         """Method builds the widget"""
-        print('data_screens: ', data_screens)
         for kv in data_screens:
             Builder.load_file(
                 os.path.join(
