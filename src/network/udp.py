@@ -97,6 +97,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             time.time()
         return True
 
+    # pylint: disable=no-self-use
     def bm_command_portcheck(self):
         return True
 
@@ -113,6 +114,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         return True
 
     def handle_connect(self):
+        """handle connect method"""
         return
 
     def writable(self):
