@@ -108,11 +108,12 @@ function install_pyinstaller()
 	fi
 }
 
-function install_msgpack()
+function install_pip_depends()
 {
 	cd "${BASE_DIR}" || exit 1
-	echo "Installing msgpack"
-	wine python -m pip install msgpack-python
+	echo "Installing pip depends"
+	wine python -m pip install msgpack-python .[qrcode] .[tor]
+	python setup.py egg_info
 }
 
 function install_pyopencl()
@@ -191,7 +192,7 @@ install_python
 install_pyqt
 install_openssl
 install_pyopencl
-install_msgpack
+install_pip_depends
 install_pyinstaller
 build_dll
 build_exe

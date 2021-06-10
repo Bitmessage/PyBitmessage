@@ -4,6 +4,7 @@ import os
 import sys
 import time
 
+from PyInstaller.utils.hooks import copy_metadata
 
 site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
@@ -27,12 +28,17 @@ os.rename(
 
 a = Analysis(
     [os.path.join(srcPath, 'bitmessagemain.py')],
+    datas = [
+        (os.path.join(spec_root[:-20], 'pybitmessage.egg-info') + '/*',
+          'pybitmessage.egg-info')
+    ] + copy_metadata('msgpack-python') + copy_metadata('qrcode')
+    + copy_metadata('six') + copy_metadata('stem'),
     pathex=[outPath],
     hiddenimports=[
         'bitmessageqt.languagebox', 'pyopencl', 'numpy', 'win32com',
-        'setuptools.msvc', '_cffi_backend'
+        'setuptools.msvc', '_cffi_backend',
+        'plugins.menu_qrcode', 'plugins.proxyconfig_stem'
     ],
-    hookspath=None,
     runtime_hooks=None,
     excludes=['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter', 'tests']
 )
