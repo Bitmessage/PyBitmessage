@@ -1,0 +1,15 @@
+language: python3.7
+cache: pip3
+dist: bionic
+python:
+  - "3.7"
+addons:
+  apt:
+    packages:
+      - build-essential
+      - libcap-dev
+      - xvfb
+install:
+  - pip3 install -r kivy-requirements.txt
+script:
+  - xvfb-run python3 -m unittest src/bitmessagekivy/tests/test_create_random_address.py

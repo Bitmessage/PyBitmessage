@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from bitmessagekivy.tests.telenium_process import TeleniumTestProcess, cleanup
+from .telenium_process import TeleniumTestProcess, cleanup
 from .common import ordered
 from random import choice
 from string import ascii_lowercase

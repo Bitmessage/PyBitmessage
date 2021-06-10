@@ -1,4 +1,4 @@
-from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
+from .telenium_process import TeleniumTestProcess
 
 
 class TrashMessage(TeleniumTestProcess):
@@ -19,6 +19,6 @@ class TrashMessage(TeleniumTestProcess):
         self.cli.sleep(4)
         self.cli.click_on('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]')
         self.cli.sleep(2)
-        # self.cli.click_on('//MDDialog/MDCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
-        self.cli.click_on('//MDDialog/DialogFakeCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
+        self.cli.click_on('//MDDialog/MDCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
+        # self.cli.click_on('//MDDialog/DialogFakeCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
         self.cli.sleep(4)

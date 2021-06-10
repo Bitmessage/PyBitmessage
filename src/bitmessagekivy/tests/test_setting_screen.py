@@ -1,4 +1,4 @@
-from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
+from .telenium_process import TeleniumTestProcess
 
 
 class SettingScreen(TeleniumTestProcess):

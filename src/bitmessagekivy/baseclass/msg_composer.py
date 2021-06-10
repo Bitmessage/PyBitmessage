@@ -27,7 +27,7 @@ from kivy.uix.textinput import TextInput
 import state
 import queues
 
-from addresses import decodeAddress
+from addresses import decodeAddress, addBMIfNotPresent
 from bitmessagekivy.baseclass.common import (
     toast, showLimitedCnt
 )
@@ -110,7 +110,6 @@ class DropDownWidget(BoxLayout):
                     # state.detailPageType = ''
                     # state.send_draft_mail = None
                 else:
-                    from addresses import addBMIfNotPresent
                     # toAddress = addBMIfNotPresent(toAddress)
                     if (addressVersionNumber > 4) or (
                             addressVersionNumber <= 1):

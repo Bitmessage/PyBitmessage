@@ -1,5 +1,4 @@
-
-from bitmessagekivy.tests.telenium_process import TeleniumTestProcess
+from .telenium_process import TeleniumTestProcess
 from .common import ordered
 
 data = [

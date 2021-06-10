@@ -36,7 +36,7 @@ def set_temp_data():
 
 class TeleniumTestProcess(TeleniumTestCase):
     """Setting Screen Functionality Testing"""
-    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'main_test.py')]
+    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'main_test.py')]
 
     @classmethod
     def setUpClass(cls):
