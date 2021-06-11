@@ -126,17 +126,51 @@ def isBitSetWithinBitfield(fourByteString, n):
 
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
-    if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
-            host.split(".")[0], True)
-    elif host.find(':') == -1:
-        if sys.version_info[0] == 3:
-            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-            str(socket.inet_aton(host))
-        else:
-            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+    if sys.version_info[0] == 3:
+        if host.find('.onion') > -1:
+            print("================================in if condition")
+            return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+                host.split(".")[0], True)
+        elif host.find(':') == -1:
+            print("================================in else condition")
+            print("_______________________")
+            print("_______________________")
+            print("_______________________")
+            print("_______________________")
+            print("_______________________")
+            print(socket.inet_aton(host))
+            print(type(socket.inet_aton(host)))
+            soo = socket.inet_aton(host)
+            # print(base64.decodebytes(bytes(soo, 'utf-8')).decode('utf-8'))
+            # print(base64.b64decode(soo))
+            # print('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'.encode('utf-8'))
+            # c = b"".join(['\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF', socket.inet_aton(host)])
+            # print(c)
+            # print(soo.decode('hex'))
+            print(host)
+            print(bytes.fromhex('01020304'))
+            rr = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(host)
+            print(rr.decode('utf-8'))
+            print("_______________________")
+            print("_______________________")
+            print("_______________________")
+
+
+            return b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
                    socket.inet_aton(host)
-    return socket.inet_pton(socket.AF_INET6, host)
+        return socket.inet_pton(socket.AF_INET6, host)
+    else:
+        if host.find('.onion') > -1:
+            return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+                host.split(".")[0], True)
+        elif host.find(':') == -1:
+            if sys.version_info[0] == 3:
+                return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+                str(socket.inet_aton(host))
+            else:
+                return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+                       socket.inet_aton(host)
+        return socket.inet_pton(socket.AF_INET6, host)
 
 
 def networkType(host):
@@ -154,6 +188,7 @@ def network_group(host):
        GetGroup() in src/netaddresses.cpp in bitcoin core"""
     if not isinstance(host, str):
         return None
+    # import pdb; pdb.set_trace()
     network_type = networkType(host)
     try:
         raw_host = encodeHost(host)
