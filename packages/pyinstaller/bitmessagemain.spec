@@ -10,7 +10,7 @@ site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
 arch = 32 if ctypes.sizeof(ctypes.c_voidp) == 4 else 64
 cdrivePath = site_root[0:3]
-srcPath = os.path.join(spec_root[:-20], "src")
+srcPath = os.path.join(spec_root[:-20], "pybitmessage")
 sslName = 'OpenSSL-Win%i' % arch
 openSSLPath = os.path.join(cdrivePath, sslName)
 msvcrDllPath = os.path.join(cdrivePath, "windows", "system32")
@@ -22,9 +22,7 @@ os.chdir(srcPath)
 
 snapshot = False
 
-os.rename(
-    os.path.join(srcPath, '__init__.py'),
-    os.path.join(srcPath, '__init__.py.backup'))
+hookspath=os.path.join(spec_root, 'hooks')
 
 a = Analysis(
     [os.path.join(srcPath, 'bitmessagemain.py')],
@@ -39,13 +37,9 @@ a = Analysis(
         'setuptools.msvc', '_cffi_backend',
         'plugins.menu_qrcode', 'plugins.proxyconfig_stem'
     ],
-    runtime_hooks=None,
+    runtime_hooks=[os.path.join(hookspath, 'pyinstaller_rthook_plugins.py')],
     excludes=['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter', 'tests']
 )
-
-os.rename(
-    os.path.join(srcPath, '__init__.py.backup'),
-    os.path.join(srcPath, '__init__.py'))
 
 
 def addTranslations():
