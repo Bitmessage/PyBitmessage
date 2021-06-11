@@ -1,0 +1,18 @@
+language: python3.7
+cache: pip3
+dist: bionic
+python:
+  - "3.7"
+addons:
+  apt:
+    packages:
+      - build-essential
+      - libcap-dev
+      - libmtdev-dev
+      - xvfb
+install:
+  - pip3 install -r kivy-requirements.txt
+  - python3 setup.py install
+  - export PYTHONWARNINGS=all
+script:
+  - xvfb-run python3 tests-kivy.py

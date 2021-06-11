@@ -1,0 +1,5 @@
+kivy-garden.qrcode
+-e git+https://github.com/kivymd/KivyMD#egg=kivymd
+opencv-python
+pyzbar
+telenium

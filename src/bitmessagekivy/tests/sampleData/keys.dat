@@ -1,0 +1,59 @@
+[bitmessagesettings]
+settingsversion = 0
+port = 8444
+timeformat = %%c
+blackwhitelist = black
+startonlogon = false
+minimizetotray = false
+showtraynotifications = true
+startintray = false
+socksproxytype = none
+sockshostname = localhost
+socksport = 9050
+socksauthentication = false
+socksusername = 
+sockspassword = 
+keysencrypted = false
+messagesencrypted = false
+defaultnoncetrialsperbyte = 1000
+defaultpayloadlengthextrabytes = 1000
+minimizeonclose = false
+replybelow = False
+maxdownloadrate = 0
+maxuploadrate = 0
+stopresendingafterxdays = 
+stopresendingafterxmonths = 
+sockslisten = false
+userlocale = system
+sendoutgoingconnections = True
+useidenticons = True
+identiconsuffix = qcqQGW6sQtZK
+maxacceptablenoncetrialsperbyte = 20000000000
+maxacceptablepayloadlengthextrabytes = 20000000000
+onionhostname = 
+onionport = 8444
+onionbindip = 127.0.0.1
+smtpdeliver = 
+hidetrayconnectionnotifications = false
+ttl = 367200
+
+[BM-2cTpgCn57rYUgqm5BrgmykuV9gK1Ak1THF]
+label = test1
+enabled = true
+decoy = false
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5KYCPJ4Vp31UD6k5NWmDKtHhfapW25UJ7V2MjctYxcgL3BpWGA3
+privencryptionkey = 5JLER8q2zyj3KDEgGMv682en2SRUkkWWhUrNuqVYfGNNhHJmdkJ
+lastpubkeysendtime = 1623160189
+
+[BM-2cVrdzQjCQRqUuET6dc3byVyRTjZcgcJXj]
+label = test2
+enabled = true
+decoy = false
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5KhryWvNowFWWA9JRjQnLVStYKwhpKpAG4RtWwzyaQqmK2fTMue
+privencryptionkey = 5JKQ9NqX2LRzHBCgyxc1GAL3rDvyDTHPifpL22a6UNN7K6y9BmL
+lastpubkeysendtime = 1623160221
+

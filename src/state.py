@@ -32,6 +32,8 @@ enableGUI = True
 """enable GUI (QT or ncurses)"""
 enableSTDIO = False
 """enable STDIO threads"""
+enableKivy = False
+"""enable kivy app and test cases"""
 curses = False
 
 maximumNumberOfHalfOpenConnections = 0

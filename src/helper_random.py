@@ -3,7 +3,10 @@
 import os
 import random
 
-from pyelliptic.openssl import OpenSSL
+try:
+    from pyelliptic.openssl import OpenSSL
+except ImportError:
+    from .pyelliptic.openssl import OpenSSL
 
 NoneType = type(None)
 

@@ -69,8 +69,11 @@ if __name__ == "__main__":
         'pybitmessage.network',
         'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
-        'pybitmessage.storage'
+        'pybitmessage.storage',
     ]
+
+    if sys.version_info[0] == 3:
+        packages.append('pybitmessage.bitmessagekivy')
 
     # this will silently accept alternative providers of msgpack
     # if they are already installed
