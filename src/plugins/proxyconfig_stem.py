@@ -14,6 +14,7 @@ Configure tor proxy and hidden service with
 import logging
 import os
 import random  # noseq
+import sys
 import tempfile
 
 import stem
@@ -34,15 +35,18 @@ class DebugLogger(object):  # pylint: disable=too-few-public-methods
 
     def __call__(self, line):
         try:
-            level, line = line.split('[', 1)[1].split(']')
+            level, line = line.split('[', 1)[1].split(']', 1)
         except IndexError:
             # Plugin's debug or unexpected log line from tor
             self._logger.debug(line)
+        except ValueError:  # some error while splitting
+            self._logger.warning(line)
         else:
             self._logger.log(self._levels.get(level, 10), '(tor) %s', line)
 
 
-def connect_plugin(config):  # pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
+def connect_plugin(config):
     """
     Run stem proxy configurator
 
@@ -62,23 +66,30 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
             ' aborting stem proxy configuration')
         return
 
+    tor_config = {'SocksPort': '9050'}
+
     datadir = tempfile.mkdtemp()
-    control_socket = os.path.join(datadir, 'control')
-    tor_config = {
-        'SocksPort': '9050',
-        # 'DataDirectory': datadir,  # had an exception with control socket
-        'ControlSocket': control_socket
-    }
-    port = config.safeGet('bitmessagesettings', 'socksport', '9050')
+    if sys.platform.startswith('win'):
+        # no ControlSocket on windows because there is no Unix sockets
+        tor_config['DataDirectory'] = datadir
+    else:
+        control_socket = os.path.join(datadir, 'control')
+        tor_config['ControlSocket'] = control_socket
+
+    port = config.safeGetInt('bitmessagesettings', 'socksport', 9050)
     for attempt in range(50):
         if attempt > 0:
             port = random.randint(32767, 65535)
             tor_config['SocksPort'] = str(port)
+        if tor_config.get('DataDirectory'):
+            control_port = port + 1
+            tor_config['ControlPort'] = str(control_port)
         # It's recommended to use separate tor instance for hidden services.
         # So if there is a system wide tor, use it for outbound connections.
         try:
             stem.process.launch_tor_with_config(
-                tor_config, take_ownership=True, timeout=20,
+                tor_config, take_ownership=True,
+                timeout=(None if sys.platform.startswith('win') else 20),
                 init_msg_handler=logwrite)
         except OSError:
             if not attempt:
@@ -90,14 +101,20 @@ def connect_plugin(config):  # pylint: disable=too-many-branches
         else:
             logwrite('Started tor on port %s' % port)
             break
+    else:
+        logwrite('Failed to start tor')
+        return
 
     config.setTemp('bitmessagesettings', 'socksproxytype', 'SOCKS5')
 
     if config.safeGetBoolean('bitmessagesettings', 'sockslisten'):
         # need a hidden service for inbound connections
         try:
-            controller = stem.control.Controller.from_socket_file(
-                control_socket)
+            controller = (
+                stem.control.Controller.from_port(port=control_port)
+                if sys.platform.startswith('win') else
+                stem.control.Controller.from_socket_file(control_socket)
+            )
             controller.authenticate()
         except stem.SocketError:
             # something goes wrong way
