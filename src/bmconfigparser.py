@@ -10,8 +10,8 @@ from datetime import datetime
 from six import string_types
 from six.moves import configparser
 
-import state
-from singleton import Singleton
+from pybitmessage import state
+from pybitmessage.singleton import Singleton
 
 SafeConfigParser = configparser.SafeConfigParser
 

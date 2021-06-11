@@ -1,0 +1,64 @@
+FROM ubuntu:bionic AS pybm-kivy-travis-bionic
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV TRAVIS_SKIP_APT_UPDATE 1
+
+RUN apt-get update
+
+RUN apt-get install -yq --no-install-suggests --no-install-recommends \
+    software-properties-common
+
+RUN dpkg --add-architecture i386
+
+RUN add-apt-repository ppa:deadsnakes/ppa
+
+RUN apt-get -y install sudo
+
+RUN apt-get -y install git
+
+RUN apt-get install -yq --no-install-suggests --no-install-recommends \
+    # travis xenial bionic
+    python-setuptools libssl-dev libpq-dev python-prctl python-dev \
+    python-dev python-virtualenv python-pip virtualenv \
+    # Code quality
+    pylint python-pycodestyle python3-pycodestyle pycodestyle python-flake8 \
+    python3-flake8 flake8 python-pyflakes python3-pyflakes pyflakes pyflakes3 \
+    curl \
+    # Wine
+    python python-pip wget wine-stable winetricks mingw-w64 wine32 wine64 xvfb \
+    # Buildbot
+    python3-dev libffi-dev python3-setuptools \
+    python3-pip \
+    # python 3.7
+    python3.7 python3.7-dev \
+    # .travis-kivy.yml
+    build-essential libcap-dev tor \
+    language-pack-en \
+    xclip xsel \
+    libzbar-dev
+
+# cleanup
+RUN rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -U builder
+
+RUN echo 'builder ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# travis2bash
+RUN wget -O /usr/local/bin/travis2bash.sh https://git.bitmessage.org/Bitmessage/buildbot-scripts/raw/branch/master/travis2bash.sh
+RUN chmod +x /usr/local/bin/travis2bash.sh
+
+# copy sources
+COPY . /home/builder/src
+RUN chown -R builder.builder /home/builder/src
+
+USER builder
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+WORKDIR /home/builder/src
+
+
+ENTRYPOINT ["/usr/local/bin/travis2bash.sh", ".travis-kivy.yml"]
