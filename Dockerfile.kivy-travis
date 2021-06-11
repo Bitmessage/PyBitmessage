@@ -31,9 +31,11 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     python3-pip \
     # python 3.7
     python3.7 python3.7-dev \
-    # .travis.yml
+    # .travis-kivy.yml
     build-essential libcap-dev tor \
-    language-pack-en
+    language-pack-en \
+    xclip xsel \
+    libzbar-dev
 
 # cleanup
 RUN rm -rf /var/lib/apt/lists/*

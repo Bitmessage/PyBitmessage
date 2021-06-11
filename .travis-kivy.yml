@@ -12,4 +12,4 @@ addons:
 install:
   - pip3 install -r kivy-requirements.txt
 script:
-  - xvfb-run python3 -m unittest src/bitmessagekivy/tests/test_create_random_address.py
+  - xvfb-run python3 tests-kivy.py
