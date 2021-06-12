@@ -320,7 +320,7 @@ def start_proxyconfig():
             logger.error(
                 'Failed to run proxy config plugin %s',
                 proxy_type, exc_info=True)
-            os._exit(0)  # pylint: disable=protected-access
+            config.setTemp('bitmessagesettings', 'dontconnect', 'true')
         else:
             logger.info(
                 'Started proxy config plugin %s in %s sec',
