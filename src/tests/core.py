@@ -119,6 +119,14 @@ class TestCore(unittest.TestCase):
         except:
             self.fail('Exception in test loop')
 
+    def _load_knownnodes(self, filepath):
+        with knownnodes.knownNodesLock:
+            shutil.copyfile(filepath, knownnodes_file)
+        try:
+            knownnodes.readKnownNodes()
+        except AttributeError as e:
+            self.fail('Failed to load knownnodes: %s' % e)
+
     @staticmethod
     def _wipe_knownnodes():
         with knownnodes.knownNodesLock:
@@ -245,6 +253,10 @@ class TestCore(unittest.TestCase):
         self._initiate_bootstrap()
         self._check_connection()
         self._check_knownnodes()
+        # backup potentially enough knownnodes
+        knownnodes.saveKnownNodes()
+        with knownnodes.knownNodesLock:
+            shutil.copyfile(knownnodes_file, knownnodes_file + '.bak')
 
     @unittest.skipIf(tor_port_free, 'no running tor detected')
     def test_bootstrap_tor(self):
@@ -261,7 +273,14 @@ class TestCore(unittest.TestCase):
         """
         BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
-        self._initiate_bootstrap()
+        self._load_knownnodes(knownnodes_file + '.bak')
+        if len([
+            node for node in knownnodes.knownNodes[1]
+            if node.host.endswith('.onion')
+        ]) < 3:  # generate fake onion nodes if have not enough
+            with knownnodes.knownNodesLock:
+                for f in ('a', 'b', 'c', 'd'):
+                    knownnodes.addKnownNode(1, Peer(f * 16 + '.onion', 8444))
         BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
         tried_hosts = set()
         for _ in range(360):
@@ -276,7 +295,7 @@ class TestCore(unittest.TestCase):
                             'connections!' % peer.host)
                 if len(tried_hosts) > 2:
                     return
-        self.fail('Failed to connect to at least 3 nodes within 360 sec')
+        self.fail('Failed to find at least 3 nodes to connect within 360 sec')
 
     def test_udp(self):
         """check default udp setting and presence of Announcer thread"""
@@ -351,15 +370,14 @@ class TestCore(unittest.TestCase):
         self.assertEqual(column_type[0][0] if column_type else '', 'text')
 
     def test_old_knownnodes_pickle(self):
-        """Testing old(v.0.6.2) version knownnodes.dat file"""
+        """Testing old (v0.6.2) version knownnodes.dat file"""
         try:
-            old_source_file = os.path.join(
-                os.path.abspath(os.path.dirname(__file__)), 'test_pattern', 'knownnodes.dat')
-            new_destination_file = os.path.join(state.appdata, 'knownnodes.dat')
-            shutil.copyfile(old_source_file, new_destination_file)
-            knownnodes.readKnownNodes()
-        except AttributeError as e:
-            self.fail('Failed to load knownnodes: %s' % e)
+            self._load_knownnodes(
+                os.path.join(
+                    os.path.abspath(os.path.dirname(__file__)),
+                    'test_pattern', 'knownnodes.dat'))
+        except self.failureException:
+            raise
         finally:
             cleanup(files=('knownnodes.dat',))
 
