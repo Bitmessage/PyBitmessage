@@ -58,7 +58,7 @@ import ast
 
 from bitmessagekivy.baseclass.common import toast
 
-from kivy_garden.zbarcam import ZBarCam
+from qr_scanner.zbarcam import ZBarCam
 from pyzbar.pyzbar import ZBarSymbol
 
 if platform != "android":

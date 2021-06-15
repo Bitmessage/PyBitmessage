@@ -3,7 +3,7 @@ from kivy.app import App
 from kivy.lang import Builder
 
 kv = """
-#:import XCamera kivy_garden.xcamera.XCamera
+#:import XCamera qr_scanner.xcamera.XCamera
 
 FloatLayout:
     orientation: 'vertical'
