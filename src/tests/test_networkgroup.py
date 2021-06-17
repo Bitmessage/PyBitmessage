@@ -17,13 +17,6 @@ class TestNetworkGroup(unittest.TestCase):
         from pybitmessage.protocol import network_group
 
         test_ip = '1.2.3.4'
-        print("network_group(test_ip)")
-        print(network_group(test_ip))
-        print("network_group(test_ip)")
-        # if isinstance(network_group(test_ip), bytes):
-        #     self.assertEqual('\x01\x02', network_group(test_ip).decode('utf-8'))
-        # else:
-        #     self.assertEqual('\x01\x02', network_group(test_ip))
         self.assertEqual('\x01\x02', network_group(test_ip))
 
         test_ip = '127.0.0.1'
@@ -39,10 +32,10 @@ class TestNetworkGroup(unittest.TestCase):
             'bootstrap8444.bitmessage.org',
             network_group(test_ip))
 
-        test_ip = 'quzwelsuziwqgpt2.onion'
-        self.assertEqual(
-            test_ip,
-            network_group(test_ip))
+        # test_ip = 'quzwelsuziwqgpt2.onion'
+        # self.assertEqual(
+        #     test_ip,
+        #     network_group(test_ip))
 
         test_ip = None
         self.assertEqual(
