@@ -107,10 +107,16 @@ def isBitSetWithinBitfield(fourByteString, n):
 
 
 def encodeHost(host):
-    """Encode a given host to be used in low-level socket operations"""
+    """
+        Encode a given host to be used in low-level socket operations
+    """
     if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+        try:
+            return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
+        except TypeError:
+            return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+                host.split(".")[0], True).decode('utf-8', 'ignore')
     elif host.find(':') == -1:
         try:
             return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
@@ -151,7 +157,7 @@ def network_group(host):
         decoded_host = checkIPv6Address(raw_host, True)
         if decoded_host:
             # /32 subnet
-            return raw_host[0:12]
+            return raw_host[0:12].decode()
     else:
         # just host, e.g. for tor
         return host
@@ -227,7 +233,7 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
         if not private:
             logger.debug('Ignoring local address: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if (ord(host[0]) & 0xfe) == 0xfc:
+    if (ord(host.decode()[0]) & 0xfe) == 0xfc:
         if not private:
             logger.debug(
                 'Ignoring unique local address: %s', hostStandardFormat)

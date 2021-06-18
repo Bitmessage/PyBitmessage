@@ -32,10 +32,10 @@ class TestNetworkGroup(unittest.TestCase):
             'bootstrap8444.bitmessage.org',
             network_group(test_ip))
 
-        # test_ip = 'quzwelsuziwqgpt2.onion'
-        # self.assertEqual(
-        #     test_ip,
-        #     network_group(test_ip))
+        test_ip = 'quzwelsuziwqgpt2.onion'
+        self.assertEqual(
+            test_ip,
+            network_group(test_ip))
 
         test_ip = None
         self.assertEqual(
