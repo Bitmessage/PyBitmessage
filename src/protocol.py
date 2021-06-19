@@ -115,8 +115,8 @@ def encodeHost(host):
             return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
         except TypeError:
-            return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
-                host.split(".")[0], True).decode('utf-8', 'ignore')
+            return '\xfd\x87\xd8\x7e\xeb\x43' + \
+                   base64.b32decode(host.split(".")[0], True).decode('utf-8', 'ignore')
     elif host.find(':') == -1:
         try:
             return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
