@@ -11,6 +11,9 @@ import time
 import unittest
 import psutil
 from .common import cleanup, put_signal_file
+from .common import cleanup, put_signal_file, skip_python3
+
+skip_python3()
 
 
 class TestProcessProto(unittest.TestCase):
