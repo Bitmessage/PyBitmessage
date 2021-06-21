@@ -11,10 +11,10 @@ import unittest
 
 os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
 
-from pybitmessage.helper_sql import (
+from ..pybitmessage.helper_sql import (
     sqlQuery, sql_ready, sqlStoredProcedure)  # noqa:E402
-from pybitmessage.class_sqlThread import sqlThread  # noqa:E402
-from pybitmessage.addresses import encodeAddress  # noqa:E402
+from ..pybitmessage.class_sqlThread import sqlThread  # noqa:E402
+from ..pybitmessage.addresses import encodeAddress  # noqa:E402
 
 
 class TestSqlThread(unittest.TestCase):
