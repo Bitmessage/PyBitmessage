@@ -9,9 +9,10 @@ import sys
 import tempfile
 import time
 import unittest
-import psutil
-from .common import cleanup, put_signal_file, skip_python3
 
+import psutil
+
+from .common import cleanup, put_signal_file, skip_python3
 
 skip_python3()
 
