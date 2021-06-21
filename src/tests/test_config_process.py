@@ -6,6 +6,9 @@ import os
 import tempfile
 from pybitmessage.bmconfigparser import BMConfigParser
 from .test_process import TestProcessProto
+from .common import skip_python3
+
+skip_python3()
 
 
 class TestProcessConfig(TestProcessProto):

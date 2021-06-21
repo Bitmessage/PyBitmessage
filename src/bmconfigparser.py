@@ -12,12 +12,9 @@ from six.moves import configparser
 
 try:
     import state
-except ImportError:
-    from . import state
-
-try:
     from singleton import Singleton
 except ImportError:
+    from . import state
     from .singleton import Singleton
 
 SafeConfigParser = configparser.SafeConfigParser
