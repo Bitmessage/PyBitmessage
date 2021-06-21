@@ -2,11 +2,7 @@
 
 import os
 import random
-
-try:
-    from pyelliptic.openssl import OpenSSL
-except ModuleNotFoundError:
-    from .pyelliptic.openssl import OpenSSL
+from pyelliptic.openssl import OpenSSL
 
 NoneType = type(None)
 

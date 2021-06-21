@@ -11,22 +11,13 @@ from binascii import hexlify
 
 try:
     import pyelliptic
-except ImportError:
-    from . import pyelliptic
-
-try:
     from bmconfigparser import BMConfigParser
-except ImportError:
-    from .bmconfigparser import BMConfigParser
-
-try:
     from pyelliptic import OpenSSL
-except ImportError:
-    from .pyelliptic import OpenSSL
-
-try:
     from pyelliptic import arithmetic as a
 except ImportError:
+    from . import pyelliptic
+    from .bmconfigparser import BMConfigParser
+    from .pyelliptic import OpenSSL
     from .pyelliptic import arithmetic as a
 
 
