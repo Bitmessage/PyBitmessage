@@ -225,7 +225,7 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
     Returns hostStandardFormat if it is an IPv6 address,
     otherwise returns False
     """
-    if host == ('\x00' * 15) + '\x01':
+    if host == (b'\x00' * 15) + b'\x01':
         if not private:
             logger.debug('Ignoring loopback address: %s', hostStandardFormat)
         return False
@@ -233,11 +233,19 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
         if not private:
             logger.debug('Ignoring local address: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if (ord(host.decode()[0]) & 0xfe) == 0xfc:
-        if not private:
-            logger.debug(
-                'Ignoring unique local address: %s', hostStandardFormat)
-        return hostStandardFormat if private else False
+    try:
+        if (ord(host[0]) & 0xfe) == 0xfc:
+            if not private:
+                logger.debug(
+                    'Ignoring unique local address: %s', hostStandardFormat)
+            return hostStandardFormat if private else False
+    except TypeError:
+        if (ord(host.decode()[0]) & 0xfe) == 0xfc:
+            if not private:
+                logger.debug(
+                    'Ignoring unique local address: %s', hostStandardFormat)
+            return hostStandardFormat if private else False
+
     return False if private else hostStandardFormat
 
 
