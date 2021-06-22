@@ -14,7 +14,10 @@ class TestNetworkGroup(unittest.TestCase):
     """
     def test_network_group(self):
         """Test various types of network groups"""
-        from pybitmessage.protocol import network_group
+        try:
+            from pybitmessage.protocol import network_group
+        except ModuleNotFoundError:
+            from .protocol import network_group
 
         test_ip = '1.2.3.4'
         self.assertEqual('\x01\x02', network_group(test_ip))
