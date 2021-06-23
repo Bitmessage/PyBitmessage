@@ -1,3 +1,4 @@
+# pylint: disable=E1101
 """
 Tests using API.
 """
