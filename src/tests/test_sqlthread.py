@@ -12,7 +12,7 @@ skip_python3()
 os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
 
 from pybitmessage.helper_sql import (
-    sqlQuery, sql_ready, sqlStoredProcedure, SqlBulkExecute, sqlExecuteScript)  # noqa:E402
+    sqlQuery, sql_ready, sqlStoredProcedure, SqlBulkExecute, sqlExecuteScript, sqlExecute)  # noqa:E402
 from pybitmessage.class_sqlThread import sqlThread, UpgradeDB  # noqa:E402
 from pybitmessage.addresses import encodeAddress  # noqa:E402
 
@@ -68,7 +68,7 @@ class TestSqlThread(unittest.TestCase):
             if thread.name == "SQL":
                 thread.join()
 
-    def initialise_database(self, file):
+    def initialise_database(self, file):  # pylint: disable=W0622, redefined-builtin
         """
             Initialise DB
         """
