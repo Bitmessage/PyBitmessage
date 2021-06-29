@@ -11,10 +11,15 @@ import unittest
 
 os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
 
-from pybitmessage.helper_sql import (
+try:
+    from pybitmessage.helper_sql import (
     sqlQuery, sql_ready, sqlStoredProcedure, SqlBulkExecute, sqlExecuteScript, sqlExecute)  # noqa:E402
-from pybitmessage.class_sqlThread import sqlThread, UpgradeDB  # noqa:E402
-from pybitmessage.addresses import encodeAddress  # noqa:E402
+    from pybitmessage.class_sqlThread import sqlThread, UpgradeDB  # noqa:E402
+    from pybitmessage.addresses import encodeAddress  # noqa:E402
+except:
+    from ..helper_sql import sqlStoredProcedure, sql_ready, sqlExecute, SqlBulkExecute, sqlQuery, sqlExecuteScript  # noqa:E402
+    from ..class_sqlThread import (sqlThread, UpgradeDB)  # noqa:E402
+    from ..addresses import encodeAddress  # noqa:E402
 
 
 def filter_table_column(schema, column):
