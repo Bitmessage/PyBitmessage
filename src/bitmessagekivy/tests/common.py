@@ -3,6 +3,8 @@ This module is used for running test cases ui order.
 """
 import unittest
 
+from pybitmessage import state
+
 
 def make_ordered_test():
     """this method is for compairing and arranging in order"""
@@ -22,3 +24,14 @@ def make_ordered_test():
 
 ordered, compare = make_ordered_test()
 unittest.defaultTestLoader.sortTestMethodsUsing = compare
+
+
+def skip_screen_checks(x):
+    """This methos is skipping current screen checks"""
+    def inner(y):
+        """Inner function"""
+        if not state.isKivyworking:
+            return unittest.skip('Kivy is not working')
+        else:
+            x(y)
+    return inner

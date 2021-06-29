@@ -13,7 +13,6 @@ class NavigateApp(App):
     def build(self):
         """Method builds the widget"""
         # pylint: disable=no-self-use
-
         return Label(text="Hello World !")
 
     def clickNavDrawer(self):

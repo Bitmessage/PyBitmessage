@@ -1,5 +1,5 @@
 from .telenium_process import TeleniumTestProcess
-from .common import ordered
+from .common import ordered, skip_screen_checks
 
 data = [
     'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h',
@@ -10,16 +10,18 @@ data = [
 class AddressBook(TeleniumTestProcess):
     """AddressBook Screen Functionality Testing"""
 
+    @skip_screen_checks
     @ordered
     def test_save_address(self):
         """Save Address On Address Book Screen/Window"""
         print("=====================Test -Save Address In Address Book=====================")
         self.cli.sleep(6)
-        self.cli.execute('app.clickNavDrawer()')
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(4)
         self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
         self.cli.sleep(3)
         self.cli.click_on('//NavigationItem[6]')
+        self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=0)
         self.cli.sleep(4)
         self.cli.execute('app.addingtoaddressbook()')
         self.cli.sleep(3)
@@ -53,7 +55,10 @@ class AddressBook(TeleniumTestProcess):
         self.cli.sleep(3)
         self.cli.click_on('//MDRaisedButton[0]')
         self.cli.sleep(4)
+        address_book_msgs = len(self.cli.select("//SwipeToDeleteItem"))
+        self.assertEqual(address_book_msgs, 1)
 
+    @skip_screen_checks
     @ordered
     def test_cancel_addressbook_popup(self):
         """Cancel Address"""
@@ -66,7 +71,9 @@ class AddressBook(TeleniumTestProcess):
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]', 'text', data[0])
         self.cli.sleep(3)
         self.cli.click_on('//MDRaisedButton[1]')
+        self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=1)
 
+    @skip_screen_checks
     @ordered
     def test_send_message_to_addressbook(self):
         """Directly Send Message To The User"""
@@ -76,6 +83,7 @@ class AddressBook(TeleniumTestProcess):
             '//AddressBook/BoxLayout[0]/BoxLayout[0]/ScrollView[0]/MDList[0]/SwipeToDeleteItem[0]')
         self.cli.sleep(3)
         self.cli.click_on('//MDRaisedButton[0]')
+        self.assertExists("//Create[@name~=\"create\"]", timeout=1)
         self.cli.sleep(3)
         self.cli.click_on(
             '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
@@ -91,16 +99,19 @@ class AddressBook(TeleniumTestProcess):
                 '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
             self.cli.sleep(0.2)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
-        self.cli.sleep(2)
+        self.cli.sleep(4)
+        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=1)
 
+    @skip_screen_checks
     @ordered
     def test_delete_address_from_address_contact(self):
         """Delete Address From Address Book"""
         print("=====================Test -Delete Address From Address Book=====================")
-        self.cli.sleep(3)
-        self.cli.execute('app.clickNavDrawer()')
+        self.cli.sleep(2)
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(3)
         self.cli.click_on('//NavigationItem[6]')
+        self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=1)
         self.cli.sleep(3)
         self.cli.drag(
             '//MDList[0]/SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
@@ -108,4 +119,4 @@ class AddressBook(TeleniumTestProcess):
         self.cli.click_on('//MDList[0]/SwipeToDeleteItem[0]')
         self.cli.sleep(2)
         self.cli.click_on('//MDList[0]/SwipeToDeleteItem[0]//MDIconButton[0]')
-        self.cli.sleep(2)
+        self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=2)

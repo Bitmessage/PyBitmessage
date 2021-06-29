@@ -1,5 +1,5 @@
 from .telenium_process import TeleniumTestProcess
-from .common import ordered
+from .common import ordered, skip_screen_checks
 
 data = [
     'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h',
@@ -10,18 +10,21 @@ data = [
 class MyAddressScreen(TeleniumTestProcess):
     """MyAddress Screen Functionality Testing"""
 
+    @skip_screen_checks
     @ordered
     def test_select_myaddress_list(self):
         """Select Address From List of Address"""
         print("=====================Test -Select Address From List of Address=====================")
         self.cli.sleep(4)
-        self.cli.execute('app.clickNavDrawer()')
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(3)
         self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
         self.cli.sleep(3)
         self.cli.click_on('//NavigationItem[11]')
         self.cli.sleep(4)
+        self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=2)
 
+    @skip_screen_checks
     @ordered
     def test_show_Qrcode(self):
         """Show the Qr code of selected address"""
@@ -32,10 +35,13 @@ class MyAddressScreen(TeleniumTestProcess):
             '''CustomTwoLineAvatarIconListItem[0]''')
         self.cli.sleep(3)
         self.cli.click_on('//MyaddDetailPopup/BoxLayout[1]/MDRaisedButton[1]/MDLabel[0]')
+        self.assertExists("//ShowQRCode[@name~=\"showqrcode\"]", timeout=2)
         self.cli.sleep(3)
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(3)
+        self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=2)
 
+    @skip_screen_checks
     @ordered
     def test_send_message_from(self):
         """Send Message From Send Message From Button"""
@@ -46,6 +52,7 @@ class MyAddressScreen(TeleniumTestProcess):
             '''CustomTwoLineAvatarIconListItem[0]''')
         self.cli.sleep(4)
         self.cli.click_on('//MyaddDetailPopup/BoxLayout[1]/MDRaisedButton[0]/MDLabel[0]')
+        self.assertExists("//Create[@name~=\"create\"]", timeout=2)
         self.cli.sleep(3)
         self.cli.setattr(
             '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput', "text", data[1])
@@ -61,3 +68,4 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.sleep(2)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(4)
+        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)

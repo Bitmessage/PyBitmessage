@@ -13,5 +13,6 @@ addons:
 install:
   - pip3 install -r kivy-requirements.txt
   - python setup.py install
+  - export PYTHONWARNINGS=all
 script:
   - xvfb-run python3 tests-kivy.py
