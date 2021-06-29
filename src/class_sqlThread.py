@@ -64,19 +64,6 @@ class UpgradeDB(object):
         self.cur.execute(item, parameters)
         return int(self.cur.fetchall()[0][0])
 
-    def _upgrade_one_level_method(self, level):
-        """
-            Apply switcher to call methods accordingly
-        """
-
-        if level != self.__get_current_settings_version():
-            return None
-
-        # Migrate Db with level
-        method_name = 'upgrade_schema_data_' + str(level)
-        method = getattr(self, method_name, lambda: "Invalid version")
-        return method()
-
     def _upgrade_one_level_sql_statement(self, file_name):
         """
             Execute SQL files and queries
@@ -106,10 +93,10 @@ class UpgradeDB(object):
 
         # call upgrading level in loop
         for l in range(self.current_level, self.max_level):
-            if int(l) == 3:
+            if int(l) == 1:
                 continue
-            self._upgrade_one_level_method(l)
             self._upgrade_one_level_sql_statement(l)
+            self.increment_settings_version(l)
 
     def increment_settings_version(self, level):
         """

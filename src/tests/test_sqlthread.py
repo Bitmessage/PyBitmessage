@@ -77,7 +77,7 @@ class TestSqlThread(unittest.TestCase):
 
         sqlExecuteScript(sql_as_string)
 
-    def versioning(self):
+    def version(self):
         """
             Run SQL Scripts, Initialize DB with respect to versioning
             and Upgrade DB schema for all versions
@@ -125,8 +125,18 @@ class TestSqlThread(unittest.TestCase):
         self.assertEqual(query[0][-1], encoded_str, "test case fail for create_function")
         sqlExecute('''DROP TABLE testhash''')
 
-    @versioning
-    def test_sql_thread_version_1(self):
+    @version
+    def test_sql_thread_version_2(self):
+        """
+            Test with version 2
+        """
+
+        # Assertion
+        res = sqlQuery(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='inventory_backup' ''')
+        self.assertNotEqual(res[0][0], 1, "Table inventory_backup not deleted in versioning 2")
+
+    @version
+    def test_sql_thread_version_3(self):
         """
             Test with version 1
             Version 1 and 3 are same so will skip 3
@@ -139,17 +149,7 @@ class TestSqlThread(unittest.TestCase):
         self.assertEqual(result, ['tag'], "Data not migrated for version 1")
         self.assertEqual(res, [(5, 'tag', 'blob', 0, "''", 0)], "Data not migrated for version 1")
 
-    @versioning
-    def test_sql_thread_version_2(self):
-        """
-            Test with version 2
-        """
-
-        # Assertion
-        res = sqlQuery(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='inventory_backup' ''')
-        self.assertNotEqual(res[0][0], 1, "Table inventory_backup not deleted in versioning 2")
-
-    @versioning
+    @version
     def test_sql_thread_version_4(self):
         """
             Test with version 4
@@ -159,7 +159,7 @@ class TestSqlThread(unittest.TestCase):
         res = sqlQuery('''select * from inventory where objecttype = 'pubkey';''')
         self.assertNotEqual(len(res), 1, "Table inventory not deleted in versioning 4")
 
-    @versioning
+    @version
     def test_sql_thread_version_5(self):
         """
             Test with version 5
@@ -173,7 +173,7 @@ class TestSqlThread(unittest.TestCase):
             WHERE type='table' AND name='objectprocessorqueue'; ''')
         self.assertNotEqual(len(res), 0, "Table objectprocessorqueue not created in versioning 5")
 
-    @versioning
+    @version
     def test_sql_thread_version_6(self):
         """
             Test with version 6
@@ -189,7 +189,7 @@ class TestSqlThread(unittest.TestCase):
         objectprocessorqueue = list(filter_table_column(objectprocessorqueue, "objecttype"))
         self.assertEqual(objectprocessorqueue, ['objecttype'], "Data not migrated for version 6")
 
-    @versioning
+    @version
     def test_sql_thread_version_7(self):
         """
             Test with version 7
@@ -205,7 +205,7 @@ class TestSqlThread(unittest.TestCase):
         sent = sqlQuery('''SELECT status FROM sent ''')
         self.assertEqual(sent, [('msgqueued',), ('msgqueued',)], "Data not migrated for version 7")
 
-    @versioning
+    @version
     def test_sql_thread_version_8(self):
         """
             Test with version 8
@@ -216,7 +216,7 @@ class TestSqlThread(unittest.TestCase):
         result = list(filter_table_column(res, "sighash"))
         self.assertEqual(result, ['sighash'], "Data not migrated for version 8")
 
-    @versioning
+    @version
     def test_sql_thread_version_9(self):
         """
             Test with version 9
@@ -231,7 +231,7 @@ class TestSqlThread(unittest.TestCase):
         result = list(filter_table_column(res, "address"))
         self.assertEqual(result, ['address'], "Data not migrated for version 9")
 
-    @versioning
+    @version
     def test_sql_thread_version_10(self):
         """
             Test with version 10
