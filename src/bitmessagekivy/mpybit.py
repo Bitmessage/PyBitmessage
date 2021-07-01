@@ -252,10 +252,6 @@ class NavigateApp(MDApp):
         super(NavigateApp, self).run()
 
     @staticmethod
-    def clickNavDrawer():
-        state.kivyapp.root.ids.nav_drawer.set_state('toggle')
-
-    @staticmethod
     def showmeaddresses(name="text"):
         """Show the addresses in spinner to make as dropdown"""
         if name == "text":
