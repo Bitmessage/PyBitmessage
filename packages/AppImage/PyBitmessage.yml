@@ -12,9 +12,10 @@ ingredients:
     - python-setuptools
     - python-sip
     - python-six
-    - python-stem
+    - sni-qt
   exclude:
     - libmng2
+    - libncursesw5
     - libqt4-declarative
     - libqt4-designer
     - libqt4-help
@@ -23,6 +24,7 @@ ingredients:
     - libqt4-sql
     - libqt4-xmlpatterns
     - libqtassistantclient4
+    - libreadline7
   debs:
     - ../deb_dist/pybitmessage_*_amd64.deb
 
