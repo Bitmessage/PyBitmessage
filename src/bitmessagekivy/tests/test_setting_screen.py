@@ -8,11 +8,14 @@ class SettingScreen(TeleniumTestProcess):
         """Show Setting Screen"""
         print("=====================Test -Show Setting Screen=====================")
         self.cli.sleep(3)
-        # self.cli.wait_click("//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]", timeout=20)
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
+        # this is for opening Nav drawer
+        self.cli.click_on('//MDActionTopAppBarButton[@icon=\"menu\"]')
         self.cli.sleep(3)
+        # this is for scrolling Nav drawer
         self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
         self.cli.sleep(3)
-        self.cli.click_on('//NavigationItem[7]')
+        # this is for opening setting screen
+        self.cli.click_on('//NavigationItem[@text=\"Settings\"]')
         self.cli.sleep(2)
+        # Checking current screen
         self.assertExists("//Setting[@name~=\"set\"]", timeout=2)
