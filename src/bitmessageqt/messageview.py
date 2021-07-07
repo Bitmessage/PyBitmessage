@@ -69,19 +69,19 @@ class MessageView(QtGui.QTextBrowser):
         """Show a dialog requesting URL opening confirmation"""
         if link.scheme() == "mailto":
             window = QtGui.QApplication.activeWindow()
-            window.ui.lineEditTo.setText(link.path())
+            window.lineEditTo.setText(link.path())
             if link.hasQueryItem("subject"):
-                window.ui.lineEditSubject.setText(
+                window.lineEditSubject.setText(
                     link.queryItemValue("subject"))
             if link.hasQueryItem("body"):
-                window.ui.textEditMessage.setText(
+                window.textEditMessage.setText(
                     link.queryItemValue("body"))
             window.setSendFromComboBox()
-            window.ui.tabWidgetSend.setCurrentIndex(0)
-            window.ui.tabWidget.setCurrentIndex(
-                window.ui.tabWidget.indexOf(window.ui.send)
+            window.tabWidgetSend.setCurrentIndex(0)
+            window.tabWidget.setCurrentIndex(
+                window.tabWidget.indexOf(window.send)
             )
-            window.ui.textEditMessage.setFocus()
+            window.textEditMessage.setFocus()
             return
         reply = QtGui.QMessageBox.warning(
             self,

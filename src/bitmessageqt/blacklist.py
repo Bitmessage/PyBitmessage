@@ -5,7 +5,6 @@ from addresses import addBMIfNotPresent
 from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
-from queues import UISignalQueue
 from retranslateui import RetranslateMixin
 from tr import _translate
 from uisignaler import UISignaler
@@ -17,21 +16,11 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         super(Blacklist, self).__init__(parent)
         widgets.load('blacklist.ui', self)
 
-        QtCore.QObject.connect(self.radioButtonBlacklist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonBlacklist)
-        QtCore.QObject.connect(self.radioButtonWhitelist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonWhitelist)
-        QtCore.QObject.connect(self.pushButtonAddBlacklist, QtCore.SIGNAL(
-        "clicked()"), self.click_pushButtonAddBlacklist)
-
+        self.blacklistContextMenuToolbar.setVisible(False)
         self.init_blacklist_popup_menu()
 
-        # Initialize blacklist
-        QtCore.QObject.connect(self.tableWidgetBlacklist, QtCore.SIGNAL(
-            "itemChanged(QTableWidgetItem *)"), self.tableWidgetBlacklistItemChanged)
-
         # Set the icon sizes for the identicons
-        identicon_size = 3*7
+        identicon_size = 3 * 7
         self.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
 
         self.UISignalThread = UISignaler.get()
@@ -42,16 +31,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
             BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'black')
             BMConfigParser().save()
-            # self.tableWidgetBlacklist.clearContents()
-            self.tableWidgetBlacklist.setRowCount(0)
             self.rerenderBlackWhiteList()
 
     def click_radioButtonWhitelist(self):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
             BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'white')
             BMConfigParser().save()
-            # self.tableWidgetBlacklist.clearContents()
-            self.tableWidgetBlacklist.setRowCount(0)
             self.rerenderBlackWhiteList()
 
     def click_pushButtonAddBlacklist(self):
@@ -89,21 +74,17 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                         sql = '''INSERT INTO whitelist VALUES (?,?,?)'''
                     sqlExecute(sql, *t)
                 else:
-                    UISignalQueue.put((
-                        'updateStatusBar',
+                    self.window().updateStatusBar(
                         _translate(
                             "MainWindow",
                             "Error: You cannot add the same address to your"
                             " list twice. Perhaps rename the existing one"
-                            " if you want.")
-                    ))
+                            " if you want."))
             else:
-                UISignalQueue.put((
-                    'updateStatusBar',
+                self.window().updateStatusBar(
                     _translate(
                         "MainWindow",
-                        "The address you entered was invalid. Ignoring it.")
-                ))
+                        "The address you entered was invalid. Ignoring it."))
 
     def tableWidgetBlacklistItemChanged(self, item):
         if item.column() == 0:
@@ -116,36 +97,8 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                     sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
                             str(item.text()), str(addressitem.text()))
 
-    def init_blacklist_popup_menu(self, connectSignal=True):
+    def init_blacklist_popup_menu(self):
         # Popup menu for the Blacklist page
-        self.blacklistContextMenuToolbar = QtGui.QToolBar()
-        # Actions
-        self.actionBlacklistNew = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Add new entry"), self.on_action_BlacklistNew)
-        self.actionBlacklistDelete = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Delete"), self.on_action_BlacklistDelete)
-        self.actionBlacklistClipboard = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Copy address to clipboard"),
-            self.on_action_BlacklistClipboard)
-        self.actionBlacklistEnable = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Enable"), self.on_action_BlacklistEnable)
-        self.actionBlacklistDisable = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Disable"), self.on_action_BlacklistDisable)
-        self.actionBlacklistSetAvatar = self.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Set avatar..."),
-            self.on_action_BlacklistSetAvatar)
-        self.tableWidgetBlacklist.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.tableWidgetBlacklist, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                        self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu(self)
         # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
         self.popMenuBlacklist.addAction(self.actionBlacklistDelete)

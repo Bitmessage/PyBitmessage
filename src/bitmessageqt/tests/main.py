@@ -20,7 +20,7 @@ class TestBase(unittest.TestCase):
             or bitmessageqt.BitmessageQtApplication(sys.argv))
         self.window = self.app.activeWindow()
         if not self.window:
-            self.window = bitmessageqt.MyForm()
+            self.window = bitmessageqt.MainWindow()
             self.window.appIndicatorInit(self.app)
 
     def tearDown(self):

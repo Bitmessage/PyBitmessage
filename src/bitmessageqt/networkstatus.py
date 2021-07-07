@@ -240,7 +240,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.labelTotalConnections.setText(
             _translate(
                 "networkstatus", "Total Connections: %1").arg(
-                    str(self.tableWidgetConnectionCount.rowCount())))
+                    self.tableWidgetConnectionCount.rowCount()))
         self.labelStartupTime.setText(_translate(
             "networkstatus", "Since startup on %1"
         ).arg(l10n.formatTimestamp(self.startup)))

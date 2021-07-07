@@ -1,0 +1,2192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>885</width>
+    <height>580</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Bitmessage</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="bitmessage_icons.qrc">
+    <normaloff>:/newPrefix/images/can-icon-24px.png</normaloff>:/newPrefix/images/can-icon-24px.png</iconset>
+  </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Rounded</enum>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout">
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>8</number>
+    </property>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="baseSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="inbox">
+       <attribute name="icon">
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/inbox.png</normaloff>:/newPrefix/images/inbox.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Messages</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="inboxLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="SSplitter" name="inboxHorizontalSplitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QWidget" name="inboxIdentitiesWidget">
+           <layout class="QVBoxLayout">
+            <item>
+             <widget class="STreeWidget" name="treeWidgetYourIdentities">
+              <property name="baseSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <column>
+               <property name="text">
+                <string>Identities</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <selectedoff>:/newPrefix/images/identities.png</selectedoff>
+                </iconset>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonNewAddress">
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>New Indentitiy</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="SSplitter" name="inboxMessagecontrolSplitter">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QWidget" name="searchWidget">
+            <layout class="QHBoxLayout" name="searchLayout">
+             <item>
+              <widget class="QLineEdit" name="inboxSearchLineEdit">
+               <property name="placeholderText">
+                <string>Search</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="inboxSearchOption">
+	       <property name="currentIndex">
+                <number>3</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>All</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>To</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>From</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Subject</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Message</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="STableWidget" name="tableWidgetInbox">
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="wordWrap">
+             <bool>false</bool>
+            </property>
+            <attribute name="horizontalHeaderCascadingSectionResizes">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderDefaultSectionSize">
+             <number>200</number>
+            </attribute>
+            <attribute name="horizontalHeaderHighlightSections">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderMinimumSectionSize">
+             <number>27</number>
+            </attribute>
+            <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="verticalHeaderDefaultSectionSize">
+             <number>26</number>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>To</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>From</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Subject</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Received</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="MessageView" name="textEditInboxMessage">
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>500</height>
+             </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="plainText">
+             <string>
+        Welcome to easy and secure Bitmessage
+            * send messages to other people
+            * send broadcast messages like twitter or
+            * discuss in chan(nel)s with other people
+	      </string>
+            </property>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="send">
+       <attribute name="icon">
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/send.png</normaloff>:/newPrefix/images/send.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Send</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="sendLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="SSplitter" name="sendHorizontalSplitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QWidget" name="sendIdentitiesWidget">
+           <layout class="QVBoxLayout">
+            <item>
+             <widget class="STableWidget" name="tableWidgetAddressBook">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::ExtendedSelection</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <property name="sortingEnabled">
+               <bool>true</bool>
+              </property>
+              <attribute name="horizontalHeaderCascadingSectionResizes">
+               <bool>true</bool>
+              </attribute>
+              <attribute name="horizontalHeaderDefaultSectionSize">
+               <number>200</number>
+              </attribute>
+              <attribute name="horizontalHeaderHighlightSections">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderStretchLastSection">
+               <bool>true</bool>
+              </attribute>
+              <attribute name="verticalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <column>
+               <property name="text">
+                <string>Address book</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <selectedoff>:/newPrefix/images/addressbook.png</selectedoff>
+                </iconset>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Address</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAddAddressBook">
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Add Contact</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonFetchNamecoinID">
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Fetch Namecoin ID</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="SSplitter" name="sendMessagecontrolSplitter">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QTabWidget" name="tabWidgetSend">
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <widget class="QWidget" name="sendDirect">
+             <attribute name="title">
+              <string>Send ordinary Message</string>
+             </attribute>
+             <layout class="QGridLayout" name="gridLayout_8">
+              <property name="leftMargin">
+               <number>4</number>
+              </property>
+              <property name="topMargin">
+               <number>4</number>
+              </property>
+              <property name="rightMargin">
+               <number>4</number>
+              </property>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
+              <item row="0" column="0">
+               <layout class="QVBoxLayout" name="verticalLayout_5">
+                <item>
+                 <layout class="QGridLayout" name="gridLayout_2">
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>Subject:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_2">
+                    <property name="text">
+                     <string>From:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="lineEditSubject">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>To:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QComboBox" name="comboBoxSendFrom">
+                    <property name="minimumSize">
+                     <size>
+                      <width>300</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="lineEditTo"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="MessageCompose" name="textEditMessage">
+                  <property name="html">
+                   <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="sendBroadcast">
+             <attribute name="title">
+              <string>Send Message to your Subscribers</string>
+             </attribute>
+             <layout class="QGridLayout" name="gridLayout_9">
+              <property name="leftMargin">
+               <number>4</number>
+              </property>
+              <property name="topMargin">
+               <number>4</number>
+              </property>
+              <property name="rightMargin">
+               <number>4</number>
+              </property>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
+              <item row="0" column="0">
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <layout class="QGridLayout" name="gridLayout_5">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_8">
+                    <property name="text">
+                     <string>From:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="lineEditSubjectBroadcast">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_7">
+                    <property name="text">
+                     <string>Subject:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QComboBox" name="comboBoxSendFromBroadcast">
+                    <property name="minimumSize">
+                     <size>
+                      <width>300</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="MessageCompose" name="textEditMessageBroadcast">
+                  <property name="html">
+                   <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+           <widget class="QWidget" name="sendControlsContainer">
+            <layout class="QHBoxLayout" name="sendControlsLayout">
+             <item>
+              <widget class="QPushButton" name="pushButtonTTL">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>32</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="palette">
+                <palette>
+                 <active>
+                  <colorrole role="ButtonText">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                 </active>
+                 <inactive>
+                  <colorrole role="ButtonText">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>0</red>
+                     <green>0</green>
+                     <blue>255</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                 </inactive>
+                 <disabled>
+                  <colorrole role="ButtonText">
+                   <brush brushstyle="SolidPattern">
+                    <color alpha="255">
+                     <red>120</red>
+                     <green>120</green>
+                     <blue>120</blue>
+                    </color>
+                   </brush>
+                  </colorrole>
+                 </disabled>
+                </palette>
+               </property>
+               <property name="font">
+                <font>
+                 <underline>true</underline>
+                </font>
+               </property>
+               <property name="text">
+                <string>TTL:</string>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="horizontalSliderTTL">
+               <property name="minimumSize">
+                <size>
+                 <width>35</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>70</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="invertedAppearance">
+                <bool>false</bool>
+               </property>
+               <property name="invertedControls">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelHumanFriendlyTTLDescription">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>45</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string notr="true">X days</string>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignRight">
+              <widget class="QPushButton" name="pushButtonClear">
+               <property name="text">
+                <string>Clear</string>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignRight">
+              <widget class="QPushButton" name="pushButtonSend">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Send</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="subscriptions">
+       <attribute name="icon">
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/subscriptions.png</normaloff>:/newPrefix/images/subscriptions.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Subscriptions</string>
+       </attribute>
+       <layout class="QVBoxLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="SSplitter" name="subscriptionsHorizontalSplitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QWidget" name="subscriptionsIdentitiesWidget">
+           <layout class="QVBoxLayout">
+            <item>
+             <widget class="STreeWidget" name="treeWidgetSubscriptions">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::SingleSelection</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <column>
+               <property name="text">
+                <string>Subscriptions</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <selectedoff>:/newPrefix/images/subscriptions.png</selectedoff>
+                </iconset>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAddSubscription">
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Add new Subscription</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="SSplitter" name="subscriptionsMessagecontrolSplitter">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QWidget" name="searchWidget">
+            <layout class="QHBoxLayout" name="searchLayout">
+             <item>
+              <widget class="QLineEdit" name="inboxSearchLineEditSubscriptions">
+               <property name="placeholderText">
+                <string>Search</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="inboxSearchOptionSubscriptions">
+		<property name="currentIndex">
+                <number>2</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>All</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>From</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Subject</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Message</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="STableWidget" name="tableWidgetInboxSubscriptions">
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="wordWrap">
+             <bool>false</bool>
+            </property>
+            <attribute name="horizontalHeaderCascadingSectionResizes">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderDefaultSectionSize">
+             <number>200</number>
+            </attribute>
+            <attribute name="horizontalHeaderHighlightSections">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderMinimumSectionSize">
+             <number>27</number>
+            </attribute>
+            <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="verticalHeaderDefaultSectionSize">
+             <number>26</number>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>To</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>From</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Subject</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Received</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="MessageView" name="textEditInboxMessageSubscriptions">
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>500</height>
+             </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="chans">
+       <attribute name="icon">
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/can-icon-16px.png</normaloff>:/newPrefix/images/can-icon-16px.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Chans</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="chansLayout">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="SSplitter" name="chansHorizontalSplitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QWidget" name="chansIdentitiesWidget">
+           <layout class="QVBoxLayout">
+            <item>
+             <widget class="QTreeWidget" name="treeWidgetChans">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Sunken</enum>
+              </property>
+              <property name="lineWidth">
+               <number>1</number>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::SingleSelection</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <column>
+               <property name="text">
+                <string>Chans</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <selectedoff>:/newPrefix/images/can-icon-16px.png</selectedoff>
+                </iconset>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAddChan">
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Add Chan</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="SSplitter" name="chansMessagecontrolSplitter">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QWidget" name="searchWidget">
+            <layout class="QHBoxLayout" name="searchLayout">
+             <item>
+              <widget class="QLineEdit" name="inboxSearchLineEditChans">
+               <property name="placeholderText">
+                <string>Search</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="inboxSearchOptionChans">
+		<property name="currentIndex">
+                <number>3</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>All</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>To</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>From</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Subject</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Message</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="STableWidget" name="tableWidgetInboxChans">
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="wordWrap">
+             <bool>false</bool>
+            </property>
+            <attribute name="horizontalHeaderCascadingSectionResizes">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="horizontalHeaderDefaultSectionSize">
+             <number>200</number>
+            </attribute>
+            <attribute name="horizontalHeaderHighlightSections">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderMinimumSectionSize">
+             <number>27</number>
+            </attribute>
+            <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="verticalHeaderDefaultSectionSize">
+             <number>26</number>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>To</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>From</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Subject</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Received</string>
+             </property>
+            </column>
+           </widget>
+           <widget class="MessageView" name="textEditInboxMessageChans">
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>500</height>
+             </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="Blacklist" name="blackwhitelist">
+       <attribute name="icon">
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/blacklist.png</normaloff>:/newPrefix/images/blacklist.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Blacklist</string>
+       </attribute>
+      </widget>
+      <widget class="NetworkStatus" name="networkstatus">
+       <attribute name="icon">
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/networkstatus.png</normaloff>:/newPrefix/images/networkstatus.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>Network Status</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButtonStatusIcon">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>50</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="cursor">
+       <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string notr="true"/>
+      </property>
+      <property name="icon">
+       <iconset resource="bitmessage_icons.qrc">
+        <normaloff>:/newPrefix/images/redicon.png</normaloff>:/newPrefix/images/redicon.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>21</width>
+        <height>23</height>
+       </size>
+      </property>
+      <property name="flat">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>885</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionManageKeys"/>
+    <addaction name="actionDeleteAllTrashedMessages"/>
+    <addaction name="actionRegenerateDeterministicAddresses"/>
+    <addaction name="actionNetworkSwitch"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionHelp"/>
+    <addaction name="actionSupport"/>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="BMStatusBar" name="statusbar">
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>25</height>
+    </size>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="inboxContextMenuToolbar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionReply">
+    <property name="text">
+     <string>Reply to sender</string>
+    </property>
+   </action>
+   <action name="actionReplyChan">
+    <property name="text">
+     <string>Reply to channel</string>
+    </property>
+   </action>
+   <action name="actionAddSenderToAddressBook">
+    <property name="text">
+     <string>Add sender to your Address Book</string>
+    </property>
+   </action>
+   <action name="actionAddSenderToBlackList">
+    <property name="text">
+     <string>Add sender to your Blacklist</string>
+    </property>
+   </action>
+   <action name="actionTrashInboxMessage">
+    <property name="text">
+     <string>Move to Trash</string>
+    </property>
+   </action>
+   <action name="actionUndeleteTrashedMessage">
+    <property name="text">
+     <string>Undelete</string>
+    </property>
+   </action>
+   <action name="actionForceHtml">
+    <property name="text">
+     <string>View HTML code as formatted text</string>
+    </property>
+   </action>
+   <action name="actionSaveMessageAs">
+    <property name="text">
+     <string>Save message as...</string>
+    </property>
+   </action>
+   <action name="actionMarkUnread">
+    <property name="text">
+     <string>Mark Unread</string>
+    </property>
+   </action>
+   <addaction name="actionReply"/>
+   <addaction name="actionReplyChan"/>
+   <addaction name="actionAddSenderToAddressBook"/>
+   <addaction name="actionAddSenderToBlackList"/>
+   <addaction name="actionTrashInboxMessage"/>
+   <addaction name="actionUndeleteTrashedMessage"/>
+   <addaction name="actionForceHtml"/>
+   <addaction name="actionSaveMessageAs"/>
+   <addaction name="actionMarkUnread"/>
+  </widget>
+  <widget class="QToolBar" name="addressContextMenuToolbarYourIdentities">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionNewYourIdentities">
+    <property name="text">
+     <string>New</string>
+    </property>
+   </action>
+   <action name="actionEnableYourIdentities">
+    <property name="text">
+     <string>Enable</string>
+    </property>
+   </action>
+   <action name="actionDisableYourIdentities">
+    <property name="text">
+     <string>Disable</string>
+    </property>
+   </action>
+   <action name="actionSetAvatarYourIdentities">
+    <property name="text">
+     <string>Set avatar...</string>
+    </property>
+   </action>
+   <action name="actionClipboardYourIdentities">
+    <property name="text">
+     <string>Copy address to clipboard</string>
+    </property>
+   </action>
+   <action name="actionSpecialAddressBehaviorYourIdentities">
+    <property name="text">
+     <string>Special address behavior...</string>
+    </property>
+   </action>
+   <action name="actionEmailGateway">
+    <property name="text">
+     <string>Email gateway</string>
+    </property>
+   </action>
+   <action name="actionMarkAllRead">
+    <property name="text">
+     <string>Mark all messages as read</string>
+    </property>
+   </action>
+   <addaction name="actionNewYourIdentities"/>
+   <addaction name="actionEnableYourIdentities"/>
+   <addaction name="actionDisableYourIdentities"/>
+   <addaction name="actionSetAvatarYourIdentities"/>
+   <addaction name="actionClipboardYourIdentities"/>
+   <addaction name="actionSpecialAddressBehaviorYourIdentities"/>
+   <addaction name="actionEmailGateway"/>
+   <addaction name="actionMarkAllRead"/>
+  </widget>
+  <widget class="QToolBar" name="addressContextMenuToolbar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionNew">
+    <property name="text">
+     <string>New</string>
+    </property>
+   </action>
+   <action name="actionDelete">
+    <property name="text">
+     <string>Delete</string>
+    </property>
+   </action>
+   <action name="actionEnable">
+    <property name="text">
+     <string>Enable</string>
+    </property>
+   </action>
+   <action name="actionDisable">
+    <property name="text">
+     <string>Disable</string>
+    </property>
+   </action>
+   <action name="actionSetAvatar">
+    <property name="text">
+     <string>Set avatar...</string>
+    </property>
+   </action>
+   <action name="actionClipboard">
+    <property name="text">
+     <string>Copy address to clipboard</string>
+    </property>
+   </action>
+   <action name="actionSend">
+    <property name="text">
+     <string>Send message to this chan</string>
+    </property>
+   </action>
+   <action name="actionSpecialAddressBehavior">
+    <property name="text">
+     <string>Special address behavior...</string>
+    </property>
+   </action>
+   <addaction name="actionNew"/>
+   <addaction name="actionDelete"/>
+   <addaction name="actionEnable"/>
+   <addaction name="actionDisable"/>
+   <addaction name="actionSetAvatar"/>
+   <addaction name="actionClipboard"/>
+   <addaction name="actionSend"/>
+   <addaction name="actionSpecialAddressBehavior"/>
+  </widget>
+  <widget class="QToolBar" name="addressBookContextMenuToolbar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionAddressBookSend">
+    <property name="text">
+     <string>Send message to this address</string>
+    </property>
+   </action>
+   <action name="actionAddressBookClipboard">
+    <property name="text">
+     <string>Copy address to clipboard</string>
+    </property>
+   </action>
+   <action name="actionAddressBookSubscribe">
+    <property name="text">
+     <string>Subscribe to this address</string>
+    </property>
+   </action>
+   <action name="actionAddressBookSetAvatar">
+    <property name="text">
+     <string>Set avatar...</string>
+    </property>
+   </action>
+   <action name="actionAddressBookSetSound">
+    <property name="text">
+     <string>Set notification sound...</string>
+    </property>
+   </action>
+   <action name="actionAddressBookNew">
+    <property name="text">
+     <string>Add New Address</string>
+    </property>
+   </action>
+   <action name="actionAddressBookDelete">
+    <property name="text">
+     <string>Delete</string>
+    </property>
+   </action>
+   <addaction name="actionAddressBookSend"/>
+   <addaction name="actionAddressBookClipboard"/>
+   <addaction name="actionAddressBookSubscribe"/>
+   <addaction name="actionAddressBookSetAvatar"/>
+   <addaction name="actionAddressBookSetSound"/>
+   <addaction name="actionAddressBookNew"/>
+   <addaction name="actionAddressBookDelete"/>
+  </widget>
+  <widget class="QToolBar" name="subscriptionsContextMenuToolbar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionsubscriptionsNew">
+    <property name="text">
+     <string>New</string>
+    </property>
+   </action>
+   <action name="actionsubscriptionsDelete">
+    <property name="text">
+     <string>Delete</string>
+    </property>
+   </action>
+   <action name="actionsubscriptionsClipboard">
+    <property name="text">
+     <string>Copy address to clipboard</string>
+    </property>
+   </action>
+   <action name="actionsubscriptionsEnable">
+    <property name="text">
+     <string>Enable</string>
+    </property>
+   </action>
+   <action name="actionsubscriptionsDisable">
+    <property name="text">
+     <string>Disable</string>
+    </property>
+   </action>
+   <action name="actionsubscriptionsSetAvatar">
+    <property name="text">
+     <string>Set avatar...</string>
+    </property>
+   </action>
+   <action name="actionsubscriptionsSend">
+    <property name="text">
+     <string>Send message to this address</string>
+    </property>
+   </action>
+   <addaction name="actionsubscriptionsNew"/>
+   <addaction name="actionsubscriptionsDelete"/>
+   <addaction name="actionsubscriptionsClipboard"/>
+   <addaction name="actionsubscriptionsEnable"/>
+   <addaction name="actionsubscriptionsDisable"/>
+   <addaction name="actionsubscriptionsSetAvatar"/>
+   <addaction name="actionsubscriptionsSend"/>
+  </widget>
+  <widget class="QToolBar" name="sentContextMenuToolbar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionTrashSentMessage">
+    <property name="text">
+     <string>Move to Trash</string>
+    </property>
+   </action>
+   <action name="actionSentClipboard">
+    <property name="text">
+     <string>Copy destination address to clipboard</string>
+    </property>
+   </action>
+   <action name="actionForceSend">
+    <property name="text">
+     <string>Force send</string>
+    </property>
+   </action>
+   <action name="actionSentReply">
+    <property name="text">
+     <string>Send update</string>
+    </property>
+   </action>
+   <addaction name="actionTrashSentMessage"/>
+   <addaction name="actionSentClipboard"/>
+   <addaction name="actionForceSend"/>
+   <addaction name="actionSentReply"/>
+  </widget>
+  <action name="actionImport_keys">
+   <property name="text">
+    <string>Import keys</string>
+   </property>
+  </action>
+  <action name="actionManageKeys">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="dialog-password">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Manage keys</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionHelp">
+   <property name="icon">
+    <iconset theme="help-contents">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Help</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset theme="help-about">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset theme="document-properties">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionRegenerateDeterministicAddresses">
+   <property name="icon">
+    <iconset theme="view-refresh">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Regenerate deterministic addresses</string>
+   </property>
+  </action>
+  <action name="actionDeleteAllTrashedMessages">
+   <property name="icon">
+    <iconset theme="user-trash">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Delete all trashed messages</string>
+   </property>
+  </action>
+  <action name="actionJoinChan">
+   <property name="icon">
+    <iconset theme="contact-new">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Join / Create chan</string>
+   </property>
+  </action>
+  <action name="actionSupport">
+   <property name="text">
+    <string>Contact Support</string>
+   </property>
+  </action>
+  <action name="actionNetworkSwitch">
+   <property name="text">
+    <string>Go offline</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BMStatusBar</class>
+   <extends>QStatusBar</extends>
+   <header>bitmessageqt.statusbar</header>
+  </customwidget>
+  <customwidget>
+   <class>Blacklist</class>
+   <extends>QWidget</extends>
+   <header>bitmessageqt.blacklist</header>
+  </customwidget>
+  <customwidget>
+   <class>NetworkStatus</class>
+   <extends>QWidget</extends>
+   <header>bitmessageqt.networkstatus</header>
+  </customwidget>
+  <customwidget>
+   <class>MessageView</class>
+   <extends>QTextEdit</extends>
+   <header>bitmessageqt.messageview</header>
+  </customwidget>
+  <customwidget>
+   <class>STreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>bitmessageqt.settingsmixin</header>
+  </customwidget>
+  <customwidget>
+   <class>STableWidget</class>
+   <extends>QTableWidget</extends>
+   <header>bitmessageqt.settingsmixin</header>
+  </customwidget>
+  <customwidget>
+   <class>SSplitter</class>
+   <extends>QSplitter</extends>
+   <header>bitmessageqt.settingsmixin</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MessageCompose</class>
+   <extends>QTextEdit</extends>
+   <header>bitmessageqt.messagecompose</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>tableWidgetInbox</tabstop>
+  <tabstop>textEditInboxMessage</tabstop>
+  <tabstop>comboBoxSendFrom</tabstop>
+  <tabstop>lineEditTo</tabstop>
+  <tabstop>lineEditSubject</tabstop>
+  <tabstop>textEditMessage</tabstop>
+  <tabstop>pushButtonSend</tabstop>
+  <tabstop>pushButtonAddSubscription</tabstop>
+ </tabstops>
+ <resources>
+  <include location="bitmessage_icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>quit()</slot>
+  </connection>
+  <connection>
+   <sender>actionNetworkSwitch</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>network_switch</slot>
+  </connection>
+  <connection>
+   <sender>actionRegenerateDeterministicAddresses</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionRegenerateDeterministicAddresses</slot>
+  </connection>
+  <connection>
+   <sender>actionDeleteAllTrashedMessages</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionDeleteAllTrashedMessages</slot>
+  </connection>
+  <connection>
+   <sender>actionManageKeys</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionManageKeys</slot>
+  </connection>
+  <connection>
+   <sender>actionSettings</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionSettings</slot>
+  </connection>
+  <connection>
+   <sender>actionAbout</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionAbout</slot>
+  </connection>
+  <connection>
+   <sender>actionSupport</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionSupport</slot>
+  </connection>
+  <connection>
+   <sender>actionHelp</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionHelp</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonNewAddress</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_NewAddressDialog</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonAddAddressBook</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonAddAddressBook</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonFetchNamecoinID</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonFetchNamecoinID</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonAddSubscription</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonAddSubscription</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonAddChan</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_actionJoinChan</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonTTL</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonTTL</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonClear</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonClear</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonSend</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonSend</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonStatusIcon</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>click_pushButtonStatusIcon</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetInbox</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuInbox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>656</x>
+     <y>366</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>442</x>
+     <y>289</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tableWidgetInboxSubscriptions</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuInbox()</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetInboxChans</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuInbox()</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetYourIdentities</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuYourIdentities()</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetAddressBook</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuAddressBook()</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetSubscriptions</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuSubscriptions()</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetChans</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_context_menuChan()</slot>
+  </connection>
+  <connection>
+   <sender>actionReply</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxReply</slot>
+  </connection>
+  <connection>
+   <sender>actionReplyChan</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxReplyChan</slot>
+  </connection>
+  <connection>
+   <sender>actionAddSenderToAddressBook</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxAddSenderToAddressBook</slot>
+  </connection>
+  <connection>
+   <sender>actionAddSenderToBlackList</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxAddSenderToBlackList</slot>
+  </connection>
+  <connection>
+   <sender>actionTrashInboxMessage</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxTrash</slot>
+  </connection>
+  <connection>
+   <sender>actionUndeleteTrashedMessage</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_TrashUndelete</slot>
+  </connection>
+  <connection>
+   <sender>actionForceHtml</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxMessageForceHtml</slot>
+  </connection>
+  <connection>
+   <sender>actionSaveMessageAs</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxSaveMessageAs</slot>
+  </connection>
+  <connection>
+   <sender>actionMarkUnread</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_InboxMarkUnread</slot>
+  </connection>
+  <connection>
+   <sender>actionNew</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_YourIdentitiesNew</slot>
+  </connection>
+  <connection>
+   <sender>actionDelete</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_YourIdentitiesDelete</slot>
+  </connection>
+  <connection>
+   <sender>actionEnable</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Enable</slot>
+  </connection>
+  <connection>
+   <sender>actionDisable</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Disable</slot>
+  </connection>
+  <connection>
+   <sender>actionSetAvatar</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_TreeWidgetSetAvatar</slot>
+  </connection>
+  <connection>
+   <sender>actionClipboard</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Clipboard</slot>
+  </connection>
+  <connection>
+   <sender>actionSend</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Send</slot>
+  </connection>
+  <connection>
+   <sender>actionSpecialAddressBehavior</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SpecialAddressBehaviorDialog</slot>
+  </connection>
+  <connection>
+   <sender>actionNewYourIdentities</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_YourIdentitiesNew</slot>
+  </connection>
+  <connection>
+   <sender>actionEnableYourIdentities</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Enable</slot>
+  </connection>
+  <connection>
+   <sender>actionDisableYourIdentities</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Disable</slot>
+  </connection>
+  <connection>
+   <sender>actionSetAvatarYourIdentities</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_TreeWidgetSetAvatar</slot>
+  </connection>
+  <connection>
+   <sender>actionClipboardYourIdentities</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Clipboard</slot>
+  </connection>
+  <connection>
+   <sender>actionSpecialAddressBehaviorYourIdentities</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SpecialAddressBehaviorDialog</slot>
+  </connection>
+  <connection>
+   <sender>actionEmailGateway</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_EmailGatewayDialog</slot>
+  </connection>
+  <connection>
+   <sender>actionMarkAllRead</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_MarkAllRead</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookSend</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookSend</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookClipboard</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookClipboard</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookSubscribe</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookSubscribe</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookSetAvatar</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookSetAvatar</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookSetSound</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookSetSound</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookNew</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookNew</slot>
+  </connection>
+  <connection>
+   <sender>actionAddressBookDelete</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_AddressBookDelete</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsNew</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SubscriptionsNew</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsDelete</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SubscriptionsDelete</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsClipboard</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SubscriptionsClipboard</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsEnable</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SubscriptionsEnable</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsDisable</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SubscriptionsDisable</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsSetAvatar</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_TreeWidgetSetAvatar</slot>
+  </connection>
+  <connection>
+   <sender>actionsubscriptionsSend</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_Send</slot>
+  </connection>
+  <connection>
+   <sender>actionTrashSentMessage</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SentTrash</slot>
+  </connection>
+  <connection>
+   <sender>actionSentClipboard</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SentClipboard</slot>
+  </connection>
+  <connection>
+   <sender>actionForceSend</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_ForceSend</slot>
+  </connection>
+  <connection>
+   <sender>actionSentReply</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_action_SentReply</slot>
+  </connection>
+  <connection>
+   <sender>inboxSearchLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>inboxSearchLineEditReturnPressed</slot>
+  </connection>
+  <connection>
+   <sender>inboxSearchLineEditSubscriptions</sender>
+   <signal>returnPressed()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>inboxSearchLineEditReturnPressed</slot>
+  </connection>
+  <connection>
+   <sender>inboxSearchLineEditChans</sender>
+   <signal>returnPressed()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>inboxSearchLineEditReturnPressed</slot>
+  </connection>
+  <connection>
+   <sender>inboxSearchLineEdit</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>inboxSearchLineEditUpdated</slot>
+  </connection>
+  <connection>
+   <sender>inboxSearchLineEditSubscriptions</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>inboxSearchLineEditUpdated</slot>
+  </connection>
+  <connection>
+   <sender>inboxSearchLineEditChans</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>inboxSearchLineEditUpdated</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetAddressBook</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>tableWidgetAddressBookItemChanged</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>67</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>442</x>
+     <y>289</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tableWidgetInbox</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>tableWidgetInboxItemClicked</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetInboxSubscriptions</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>tableWidgetInboxItemClicked</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetInboxChans</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>tableWidgetInboxItemClicked</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetYourIdentities</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>treeWidgetItemClicked</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetSubscriptions</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>treeWidgetItemClicked</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetChans</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>treeWidgetItemClicked</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetYourIdentities</sender>
+   <signal>itemChanged(QTreeWidgetItem*,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>treeWidgetItemChanged</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetSubscriptions</sender>
+   <signal>itemChanged(QTreeWidgetItem*,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>treeWidgetItemChanged</slot>
+  </connection>
+  <connection>
+   <sender>treeWidgetChans</sender>
+   <signal>itemChanged(QTreeWidgetItem*,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>treeWidgetItemChanged</slot>
+  </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>tabWidgetCurrentChanged</slot>
+  </connection>
+  <connection>
+   <sender>horizontalSliderTTL</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>updateTTL</slot>
+  </connection>
+ </connections>
+</ui>

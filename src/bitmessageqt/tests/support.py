@@ -14,7 +14,7 @@ class TestSupport(TestBase):
 
     def test(self):
         """trigger menu action "Contact Support" and check the result"""
-        ui = self.window.ui
+        ui = self.window
         self.assertEqual(ui.lineEditTo.text(), '')
         self.assertEqual(ui.lineEditSubject.text(), '')
 

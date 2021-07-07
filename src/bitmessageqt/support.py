@@ -105,14 +105,14 @@ def createSupportMessage(myapp):
     if state.shutdown:
         return
 
-    myapp.ui.lineEditSubject.setText(SUPPORT_SUBJECT)
-    addrIndex = myapp.ui.comboBoxSendFrom.findData(
+    myapp.lineEditSubject.setText(SUPPORT_SUBJECT)
+    addrIndex = myapp.comboBoxSendFrom.findData(
         address, QtCore.Qt.UserRole,
         QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
     if addrIndex == -1:  # something is very wrong
         return
-    myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
-    myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
+    myapp.comboBoxSendFrom.setCurrentIndex(addrIndex)
+    myapp.lineEditTo.setText(SUPPORT_ADDRESS)
 
     version = softwareVersion
     commit = paths.lastCommit().get('commit')
@@ -149,15 +149,15 @@ def createSupportMessage(myapp):
     upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
-    myapp.ui.textEditMessage.setText(unicode(SUPPORT_MESSAGE, 'utf-8').format(
+    myapp.textEditMessage.setText(unicode(SUPPORT_MESSAGE, 'utf-8').format(
         version, os, architecture, pythonversion, opensslversion, frozen,
         portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
-    myapp.ui.tabWidgetSend.setCurrentIndex(
-        myapp.ui.tabWidgetSend.indexOf(myapp.ui.sendDirect)
+    myapp.tabWidgetSend.setCurrentIndex(
+        myapp.tabWidgetSend.indexOf(myapp.sendDirect)
     )
     # send tab
-    myapp.ui.tabWidget.setCurrentIndex(
-        myapp.ui.tabWidget.indexOf(myapp.ui.send)
+    myapp.tabWidget.setCurrentIndex(
+        myapp.tabWidget.indexOf(myapp.send)
     )

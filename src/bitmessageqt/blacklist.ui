@@ -10,6 +10,44 @@
     <height>295</height>
    </rect>
   </property>
+  <widget class="QToolBar" name="blacklistContextMenuToolbar">
+    <action name="actionBlacklistNew">
+    <property name="text">
+     <string>Add new entry</string>
+    </property>
+    </action>
+    <action name="actionBlacklistDelete">
+    <property name="text">
+     <string>Delete</string>
+    </property>
+    </action>
+    <action name="actionBlacklistClipboard">
+    <property name="text">
+     <string>Copy address to clipboard</string>
+    </property>
+    </action>
+    <action name="actionBlacklistEnable">
+    <property name="text">
+     <string>Enable</string>
+    </property>
+    </action>
+    <action name="actionBlacklistDisable">
+    <property name="text">
+     <string>Disable</string>
+    </property>
+    </action>
+    <action name="actionBlacklistSetAvatar">
+    <property name="text">
+     <string>Set avatar...</string>
+    </property>
+    </action>
+    <addaction name="actionBlacklistNew"/>
+    <addaction name="actionBlacklistDelete"/>
+    <addaction name="actionBlacklistClipboard"/>
+    <addaction name="actionBlacklistEnable"/>
+    <addaction name="actionBlacklistDisable"/>
+    <addaction name="actionBlacklistSetAvatar"/>
+  </widget>
   <layout class="QGridLayout" name="gridLayout_6">
    <item row="0" column="0" colspan="2">
     <widget class="QRadioButton" name="radioButtonBlacklist">
@@ -62,6 +100,9 @@
      <property name="sortingEnabled">
       <bool>true</bool>
      </property>
+     <property name="contextMenuPolicy">
+       <enum>Qt::CustomContextMenu</enum>
+     </property>
      <attribute name="horizontalHeaderCascadingSectionResizes">
       <bool>true</bool>
      </attribute>
@@ -104,5 +145,72 @@
  <resources>
   <include location="bitmessage_icons.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>radioButtonBlacklist</sender>
+   <signal>clicked()</signal>
+   <receiver>blacklist</receiver>
+   <slot>click_radioButtonBlacklist</slot>
+  </connection>
+  <connection>
+   <sender>radioButtonWhitelist</sender>
+   <signal>clicked()</signal>
+   <receiver>blacklist</receiver>
+   <slot>click_radioButtonWhitelist</slot>
+  </connection>
+  <connection>
+   <sender>pushButtonAddBlacklist</sender>
+   <signal>clicked()</signal>
+   <receiver>blacklist</receiver>
+   <slot>click_pushButtonAddBlacklist</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetBlacklist</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>blacklist</receiver>
+   <slot>tableWidgetBlacklistItemChanged</slot>
+  </connection>
+  <connection>
+   <sender>actionBlacklistNew</sender>
+   <signal>triggered()</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_action_BlacklistNew</slot>
+  </connection>
+  <connection>
+   <sender>actionBlacklistDelete</sender>
+   <signal>triggered()</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_action_BlacklistDelete</slot>
+  </connection>
+  <connection>
+   <sender>actionBlacklistClipboard</sender>
+   <signal>triggered()</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_action_BlacklistClipboard</slot>
+  </connection>
+  <connection>
+   <sender>actionBlacklistEnable</sender>
+   <signal>triggered()</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_action_BlacklistEnable</slot>
+  </connection>
+  <connection>
+   <sender>actionBlacklistDisable</sender>
+   <signal>triggered()</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_action_BlacklistDisable</slot>
+  </connection>
+  <connection>
+   <sender>actionBlacklistSetAvatar</sender>
+   <signal>triggered()</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_action_BlacklistSetAvatar</slot>
+  </connection>
+  <connection>
+   <sender>tableWidgetBlacklist</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>blacklist</receiver>
+   <slot>on_context_menuBlacklist</slot>
+  </connection>
+  </connections>
 </ui>

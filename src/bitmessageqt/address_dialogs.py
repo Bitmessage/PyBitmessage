@@ -1,7 +1,7 @@
 """
 Dialogs that work with BM address.
 """
-# pylint: disable=attribute-defined-outside-init,too-few-public-methods,relative-import
+# pylint: disable=attribute-defined-outside-init,too-few-public-methods
 
 import hashlib
 
@@ -9,8 +9,11 @@ from PyQt4 import QtCore, QtGui
 
 import queues
 import widgets
-from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass, getSortedAccounts
-from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
+from account import (
+    GatewayAccount, MailchuckAccount, AccountMixin, accountClass,
+    getSortedAccounts
+)
+from addresses import decodeAddress, encodeVarint, addBMIfNotPresent
 from inventory import Inventory
 from tr import _translate
 
