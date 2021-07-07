@@ -1,8 +1,10 @@
 """shutdown function"""
+
 import os
-import Queue
 import threading
 import time
+
+from six.moves import queue
 
 import state
 from debug import logger
@@ -69,14 +71,14 @@ def doCleanShutdown():
     sqlStoredProcedure('exit')
 
     # flush queues
-    for queue in (
+    for q in (
             workerQueue, UISignalQueue, addressGeneratorQueue,
             objectProcessorQueue):
         while True:
             try:
-                queue.get(False)
-                queue.task_done()
-            except Queue.Empty:
+                q.get(False)
+                q.task_done()
+            except queue.Empty:
                 break
 
     if state.thisapp.daemon or not state.enableGUI:

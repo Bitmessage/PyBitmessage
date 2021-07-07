@@ -9,7 +9,7 @@ import knownnodes
 import protocol
 import state
 from bmconfigparser import BMConfigParser
-from queues import Queue, portCheckerQueue
+from queues import queue, portCheckerQueue
 
 logger = logging.getLogger('default')
 
@@ -37,7 +37,7 @@ def chooseConnection(stream):
         retval = portCheckerQueue.get(False)
         portCheckerQueue.task_done()
         return retval
-    except Queue.Empty:
+    except queue.Empty:
         pass
     # with a probability of 0.5, connect to a discovered peer
     if random.choice((False, True)) and not haveOnion:
