@@ -52,7 +52,7 @@ class UpgradeDB(object):
     conn, cur = connection_build()
 
     def __init__(self):
-        self.current_level = None
+        self._current_level = None
         self.max_level = 11
 
     def __get_current_settings_version(self):
@@ -80,7 +80,22 @@ class UpgradeDB(object):
                     'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
                 os._exit(0)
 
-    def upgrade_to_latest(self, cur, conn):
+    @property
+    def sql_schema_version(self):
+        self._current_level = self.__get_current_settings_version()
+
+    @sql_schema_version.setter
+    def sql_schema_version(self, cur, conn, current_level):
+        """
+            Update version with one level
+        """
+        item = '''update settings set value=? WHERE key='version';'''
+        parameters = (current_level + 1,)
+        self.cur.execute(item, parameters)
+        self._current_level = self.__get_current_settings_version()
+
+    # @sql_schema_version.setter
+    def upgrade_to_latest(self, cur, conn, current_level=None):
         """
             Initialise upgrade level
         """
@@ -88,15 +103,19 @@ class UpgradeDB(object):
         # Declare variables
         self.conn = conn
         self.cur = cur
-        self.current_level = self.__get_current_settings_version()
+        if current_level:
+            self._current_level = current_level
+        else:
+            self._current_level = self.__get_current_settings_version()
         self.max_level = 11
 
         # call upgrading level in loop
-        for l in range(self.current_level, self.max_level):
+        for l in range(self._current_level, self.max_level):
             if int(l) == 1:
                 continue
             self._upgrade_one_level_sql_statement(l)
-            self.increment_settings_version(l)
+            # self.increment_settings_version(l)
+            self._current_level = l
 
     def increment_settings_version(self, level):
         """
