@@ -84,7 +84,8 @@ class TestProcessProto(unittest.TestCase):
     def _get_readline(cls, pfile):
         pfile = os.path.join(cls.home, pfile)
         try:
-            return open(pfile, 'rb').readline().strip()
+            with open(pfile, 'rb') as p:
+                return p.readline().strip()
         except (OSError, IOError):
             pass
 
