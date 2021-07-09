@@ -51,3 +51,12 @@ class TeleniumTestProcess(TeleniumTestCase):
         cleanup()
         cls.cli.app_quit()
         cls.process.kill()
+
+    def click_on(self, xpath, seconds=0.3):
+        """this methos is used for on_click event with time"""
+        self.cli.click_on(xpath)
+        self.cli.sleep(seconds)
+
+    def drag(self, xpath1, xpath2):
+        self.cli.drag(xpath1, xpath2, 1)
+        self.cli.sleep(0.3)
