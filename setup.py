@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 'pybitmessage = pybitmessage.bitmessagemain:main'
             ] if sys.platform[:3] == 'win' else []
         },
-        scripts=['src/pybitmessage3'],
+        scripts=['src/pybitmessage'],
         cmdclass={'install': InstallCmd},
         command_options={
             'build_sphinx': {
