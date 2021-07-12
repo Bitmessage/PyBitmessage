@@ -153,7 +153,7 @@ class TestProcessProto(unittest.TestCase):
             missing_threads = []
             for thread_name in thread_names:
                 if thread_name not in self._threads_names:
-                    extra_threads.append(thread_name)
+                    extra_threads.append(thread_name.decode('utf-8'))
             for thread_name in self._threads_names:
                 if thread_name not in thread_names:
                     missing_threads.append(thread_name)
@@ -191,7 +191,7 @@ class TestProcess(TestProcessProto):
     """A test case for pybitmessage process"""
     def test_process_name(self):
         """Check PyBitmessage process name"""
-        self.assertEqual(self.process.name(), 'PyBitmessage')
+        self.assertEqual(self.process.name(), 'pybitmessage')
 
     @unittest.skipIf(psutil.version_info < (4, 0), 'psutil is too old')
     def test_home(self):
