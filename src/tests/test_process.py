@@ -13,8 +13,6 @@ import psutil
 
 from .common import cleanup, put_signal_file
 
-PY3 = sys.version_info[0] >= 3
-
 
 class TestProcessProto(unittest.TestCase):
     """Test case implementing common logic for external testing:
@@ -192,10 +190,7 @@ class TestProcess(TestProcessProto):
     """A test case for pybitmessage process"""
     def test_process_name(self):
         """Check PyBitmessage process name"""
-        if PY3:
-            self.assertEqual(self.process.name(), 'pybitmessage')
-        else:
-            self.assertEqual(self.process.name(), 'PyBitmessage')
+        self.assertEqual(self.process.name(), 'PyBitmessage')
 
     @unittest.skipIf(psutil.version_info < (4, 0), 'psutil is too old')
     def test_home(self):
