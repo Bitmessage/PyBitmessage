@@ -9,7 +9,7 @@ import unittest
 #
 # skip_python3()
 
-# os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
+os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
 from pybitmessage.helper_sql import (
     sqlQuery, sql_ready, sqlStoredProcedure, SqlBulkExecute, sqlExecuteScript, sqlExecute)  # noqa:E402
 from pybitmessage.class_sqlThread import sqlThread, UpgradeDB  # noqa:E402
