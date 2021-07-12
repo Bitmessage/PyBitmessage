@@ -69,15 +69,22 @@ class UpgradeDB(object):
             Execute SQL files and queries
         """
         try:
+            print("=======================")
+            print(file_name)
+            if int(file_name) == 8:
+                res = self.cur.execute('''PRAGMA table_info('inbox');''')
+                print("""""""""""""""-----------res""""""""""""""")
+                print(res)
+            print("=======================")
             with open(os.path.join(root_path, "src/sql/init_version_{}.sql".format(file_name))) as sql_file:
                 sql_as_string = sql_file.read()
             self.cur.executescript(sql_as_string)
         except Exception as err:
             if str(err) == 'table inbox already exists':
-                return "table inbox already exists"
+                return "ERROR trying to upgrade database. Error message: table inbox already exists"
             else:
                 sys.stderr.write(
-                    'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
+                    'ERROR trying to upgrade database. Error message: %s\n' % str(err))
                 os._exit(0)
 
     @property
@@ -186,7 +193,7 @@ class sqlThread(threading.Thread, UpgradeDB):
 
             else:
                 sys.stderr.write(
-                    'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
+                    'ERROR trying to create database file (message.dat). in1111 Error message: %s\n' % str(err))
                 os._exit(0)
 
         # If the settings version is equal to 2 or 3 then the

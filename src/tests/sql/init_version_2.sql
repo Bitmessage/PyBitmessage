@@ -1,3 +1,7 @@
+DROP TABLE inventory;
+
+
+
 CREATE TABLE IF NOT EXISTS `inventory` (
   `hash` blob NOT NULL,
   `objecttype` int DEFAULT NULL,

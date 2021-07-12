@@ -1,3 +1,5 @@
+DROP TABLE objectprocessorqueue;
+
 CREATE TABLE IF NOT EXISTS `knownnodes` (
   `hash` blob NOT NULL,
   `objecttype` int DEFAULT NULL,

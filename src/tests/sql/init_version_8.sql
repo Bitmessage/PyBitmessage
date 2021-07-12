@@ -1,3 +1,5 @@
+DROP TABLE `inbox`;
+
 CREATE TABLE IF NOT EXISTS `inbox` (
   `msgid` blob NOT NULL,
   `toaddress` text DEFAULT NULL,
