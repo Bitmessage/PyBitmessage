@@ -27,7 +27,7 @@ class SendMessage(TeleniumTestProcess):
         self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
         self.assertExists("//Create[@name~=\"create\"]", timeout=2)
         self.cli.sleep(3)
-        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MyMDTextField[0]')
+        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDTextField')
         self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/MyTextInput[0]')
         self.cli.sleep(3)
@@ -49,15 +49,17 @@ class SendMessage(TeleniumTestProcess):
         self.cli.sleep(3)
         self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]')
         self.cli.sleep(2)
+        # ADD SUBJECT
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'heyyyyyy')
         self.cli.sleep(3)
-        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]')
+        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]')
         self.cli.sleep(4)
+        # ADD BODY
         random_label = ""
         for char in "how are you this is message body":
             random_label += char
             self.cli.setattr(
-                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
+                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]', 'text', random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(3)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
@@ -65,7 +67,7 @@ class SendMessage(TeleniumTestProcess):
         self.cli.click_on('//MDFlatButton[0]')
         self.cli.sleep(6)
         self.cli.setattr(
-            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]', "text", data[0])
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[0]', "text", data[0])
         self.cli.sleep(3)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(3)

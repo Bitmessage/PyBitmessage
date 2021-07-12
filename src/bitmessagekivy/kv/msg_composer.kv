@@ -9,24 +9,29 @@
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: self.minimum_height + 3 * self.parent.height/4
+            height: self.minimum_height + 3 * self.parent.height/5
             padding: dp(20)
             spacing: 15
             BoxLayout:
                 orientation: 'vertical'
-                MyMDTextField:
+                MDTextField:
                     id: ti
-                    hint_text: 'type or select sender address'
                     size_hint_y: None
-                    height: 100
-                    font_size: dp(15)
+                    hint_text: 'Type or Select sender address'
+                    icon_right: 'account'
+                    icon_right_color: app.theme_cls.primary_light
+                    font_size: '15sp'
                     multiline: False
                     required: True
+                    # height: self.parent.height/2
+                    height: 100
+                    current_hint_text_color: 0,0,0,0.5
                     helper_text_mode: "on_error"
                     canvas.before:
                         Color:
                             rgba: (0,0,0,1)
 
+                           
                 BoxLayout:
                     size_hint_y: None
                     height: dp(40)
@@ -44,7 +49,8 @@
                         font_size: '13.5sp'
                         ArrowImg:
                     
-            BoxLayout:
+
+            RelativeLayout:
                 orientation: 'horizontal'
                 BoxLayout:
                     orientation: 'vertical'
@@ -55,13 +61,23 @@
                         id: txt_input
                         size_hint_y: None
                         font_size: '15sp'
-                        height: self.parent.height/2
-                        hint_text: app.tr._('type, select or scan QR code for recipients address')
+                        color: color_font
+                        required: True
+                        # height: self.parent.height/2
+                        current_hint_text_color: 0,0,0,0.5
+                        height: 100
+                        hint_text: app.tr._('Type or Scan QR code for recipients address')
+                        helper_text_mode: "on_focus"
+                        
+                        canvas.before:
+                            Color:
+                                rgba: (0,0,0,1)
+
                     RV:
                         id: rv
                 MDIconButton:
                     icon: 'qrcode-scan'
-                    pos_hint: {'center_x': 0, 'center_y': .8}
+                    pos_hint: {'center_x': 0.95, 'y': 0.6}
                     on_release:
                         if root.is_camara_attached(): app.root.ids.scr_mngr.current = 'scanscreen'
                         else: root.camera_alert()
@@ -70,13 +86,17 @@
 
             MyMDTextField:
                 id: subject
-                hint_text: 'subject'
-                required: True
+                hint_text: 'Subject'
                 height: 100
                 font_size: '15sp'
+                icon_right: 'text-subject'
+                icon_right_color: app.theme_cls.primary_light
+                current_hint_text_color: 0,0,0,0.5
+                font_color_normal: 0, 0, 0, 1
                 size_hint_y: None
+                required: True
                 multiline: False
-                helper_text_mode: "on_error"
+                helper_text_mode: "on_focus"
                 canvas.before:
                     Color:
                         rgba: (0,0,0,1)
@@ -94,12 +114,20 @@
             #             rgba: (0,0,0,1)
             ScrollView:
                 id: scrlv
-                TextInput:
+                MDTextField:
                     id: body
-                    # text: 'srggdfsfhgfg'
-                    hint_text: 'body'
-                    size_hint: 1, None
+                    hint_text: 'Body'
+                    mode: "fill"
+                    fill_color: 1/255, 144/255, 254/255, 0.1
+                    multiline: True
+                    font_color_normal: 0, 0, 0, .4
+                    icon_right: 'grease-pencil'
+                    icon_right_color: app.theme_cls.primary_light
+                    size_hint: 1, 1
                     height: app.window_size[1]/4
+                    canvas.before:
+                        Color:
+                            rgba: 125/255, 125/255, 125/255, 1
             BoxLayout:
                 spacing:50
 
@@ -124,7 +152,7 @@
             rgba: 0,0,0,.2
 
         Line:
-            rectangle: self.x +1 , self.y, self.width - 2, self.height -2        
+            rectangle: self.x +1 , self.y, self.width - 2, self.height -2
     bar_width: 10
     scroll_type:['bars']
     viewclass: 'SelectableLabel'

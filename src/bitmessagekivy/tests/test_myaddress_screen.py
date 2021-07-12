@@ -14,7 +14,7 @@ class MyAddressScreen(TeleniumTestProcess):
     def test_select_myaddress_list(self):
         """Select Address From List of Address"""
         print("=====================Test -Select Address From List of Address=====================")
-        self.cli.sleep(4)
+        self.cli.sleep(12)
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(3)
         self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
@@ -39,6 +39,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.sleep(3)
         self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=2)
 
+
     @ordered
     def test_send_message_from(self):
         """Send Message From Send Message From Button"""
@@ -52,7 +53,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.assertExists("//Create[@name~=\"create\"]", timeout=2)
         self.cli.sleep(3)
         self.cli.setattr(
-            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput', "text", data[1])
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput', "text", data[1])
         self.cli.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Hey')
         self.cli.sleep(3)
@@ -60,10 +61,38 @@ class MyAddressScreen(TeleniumTestProcess):
         for char in "Hey,i am sending message directly from MyAddress book":
             random_label += char
             self.cli.setattr(
-                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
+                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]', 'text', random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(2)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(4)
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)
+
+    @ordered
+    def test_disable_address(self):
+        """Disable Addresses"""
+        self.cli.sleep(5)
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
+        self.cli.sleep(3)
+        self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
+        self.cli.sleep(3)
+        self.cli.click_on('//NavigationItem[11]')
+        self.cli.sleep(3)
+        # ADDRESS DISABLED
+        self.cli.click_on('//Thumb')
+        self.cli.sleep(3)
+        # CLICK ON DISABLE ACCOUNT TO OPEN POPUP
+        self.cli.click_on('//MyAddress/BoxLayout[0]/FloatLayout[0]/MDScrollViewRefreshLayout[0]/MDList[0]/CustomTwoLineAvatarIconListItem[0]')
+        self.cli.sleep(3)
+        self.cli.click_on('//MDFlatButton[@text=\"ok\"]')
+        self.cli.sleep(3)
+        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
+        self.cli.sleep(3)
+        # ADDRESS ENABLED
+        self.cli.click_on('//Thumb')
+        self.cli.sleep(3)
+        self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=5)
+
+
+
 

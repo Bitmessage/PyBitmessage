@@ -46,9 +46,10 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.click_on('//MyTextInput[0]')
         self.cli.sleep(3)
         # ADD FROM MESSAGE
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput',
                          "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
         self.cli.sleep(4)
+        # Add SUBJECT
         random_label = ""
         for char in "Another Draft message":
             random_label += char
@@ -83,7 +84,7 @@ class DraftMessage(TeleniumTestProcess):
         random_label = ""
         for char in "Hey,This is draft Message Body":
             random_label += char
-            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]',
+            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]',
                              'text', random_label)
             self.cli.sleep(0.2)
         self.cli.sleep(3)

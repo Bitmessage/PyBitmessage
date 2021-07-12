@@ -31,6 +31,7 @@ from addresses import decodeAddress, addBMIfNotPresent
 from bitmessagekivy.baseclass.common import (
     toast, showLimitedCnt
 )
+from kivymd.uix.textfield import MDTextField
 
 
 class Create(Screen):
@@ -238,7 +239,7 @@ class DropDownWidget(BoxLayout):
             toast(text_item)
 
 
-class MyTextInput(TextInput):
+class MyTextInput(MDTextField):
     """MyTextInput class for kivy Ui"""
 
     txt_input = ObjectProperty()

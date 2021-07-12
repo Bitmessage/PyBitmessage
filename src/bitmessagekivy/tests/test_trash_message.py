@@ -1,7 +1,19 @@
+from datetime import datetime
+from os import wait
+from socket import timeout
+from time import sleep
+
+from telenium.mods.telenium_client import selectFirst, kivythread, TeleniumMotionEvent, nextid, telenium_input, run_telenium
+
 from .telenium_process import TeleniumTestProcess
 
 
 class TrashMessage(TeleniumTestProcess):
+    
+    def smart_click(self, click_on, sleep):
+        click_on = self.cli.click_on(click_on)
+        sleep = self.cli.sleep(sleep)
+        
     """Trash Screen Functionality Testing"""
 
     def test_delete_trash_message(self):

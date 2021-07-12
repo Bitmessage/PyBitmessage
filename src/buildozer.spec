@@ -49,7 +49,9 @@ requirements =
 	pyzbar,
 	bitmsghash,
 	git+https://github.com/kivymd/KivyMD#egg=kivymd,
+	kivy_garden.qrcode,
 	qrcode,
+	kivy_garden,
 	msgpack
 
 # (str) Custom source folders for requirements

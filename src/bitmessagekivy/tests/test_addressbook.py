@@ -14,7 +14,7 @@ class AddressBook(TeleniumTestProcess):
     def test_save_address(self):
         """Save Address On Address Book Screen/Window"""
         print("=====================Test -Save Address In Address Book=====================")
-        self.cli.sleep(6)
+        self.cli.sleep(12)
         self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
         self.cli.sleep(4)
         self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
@@ -84,8 +84,9 @@ class AddressBook(TeleniumTestProcess):
         self.cli.sleep(3)
         self.cli.click_on(
             '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        self.cli.sleep(2)
-        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]')
+        self.cli.sleep(5)
+        # self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]')
+        self.cli.click_on('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput')
         self.cli.sleep(3)
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Second')
         self.cli.sleep(3)
@@ -93,7 +94,7 @@ class AddressBook(TeleniumTestProcess):
         for char in "Hey This is Message From Address Book":
             random_label += char
             self.cli.setattr(
-                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/TextInput[0]', 'text', random_label)
+                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]', 'text', random_label)
             self.cli.sleep(0.2)
         self.cli.click_on('//MDActionTopAppBarButton[2]')
         self.cli.sleep(4)
