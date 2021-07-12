@@ -15,6 +15,7 @@ from .common import cleanup, put_signal_file
 
 PY3 = sys.version_info[0] >= 3
 
+
 class TestProcessProto(unittest.TestCase):
     """Test case implementing common logic for external testing:
     it starts pybitmessage in setUpClass() and stops it in tearDownClass()
