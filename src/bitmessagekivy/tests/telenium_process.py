@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from time import time, sleep
 
 from telenium.tests import TeleniumTestCase
 
@@ -58,5 +59,19 @@ class TeleniumTestProcess(TeleniumTestCase):
         self.cli.sleep(seconds)
 
     def drag(self, xpath1, xpath2):
-        self.cli.drag(xpath1, xpath2, 1)
+        """this method is for dragging"""
+        self.cli.drag(xpath1, xpath2, 1.5)
         self.cli.sleep(0.3)
+
+    def assertCheckScrollDown(self, scroll_distance, destination, timeout=-1):
+        """this method is for checking scroll"""
+        start = time()
+        while True:
+            if scroll_distance <= destination:
+                self.assertLessEqual(scroll_distance, destination)
+                return True
+            if timeout == -1:
+                return False
+            if timeout > 0 and time() - start > timeout:
+                raise Exception("Timeout")
+            sleep(0.1)

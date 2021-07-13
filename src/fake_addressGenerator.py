@@ -35,6 +35,7 @@ fake_addresses = {
 class FakeAddressGenerator(StoppableThread):
     """A thread for creating fake addresses"""
     name = "addressGenerator"
+    address_list = list(fake_addresses.keys())
 
     def stopThread(self):
         try:
@@ -52,11 +53,7 @@ class FakeAddressGenerator(StoppableThread):
             queueValue = queues.addressGeneratorQueue.get()
             streamNumber = 1
             try:
-                if len(BMConfigParser().addresses()) > 0:
-                    address = list(fake_addresses.keys())[len(BMConfigParser().addresses())]
-                else:
-                    address = list(fake_addresses.keys())[0]
-
+                address =  self.address_list.pop(0)
                 label = queueValue[3]
 
                 BMConfigParser().add_section(address)
