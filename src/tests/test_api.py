@@ -7,6 +7,7 @@ import base64
 import json
 import time
 import sys
+import six
 
 try:  # nosec
     from xmlrpclib import ServerProxy, ProtocolError
@@ -126,94 +127,50 @@ class TestAPI(TestAPIProto):
 
     def test_create_deterministic_addresses(self):
         """Test creation of deterministic addresses"""
-        if PY3:
-            self.assertEqual(
-                self.api.getDeterministicAddress(self._seed.decode('utf-8'), 4, 1),
-                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
-            self.assertEqual(
-                self.api.getDeterministicAddress(self._seed.decode('utf-8'), 3, 1),
-                'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN')
-            self.assertRegex(
-                self.api.getDeterministicAddress(self._seed.decode('utf-8'), 2, 1),
-                r'^API Error 0002:')
+        self.assertEqual(
+            self.api.getDeterministicAddress(self._seed.decode('utf-8'), 4, 1),
+            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+        self.assertEqual(
+            self.api.getDeterministicAddress(self._seed.decode('utf-8'), 3, 1),
+            'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN')
+        six.assertRegex(
+            self, self.api.getDeterministicAddress(self._seed.decode('utf-8'), 2, 1),
+            r'^API Error 0002:')
 
-            # This is here until the streams will be implemented
-            self.assertRegex(
-                self.api.getDeterministicAddress(self._seed.decode('utf-8'), 3, 2),
-                r'API Error 0003:')
-            self.assertRegex(
-                self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 1, 4, 2),
-                r'API Error 0003:')
+        # This is here until the streams will be implemented
+        six.assertRegex(
+            self, self.api.getDeterministicAddress(self._seed.decode('utf-8'), 3, 2),
+            r'API Error 0003:')
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 1, 4, 2),
+            r'API Error 0003:')
 
-            self.assertRegex(
-                self.api.createDeterministicAddresses('', 1),
-                r'API Error 0001:')
-            self.assertRegex(
-                self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 1, 2),
-                r'API Error 0002:')
-            self.assertRegex(
-                self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 0),
-                r'API Error 0004:')
-            self.assertRegex(
-                self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 1000),
-                r'API Error 0005:')
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses('', 1),
+            r'API Error 0001:')
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 1, 2),
+            r'API Error 0002:')
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 0),
+            r'API Error 0004:')
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 1000),
+            r'API Error 0005:')
 
-            addresses = json.loads(
-                self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 2, 4)
-            )['addresses']
-            self.assertEqual(len(addresses), 2)
-            self.assertEqual(addresses[0], 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
-            for addr in addresses:
-                self.assertEqual(self.api.deleteAddress(addr), 'success')
-        else:
-            self.assertEqual(
-                self.api.getDeterministicAddress(self._seed, 4, 1),
-                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
-            self.assertEqual(
-                self.api.getDeterministicAddress(self._seed, 3, 1),
-                'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN')
-            self.assertRegexpMatches(
-                self.api.getDeterministicAddress(self._seed, 2, 1),
-                r'^API Error 0002:')
-
-            # This is here until the streams will be implemented
-            self.assertRegexpMatches(
-                self.api.getDeterministicAddress(self._seed, 3, 2),
-                r'API Error 0003:')
-            self.assertRegexpMatches(
-                self.api.createDeterministicAddresses(self._seed, 1, 4, 2),
-                r'API Error 0003:')
-
-            self.assertRegexpMatches(
-                self.api.createDeterministicAddresses('', 1),
-                r'API Error 0001:')
-            self.assertRegexpMatches(
-                self.api.createDeterministicAddresses(self._seed, 1, 2),
-                r'API Error 0002:')
-            self.assertRegexpMatches(
-                self.api.createDeterministicAddresses(self._seed, 0),
-                r'API Error 0004:')
-            self.assertRegexpMatches(
-                self.api.createDeterministicAddresses(self._seed, 1000),
-                r'API Error 0005:')
-
-            addresses = json.loads(
-                self.api.createDeterministicAddresses(self._seed, 2, 4)
-            )['addresses']
-            self.assertEqual(len(addresses), 2)
-            self.assertEqual(addresses[0], 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
-            for addr in addresses:
-                self.assertEqual(self.api.deleteAddress(addr), 'success')
+        addresses = json.loads(
+            self.api.createDeterministicAddresses(self._seed.decode('utf-8'), 2, 4)
+        )['addresses']
+        self.assertEqual(len(addresses), 2)
+        self.assertEqual(addresses[0], 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+        for addr in addresses:
+            self.assertEqual(self.api.deleteAddress(addr), 'success')
 
     def test_create_random_address(self):
         """API command 'createRandomAddress': basic BM-address validation"""
         addr = self._add_random_address('random_1')
-        if PY3:
-            self.assertRegex(addr, r'^BM-')
-            self.assertRegex(addr[3:], r'[a-zA-Z1-9]+$')
-        else:
-            self.assertRegexpMatches(addr, r'^BM-')
-            self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
+        six.assertRegex(self, addr, r'^BM-')
+        six.assertRegex(self, addr[3:], r'[a-zA-Z1-9]+$')
         # Whitepaper says "around 36 character"
         self.assertLessEqual(len(addr[3:]), 40)
         self.assertEqual(self.api.deleteAddress(addr), 'success')
@@ -431,48 +388,25 @@ class TestAPI(TestAPIProto):
 
     def test_chan(self):
         """Testing chan creation/joining"""
-        if PY3:
-            # Create chan with known address
-            self.assertEqual(
-                self.api.createChan(self._seed.decode("utf-8")),
-                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
-            )
-            # cleanup
-            self.assertEqual(
-                self.api.leaveChan('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'),
-                'success'
-            )
-            # Join chan with addresses of version 3 or 4
-            for addr in (
-                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
-                'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
-            ):
-                self.assertEqual(self.api.joinChan(self._seed.decode("utf-8"), addr), 'success')
-                self.assertEqual(self.api.leaveChan(addr), 'success')
-            # Joining with wrong address should fail
-            self.assertRegex(
-                self.api.joinChan(self._seed.decode("utf-8"), 'BM-2cWzSnwjJ7yRP3nLEW'),
-                r'^API Error 0008:'
-            )
-        else:
-            self.assertEqual(
-                self.api.createChan(self._seed),
-                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
-            )
-            # cleanup
-            self.assertEqual(
-                self.api.leaveChan('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'),
-                'success'
-            )
-            # Join chan with addresses of version 3 or 4
-            for addr in (
-                'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
-                'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
-            ):
-                self.assertEqual(self.api.joinChan(self._seed, addr), 'success')
-                self.assertEqual(self.api.leaveChan(addr), 'success')
-            # Joining with wrong address should fail
-            self.assertRegexpMatches(
-                self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
-                r'^API Error 0008:'
-            )
+        # Create chan with known address
+        self.assertEqual(
+            self.api.createChan(self._seed.decode("utf-8")),
+            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
+        )
+        # cleanup
+        self.assertEqual(
+            self.api.leaveChan('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'),
+            'success'
+        )
+        # Join chan with addresses of version 3 or 4
+        for addr in (
+            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
+            'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
+        ):
+            self.assertEqual(self.api.joinChan(self._seed.decode("utf-8"), addr), 'success')
+            self.assertEqual(self.api.leaveChan(addr), 'success')
+        # Joining with wrong address should fail
+        six.assertRegex(
+            self, self.api.joinChan(self._seed.decode("utf-8"), 'BM-2cWzSnwjJ7yRP3nLEW'),
+            r'^API Error 0008:'
+        )

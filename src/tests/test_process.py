@@ -142,7 +142,7 @@ class TestProcessProto(unittest.TestCase):
             thread_names = subprocess.check_output([
                 "ps", "-L", "-o", "comm=", "--pid",
                 str(self.process.pid)
-            ]).split()
+            ]).decode('utf-8').split()
         except:  # pylint: disable=bare-except
             thread_names = []
 
