@@ -274,7 +274,8 @@ def drawtab(stdscr):
                     stdscr.addstr(8 + i, 18, str(item).ljust(2))
 
             # Uptime and processing data
-            stdscr.addstr(6, 35, "Since startup on " + l10n.formatTimestamp(startuptime, False))
+            stdscr.addstr(
+                6, 35, "Since startup on " + l10n.formatTimestamp(startuptime))
             stdscr.addstr(7, 40, "Processed " + str(
                 state.numberOfMessagesProcessed).ljust(4) + " person-to-person messages.")
             stdscr.addstr(8, 40, "Processed " + str(
@@ -1027,8 +1028,9 @@ def loadInbox():
         fromlabel = shared.fixPotentiallyInvalidUTF8Data(fromlabel)
 
         # Load into array
-        inbox.append([msgid, tolabel, toaddr, fromlabel, fromaddr, subject, l10n.formatTimestamp(
-            received, False), read])
+        inbox.append([
+            msgid, tolabel, toaddr, fromlabel, fromaddr, subject,
+            l10n.formatTimestamp(received), read])
     inbox.reverse()
 
 
@@ -1080,20 +1082,20 @@ def loadSent():
         elif status == "msgqueued":
             statstr = "Message queued"
         elif status == "msgsent":
-            t = l10n.formatTimestamp(lastactiontime, False)
+            t = l10n.formatTimestamp(lastactiontime)
             statstr = "Message sent at " + t + ".Waiting for acknowledgement."
         elif status == "msgsentnoackexpected":
-            t = l10n.formatTimestamp(lastactiontime, False)
+            t = l10n.formatTimestamp(lastactiontime)
             statstr = "Message sent at " + t + "."
         elif status == "doingmsgpow":
             statstr = "The proof of work required to send the message has been queued."
         elif status == "ackreceived":
-            t = l10n.formatTimestamp(lastactiontime, False)
+            t = l10n.formatTimestamp(lastactiontime)
             statstr = "Acknowledgment of the message received at " + t + "."
         elif status == "broadcastqueued":
             statstr = "Broadcast queued."
         elif status == "broadcastsent":
-            t = l10n.formatTimestamp(lastactiontime, False)
+            t = l10n.formatTimestamp(lastactiontime)
             statstr = "Broadcast sent at " + t + "."
         elif status == "forcepow":
             statstr = "Forced difficulty override. Message will start sending soon."
@@ -1102,7 +1104,7 @@ def loadSent():
         elif status == "toodifficult":
             statstr = "Error: The work demanded by the recipient is more difficult than you are willing to do."
         else:
-            t = l10n.formatTimestamp(lastactiontime, False)
+            t = l10n.formatTimestamp(lastactiontime)
             statstr = "Unknown status " + status + " at " + t + "."
 
         # Load into array
@@ -1114,7 +1116,7 @@ def loadSent():
             subject,
             statstr,
             ackdata,
-            l10n.formatTimestamp(lastactiontime, False)])
+            l10n.formatTimestamp(lastactiontime)])
     sentbox.reverse()
 
 

@@ -125,6 +125,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.qsystranslator.load(translationpath)
         QtGui.QApplication.installTranslator(self.qsystranslator)
 
+        # TODO: move this block into l10n
+        # FIXME: shouldn't newlocale be used here?
         lang = locale.normalize(l10n.getTranslationLanguage())
         langs = [
             lang.split(".")[0] + "." + l10n.encoding,
@@ -135,7 +137,7 @@ class MyForm(settingsmixin.SMainWindow):
             langs = [l10n.getWindowsLocale(lang)]
         for lang in langs:
             try:
-                l10n.setlocale(locale.LC_ALL, lang)
+                l10n.setlocale(lang)
                 if 'win32' not in sys.platform and 'win64' not in sys.platform:
                     l10n.encoding = locale.nl_langinfo(locale.CODESET)
                 else:
