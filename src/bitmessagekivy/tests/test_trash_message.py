@@ -21,12 +21,13 @@ class TrashMessage(TeleniumTestProcess):
         print("=====================Test -Delete Message From Trash Message Listing=====================")
         self.cli.sleep(8)
         # this is for opening Nav drawer
-        self.click_on('//MDActionTopAppBarButton[@icon=\"menu\"]')
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
-        self.assertEqual(self.cli.getattr('//MDNavigationDrawer', 'state'), 'open')
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
         # this is for opening Trash screen
-        self.click_on('//NavigationItem[@text=\"Trash\"]')
+        self.cli.wait_click('//NavigationItem[@text=\"Trash\"]', timeout=2)
         # self.cli.click_on('//NavigationItem[4]')
+        # Checking Trash Screen
         self.assertExists("//Trash[@name~=\"trash\"]", timeout=2)
         self.cli.sleep(4)
         # This is for swiping message to activate delete icon.
@@ -34,10 +35,16 @@ class TrashMessage(TeleniumTestProcess):
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]')
         self.click_on('//MDList[0]/CutsomSwipeToDeleteItem[0]', seconds=1)
+        # Checking the Trash Icon after swipe. 
+        self.assertExists("//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@icon~=\"trash-can\"]", timeout=2)
         # clicking on Trash Box icon to delete message.
-        self.click_on('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', seconds=2)
+        self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=2)
+        # Checking the popup box screen.
+        self.assertExists("//MDDialog//MDFlatButton[@text=\"Yes\"]", timeout=2)
         # Clicking on 'Yes' Button on Popup to confirm delete.
         self.click_on('//MDDialog//MDFlatButton[@text=\"Yes\"]', seconds=1.1)
-        # self.cli.click_on('//MDDialog/DialogFakeCard[0]/AnchorLayout[0]/MDBoxLayout[0]/MDFlatButton[0]')
+        # Checking Trash Screen
+        self.assertExists("//Trash[@name~=\"trash\"]", timeout=2)
         total_trash_msgs = len(self.cli.select("//CutsomSwipeToDeleteItem"))
+        # Checking the number of messages after delete.
         self.assertEqual(total_trash_msgs, 1)
