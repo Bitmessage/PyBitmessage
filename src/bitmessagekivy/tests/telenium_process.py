@@ -79,7 +79,7 @@ class TeleniumTestProcess(TeleniumTestCase):
         """this method is for checking scroll"""
         start = time()
         while True:
-            scroll_distance = self.cli.getattr('//ContentNavigationDrawer//ScrollView[0]', 'scroll_y')
+            scroll_distance = self.cli.getattr(selector, 'scroll_y')
             if scroll_distance > 0.0:
                 self.assertGreaterEqual(scroll_distance, 0.0)
                 return True
