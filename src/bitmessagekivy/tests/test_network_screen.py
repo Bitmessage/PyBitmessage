@@ -1,4 +1,3 @@
-from requests.packages.urllib3.util import timeout
 from .telenium_process import TeleniumTestProcess
 
 
@@ -28,4 +27,3 @@ class NetwrokStatusScreen(TeleniumTestProcess):
         self.cli.wait_click('//NetworkStat/MDTabs[0]//MDTabsLabel[1]', timeout=1)
         # Checking for current screen (Network Status)
         self.assertExists("//NetworkStat[@name~=\"networkstat\"]", timeout=2)
-

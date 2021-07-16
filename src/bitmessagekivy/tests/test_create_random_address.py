@@ -20,31 +20,31 @@ class CreateRandomAddress(TeleniumTestProcess):
     def test_login_screen(self):
         """Clicking on Proceed Button to Proceed to Next Screen."""
         print("=====================Test - Login Screen=====================")
-        self.cli.sleep(3)
-        self.assertExists("//Login[@name~=\"login\"]", timeout=1)
+        self.cli.sleep(10)
+        # Checking current Screen(Login screen)
+        self.assertExists("//Login[@name~=\"login\"]", timeout=3)
+        # Clicking on Proceed Next Button
         self.cli.wait_click(
-            '//ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[0]')
-        self.cli.sleep(3)
-        self.assertExists("//Random[@name~=\"random\"]", timeout=1)
+            '//Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
+        # Checking Current Screen(Random Screen) after Clicking on Proceed Next Button 
+        self.assertExists("//Random[@name~=\"random\"]", timeout=2)
+
 
     @ordered
     def test_random_screen(self):
         """Creating New Adress For New User."""
         print("=====================Test - Create New Address=====================")
-        self.cli.click_on('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[0]')
-        self.cli.sleep(3)
-        self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[2]/MDFillRoundFlatIconButton[0]')
-        self.cli.sleep(3)
-        self.cli.click_on('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[0]')
-        self.cli.sleep(3)
+        # Clicking on Label Text Field to give address name
+        self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[0]', timeout=2)
+        # Generating Label Randomly
         random_label = ""
         for _ in range(10):
             random_label += choice(ascii_lowercase)
             self.cli.setattr('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[0]', "text", random_label)
-            self.cli.sleep(0.2)
-        self.cli.sleep(1)
-        self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[2]/MDFillRoundFlatIconButton[0]')
-        self.cli.sleep(5)
+            self.cli.sleep(0.1)
+        # Click on Proceed Next button to generate random Address
+        self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[2]/MDFillRoundFlatIconButton[0]', timeout=2)
+        # Checking My Address Screen
         self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=3)
 
     @ordered
@@ -52,32 +52,44 @@ class CreateRandomAddress(TeleniumTestProcess):
         """Clicking on Navigation Drawer To Open New Address"""
         print("=====================Test - Create New Address=====================")
         self.cli.sleep(5)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.cli.sleep(2)
-        self.cli.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1)
-        self.cli.sleep(3)
-        self.cli.click_on('//NavigationItem[9]')
-        self.assertExists("//Login[@name~=\"login\"]", timeout=1)
-        self.cli.sleep(4)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # Scroll Down to get New Address Tab
+        self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
+        # Checking state of scrolled screen
+        self.assertExists('//NavigationItem[@text=\"New address\"]', timeout=3)
+        # Clicking on New Address Tab
+        self.cli.wait_click('//NavigationItem[@text=\"New address\"]', timeout=3)
+        self.cli.sleep(1)
+        # Checking current Screen(Login screen)
+        self.assertExists("//Login[@name~=\"login\"]", timeout=3)
+        # Click on Proceed Next button to enter 'Random' Screen
         self.cli.wait_click(
-            '''//Login/BoxLayout[0]/BoxLayout[0]/ScreenManager[0]/Screen[0]/BoxLayout[0]/AnchorLayout[3]'''
-            '''/MDFillRoundFlatIconButton[0]''')
+            '//Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
+        # Checking Current Screen(Random Screen) after Clicking on Proceed Next Button 
         self.assertExists("//Random[@name~=\"random\"]", timeout=1)
+        # Executing above function to create new address
         self.test_random_screen()
 
     @ordered
     def test_select_address(self):
         """Select First Address From Drawer-Box"""
         print("=====================Test - Select First Address From Drawer-Box=======================")
-        self.cli.sleep(3)
+        self.cli.sleep(6)
         # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.cli.sleep(2)
-        self.cli.drag("//NavigationItem[@text=\"Address Book\"]", "//NavigationItem[@text=\"Settings\"]", 1)
-        self.cli.sleep(2)
-        self.cli.click_on('//NavigationItem[0]')
-        self.cli.sleep(2)
-        self.cli.click_on('//MySpinnerOption[0]')
-        self.cli.sleep(3)
-        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=1)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # Scrolling up to get address dropdown
+        self.drag("//NavigationItem[@text=\"Address Book\"]", "//NavigationItem[@text=\"Settings\"]")
+        # Checking scroll state
+        self.assertExists("//NavigationDrawerSubheader[@text~=\"Accounts\"]", timeout=2)
+        # Clicking on Address Dropdown
+        self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=2)
+        # Select address fron Address Dropdown
+        self.cli.wait_click('//MySpinnerOption[0]', timeout=2)
+        # Checking Landing Screen(Inbox)
+        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)

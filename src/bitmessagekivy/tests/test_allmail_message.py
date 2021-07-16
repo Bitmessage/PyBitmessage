@@ -1,4 +1,3 @@
-from requests.packages.urllib3.util import Timeout, timeout
 from .telenium_process import TeleniumTestProcess
 from .common import ordered
 
@@ -32,7 +31,7 @@ class AllMailMessage(TeleniumTestProcess):
             '//MDList[0]/CutsomSwipeToDeleteItem[0]', timeout=2)
         # Assert for checking Current Screen(Mail Detail)
         self.assertExists("//MailDetail[@name~=\"mailDetail\"]", timeout=2)
-        # CLicking on Trash-Can icon to delete Message 
+        # CLicking on Trash-Can icon to delete Message
         self.cli.wait_click('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]', timeout=2)
-        # After deleting msg, screen is redirected to All mail screen 
+        # After deleting msg, screen is redirected to All mail screen
         self.assertExists("//Allmails[@name~=\"allmails\"]", timeout=0)

@@ -62,13 +62,10 @@
                         size_hint_y: None
                         font_size: '15sp'
                         color: color_font
-                        required: True
                         # height: self.parent.height/2
                         current_hint_text_color: 0,0,0,0.5
                         height: 100
                         hint_text: app.tr._('Type or Scan QR code for recipients address')
-                        helper_text_mode: "on_focus"
-                        
                         canvas.before:
                             Color:
                                 rgba: (0,0,0,1)

@@ -10,55 +10,83 @@ class DraftMessage(TeleniumTestProcess):
         """Select A Draft Screen From Navigaion-Drawer-Box Then
            Send a drafted message """
         print("=====================Test - Select A Draft Screen From Navigaion-Drawer-Box=====================")
-        # OPEN NAVIGATION-DRAWER
-        self.cli.sleep(4)
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.cli.sleep(2)
-        # OPEN INBOX SCREEN
-        self.cli.click_on('//NavigationItem[1]')
+        self.cli.sleep(8)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # Click to open Inbox
+        self.cli.wait_click('//NavigationItem[@text=\"Inbox\"]', timeout=2)
+        # Checking Inbox Screen
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)
-        self.cli.sleep(2)
-        # CLICK ON PLUS ICON BUTTON
-        self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        self.assertExists("//Create[@name~=\"create\"]", timeout=2)
-        self.cli.sleep(3)
-        # SELECT - TO ADDRESS
-        self.cli.click_on(
-            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
-        self.cli.sleep(2)
-        self.cli.click_on('//MyTextInput[0]')
-        self.cli.sleep(3)
-        # ADD FROM MESSAGE
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[1]/BoxLayout[0]/MyTextInput[0]',
-                         "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
-        self.cli.sleep(3)
-        # CLICK BACK-BUTTON
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)
-        self.cli.sleep(5)
-        self.cli.click_on('//Inbox/ComposerButton[0]/MDFloatingActionButton[0]')
-        self.assertExists("//Create[@name~=\"create\"]", timeout=2)
-        self.cli.sleep(3)
-        # SELECT - TO ADDRESS
-        self.cli.click_on(
-            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]')
+        # Due to animation and transition effect, it needed some halt otherwise it fails
         self.cli.sleep(1)
-        self.cli.click_on('//MyTextInput[0]')
-        self.cli.sleep(3)
-        # ADD FROM MESSAGE
-        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput',
-                         "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
-        self.cli.sleep(4)
-        # Add SUBJECT
-        random_label = ""
-        for char in "Another Draft message":
-            random_label += char
-            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', random_label)
-            self.cli.sleep(0.2)
+        # Click on Composer Icon(Plus icon)
+        self.cli.wait_click('//ComposerButton[0]/MDFloatingActionButton[@icon=\"plus\"]', timeout=2)
+        # Checking Message Composer Screen(Create)
+        self.assertExists("//Create[@name~=\"create\"]", timeout=4)
+        # ADD SENDER'S ADDRESS
+        # Checking State of Sender's Address Input Field (Empty)
+        self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDTextField[@text=\"\"]', timeout=2)
+        # Open Sender's Address DropDown
+        self.cli.wait_click(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]', timeout=2)
+        # Due to animation and transition effect, it needed some halt otherwise it fails
+        self.cli.sleep(2)
+        # SENDER FIELD
+        # Select Sender's Address from Dropdown
+        self.cli.wait_click(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]', timeout=2)
+        self.cli.click_on('//ComposerSpinnerOption[0]')
+        # Assert to check Sender's address dropdown open or not
+        self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDTextField[0]', '')
+        # RECEIVER FIELD
+        # Checking Receiver Address Field
+        self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[@text=\"\"]', timeout=2)
+        # Entering Receiver Address
+        self.cli.setattr(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[0]', "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
+        # Checking Receiver Address filled or not
+        self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[0]', '')
         # CLICK BACK-BUTTON
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.cli.sleep(4)
-        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=1)
+        self.cli.wait_click('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]', timeout=2)
+        # Checking current screen(Login) after BACK Press
+        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)
+        self.cli.sleep(0.5)
+        # Click on Composer Icon(Plus icon)
+        self.cli.wait_click('//ComposerButton[0]/MDFloatingActionButton[@icon=\"plus\"]', timeout=2)
+        # Checking Message Composer Screen(Create)
+        self.assertExists("//Create[@name~=\"create\"]", timeout=4)
+        # ADD SENDER'S ADDRESS
+        # Checking State of Sender's Address Input Field (Empty)
+        self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDTextField[@text=\"\"]', timeout=2)
+        # Open Sender's Address DropDown
+        self.cli.wait_click(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]/ArrowImg[0]', timeout=2)
+        # Due to animation and transition effect, it needed some halt otherwise it fails
+        self.cli.sleep(2)
+        # Select Sender's Address from Dropdown
+        self.cli.wait_click(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/BoxLayout[0]/CustomSpinner[0]', timeout=2)
+        self.cli.click_on('//ComposerSpinnerOption[0]')
+        # Assert to check Sender's address dropdown open or not
+        self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/BoxLayout[0]/MDTextField[0]', '')        
+        # RECEIVER FIELD
+        # Checking Receiver Address Field
+        self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[@text=\"\"]', timeout=2)
+        # Entering Receiver Address
+        self.cli.setattr(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[0]', "text", 'BM-2cSsuH1bUWBski8bvdqnK2DivMqQCeQA1J')
+        # Checking Receiver Address filled or not
+        self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/RelativeLayout[0]/BoxLayout[0]/MyTextInput[0]', '')
+         # ADD SUBJECT
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[0]', 'text', 'Another Draft message')
+        # Checking Subject Field is Entered
+        self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[@text=\"Another Draft message\"]', timeout=2)
+        # CLICK BACK-BUTTON
+        self.cli.wait_click('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]', timeout=2)
+        # Checking current screen(Login) after BACK Press
+        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=2)
 
     @ordered
     def test_edit_and_resend_draft_messgae(self):
@@ -66,47 +94,54 @@ class DraftMessage(TeleniumTestProcess):
             make changes and send it."""
         print("=====================Test - Edit A Message From Draft Screen=====================")
         # OPEN NAVIGATION-DRAWER
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.cli.sleep(4)
-        # OPEN DRAFT SCREEN
-        self.cli.click_on('//NavigationItem[3]')
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # Click to open Draft Screen
+        self.cli.wait_click('//NavigationItem[@text=\"Draft\"]', timeout=2)
+        # Checking Draft Screen
         self.assertExists("//Draft[@name~=\"draft\"]", timeout=2)
-        self.cli.sleep(4)
+        # Due to animation and transition effect, it needed some halt otherwise it fails
+        self.cli.sleep(1)
         # SHOW DRAFT MESSAGE AND SELECT FIRST MESSAGE
         # self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
-        self.cli.click_on('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]')
+        self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=2)
+        # Checking current screen Mail Detail
         self.assertExists("//MailDetail[@name~=\"mailDetail\"]", timeout=2)
-        self.cli.sleep(3)
         # CLICK EDIT BUTTON
-        self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[0]')
+        self.cli.wait_click('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[0]', timeout=2)
+        # Checking Current Screen 'Create'
         self.assertExists("//Create[@name~=\"create\"]", timeout=2)
-        self.cli.sleep(5)
-        random_label = ""
-        for char in "Hey,This is draft Message Body":
-            random_label += char
-            self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]',
-                             'text', random_label)
-            self.cli.sleep(0.2)
-        self.cli.sleep(3)
-        self.cli.click_on('//MDActionTopAppBarButton[2]')
-        # self.cli.sleep(5)
+        # ADD MESSAGE BODY
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]',
+                             'text', 'Hey,This is draft Message Body')
+        # Checking Message body is Entered
+        self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]', '')
+        # Click on Send Icon
+        self.cli.wait_click('//MDActionTopAppBarButton[2]', timeout=3)
+        # After Click send, Screen is redirected to Inbox screen
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
 
     @ordered
     def test_delete_draft_message(self):
         """Delete A Message From List of Messages"""
         print("=====================Test - Delete A Message From List of Messages=====================")
-        self.cli.sleep(5)
-        # self.cli.execute('app.root.ids.nav_drawer.set_state("toggle")')
-        self.cli.click_on('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[0]')
-        self.cli.sleep(4)
-        self.cli.click_on('//NavigationItem[3]')
-        self.assertExists("//Draft[@name~=\"draft\"]", timeout=1)
-        self.cli.sleep(5)
-        self.cli.click_on('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]')
-        self.assertExists("//MailDetail[@name~=\"mailDetail\"]", timeout=2)
-        # self.cli.click_on('//Carousel[0]//TwoLineAvatarIconListItem[0]')
-        self.cli.sleep(5)
-        self.cli.click_on('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]')
-        self.cli.sleep(5)
+        self.cli.sleep(2)
+         # OPEN NAVIGATION-DRAWER
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # Click to open Draft Screen
+        self.cli.wait_click('//NavigationItem[@text=\"Draft\"]', timeout=2)
+        # Checking Draft Screen
+        self.assertExists("//Draft[@name~=\"draft\"]", timeout=2)
+        self.cli.sleep(1)
+        self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=3)
+        # Checking Current screen is Mail Detail
+        self.assertExists("//MailDetail[@name~=\"mailDetail\"]", timeout=3)
+        # Click on trash-can icon to delete
+        self.cli.wait_click('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[1]', timeout=2)
+        # After Deleting, Screen is redirected to Draft screen
         self.assertExists("//Draft[@name~=\"draft\"]", timeout=1)

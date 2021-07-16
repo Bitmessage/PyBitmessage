@@ -35,7 +35,7 @@ class TrashMessage(TeleniumTestProcess):
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]')
         self.click_on('//MDList[0]/CutsomSwipeToDeleteItem[0]', seconds=1)
-        # Checking the Trash Icon after swipe. 
+        # Checking the Trash Icon after swipe.
         self.assertExists("//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@icon~=\"trash-can\"]", timeout=2)
         # clicking on Trash Box icon to delete message.
         self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=2)

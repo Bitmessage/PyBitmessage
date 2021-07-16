@@ -1,5 +1,4 @@
 from time import time
-from requests.packages.urllib3.util import timeout
 from .telenium_process import TeleniumTestProcess
 
 
@@ -17,10 +16,8 @@ class PaymentScreen(TeleniumTestProcess):
         # Dragging from sent to inbox to get Payment tab.
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         self.assertExists('//NavigationItem[@text=\"Network status\"]', timeout=3)
-                
-        # assert for checking scroll funcation
+        # assert for checking scroll function
         scroll_distance = self.cli.getattr('//ContentNavigationDrawer//ScrollView[0]', 'scroll_y')
-
         self.assertCheckScrollDown(scroll_distance, 0.0, timeout=3)
         self.assertExists('//NavigationItem[@text=\"Purchase\"]', timeout=3)
         # this is for opening Payment screen
@@ -30,7 +27,7 @@ class PaymentScreen(TeleniumTestProcess):
         self.drag(
             '//ProductCategoryLayout[0]/ProductLayout[1]',
             '//ProductCategoryLayout[0]/ProductLayout[0]')
-        # assert for checking scroll funcation
+        # assert for checking scroll function
         scroll_distance = self.cli.getattr('//Payment//ScrollView[0]', 'scroll_y')
         self.assertCheckScrollDown(scroll_distance, 0.0, timeout=3)
         self.assertExists('//MDRaisedButton[3]', timeout=3)
@@ -38,7 +35,4 @@ class PaymentScreen(TeleniumTestProcess):
         self.click_on('//ScrollView[0]/ListItemWithLabel[0]', seconds=1)
         self.click_on('//MDRaisedButton[3]', seconds=1)
         self.assertExists("//Payment[@name~=\"payment\"]", timeout=2)
-
-
-
-
+        
