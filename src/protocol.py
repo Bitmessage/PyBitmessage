@@ -13,16 +13,30 @@ import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
 
-import defaults
-import highlevelcrypto
-import state
-from addresses import (
-    encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-from bmconfigparser import BMConfigParser
-from debug import logger
-from fallback import RIPEMD160Hash
-from helper_sql import sqlExecute
-from version import softwareVersion
+try:
+    import defaults
+    import highlevelcrypto
+    import state
+    from addresses import (
+        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+    from bmconfigparser import BMConfigParser
+    from debug import logger
+    from fallback import RIPEMD160Hash
+    from helper_sql import sqlExecute
+    from version import softwareVersion
+except ImportError:
+    from . import defaults
+    from . import highlevelcrypto
+    from . import state
+    from .addresses import (
+        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+    from .bmconfigparser import BMConfigParser
+    from .debug import logger
+    from .fallback import RIPEMD160Hash
+    from .helper_sql import sqlExecute
+    from .version import softwareVersion
+
+PY3 = sys.version_info[0] >= 3
 
 # Service flags
 #: This is a normal network node
@@ -100,8 +114,13 @@ def encodeHost(host):
         return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
     elif host.find(':') == -1:
-        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-            socket.inet_aton(host)
+        import pdb; pdb.set_trace()
+        if PY3:
+            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+                socket.inet_aton(host).decode('utf-8')
+        else:
+            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+                socket.inet_aton(host)
     return socket.inet_pton(socket.AF_INET6, host)
 
 
@@ -210,7 +229,7 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
         if not private:
             logger.debug('Ignoring local address: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if (ord(host[0]) & 0xfe) == 0xfc:
+    if (ord(str(host[0])) & 0xfe) == 0xfc:
         if not private:
             logger.debug(
                 'Ignoring unique local address: %s', hostStandardFormat)

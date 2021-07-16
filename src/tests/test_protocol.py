@@ -4,10 +4,6 @@ Tests for common protocol functions
 
 import unittest
 
-from .common import skip_python3
-
-skip_python3()
-
 
 class TestProtocol(unittest.TestCase):
     """Main protocol test case"""
@@ -15,11 +11,12 @@ class TestProtocol(unittest.TestCase):
     def test_check_local(self):
         """Check the logic of TCPConnection.local"""
         from pybitmessage import protocol, state
+        # import pdb; pdb.set_trace()
 
         self.assertTrue(
-            protocol.checkIPAddress(protocol.encodeHost('127.0.0.1'), True))
+            protocol.checkIPAddress(protocol.encodeHost('127.0.0.1').decode('ISO-8859-1'), True))
         self.assertTrue(
-            protocol.checkIPAddress(protocol.encodeHost('192.168.0.1'), True))
+            protocol.checkIPAddress(protocol.encodeHost('192.168.0.1').decode('ISO-8859-1'), True))
 
         self.assertTrue(
             not protocol.checkSocksIP('127.0.0.1')

@@ -14,8 +14,8 @@ try:
     import state
     from singleton import Singleton
 except ImportError:
-    from pybitmessage import state
-    from pybitmessage.singleton import Singleton
+    from . import state
+    from .singleton import Singleton
 
 SafeConfigParser = configparser.SafeConfigParser
 
