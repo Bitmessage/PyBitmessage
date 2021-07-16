@@ -1,3 +1,7 @@
+"""
+    Base class for telenium test cases which run kivy app as background process
+"""
+
 import os
 import shutil
 import tempfile
@@ -28,10 +32,10 @@ def cleanup(home=None, files=_files):
 
 def set_temp_data():
     """Set temp data in tmp directory"""
-    for file in tmp_db_file:
+    for file_name in tmp_db_file:
         old_source_file = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)), 'sampleData', file)
-        new_destination_file = os.path.join(os.environ['BITMESSAGE_HOME'], file)
+            os.path.abspath(os.path.dirname(__file__)), 'sampleData', file_name)
+        new_destination_file = os.path.join(os.environ['BITMESSAGE_HOME'], file_name)
         shutil.copyfile(old_source_file, new_destination_file)
 
 
@@ -49,9 +53,17 @@ class TeleniumTestProcess(TeleniumTestCase):
     @classmethod
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
+        # pylint: disable=no-member
+        try:
+            cls.cli.app_quit()
+        except:
+            pass
+
+        try:
+            cls.process.kill()
+        except:
+            pass
         cleanup()
-        cls.cli.app_quit()
-        cls.process.kill()
 
     def click_on(self, xpath, seconds=0.3):
         """this methos is used for on_click event with time"""
@@ -60,15 +72,16 @@ class TeleniumTestProcess(TeleniumTestCase):
 
     def drag(self, xpath1, xpath2):
         """this method is for dragging"""
-        self.cli.drag(xpath1, xpath2, 1.5)
+        self.cli.drag(xpath1, xpath2, 1)
         self.cli.sleep(0.3)
 
-    def assertCheckScrollDown(self, scroll_distance, destination, timeout=-1):
+    def assertCheckScrollDown(self, selector, timeout=-1):
         """this method is for checking scroll"""
         start = time()
         while True:
-            if scroll_distance <= destination:
-                self.assertLessEqual(scroll_distance, destination)
+            scroll_distance = self.cli.getattr('//ContentNavigationDrawer//ScrollView[0]', 'scroll_y')
+            if scroll_distance > 0.0:
+                self.assertGreaterEqual(scroll_distance, 0.0)
                 return True
             if timeout == -1:
                 return False
