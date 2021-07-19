@@ -59,7 +59,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Scroll Down to get New Address Tab
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # Checking state of scrolled screen
-        self.assertExists('//NavigationItem[@text=\"New address\"]', timeout=3)
+        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
         # Clicking on New Address Tab
         self.cli.wait_click('//NavigationItem[@text=\"New address\"]', timeout=3)
         self.cli.sleep(1)
@@ -86,7 +86,8 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Scrolling up to get address dropdown
         self.drag("//NavigationItem[@text=\"Address Book\"]", "//NavigationItem[@text=\"Settings\"]")
         # Checking scroll state
-        self.assertExists("//NavigationDrawerSubheader[@text~=\"Accounts\"]", timeout=2)
+        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
+        # self.assertExists("//NavigationDrawerSubheader[@text~=\"Accounts\"]", timeout=2)
         # Clicking on Address Dropdown
         self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=2)
         # Select address fron Address Dropdown

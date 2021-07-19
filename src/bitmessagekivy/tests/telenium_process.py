@@ -74,11 +74,25 @@ class TeleniumTestProcess(TeleniumTestCase):
         self.cli.sleep(0.3)
 
     def assertCheckScrollDown(self, selector, timeout=-1):
-        """this method is for checking scroll"""
+        """this method is for checking scroll Down"""
         start = time()
         while True:
             scroll_distance = self.cli.getattr(selector, 'scroll_y')
             if scroll_distance > 0.0:
+                self.assertGreaterEqual(scroll_distance, 0.0)
+                return True
+            if timeout == -1:
+                return False
+            if timeout > 0 and time() - start > timeout:
+                raise Exception("Timeout")
+            sleep(0.1)
+
+    def assertCheckScrollUp(self, selector, timeout=-1):
+        """this method is for checking scroll UP"""
+        start = time()
+        while True:
+            scroll_distance = self.cli.getattr(selector, 'scroll_y')
+            if scroll_distance < 1.0:
                 self.assertGreaterEqual(scroll_distance, 0.0)
                 return True
             if timeout == -1:

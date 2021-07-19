@@ -31,11 +31,8 @@ class AddressBook(TeleniumTestProcess):
         self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=2)
         # Checking current screen
         self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=2)
-        
         # Click on Account-Plus Icon to opeb popup for add Address
         self.cli.execute('app.addingtoaddressbook()')
-        # Checking the popup opened
-        # self.assertExists("//GrashofPopup/MDRaisedButton[@text=\"Save\"]", timeout=4)
         # Click on Label field to check validation
         self.cli.wait_click('//GrashofPopup/BoxLayout[0]/MDTextField[0]', timeout=2)
         # Checking the Label Field shows Validation for empty string
@@ -114,8 +111,6 @@ class AddressBook(TeleniumTestProcess):
     def test_delete_address_from_address_contact(self):
         """Delete Address From Address Book"""
         print("=====================Test -Delete Address From Address Book=====================")
-        
-        
         # this is for checking current screen
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=3)
         # this is for opening Nav drawer
@@ -126,12 +121,11 @@ class AddressBook(TeleniumTestProcess):
         self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=2)
         # Checking current screen
         self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=2)
-        self.cli.sleep(3)
-
+        # Swipe to delete
         self.cli.drag(
             '//MDList[0]/SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
             '//MDList[0]/SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]',2)
-        self.cli.sleep(3)
-
-        self.cli.wait_click(
-                    '//AddressBook/BoxLayout[0]//SwipeToDeleteItem[0]', timeout=2)
+        # Click on trash-can icon
+        self.cli.click_on('//MDList[0]/SwipeToDeleteItem[0]//MDIconButton[0]')
+        # Checking current screen
+        self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=2)

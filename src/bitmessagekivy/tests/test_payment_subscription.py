@@ -17,18 +17,27 @@ class PaymentScreen(TeleniumTestProcess):
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
-        self.assertExists('//NavigationItem[@text=\"Purchase\"]', timeout=3)
         # this is for opening Payment screen
-        self.click_on('//NavigationItem[@text=\"Purchase\"]', seconds=2)
+        self.cli.wait_click('//NavigationItem[@text=\"Purchase\"]', timeout=2)
         # Assert for checking Current Screen
-        self.assertExists("//Payment[@name~=\"payment\"]", timeout=4)
+        self.assertExists("//Payment[@name~=\"payment\"]", timeout=3)
+        # Scrolling Down Product list 
+        self.cli.sleep(0.5)
         self.drag(
             '//ProductCategoryLayout[0]/ProductLayout[1]',
             '//ProductCategoryLayout[0]/ProductLayout[0]')
         # assert for checking scroll function
-        self.assertExists('//MDRaisedButton[3]', timeout=3)
+        self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=3)
+        # Click on BUY Button
         self.cli.wait_click('//MDRaisedButton[@text=\"BUY\"]', timeout=2)
-        self.click_on('//ScrollView[0]/ListItemWithLabel[0]', seconds=1)
-        self.click_on('//MDRaisedButton[3]', seconds=1)
+        # Checking the pop up opend by clicking on BUY button
+        # self.assertExists('//PaymentMethodLayout/BoxLayout[0]/MDLabel[@text=\"Select Payment Method\"]', timeout=2)
+        # CLick on the Payment Method
+        self.cli.click_on('//ScrollView[0]/ListItemWithLabel[0]')
+        # Click checked
+        # self.assertExists('//PaymentMethodLayout/BoxLayout[0]/MDLabel[@text=\"Select Payment Method\"]', timeout=2)
+        # Click out side to dismiss the popup
+        self.cli.wait_click('//MDRaisedButton[3]', timeout=2)
+        # Checking Current screen(Payment screen)
         self.assertExists("//Payment[@name~=\"payment\"]", timeout=2)
         
