@@ -15,6 +15,7 @@ class TestAddresses(unittest.TestCase):
         self.assertEqual(
             addresses.decodeAddress(sample_address),
             ('success', 2, 1, unhexlify(sample_ripe)))
+
         status, version, stream, ripe1 = addresses.decodeAddress(
             '2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
         self.assertEqual(status, 'success')

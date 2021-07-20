@@ -7,7 +7,7 @@ import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify
 
-from pybitmessage.pyelliptic import arithmetic
+from pybitmessage import highlevelcrypto
 
 
 try:
@@ -16,7 +16,7 @@ except ImportError:
     RIPEMD = None
 
 from .samples import (
-    sample_factor, sample_point, sample_pubsigningkey, sample_pubencryptionkey,
+    sample_pubsigningkey, sample_pubencryptionkey,
     sample_privsigningkey, sample_privencryptionkey, sample_ripe
 )
 
@@ -62,19 +62,13 @@ class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
 class TestHighlevelcrypto(unittest.TestCase):
     """Test highlevelcrypto public functions"""
 
-    def test_base10_multiply(self):
-        """Test arithmetic.base10_multiply"""
-        self.assertEqual(
-            sample_point,
-            arithmetic.base10_multiply(arithmetic.G, sample_factor))
-
     def test_privtopub(self):
         """Generate public keys and check the result"""
         self.assertEqual(
-            arithmetic.privtopub(sample_privsigningkey).encode(),
+            highlevelcrypto.privToPub(sample_privsigningkey),
             hexlify(sample_pubsigningkey)
         )
         self.assertEqual(
-            arithmetic.privtopub(sample_privencryptionkey).encode(),
+            highlevelcrypto.privToPub(sample_privencryptionkey),
             hexlify(sample_pubencryptionkey)
         )

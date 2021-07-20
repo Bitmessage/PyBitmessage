@@ -14,7 +14,10 @@ def unittest_discover():
     # randomize the order of tests in test cases
     loader.sortTestMethodsUsing = lambda a, b: random.randint(-1, 1)
     # pybitmessage symlink may disappear on Windows
-    return loader.discover('src.tests')
+    testsuite = loader.discover('src.tests')
+    testsuite.addTests([loader.discover('src.pyelliptic')])
+
+    return testsuite
 
 
 if __name__ == "__main__":
