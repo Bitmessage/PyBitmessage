@@ -3,6 +3,8 @@
 from binascii import unhexlify
 
 
+magic = 0xE9BEB4D9
+
 # These keys are from addresses test script
 sample_pubsigningkey = unhexlify(
     '044a367f049ec16cb6b6118eb734a9962d10b8db59c890cd08f210c43ff08bdf09d'
@@ -14,6 +16,7 @@ sample_privsigningkey = \
     b'93d0b61371a54b53df143b954035d612f8efa8a3ed1cf842c2186bfd8f876665'
 sample_privencryptionkey = \
     b'4b0b73a54e19b059dc274ab69df095fe699f43b17397bca26fdf40f4d7400a3a'
+
 sample_ripe = b'003cd097eb7f35c87b5dc8b4538c22cb55312a9f'
 # stream: 1, version: 2
 sample_address = 'BM-onkVu1KKL2UaUss5Upg9vXmqd3esTmV79'
