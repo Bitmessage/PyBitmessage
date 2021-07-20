@@ -1,4 +1,6 @@
 from time import time
+
+from kivy.core.window import Animation
 from .telenium_process import TeleniumTestProcess
 
 
@@ -30,12 +32,10 @@ class PaymentScreen(TeleniumTestProcess):
         self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=3)
         # Click on BUY Button
         self.cli.wait_click('//MDRaisedButton[@text=\"BUY\"]', timeout=2)
-        # Checking the pop up opend by clicking on BUY button
-        # self.assertExists('//PaymentMethodLayout/BoxLayout[0]/MDLabel[@text=\"Select Payment Method\"]', timeout=2)
         # CLick on the Payment Method
         self.cli.click_on('//ScrollView[0]/ListItemWithLabel[0]')
-        # Click checked
-        # self.assertExists('//PaymentMethodLayout/BoxLayout[0]/MDLabel[@text=\"Select Payment Method\"]', timeout=2)
+        # Check pop up is opened
+        self.assertEqual(self.cli.getattr('//PaymentMethodLayout/BoxLayout[0]/MDLabel[0]', 'text'), 'Select Payment Method')
         # Click out side to dismiss the popup
         self.cli.wait_click('//MDRaisedButton[3]', timeout=2)
         # Checking Current screen(Payment screen)

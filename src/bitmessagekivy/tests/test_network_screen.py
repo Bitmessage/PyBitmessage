@@ -21,6 +21,6 @@ class NetwrokStatusScreen(TeleniumTestProcess):
         # Checking for current screen (Network Status)
         self.assertExists("//NetworkStat[@name~=\"networkstat\"]", timeout=2)
         # Clicking on Processes Tab
-        self.cli.wait_click('//NetworkStat/MDTabs[0]//MDTabsLabel[1]', timeout=1)
+        self.cli.wait_click('//NetworkStat/MDTabs[0]//MDTabsLabel[@text=\"Processes\"]', timeout=1)
         # Checking for current screen (Network Status)
         self.assertExists("//NetworkStat[@name~=\"networkstat\"]", timeout=2)
