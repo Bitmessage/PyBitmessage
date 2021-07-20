@@ -19,18 +19,16 @@ tmp_db_file = (
 )
 
 
-def cleanup(home=None, files=_files):
+def cleanup(files=_files):
     """Cleanup application files"""
-    if not home:
-        home = tempfile.gettempdir()
     for pfile in files:
         try:
-            os.remove(os.path.join(home, pfile))
+            os.remove(os.path.join(tempfile.gettempdir(), pfile))
         except OSError:
             pass
 
 
-def set_temp_data():
+def populate_test_data():
     """Set temp data in tmp directory"""
     for file_name in tmp_db_file:
         old_source_file = os.path.join(
@@ -47,7 +45,7 @@ class TeleniumTestProcess(TeleniumTestCase):
     def setUpClass(cls):
         """Setupclass is for setting temp environment"""
         os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
-        set_temp_data()
+        populate_test_data()
         super(TeleniumTestProcess, cls).setUpClass()
 
     @classmethod

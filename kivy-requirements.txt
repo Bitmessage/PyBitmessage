@@ -1,6 +1,5 @@
-Kivy==2.0.0
-kivy-garden.qrcode==2021.314
+kivy-garden.qrcode
 -e git+https://github.com/kivymd/KivyMD#egg=kivymd
-opencv-python==4.5.1.48
-pyzbar==0.1.8
-telenium==0.5.0
+opencv-python
+pyzbar
+telenium
