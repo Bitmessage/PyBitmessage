@@ -14,9 +14,9 @@ class TestProtocol(unittest.TestCase):
         # import pdb; pdb.set_trace()
 
         self.assertTrue(
-            protocol.checkIPAddress(protocol.encodeHost('127.0.0.1').decode('ISO-8859-1'), True))
+            protocol.checkIPAddress(protocol.encodeHost('127.0.0.1'), True))
         self.assertTrue(
-            protocol.checkIPAddress(protocol.encodeHost('192.168.0.1').decode('ISO-8859-1'), True))
+            protocol.checkIPAddress(protocol.encodeHost('192.168.0.1'), True))
 
         self.assertTrue(
             not protocol.checkSocksIP('127.0.0.1')
