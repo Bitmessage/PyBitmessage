@@ -4,10 +4,7 @@ from binascii import unhexlify
 
 from pybitmessage import addresses
 
-
-sample_ripe = unhexlify('003cd097eb7f35c87b5dc8b4538c22cb55312a9f')
-# stream: 1, version: 2
-sample_address = 'BM-onkVu1KKL2UaUss5Upg9vXmqd3esTmV79'
+from .samples import sample_address, sample_ripe
 
 
 class TestAddresses(unittest.TestCase):
@@ -17,7 +14,7 @@ class TestAddresses(unittest.TestCase):
         """Decode some well known addresses and check the result"""
         self.assertEqual(
             addresses.decodeAddress(sample_address),
-            ('success', 2, 1, sample_ripe))
+            ('success', 2, 1, unhexlify(sample_ripe)))
         status, version, stream, ripe1 = addresses.decodeAddress(
             '2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
         self.assertEqual(status, 'success')
@@ -33,4 +30,5 @@ class TestAddresses(unittest.TestCase):
     def test_encode(self):
         """Encode sample ripe and compare the result to sample address"""
         self.assertEqual(
-            addresses.encodeAddress(2, 1, sample_ripe), sample_address)
+            sample_address,
+            addresses.encodeAddress(2, 1, unhexlify(sample_ripe)))
