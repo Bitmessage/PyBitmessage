@@ -10,6 +10,9 @@ from six.moves import xmlrpc_client  # nosec
 
 import psutil
 
+from .samples import (
+    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4)
+
 from .test_process import TestProcessProto
 
 
@@ -58,9 +61,7 @@ class TestAPIShutdown(TestAPIProto):
 
 class TestAPI(TestAPIProto):
     """Main API test case"""
-    _seed = base64.encodestring(
-        'TIGER, tiger, burning bright. In the forests of the night'
-    )
+    _seed = base64.encodestring(sample_seed)
 
     def _add_random_address(self, label):
         return self.api.createRandomAddress(base64.encodestring(label))
@@ -108,7 +109,7 @@ class TestAPI(TestAPIProto):
     def test_decode_address(self):
         """Checking the return of API command 'decodeAddress'"""
         result = json.loads(
-            self.api.decodeAddress('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'))
+            self.api.decodeAddress(sample_deterministic_addr4))
         self.assertEqual(result.get('status'), 'success')
         self.assertEqual(result['addressVersion'], 4)
         self.assertEqual(result['streamNumber'], 1)
@@ -117,10 +118,10 @@ class TestAPI(TestAPIProto):
         """Test creation of deterministic addresses"""
         self.assertEqual(
             self.api.getDeterministicAddress(self._seed, 4, 1),
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+            sample_deterministic_addr4)
         self.assertEqual(
             self.api.getDeterministicAddress(self._seed, 3, 1),
-            'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN')
+            sample_deterministic_addr3)
         self.assertRegexpMatches(
             self.api.getDeterministicAddress(self._seed, 2, 1),
             r'^API Error 0002:')
@@ -150,7 +151,7 @@ class TestAPI(TestAPIProto):
             self.api.createDeterministicAddresses(self._seed, 2, 4)
         )['addresses']
         self.assertEqual(len(addresses), 2)
-        self.assertEqual(addresses[0], 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+        self.assertEqual(addresses[0], sample_deterministic_addr4)
         for addr in addresses:
             self.assertEqual(self.api.deleteAddress(addr), 'success')
 
@@ -172,19 +173,18 @@ class TestAPI(TestAPIProto):
         )
         # Add known address
         self.api.addAddressBookEntry(
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
+            sample_deterministic_addr4,
             base64.encodestring('tiger_4')
         )
         # Check addressbook entry
         entries = json.loads(
             self.api.listAddressBookEntries()).get('addresses')[0]
         self.assertEqual(
-            entries['address'], 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+            entries['address'], sample_deterministic_addr4)
         self.assertEqual(
             base64.decodestring(entries['label']), 'tiger_4')
         # Remove known address
-        self.api.deleteAddressBookEntry(
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+        self.api.deleteAddressBookEntry(sample_deterministic_addr4)
         # Addressbook should be empty again
         self.assertEqual(
             json.loads(self.api.listAddressBookEntries()).get('addresses'),
@@ -218,7 +218,7 @@ class TestAPI(TestAPIProto):
         msg = base64.encodestring('test message')
         msg_subject = base64.encodestring('test_subject')
         ackdata = self.api.sendMessage(
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK', addr, msg_subject, msg)
+            sample_deterministic_addr4, addr, msg_subject, msg)
         try:
             # Check ackdata and message status
             int(ackdata, 16)
@@ -332,19 +332,12 @@ class TestAPI(TestAPIProto):
         """Testing chan creation/joining"""
         # Create chan with known address
         self.assertEqual(
-            self.api.createChan(self._seed),
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
-        )
+            self.api.createChan(self._seed), sample_deterministic_addr4)
         # cleanup
         self.assertEqual(
-            self.api.leaveChan('BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'),
-            'success'
-        )
+            self.api.leaveChan(sample_deterministic_addr4), 'success')
         # Join chan with addresses of version 3 or 4
-        for addr in (
-            'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK',
-            'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
-        ):
+        for addr in (sample_deterministic_addr4, sample_deterministic_addr3):
             self.assertEqual(self.api.joinChan(self._seed, addr), 'success')
             self.assertEqual(self.api.leaveChan(addr), 'success')
         # Joining with wrong address should fail

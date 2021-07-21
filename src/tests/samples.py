@@ -24,3 +24,8 @@ sample_point = (
     33567437183004486938355437500683826356288335339807546987348409590129959362313,
     94730058721143827257669456336351159718085716196507891067256111928318063085006
 )
+
+sample_seed = 'TIGER, tiger, burning bright. In the forests of the night'
+# Deterministic addresses with stream 1 and versions 3, 4
+sample_deterministic_addr3 = 'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
+sample_deterministic_addr4 = 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
