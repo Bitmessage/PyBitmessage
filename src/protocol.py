@@ -160,12 +160,12 @@ def network_group(host):
     return network_type
 
 
-def checkIPAddress(host, private=False):
-    """
-    Returns hostStandardFormat if it is a valid IP address,
-    otherwise returns False
-    """
-    if not isinstance(host, str):
+if PY3:
+    def checkIPAddress(host, private=False):
+        """
+        Returns hostStandardFormat if it is a valid IP address,
+        otherwise returns False
+        """
         if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
             hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
             return checkIPv4Address(host[12:], hostStandardFormat, private)
@@ -185,7 +185,13 @@ def checkIPAddress(host, private=False):
                 # not 64-bit compatible so let us drop the IPv6 address.
                 return False
             return checkIPv6Address(host, hostStandardFormat, private)
-    else:
+
+else:
+    def checkIPAddress(host, private=False):
+        """
+        Returns hostStandardFormat if it is a valid IP address,
+        otherwise returns False
+        """
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
             hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
             return checkIPv4Address(host[12:], hostStandardFormat, private)
@@ -207,12 +213,12 @@ def checkIPAddress(host, private=False):
             return checkIPv6Address(host, hostStandardFormat, private)
 
 
-def checkIPv4Address(host, hostStandardFormat, private=False):
-    """
-    Returns hostStandardFormat if it is an IPv4 address,
-    otherwise returns False
-    """
-    if not isinstance(host, str):
+if PY3:
+    def checkIPv4Address(host, hostStandardFormat, private=False):
+        """
+        Returns hostStandardFormat if it is an IPv4 address,
+        otherwise returns False
+        """
         if host[0] == 127:  # 127/8
             if not private:
                 logger.debug(
@@ -235,7 +241,13 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
                     'Ignoring IP address in private range: %s', hostStandardFormat)
             return hostStandardFormat if private else False
         return False if private else hostStandardFormat
-    else:
+
+else:
+    def checkIPv4Address(host, hostStandardFormat, private=False):
+        """
+        Returns hostStandardFormat if it is an IPv4 address,
+        otherwise returns False
+        """
         if host[0] == '\x7F':  # 127/8
             if not private:
                 logger.debug(
