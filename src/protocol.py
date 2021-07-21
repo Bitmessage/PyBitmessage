@@ -25,16 +25,16 @@ try:
     from helper_sql import sqlExecute
     from version import softwareVersion
 except ImportError:
-    from . import defaults
-    from . import highlevelcrypto
-    from . import state
-    from .addresses import (
+    from pybitmessage import defaults
+    from pybitmessage import highlevelcrypto
+    from pybitmessage import state
+    from pybitmessage.addresses import (
         encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-    from .bmconfigparser import BMConfigParser
-    from .debug import logger
-    from .fallback import RIPEMD160Hash
-    from .helper_sql import sqlExecute
-    from .version import softwareVersion
+    from pybitmessage.bmconfigparser import BMConfigParser
+    from pybitmessage.debug import logger
+    from pybitmessage.fallback import RIPEMD160Hash
+    from pybitmessage.helper_sql import sqlExecute
+    from pybitmessage.version import softwareVersion
 
 PY3 = sys.version_info[0] >= 3
 
