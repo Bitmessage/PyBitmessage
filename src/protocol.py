@@ -284,7 +284,7 @@ def isProofOfWorkSufficient(
 # Packet creation
 
 
-def CreatePacket(command, payload=''):
+def CreatePacket(command, payload=b''):
     """Construct and return a packet"""
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
@@ -302,7 +302,7 @@ def assembleVersionMessage(
     Construct the payload of a version message,
     return the resulting bytes of running `CreatePacket` on it
     """
-    payload = ''
+    payload = b''
     payload += pack('>L', 3)  # protocol version.
     # bitflags of the services I offer.
     payload += pack(
@@ -337,7 +337,7 @@ def assembleVersionMessage(
     )
     # = 127.0.0.1. This will be ignored by the remote host.
     # The actual remote connected IP will be used.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
+    payload += b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
@@ -359,7 +359,7 @@ def assembleVersionMessage(
         payload += nodeid[0:8]
     else:
         payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + softwareVersion + '/'
+    userAgent = ('/PyBitmessage:%s/' % softwareVersion).encode('utf-8')
     payload += encodeVarint(len(userAgent))
     payload += userAgent
 
@@ -373,7 +373,7 @@ def assembleVersionMessage(
         if count >= 160000:
             break
 
-    return CreatePacket('version', payload)
+    return CreatePacket(b'version', payload)
 
 
 def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
@@ -387,7 +387,7 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload += inventoryVector
     payload += encodeVarint(len(errorText))
     payload += errorText
-    return CreatePacket('error', payload)
+    return CreatePacket(b'error', payload)
 
 
 # Packet decoding
