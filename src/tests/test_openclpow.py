@@ -4,11 +4,6 @@ Tests for openclpow module
 import hashlib
 import unittest
 from struct import pack, unpack
-
-from .common import skip_python3
-
-skip_python3()  # noqa:E402
-
 from pybitmessage import openclpow
 
 

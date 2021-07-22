@@ -5,9 +5,14 @@ import logging
 import os
 from struct import pack
 
-import paths
-from bmconfigparser import BMConfigParser
-from state import shutdown
+try:
+    import paths
+    from bmconfigparser import BMConfigParser
+    from state import shutdown
+except ImportError:
+    from pybitmessage import paths
+    from pybitmessage.bmconfigparser import BMConfigParser
+    from pybitmessage.state import shutdown
 
 try:
     import numpy
