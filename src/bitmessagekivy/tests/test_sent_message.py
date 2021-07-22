@@ -7,7 +7,6 @@ data = [
     'BM-2cVpswZo8rWLXDVtZEUNcDQvnvHJ6TLRYr'
 ]
 
-
 class SendMessage(TeleniumTestProcess):
     """Sent Screen Functionality Testing"""
 
@@ -74,10 +73,11 @@ class SendMessage(TeleniumTestProcess):
         # Checking BODY Field(EMPTY)
         self.assertExists('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"\"]', timeout=2)
         # ADD BODY
-        self.cli.setattr(
-                '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]', 'text', 'how are you this is message body')
+        self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]',
+                             'text', 'how are you this is message body')
         # Checking BODY is Entered
-        self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[@text=\"how are you this is message body\"]', timeout=2)
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[@text=\"how are you this is message body\"]', timeout=2)
         # click on send icon
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
         # Checking validation so Pop up is Opened

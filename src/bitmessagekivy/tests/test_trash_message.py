@@ -1,25 +1,12 @@
-from datetime import datetime
-from os import wait
-from socket import timeout
-from time import sleep
-
-from telenium.mods.telenium_client import selectFirst, kivythread, TeleniumMotionEvent, nextid, telenium_input, run_telenium
-
 from .telenium_process import TeleniumTestProcess
 
-
 class TrashMessage(TeleniumTestProcess):
-    
-    def smart_click(self, click_on, sleep):
-        click_on = self.cli.click_on(click_on)
-        sleep = self.cli.sleep(sleep)
-        
     """Trash Screen Functionality Testing"""
 
     def test_delete_trash_message(self):
         """Delete Trash message permanently from trash message listing"""
         print("=====================Test -Delete Message From Trash Message Listing=====================")
-        self.cli.sleep(8)
+        self.cli.sleep(3)
         # this is for opening Nav drawer
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
@@ -29,14 +16,16 @@ class TrashMessage(TeleniumTestProcess):
         # self.cli.click_on('//NavigationItem[4]')
         # Checking Trash Screen
         self.assertExists("//Trash[@name~=\"trash\"]", timeout=5)
-        # Transition Effect taking time, so halt is required 
+        # Transition Effect taking time, so halt is required
         self.cli.sleep(2)
-        # Checking Popup is closed
-        self.assertEqual(self.cli.getattr('//MDList[0]/CutsomSwipeToDeleteItem[0]', '_opens_process'), False)
+        # Checking Trash Icon is in disable state
+        self.assertTrue('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'True')
         # This is for swiping message to activate delete icon.
         self.drag(
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]')
+        # Assert to check the drag is worked (Trash icon Activated)
+        self.assertTrue('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'False')
         # Checking Popup is Opened
         self.assertEqual(self.cli.getattr('//MDList[0]/CutsomSwipeToDeleteItem[0]', '_opens_process'), True)
         self.click_on('//MDList[0]/CutsomSwipeToDeleteItem[0]', seconds=1)

@@ -30,6 +30,9 @@ class PaymentScreen(TeleniumTestProcess):
             '//ProductCategoryLayout[0]/ProductLayout[0]')
         # assert for checking scroll function
         self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=3)
+        self.cli.sleep(2)
+        print(self.cli.getattr('//Payment//MDCustomBottomSheet//MDBottomSheet[0]', 'animation'), 'pop is open or not  ----------------------------------------------````````````````````````````````````````````````````````````~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        self.cli.sleep(2)
         # Click on BUY Button
         self.cli.wait_click('//MDRaisedButton[@text=\"BUY\"]', timeout=2)
         # CLick on the Payment Method

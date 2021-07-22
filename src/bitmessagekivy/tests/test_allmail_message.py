@@ -1,7 +1,6 @@
 from .telenium_process import TeleniumTestProcess
 from .common import ordered
 
-
 class AllMailMessage(TeleniumTestProcess):
     """AllMail Screen Functionality Testing"""
 
@@ -33,6 +32,4 @@ class AllMailMessage(TeleniumTestProcess):
         # CLicking on Trash-Can icon to delete Message
         self.cli.wait_click('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[@icon=\"delete-forever\"]', timeout=5)
         # After deleting msg, screen is redirected to All mail screen
-        self.assertExists("//Allmails[@name~=\"allmails\"]", timeout=5)        
-
-
+        self.assertExists("//Allmails[@name~=\"allmails\"]", timeout=5)

@@ -1,11 +1,9 @@
 import os
 import tempfile
-
 from .telenium_process import TeleniumTestProcess, cleanup
 from .common import ordered
 from random import choice
 from string import ascii_lowercase
-
 
 class CreateRandomAddress(TeleniumTestProcess):
     """This is for testing randrom address creation"""
@@ -29,7 +27,6 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Checking Current Screen(Random Screen) after Clicking on Proceed Next Button 
         self.assertExists("//Random[@name~=\"random\"]", timeout=2)
 
-
     @ordered
     def test_random_screen(self):
         """Creating New Adress For New User."""
@@ -51,7 +48,8 @@ class CreateRandomAddress(TeleniumTestProcess):
     def test_create_new_address(self):
         """Clicking on Navigation Drawer To Open New Address"""
         print("=====================Test - Create New Address=====================")
-        self.cli.sleep(5)
+        # New screen is opening and transition effect takes time so Sleep is used
+        self.cli.sleep(3)
         # this is for opening Nav drawer
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
         # checking state of Nav drawer
@@ -67,7 +65,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.assertExists("//Login[@name~=\"login\"]", timeout=3)
         # Click on Proceed Next button to enter 'Random' Screen
         self.cli.wait_click(
-            '//Screen[0]/BoxLayout[0]/AnchorLayout[3]/MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
+            '//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
         # Checking Current Screen(Random Screen) after Clicking on Proceed Next Button 
         self.assertExists("//Random[@name~=\"random\"]", timeout=1)
         # Executing above function to create new address
