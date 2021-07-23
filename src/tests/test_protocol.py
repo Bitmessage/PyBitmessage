@@ -11,7 +11,6 @@ class TestProtocol(unittest.TestCase):
     def test_check_local(self):
         """Check the logic of TCPConnection.local"""
         from pybitmessage import protocol, state
-        # import pdb; pdb.set_trace()
 
         self.assertTrue(
             protocol.checkIPAddress(protocol.encodeHost('127.0.0.1'), True))
