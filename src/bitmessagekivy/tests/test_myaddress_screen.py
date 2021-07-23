@@ -1,7 +1,6 @@
-from time import sleep
-from requests.packages.urllib3.util import timeout
 from .telenium_process import TeleniumTestProcess
 from .common import ordered
+
 
 data = [
     'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h',
@@ -15,7 +14,7 @@ class MyAddressScreen(TeleniumTestProcess):
     def test_select_myaddress_list(self):
         """Select Address From List of Address"""
         print("=====================Test -Select Address From List of Address=====================")
-        self.cli.sleep(12)
+        self.cli.sleep(8)
         # this is for checking current screen
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=3)
         # this is for opening Nav drawer

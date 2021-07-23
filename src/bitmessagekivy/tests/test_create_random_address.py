@@ -18,7 +18,7 @@ class CreateRandomAddress(TeleniumTestProcess):
     def test_login_screen(self):
         """Clicking on Proceed Button to Proceed to Next Screen."""
         print("=====================Test - Login Screen=====================")
-        self.cli.sleep(10)
+        self.cli.sleep(8)
         # Checking current Screen(Login screen)
         self.assertExists("//Login[@name~=\"login\"]", timeout=3)
         # Clicking on Proceed Next Button

@@ -14,7 +14,7 @@ class AddressBook(TeleniumTestProcess):
     def test_save_address(self):
         """Save Address On Address Book Screen/Window"""
         print("=====================Test -Save Address In Address Book=====================")
-        self.cli.sleep(3)
+        self.cli.sleep(8)
         # this is for checking current screen
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=3)
         # this is for opening Nav drawer

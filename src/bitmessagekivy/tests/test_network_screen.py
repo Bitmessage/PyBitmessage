@@ -7,7 +7,7 @@ class NetwrokStatusScreen(TeleniumTestProcess):
     def test_network_status(self):
         """Show NetwrokStatus"""
         print("=====================Test -Show NetwrokStatus=====================")
-        self.cli.sleep(10)
+        self.cli.sleep(8)
         # this is for opening Nav drawer
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=2)
         # checking state of Nav drawer

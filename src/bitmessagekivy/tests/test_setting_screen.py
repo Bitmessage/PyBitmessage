@@ -7,7 +7,7 @@ class SettingScreen(TeleniumTestProcess):
     def test_setting_screen(self):
         """Show Setting Screen"""
         print("=====================Test -Show Setting Screen=====================")
-        self.cli.sleep(12)
+        self.cli.sleep(8)
         # this is for checking current screen
         self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=3)
         # this is for opening Nav drawer
