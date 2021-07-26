@@ -4,9 +4,6 @@ Test for ECC blind signatures
 import os
 import unittest
 from hashlib import sha256
-from .common import skip_python3
-
-skip_python3()
 
 from pybitmessage.pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
 
