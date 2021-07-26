@@ -3,10 +3,17 @@ Tests for common protocol functions
 """
 
 import unittest
+try:
+    from .common import cleanup
+except ImportError:
+    from common import cleanup
 
 
 class TestProtocol(unittest.TestCase):
     """Main protocol test case"""
+
+    def tearDown(self):
+        cleanup()
 
     def test_check_local(self):
         """Check the logic of TCPConnection.local"""

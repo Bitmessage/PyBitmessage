@@ -13,7 +13,10 @@ _files = (
 def cleanup(home=None, files=_files):
     """Cleanup application files"""
     if not home:
-        import state
+        try:
+            import state
+        except ImportError:
+            from pybitmessage import state
         home = state.appdata
     for pfile in files:
         try:
