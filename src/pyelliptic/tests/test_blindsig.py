@@ -5,7 +5,10 @@ import os
 import unittest
 from hashlib import sha256
 
-from pybitmessage.pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
+try:
+    from pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
+except ImportError:
+    from pybitmessage.pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
 
 # pylint: disable=protected-access
 

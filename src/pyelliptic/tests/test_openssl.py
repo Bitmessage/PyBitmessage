@@ -3,7 +3,10 @@ Test if OpenSSL is working correctly
 """
 import unittest
 
-from pybitmessage.pyelliptic.openssl import OpenSSL
+try:
+    from pyelliptic.openssl import OpenSSL
+except ImportError:
+    from pybitmessage.pyelliptic import OpenSSL
 
 try:
     OpenSSL.BN_bn2binpad
@@ -33,7 +36,7 @@ class TestOpenSSL(unittest.TestCase):
 
     @unittest.skipUnless(have_pad, 'Skipping OpenSSL pad test')
     def test_padding(self):
-        """Test an alternatie implementation of bn2binpad"""
+        """Test an alternative implementation of bn2binpad"""
 
         ctx = OpenSSL.BN_CTX_new()
         a = OpenSSL.BN_new()
