@@ -173,13 +173,13 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
     Returns hostStandardFormat if it is an IPv4 address,
     otherwise returns False
     """
-    if host[0] == b'\x7F':  # 127/8
+    if host[0:1] == b'\x7F':  # 127/8
         if not private:
             logger.debug(
                 'Ignoring IP address in loopback range: %s',
                 hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0] == b'\x0A':  # 10/8
+    if host[0:1] == b'\x0A':  # 10/8
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
