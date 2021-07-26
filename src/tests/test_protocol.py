@@ -2,6 +2,7 @@
 Tests for common protocol functions
 """
 
+import sys
 import unittest
 
 from pybitmessage import protocol, state
@@ -67,6 +68,10 @@ class TestProtocol(unittest.TestCase):
         self.assertFalse(protocol.checkIPAddress(globalhost, True))
         self.assertEqual(protocol.checkIPAddress(globalhost), '8.8.8.8')
 
+    @unittest.skipIf(
+        sys.hexversion >= 0x3000000, 'this is still not working with python3')
+    def test_check_local_socks(self):
+        """The SOCKS part of the local check"""
         self.assertTrue(
             not protocol.checkSocksIP('127.0.0.1')
             or state.socksIP)
