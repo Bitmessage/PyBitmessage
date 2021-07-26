@@ -70,3 +70,29 @@ class TestProtocol(unittest.TestCase):
         self.assertTrue(
             not protocol.checkSocksIP('127.0.0.1')
             or state.socksIP)
+
+    def test_network_group(self):
+        """Test various types of network groups"""
+
+        test_ip = '1.2.3.4'
+        self.assertEqual(b'\x01\x02', protocol.network_group(test_ip))
+
+        test_ip = '127.0.0.1'
+        self.assertEqual('IPv4', protocol.network_group(test_ip))
+
+        self.assertEqual(
+            protocol.network_group('8.8.8.8'),
+            protocol.network_group('8.8.4.4'))
+        self.assertNotEqual(
+            protocol.network_group('1.1.1.1'),
+            protocol.network_group('8.8.8.8'))
+
+        test_ip = '0102:0304:0506:0708:090A:0B0C:0D0E:0F10'
+        self.assertEqual(
+            b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C',
+            protocol.network_group(test_ip))
+
+        for test_ip in (
+                'bootstrap8444.bitmessage.org', 'quzwelsuziwqgpt2.onion', None):
+            self.assertEqual(
+                test_ip, protocol.network_group(test_ip))
