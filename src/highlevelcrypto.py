@@ -13,7 +13,6 @@ import pyelliptic
 from pyelliptic import OpenSSL
 from pyelliptic import arithmetic as a
 
-from bmconfigparser import config
 
 __all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
 
@@ -64,43 +63,44 @@ def decryptFast(msg, cryptor):
     return cryptor.decrypt(msg)
 
 
-def sign(msg, hexPrivkey):
+def _choose_digest_alg(name):
+    """
+    Choose openssl digest constant by name raises ValueError if not appropriate
+    """
+    if name not in ("sha1", "sha256"):
+        raise ValueError("Unknown digest algorithm %s" % name)
+    return (
+        # SHA1, this will eventually be deprecated
+        OpenSSL.digest_ecdsa_sha1 if name == "sha1" else OpenSSL.EVP_sha256)
+
+
+def sign(msg, hexPrivkey, digestAlg="sha256"):
     """
     Signs with hex private key using SHA1 or SHA256 depending on
-    "digestalg" setting
+    *digestAlg* keyword.
     """
-    digestAlg = config.safeGet(
-        'bitmessagesettings', 'digestalg', 'sha256')
-    if digestAlg == "sha1":
-        # SHA1, this will eventually be deprecated
-        return makeCryptor(hexPrivkey).sign(
-            msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
-    elif digestAlg == "sha256":
-        # SHA256. Eventually this will become the default
-        return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
-    else:
-        raise ValueError("Unknown digest algorithm %s" % digestAlg)
+    return makeCryptor(hexPrivkey).sign(
+        msg, digest_alg=_choose_digest_alg(digestAlg))
 
 
-def verify(msg, sig, hexPubkey):
+def verify(msg, sig, hexPubkey, digestAlg=None):
     """Verifies with hex public key using SHA1 or SHA256"""
     # As mentioned above, we must upgrade gracefully to use SHA256. So
     # let us check the signature using both SHA1 and SHA256 and if one
     # of them passes then we will be satisfied. Eventually this can
     # be simplified and we'll only check with SHA256.
-    try:
+    if digestAlg is None:
         # old SHA1 algorithm.
-        sigVerifyPassed = makePubCryptor(hexPubkey).verify(
-            sig, msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
-    except:
-        sigVerifyPassed = False
-    if sigVerifyPassed:
-        # The signature check passed using SHA1
-        return True
-    # The signature check using SHA1 failed. Let us try it with SHA256.
+        sigVerifyPassed = verify(msg, sig, hexPubkey, "sha1")
+        if sigVerifyPassed:
+            # The signature check passed using SHA1
+            return True
+        # The signature check using SHA1 failed. Let us try it with SHA256.
+        return verify(msg, sig, hexPubkey, "sha256")
+
     try:
         return makePubCryptor(hexPubkey).verify(
-            sig, msg, digest_alg=OpenSSL.EVP_sha256)
+            sig, msg, digest_alg=_choose_digest_alg(digestAlg))
     except:
         return False
 

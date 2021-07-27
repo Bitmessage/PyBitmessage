@@ -70,12 +70,21 @@ class TestHighlevelcrypto(unittest.TestCase):
         """Verify sample signatures and newly generated ones"""
         pubkey_hex = hexlify(sample_pubsigningkey)
         # pregenerated signatures
+        self.assertTrue(highlevelcrypto.verify(
+            sample_msg, sample_sig, pubkey_hex, "sha256"))
+        self.assertFalse(highlevelcrypto.verify(
+            sample_msg, sample_sig, pubkey_hex, "sha1"))
+        self.assertTrue(highlevelcrypto.verify(
+            sample_msg, sample_sig_sha1, pubkey_hex, "sha1"))
+        self.assertTrue(highlevelcrypto.verify(
+            sample_msg, sample_sig_sha1, pubkey_hex))
+        # new signatures
+        sig256 = highlevelcrypto.sign(sample_msg, sample_privsigningkey)
+        sig1 = highlevelcrypto.sign(sample_msg, sample_privsigningkey, "sha1")
         self.assertTrue(
-            highlevelcrypto.verify(sample_msg, sample_sig, pubkey_hex))
+            highlevelcrypto.verify(sample_msg, sig256, pubkey_hex))
         self.assertTrue(
-            highlevelcrypto.verify(sample_msg, sample_sig_sha1, pubkey_hex))
-        # new signature
-        sig1 = highlevelcrypto.sign(sample_msg, sample_privsigningkey)
+            highlevelcrypto.verify(sample_msg, sig256, pubkey_hex, "sha256"))
         self.assertTrue(
             highlevelcrypto.verify(sample_msg, sig1, pubkey_hex))
 

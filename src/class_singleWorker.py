@@ -50,6 +50,8 @@ class singleWorker(StoppableThread):
 
     def __init__(self):
         super(singleWorker, self).__init__(name="singleWorker")
+        self.digestAlg = config.safeGet(
+            'bitmessagesettings', 'digestalg', 'sha256')
         proofofwork.init()
 
     def stopThread(self):
@@ -368,7 +370,8 @@ class singleWorker(StoppableThread):
         payload += encodeVarint(config.getint(
             myAddress, 'payloadlengthextrabytes'))
 
-        signature = highlevelcrypto.sign(payload, privSigningKeyHex)
+        signature = highlevelcrypto.sign(
+            payload, privSigningKeyHex, self.digestAlg)
         payload += encodeVarint(len(signature))
         payload += signature
 
@@ -455,8 +458,7 @@ class singleWorker(StoppableThread):
         ).digest()).digest()
         payload += doubleHashOfAddressData[32:]  # the tag
         signature = highlevelcrypto.sign(
-            payload + dataToEncrypt, privSigningKeyHex
-        )
+            payload + dataToEncrypt, privSigningKeyHex, self.digestAlg)
         dataToEncrypt += encodeVarint(len(signature))
         dataToEncrypt += signature
 
@@ -641,7 +643,7 @@ class singleWorker(StoppableThread):
             dataToSign = payload + dataToEncrypt
 
             signature = highlevelcrypto.sign(
-                dataToSign, privSigningKeyHex)
+                dataToSign, privSigningKeyHex, self.digestAlg)
             dataToEncrypt += encodeVarint(len(signature))
             dataToEncrypt += signature
 
@@ -1223,7 +1225,8 @@ class singleWorker(StoppableThread):
             payload += fullAckPayload
             dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
-            signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
+            signature = highlevelcrypto.sign(
+                dataToSign, privSigningKeyHex, self.digestAlg)
             payload += encodeVarint(len(signature))
             payload += signature
 
