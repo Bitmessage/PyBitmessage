@@ -42,3 +42,13 @@ sample_inbox_msg_ids = ['27e644765a3e4b2e973ee7ccf958ea20', '51fc5531-3989-4d69-
 # second address in sample_test_subscription_address is for the announcement broadcast
 sample_test_subscription_address = ['BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq', 'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw']
 sample_subscription_name = 'test sub'
+
+sample_msg = unhexlify(
+    '0592a10584ffabf96539f3d780d776828c67da1ab5b169e9e8aed838aaecc9ed36d49ff'
+    '1423c55f019e050c66c6324f53588be88894fef4dcffdb74b98e2b200')
+sample_sig = unhexlify(
+    '304402202302475351db6b822de15d922e29397541f10d8a19780ba2ca4a920b1035f075'
+    '02205e5bba40d5f07a24c23a89ba5f01a3828371dfbb685dd5375fa1c29095fd232b')
+sample_sig_sha1 = unhexlify(
+    '30460221008ad234687d1bdc259932e28ea6ee091b88b0900d8134902aa8c2fd7f016b96e'
+    'd022100dafb94e28322c2fa88878f9dcbf0c2d33270466ab3bbffaec3dca0a2d1ef9354')
