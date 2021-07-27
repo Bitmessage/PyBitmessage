@@ -1,12 +1,42 @@
+###
+# qidenticon.py is Licesensed under FreeBSD License.
+# (http://www.freebsd.org/copyright/freebsd-license.html)
+#
+# Copyright 1994-2009 Shin Adachi. All rights reserved.
+# Copyright 2013 "Sendiulo". All rights reserved.
+# Copyright 2018-2021 The Bitmessage Developers. All rights reserved.
+#
+# Redistribution and use in source and binary forms,
+# with or without modification, are permitted provided that the following
+# conditions are met:
+#
+#    1. Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#    2. Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###
+
 # pylint: disable=too-many-locals,too-many-arguments,too-many-function-args
 """
 Usage
 -----
 
->>> import qtidenticon
->>> qtidenticon.render_identicon(code, size)
+>>> import qidenticon
+>>> qidenticon.render_identicon(code, size)
 
-Return a PIL Image class instance which have generated identicon image.
+Returns an instance of :class:`QPixmap` which have generated identicon image.
 ``size`` specifies `patch size`. Generated image size is 3 * ``size``.
 """
 
@@ -31,10 +61,10 @@ class IdenticonRendererBase(object):
 
     def render(self, size, twoColor, opacity, penwidth):
         """
-        render identicon to QPicture
+        render identicon to QPixmap
 
         :param size: identicon patchsize. (image size is 3 * [size])
-        :returns: :class:`QPicture`
+        :returns: :class:`QPixmap`
         """
 
         # decode the code
@@ -137,8 +167,8 @@ class IdenticonRendererBase(object):
 
 class DonRenderer(IdenticonRendererBase):
     """
-    Don Park's implementation of identicon
-    see: http://www.docuverse.com/blog/donpark/2007/01/19/identicon-updated-and-source-released
+    Don Park's implementation of identicon, see:
+    https://blog.docuverse.com/2007/01/18/identicon-updated-and-source-released
     """
 
     PATH_SET = [
