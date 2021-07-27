@@ -13,7 +13,6 @@ import pyelliptic
 from pyelliptic import OpenSSL
 from pyelliptic import arithmetic as a
 
-from bmconfigparser import BMConfigParser
 
 __all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
 
@@ -67,22 +66,17 @@ def decryptFast(msg, cryptor):
     return cryptor.decrypt(msg)
 
 
-def sign(msg, hexPrivkey):
+def sign(msg, hexPrivkey, digestAlg="sha256"):
     """
     Signs with hex private key using SHA1 or SHA256 depending on
-    "digestalg" setting
+    *digestAlg* keyword.
     """
-    digestAlg = BMConfigParser().safeGet(
-        'bitmessagesettings', 'digestalg', 'sha256')
-    if digestAlg == "sha1":
-        # SHA1, this will eventually be deprecated
-        return makeCryptor(hexPrivkey).sign(
-            msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
-    elif digestAlg == "sha256":
-        # SHA256. Eventually this will become the default
-        return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
-    else:
+    if digestAlg not in ("sha1", "sha256"):
         raise ValueError("Unknown digest algorithm %s" % digestAlg)
+    # SHA1, this will eventually be deprecated
+    return makeCryptor(hexPrivkey).sign(
+        msg, digest_alg=OpenSSL.digest_ecdsa_sha1
+        if digestAlg == "sha1" else OpenSSL.EVP_sha256)
 
 
 def verify(msg, sig, hexPubkey):
