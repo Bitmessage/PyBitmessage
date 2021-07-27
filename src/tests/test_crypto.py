@@ -17,8 +17,9 @@ except ImportError:
     RIPEMD160 = None
 
 from .samples import (
-    sample_pubsigningkey, sample_pubencryptionkey,
-    sample_privsigningkey, sample_privencryptionkey, sample_ripe
+    sample_msg, sample_pubsigningkey, sample_pubencryptionkey,
+    sample_privsigningkey, sample_privencryptionkey, sample_ripe,
+    sample_sig, sample_sig_sha1
 )
 
 
@@ -64,6 +65,19 @@ class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
 
 class TestHighlevelcrypto(unittest.TestCase):
     """Test highlevelcrypto public functions"""
+
+    def test_signatures(self):
+        """Verify sample signatures and newly generated ones"""
+        pubkey_hex = hexlify(sample_pubsigningkey)
+        # pregenerated signatures
+        self.assertTrue(
+            highlevelcrypto.verify(sample_msg, sample_sig, pubkey_hex))
+        self.assertTrue(
+            highlevelcrypto.verify(sample_msg, sample_sig_sha1, pubkey_hex))
+        # new signature
+        sig1 = highlevelcrypto.sign(sample_msg, sample_privsigningkey)
+        self.assertTrue(
+            highlevelcrypto.verify(sample_msg, sig1, pubkey_hex))
 
     def test_privtopub(self):
         """Generate public keys and check the result"""
