@@ -25,28 +25,31 @@ def inv(a, n):
 def get_code_string(base):
     """Returns string according to base value"""
     if base == 2:
-        return '01'
-    elif base == 10:
-        return '0123456789'
-    elif base == 16:
-        return "0123456789abcdef"
-    elif base == 58:
-        return "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-    elif base == 256:
-        return ''.join([chr(x) for x in range(256)])
-    else:
-        raise ValueError("Invalid base!")
+        return b'01'
+    if base == 10:
+        return b'0123456789'
+    if base == 16:
+        return b'0123456789abcdef'
+    if base == 58:
+        return b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    if base == 256:
+        try:
+            return b''.join([chr(x) for x in range(256)])
+        except TypeError:
+            return bytes([x for x in range(256)])
+
+    raise ValueError("Invalid base!")
 
 
 def encode(val, base, minlen=0):
     """Returns the encoded string"""
     code_string = get_code_string(base)
-    result = ""
+    result = b''
     while val > 0:
         val, i = divmod(val, base)
-        result = code_string[i] + result
+        result = code_string[i:i + 1] + result
     if len(result) < minlen:
-        result = code_string[0] * (minlen - len(result)) + result
+        result = code_string[0:1] * (minlen - len(result)) + result
     return result
 
 
@@ -116,7 +119,7 @@ def hex_to_point(h):
 
 def point_to_hex(p):
     """Converting point value to hexadecimal"""
-    return '04' + encode(p[0], 16, 64) + encode(p[1], 16, 64)
+    return b'04' + encode(p[0], 16, 64) + encode(p[1], 16, 64)
 
 
 def multiply(privkey, pubkey):
