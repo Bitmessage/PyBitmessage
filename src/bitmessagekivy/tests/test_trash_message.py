@@ -6,7 +6,7 @@ class TrashMessage(TeleniumTestProcess):
     def test_delete_trash_message(self):
         """Delete Trash message permanently from trash message listing"""
         print("=====================Test -Delete Message From Trash Message Listing=====================")
-        self.cli.sleep()
+        self.cli.sleep(8)
         # this is for opening Nav drawer
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer

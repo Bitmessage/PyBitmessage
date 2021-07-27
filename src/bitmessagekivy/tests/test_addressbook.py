@@ -61,7 +61,7 @@ class AddressBook(TeleniumTestProcess):
     def test_cancel_addressbook_popup(self):
         """Cancel Address"""
         print("=====================Test -Cancel Address Add Popup=====================")
-        # Click on Account-Plus Icon to opeb popup for add Address
+        # Click on Account-Plus Icon to open popup for add Address
         self.cli.execute('app.addingtoaddressbook()')
         # Add Label to label Field
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]', 'text', 'test2')
@@ -97,7 +97,7 @@ class AddressBook(TeleniumTestProcess):
         self.assertExists('//DropDownWidget/ScrollView[0]/BoxLayout[0]/MyMDTextField[@text=\"Demo Subject\"]', timeout=2)
         # ADD MESSAGE BODY
         self.cli.setattr('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]',
-                             'text', 'Hey,This is draft Message Body from Address Book')
+                            'text', 'Hey,This is draft Message Body from Address Book')
         # Checking Message body is Entered
         self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[@text]', '')
         # Click on Send Icon
@@ -121,7 +121,6 @@ class AddressBook(TeleniumTestProcess):
         self.assertExists("//AddressBook[@name~=\"addressbook\"]", timeout=2)
         # Swipe to delete
         self.assertTrue('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'True')
-        self.cli.sleep(1)
         self.drag(
             '//MDList[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
             '//MDList[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]')
