@@ -104,23 +104,30 @@ def isBitSetWithinBitfield(fourByteString, n):
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
 
-
 # ip addresses
 
 
-def encodeHost(host):
-    """Encode a given host to be used in low-level socket operations"""
-    if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
-            host.split(".")[0], True)
-    elif host.find(':') == -1:
-        if PY3:
+if PY3:
+    def encodeHost(host):
+        """Encode a given host to be used in low-level socket operations"""
+        if host.find('.onion') > -1:
+            return b'\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+                host.split(".")[0], True)
+        elif host.find(':') == -1:
             return b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
                 socket.inet_aton(host)
-        else:
+        return socket.inet_pton(socket.AF_INET6, host)
+
+else:
+    def encodeHost(host):
+        """Encode a given host to be used in low-level socket operations"""
+        if host.find('.onion') > -1:
+            return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
+                host.split(".")[0], True)
+        elif host.find(':') == -1:
             return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
                 socket.inet_aton(host)
-    return socket.inet_pton(socket.AF_INET6, host)
+        return socket.inet_pton(socket.AF_INET6, host)
 
 
 def networkType(host):
