@@ -3,6 +3,7 @@ Low-level protocol-related functions.
 """
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements
 # pylint: disable=too-many-locals,too-many-statements
+# pylint: disable=R0204
 
 import base64
 import hashlib
@@ -199,18 +200,18 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
     otherwise returns False
     """
     if six.PY2:
-        IP_OCT1 = '\x7F' # 127/8
-        IP_OCT2 = '\x0A' # 10/8
-        IP_OCT3 = '\xC0\xA8' # 192.168/16
-        IP_OCT4 = '\xAC\x10' # 172.16
-        IP_OCT5 = '\xAC\x20' # 12
+        IP_OCT1 = '\x7F'  # 127/8
+        IP_OCT2 = '\x0A'  # 10/8
+        IP_OCT3 = '\xC0\xA8'  # 192.168/16
+        IP_OCT4 = '\xAC\x10'  # 172.16
+        IP_OCT5 = '\xAC\x20'  # 12
     else:
-        IP_OCT1 = 127 # 127/8
-        IP_OCT2 = 10 # 10/8
-        IP_OCT3 = b'\xC0\xA8' # 192.168/16
-        IP_OCT4 = b'\xAC\x10' # 172.16
-        IP_OCT5 = b'\xAC\x20' # 12
-        
+        IP_OCT1 = 127  # 127/8
+        IP_OCT2 = 10  # 10/8
+        IP_OCT3 = b'\xC0\xA8'  # 192.168/16
+        IP_OCT4 = b'\xAC\x10'  # 172.16
+        IP_OCT5 = b'\xAC\x20'  # 12
+
     if host[0] == IP_OCT1:
         if not private:
             logger.debug(
