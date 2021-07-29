@@ -2,6 +2,11 @@
 
 from binascii import unhexlify
 
+# hello, page 1 of the Specification
+sample_double_sha512 = unhexlify(
+    '0592a10584ffabf96539f3d780d776828c67da1ab5b169e9e8aed838aaecc9ed36d49ff14'
+    '23c55f019e050c66c6324f53588be88894fef4dcffdb74b98e2b200')
+
 
 magic = 0xE9BEB4D9
 

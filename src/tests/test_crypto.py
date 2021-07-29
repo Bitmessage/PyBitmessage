@@ -16,6 +16,7 @@ except ImportError:
     RIPEMD = None
 
 from .samples import (
+    sample_double_sha512,
     sample_msg, sample_pubsigningkey, sample_pubencryptionkey,
     sample_privsigningkey, sample_privencryptionkey, sample_ripe,
     sample_sig, sample_sig_sha1
@@ -67,6 +68,11 @@ class TestHighlevelcrypto(unittest.TestCase):
     #     """Check the signature of the sample_msg created with sample key"""
     #     self.assertEqual(
     #         highlevelcrypto.sign(sample_msg, sample_privsigningkey), sample_sig)
+
+    def test_double_sha512(self):
+        """Reproduce the example on page 1 of the Specification"""
+        self.assertEqual(
+            highlevelcrypto.double_sha512(b'hello'), sample_double_sha512)
 
     def test_verify(self):
         """Verify sample signatures and newly generated ones"""
