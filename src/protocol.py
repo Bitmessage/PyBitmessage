@@ -3,40 +3,26 @@ Low-level protocol-related functions.
 """
 # pylint: disable=too-many-boolean-expressions,too-many-return-statements
 # pylint: disable=too-many-locals,too-many-statements
-# pylint: disable=R0204
 
 import base64
 import hashlib
 import random
 import socket
 import sys
-import six
 import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
 
-try:
-    import defaults
-    import highlevelcrypto
-    import state
-    from addresses import (
-        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-    from bmconfigparser import BMConfigParser
-    from debug import logger
-    from fallback import RIPEMD160Hash
-    from helper_sql import sqlExecute
-    from version import softwareVersion
-except ImportError:
-    from . import defaults
-    from . import highlevelcrypto
-    from . import state
-    from .addresses import (
-        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-    from .bmconfigparser import BMConfigParser
-    from .debug import logger
-    from .fallback import RIPEMD160Hash
-    from .helper_sql import sqlExecute
-    from .version import softwareVersion
+import defaults
+import highlevelcrypto
+import state
+from addresses import (
+    encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+from bmconfigparser import BMConfigParser
+from debug import logger
+from fallback import RIPEMD160Hash
+from helper_sql import sqlExecute
+from version import softwareVersion
 
 # Service flags
 #: This is a normal network node
@@ -104,23 +90,18 @@ def isBitSetWithinBitfield(fourByteString, n):
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
 
-# ip addresses
+
+# IP addresses
 
 
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
-    if six.PY2:
-        ONION_PREFIX = '\xfd\x87\xd8\x7e\xeb\x43'
-        IP_PREFIX = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'
-    else:
-        ONION_PREFIX = b'\xfd\x87\xd8\x7e\xeb\x43'
-        IP_PREFIX = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'
-
     if host.find('.onion') > -1:
-        return ONION_PREFIX + base64.b32decode(
+        return b'\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
     elif host.find(':') == -1:
-        return IP_PREFIX + socket.inet_aton(host)
+        return b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+            socket.inet_aton(host)
     return socket.inet_pton(socket.AF_INET6, host)
 
 
@@ -166,17 +147,10 @@ def checkIPAddress(host, private=False):
     Returns hostStandardFormat if it is a valid IP address,
     otherwise returns False
     """
-    if six.PY3:
-        IP_PREFIX1 = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'
-        IP_PREFIX2 = b'\xfd\x87\xd8\x7e\xeb\x43'
-    else:
-        IP_PREFIX1 = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'
-        IP_PREFIX2 = '\xfd\x87\xd8\x7e\xeb\x43'
-
-    if host[0:12] == IP_PREFIX1:
+    if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
         hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
         return checkIPv4Address(host[12:], hostStandardFormat, private)
-    elif host[0:6] == IP_PREFIX2:
+    elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
         # Onion, based on BMD/bitcoind
         hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
         if private:
@@ -187,7 +161,7 @@ def checkIPAddress(host, private=False):
             hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
         except ValueError:
             return False
-        if hostStandardFormat == "":
+        if len(hostStandardFormat) == 0:
             # This can happen on Windows systems which are
             # not 64-bit compatible so let us drop the IPv6 address.
             return False
@@ -199,36 +173,23 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
     Returns hostStandardFormat if it is an IPv4 address,
     otherwise returns False
     """
-    if six.PY2:
-        IP_OCT1 = '\x7F'  # 127/8
-        IP_OCT2 = '\x0A'  # 10/8
-        IP_OCT3 = '\xC0\xA8'  # 192.168/16
-        IP_OCT4 = '\xAC\x10'  # 172.16
-        IP_OCT5 = '\xAC\x20'  # 12
-    else:
-        IP_OCT1 = 127  # 127/8
-        IP_OCT2 = 10  # 10/8
-        IP_OCT3 = b'\xC0\xA8'  # 192.168/16
-        IP_OCT4 = b'\xAC\x10'  # 172.16
-        IP_OCT5 = b'\xAC\x20'  # 12
-
-    if host[0] == IP_OCT1:
+    if host[0:1] == b'\x7F':  # 127/8
         if not private:
             logger.debug(
                 'Ignoring IP address in loopback range: %s',
                 hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0] == IP_OCT2:
+    if host[0:1] == b'\x0A':  # 10/8
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0:2] == IP_OCT3:
+    if host[0:2] == b'\xC0\xA8':  # 192.168/16
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if host[0:2] >= IP_OCT4 and host[0:2] < IP_OCT5:
+    if host[0:2] >= b'\xAC\x10' and host[0:2] < b'\xAC\x20':  # 172.16/12
         if not private:
             logger.debug(
                 'Ignoring IP address in private range: %s', hostStandardFormat)
@@ -241,15 +202,19 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
     Returns hostStandardFormat if it is an IPv6 address,
     otherwise returns False
     """
-    if host == ('\x00' * 15) + '\x01':
+    if host == b'\x00' * 15 + b'\x01':
         if not private:
             logger.debug('Ignoring loopback address: %s', hostStandardFormat)
         return False
-    if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
+    try:
+        host = [ord(c) for c in host[:2]]
+    except TypeError:  # python3 has ints already
+        pass
+    if host[0:1] == b'\xFE' and host[1] & 0xc0 == 0x80:
         if not private:
             logger.debug('Ignoring local address: %s', hostStandardFormat)
         return hostStandardFormat if private else False
-    if (ord(str(host[0])) & 0xfe) == 0xfc:
+    if host[0] & 0xfe == 0xfc:
         if not private:
             logger.debug(
                 'Ignoring unique local address: %s', hostStandardFormat)
@@ -319,7 +284,7 @@ def isProofOfWorkSufficient(
 # Packet creation
 
 
-def CreatePacket(command, payload=''):
+def CreatePacket(command, payload=b''):
     """Construct and return a packet"""
     payload_length = len(payload)
     checksum = hashlib.sha512(payload).digest()[0:4]
@@ -337,14 +302,14 @@ def assembleVersionMessage(
     Construct the payload of a version message,
     return the resulting bytes of running `CreatePacket` on it
     """
-    payload = ''
+    payload = b''
     payload += pack('>L', 3)  # protocol version.
     # bitflags of the services I offer.
     payload += pack(
         '>q',
-        NODE_NETWORK |
-        (NODE_SSL if haveSSL(server) else 0) |
-        (NODE_DANDELION if state.dandelion else 0)
+        NODE_NETWORK
+        | (NODE_SSL if haveSSL(server) else 0)
+        | (NODE_DANDELION if state.dandelion else 0)
     )
     payload += pack('>q', int(time.time()))
 
@@ -366,13 +331,13 @@ def assembleVersionMessage(
     # bitflags of the services I offer.
     payload += pack(
         '>q',
-        NODE_NETWORK |
-        (NODE_SSL if haveSSL(server) else 0) |
-        (NODE_DANDELION if state.dandelion else 0)
+        NODE_NETWORK
+        | (NODE_SSL if haveSSL(server) else 0)
+        | (NODE_DANDELION if state.dandelion else 0)
     )
     # = 127.0.0.1. This will be ignored by the remote host.
     # The actual remote connected IP will be used.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
+    payload += b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
@@ -394,7 +359,7 @@ def assembleVersionMessage(
         payload += nodeid[0:8]
     else:
         payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + softwareVersion + '/'
+    userAgent = ('/PyBitmessage:%s/' % softwareVersion).encode('utf-8')
     payload += encodeVarint(len(userAgent))
     payload += userAgent
 
