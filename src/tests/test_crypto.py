@@ -17,6 +17,7 @@ except ImportError:
     RIPEMD160 = None
 
 from .samples import (
+    sample_double_sha512, sample_hash_data,
     sample_msg, sample_pubsigningkey, sample_pubencryptionkey,
     sample_privsigningkey, sample_privencryptionkey, sample_ripe,
     sample_sig, sample_sig_sha1
@@ -65,6 +66,12 @@ class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
 
 class TestHighlevelcrypto(unittest.TestCase):
     """Test highlevelcrypto public functions"""
+
+    def test_double_sha512(self):
+        """Reproduce the example on page 1 of the Specification"""
+        self.assertEqual(
+            highlevelcrypto.double_sha512(sample_hash_data),
+            sample_double_sha512)
 
     def test_randomBytes(self):
         """Dummy checks for random bytes"""
