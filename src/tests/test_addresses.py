@@ -2,12 +2,13 @@
 import unittest
 from binascii import unhexlify
 
-from pybitmessage import addresses
+from pybitmessage import addresses, shared
 
 from .samples import (
     sample_address, sample_daddr3_512, sample_daddr4_512,
     sample_deterministic_addr4, sample_deterministic_addr3,
-    sample_deterministic_ripe, sample_ripe)
+    sample_deterministic_ripe, sample_ripe,
+    sample_wif_privsigningkey, sample_wif_privencryptionkey)
 
 sample_addr3 = sample_deterministic_addr3.split('-')[1]
 sample_addr4 = sample_deterministic_addr4.split('-')[1]
@@ -59,3 +60,14 @@ class TestAddresses(unittest.TestCase):
             sample_addr4, addresses.encodeBase58(sample_daddr4_512))
         self.assertEqual(
             sample_addr3, addresses.encodeBase58(sample_daddr3_512))
+
+    def test_wif(self):
+        """Decode WIFs of [chan] bitmessage and check the keys"""
+        self.assertEqual(
+            sample_wif_privsigningkey,
+            shared.decodeWalletImportFormat(
+                b'5K42shDERM5g7Kbi3JT5vsAWpXMqRhWZpX835M2pdSoqQQpJMYm'))
+        self.assertEqual(
+            sample_wif_privencryptionkey,
+            shared.decodeWalletImportFormat(
+                b'5HwugVWm31gnxtoYcvcK7oywH2ezYTh6Y4tzRxsndAeMi6NHqpA'))

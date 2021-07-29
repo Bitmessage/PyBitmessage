@@ -56,3 +56,10 @@ sample_sig = unhexlify(
 sample_sig_sha1 = unhexlify(
     '304502203b50123af78b4e40f5f819ae5b8786f48826e56d0f3e65744708a493f5b65de1'
     '0221009ddce2981ea143c0ac70404a535327e774adce8eebbae2d35104f1d326255f9a')
+
+
+# [chan] bitmessage
+sample_wif_privsigningkey = unhexlify(
+    b'a2e8b841a531c1c558ee0680c396789c7a2ea3ac4795ae3f000caf9fe367d144')
+sample_wif_privencryptionkey = unhexlify(
+    b'114ec0e2dca24a826a0eed064b0405b0ac148abc3b1d52729697f4d7b873fdc6')
