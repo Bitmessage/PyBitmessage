@@ -349,10 +349,10 @@ class addressGenerator(StoppableThread):
                                 highlevelcrypto.makeCryptor(
                                     hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe] = address
-                            tag = hashlib.sha512(hashlib.sha512(
+                            tag = highlevelcrypto.double_sha512(
                                 encodeVarint(addressVersionNumber)
                                 + encodeVarint(streamNumber) + ripe
-                            ).digest()).digest()[32:]
+                            )[32:]
                             shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
                                 # If this is a chan address,

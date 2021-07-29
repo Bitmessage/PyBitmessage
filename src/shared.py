@@ -86,8 +86,7 @@ def reloadMyAddressHashes():
         state.appdata, 'keys.dat'))
     hasEnabledKeys = False
     for addressInKeysFile in config.addresses():
-        isEnabled = config.getboolean(addressInKeysFile, 'enabled')
-        if not isEnabled:
+        if not config.getboolean(addressInKeysFile, 'enabled'):
             continue
 
         hasEnabledKeys = True
@@ -116,9 +115,9 @@ def reloadMyAddressHashes():
             myECCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(privEncryptionKey)
             myAddressesByHash[hashobj] = addressInKeysFile
-            tag = hashlib.sha512(hashlib.sha512(
+            tag = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
-                + encodeVarint(streamNumber) + hashobj).digest()).digest()[32:]
+                + encodeVarint(streamNumber) + hashobj)[32:]
             myAddressesByTag[tag] = addressInKeysFile
 
     if not keyfileSecure:
@@ -153,10 +152,10 @@ def reloadBroadcastSendersForWhichImWatching():
             MyECSubscriptionCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
-            doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+            doubleHashOfAddressData = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj
-            ).digest()).digest()
+            )
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = \

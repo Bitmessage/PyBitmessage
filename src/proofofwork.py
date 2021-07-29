@@ -4,7 +4,6 @@ Proof of work calculation
 """
 
 import ctypes
-import hashlib
 import os
 import sys
 import tempfile
@@ -12,6 +11,7 @@ import time
 from struct import pack, unpack
 from subprocess import call  # nosec B404
 
+import highlevelcrypto
 import openclpow
 import paths
 import queues
@@ -87,13 +87,20 @@ def _set_idle():
             pass
 
 
+def trial_value(nonce, initialHash):
+    """Calculate PoW trial value"""
+    trialValue, = unpack(
+        '>Q', highlevelcrypto.double_sha512(
+            pack('>Q', nonce) + initialHash)[0:8])
+    return trialValue
+
+
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
     trialValue = float('inf')
     while trialValue > target:
         nonce += pool_size
-        trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-            pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+        trialValue = trial_value(nonce, initialHash)
     return [trialValue, nonce]
 
 
@@ -103,10 +110,9 @@ def _doSafePoW(target, initialHash):
     trialValue = float('inf')
     while trialValue > target and state.shutdown == 0:
         nonce += 1
-        trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-            pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+        trialValue = trial_value(nonce, initialHash)
     if state.shutdown != 0:
-        raise StopIteration("Interrupted")  # pylint: misplaced-bare-raise
+        raise StopIteration("Interrupted")
     logger.debug("Safe PoW done")
     return [trialValue, nonce]
 
@@ -163,7 +169,7 @@ def _doCPoW(target, initialHash):
         logger.debug("C PoW start")
         nonce = bmpow(out_h, out_m)
 
-    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+    trialValue = trial_value(nonce, initialHash)
     if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("C PoW done")
@@ -173,7 +179,7 @@ def _doCPoW(target, initialHash):
 def _doGPUPoW(target, initialHash):
     logger.debug("GPU PoW start")
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
-    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+    trialValue = trial_value(nonce, initialHash)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
         queues.UISignalQueue.put((

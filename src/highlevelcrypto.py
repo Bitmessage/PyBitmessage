@@ -18,6 +18,7 @@ from pyelliptic import arithmetic as a
 
 __all__ = [
     'decodeWalletImportFormat', 'encodeWalletImportFormat',
+    'double_sha512', 'calculateInventoryHash',
     'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'randomBytes',
     'sign', 'verify']
 
@@ -59,6 +60,18 @@ def randomBytes(n):
         return os.urandom(n)
     except NotImplementedError:
         return OpenSSL.rand(n)
+
+
+# Hashes
+
+def double_sha512(data):
+    """Binary double SHA512 digest"""
+    return hashlib.sha512(hashlib.sha512(data).digest()).digest()
+
+
+def calculateInventoryHash(data):
+    """Calculate inventory hash from object data"""
+    return double_sha512(data)[:32]
 
 
 def makeCryptor(privkey, curve='secp256k1'):

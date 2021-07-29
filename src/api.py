@@ -83,7 +83,6 @@ import shutdown
 import state
 from addresses import (
     addBMIfNotPresent,
-    calculateInventoryHash,
     decodeAddress,
     decodeVarint,
     varintDecodeError
@@ -92,6 +91,7 @@ from bmconfigparser import config
 from debug import logger
 from helper_sql import (
     SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready)
+from highlevelcrypto import calculateInventoryHash
 from inventory import Inventory
 
 try:

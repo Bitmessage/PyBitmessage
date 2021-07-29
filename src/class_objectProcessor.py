@@ -24,7 +24,7 @@ import queues
 import shared
 import state
 from addresses import (
-    calculateInventoryHash, decodeAddress, decodeVarint,
+    decodeAddress, decodeVarint,
     encodeAddress, encodeVarint, varintDecodeError
 )
 from bmconfigparser import config
@@ -456,7 +456,7 @@ class objectProcessor(threading.Thread):
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = \
             decodeVarint(data[readPosition:readPosition + 9])
         readPosition += streamNumberAsClaimedByMsgLength
-        inventoryHash = calculateInventoryHash(data)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(data)
         initialDecryptionSuccessful = False
 
         # This is not an acknowledgement bound for me. See if it is a message
@@ -586,8 +586,7 @@ class objectProcessor(threading.Thread):
                 helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey)
             )
         # Used to detect and ignore duplicate messages in our inbox
-        sigHash = hashlib.sha512(
-            hashlib.sha512(signature).digest()).digest()[32:]
+        sigHash = highlevelcrypto.double_sha512(signature)[32:]
 
         # calculate the fromRipe.
         sha = hashlib.new('sha512')
@@ -736,7 +735,7 @@ class objectProcessor(threading.Thread):
             ackPayload = ackData[24:]
             objectType, toStreamNumber, expiresTime = \
                 protocol.decodeObjectParameters(ackPayload)
-            inventoryHash = calculateInventoryHash(ackPayload)
+            inventoryHash = highlevelcrypto.calculateInventoryHash(ackPayload)
             Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, ackPayload, expiresTime, b'')
             queues.invQueue.put((toStreamNumber, inventoryHash))
@@ -763,7 +762,7 @@ class objectProcessor(threading.Thread):
         state.numberOfBroadcastsProcessed += 1
         queues.UISignalQueue.put((
             'updateNumberOfBroadcastsProcessed', 'no data'))
-        inventoryHash = calculateInventoryHash(data)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(data)
         readPosition = 20  # bypass the nonce, time, and object type
         broadcastVersion, broadcastVersionLength = decodeVarint(
             data[readPosition:readPosition + 9])
@@ -897,10 +896,10 @@ class objectProcessor(threading.Thread):
                     ' itself. Ignoring message.'
                 )
         elif broadcastVersion == 5:
-            calculatedTag = hashlib.sha512(hashlib.sha512(
+            calculatedTag = highlevelcrypto.double_sha512(
                 encodeVarint(sendersAddressVersion)
                 + encodeVarint(sendersStream) + calculatedRipe
-            ).digest()).digest()[32:]
+            )[32:]
             if calculatedTag != embeddedTag:
                 return logger.debug(
                     'The tag and encryption key used to encrypt this'
@@ -930,8 +929,7 @@ class objectProcessor(threading.Thread):
             return
         logger.debug('ECDSA verify passed')
         # Used to detect and ignore duplicate messages in our inbox
-        sigHash = hashlib.sha512(
-            hashlib.sha512(signature).digest()).digest()[32:]
+        sigHash = highlevelcrypto.double_sha512(signature)[32:]
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
@@ -1005,10 +1003,10 @@ class objectProcessor(threading.Thread):
         # Let us create the tag from the address and see if we were waiting
         # for it.
         elif addressVersion >= 4:
-            tag = hashlib.sha512(hashlib.sha512(
+            tag = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersion) + encodeVarint(streamNumber)
                 + ripe
-            ).digest()).digest()[32:]
+            )[32:]
             if tag in state.neededPubkeys:
                 del state.neededPubkeys[tag]
                 self.sendMessages(address)

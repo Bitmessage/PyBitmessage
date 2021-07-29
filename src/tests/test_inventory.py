@@ -7,8 +7,8 @@ import tempfile
 import time
 import unittest
 
+from pybitmessage import highlevelcrypto
 from pybitmessage.storage import storage
-from pybitmessage.addresses import calculateInventoryHash
 
 from .partial import TestPartialRun
 
@@ -35,7 +35,7 @@ class TestFilesystemInventory(TestPartialRun):
         TTL = 24 * 60 * 60
         embedded_time = int(time.time() + TTL)
         msg = struct.pack('>Q', embedded_time) + os.urandom(166)
-        invhash = calculateInventoryHash(msg)
+        invhash = highlevelcrypto.calculateInventoryHash(msg)
         self.inventory[invhash] = (2, 1, msg, embedded_time, b'')
 
     @classmethod
