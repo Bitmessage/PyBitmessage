@@ -73,3 +73,13 @@ sample_sig = unhexlify(
 sample_sig_sha1 = unhexlify(
     '30460221008ad234687d1bdc259932e28ea6ee091b88b0900d8134902aa8c2fd7f016b96e'
     'd022100dafb94e28322c2fa88878f9dcbf0c2d33270466ab3bbffaec3dca0a2d1ef9354')
+
+# [chan] bitmessage
+sample_wif_privsigningkey = unhexlify(
+    b'a2e8b841a531c1c558ee0680c396789c7a2ea3ac4795ae3f000caf9fe367d144')
+sample_wif_privencryptionkey = unhexlify(
+    b'114ec0e2dca24a826a0eed064b0405b0ac148abc3b1d52729697f4d7b873fdc6')
+sample_privsigningkey_wif = \
+    b'5K42shDERM5g7Kbi3JT5vsAWpXMqRhWZpX835M2pdSoqQQpJMYm'
+sample_privencryptionkey_wif = \
+    b'5HwugVWm31gnxtoYcvcK7oywH2ezYTh6Y4tzRxsndAeMi6NHqpA'
