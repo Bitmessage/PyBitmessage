@@ -121,7 +121,8 @@ def reloadMyAddressHashes():
         if isEnabled:
             hasEnabledKeys = True
             # status
-            addressVersionNumber, streamNumber, hashobj = decodeAddress(addressInKeysFile)[1:]
+            addressVersionNumber, streamNumber, hashobj = decodeAddress(
+                addressInKeysFile)[1:]
             if addressVersionNumber in (2, 3, 4):
                 # Returns a simple 32 bytes of information encoded
                 # in 64 Hex characters, or null if there was an error.
@@ -132,9 +133,9 @@ def reloadMyAddressHashes():
                     myECCryptorObjects[hashobj] = \
                         highlevelcrypto.makeCryptor(privEncryptionKey)
                     myAddressesByHash[hashobj] = addressInKeysFile
-                    tag = hashlib.sha512(hashlib.sha512(
+                    tag = highlevelcrypto.double_sha512(
                         encodeVarint(addressVersionNumber)
-                        + encodeVarint(streamNumber) + hashobj).digest()).digest()[32:]
+                        + encodeVarint(streamNumber) + hashobj)[32:]
                     myAddressesByTag[tag] = addressInKeysFile
             else:
                 logger.error(
@@ -174,10 +175,10 @@ def reloadBroadcastSendersForWhichImWatching():
             MyECSubscriptionCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
-            doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+            doubleHashOfAddressData = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj
-            ).digest()).digest()
+            )
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = \
