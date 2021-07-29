@@ -71,6 +71,8 @@ from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
 
+from six.moves import queue
+
 import defaults
 import helper_inbox
 import helper_sent
@@ -82,17 +84,17 @@ import shutdown
 import state
 from addresses import (
     addBMIfNotPresent,
-    calculateInventoryHash,
     decodeAddress,
     decodeVarint,
     varintDecodeError
 )
 from bmconfigparser import config
 from debug import logger
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready
+from helper_sql import (
+    SqlBulkExecute, sqlExecute, sqlQuery, sql_ready, sqlStoredProcedure)
+from highlevelcrypto import calculateInventoryHash
 from inventory import Inventory
 from network.threads import StoppableThread
-from six.moves import queue
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities

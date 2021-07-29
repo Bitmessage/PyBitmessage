@@ -7,6 +7,7 @@ High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
   `More discussion. <https://github.com/yann2192/pyelliptic/issues/32>`_
 """
 
+import hashlib
 from binascii import hexlify
 
 import pyelliptic
@@ -14,7 +15,21 @@ from pyelliptic import OpenSSL
 from pyelliptic import arithmetic as a
 
 
-__all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
+__all__ = [
+    'double_sha512', 'calculateInventoryHash',
+    'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
+
+
+# Hashes
+
+def double_sha512(data):
+    """Binary double SHA512 digest"""
+    return hashlib.sha512(hashlib.sha512(data).digest()).digest()
+
+
+def calculateInventoryHash(data):
+    """Calculate inventory hash from object data"""
+    return double_sha512(data)[:32]
 
 
 def makeCryptor(privkey):
