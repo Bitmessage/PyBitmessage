@@ -8,6 +8,8 @@ import tempfile
 from time import time, sleep
 
 from telenium.tests import TeleniumTestCase
+from telenium.client import TeleniumHttpException
+
 
 _files = (
     'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
@@ -62,6 +64,23 @@ class TeleniumTestProcess(TeleniumTestCase):
         except:
             pass
         cleanup()
+
+    def assert_wait_no_except(self, selector, timeout=-1, value='inbox'):
+        """This method is to check the application is launched."""
+        start = time()
+        deadline = start + timeout
+        while time() < deadline:
+            try:
+                if self.cli.getattr(selector, 'current') == value:
+                    self.assertTrue(selector, value)
+                    return True
+            except TeleniumHttpException:
+                sleep(0.1)
+                continue
+            finally:
+                # Finally Sleep is used to make the menu button funcationlly available for the click process.
+                # (because Transition is little bit slow)
+                sleep(0.1)
 
     def drag(self, xpath1, xpath2):
         """this method is for dragging"""

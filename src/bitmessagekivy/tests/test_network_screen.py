@@ -4,12 +4,12 @@ from .telenium_process import TeleniumTestProcess
 from .common import skip_screen_checks
 
 
-class SettingScreen(TeleniumTestProcess):
-    """Setting Screen Functionality Testing"""
+class NetworkStatusScreen(TeleniumTestProcess):
+    """NetwrokStatus Screen Functionality Testing"""
 
     @skip_screen_checks
-    def test_setting_screen(self):
-        """Show Setting Screen"""
+    def test_network_status(self):
+        """Show NetwrokStatus"""
         # This is for checking Current screen
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
         # This is for checking the Side nav Bar id closed
@@ -24,7 +24,11 @@ class SettingScreen(TeleniumTestProcess):
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
-        # this is for opening setting screen
-        self.cli.wait_click('//NavigationItem[@text=\"Settings\"]', timeout=3)
-        # Checking current screen
-        self.assertExists("//ScreenManager[@current=\"set\"]", timeout=2)
+        # Clicking on Network Status tab
+        self.cli.wait_click('//NavigationItem[@text=\"Network status\"]', timeout=5)
+        # checking current screen
+        self.assertExists("//ScreenManager[@current=\"networkstat\"]", timeout=5)
+        # Clicking on Processes Tab
+        self.cli.wait_click('//NetworkStat/MDTabs[0]//MDTabsLabel[@text=\"Processes\"]', timeout=3)
+        # this is for checking current screen
+        self.assertExists("//ScreenManager[@current=\"networkstat\"]", timeout=3)
