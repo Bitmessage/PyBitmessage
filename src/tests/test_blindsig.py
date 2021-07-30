@@ -197,7 +197,7 @@ class TestBlindSig(unittest.TestCase):
                 output.extend(pubkey)
             output.extend(signature)
             signer_obj = child_obj
-        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=str(output))
+        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=bytes(output))
         self.assertFalse(verifychain.verify(msg, 1))
 
     def test_blind_sig_chain_wrong_msg(self):  # pylint: disable=too-many-locals
@@ -232,7 +232,7 @@ class TestBlindSig(unittest.TestCase):
                 output.extend(pubkey)
             output.extend(signature)
             signer_obj = child_obj
-        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=str(output))
+        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=bytes(output))
         self.assertFalse(verifychain.verify(fake_msg, 1))
 
     def test_blind_sig_chain_wrong_intermediary(self):  # pylint: disable=too-many-locals
@@ -270,5 +270,5 @@ class TestBlindSig(unittest.TestCase):
                 output.extend(pubkey)
             output.extend(signature)
             signer_obj = child_obj
-        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=str(output))
+        verifychain = ECCBlindChain(ca=ca.pubkey(), chain=bytes(output))
         self.assertFalse(verifychain.verify(msg, 1))
