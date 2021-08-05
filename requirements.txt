@@ -3,3 +3,4 @@ python_prctl
 psutil
 pycrypto
 six
+PyQt5;python_version>="3.7"
