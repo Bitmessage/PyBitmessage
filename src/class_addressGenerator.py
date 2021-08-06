@@ -16,7 +16,6 @@ from addresses import decodeAddress, encodeAddress, encodeVarint
 from bmconfigparser import config
 from fallback import RIPEMD160Hash
 from network import StoppableThread
-from pyelliptic import arithmetic
 from pyelliptic.openssl import OpenSSL
 from tr import _translate
 
@@ -164,20 +163,10 @@ class addressGenerator(StoppableThread):
                 address = encodeAddress(
                     addressVersionNumber, streamNumber, ripe)
 
-                # An excellent way for us to store our keys
-                # is in Wallet Import Format. Let us convert now.
-                # https://en.bitcoin.it/wiki/Wallet_import_format
-                privSigningKey = b'\x80' + potentialPrivSigningKey
-                checksum = hashlib.sha256(hashlib.sha256(
-                    privSigningKey).digest()).digest()[0:4]
-                privSigningKeyWIF = arithmetic.changebase(
-                    privSigningKey + checksum, 256, 58)
-
-                privEncryptionKey = b'\x80' + potentialPrivEncryptionKey
-                checksum = hashlib.sha256(hashlib.sha256(
-                    privEncryptionKey).digest()).digest()[0:4]
-                privEncryptionKeyWIF = arithmetic.changebase(
-                    privEncryptionKey + checksum, 256, 58)
+                privSigningKeyWIF = highlevelcrypto.encodeWalletImportFormat(
+                    potentialPrivSigningKey)
+                privEncryptionKeyWIF = highlevelcrypto.encodeWalletImportFormat(
+                    potentialPrivEncryptionKey)
 
                 config.add_section(address)
                 config.set(address, 'label', label)
@@ -303,21 +292,12 @@ class addressGenerator(StoppableThread):
                         saveAddressToDisk = False
 
                     if saveAddressToDisk and live:
-                        # An excellent way for us to store our keys is
-                        # in Wallet Import Format. Let us convert now.
-                        # https://en.bitcoin.it/wiki/Wallet_import_format
-                        privSigningKey = b'\x80' + potentialPrivSigningKey
-                        checksum = hashlib.sha256(hashlib.sha256(
-                            privSigningKey).digest()).digest()[0:4]
-                        privSigningKeyWIF = arithmetic.changebase(
-                            privSigningKey + checksum, 256, 58)
-
-                        privEncryptionKey = b'\x80' + \
-                            potentialPrivEncryptionKey
-                        checksum = hashlib.sha256(hashlib.sha256(
-                            privEncryptionKey).digest()).digest()[0:4]
-                        privEncryptionKeyWIF = arithmetic.changebase(
-                            privEncryptionKey + checksum, 256, 58)
+                        privSigningKeyWIF = \
+                            highlevelcrypto.encodeWalletImportFormat(
+                                potentialPrivSigningKey)
+                        privEncryptionKeyWIF = \
+                            highlevelcrypto.encodeWalletImportFormat(
+                                potentialPrivEncryptionKey)
 
                         try:
                             config.add_section(address)

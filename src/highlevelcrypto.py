@@ -7,6 +7,7 @@ High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
   `More discussion. <https://github.com/yann2192/pyelliptic/issues/32>`_
 """
 
+import hashlib
 from binascii import hexlify
 
 import pyelliptic
@@ -14,7 +15,38 @@ from pyelliptic import OpenSSL
 from pyelliptic import arithmetic as a
 
 
-__all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
+__all__ = [
+    'decodeWalletImportFormat', 'encodeWalletImportFormat',
+    'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
+
+
+# WIF (uses arithmetic ):
+def decodeWalletImportFormat(WIFstring):
+    """
+    Convert private key from base58 that's used in the config file to
+    8-bit binary string.
+    """
+    fullString = a.changebase(WIFstring, 58, 256)
+    privkey = fullString[:-4]
+    if fullString[-4:] != \
+       hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
+        raise ValueError('Checksum failed')
+    elif privkey[0:1] == b'\x80':  # checksum passed
+        return privkey[1:]
+
+    raise ValueError('No hex 80 prefix')
+
+
+# An excellent way for us to store our keys
+# is in Wallet Import Format. Let us convert now.
+# https://en.bitcoin.it/wiki/Wallet_import_format
+def encodeWalletImportFormat(privKey):
+    """
+    Convert private key from binary 8-bit string into base58check WIF string.
+    """
+    privKey = b'\x80' + privKey
+    checksum = hashlib.sha256(hashlib.sha256(privKey).digest()).digest()[0:4]
+    return a.changebase(privKey + checksum, 256, 58)
 
 
 def makeCryptor(privkey, curve='secp256k1'):
