@@ -193,15 +193,18 @@ class singleWorker(StoppableThread):
         self.logger.info("Quitting...")
 
     def _getKeysForAddress(self, address):
-        privSigningKeyBase58 = config.get(
-            address, 'privsigningkey')
-        privEncryptionKeyBase58 = config.get(
-            address, 'privencryptionkey')
+        try:
+            privSigningKeyBase58 = config.get(address, 'privsigningkey')
+            privEncryptionKeyBase58 = config.get(address, 'privencryptionkey')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            self.logger.error(
+                'Could not read or decode privkey for address %s', address)
+            raise ValueError
 
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
+        privSigningKeyHex = hexlify(
+            highlevelcrypto.decodeWalletImportFormat(privSigningKeyBase58))
+        privEncryptionKeyHex = hexlify(
+            highlevelcrypto.decodeWalletImportFormat(privEncryptionKeyBase58))
 
         # The \x04 on the beginning of the public keys are not sent.
         # This way there is only one acceptable way to encode
@@ -252,9 +255,7 @@ class singleWorker(StoppableThread):
         message once it is done with the POW"""
         # Look up my stream number based on my address hash
         myAddress = shared.myAddressesByHash[adressHash]
-        # status
-        _, addressVersionNumber, streamNumber, adressHash = (
-            decodeAddress(myAddress))
+        addressVersionNumber, streamNumber = decodeAddress(myAddress)[1:3]
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
@@ -267,18 +268,15 @@ class singleWorker(StoppableThread):
         payload += protocol.getBitfield(myAddress)
 
         try:
-            # privSigningKeyHex, privEncryptionKeyHex
-            _, _, pubSigningKey, pubEncryptionKey = \
-                self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
-            self.logger.error(
+            pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                myAddress)[2:]
+        except ValueError:
+            return
+        except Exception:
+            return self.logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
-            return
+                ' address. %s\n', exc_info=True)
 
         payload += pubSigningKey + pubEncryptionKey
 
@@ -316,9 +314,8 @@ class singleWorker(StoppableThread):
         try:
             myAddress = shared.myAddressesByHash[adressHash]
         except KeyError:
-            # The address has been deleted.
-            self.logger.warning("Can't find %s in myAddressByHash", hexlify(adressHash))
-            return
+            return self.logger.warning(  # The address has been deleted.
+                "Can't find %s in myAddressByHash", hexlify(adressHash))
         if config.safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
             return
@@ -349,15 +346,13 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
-            self.logger.error(
+        except ValueError:
+            return
+        except Exception:
+            return self.logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
-            return
+                ' address. %s\n', exc_info=True)
 
         payload += pubSigningKey + pubEncryptionKey
 
@@ -424,15 +419,13 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
-            self.logger.error(
+        except ValueError:
+            return
+        except Exception:
+            return self.logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
-            return
+                ' address. %s\n', exc_info=True)
 
         dataToEncrypt += pubSigningKey + pubEncryptionKey
 
@@ -1114,8 +1107,9 @@ class singleWorker(StoppableThread):
                         ' from the keys.dat file for our own address. %s\n',
                         err)
                     continue
-                privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58))
+                privEncryptionKeyHex = hexlify(
+                    highlevelcrypto.decodeWalletImportFormat(
+                        privEncryptionKeyBase58))
                 pubEncryptionKeyBase256 = unhexlify(highlevelcrypto.privToPub(
                     privEncryptionKeyHex))[1:]
                 requiredAverageProofOfWorkNonceTrialsPerByte = \

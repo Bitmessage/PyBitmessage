@@ -23,8 +23,6 @@ from bmconfigparser import config
 from debug import logger
 from helper_sql import sqlQuery
 
-from pyelliptic import arithmetic
-
 
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
@@ -76,35 +74,6 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     return False
 
 
-def decodeWalletImportFormat(WIFstring):
-    # pylint: disable=inconsistent-return-statements
-    """
-    Convert private key from base58 that's used in the config file to
-    8-bit binary string
-    """
-    fullString = arithmetic.changebase(WIFstring, 58, 256)
-    privkey = fullString[:-4]
-    if fullString[-4:] != \
-       hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
-        logger.critical(
-            'Major problem! When trying to decode one of your'
-            ' private keys, the checksum failed. Here are the first'
-            ' 6 characters of the PRIVATE key: %s',
-            str(WIFstring)[:6]
-        )
-        os._exit(0)  # pylint: disable=protected-access
-        # return ""
-    elif privkey[0] == '\x80':  # checksum passed
-        return privkey[1:]
-
-    logger.critical(
-        'Major problem! When trying to decode one of your  private keys,'
-        ' the checksum passed but the key doesn\'t begin with hex 80.'
-        ' Here is the PRIVATE key: %s', WIFstring
-    )
-    os._exit(0)  # pylint: disable=protected-access
-
-
 def reloadMyAddressHashes():
     """Reload keys for user's addresses from the config file"""
     logger.debug('reloading keys from keys.dat file')
@@ -118,30 +87,39 @@ def reloadMyAddressHashes():
     hasEnabledKeys = False
     for addressInKeysFile in config.addresses():
         isEnabled = config.getboolean(addressInKeysFile, 'enabled')
-        if isEnabled:
-            hasEnabledKeys = True
-            # status
-            addressVersionNumber, streamNumber, hashobj = decodeAddress(
-                addressInKeysFile)[1:]
-            if addressVersionNumber in (2, 3, 4):
-                # Returns a simple 32 bytes of information encoded
-                # in 64 Hex characters, or null if there was an error.
-                privEncryptionKey = hexlify(decodeWalletImportFormat(
-                    config.get(addressInKeysFile, 'privencryptionkey')))
-                # It is 32 bytes encoded as 64 hex characters
-                if len(privEncryptionKey) == 64:
-                    myECCryptorObjects[hashobj] = \
-                        highlevelcrypto.makeCryptor(privEncryptionKey)
-                    myAddressesByHash[hashobj] = addressInKeysFile
-                    tag = highlevelcrypto.double_sha512(
-                        encodeVarint(addressVersionNumber)
-                        + encodeVarint(streamNumber) + hashobj)[32:]
-                    myAddressesByTag[tag] = addressInKeysFile
-            else:
-                logger.error(
-                    'Error in reloadMyAddressHashes: Can\'t handle'
-                    ' address versions other than 2, 3, or 4.'
-                )
+        if not isEnabled:
+            continue
+
+        hasEnabledKeys = True
+
+        addressVersionNumber, streamNumber, hashobj = decodeAddress(
+            addressInKeysFile)[1:]
+        if addressVersionNumber not in (2, 3, 4):
+            logger.error(
+                'Error in reloadMyAddressHashes: Can\'t handle'
+                ' address versions other than 2, 3, or 4.')
+            continue
+
+        # Returns a simple 32 bytes of information encoded in 64 Hex characters
+        try:
+            privEncryptionKey = hexlify(
+                highlevelcrypto.decodeWalletImportFormat(
+                    config.get(addressInKeysFile, 'privencryptionkey')
+                ))
+        except ValueError:
+            logger.error(
+                'Error in reloadMyAddressHashes: failed to decode'
+                ' one of the private keys for address %s', addressInKeysFile)
+            continue
+        # It is 32 bytes encoded as 64 hex characters
+        if len(privEncryptionKey) == 64:
+            myECCryptorObjects[hashobj] = \
+                highlevelcrypto.makeCryptor(privEncryptionKey)
+            myAddressesByHash[hashobj] = addressInKeysFile
+            tag = highlevelcrypto.double_sha512(
+                encodeVarint(addressVersionNumber)
+                + encodeVarint(streamNumber) + hashobj)[32:]
+            myAddressesByTag[tag] = addressInKeysFile
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(os.path.join(
