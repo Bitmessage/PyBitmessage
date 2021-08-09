@@ -55,6 +55,7 @@ class TestAPIShutdown(TestAPIProto):
 # getMessageDataByDestinationHash
 # statusBar
 
+
 class TestAPI(TestAPIProto):
     """Main API test case"""
     _seed = base64.encodestring(

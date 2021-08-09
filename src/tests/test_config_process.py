@@ -15,7 +15,6 @@ class TestProcessConfig(TestProcessProto):
     """A test case for keys.dat"""
     home = tempfile.mkdtemp()
 
-
     def test_config_defaults(self):
         """Test settings in the generated config"""
         config = BMConfigParser()
