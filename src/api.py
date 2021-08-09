@@ -1,6 +1,5 @@
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2020 The Bitmessage developers
-# pylint: disable=too-many-lines,no-self-use,unused-variable,unused-argument
 
 """
 This is not what you run to start the Bitmessage API.
@@ -1257,16 +1256,19 @@ class BMRPCDispatcher(object):
         # the message itself. Please do not yet add this to the api doc.
         encryptedPayload = self._decode(encryptedPayload, "hex")
         # Let us do the POW and attach it to the front
-        target = 2**64 / ((
-            len(encryptedPayload) + requiredPayloadLengthExtraBytes + 8) *
-            requiredAverageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / (
+            (
+                len(encryptedPayload)
+                + requiredPayloadLengthExtraBytes
+                + 8
+            ) * requiredAverageProofOfWorkNonceTrialsPerByte)
         logger.info(
             '(For msg message via API) Doing proof of work. Total  required'
             ' difficulty: %s\nRequired small message difficulty: %s',
-            float(requiredAverageProofOfWorkNonceTrialsPerByte) /
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-            float(requiredPayloadLengthExtraBytes) /
-            defaults.networkDefaultPayloadLengthExtraBytes,
+            float(requiredAverageProofOfWorkNonceTrialsPerByte)
+            / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+            float(requiredPayloadLengthExtraBytes)
+            / defaults.networkDefaultPayloadLengthExtraBytes,
         )
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
