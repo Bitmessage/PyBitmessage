@@ -196,7 +196,7 @@ def apiData():
     try:
         BMConfigParser().get('bitmessagesettings', 'port')
         appDataFolder = ''
-    except:
+    except:  # noqa:E722
         # Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
         appDataFolder = lookupAppdataFolder()
         keysPath = appDataFolder + keysPath
@@ -204,7 +204,7 @@ def apiData():
 
         try:
             BMConfigParser().get('bitmessagesettings', 'port')
-        except:
+        except:  # noqa:E722
             # keys.dat was not there either, something is wrong.
             print('\n     ******************************************************************')
             print('     There was a problem trying to access the Bitmessage keys.dat file')
@@ -235,7 +235,7 @@ def apiData():
         BMConfigParser().get('bitmessagesettings', 'apiusername')
         BMConfigParser().get('bitmessagesettings', 'apipassword')
 
-    except:
+    except:  # noqa:E722
         apiInit("")  # Initalize the keys.dat file with API information
 
     # keys.dat file was found or appropriately configured, allow information retrieval
@@ -263,7 +263,7 @@ def apiTest():
 
     try:
         result = api.add(2, 3)
-    except:
+    except:  # noqa:E722
         return False
 
     return result == 5
@@ -280,7 +280,7 @@ def bmSettings():
     BMConfigParser().read(keysPath)  # Read the keys.dat
     try:
         port = BMConfigParser().get('bitmessagesettings', 'port')
-    except:
+    except:  # noqa:E722
         print('\n     File not found.\n')
         usrPrompt = 0
         main()
@@ -476,7 +476,7 @@ def listSubscriptions():
     print('\nLabel, Address, Enabled\n')
     try:
         print(api.listSubscriptions())
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -491,7 +491,7 @@ def createChan():
     password = password.encode('base64')
     try:
         print(api.createChan(password))
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -517,7 +517,7 @@ def joinChan():
     password = password.encode('base64')
     try:
         print(api.joinChan(password, address))
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -541,7 +541,7 @@ def leaveChan():
 
     try:
         print(api.leaveChan(address))
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -553,7 +553,7 @@ def listAdd():
     try:
         jsonAddresses = json.loads(api.listAddresses())
         numAddresses = len(jsonAddresses['addresses'])  # Number of addresses
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -602,7 +602,7 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
         addressLabel = lbl.encode('base64')
         try:
             generatedAddress = api.createRandomAddress(addressLabel)
-        except:
+        except:  # noqa:E722
             print('\n     Connection Error\n')
             usrPrompt = 0
             main()
@@ -613,7 +613,7 @@ def genAdd(lbl, deterministic, passphrase, numOfAdd, addVNum, streamNum, ripe):
         passphrase = passphrase.encode('base64')
         try:
             generatedAddress = api.createDeterministicAddresses(passphrase, numOfAdd, addVNum, streamNum, ripe)
-        except:
+        except:  # noqa:E722
             print('\n     Connection Error\n')
             usrPrompt = 0
             main()
@@ -770,7 +770,7 @@ def sendMsg(toAddress, fromAddress, subject, message):
         try:
             jsonAddresses = json.loads(api.listAddresses())
             numAddresses = len(jsonAddresses['addresses'])  # Number of addresses
-        except:
+        except:  # noqa:E722
             print('\n     Connection Error\n')
             usrPrompt = 0
             main()
@@ -829,7 +829,7 @@ def sendMsg(toAddress, fromAddress, subject, message):
     try:
         ackData = api.sendMessage(toAddress, fromAddress, subject, message)
         print('\n     Message Status:', api.getStatus(ackData), '\n')
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -844,7 +844,7 @@ def sendBrd(fromAddress, subject, message):
         try:
             jsonAddresses = json.loads(api.listAddresses())
             numAddresses = len(jsonAddresses['addresses'])  # Number of addresses
-        except:
+        except:  # noqa:E722
             print('\n     Connection Error\n')
             usrPrompt = 0
             main()
@@ -902,7 +902,7 @@ def sendBrd(fromAddress, subject, message):
     try:
         ackData = api.sendBroadcast(fromAddress, subject, message)
         print('\n     Message Status:', api.getStatus(ackData), '\n')
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -915,7 +915,7 @@ def inbox(unreadOnly=False):
     try:
         inboxMessages = json.loads(api.getAllInboxMessages())
         numMessages = len(inboxMessages['inboxMessages'])
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -955,7 +955,7 @@ def outbox():
     try:
         outboxMessages = json.loads(api.getAllSentMessages())
         numMessages = len(outboxMessages['sentMessages'])
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -998,7 +998,7 @@ def readSentMsg(msgNum):
     try:
         outboxMessages = json.loads(api.getAllSentMessages())
         numMessages = len(outboxMessages['sentMessages'])
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1063,7 +1063,7 @@ def readMsg(msgNum):
     try:
         inboxMessages = json.loads(api.getAllInboxMessages())
         numMessages = len(inboxMessages['inboxMessages'])
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1125,7 +1125,7 @@ def replyMsg(msgNum, forwardORreply):
     forwardORreply = forwardORreply.lower()  # makes it lowercase
     try:
         inboxMessages = json.loads(api.getAllInboxMessages())
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1186,7 +1186,7 @@ def delMsg(msgNum):
         msgId = inboxMessages['inboxMessages'][int(msgNum)]['msgid']
 
         msgAck = api.trashMessage(msgId)
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1203,7 +1203,7 @@ def delSentMsg(msgNum):
         # gets the message ID via the message index number
         msgId = outboxMessages['sentMessages'][int(msgNum)]['msgid']
         msgAck = api.trashSentMessage(msgId)
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1239,7 +1239,7 @@ def buildKnownAddresses():
         for entry in addressBook['addresses']:
             if entry['address'] not in knownAddresses:
                 knownAddresses[entry['address']] = "%s (%s)" % (entry['label'].decode('base64'), entry['address'])
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1254,7 +1254,7 @@ def buildKnownAddresses():
         for entry in addresses['addresses']:
             if entry['address'] not in knownAddresses:
                 knownAddresses[entry['address']] = "%s (%s)" % (entry['label'].decode('base64'), entry['address'])
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1280,7 +1280,7 @@ def listAddressBookEntries():
                 label = label[:16] + '...'
             print('     | ' + label.ljust(19) + '| ' + address.ljust(37) + ' |')
         print('     --------------------------------------------------------------')
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1295,7 +1295,7 @@ def addAddressToAddressBook(address, label):
         response = api.addAddressBookEntry(address, label.encode('base64'))
         if "API Error" in response:
             return getAPIErrorCode(response)
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1310,7 +1310,7 @@ def deleteAddressFromAddressBook(address):
         response = api.deleteAddressBookEntry(address)
         if "API Error" in response:
             return getAPIErrorCode(response)
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1334,7 +1334,7 @@ def markMessageRead(messageID):
         response = api.getInboxMessageByID(messageID, True)
         if "API Error" in response:
             return getAPIErrorCode(response)
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1349,7 +1349,7 @@ def markMessageUnread(messageID):
         response = api.getInboxMessageByID(messageID, False)
         if "API Error" in response:
             return getAPIErrorCode(response)
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1362,7 +1362,7 @@ def markAllMessagesRead():
 
     try:
         inboxMessages = json.loads(api.getAllInboxMessages())['inboxMessages']
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1378,7 +1378,7 @@ def markAllMessagesUnread():
 
     try:
         inboxMessages = json.loads(api.getAllInboxMessages())['inboxMessages']
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
@@ -1394,7 +1394,7 @@ def clientStatus():
 
     try:
         client_status = json.loads(api.clientStatus())
-    except:
+    except:  # noqa:E722
         print('\n     Connection Error\n')
         usrPrompt = 0
         main()
