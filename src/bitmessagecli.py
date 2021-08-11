@@ -214,12 +214,12 @@ def apiData():
 
             uInput = userInput("Would you like to create a keys.dat in the local directory, (Y)es or (N)o?").lower()
 
-            if (uInput == "y" or uInput == "yes"):
+            if uInput in ("y", "yes"):
                 configInit()
                 keysPath = keysName
                 usrPrompt = 0
                 main()
-            elif (uInput == "n" or uInput == "no"):
+            elif uInput in ("n", "no"):
                 print('\n     Trying Again.\n')
                 usrPrompt = 0
                 main()
@@ -737,9 +737,9 @@ Encoding:base64
 
         uInput = userInput('Would you like to add another attachment, (Y)es or (N)o?').lower()
 
-        if uInput == 'y' or uInput == 'yes':  # Allows multiple attachments to be added to one message
+        if uInput in ('y', 'yes'):  # Allows multiple attachments to be added to one message
             theAttachmentS = str(theAttachmentS) + str(theAttachment) + '\n\n'
-        elif uInput == 'n' or uInput == 'no':
+        elif uInput in ('n', 'no'):
             break
 
     theAttachmentS = theAttachmentS + theAttachment
@@ -814,10 +814,10 @@ def sendMsg(toAddress, fromAddress, subject, message):
             print('\n     Using the only address in the addressbook to send from.\n')
             fromAddress = jsonAddresses['addresses'][0]['address']
 
-    if subject == '':
+    if not subject:
         subject = userInput("Enter your Subject.")
         subject = subject.encode('base64')
-    if message == '':
+    if not message:
         message = userInput("Enter your Message.")
 
         uInput = userInput('Would you like to add an attachment, (Y)es or (N)o?').lower()
@@ -839,7 +839,7 @@ def sendBrd(fromAddress, subject, message):
     """Send a broadcast"""
 
     global usrPrompt
-    if fromAddress == '':
+    if not fromAddress:
 
         try:
             jsonAddresses = json.loads(api.listAddresses())
@@ -887,10 +887,10 @@ def sendBrd(fromAddress, subject, message):
             print('\n     Using the only address in the addressbook to send from.\n')
             fromAddress = jsonAddresses['addresses'][0]['address']
 
-    if subject == '':
+    if not subject:
         subject = userInput("Enter your Subject.")
         subject = subject.encode('base64')
-    if message == '':
+    if not message:
         message = userInput("Enter your Message.")
 
         uInput = userInput('Would you like to add an attachment, (Y)es or (N)o?').lower()
@@ -1030,7 +1030,7 @@ def readSentMsg(msgNum):
 
             uInput = userInput(
                 '\n     Attachment Detected. Would you like to save the attachment, (Y)es or (N)o?').lower()
-            if uInput == "y" or uInput == 'yes':
+            if uInput in ("y", 'yes'):
 
                 this_attachment = message[attPos + 9:attEndPos]
                 saveFile(fileName, this_attachment)
@@ -1093,7 +1093,7 @@ def readMsg(msgNum):
 
             uInput = userInput(
                 '\n     Attachment Detected. Would you like to save the attachment, (Y)es or (N)o?').lower()
-            if uInput == "y" or uInput == 'yes':
+            if uInput in ("y", 'yes'):
 
                 this_attachment = message[attPos + 9:attEndPos]
                 saveFile(fileName, this_attachment)
@@ -1421,7 +1421,7 @@ def UI(usrInput):
 
     global usrPrompt
 
-    if usrInput == "help" or usrInput == "h" or usrInput == "?":
+    if usrInput in ("help", "h", "?"):
         print(' ')
         print('     -------------------------------------------------------------------------')
         print('     |        https://github.com/Dokument/PyBitmessage-Daemon                |')
@@ -1500,7 +1500,7 @@ def UI(usrInput):
     elif usrInput == "generateaddress":  # Generates a new address
         uInput = userInput('\nWould you like to create a (D)eterministic or (R)andom address?').lower()
 
-        if uInput in ["d", "deterministic"]:  # Creates a deterministic address
+        if uInput in ("d", "deterministic"):  # Creates a deterministic address
             deterministic = True
 
             lbl = ''
@@ -1593,11 +1593,11 @@ def UI(usrInput):
     elif usrInput == 'send':  # Sends a message or broadcast
         uInput = userInput('Would you like to send a (M)essage or (B)roadcast?').lower()
 
-        if (uInput == 'm' or uInput == 'message'):
+        if uInput in ('m', 'message'):
             null = ''
             sendMsg(null, null, null, null)
             main()
-        elif (uInput == 'b' or uInput == 'broadcast'):
+        elif uInput in ('b', 'broadcast'):
             null = ''
             sendBrd(null, null, null)
             main()
@@ -1606,38 +1606,38 @@ def UI(usrInput):
 
         uInput = userInput("Would you like to read a message from the (I)nbox or (O)utbox?").lower()
 
-        if (uInput != 'i' and uInput != 'inbox' and uInput != 'o' and uInput != 'outbox'):
+        if uInput not in ('i', 'inbox', 'o', 'outbox'):
             print('\n     Invalid Input.\n')
             usrPrompt = 1
             main()
 
         msgNum = int(userInput("What is the number of the message you wish to open?"))
 
-        if (uInput == 'i' or uInput == 'inbox'):
+        if uInput in ('i', 'inbox'):
             print('\n     Loading...\n')
             messageID = readMsg(msgNum)
 
             uInput = userInput("\nWould you like to keep this message unread, (Y)es or (N)o?").lower()
 
-            if not (uInput == 'y' or uInput == 'yes'):
+            if uInput not in ('y', 'yes'):
                 markMessageRead(messageID)
                 usrPrompt = 1
 
             uInput = userInput("\nWould you like to (D)elete, (F)orward, (R)eply to, or (Exit) this message?").lower()
 
-            if uInput in ['r', 'reply']:
+            if uInput in ('r', 'reply'):
                 print('\n     Loading...\n')
                 print(' ')
                 replyMsg(msgNum, 'reply')
                 usrPrompt = 1
 
-            elif uInput == 'f' or uInput == 'forward':
+            elif uInput in ('f', 'forward'):
                 print('\n     Loading...\n')
                 print(' ')
                 replyMsg(msgNum, 'forward')
                 usrPrompt = 1
 
-            elif uInput in ["d", 'delete']:
+            elif uInput in ("d", 'delete'):
                 uInput = userInput("Are you sure, (Y)es or (N)o?").lower()  # Prevent accidental deletion
 
                 if uInput == "y":
@@ -1650,13 +1650,13 @@ def UI(usrInput):
                 print('\n     Invalid entry\n')
                 usrPrompt = 1
 
-        elif (uInput == 'o' or uInput == 'outbox'):
+        elif uInput in ('o', 'outbox'):
             readSentMsg(msgNum)
 
             # Gives the user the option to delete the message
             uInput = userInput("Would you like to (D)elete, or (Exit) this message?").lower()
 
-            if (uInput == "d" or uInput == 'delete'):
+            if uInput in ("d", 'delete'):
                 uInput = userInput('Are you sure, (Y)es or (N)o?').lower()  # Prevent accidental deletion
 
                 if uInput == "y":
@@ -1675,12 +1675,12 @@ def UI(usrInput):
 
         uInput = userInput("Would you like to save a message from the (I)nbox or (O)utbox?").lower()
 
-        if uInput not in ['i', 'inbox', 'o', 'outbox']:
+        if uInput not in ('i', 'inbox', 'o', 'outbox'):
             print('\n     Invalid Input.\n')
             usrPrompt = 1
             main()
 
-        if uInput in ['i', 'inbox']:
+        if uInput in ('i', 'inbox'):
             inboxMessages = json.loads(api.getAllInboxMessages())
             numMessages = len(inboxMessages['inboxMessages'])
 
@@ -1722,7 +1722,7 @@ def UI(usrInput):
 
         uInput = userInput("Would you like to delete a message from the (I)nbox or (O)utbox?").lower()
 
-        if uInput in ['i', 'inbox']:
+        if uInput in ('i', 'inbox'):
             inboxMessages = json.loads(api.getAllInboxMessages())
             numMessages = len(inboxMessages['inboxMessages'])
 
@@ -1740,7 +1740,7 @@ def UI(usrInput):
             uInput = userInput("Are you sure, (Y)es or (N)o?").lower()  # Prevent accidental deletion
 
             if uInput == "y":
-                if msgNum in ['a', 'all']:
+                if msgNum in ('a', 'all'):
                     print(' ')
                     for msgNum in range(0, numMessages):  # processes all of the messages in the inbox
                         print('     Deleting message ', msgNum + 1, ' of ', numMessages)
@@ -1756,7 +1756,7 @@ def UI(usrInput):
             else:
                 usrPrompt = 1
 
-        elif uInput in ['o', 'outbox']:
+        elif uInput in ('o', 'outbox'):
             outboxMessages = json.loads(api.getAllSentMessages())
             numMessages = len(outboxMessages['sentMessages'])
 
@@ -1764,7 +1764,7 @@ def UI(usrInput):
                 msgNum = userInput(
                     'Enter the number of the message you wish to delete or (A)ll to empty the inbox.').lower()
 
-                if msgNum in ['a', 'all']:
+                if msgNum in ('a', 'all'):
                     break
                 elif int(msgNum) >= numMessages:
                     print('\n     Invalid Message Number.\n')
@@ -1774,7 +1774,7 @@ def UI(usrInput):
             uInput = userInput("Are you sure, (Y)es or (N)o?").lower()  # Prevent accidental deletion
 
             if uInput == "y":
-                if msgNum in ['a', 'all']:
+                if msgNum in ('a', 'all'):
                     print(' ')
                     for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
                         print('     Deleting message ', msgNum + 1, ' of ', numMessages)
