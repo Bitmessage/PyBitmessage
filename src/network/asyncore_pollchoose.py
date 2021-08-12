@@ -972,8 +972,8 @@ if os.name == 'posix':
 
         def getsockopt(self, level, optname, buflen=None):
             """Fake getsockopt()"""
-            if (level == socket.SOL_SOCKET and optname == socket.SO_ERROR and
-                    not buflen):
+            if (level == socket.SOL_SOCKET and optname == socket.SO_ERROR
+                    and not buflen):
                 return 0
             raise NotImplementedError(
                 "Only asyncore specific behaviour implemented.")

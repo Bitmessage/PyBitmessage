@@ -107,8 +107,8 @@ class ObjectTracker(object):
                 del i.objectsNewToMe[hashid]
             except KeyError:
                 if streamNumber in i.streams and (
-                        not Dandelion().hasHash(hashid) or
-                        Dandelion().objectChildStem(hashid) == i):
+                        not Dandelion().hasHash(hashid)
+                        or Dandelion().objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
                         i.objectsNewToThem[hashid] = time.time()
                     # update stream number,
