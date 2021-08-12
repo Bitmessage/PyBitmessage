@@ -104,9 +104,9 @@ class RandomTrackingDict(object):
     def randomKeys(self, count=1):
         """Retrieve count random keys from the dict
         that haven't already been retrieved"""
-        if self.len == 0 or ((self.pendingLen >= self.maxPending or
-                              self.pendingLen == self.len) and self.lastPoll +
-                             self.pendingTimeout > time()):
+        if self.len == 0 or (
+                (self.pendingLen >= self.maxPending or self.pendingLen == self.len)
+                and self.lastPoll + self.pendingTimeout > time()):
             raise KeyError
 
         # pylint: disable=redefined-outer-name
