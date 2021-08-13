@@ -277,8 +277,8 @@ def isProofOfWorkSufficient(
     ).digest()).digest()[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
-            len(data) + payloadLengthExtraBytes +
-            ((TTL * (len(data) + payloadLengthExtraBytes)) / (2 ** 16))))
+            len(data) + payloadLengthExtraBytes
+            + ((TTL * (len(data) + payloadLengthExtraBytes)) / (2 ** 16))))
 
 
 # Packet creation
@@ -307,9 +307,9 @@ def assembleVersionMessage(
     # bitflags of the services I offer.
     payload += pack(
         '>q',
-        NODE_NETWORK |
-        (NODE_SSL if haveSSL(server) else 0) |
-        (NODE_DANDELION if state.dandelion else 0)
+        NODE_NETWORK
+        | (NODE_SSL if haveSSL(server) else 0)
+        | (NODE_DANDELION if state.dandelion else 0)
     )
     payload += pack('>q', int(time.time()))
 
@@ -331,9 +331,9 @@ def assembleVersionMessage(
     # bitflags of the services I offer.
     payload += pack(
         '>q',
-        NODE_NETWORK |
-        (NODE_SSL if haveSSL(server) else 0) |
-        (NODE_DANDELION if state.dandelion else 0)
+        NODE_NETWORK
+        | (NODE_SSL if haveSSL(server) else 0)
+        | (NODE_DANDELION if state.dandelion else 0)
     )
     # = 127.0.0.1. This will be ignored by the remote host.
     # The actual remote connected IP will be used.
@@ -449,7 +449,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             return 'failed'
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
-        except:
+        except:  # noqa:E722
             # Someone must have encrypted some data with a different key
             # but tagged it with a tag for which we are watching.
             logger.info('Pubkey decryption was unsuccessful.')
