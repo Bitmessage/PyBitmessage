@@ -37,18 +37,27 @@ class LogOutput(object):  # pylint: disable=too-few-public-methods
 
     def __init__(self, prefix='PoW'):
         self.prefix = prefix
-        sys.stdout.flush()
-        self._stdout = sys.stdout
-        self._stdout_fno = os.dup(sys.stdout.fileno())
-        self._dst, self._filepath = tempfile.mkstemp()
+        try:
+            sys.stdout.flush()
+            self._stdout = sys.stdout
+            self._stdout_fno = os.dup(sys.stdout.fileno())
+        except AttributeError:
+            # NullWriter instance has no attribute 'fileno' on Windows
+            self._stdout = None
+        else:
+            self._dst, self._filepath = tempfile.mkstemp()
 
     def __enter__(self):
+        if not self._stdout:
+            return
         stdout = os.dup(1)
         os.dup2(self._dst, 1)
         os.close(self._dst)
         sys.stdout = os.fdopen(stdout, 'w')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if not self._stdout:
+            return
         sys.stdout.close()
         sys.stdout = self._stdout
         sys.stdout.flush()
