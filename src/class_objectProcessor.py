@@ -715,7 +715,7 @@ class objectProcessor(threading.Thread):
                 try:
                     apiNotifyPath = BMConfigParser().get(
                         'bitmessagesettings', 'apinotifypath')
-                except:
+                except:  # noqa:E722
                     apiNotifyPath = ''
                 if apiNotifyPath != '':
                     call([apiNotifyPath, "newMessage"])
@@ -727,7 +727,7 @@ class objectProcessor(threading.Thread):
                 try:
                     mailingListName = BMConfigParser().get(
                         toAddress, 'mailinglistname')
-                except:
+                except:  # noqa:E722
                     mailingListName = ''
                 # Let us send out this message as a broadcast
                 subject = self.addMailingListNameToSubject(
@@ -763,10 +763,10 @@ class objectProcessor(threading.Thread):
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
         if (
-            self.ackDataHasAValidHeader(ackData) and not blockMessage and
-            messageEncodingType != 0 and
-            not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and
-            not BMConfigParser().safeGetBoolean(toAddress, 'chan')
+            self.ackDataHasAValidHeader(ackData) and not blockMessage
+            and messageEncodingType != 0
+            and not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
+            and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
         ):
             self._ack_obj.send_data(ackData[24:])
 
@@ -934,8 +934,8 @@ class objectProcessor(threading.Thread):
                 return
         elif broadcastVersion == 5:
             calculatedTag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(sendersAddressVersion) +
-                encodeVarint(sendersStream) + calculatedRipe
+                encodeVarint(sendersAddressVersion)
+                + encodeVarint(sendersStream) + calculatedRipe
             ).digest()).digest()[32:]
             if calculatedTag != embeddedTag:
                 logger.debug(
@@ -1017,7 +1017,7 @@ class objectProcessor(threading.Thread):
             try:
                 apiNotifyPath = BMConfigParser().get(
                     'bitmessagesettings', 'apinotifypath')
-            except:
+            except:  # noqa:E722
                 apiNotifyPath = ''
             if apiNotifyPath != '':
                 call([apiNotifyPath, "newBroadcast"])
