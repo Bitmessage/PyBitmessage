@@ -82,8 +82,8 @@ class singleWorker(StoppableThread):
                 state.neededPubkeys[toAddress] = 0
             elif toAddressVersionNumber >= 4:
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
-                    encodeVarint(toAddressVersionNumber) +
-                    encodeVarint(toStreamNumber) + toRipe
+                    encodeVarint(toAddressVersionNumber)
+                    + encodeVarint(toStreamNumber) + toRipe
                 ).digest()).digest()
                 # Note that this is the first half of the sha512 hash.
                 privEncryptionKey = doubleHashOfAddressData[:32]
@@ -221,11 +221,11 @@ class singleWorker(StoppableThread):
                        log_time=False):
         target = 2 ** 64 / (
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8 +
-                defaults.networkDefaultPayloadLengthExtraBytes + ((
+                len(payload) + 8
+                + defaults.networkDefaultPayloadLengthExtraBytes + ((
                     TTL * (
-                        len(payload) + 8 +
-                        defaults.networkDefaultPayloadLengthExtraBytes
+                        len(payload) + 8
+                        + defaults.networkDefaultPayloadLengthExtraBytes
                     )) / (2 ** 16))
             ))
         initialHash = hashlib.sha512(payload).digest()
@@ -450,8 +450,8 @@ class singleWorker(StoppableThread):
         # know which pubkey object to try to decrypt
         # when they want to send a message.
         doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
-            encodeVarint(addressVersionNumber) +
-            encodeVarint(streamNumber) + addressHash
+            encodeVarint(addressVersionNumber)
+            + encodeVarint(streamNumber) + addressHash
         ).digest()).digest()
         payload += doubleHashOfAddressData[32:]  # the tag
         signature = highlevelcrypto.sign(
@@ -614,8 +614,8 @@ class singleWorker(StoppableThread):
             payload += encodeVarint(streamNumber)
             if addressVersionNumber >= 4:
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
-                    encodeVarint(addressVersionNumber) +
-                    encodeVarint(streamNumber) + ripe
+                    encodeVarint(addressVersionNumber)
+                    + encodeVarint(streamNumber) + ripe
                 ).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
                 payload += tag
@@ -654,8 +654,8 @@ class singleWorker(StoppableThread):
             # Internet connections and being stored on the disk of 3rd parties.
             if addressVersionNumber <= 3:
                 privEncryptionKey = hashlib.sha512(
-                    encodeVarint(addressVersionNumber) +
-                    encodeVarint(streamNumber) + ripe
+                    encodeVarint(addressVersionNumber)
+                    + encodeVarint(streamNumber) + ripe
                 ).digest()[:32]
             else:
                 privEncryptionKey = doubleHashOfAddressData[:32]
@@ -796,8 +796,8 @@ class singleWorker(StoppableThread):
                         toTag = ''
                     else:
                         toTag = hashlib.sha512(hashlib.sha512(
-                            encodeVarint(toAddressVersionNumber) +
-                            encodeVarint(toStreamNumber) + toRipe
+                            encodeVarint(toAddressVersionNumber)
+                            + encodeVarint(toStreamNumber) + toRipe
                         ).digest()).digest()[32:]
                     if toaddress in state.neededPubkeys or \
                             toTag in state.neededPubkeys:
@@ -1044,13 +1044,13 @@ class singleWorker(StoppableThread):
                                     " and %2"
                                 ).arg(
                                     str(
-                                        float(requiredAverageProofOfWorkNonceTrialsPerByte) /
-                                        defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+                                        float(requiredAverageProofOfWorkNonceTrialsPerByte)
+                                        / defaults.networkDefaultProofOfWorkNonceTrialsPerByte
                                     )
                                 ).arg(
                                     str(
-                                        float(requiredPayloadLengthExtraBytes) /
-                                        defaults.networkDefaultPayloadLengthExtraBytes
+                                        float(requiredPayloadLengthExtraBytes)
+                                        / defaults.networkDefaultPayloadLengthExtraBytes
                                     )
                                 )
                             )
@@ -1083,11 +1083,11 @@ class singleWorker(StoppableThread):
                                         " the recipient (%1 and %2) is"
                                         " more difficult than you are"
                                         " willing to do. %3"
-                                    ).arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) /
-                                              defaults.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(
-                                                  str(float(requiredPayloadLengthExtraBytes) /
-                                                      defaults.networkDefaultPayloadLengthExtraBytes)).arg(
-                                                          l10n.formatTimestamp()))))
+                                    ).arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte)
+                                          / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
+                                          ).arg(str(float(requiredPayloadLengthExtraBytes)
+                                                / defaults.networkDefaultPayloadLengthExtraBytes)
+                                                ).arg(l10n.formatTimestamp()))))
                             continue
             else:  # if we are sending a message to ourselves or a chan..
                 self.logger.info('Sending a message.')
@@ -1255,20 +1255,20 @@ class singleWorker(StoppableThread):
             encryptedPayload += encodeVarint(toStreamNumber) + encrypted
             target = 2 ** 64 / (
                 requiredAverageProofOfWorkNonceTrialsPerByte * (
-                    len(encryptedPayload) + 8 +
-                    requiredPayloadLengthExtraBytes + ((
+                    len(encryptedPayload) + 8
+                    + requiredPayloadLengthExtraBytes + ((
                         TTL * (
-                            len(encryptedPayload) + 8 +
-                            requiredPayloadLengthExtraBytes
+                            len(encryptedPayload) + 8
+                            + requiredPayloadLengthExtraBytes
                         )) / (2 ** 16))
                 ))
             self.logger.info(
                 '(For msg message) Doing proof of work. Total required'
                 ' difficulty: %f. Required small message difficulty: %f.',
-                float(requiredAverageProofOfWorkNonceTrialsPerByte) /
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-                float(requiredPayloadLengthExtraBytes) /
-                defaults.networkDefaultPayloadLengthExtraBytes
+                float(requiredAverageProofOfWorkNonceTrialsPerByte)
+                / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+                float(requiredPayloadLengthExtraBytes)
+                / defaults.networkDefaultPayloadLengthExtraBytes
             )
 
             powStartTime = time.time()
@@ -1409,13 +1409,13 @@ class singleWorker(StoppableThread):
 
             # Note that this is the first half of the sha512 hash.
             privEncryptionKey = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + ripe
+                encodeVarint(addressVersionNumber)
+                + encodeVarint(streamNumber) + ripe
             ).digest()).digest()[:32]
             # Note that this is the second half of the sha512 hash.
             tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + ripe
+                encodeVarint(addressVersionNumber)
+                + encodeVarint(streamNumber) + ripe
             ).digest()).digest()[32:]
             if tag not in state.neededPubkeys:
                 # We'll need this for when we receive a pubkey reply:
