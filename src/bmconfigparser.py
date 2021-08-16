@@ -142,6 +142,15 @@ class BMConfigParser(SafeConfigParser):
                 ValueError, AttributeError):
             return default
 
+    def safeGetFloat(self, section, field, default=0.0):
+        """Return value as float, default on exceptions,
+        0.0 if default missing"""
+        try:
+            return self.getfloat(section, field)
+        except (configparser.NoSectionError, configparser.NoOptionError,
+                ValueError, AttributeError):
+            return default
+
     def safeGet(self, section, option, default=None):
         """Return value as is, default on exceptions, None if default missing"""
         try:

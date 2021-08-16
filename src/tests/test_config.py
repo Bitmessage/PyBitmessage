@@ -34,3 +34,10 @@ class TestConfig(unittest.TestCase):
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent'), 0)
         self.assertEqual(
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
+
+    def test_safeGetFloat(self):
+        """safeGetFloat retuns provided default for nonexistent option or 0.0"""
+        self.assertEqual(
+            BMConfigParser().safeGetFloat('nonexistent', 'nonexistent'), 0.0)
+        self.assertEqual(
+            BMConfigParser().safeGetFloat('nonexistent', 'nonexistent', 42.0), 42.0)

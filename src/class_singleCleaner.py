@@ -50,14 +50,14 @@ class singleCleaner(StoppableThread):
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
             state.maximumLengthOfTimeToBotherResendingMessages = (
-                float(BMConfigParser().get(
-                    'bitmessagesettings', 'stopresendingafterxdays'))
+                BMConfigParser().getfloat(
+                    'bitmessagesettings', 'stopresendingafterxdays')
                 * 24 * 60 * 60
             ) + (
-                float(BMConfigParser().get(
-                    'bitmessagesettings', 'stopresendingafterxmonths'))
+                BMConfigParser().getfloat(
+                    'bitmessagesettings', 'stopresendingafterxmonths')
                 * (60 * 60 * 24 * 365) / 12)
-        except:
+        except:  # noqa:E722
             # Either the user hasn't set stopresendingafterxdays and
             # stopresendingafterxmonths yet or the options are missing
             # from the config file.
@@ -156,8 +156,11 @@ class singleCleaner(StoppableThread):
             # is already present and will not do the POW and send the message
             # because it assumes that it has already done it recently.
             del state.neededPubkeys[address]
-        except:
+        except KeyError:
             pass
+        except RuntimeError:
+            self.logger.warning(
+                "Can't remove %s from neededPubkeys, requesting pubkey will be delayed", address, exc_info=True)
 
         queues.UISignalQueue.put((
             'updateStatusBar',
