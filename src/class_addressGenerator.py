@@ -17,6 +17,7 @@ from fallback import RIPEMD160Hash
 from network import StoppableThread
 from pyelliptic import arithmetic
 from pyelliptic.openssl import OpenSSL
+from six.moves import configparser, queue
 
 
 class addressGenerator(StoppableThread):
@@ -27,8 +28,9 @@ class addressGenerator(StoppableThread):
     def stopThread(self):
         try:
             queues.addressGeneratorQueue.put(("stopThread", "data"))
-        except:
-            pass
+        except queue.Full:
+            self.logger.error('addressGeneratorQueue is Full')
+
         super(addressGenerator, self).stopThread()
 
     def run(self):
@@ -61,35 +63,25 @@ class addressGenerator(StoppableThread):
                 command, addressVersionNumber, streamNumber, label, \
                     numberOfAddressesToMake, deterministicPassphrase, \
                     eighteenByteRipe = queueValue
-                try:
-                    numberOfNullBytesDemandedOnFrontOfRipeHash = \
-                        BMConfigParser().getint(
-                            'bitmessagesettings',
-                            'numberofnullbytesonaddress'
-                        )
-                except:
-                    if eighteenByteRipe:
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 2
-                    else:
-                        # the default
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1
+
+                numberOfNullBytesDemandedOnFrontOfRipeHash = \
+                    BMConfigParser().safeGetInt(
+                        'bitmessagesettings',
+                        'numberofnullbytesonaddress',
+                        2 if eighteenByteRipe else 1
+                    )
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, \
                     numberOfAddressesToMake, deterministicPassphrase, \
                     eighteenByteRipe, nonceTrialsPerByte, \
                     payloadLengthExtraBytes = queueValue
-                try:
-                    numberOfNullBytesDemandedOnFrontOfRipeHash = \
-                        BMConfigParser().getint(
-                            'bitmessagesettings',
-                            'numberofnullbytesonaddress'
-                        )
-                except:
-                    if eighteenByteRipe:
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 2
-                    else:
-                        # the default
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1
+
+                numberOfNullBytesDemandedOnFrontOfRipeHash = \
+                    BMConfigParser().safeGetInt(
+                        'bitmessagesettings',
+                        'numberofnullbytesonaddress',
+                        2 if eighteenByteRipe else 1
+                    )
             elif queueValue[0] == 'stopThread':
                 break
             else:
@@ -143,8 +135,8 @@ class addressGenerator(StoppableThread):
                         potentialPubSigningKey + potentialPubEncryptionKey)
                     ripe = RIPEMD160Hash(sha.digest()).digest()
                     if (
-                        ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
-                        '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                        ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
+                        == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
                 self.logger.info(
@@ -248,12 +240,12 @@ class addressGenerator(StoppableThread):
                     while True:
                         numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
                         potentialPrivSigningKey = hashlib.sha512(
-                            deterministicPassphrase +
-                            encodeVarint(signingKeyNonce)
+                            deterministicPassphrase
+                            + encodeVarint(signingKeyNonce)
                         ).digest()[:32]
                         potentialPrivEncryptionKey = hashlib.sha512(
-                            deterministicPassphrase +
-                            encodeVarint(encryptionKeyNonce)
+                            deterministicPassphrase
+                            + encodeVarint(encryptionKeyNonce)
                         ).digest()[:32]
                         potentialPubSigningKey = highlevelcrypto.pointMult(
                             potentialPrivSigningKey)
@@ -266,8 +258,8 @@ class addressGenerator(StoppableThread):
                             potentialPubSigningKey + potentialPubEncryptionKey)
                         ripe = RIPEMD160Hash(sha.digest()).digest()
                         if (
-                            ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash] ==
-                            '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                            ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
+                            == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                         ):
                             break
 
@@ -279,8 +271,8 @@ class addressGenerator(StoppableThread):
                             ' at %s addresses per second before finding'
                             ' one with the correct ripe-prefix.',
                             numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix,
-                            numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix /
-                            (time.time() - startTime)
+                            numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix
+                            / (time.time() - startTime)
                         )
                     except ZeroDivisionError:
                         # The user must have a pretty fast computer.
@@ -320,7 +312,7 @@ class addressGenerator(StoppableThread):
                         try:
                             BMConfigParser().add_section(address)
                             addressAlreadyExists = False
-                        except:
+                        except configparser.DuplicateSectionError:
                             addressAlreadyExists = True
 
                         if addressAlreadyExists:
@@ -369,8 +361,8 @@ class addressGenerator(StoppableThread):
                                     hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe] = address
                             tag = hashlib.sha512(hashlib.sha512(
-                                encodeVarint(addressVersionNumber) +
-                                encodeVarint(streamNumber) + ripe
+                                encodeVarint(addressVersionNumber)
+                                + encodeVarint(streamNumber) + ripe
                             ).digest()).digest()[32:]
                             shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
@@ -401,6 +393,6 @@ class addressGenerator(StoppableThread):
                     queues.apiAddressGeneratorReturnQueue.put(address)
             else:
                 raise Exception(
-                    "Error in the addressGenerator thread. Thread was" +
-                    " given a command it could not understand: " + command)
+                    "Error in the addressGenerator thread. Thread was"
+                    + " given a command it could not understand: " + command)
             queues.addressGeneratorQueue.task_done()
