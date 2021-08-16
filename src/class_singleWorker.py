@@ -32,6 +32,7 @@ from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import knownnodes, StoppableThread
+from six.moves import configparser, queue
 
 
 def sizeof_fmt(num, suffix='h/s'):
@@ -56,8 +57,8 @@ class singleWorker(StoppableThread):
 
         try:
             queues.workerQueue.put(("stopThread", "data"))
-        except:
-            pass
+        except queue.Full:
+            self.logger.error('workerQueue is Full')
         super(singleWorker, self).stopThread()
 
     def run(self):
@@ -148,38 +149,38 @@ class singleWorker(StoppableThread):
             if command == 'sendmessage':
                 try:
                     self.sendMsg()
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("sendMsg didn't work")
             elif command == 'sendbroadcast':
                 try:
                     self.sendBroadcast()
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("sendBroadcast didn't work")
             elif command == 'doPOWForMyV2Pubkey':
                 try:
                     self.doPOWForMyV2Pubkey(data)
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("doPOWForMyV2Pubkey didn't work")
             elif command == 'sendOutOrStoreMyV3Pubkey':
                 try:
                     self.sendOutOrStoreMyV3Pubkey(data)
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("sendOutOrStoreMyV3Pubkey didn't work")
             elif command == 'sendOutOrStoreMyV4Pubkey':
                 try:
                     self.sendOutOrStoreMyV4Pubkey(data)
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("sendOutOrStoreMyV4Pubkey didn't work")
             elif command == 'sendOnionPeerObj':
                 try:
                     self.sendOnionPeerObj(data)
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("sendOnionPeerObj didn't work")
             elif command == 'resetPoW':
                 try:
                     proofofwork.resetPoW()
-                except:
-                    pass
+                except:  # noqa:E722
+                    self.logger.warning("proofofwork.resetPoW didn't work")
             elif command == 'stopThread':
                 self.busy = 0
                 return
@@ -243,8 +244,8 @@ class singleWorker(StoppableThread):
                 'PoW took %.1f seconds, speed %s.',
                 delta, sizeof_fmt(nonce / delta)
             )
-        except:  # NameError
-            pass
+        except:  # noqa:E722  # NameError
+            self.logger.warning("Proof of Work exception")
         payload = pack('>Q', nonce) + payload
         return payload
 
@@ -271,6 +272,8 @@ class singleWorker(StoppableThread):
             # privSigningKeyHex, privEncryptionKeyHex
             _, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
+        except (configparser.NoSectionError, configparser.NoOptionError) as err:
+            self.logger.warning("Section or Option did not found: %s", err)
         except Exception as err:
             self.logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
@@ -299,10 +302,12 @@ class singleWorker(StoppableThread):
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
             BMConfigParser().save()
-        except:
+        except configparser.NoSectionError:
             # The user deleted the address out of the keys.dat file
             # before this finished.
             pass
+        except:  # noqa:E722
+            self.logger.warning("BMConfigParser().set didn't work")
 
     def sendOutOrStoreMyV3Pubkey(self, adressHash):
         """
@@ -312,8 +317,9 @@ class singleWorker(StoppableThread):
         """
         try:
             myAddress = shared.myAddressesByHash[adressHash]
-        except:
+        except KeyError:
             # The address has been deleted.
+            self.logger.warning("Can't find %s in myAddressByHash", hexlify(adressHash))
             return
         if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
@@ -345,6 +351,8 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
+        except (configparser.NoSectionError, configparser.NoOptionError) as err:
+            self.logger.warning("Section or Option did not found: %s", err)
         except Exception as err:
             self.logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
@@ -382,10 +390,12 @@ class singleWorker(StoppableThread):
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
             BMConfigParser().save()
-        except:
+        except configparser.NoSectionError:
             # The user deleted the address out of the keys.dat file
             # before this finished.
             pass
+        except:  # noqa:E722
+            self.logger.warning("BMConfigParser().set didn't work")
 
     def sendOutOrStoreMyV4Pubkey(self, myAddress):
         """
@@ -415,6 +425,8 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
+        except (configparser.NoSectionError, configparser.NoOptionError) as err:
+            self.logger.warning("Section or Option did not found: %s", err)
         except Exception as err:
             self.logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
@@ -546,7 +558,14 @@ class singleWorker(StoppableThread):
                 # , privEncryptionKeyHex
                 privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                     self._getKeysForAddress(fromaddress)
-            except:
+            except (configparser.NoSectionError, configparser.NoOptionError) as err:
+                self.logger.warning("Section or Option did not found: %s", err)
+            except Exception as err:
+                self.logger.error(
+                    'Error within sendBroadcast. Could not read'
+                    ' the keys from the keys.dat file for a requested'
+                    ' address. %s\n', err
+                )
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata,
@@ -1072,7 +1091,7 @@ class singleWorker(StoppableThread):
                 try:
                     privEncryptionKeyBase58 = BMConfigParser().get(
                         toaddress, 'privencryptionkey')
-                except Exception as err:
+                except (configparser.NoSectionError, configparser.NoOptionError) as err:
                     queues.UISignalQueue.put((
                         'updateSentItemStatusByAckdata', (
                             ackdata,
@@ -1120,7 +1139,14 @@ class singleWorker(StoppableThread):
                 privSigningKeyHex, privEncryptionKeyHex, \
                     pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
                         fromaddress)
-            except:
+            except (configparser.NoSectionError, configparser.NoOptionError) as err:
+                self.logger.warning("Section or Option did not found: %s", err)
+            except Exception as err:
+                self.logger.error(
+                    'Error within sendMsg. Could not read'
+                    ' the keys from the keys.dat file for a requested'
+                    ' address. %s\n', err
+                )
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata,
@@ -1192,7 +1218,8 @@ class singleWorker(StoppableThread):
                 encrypted = highlevelcrypto.encrypt(
                     payload, "04" + hexlify(pubEncryptionKeyBase256)
                 )
-            except:
+            except:  # noqa:E722
+                self.logger.warning("highlevelcrypto.encrypt didn't work")
                 sqlExecute(
                     '''UPDATE sent SET status='badkey' WHERE ackdata=? AND folder='sent' ''',
                     ackdata
@@ -1243,8 +1270,8 @@ class singleWorker(StoppableThread):
                     time.time() - powStartTime,
                     sizeof_fmt(nonce / (time.time() - powStartTime))
                 )
-            except:
-                pass
+            except:  # noqa:E722
+                self.logger.warning("Proof of Work exception")
 
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
@@ -1324,12 +1351,11 @@ class singleWorker(StoppableThread):
                 # has arrived.
                 if BMConfigParser().safeGetBoolean(
                         'bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = BMConfigParser().get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
+
+                    apiNotifyPath = BMConfigParser().safeGet(
+                        'bitmessagesettings', 'apinotifypath')
+
+                    if apiNotifyPath:
                         call([apiNotifyPath, "newMessage"])
 
     def requestPubKey(self, toAddress):
