@@ -450,6 +450,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
         except:  # noqa:E722
+            # FIXME: use a proper exception after `pyelliptic.ecc` is refactored.
             # Someone must have encrypted some data with a different key
             # but tagged it with a tag for which we are watching.
             logger.info('Pubkey decryption was unsuccessful.')
