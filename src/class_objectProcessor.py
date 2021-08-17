@@ -712,23 +712,21 @@ class objectProcessor(threading.Thread):
             # has arrived.
             if BMConfigParser().safeGetBoolean(
                     'bitmessagesettings', 'apienabled'):
-                try:
-                    apiNotifyPath = BMConfigParser().get(
-                        'bitmessagesettings', 'apinotifypath')
-                except:  # noqa:E722
-                    apiNotifyPath = ''
-                if apiNotifyPath != '':
+
+                apiNotifyPath = BMConfigParser().safeGet(
+                    'bitmessagesettings', 'apinotifypath')
+
+                if apiNotifyPath:
                     call([apiNotifyPath, "newMessage"])
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
             if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') \
                     and messageEncodingType != 0:
-                try:
-                    mailingListName = BMConfigParser().get(
-                        toAddress, 'mailinglistname')
-                except:  # noqa:E722
-                    mailingListName = ''
+
+                mailingListName = BMConfigParser().safeGet(
+                    toAddress, 'mailinglistname', '')
+
                 # Let us send out this message as a broadcast
                 subject = self.addMailingListNameToSubject(
                     subject, mailingListName)
@@ -1014,12 +1012,11 @@ class objectProcessor(threading.Thread):
         # outside command to let some program know that a new message
         # has arrived.
         if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-            try:
-                apiNotifyPath = BMConfigParser().get(
-                    'bitmessagesettings', 'apinotifypath')
-            except:  # noqa:E722
-                apiNotifyPath = ''
-            if apiNotifyPath != '':
+
+            apiNotifyPath = BMConfigParser().safeGet(
+                'bitmessagesettings', 'apinotifypath')
+
+            if apiNotifyPath:
                 call([apiNotifyPath, "newBroadcast"])
 
         # Display timing data
