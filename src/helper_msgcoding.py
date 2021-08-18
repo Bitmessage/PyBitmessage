@@ -103,8 +103,8 @@ class MsgDecode(object):
         while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
             try:
                 got = dc.decompress(
-                    data, BMConfigParser().safeGetInt("zlib", "maxsize") +
-                    1 - len(tmp))
+                    data, BMConfigParser().safeGetInt("zlib", "maxsize")
+                    + 1 - len(tmp))
                 # EOF
                 if got == "":
                     break
