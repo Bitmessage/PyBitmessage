@@ -196,9 +196,9 @@ def check_sqlite():
     logger.info('SQLite Library Version: %s', sqlite3.sqlite_version)
     # sqlite_version_number formula: https://sqlite.org/c3ref/c_source_id.html
     sqlite_version_number = (
-        sqlite3.sqlite_version_info[0] * 1000000 +
-        sqlite3.sqlite_version_info[1] * 1000 +
-        sqlite3.sqlite_version_info[2]
+        sqlite3.sqlite_version_info[0] * 1000000
+        + sqlite3.sqlite_version_info[1] * 1000
+        + sqlite3.sqlite_version_info[2]
     )
 
     conn = None
