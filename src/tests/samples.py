@@ -5,6 +5,15 @@ from binascii import unhexlify
 
 magic = 0xE9BEB4D9
 
+# 500 identical peers:
+# 1626611891, 1, 1, 127.0.0.1, 8444
+sample_addr_data = unhexlify(
+    'fd01f4' + (
+        '0000000060f420b30000000'
+        '1000000000000000100000000000000000000ffff7f00000120fc'
+    ) * 500
+)
+
 # These keys are from addresses test script
 sample_pubsigningkey = unhexlify(
     '044a367f049ec16cb6b6118eb734a9962d10b8db59c890cd08f210c43ff08bdf09d'

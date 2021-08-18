@@ -5,7 +5,7 @@ from struct import pack
 
 from pybitmessage import addresses, protocol
 
-from .samples import magic
+from .samples import magic, sample_addr_data
 from .test_protocol import TestSocketInet
 
 
@@ -67,3 +67,12 @@ class TestSerialize(TestSocketInet):
         self.assertEqual(
             protocol.encodeHost('quzwelsuziwqgpt2.onion'),
             unhexlify('fd87d87eeb438533622e54ca2d033e7a'))
+
+    def test_assemble_addr(self):
+        """Assemble addr packet and compare it to pregenerated sample"""
+        self.assertEqual(
+            sample_addr_data,
+            protocol.assembleAddrMessage([
+                (1, protocol.Peer('127.0.0.1', 8444), 1626611891)
+                for _ in range(500)
+            ])[protocol.Header.size:])
