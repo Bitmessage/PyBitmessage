@@ -73,14 +73,14 @@ class TeleniumTestProcess(TeleniumTestCase):
             try:
                 if self.cli.getattr(selector, 'current') == value:
                     self.assertTrue(selector, value)
-                    return True
+                    break
             except TeleniumHttpException:
                 sleep(0.1)
                 continue
             finally:
                 # Finally Sleep is used to make the menu button funcationlly available for the click process.
                 # (because Transition is little bit slow)
-                sleep(0.1)
+                sleep(0.2)
 
     def drag(self, xpath1, xpath2):
         """this method is for dragging"""

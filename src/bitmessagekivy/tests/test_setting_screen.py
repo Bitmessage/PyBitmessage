@@ -12,7 +12,7 @@ class SettingScreen(TeleniumTestProcess):
         """Show Setting Screen"""
         # This is for checking Current screen
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
-        # This is for checking the Side nav Bar id closed
+        # This is for checking the Side nav Bar is closed
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # This is for checking the menu button is appeared
         self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)

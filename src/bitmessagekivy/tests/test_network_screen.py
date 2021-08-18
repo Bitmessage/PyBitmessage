@@ -9,7 +9,7 @@ class NetworkStatusScreen(TeleniumTestProcess):
 
     @skip_screen_checks
     def test_network_status(self):
-        """Show NetwrokStatus"""
+        """Show NetworkStatus"""
         # This is for checking Current screen
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
         # This is for checking the Side nav Bar id closed
