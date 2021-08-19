@@ -323,7 +323,7 @@ def assembleAddrMessage(peerList):
             payload += encodeHost(peer.host)
             # remote port
             payload += pack('>H', peer.port)
-        retval += CreatePacket('addr', payload)
+        retval += CreatePacket(b'addr', payload)
     return retval
 
 
