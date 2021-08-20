@@ -27,6 +27,8 @@ EXTRAS_REQUIRE = {
 
 
 class InstallCmd(install):
+    '''Install cmd'''
+
     def run(self):
         # prepare icons directories
         try:
@@ -84,7 +86,7 @@ if __name__ == "__main__":
             "msgpack-python" if msgpack.version[:2] < (0, 6) else "msgpack")
     except ImportError:
         try:
-            import umsgpack
+            import umsgpack  # noqa:F401
             installRequires.append("umsgpack")
         except ImportError:
             packages += ['pybitmessage.fallback.umsgpack']
@@ -115,11 +117,11 @@ if __name__ == "__main__":
         long_description=README,
         license='MIT',
         # TODO: add author info
-        #author='',
-        #author_email='',
+        # author='',
+        # author_email='',
         url='https://bitmessage.org',
         # TODO: add keywords
-        #keywords='',
+        # keywords='',
         install_requires=installRequires,
         tests_require=requirements,
         test_suite='tests.unittest_discover',
