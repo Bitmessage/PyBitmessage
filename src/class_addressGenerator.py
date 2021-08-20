@@ -20,6 +20,11 @@ from pyelliptic.openssl import OpenSSL
 from six.moves import configparser, queue
 
 
+class AddressGeneratorException(Exception):
+    '''Generic AddressGenerator exception'''
+    pass
+
+
 class addressGenerator(StoppableThread):
     """A thread for creating addresses"""
 
@@ -40,6 +45,8 @@ class addressGenerator(StoppableThread):
         """
         # pylint: disable=too-many-locals, too-many-branches
         # pylint: disable=protected-access, too-many-statements
+        # pylint: disable=too-many-nested-blocks
+
         while state.shutdown == 0:
             queueValue = queues.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
@@ -136,7 +143,7 @@ class addressGenerator(StoppableThread):
                     ripe = RIPEMD160Hash(sha.digest()).digest()
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
-                        == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                        == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
                 self.logger.info(
@@ -159,13 +166,13 @@ class addressGenerator(StoppableThread):
                 # An excellent way for us to store our keys
                 # is in Wallet Import Format. Let us convert now.
                 # https://en.bitcoin.it/wiki/Wallet_import_format
-                privSigningKey = '\x80' + potentialPrivSigningKey
+                privSigningKey = b'\x80' + potentialPrivSigningKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privSigningKey).digest()).digest()[0:4]
                 privSigningKeyWIF = arithmetic.changebase(
                     privSigningKey + checksum, 256, 58)
 
-                privEncryptionKey = '\x80' + potentialPrivEncryptionKey
+                privEncryptionKey = b'\x80' + potentialPrivEncryptionKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privEncryptionKey).digest()).digest()[0:4]
                 privEncryptionKeyWIF = arithmetic.changebase(
@@ -259,7 +266,7 @@ class addressGenerator(StoppableThread):
                         ripe = RIPEMD160Hash(sha.digest()).digest()
                         if (
                             ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
-                            == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                            == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                         ):
                             break
 
@@ -296,13 +303,13 @@ class addressGenerator(StoppableThread):
                         # An excellent way for us to store our keys is
                         # in Wallet Import Format. Let us convert now.
                         # https://en.bitcoin.it/wiki/Wallet_import_format
-                        privSigningKey = '\x80' + potentialPrivSigningKey
+                        privSigningKey = b'\x80' + potentialPrivSigningKey
                         checksum = hashlib.sha256(hashlib.sha256(
                             privSigningKey).digest()).digest()[0:4]
                         privSigningKeyWIF = arithmetic.changebase(
                             privSigningKey + checksum, 256, 58)
 
-                        privEncryptionKey = '\x80' + \
+                        privEncryptionKey = b'\x80' + \
                             potentialPrivEncryptionKey
                         checksum = hashlib.sha256(hashlib.sha256(
                             privEncryptionKey).digest()).digest()[0:4]
@@ -392,7 +399,7 @@ class addressGenerator(StoppableThread):
                 elif command == 'getDeterministicAddress':
                     queues.apiAddressGeneratorReturnQueue.put(address)
             else:
-                raise Exception(
+                raise AddressGeneratorException(
                     "Error in the addressGenerator thread. Thread was"
                     + " given a command it could not understand: " + command)
             queues.addressGeneratorQueue.task_done()
