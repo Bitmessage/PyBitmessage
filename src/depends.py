@@ -3,7 +3,11 @@ Utility functions to check the availability of dependencies
 and suggest how it may be installed
 """
 
+import os
+import re
+import subprocess
 import sys
+from importlib import import_module
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -14,9 +18,7 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
         % sys.version
     )
 
-import logging
-import os
-from importlib import import_module
+import logging  # noqa:E402
 
 # We can now use logging so set up a simple configuration
 formatter = logging.Formatter('%(levelname)s: %(message)s')
@@ -248,7 +250,6 @@ def check_openssl():
     if sys.platform == 'win32':
         paths = ['libeay32.dll']
         if getattr(sys, 'frozen', False):
-            import os.path
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
     else:
         paths = ['libcrypto.so', 'libcrypto.so.1.0.0']
@@ -258,7 +259,7 @@ def check_openssl():
             '/usr/local/opt/openssl/lib/libcrypto.dylib',
             './../Frameworks/libcrypto.dylib'
         ])
-    import re
+
     if re.match(r'linux|darwin|freebsd', sys.platform):
         try:
             import ctypes.util
@@ -338,8 +339,6 @@ def check_curses():
         logger.error('The curses interface can not be used.')
         return False
 
-    import subprocess
-
     try:
         subprocess.check_call(['which', 'dialog'])
     except subprocess.CalledProcessError:
@@ -353,7 +352,7 @@ def check_curses():
     # The pythondialog author does not like Python2 str, so we have to use
     # unicode for just the version otherwise we get the repr form which
     # includes the module and class names along with the actual version.
-    logger.info('dialog Utility Version %s', unicode(dialog_util_version))
+    logger.info('dialog Utility Version %s', dialog_util_version.decode('utf-8'))
     return True
 
 
