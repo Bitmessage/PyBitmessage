@@ -5,7 +5,7 @@ from .common import skip_screen_checks
 
 
 class NetworkStatusScreen(TeleniumTestProcess):
-    """NetwrokStatus Screen Functionality Testing"""
+    """NetworkStatus Screen Functionality Testing"""
 
     @skip_screen_checks
     def test_network_status(self):
