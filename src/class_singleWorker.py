@@ -560,6 +560,14 @@ class singleWorker(StoppableThread):
                     self._getKeysForAddress(fromaddress)
             except (configparser.NoSectionError, configparser.NoOptionError) as err:
                 self.logger.warning("Section or Option did not found: %s", err)
+                queues.UISignalQueue.put((
+                    'updateSentItemStatusByAckdata', (
+                        ackdata,
+                        tr._translate(
+                            "MainWindow",
+                            "Error! Could not find sender address"
+                            " (your address) in the keys.dat file."))
+                ))
             except Exception as err:
                 self.logger.error(
                     'Error within sendBroadcast. Could not read'
@@ -571,8 +579,7 @@ class singleWorker(StoppableThread):
                         ackdata,
                         tr._translate(
                             "MainWindow",
-                            "Error! Could not find sender address"
-                            " (your address) in the keys.dat file."))
+                            "Error, can't send."))
                 ))
                 continue
 
@@ -1141,6 +1148,14 @@ class singleWorker(StoppableThread):
                         fromaddress)
             except (configparser.NoSectionError, configparser.NoOptionError) as err:
                 self.logger.warning("Section or Option did not found: %s", err)
+                queues.UISignalQueue.put((
+                    'updateSentItemStatusByAckdata', (
+                        ackdata,
+                        tr._translate(
+                            "MainWindow",
+                            "Error! Could not find sender address"
+                            " (your address) in the keys.dat file."))
+                ))
             except Exception as err:
                 self.logger.error(
                     'Error within sendMsg. Could not read'
@@ -1152,8 +1167,7 @@ class singleWorker(StoppableThread):
                         ackdata,
                         tr._translate(
                             "MainWindow",
-                            "Error! Could not find sender address"
-                            " (your address) in the keys.dat file."))
+                            "Error, can't send."))
                 ))
                 continue
 
