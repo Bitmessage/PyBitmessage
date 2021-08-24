@@ -100,12 +100,12 @@ class MyForm(settingsmixin.SMainWindow):
         try:
             if not self.qmytranslator.isEmpty():
                 QtGui.QApplication.removeTranslator(self.qmytranslator)
-        except:
+        except:  # noqa:E722
             pass
         try:
             if not self.qsystranslator.isEmpty():
                 QtGui.QApplication.removeTranslator(self.qsystranslator)
-        except:
+        except:  # noqa:E722
             pass
 
         self.qmytranslator = QtCore.QTranslator()
@@ -142,7 +142,7 @@ class MyForm(settingsmixin.SMainWindow):
                     l10n.encoding = locale.getlocale()[1]
                 logger.info("Successfully set locale to %s", lang)
                 break
-            except:
+            except:  # noqa:E722
                 logger.error("Failed to set locale to %s", lang, exc_info=True)
 
     def init_file_menu(self):
@@ -456,7 +456,7 @@ class MyForm(settingsmixin.SMainWindow):
                     subwidget.setUnreadCount(db[toAddress][subwidget.folderName]['count'])
                     unread += db[toAddress][subwidget.folderName]['count']
                     db[toAddress].pop(subwidget.folderName, None)
-                except:
+                except:  # noqa:E722
                     widget.takeChild(j)
                     # no increment
                     continue
@@ -576,7 +576,7 @@ class MyForm(settingsmixin.SMainWindow):
                     if subwidget.folderName not in ("new", "trash", "sent"):
                         unread += db[toAddress][subwidget.folderName]
                     db[toAddress].pop(subwidget.folderName, None)
-                except:
+                except:  # noqa:E722
                     widget.takeChild(j)
                     # no increment
                     continue
@@ -1605,7 +1605,7 @@ class MyForm(settingsmixin.SMainWindow):
             try:
                 addressVersionNumber = int(
                     dialog.lineEditAddressVersionNumber.text())
-            except:
+            except:  # noqa:E722
                 QtGui.QMessageBox.about(
                     self,
                     _translate("MainWindow", "Bad address version number"),
@@ -1834,7 +1834,7 @@ class MyForm(settingsmixin.SMainWindow):
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
-                    except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                    except:  # noqa:E722 # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
                         newlinePosition = 0
                     if newlinePosition > 1:
                         sent.item(i, 3).setText(
@@ -1862,7 +1862,7 @@ class MyForm(settingsmixin.SMainWindow):
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
-                    except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                    except:  # noqa:E722 # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
                         newlinePosition = 0
                     if newlinePosition > 1:
                         sent.item(i, 3).setText(
@@ -2079,7 +2079,7 @@ class MyForm(settingsmixin.SMainWindow):
                     if status != 'success':
                         try:
                             toAddress = unicode(toAddress, 'utf-8', 'ignore')
-                        except:
+                        except:  # noqa:E722
                             pass
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
 
@@ -3163,7 +3163,7 @@ class MyForm(settingsmixin.SMainWindow):
         try:
             subjectAtCurrentInboxRow = str(tableWidget.item(
                 currentInboxRow, 2).data(QtCore.Qt.UserRole))
-        except:
+        except:  # noqa:E722
             subjectAtCurrentInboxRow = ''
 
         # Retrieve the message data out of the SQL database
@@ -3438,7 +3438,7 @@ class MyForm(settingsmixin.SMainWindow):
                 return self.ui.treeWidgetSubscriptions
             else:
                 return self.ui.treeWidgetYourIdentities
-        except:
+        except:  # noqa:E722
             return self.ui.treeWidgetYourIdentities
 
     def getCurrentMessagelist(self):
@@ -3460,7 +3460,7 @@ class MyForm(settingsmixin.SMainWindow):
                 return self.ui.tableWidgetInboxSubscriptions
             else:
                 return self.ui.tableWidgetInbox
-        except:
+        except:  # noqa:E722
             return self.ui.tableWidgetInbox
 
     def getCurrentMessageId(self):
@@ -3489,7 +3489,7 @@ class MyForm(settingsmixin.SMainWindow):
                 return self.ui.textEditInboxSubscriptions
             else:
                 return self.ui.textEditInboxMessage
-        except:
+        except:  # noqa:E722
             return self.ui.textEditInboxMessage
 
     def getCurrentSearchLine(self, currentIndex=None, retObj=False):
