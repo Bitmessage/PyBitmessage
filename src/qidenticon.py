@@ -40,6 +40,7 @@ Returns an instance of :class:`QPixmap` which have generated identicon image.
 ``size`` specifies `patch size`. Generated image size is 3 * ``size``.
 """
 
+import six.moves
 try:
     from PyQt5 import QtCore, QtGui
 except ImportError:
@@ -93,14 +94,14 @@ class IdenticonRendererBase(object):
         # side patch
         kwds['foreColor'] = foreColor
         kwds['patch_type'] = side[0]
-        for i in range(4):
+        for i in six.moves.range(4):
             pos = [(1, 0), (2, 1), (1, 2), (0, 1)][i]
             image = self.drawPatchQt(pos, side[2] + 1 + i, side[1], **kwds)
 
         # corner patch
         kwds['foreColor'] = secondColor
         kwds['patch_type'] = corner[0]
-        for i in range(4):
+        for i in six.moves.range(4):
             pos = [(0, 0), (2, 0), (2, 2), (0, 2)][i]
             image = self.drawPatchQt(pos, corner[2] + 1 + i, corner[1], **kwds)
 
