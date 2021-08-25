@@ -82,7 +82,7 @@ def _set_idle():
             pid = win32api.GetCurrentProcessId()
             handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
             win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
-        except:
+        except:  # noqa:E722
             # Windows 64-bit
             pass
 
@@ -116,11 +116,11 @@ def _doFastPoW(target, initialHash):
     from multiprocessing import Pool, cpu_count
     try:
         pool_size = cpu_count()
-    except:
+    except:  # noqa:E722
         pool_size = 4
     try:
         maxCores = BMConfigParser().getint('bitmessagesettings', 'maxcores')
-    except:
+    except:  # noqa:E722
         maxCores = 99999
     if pool_size > maxCores:
         pool_size = maxCores
@@ -135,7 +135,7 @@ def _doFastPoW(target, initialHash):
             try:
                 pool.terminate()
                 pool.join()
-            except:
+            except:  # noqa:E722
                 pass
             raise StopIteration("Interrupted")
         for i in range(pool_size):
@@ -281,7 +281,7 @@ def buildCPoW():
             notifyBuild(True)
         else:
             notifyBuild(True)
-    except:
+    except:  # noqa:E722
         notifyBuild(True)
 
 
@@ -296,14 +296,14 @@ def run(target, initialHash):
             return _doGPUPoW(target, initialHash)
         except StopIteration:
             raise
-        except:
+        except:  # noqa:E722
             pass  # fallback
     if bmpow:
         try:
             return _doCPoW(target, initialHash)
         except StopIteration:
             raise
-        except:
+        except:  # noqa:E722
             pass  # fallback
     if paths.frozen == "macosx_app" or not paths.frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
@@ -315,13 +315,13 @@ def run(target, initialHash):
         except StopIteration:
             logger.error("Fast PoW got StopIteration")
             raise
-        except:
+        except:  # noqa:E722
             logger.error("Fast PoW got exception:", exc_info=True)
     try:
         return _doSafePoW(target, initialHash)
     except StopIteration:
         raise
-    except:
+    except:  # noqa:E722
         pass  # fallback
 
 
@@ -378,7 +378,7 @@ def init():
                 ))[0])
             except (OSError, IndexError):
                 bso = None
-        except:
+        except:  # noqa:E722
             bso = None
         else:
             logger.info("Loaded C PoW DLL %s", bitmsglib)
@@ -386,7 +386,7 @@ def init():
         try:
             bmpow = bso.BitmessagePOW
             bmpow.restype = ctypes.c_ulonglong
-        except:
+        except:  # noqa:E722
             bmpow = None
     else:
         bmpow = None
