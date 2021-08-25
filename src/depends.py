@@ -303,7 +303,7 @@ def check_openssl():
                 ' OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC),'
                 ' ECDH, and ECDSA enabled.')
             return False
-        matches = cflags_regex.findall(openssl_cflags)
+        matches = cflags_regex.findall(openssl_cflags.decode('utf-8', "ignore"))
         if matches:
             logger.error(
                 'This OpenSSL library is missing the following required'
@@ -423,6 +423,10 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage does not support Python 3+. Python 2.7.4'
             ' or greater is required. Python 2.7.18 is recommended.')
         sys.exit()
+
+    # FIXME: This needs to be uncommented when more of the code is python3 compatible
+    # if sys.hexversion >= 0x3000000 and sys.hexversion < 0x3060000:
+    #     print("PyBitmessage requires python >= 3.6 if using python 3")
 
     check_functions = [check_ripemd160, check_sqlite, check_openssl]
     if optional:
