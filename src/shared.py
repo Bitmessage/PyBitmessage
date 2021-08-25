@@ -133,8 +133,8 @@ def reloadMyAddressHashes():
                         highlevelcrypto.makeCryptor(privEncryptionKey)
                     myAddressesByHash[hashobj] = addressInKeysFile
                     tag = hashlib.sha512(hashlib.sha512(
-                        encodeVarint(addressVersionNumber) +
-                        encodeVarint(streamNumber) + hashobj).digest()).digest()[32:]
+                        encodeVarint(addressVersionNumber)
+                        + encodeVarint(streamNumber) + hashobj).digest()).digest()[32:]
                     myAddressesByTag[tag] = addressInKeysFile
             else:
                 logger.error(
@@ -168,15 +168,15 @@ def reloadBroadcastSendersForWhichImWatching():
 
         if addressVersionNumber <= 3:
             privEncryptionKey = hashlib.sha512(
-                encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + hashobj
+                encodeVarint(addressVersionNumber)
+                + encodeVarint(streamNumber) + hashobj
             ).digest()[:32]
             MyECSubscriptionCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersionNumber) +
-                encodeVarint(streamNumber) + hashobj
+                encodeVarint(addressVersionNumber)
+                + encodeVarint(streamNumber) + hashobj
             ).digest()).digest()
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
@@ -187,9 +187,9 @@ def reloadBroadcastSendersForWhichImWatching():
 def fixPotentiallyInvalidUTF8Data(text):
     """Sanitise invalid UTF-8 strings"""
     try:
-        unicode(text, 'utf-8')
+        text.decode('utf-8')
         return text
-    except:
+    except UnicodeDecodeError:
         return 'Part of the message is corrupt. The message cannot be' \
             ' displayed the normal way.\n\n' + repr(text)
 
@@ -221,7 +221,7 @@ def checkSensitiveFilePermissions(filename):
                 'Skipping file permissions check for %s.'
                 ' Filesystem fuseblk detected.', filename)
             return True
-    except:
+    except:  # noqa:E722
         # Swallow exception here, but we might run into trouble later!
         logger.error('Could not determine filesystem type. %s', filename)
     present_permissions = os.stat(filename)[0]
