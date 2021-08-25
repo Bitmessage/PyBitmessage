@@ -94,7 +94,7 @@ class namecoinConnection(object):
                 if not res:
                     return (tr._translate(
                         "MainWindow", 'The name %1 was not found.'
-                    ).arg(unicode(string)), None)
+                    ).arg(string.decode('utf-8')), None)
             else:
                 assert False
         except RPCError as exc:
@@ -105,11 +105,11 @@ class namecoinConnection(object):
                 errmsg = exc.error
             return (tr._translate(
                 "MainWindow", 'The namecoin query failed (%1)'
-            ).arg(unicode(errmsg)), None)
+            ).arg(errmsg.decode('utf-8')), None)
         except AssertionError:
             return (tr._translate(
                 "MainWindow", 'Unknown namecoin interface type: %1'
-            ).arg(unicode(self.nmctype)), None)
+            ).arg(self.nmctype.decode('utf-8')), None)
         except Exception:
             logger.exception("Namecoin query exception")
             return (tr._translate(
@@ -133,7 +133,7 @@ class namecoinConnection(object):
             tr._translate(
                 "MainWindow",
                 'The name %1 has no associated Bitmessage address.'
-            ).arg(unicode(string)), None)
+            ).arg(string.decode('utf-8')), None)
 
     def test(self):
         """
@@ -162,7 +162,7 @@ class namecoinConnection(object):
                     tr._translate(
                         "MainWindow",
                         'Success!  Namecoind version %1 running.').arg(
-                            unicode(versStr)))
+                            versStr.decode('utf-8')))
 
             elif self.nmctype == "nmcontrol":
                 res = self.callRPC("data", ["status"])
@@ -235,9 +235,9 @@ class namecoinConnection(object):
                 result = resp.read()
                 if resp.status != 200:
                     raise Exception("Namecoin returned status %i: %s" % (resp.status, resp.reason))
-            except:
+            except:  # noqa:E722
                 logger.info("HTTP receive error")
-        except:
+        except:  # noqa:E722
             logger.info("HTTP connection error")
 
         return result
