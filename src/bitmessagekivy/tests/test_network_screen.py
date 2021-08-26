@@ -30,5 +30,5 @@ class NetworkStatusScreen(TeleniumTestProcess):
         self.assertExists("//ScreenManager[@current=\"networkstat\"]", timeout=5)
         # Clicking on Processes Tab
         self.cli.wait_click('//NetworkStat/MDTabs[0]//MDTabsLabel[@text=\"Processes\"]', timeout=3)
-        # this is for checking current screen
-        self.assertTrue('//NetworkStat/MDTabs[@disabled]', 'False')
+        # this is for checking current sub-tab
+        self.assertTrue('//NetworkStat/RelativeLayout[1]/Tab[@disabled]', 'False')
