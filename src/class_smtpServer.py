@@ -55,7 +55,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
                 self.push('235 2.7.0 Authentication successful')
             else:
                 raise Exception("Auth fail")
-        except:
+        except:  # noqa:E722
             self.push('501 Authentication fail')
 
     def smtp_DATA(self, arg):
@@ -108,7 +108,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         ret = []
         for h in decode_header(self.msg_headers[hdr]):
             if h[1]:
-                ret.append(unicode(h[0], h[1]))
+                ret.append(h[0].decode(h[1]))
             else:
                 ret.append(h[0].decode("utf-8", errors='replace'))
 
@@ -123,7 +123,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             return
         try:
             self.msg_headers = Parser().parsestr(data)
-        except:
+        except:  # noqa:E722
             logger.error('Invalid headers')
             return
 
@@ -149,7 +149,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
         try:
             msg_subject = self.decode_header('subject')[0]
-        except:
+        except:  # noqa:E722
             msg_subject = "Subject missing..."
 
         msg_tmp = email.message_from_string(data)
