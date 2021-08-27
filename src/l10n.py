@@ -100,7 +100,7 @@ def formatTimestamp(timestamp=None):
     if timestamp is not None and not isinstance(timestamp, int):
         try:
             timestamp = int(timestamp)
-        except:
+        except:  # noqa:E722
             timestamp = None
 
     # timestamp can't be less than 0.
