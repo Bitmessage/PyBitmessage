@@ -5,6 +5,7 @@ import platform
 import shutil
 import sys
 
+from importlib import import_module
 from setuptools import setup, Extension
 from setuptools.command.install import install
 
@@ -27,7 +28,7 @@ EXTRAS_REQUIRE = {
 
 
 class InstallCmd(install):
-    '''Install cmd'''
+    """Custom setuptools install command preparing icons"""
 
     def run(self):
         # prepare icons directories
@@ -86,7 +87,7 @@ if __name__ == "__main__":
             "msgpack-python" if msgpack.version[:2] < (0, 6) else "msgpack")
     except ImportError:
         try:
-            import umsgpack  # noqa:F401
+            import_module('umsgpack')
             installRequires.append("umsgpack")
         except ImportError:
             packages += ['pybitmessage.fallback.umsgpack']
