@@ -11,7 +11,7 @@ import socket
 import sys
 
 import defaults
-import tr  # translate
+from tr import _translate  # translate
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from debug import logger
@@ -70,31 +70,31 @@ class namecoinConnection(object):
         if self.nmctype == "namecoind":
             self.con = httplib.HTTPConnection(self.host, self.port, timeout=3)
 
-    def query(self, string):
+    def query(self, identity):
         """
         Query for the bitmessage address corresponding to the given identity
         string.  If it doesn't contain a slash, id/ is prepended.  We return
         the result as (Error, Address) pair, where the Error is an error
         message to display or None in case of success.
         """
-        slashPos = string.find("/")
+        slashPos = identity.find("/")
         if slashPos < 0:
-            display_name = string
-            string = "id/" + string
+            display_name = identity
+            identity = "id/" + identity
         else:
-            display_name = string.split("/")[1]
+            display_name = identity.split("/")[1]
 
         try:
             if self.nmctype == "namecoind":
-                res = self.callRPC("name_show", [string])
+                res = self.callRPC("name_show", [identity])
                 res = res["value"]
             elif self.nmctype == "nmcontrol":
-                res = self.callRPC("data", ["getValue", string])
+                res = self.callRPC("data", ["getValue", identity])
                 res = res["reply"]
                 if not res:
-                    return (tr._translate(
+                    return (_translate(
                         "MainWindow", 'The name %1 was not found.'
-                    ).arg(string.decode('utf-8')), None)
+                    ).arg(identity.decode('utf-8')), None)
             else:
                 assert False
         except RPCError as exc:
@@ -103,16 +103,16 @@ class namecoinConnection(object):
                 errmsg = exc.error["message"]
             else:
                 errmsg = exc.error
-            return (tr._translate(
+            return (_translate(
                 "MainWindow", 'The namecoin query failed (%1)'
             ).arg(errmsg.decode('utf-8')), None)
         except AssertionError:
-            return (tr._translate(
+            return (_translate(
                 "MainWindow", 'Unknown namecoin interface type: %1'
             ).arg(self.nmctype.decode('utf-8')), None)
         except Exception:
             logger.exception("Namecoin query exception")
-            return (tr._translate(
+            return (_translate(
                 "MainWindow", 'The namecoin query failed.'), None)
 
         try:
@@ -130,10 +130,10 @@ class namecoinConnection(object):
         return (
             None, "%s <%s>" % (display_name, res)
         ) if valid else (
-            tr._translate(
+            _translate(
                 "MainWindow",
                 'The name %1 has no associated Bitmessage address.'
-            ).arg(string.decode('utf-8')), None)
+            ).arg(identity.decode('utf-8')), None)
 
     def test(self):
         """
@@ -159,7 +159,7 @@ class namecoinConnection(object):
                     versStr = "0.%d.%d.%d" % (v1, v2, v3)
                 message = (
                     'success',
-                    tr._translate(
+                    _translate(
                         "MainWindow",
                         'Success!  Namecoind version %1 running.').arg(
                             versStr.decode('utf-8')))
@@ -168,10 +168,10 @@ class namecoinConnection(object):
                 res = self.callRPC("data", ["status"])
                 prefix = "Plugin data running"
                 if ("reply" in res) and res["reply"][:len(prefix)] == prefix:
-                    return ('success', tr._translate("MainWindow", 'Success!  NMControll is up and running.'))
+                    return ('success', _translate("MainWindow", 'Success!  NMControll is up and running.'))
 
                 logger.error("Unexpected nmcontrol reply: %s", res)
-                message = ('failed', tr._translate("MainWindow", 'Couldn\'t understand NMControl.'))
+                message = ('failed', _translate("MainWindow", 'Couldn\'t understand NMControl.'))
 
             else:
                 print("Unsupported Namecoin type")
@@ -183,7 +183,7 @@ class namecoinConnection(object):
             logger.info("Namecoin connection test failure")
             return (
                 'failed',
-                tr._translate(
+                _translate(
                     "MainWindow", "The connection to namecoin failed.")
             )
 
