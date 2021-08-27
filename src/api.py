@@ -642,7 +642,7 @@ class BMRPCDispatcher(object):
                 % type(eighteenByteRipe))
         label = self._decode(label, "base64")
         try:
-            unicode(label, 'utf-8')
+            label.decode('utf-8')
         except UnicodeDecodeError:
             raise APIError(17, 'Label is not valid UTF-8 data.')
         queues.apiAddressGeneratorReturnQueue.queue.clear()
@@ -773,7 +773,7 @@ class BMRPCDispatcher(object):
         # It would be nice to make the label the passphrase but it is
         # possible that the passphrase contains non-utf-8 characters.
         try:
-            unicode(passphrase, 'utf-8')
+            passphrase.decode('utf-8')
             label = str_chan + ' ' + passphrase
         except UnicodeDecodeError:
             label = str_chan + ' ' + repr(passphrase)
@@ -805,7 +805,7 @@ class BMRPCDispatcher(object):
         # It would be nice to make the label the passphrase but it is
         # possible that the passphrase contains non-utf-8 characters.
         try:
-            unicode(passphrase, 'utf-8')
+            passphrase.decode('utf-8')
             label = str_chan + ' ' + passphrase
         except UnicodeDecodeError:
             label = str_chan + ' ' + repr(passphrase)
@@ -1192,7 +1192,7 @@ class BMRPCDispatcher(object):
         if label:
             label = self._decode(label, "base64")
             try:
-                unicode(label, 'utf-8')
+                label.decode('utf-8')
             except UnicodeDecodeError:
                 raise APIError(17, 'Label is not valid UTF-8 data.')
         self._verifyAddress(address)
