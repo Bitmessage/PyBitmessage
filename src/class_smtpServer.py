@@ -28,6 +28,11 @@ logger = logging.getLogger('default')
 # pylint: disable=attribute-defined-outside-init
 
 
+class SmtpServerChannelException(Exception):
+    """Generic smtp server channel exception."""
+    pass
+
+
 class smtpServerChannel(smtpd.SMTPChannel):
     """Asyncore channel for SMTP protocol (server)"""
     def smtp_EHLO(self, arg):
@@ -54,7 +59,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
                 self.auth = True
                 self.push('235 2.7.0 Authentication successful')
             else:
-                raise Exception("Auth fail")
+                raise SmtpServerChannelException("Auth fail")
         except:  # noqa:E722
             self.push('501 Authentication fail')
 
