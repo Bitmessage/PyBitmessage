@@ -94,7 +94,7 @@ class namecoinConnection(object):
                 if not res:
                     return (_translate(
                         "MainWindow", 'The name %1 was not found.'
-                    ).arg(identity.decode('utf-8')), None)
+                    ).arg(identity.decode('utf-8', 'ignore')), None)
             else:
                 assert False
         except RPCError as exc:
@@ -105,11 +105,11 @@ class namecoinConnection(object):
                 errmsg = exc.error
             return (_translate(
                 "MainWindow", 'The namecoin query failed (%1)'
-            ).arg(errmsg.decode('utf-8')), None)
+            ).arg(errmsg.decode('utf-8', 'ignore')), None)
         except AssertionError:
             return (_translate(
                 "MainWindow", 'Unknown namecoin interface type: %1'
-            ).arg(self.nmctype.decode('utf-8')), None)
+            ).arg(self.nmctype.decode('utf-8', 'ignore')), None)
         except Exception:
             logger.exception("Namecoin query exception")
             return (_translate(
@@ -133,7 +133,7 @@ class namecoinConnection(object):
             _translate(
                 "MainWindow",
                 'The name %1 has no associated Bitmessage address.'
-            ).arg(identity.decode('utf-8')), None)
+            ).arg(identity.decode('utf-8', 'ignore')), None)
 
     def test(self):
         """
@@ -162,7 +162,7 @@ class namecoinConnection(object):
                     _translate(
                         "MainWindow",
                         'Success!  Namecoind version %1 running.').arg(
-                            versStr.decode('utf-8')))
+                            versStr.decode('utf-8', 'ignore')))
 
             elif self.nmctype == "nmcontrol":
                 res = self.callRPC("data", ["status"])
