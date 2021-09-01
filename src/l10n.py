@@ -7,6 +7,7 @@ import sys
 import time
 
 from bmconfigparser import BMConfigParser
+from six.moves import range
 
 logger = logging.getLogger('default')
 
