@@ -155,7 +155,8 @@ class singleWorker(StoppableThread):
                 try:
                     self.sendBroadcast()
                 except:  # noqa:E722
-                    self.logger.warning("sendBroadcast didn't work")
+                    self.logger.warning(
+                        "sendBroadcast didn't work", exc_info=True)
             elif command == 'doPOWForMyV2Pubkey':
                 try:
                     self.doPOWForMyV2Pubkey(data)
