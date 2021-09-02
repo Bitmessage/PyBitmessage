@@ -11,11 +11,10 @@ import socket
 import sys
 
 import defaults
-from tr import _translate  # translate
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from debug import logger
-
+from tr import _translate  # translate
 
 configSection = "bitmessagesettings"
 
