@@ -28,7 +28,7 @@ from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
 from network.node import Node, Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
-from queues import excQueue
+from queues import excQueue, workerQueue
 from version import softwareVersion
 
 from common import cleanup
@@ -350,6 +350,18 @@ class TestCore(unittest.TestCase):
         peer, _, ua = decoded[4:7]
         streams = decoded[7:]
         self.assertEqual(streams, [1, 2, 3])
+
+    def test_worker_exceptions(self):
+        """try to provoke an exception in singleWorker"""
+        for _ in range(5):
+            helper_sent.insert(
+                fromAddress='BM-2cXrFSw75fT5FP7qWbM86jpMTSGFBD7uLU',
+                subject='test subject',
+                message='test message',
+                status='broadcastqueued'
+            )
+        workerQueue.put(('sendbroadcast', ''))
+        time.sleep(5)
 
     def test_insert_method_msgid(self):
         """Test insert method of helper_sent module with message sending"""
