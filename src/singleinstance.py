@@ -55,12 +55,7 @@ class singleinstance(object):
                 )
             except OSError as e:
                 if e.errno == 13:
-                    print(
-                        'Another instance of this application'
-                        ' is already running'
-                    )
-                    sys.exit(-1)
-                print(e.errno)
+                    sys.exit('Another instance of this application is already running')
                 raise
             else:
                 pidLine = "%i\n" % self.lockPid
@@ -75,8 +70,7 @@ class singleinstance(object):
                     fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 self.lockPid = os.getpid()
             except IOError:
-                print('Another instance of this application is already running')
-                sys.exit(-1)
+                sys.exit('Another instance of this application is already running')
             else:
                 pidLine = "%i\n" % self.lockPid
                 self.fp.truncate(0)
