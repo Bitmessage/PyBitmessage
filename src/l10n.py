@@ -6,8 +6,9 @@ import re
 import sys
 import time
 
-from bmconfigparser import BMConfigParser
 from six.moves import range
+
+from bmconfigparser import BMConfigParser
 
 logger = logging.getLogger('default')
 
@@ -101,7 +102,7 @@ def formatTimestamp(timestamp=None):
     if timestamp is not None and not isinstance(timestamp, int):
         try:
             timestamp = int(timestamp)
-        except:  # noqa:E722
+        except (ValueError, TypeError):
             timestamp = None
 
     # timestamp can't be less than 0.
