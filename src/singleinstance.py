@@ -97,7 +97,7 @@ class singleinstance(object):
                 pass
 
             return
-        print("Cleaning up lockfile")
+
         try:
             if sys.platform == 'win32':
                 if hasattr(self, 'fd'):
