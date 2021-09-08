@@ -53,15 +53,15 @@ class namecoinConnection(object):
         """
         if options is None:
             self.nmctype = BMConfigParser().get(
-                                configSection, "namecoinrpctype")
+                configSection, "namecoinrpctype")
             self.host = BMConfigParser().get(
-                                configSection, "namecoinrpchost")
+                configSection, "namecoinrpchost")
             self.port = int(BMConfigParser().get(
-                                configSection, "namecoinrpcport"))
+                configSection, "namecoinrpcport"))
             self.user = BMConfigParser().get(
-                                configSection, "namecoinrpcuser")
+                configSection, "namecoinrpcuser")
             self.password = BMConfigParser().get(
-                                configSection, "namecoinrpcpassword")
+                configSection, "namecoinrpcpassword")
         else:
             self.nmctype = options["type"]
             self.host = options["host"]
@@ -176,8 +176,8 @@ class namecoinConnection(object):
                         _translate(
                             "MainWindow",
                             "Success!  NMControll is up and running."
-                            )
                         )
+                    )
 
                 logger.error("Unexpected nmcontrol reply: %s", res)
                 message = (
@@ -185,8 +185,8 @@ class namecoinConnection(object):
                     _translate(
                         "MainWindow",
                         "Couldn\'t understand NMControl."
-                        )
                     )
+                )
 
             else:
                 sys.exit("Unsupported Namecoin type")
@@ -247,6 +247,7 @@ class namecoinConnection(object):
             self.con.send(data)
         except:  # noqa:E722
             logger.info("HTTP connection error")
+            return None
 
         try:
             resp = self.con.getresponse()
@@ -257,6 +258,7 @@ class namecoinConnection(object):
                     " %i: %s" % (resp.status, resp.reason))
         except:  # noqa:E722
             logger.info("HTTP receive error")
+            return None
 
         return result
 
