@@ -36,8 +36,8 @@ else:
         set_thread_name(self.name)
         threading.Thread.__bootstrap_original__(self)
     # pylint: disable=protected-access
-    threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
-    threading.Thread._Thread__bootstrap = _thread_name_hack
+    # threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
+    # threading.Thread._Thread__bootstrap = _thread_name_hack
 
 
 printLock = threading.Lock()
