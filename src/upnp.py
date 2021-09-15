@@ -191,7 +191,7 @@ class Router:  # pylint: disable=old-style-class
                 if errinfo:
                     logger.error("UPnP error: %s", respData)
                     raise UPnPError(errinfo[0].childNodes[0].data)
-            except:
+            except:  # noqa:E722
                 raise UPnPError("Unable to parse SOAP error: %s" % (respData))
         return resp
 
@@ -209,7 +209,7 @@ class uPnPThread(StoppableThread):
         super(uPnPThread, self).__init__(name="uPnPThread")
         try:
             self.extPort = BMConfigParser().getint('bitmessagesettings', 'extport')
-        except:
+        except:  # noqa:E722
             self.extPort = None
         self.localIP = self.getLocalIP()
         self.routers = []
@@ -242,7 +242,7 @@ class uPnPThread(StoppableThread):
             if time.time() - lastSent > self.sendSleep and not self.routers:
                 try:
                     self.sendSearchRouter()
-                except:
+                except:  # noqa:E722
                     pass
                 lastSent = time.time()
             try:
@@ -263,7 +263,7 @@ class uPnPThread(StoppableThread):
                                 newRouter.GetExternalIPAddress(),
                                 self.extPort
                             )
-                        except:
+                        except:  # noqa:E722
                             logger.debug('Failed to get external IP')
                         else:
                             with knownnodes.knownNodesLock:
@@ -275,18 +275,18 @@ class uPnPThread(StoppableThread):
                         break
             except socket.timeout:
                 pass
-            except:
+            except:  # noqa:E722
                 logger.error("Failure running UPnP router search.", exc_info=True)
             for router in self.routers:
                 if router.extPort is None:
                     self.createPortMapping(router)
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
-        except:
+        except:  # noqa:E722
             pass
         try:
             self.sock.close()
-        except:
+        except:  # noqa:E722
             pass
         deleted = False
         for router in self.routers:
@@ -317,7 +317,7 @@ class uPnPThread(StoppableThread):
         try:
             logger.debug("Sending UPnP query")
             self.sock.sendto(ssdpRequest, (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
-        except:
+        except:  # noqa:E722
             logger.exception("UPnP send query failed")
 
     def createPortMapping(self, router):
