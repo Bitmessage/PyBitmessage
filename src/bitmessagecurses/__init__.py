@@ -130,7 +130,7 @@ def set_background_title(d, title):
     """Setting background title"""
     try:
         d.set_background_title(title)
-    except:
+    except:  # noqa:E722
         d.add_persistent_args(("--backtitle", title))
 
 
@@ -138,7 +138,7 @@ def scrollbox(d, text, height=None, width=None):
     """Setting scroll box"""
     try:
         d.scrollbox(text, height, width, exit_label="Continue")
-    except:
+    except:  # noqa:E722
         d.msgbox(text, height or 0, width or 0, ok_label="Continue")
 
 
@@ -1003,7 +1003,7 @@ def loadInbox():
                 tolabel = BROADCAST_STR
             else:
                 tolabel = BMConfigParser().get(toaddr, "label")
-        except:
+        except:  # noqa:E722
             tolabel = ""
         if tolabel == "":
             tolabel = toaddr

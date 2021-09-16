@@ -25,7 +25,7 @@ class smtpDeliver(StoppableThread):
         # pylint: disable=no-member
         try:
             queues.UISignallerQueue.put(("stopThread", "data"))
-        except:
+        except:  # noqa:E722
             pass
         super(smtpDeliver, self).stopThread()
 
@@ -78,7 +78,7 @@ class smtpDeliver(StoppableThread):
                         'Delivered via SMTP to %s through %s:%i ...',
                         to, u.hostname, u.port)
                     client.quit()
-                except:
+                except:  # noqa:E722
                     self.logger.error('smtp delivery error', exc_info=True)
             elif command == 'displayNewSentMessage':
                 toAddress, fromLabel, fromAddress, subject, message, ackdata = data

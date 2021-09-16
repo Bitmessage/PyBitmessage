@@ -134,7 +134,7 @@ class MsgDecode(object):
             raise MsgDecodeException("Malformed message")
         try:
             msgObj.process()
-        except:
+        except:  # noqa:E722
             raise MsgDecodeException("Malformed message")
         if msgType == "message":
             self.subject = msgObj.subject

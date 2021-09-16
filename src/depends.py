@@ -265,7 +265,7 @@ def check_openssl():
             path = ctypes.util.find_library('ssl')
             if path not in paths:
                 paths.append(path)
-        except:
+        except:  # noqa:E722
             pass
 
     openssl_version = None
@@ -432,7 +432,7 @@ def check_dependencies(verbose=False, optional=False):
     for check in check_functions:
         try:
             has_all_dependencies &= check()
-        except:
+        except:  # noqa:E722
             logger.exception('%s failed unexpectedly.', check.__name__)
             has_all_dependencies = False
 

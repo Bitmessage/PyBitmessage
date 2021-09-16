@@ -55,7 +55,7 @@ def loadConfig():
             logger.info('Loading config files from same directory as program.')
             needToCreateKeysFile = False
             state.appdata = paths.lookupExeFolder()
-        except:
+        except:  # noqa:E722
             # Could not load the keys.dat file in the program directory.
             # Perhaps it is in the appdata directory.
             state.appdata = paths.lookupAppdataFolder()

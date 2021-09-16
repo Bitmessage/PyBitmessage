@@ -95,7 +95,7 @@ def verify(msg, sig, hexPubkey):
         # old SHA1 algorithm.
         sigVerifyPassed = makePubCryptor(hexPubkey).verify(
             sig, msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
-    except:
+    except:  # noqa:E722
         sigVerifyPassed = False
     if sigVerifyPassed:
         # The signature check passed using SHA1
@@ -104,7 +104,7 @@ def verify(msg, sig, hexPubkey):
     try:
         return makePubCryptor(hexPubkey).verify(
             sig, msg, digest_alg=OpenSSL.EVP_sha256)
-    except:
+    except:  # noqa:E722
         return False
 
 
