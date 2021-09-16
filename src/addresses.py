@@ -15,7 +15,6 @@ ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 def encodeBase58(num, alphabet=ALPHABET):
     """Encode a number in Base X
-
     Args:
       num: The number to encode
       alphabet: The alphabet to use for encoding
@@ -159,13 +158,20 @@ def encodeAddress(version, stream, ripe):
             raise Exception(
                 'Programming error in encodeAddress: The length of'
                 ' a given ripe hash was not 20.')
-        ripe = ripe.lstrip(b'\x00')
+        try:
+            ripe = ripe.lstrip(b'\x00')
+        except TypeError:
+            ripe = ripe.lstrip(b'\x00'.decode())
 
-    storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
+    storedBinaryData = encodeVarint(version).decode() + encodeVarint(stream).decode() + ripe
 
     # Generate the checksum
     sha = hashlib.new('sha512')
-    sha.update(storedBinaryData)
+    try:
+        sha.update(storedBinaryData)
+    except TypeError:
+        sha.update(storedBinaryData.encode('utf-8'))
+
     currentHash = sha.digest()
     sha = hashlib.new('sha512')
     sha.update(currentHash)
@@ -173,7 +179,7 @@ def encodeAddress(version, stream, ripe):
 
     # FIXME: encodeBase58 should take binary data, to reduce conversions
     # encodeBase58(storedBinaryData + checksum)
-    asInt = int(hexlify(storedBinaryData) + hexlify(checksum), 16)
+    asInt = int(hexlify(storedBinaryData.encode()) + hexlify(checksum), 16)
     # should it be str? If yes, it should be everywhere in the code
     return 'BM-' + encodeBase58(asInt)
 
