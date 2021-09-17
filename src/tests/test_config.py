@@ -7,7 +7,7 @@ import tempfile
 import sys
 import os
 
-# from six.moves import configparser
+from pybitmessage import paths
 from pybitmessage.bmconfigparser import BMConfigParser
 
 test_config = {
@@ -91,13 +91,17 @@ class TestConfig(unittest.TestCase):
 
     def test_reset(self):
         """safeGetInt retuns provided default for bitmessagesettings option or 0"""
-        if sys.version_info[0] >= 3:
-            BMConfigParser().read_dict(test_config)
-        else:
-            BMConfigParser().read('src/tests/test_config.ini')
+
+        BMConfigParser().read(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)),
+                'test_pattern', 'test_config.ini'
+            )
+        )
+
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)
-        # pylint: disable=protected-access
+
         BMConfigParser()._reset()
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 500)

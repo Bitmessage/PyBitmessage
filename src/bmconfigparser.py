@@ -180,6 +180,7 @@ class BMConfigParser(SafeConfigParser):
                 self.remove_section(x)
 
         def read(self, filenames):
+            self._reset()
             SafeConfigParser.read(self, filenames)
             for section in self.sections():
                 for option in self.options(section):
