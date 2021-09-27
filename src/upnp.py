@@ -207,10 +207,7 @@ class uPnPThread(StoppableThread):
 
     def __init__(self):
         super(uPnPThread, self).__init__(name="uPnPThread")
-        try:
-            self.extPort = BMConfigParser().getint('bitmessagesettings', 'extport')
-        except:  # noqa:E722
-            self.extPort = None
+        self.extPort = BMConfigParser().safeGetInt('bitmessagesettings', 'extport', default=None)
         self.localIP = self.getLocalIP()
         self.routers = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
