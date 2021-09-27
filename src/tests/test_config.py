@@ -7,54 +7,52 @@ import tempfile
 import sys
 import os
 
+from six import StringIO
 from pybitmessage import paths
 from pybitmessage.bmconfigparser import BMConfigParser
 
-test_config = {
-    "bitmessagesettings": {
-        "maxaddrperstreamsend": 100,
-        "maxbootstrapconnections": 20,
-        "maxdownloadrate": 0,
-        "maxoutboundconnections": 8,
-        "maxtotalconnections": 200,
-        "maxuploadrate": 0,
-        "apiinterface": "127.0.0.1",
-        "apiport": 8442,
-        "udp": "True"
-    },
-    "threads": {
-        "receive": 3,
-    },
-    "network": {
-        "bind": "",
-        "dandelion": 90,
-    },
-    "inventory": {
-        "storage": "sqlite",
-        "acceptmismatch": "False",
-    },
-    "knownnodes": {
-        "maxnodes": 20000,
-    },
-    "zlib": {
-        "maxsize": 1048576
-    }
-}
+test_config = """[bitmessagesettings]
+maxaddrperstreamsend = 100
+maxbootstrapconnections = 10
+maxdownloadrate = 0
+maxoutboundconnections = 8
+maxtotalconnections = 100
+maxuploadrate = 0
+apiinterface = 127.0.0.1
+apiport = 8442
+udp = True
+
+[threads]
+receive = 3
+
+[network]
+bind = None
+dandelion = 90
+
+[inventory]
+storage = sqlite
+acceptmismatch = False
+
+[knownnodes]
+maxnodes = 15000
+
+[zlib]
+maxsize = 1048576"""
 
 
 class TestConfig(unittest.TestCase):
     """A test case for bmconfigparser"""
-    config_backup = tempfile.NamedTemporaryFile(suffix='.cfg').name
+    configfile = StringIO('')
 
     def setUp(self):
         """creates a backup of BMConfigparser current state"""
-        with open(self.config_backup, 'wb') as configfile:
-            BMConfigParser().write(configfile)
+        BMConfigParser().write(self.configfile)
+        self.configfile.seek(0)
 
     def tearDown(self):
         """restore to the backup of BMConfigparser"""
-        BMConfigParser().read(self.config_backup)
-        os.remove(self.config_backup)
+        BMConfigParser()._reset()
+        BMConfigParser().readfp(self.configfile)
 
     def test_safeGet(self):
         """safeGet retuns provided default for nonexistent option or None"""
@@ -70,7 +68,6 @@ class TestConfig(unittest.TestCase):
             False
         )
         # no arg for default
-        # pylint: disable=too-many-function-args
         with self.assertRaises(TypeError):
             BMConfigParser().safeGetBoolean(
                 'nonexistent', 'nonexistent', True)
@@ -91,13 +88,8 @@ class TestConfig(unittest.TestCase):
 
     def test_reset(self):
         """safeGetInt retuns provided default for bitmessagesettings option or 0"""
-
-        BMConfigParser().read(
-            os.path.join(
-                os.path.abspath(os.path.dirname(__file__)),
-                'test_pattern', 'test_config.ini'
-            )
-        )
+        test_config_object = StringIO(test_config)
+        BMConfigParser().readfp(test_config_object)
 
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)

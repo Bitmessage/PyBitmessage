@@ -200,6 +200,8 @@ class BMConfigParser(SafeConfigParser):
                     except configparser.InterpolationError:
                         continue
 
+        def readfp(self, file_obj):
+            SafeConfigParser.read_file(self, file_obj)
     else:
         @staticmethod
         def addresses():
