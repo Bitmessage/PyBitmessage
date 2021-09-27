@@ -45,7 +45,7 @@ def decodeBase58(string, alphabet=ALPHABET):
         for char in string:
             num *= base
             num += alphabet.index(char)
-    except:  # noqa:E722  # ValueError
+    except ValueError:
         # character not found (like a space character or a 0)
         return 0
     return num

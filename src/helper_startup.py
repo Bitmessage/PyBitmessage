@@ -49,13 +49,17 @@ def loadConfig():
                 'Loading config files from directory specified'
                 ' on startup: %s', state.appdata)
     else:
-        config.read(paths.lookupExeFolder() + 'keys.dat')
         try:
-            config.get('bitmessagesettings', 'settingsversion')
+            config.read(paths.lookupExeFolder() + 'keys.dat')
+        except:  # noqa:E722
+            logger.info(
+                'Permission error in BMConfigParser().read() method for keys.dat file')
+
+        if config.safeGet('bitmessagesettings', 'settingsversion'):
             logger.info('Loading config files from same directory as program.')
             needToCreateKeysFile = False
             state.appdata = paths.lookupExeFolder()
-        except:  # noqa:E722
+        else:
             # Could not load the keys.dat file in the program directory.
             # Perhaps it is in the appdata directory.
             state.appdata = paths.lookupAppdataFolder()
