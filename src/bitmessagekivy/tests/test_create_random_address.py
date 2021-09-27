@@ -20,17 +20,18 @@ class CreateRandomAddress(TeleniumTestProcess):
         """Click on Proceed Button to Proceed to Next Screen."""
         # Checking current Screen(Login screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
-        # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # Clicking on Proceed Next Button
+        self.assertExists('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
         self.cli.wait_click(
             '//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
         # Checking Current Screen(Random Screen) after Clicking on Proceed Next Button 
         # self.assertExists("//Random[@name~=\"random\"]", timeout=2)
-        self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
-        self.cli.wait_click(
-            '//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
-
+        try:
+            self.assertExists("//ScreenManager[@current=\"random\"]", timeout=2)
+        except:
+            self.cli.wait_click(
+            '//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
+            self.assertExists("//ScreenManager[@current=\"random\"]", timeout=2)
 
     @ordered
     def test_random_screen(self):
@@ -62,6 +63,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Checking state of scrolled screen
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
         # Clicking on New Address Tab
+        self.assertExists('//NavigationItem[@text=\"New address\"]', timeout=5)
         self.cli.wait_click('//NavigationItem[@text=\"New address\"]', timeout=3)
         self.cli.sleep(1)
         # Checking current Screen(Login screen)
@@ -79,6 +81,10 @@ class CreateRandomAddress(TeleniumTestProcess):
     @ordered
     def test_select_address(self):
         """Select First Address From Drawer-Box"""
+        # This is for checking the Side nav Bar is closed
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # This is for checking the menu button is appeared
+        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
         # this is for opening Nav drawer
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
@@ -87,10 +93,15 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.drag("//NavigationItem[@text=\"Address Book\"]", "//NavigationItem[@text=\"Settings\"]")
         # Checking scroll state
         self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
-        # Clicking on Address Dropdown
+        # Click to open Address Dropdown
         self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
+        # Checking the state of dropdown (Should be open)
         self.assertNotEqual('//NavigationItem[0]/CustomSpinner[@is_open]', False)
-        # Select address fron Address Dropdown
-        self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
-        # Checking Landing Screen(Inbox)
-        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
+        try:
+            # Select address fron Address Dropdown
+            self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
+            # Checking current screen
+            self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
+        except:
+            self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
+            self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
