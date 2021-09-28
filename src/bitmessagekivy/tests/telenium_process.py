@@ -29,15 +29,6 @@ def cleanup(files=_files):
             pass
 
 
-def populate_test_data():
-    """Set temp data in tmp directory"""
-    for file_name in tmp_db_file:
-        old_source_file = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)), 'sampleData', file_name)
-        new_destination_file = os.path.join(os.environ['BITMESSAGE_HOME'], file_name)
-        shutil.copyfile(old_source_file, new_destination_file)
-
-
 class TeleniumTestProcess(TeleniumTestCase):
     """Setting Screen Functionality Testing"""
     cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'main_test.py')]
@@ -46,8 +37,17 @@ class TeleniumTestProcess(TeleniumTestCase):
     def setUpClass(cls):
         """Setupclass is for setting temp environment"""
         os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
-        populate_test_data()
+        cls.populate_test_data()
         super(TeleniumTestProcess, cls).setUpClass()
+
+    @staticmethod
+    def populate_test_data():
+        """Set temp data in tmp directory"""
+        for file_name in tmp_db_file:
+            old_source_file = os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), 'sampleData', file_name)
+            new_destination_file = os.path.join(os.environ['BITMESSAGE_HOME'], file_name)
+            shutil.copyfile(old_source_file, new_destination_file)
 
     @classmethod
     def tearDownClass(cls):

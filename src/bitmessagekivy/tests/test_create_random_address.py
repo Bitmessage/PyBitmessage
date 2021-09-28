@@ -1,19 +1,15 @@
-import os
-import pdb
-import tempfile
-from .telenium_process import TeleniumTestProcess, cleanup
+from telenium.client import TeleniumHttpException
+from .telenium_process import TeleniumTestProcess
 from .common import ordered
 from random import choice
 from string import ascii_lowercase
 
 class CreateRandomAddress(TeleniumTestProcess):
     """This is for testing randrom address creation"""
-
+    
     @classmethod
-    def setUpClass(cls):
-        os.environ["BITMESSAGE_HOME"] = tempfile.gettempdir()
-        cleanup()
-        super(TeleniumTestProcess, cls).setUpClass()
+    def populate_test_data(cls):
+        pass
 
     @ordered
     def test_login_screen(self):
@@ -21,17 +17,14 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Checking current Screen(Login screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
         # Clicking on Proceed Next Button
-        self.assertExists('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
-        self.cli.wait_click(
-            '//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=2)
-        # Checking Current Screen(Random Screen) after Clicking on Proceed Next Button 
-        # self.assertExists("//Random[@name~=\"random\"]", timeout=2)
+        # self.assertExists('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
+        self.cli.wait_click('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
+        # Checking Current Screen(Random Screen) after Clicking on "Proceed Next" Button 
         try:
-            self.assertExists("//ScreenManager[@current=\"random\"]", timeout=2)
-        except:
-            self.cli.wait_click(
-            '//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
-            self.assertExists("//ScreenManager[@current=\"random\"]", timeout=2)
+            self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
+        except TeleniumHttpException:
+            self.cli.wait_click('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
+            self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
 
     @ordered
     def test_random_screen(self):
@@ -102,6 +95,6 @@ class CreateRandomAddress(TeleniumTestProcess):
             self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
             # Checking current screen
             self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
-        except:
+        except TeleniumHttpException:
             self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
             self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
