@@ -3,12 +3,8 @@
 Various tests for config
 """
 import unittest
-import tempfile
-import sys
-import os
 
 from six import StringIO
-from pybitmessage import paths
 from pybitmessage.bmconfigparser import BMConfigParser
 
 test_config = """[bitmessagesettings]
@@ -51,7 +47,8 @@ class TestConfig(unittest.TestCase):
 
     def tearDown(self):
         """restore to the backup of BMConfigparser"""
-        BMConfigParser()._reset()
+        # pylint: protected-access=ignore
+        BMConfigParser()._reset()  
         BMConfigParser().readfp(self.configfile)
 
     def test_safeGet(self):
@@ -68,6 +65,7 @@ class TestConfig(unittest.TestCase):
             False
         )
         # no arg for default
+        # pylint: disable=too-many-function-args
         with self.assertRaises(TypeError):
             BMConfigParser().safeGetBoolean(
                 'nonexistent', 'nonexistent', True)
@@ -93,7 +91,7 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)
-
+        # pylint: protected-access=ignore
         BMConfigParser()._reset()
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 500)

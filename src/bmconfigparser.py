@@ -165,19 +165,19 @@ class BMConfigParser(SafeConfigParser):
         but override the "raw" argument to always True"""
         return SafeConfigParser.items(self, section, True, variables)
 
+    def _reset(self):
+        """Reset current config. There doesn't appear to be a built in
+            method for this"""
+        sections = self.sections()
+        for x in sections:
+            self.remove_section(x)
+
     if sys.version_info[0] == 3:
         @staticmethod
         def addresses(hidden=False):
             """Return a list of local bitmessage addresses (from section labels)"""
             return [x for x in BMConfigParser().sections() if x.startswith('BM-') and (
                     hidden or not BMConfigParser().safeGetBoolean(x, 'hidden'))]
-
-        def _reset(self):
-            """Reset current config. There doesn't appear to be a built in
-               method for this"""
-            sections = self.sections()
-            for x in sections:
-                self.remove_section(x)
 
         def read(self, filenames):
             self._reset()
@@ -200,21 +200,15 @@ class BMConfigParser(SafeConfigParser):
                     except configparser.InterpolationError:
                         continue
 
-        def readfp(self, file_obj):
-            SafeConfigParser.read_file(self, file_obj)
+        def readfp(self, fp, filename=None):
+            # pylint: no-member=ignore
+            SafeConfigParser.read_file(self, fp)
     else:
         @staticmethod
         def addresses():
             """Return a list of local bitmessage addresses (from section labels)"""
             return [
                 x for x in BMConfigParser().sections() if x.startswith('BM-')]
-
-        def _reset(self):
-            """Reset current config. There doesn't appear to be a built in
-               method for this"""
-            sections = self.sections()
-            for x in sections:
-                self.remove_section(x)
 
         def read(self, filenames):
             """Read config and populate defaults"""
