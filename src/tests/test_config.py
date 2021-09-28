@@ -47,8 +47,8 @@ class TestConfig(unittest.TestCase):
 
     def tearDown(self):
         """restore to the backup of BMConfigparser"""
-        # pylint: protected-access=ignore
-        BMConfigParser()._reset()  
+        # pylint: disable=protected-access
+        BMConfigParser()._reset()
         BMConfigParser().readfp(self.configfile)
 
     def test_safeGet(self):
@@ -91,7 +91,7 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)
-        # pylint: protected-access=ignore
+        # pylint: disable=protected-access
         BMConfigParser()._reset()
         self.assertEqual(
             BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 500)

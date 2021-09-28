@@ -201,7 +201,7 @@ class BMConfigParser(SafeConfigParser):
                         continue
 
         def readfp(self, fp, filename=None):
-            # pylint: no-member=ignore
+            # pylint: disable=no-member
             SafeConfigParser.read_file(self, fp)
     else:
         @staticmethod
