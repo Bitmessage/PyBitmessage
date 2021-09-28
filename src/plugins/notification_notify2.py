@@ -4,8 +4,8 @@ Notification plugin using notify2
 """
 
 import gi
-gi.require_version('Notify', '0.7')
 from gi.repository import Notify
+gi.require_version('Notify', '0.7')
 
 Notify.init('pybitmessage')
 
