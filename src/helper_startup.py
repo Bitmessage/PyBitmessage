@@ -49,11 +49,7 @@ def loadConfig():
                 'Loading config files from directory specified'
                 ' on startup: %s', state.appdata)
     else:
-        try:
-            config.read(paths.lookupExeFolder() + 'keys.dat')
-        except:  # noqa:E722
-            logger.info(
-                'Permission error in BMConfigParser().read() method for keys.dat file')
+        config.read(paths.lookupExeFolder() + 'keys.dat')
 
         if config.safeGet('bitmessagesettings', 'settingsversion'):
             logger.info('Loading config files from same directory as program.')
