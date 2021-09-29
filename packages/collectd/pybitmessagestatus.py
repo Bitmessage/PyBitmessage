@@ -7,10 +7,12 @@ import xmlrpclib
 pybmurl = ""
 api = ""
 
+
 def init_callback():
     global api
     api = xmlrpclib.ServerProxy(pybmurl)
     collectd.info('pybitmessagestatus.py init done')
+
 
 def config_callback(ObjConfiguration):
     global pybmurl
@@ -28,17 +30,19 @@ def config_callback(ObjConfiguration):
             apiInterface = node.values[0]
         elif key.lower() == "apiport" and node.values:
             apiPort = node.values[0]
-    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface+ ":" + str(int(apiPort)) + "/"
+    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface + ":" + str(int(apiPort)) + "/"
     collectd.info('pybitmessagestatus.py config done')
+
 
 def read_callback():
     try:
         clientStatus = json.loads(api.clientStatus())
-    except:
+    except (json.decoder.JSONDecodeError, TypeError()):
         collectd.info("Exception loading or parsing JSON")
         return
 
-    for i in ["networkConnections", "numberOfPubkeysProcessed", "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]:
+    for i in ["networkConnections", "numberOfPubkeysProcessed", 
+              "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]:
         metric = collectd.Values()
         metric.plugin = "pybitmessagestatus"
         if i[0:6] == "number":
@@ -48,9 +52,10 @@ def read_callback():
         metric.type_instance = i.lower()
         try:
             metric.values = [clientStatus[i]]
-        except:
+        except (NameError, KeyError):
             collectd.info("Value for %s missing" % (i))
         metric.dispatch()
+
 
 if __name__ == "__main__":
     main()
