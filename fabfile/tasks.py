@@ -46,13 +46,13 @@ def print_results(results, top, verbose, details):
     """Print an item with the appropriate verbosity / detail"""
 
     if verbose and results:
-        print ''.join(
+        print(''.join(
             [
                 os.linesep,
                 'total pycodestyle flake8 pylint path_to_file',
                 os.linesep,
             ]
-        )
+        ))
 
     for item in sort_and_slice(results, top):
 
@@ -66,23 +66,23 @@ def print_results(results, top, verbose, details):
             )
         else:
             line = item['path_to_file']
-        print line
+        print(line)
 
         if details:
-            print "pycodestyle:"
+            print("pycodestyle:")
             for detail in flatten(item['pycodestyle_violations']):
-                print detail
-            print
+                print(detail)
+            print()
 
-            print "flake8:"
+            print("flake8:")
             for detail in flatten(item['flake8_violations']):
-                print detail
-            print
+                print(detail)
+            print()
 
-            print "pylint:"
+            print("pylint:")
             for detail in flatten(item['pylint_violations']):
-                print detail
-            print
+                print(detail)
+            print()
 
 
 def sort_and_slice(results, top):
@@ -107,7 +107,7 @@ def generate_file_list(filename):
             if filename:
                 filename = os.path.abspath(filename)
                 if not os.path.exists(filename):
-                    print "Bad filename, specify a Python file"
+                    print("Bad filename, specify a Python file")
                     sys.exit(1)
                 else:
                     file_list = [filename]
@@ -303,7 +303,7 @@ def push_docs(path=None):
     )
     result = run('ln -sf {0} {1}'.format(WEB_ROOT, VERSION_ROOT))
     if result.return_code:
-        print 'Linking the new release failed'
+        print('Linking the new release failed')
 
     # More assumptions
     sudo('systemctl restart apache2')
