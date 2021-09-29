@@ -41,7 +41,7 @@ class TeleniumTestProcess(TeleniumTestCase):
         cls.populate_test_data()
         super(TeleniumTestProcess, cls).setUpClass()
 
-    @classmethod
+    @staticmethod
     def populate_test_data():
         """Set temp data in tmp directory"""
         for file_name in tmp_db_file:
