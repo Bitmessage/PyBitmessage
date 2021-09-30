@@ -16,10 +16,14 @@ class CreateRandomAddress(TeleniumTestProcess):
 
     @skip_screen_checks
     @ordered
-    def test_login_screen(self):
+    # This method tests the landing screen when the app runs first time and
+    # the landing screen should be "login" where we can create new address
+    def test_landing_screen(self):
         """Click on Proceed Button to Proceed to Next Screen."""
         # Checking current Screen(Login screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
+        # Click on "Proceed Next" Button to "generate random label for address" screen
+        # Some widgets cannot renders suddenly and become not functional so we used loop with a timeout.
         start = time()
         deadline = start + 2
         while time() < deadline:
@@ -33,10 +37,11 @@ class CreateRandomAddress(TeleniumTestProcess):
 
     @skip_screen_checks
     @ordered
-    def test_random_screen(self):
+    def test_generate_random_address_label(self):
         """Creating New Adress For New User."""
-        # Clicking on Label Text Field to give address name
-        # Generating Label Randomly
+        # Click on Label Text Field to give address Label
+        self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[0]', timeout=2)
+        # Enter a Label Randomly
         random_label = ""
         for _ in range(10):
             random_label += choice(ascii_lowercase)
@@ -44,40 +49,24 @@ class CreateRandomAddress(TeleniumTestProcess):
             self.cli.sleep(0.1)
         # Click on Proceed Next button to generate random Address
         self.cli.wait_click('//RandomBoxlayout//MDFillRoundFlatIconButton[0]', timeout=2)
-        # Checking My Address Screen
-        # self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=3)
+        # Checking "My Address" Screen after creating a address
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
-
-    @skip_screen_checks
-    @ordered
-    def test_create_new_address(self):
-        """Clicking on Navigation Drawer To Open New Address"""
-        # CLick to Open side Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
-        # Scroll Down to get New Address Tab
-        self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
-        # Checking state of scrolled screen
-        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
-        self.assertExists('//NavigationItem[@text=\"New address\"]', timeout=5)
-        # Clicking on New Address Tab
-        self.cli.wait_click('//NavigationItem[@text=\"New address\"]', timeout=3)
+        # Validating the new address is created,
+        # because the process takes time to generate new address so we used loop with a timout.
+        num_of_addresses = len(self.cli.select('//MDList[0]/CustomTwoLineAvatarIconListItem'))
         start = time()
-        deadline = start + 2
+        deadline = start + 6
         while time() < deadline:
             try:
-                # Clicking on Proceed Next Button to redirect to "random" screen
-                self.cli.wait_click('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
+                if num_of_addresses >= 1:
+                    self.assertEqual(num_of_addresses, 1)
+                    break
             except TeleniumHttpException:
-                # Checking Current Screen(Random Screen) after Clicking on "Proceed Next" Button
-                self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
-        # This method is to create random label
-        self.test_random_screen()
+                continue
 
     @skip_screen_checks
     @ordered
-    def test_select_address(self):
+    def test_set_default_address(self):
         """Select First Address From Drawer-Box"""
         # Checking current screen
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
@@ -89,17 +78,14 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
         self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
-        # Scrolling up to get address dropdown
-        self.drag("//NavigationItem[@text=\"Address Book\"]", "//NavigationItem[@text=\"Settings\"]")
-        # Checking scroll state
-        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
         # Click to open Address Dropdown
         self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
-        self.assertExists('//MySpinnerOption', timeout=5)
-        # Assert to check the address dropwdown open
+        # Checking the dropdown option is exist
+        self.assertExists('//MySpinnerOption[0]', timeout=5)
         is_open = self.cli.getattr('//NavigationItem[0]/CustomSpinner[@is_open]', 'is_open')
+        # Check the state of dropdown.
         self.assertEqual(is_open, True)
-        # Select address from address dropdown
+        # Selection of an address to set as a default address.
         self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
         # Checking current screen
-        self.assertExists("//Inbox[@name~=\"inbox\"]", timeout=5)
+        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=5)
