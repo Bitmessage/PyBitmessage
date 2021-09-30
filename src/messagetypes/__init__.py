@@ -31,7 +31,7 @@ def constructObject(data):
     except KeyError as e:
         logger.error("Missing mandatory key %s", e)
         return None
-    except:
+    except:  # noqa:E722
         logger.error("classBase fail", exc_info=True)
         return None
     else:

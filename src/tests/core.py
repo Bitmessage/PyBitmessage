@@ -117,7 +117,7 @@ class TestCore(unittest.TestCase):
                 while asyncore.socket_map:
                     print("loop, state = %s" % direct.state)
                     asyncore.loop(timeout=10, count=1)
-        except:
+        except:  # noqa:E722
             self.fail('Exception in test loop')
 
     def _load_knownnodes(self, filepath):

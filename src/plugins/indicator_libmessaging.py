@@ -18,7 +18,7 @@ class IndicatorLibmessaging(object):
             self.app = MessagingMenu.App(desktop_id='pybitmessage.desktop')
             self.app.register()
             self.app.connect('activate-source', self.activate)
-        except:
+        except:  # noqa:E722
             self.app = None
             return
 

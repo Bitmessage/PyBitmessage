@@ -51,6 +51,6 @@ class ReceiveQueueThread(StoppableThread):
                     connection.set_state("close", 0)
                 else:
                     self.logger.error('Socket error: %s', err)
-            except:
+            except:  # noqa:E722
                 self.logger.error('Error processing', exc_info=True)
             receiveDataQueue.task_done()

@@ -147,7 +147,7 @@ class TestProcessProto(unittest.TestCase):
                 "ps", "-L", "-o", "comm=", "--pid",
                 str(self.process.pid)
             ]).split()
-        except:  # pylint: disable=bare-except
+        except:  # noqa:E722
             thread_names = []
 
         running_threads = len(thread_names)
