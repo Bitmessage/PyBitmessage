@@ -43,17 +43,21 @@ class SendMessage(TeleniumTestProcess):
         # ADD SENDER'S ADDRESS
         # Checking State of Sender's Address Input Field (Empty)
         self.assertExists('//DropDownWidget/ScrollView[0]//MDTextField[@text=\"\"]', timeout=2)
+        # Assert to check Sender's address dropdown closed
+        is_open = self.cli.getattr('//Create//CustomSpinner[@is_open]', 'is_open')
+        self.assertEqual(is_open, False)
         # Open Sender's Address DropDown
-        self.cli.wait_click('//Create//CustomSpinner[0]/ArrowImg[0]', timeout=3)
-        # Due to animation and transition effect, it needed some halt otherwise it fails
-        # self.cli.sleep(2)
+        self.cli.wait_click('//Create//CustomSpinner[0]/ArrowImg[0]', timeout=5)
         # Checking the Address Dropdown is in open State
-        # self.assertFalse('//Create//CustomSpinner[@is_open]', 'False')
+        is_open = self.cli.getattr('//Create//CustomSpinner[@is_open]', 'is_open')
+        # self.assertEqual(is_open, True)
+        print(is_open, '----------------------------------------')
         # Select Sender's Address from Dropdown
         self.cli.wait_click('//ComposerSpinnerOption[0]', timeout=3)
-        # Checking the Address Dropdown is in open State
-        # self.assertTrue('//Create//CustomSpinner[@is_open]', 'False')
-        # Assert to check Sender's address dropdown open or not
+        # Assert to check Sender's address dropdown closed
+        is_open = self.cli.getattr('//Create//CustomSpinner[@is_open]', 'is_open')
+        self.assertEqual(is_open, False)
+        # Assert check for empty Subject Field
         self.assertNotEqual('//DropDownWidget/ScrollView[0]//MDTextField[0]', '')
         # ADD SUBJECT
         self.cli.setattr('//DropDownWidget/ScrollView[0]//MyMDTextField[0]', 'text', self.test_subject)
@@ -82,12 +86,8 @@ class SendMessage(TeleniumTestProcess):
         self.assertNotEqual('//DropDownWidget/ScrollView[0]//MyTextInput[text]', '')
         # Clicking on send icon
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
-        # Checking screen(Inbox) after sending message
-        try:
-            self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=10)
-        except TeleniumHttpException:
-            self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=4)
-            self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=10)
+        # Checking the current screen
+        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=10)
 
     @ordered
     def test_sent_box(self):
