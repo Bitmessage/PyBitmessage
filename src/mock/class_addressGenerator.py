@@ -66,8 +66,8 @@ class FakeAddressGenerator(StoppableThread):
     def stopThread(self):
         try:
             queues.addressGeneratorQueue.put(("stopThread", "data"))
-        except:  # noqa:E722
-            pass
+        except queue.Full:
+            self.logger.error('addressGeneratorQueue is Full')
         super(FakeAddressGenerator, self).stopThread()
 
     def run(self):
