@@ -6,6 +6,8 @@ import logging
 import random
 import threading
 
+from six.moves import queue
+
 from pybitmessage import state
 from pybitmessage import queues
 
