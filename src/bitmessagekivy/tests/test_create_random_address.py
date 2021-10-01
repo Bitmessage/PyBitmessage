@@ -51,18 +51,8 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.cli.wait_click('//RandomBoxlayout//MDFillRoundFlatIconButton[0]', timeout=2)
         # Checking "My Address" Screen after creating a address
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
-        # Validating the new address is created,
-        # because the process takes time to generate new address so we used loop with a timout.
-        num_of_addresses = len(self.cli.select('//MDList[0]/CustomTwoLineAvatarIconListItem'))
-        start = time()
-        deadline = start + 6
-        while time() < deadline:
-            try:
-                if num_of_addresses >= 1:
-                    self.assertEqual(num_of_addresses, 1)
-                    break
-            except TeleniumHttpException:
-                continue
+        # Checking the new address is created
+        self.assertExists('//MDList[0]/CustomTwoLineAvatarIconListItem', timeout=10)
 
     @skip_screen_checks
     @ordered
