@@ -30,18 +30,21 @@ def config_callback(ObjConfiguration):
             apiInterface = node.values[0]
         elif key.lower() == "apiport" and node.values:
             apiPort = node.values[0]
-    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface + ":" + str(int(apiPort)) + "/"
+    pybmurl = "http://{}:{}@{}:{}/".format(apiUsername, apiPassword, apiInterface, str(int(apiPort)))
     collectd.info('pybitmessagestatus.py config done')
 
 
 def read_callback():
     try:
         clientStatus = json.loads(api.clientStatus())
-    except (json.decoder.JSONDecodeError, TypeError()):
+    except (ValueError, TypeError):
+        collectd.info("Exception loading or parsing JSON")
+        return
+    except:  # noqa:E722
         collectd.info("Exception loading or parsing JSON")
         return
 
-    for i in ["networkConnections", "numberOfPubkeysProcessed", 
+    for i in ["networkConnections", "numberOfPubkeysProcessed",
               "numberOfMessagesProcessed", "numberOfBroadcastsProcessed"]:
         metric = collectd.Values()
         metric.plugin = "pybitmessagestatus"
@@ -52,7 +55,7 @@ def read_callback():
         metric.type_instance = i.lower()
         try:
             metric.values = [clientStatus[i]]
-        except (NameError, KeyError):
+        except (TypeError, KeyError):
             collectd.info("Value for %s missing" % (i))
         metric.dispatch()
 
