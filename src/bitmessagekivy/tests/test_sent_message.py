@@ -32,9 +32,9 @@ class SendMessage(TeleniumTestProcess):
         # Click on Send Icon to check validation working
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
         # Checking validation Pop up is Opened
-        self.assertExists('//MDDialog[@text=\"Please fill the form completely\"]', timeout=2)
-        # Click to dismiss the Popup
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
+        self.assertExists('//MDDialog', timeout=5)
+        # Click "OK" button to dismiss the Popup
+        self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
         # Checking current screen after dialog dismiss
         self.assertExists("//ScreenManager[@current=\"create\"]", timeout=10)
 
@@ -77,10 +77,10 @@ class SendMessage(TeleniumTestProcess):
         # click on send icon
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
         # Checking validation Pop up is Opened
-        self.assertExists('//MDDialog[@text=\"Please fill the form completely\"]', timeout=2)
-        # clicked on 'ok' button to close popup
-        self.cli.wait_click('//MDFlatButton[0]', timeout=2)
-        # self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
+        self.assertExists('//MDDialog', timeout=5)
+        # clicked on 'Ok' button to close popup
+        self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
+        # Checking current screen after dialog dismiss
         self.assertExists("//ScreenManager[@current=\"create\"]", timeout=5)
 
     @skip_screen_checks
