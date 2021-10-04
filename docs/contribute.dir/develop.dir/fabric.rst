@@ -1,2 +1,0 @@
-.. mdinclude:: ../../../fabfile/README.md
-

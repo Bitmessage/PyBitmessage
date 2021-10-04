@@ -7,13 +7,6 @@ Documentation
 
    autodoc/pybitmessage
 
-Legacy pages
-------------
-.. toctree::
-   :maxdepth: 2
-
-   usage
-   contribute
 
 Indices and tables
 ------------------
