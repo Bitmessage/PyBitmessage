@@ -149,6 +149,8 @@ class TestProcessProto(unittest.TestCase):
             ]).split()
         except subprocess.CalledProcessError:
             thread_names = []
+        except:  # noqa:E722
+            thread_names = []
 
         running_threads = len(thread_names)
         if 0 < running_threads < 30:  # adequacy check
