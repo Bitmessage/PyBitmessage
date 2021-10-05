@@ -2,7 +2,8 @@ from telenium.client import TeleniumHttpException
 from .telenium_process import TeleniumTestProcess
 from .common import ordered
 
-test_address = {'receiver': 'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h'}
+test_address = {'receiver': 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'}
+
 
 class SendMessage(TeleniumTestProcess):
     """Sent Screen Functionality Testing"""
