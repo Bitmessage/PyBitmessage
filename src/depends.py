@@ -384,25 +384,25 @@ def check_pyqt():
     """
     # pylint: disable=no-member
     try:
-        from fallback import qtpy
+        from fallback import PyQt5
     except ImportError:
         logger.error(
-            'PyBitmessage requires qtpy, PyQt 4.8 or later and Qt 4.7 or later.'
-        )
-        qtpy = None
+            'PyBitmessage requires PyQt5 or qtpy, PyQt 4.8 or later'
+            ' and Qt 4.7 or later.')
+        PyQt5 = None
 
-    if not qtpy:
+    if not PyQt5:
         return False
 
-    logger.info('PyQt Version: %s', qtpy.PYQT_VERSION)
-    logger.info('Qt Version: %s', qtpy.QT_VERSION)
+    logger.info('PyQt Version: %s', PyQt5.PYQT_VERSION)
+    logger.info('Qt Version: %s', PyQt5.QT_VERSION)
     passed = True
-    if version.LooseVersion(qtpy.PYQT_VERSION) < '4.8':
+    if version.LooseVersion(PyQt5.PYQT_VERSION) < '4.8':
         logger.error(
             'This version of PyQt is too old. PyBitmessage requries'
             ' PyQt 4.8 or later.')
         passed = False
-    if version.LooseVersion(qtpy.QT_VERSION) < '4.7':
+    if version.LooseVersion(PyQt5.QT_VERSION) < '4.7':
         logger.error(
             'This version of Qt is too old. PyBitmessage requries'
             ' Qt 4.7 or later.')

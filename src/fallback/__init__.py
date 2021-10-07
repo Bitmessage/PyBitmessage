@@ -32,34 +32,44 @@ else:
         return hasher
 
 try:
-    import qtpy
+    import PyQt5
 except ImportError:
     try:
-        from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork, uic
+        import qtpy as PyQt5
     except ImportError:
-        qtpy = None
-    else:
-        import sys
-        import types
+        pass
+else:
+    from PyQt5 import QtCore
 
-        QtCore.Signal = QtCore.pyqtSignal
-        context = {
-            'API': 'pyqt5',  # for tr
-            'PYQT_VERSION': QtCore.PYQT_VERSION_STR,
-            'QT_VERSION': QtCore.QT_VERSION_STR,
-            'QtCore': QtCore,
-            'QtGui': QtGui,
-            'QtWidgets': QtWidgets,
-            'QtNetwork': QtNetwork,
-            'uic': uic
-        }
-        try:
-            from PyQt5 import QtTest
-        except ImportError:
-            pass
-        else:
-            context['QtTest'] = QtTest
-        qtpy = types.ModuleType(
-            'qtpy', 'PyQt5 based dynamic fallback for qtpy')
-        qtpy.__dict__.update(context)
-        sys.modules['qtpy'] = qtpy
+    QtCore.Signal = QtCore.pyqtSignal
+    PyQt5.PYQT_VERSION = QtCore.PYQT_VERSION_STR
+    PyQt5.QT_VERSION = QtCore.QT_VERSION_STR
+    # try:
+    #     from qtpy import QtCore, QtGui, QtWidgets, QtNetwork, uic
+    # except ImportError:
+    #     PyQt5 = None
+    # else:
+    #     import sys
+    #     import types
+
+    #     QtCore.Signal = QtCore.pyqtSignal
+    #     context = {
+    #         'API': 'pyqt5',  # for tr
+    #         'PYQT_VERSION': QtCore.PYQT_VERSION_STR,
+    #         'QT_VERSION': QtCore.QT_VERSION_STR,
+    #         'QtCore': QtCore,
+    #         'QtGui': QtGui,
+    #         'QtWidgets': QtWidgets,
+    #         'QtNetwork': QtNetwork,
+    #         'uic': uic
+    #     }
+    #     try:
+    #         from PyQt5 import QtTest
+    #     except ImportError:
+    #         pass
+    #     else:
+    #         context['QtTest'] = QtTest
+    #     PyQt5 = types.ModuleType(
+    #         'PyQt5', 'qtpy based dynamic fallback for PyQt5')
+    #     PyQt5.__dict__.update(context)
+    #     sys.modules['PyQt5'] = PyQt5
