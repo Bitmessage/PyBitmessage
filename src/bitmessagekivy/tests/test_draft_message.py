@@ -44,7 +44,6 @@ class DraftMessage(TeleniumTestProcess):
         # Click "OK" button to dismiss the Popup
         self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
 
-        # self.cli.sleep(6)
 
         # RECEIVER FIELD
         # Checking Receiver Address Field
@@ -74,7 +73,6 @@ class DraftMessage(TeleniumTestProcess):
         #         self.cli.sleep(0.3)
         #         continue                
  
-        # self.cli.sleep(10)
         self.assertExists('//ComposerSpinnerOption[0]', timeout=5)
         # Select Sender's Address from Dropdown
         self.cli.wait_click('//ComposerSpinnerOption[0]', timeout=5)
@@ -86,7 +84,6 @@ class DraftMessage(TeleniumTestProcess):
         # Checking current screen(Login) after BACK Press
         self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=5)
 
-        # self.cli.sleep(0.5)
         # # Click on Composer Icon(Plus icon)
         # self.cli.wait_click('//ComposerButton[0]/MDFloatingActionButton[@icon=\"plus\"]', timeout=2)
         # # Checking Message Composer Screen(Create)
@@ -146,11 +143,24 @@ class DraftMessage(TeleniumTestProcess):
         # self.assertExists("//MDNavigationDrawer[@state~=\"closed\"]", timeout=2)
         # Checking Draft Screen
         self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=5)
-        
         # Checking messages in draft box
-        self.assertExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem', timeout=10)
+        self.assertExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=10)
+        # self.assertEqual(len(self.cli.select('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem')), 1)
+        # self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
+
+        start = time()
+        deadline = start + 5
+        while time() < deadline:
+            try:
+                self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
+                break
+            except:
+                self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
+                self.cli.sleep(0.1)
+        self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
+
         self.cli.sleep(1)
-        # Click on a drafted msg to show details
+        # # Click on a drafted msg to show details
         self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
  
         # Checking current screen Mail Detail
@@ -207,14 +217,31 @@ class DraftMessage(TeleniumTestProcess):
         self.cli.wait_click('//NavigationItem[@text=\"Draft\"]', timeout=5)
         # Checking Draft Screen
         self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=5)
-        # Asser check that the message is rendered
-        self.assertExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
-        self.cli.sleep(1)
-        # Click on a mesage to show msg details
-        self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
-        # Checking Current screen is Mail Detail
+
+        start = time()
+        deadline = start + 5
+        while time() < deadline:
+            try:
+                # Click on a drafted msg to show details                
+                self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
+                break
+            except:
+                # Checking Current Screen(Random Screen) after Clicking on "Proceed Next" Button
+                # self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
+                self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
+                self.cli.sleep(0.1)
         self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
+
+
+        # # Asser check that the message is rendered
+        # self.assertExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
+        # # self.cli.sleep(1)
+        # # Click on a mesage to show msg details
+        # self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
+        # # Checking Current screen is Mail Detail
+        # self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
         # Click on trash-can icon to delete
         self.cli.wait_click('//MDToolbar//MDActionTopAppBarButton[@icon=\"delete-forever\"]', timeout=5)
         # After Deleting, Screen is redirected to Draft screen
         self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=10)
+
