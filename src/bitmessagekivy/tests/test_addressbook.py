@@ -71,13 +71,14 @@ class AddressBook(TeleniumTestProcess):
         self.assertEqual(
             self.cli.getattr('//GrashofPopup/BoxLayout[0]/MDTextField[1][@text]', 'text'),
             test_address['autoresponder_address'])
-        # Click on Save Button to save the address in address book
-        self.cli.wait_click('//MDRaisedButton[@text=\"Save\"]', timeout=2)
         # Validating the Label field
         self.assertExists('//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"Auto Responder\"]', timeout=3)
         # Validating the Valid Address is entered
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP\"]', timeout=3)
+            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['autoresponder_address']),
+            timeout=3)
+        # Click on Save Button to save the address in address book
+        self.cli.wait_click('//MDRaisedButton[@text=\"Save\"]', timeout=2)
         # Check Current Screen (Address Book)
         self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
         # Checking new address should be added
@@ -128,4 +129,5 @@ class AddressBook(TeleniumTestProcess):
         self.assertExists("//ScreenManager[@current=\"create\"]", timeout=5)
         # Checking the Address is populated to recipient field when we try to send message to saved address.
         self.assertExists(
-            '//DropDownWidget/ScrollView[0]//MyTextInput[@text="BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP"]', timeout=5)
+            '//DropDownWidget/ScrollView[0]//MyTextInput[@text="{}"]'.format(test_address['autoresponder_address']),
+            timeout=5)
