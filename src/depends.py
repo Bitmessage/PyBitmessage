@@ -5,9 +5,7 @@ and suggest how it may be installed
 
 import os
 import re
-import subprocess
 import sys
-from importlib import import_module
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -19,6 +17,9 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     )
 
 import logging  # noqa:E402
+import subprocess
+
+from importlib import import_module
 
 # We can now use logging so set up a simple configuration
 formatter = logging.Formatter('%(levelname)s: %(message)s')
