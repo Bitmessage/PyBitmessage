@@ -27,32 +27,25 @@ class TrashMessage(TeleniumTestProcess):
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[1]',
             '//Trash[0]//TwoLineAvatarIconListItem[0]/BoxLayout[2]', 2, timeout=5)
         # Checking the "trash-can" is rendered
-        self.assertExists("//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@icon~=\"trash-can\"]", timeout=2)
-        # Assert to check the drag is worked (Trash icon should be Activated)
-        if self.cli.getattr('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'disabled') is True:
-            self.cli.setattr('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton', 'disabled', False)
-        else:
-            # Checking the button is rendered and functional
-            self.assertExists(
-                '//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton', timeout=5)
-            # Checking the state of button(Should be enabled)
-            self.assertEqual(
-                self.cli.getattr('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'disabled'), False)
-        # Checking the Trash Icon after swipe.
         self.assertExists(
             "//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@icon~=\"trash-can\"]", timeout=2)
-        # Checking the state of button(Should be enabled)
-        self.assertEqual(self.cli.getattr(
-            '//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'disabled'), False)
-        # clicking on Trash Box icon to delete message.
-        self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=2)
+        # Delete icon is enabled
+        self.cli.setattr('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton', 'disabled', False)
+        # Checking the Dialog popup is closed
+        self.assertNotExists('//MDDialog[@open]', timeout=5)
+        # Checking the delete icon is rendered and functional
+        self.assertExists('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=5)
+        # Click on the delete icon to delete the current message
+        self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=5)
         # Checking Confirm Popup is Opened
-        self.assertExists('//MDDialog', timeout=5)
-        # Checking the popup button is rendered.
+        self.assertExists('//MDDialog[@open]', timeout=5)
+        # Checking the popup's 'Yes' button is rendered.
         self.assertExists("//MDDialog//MDFlatButton[@text=\"Yes\"]", timeout=5)
         # Clicking on 'Yes' Button on Popup to confirm delete.
         self.cli.wait_click('//MDFlatButton[@text=\"Yes\"]', timeout=5)
-        # Checking Pop is closed
-        self.assertNotExists('//MDDialog', timeout=5)
-        # Checking Trash Screen
+        # Checking the Dialog is closed on click "Yes" button
+        self.assertNotExists('//MDDialog[@open]', timeout=5)
+        # Checking the message is rendered on Trash screen
+        self.assertExists('//MDList[0]/CutsomSwipeToDeleteItem[0]', timeout=5)
+        # Checking Current screen is Trash Screen
         self.assertExists("//ScreenManager[@current=\"trash\"]", timeout=5)
