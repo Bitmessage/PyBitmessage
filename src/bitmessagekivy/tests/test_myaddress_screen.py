@@ -54,19 +54,19 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.setattr(
             '//DropDownWidget/ScrollView[0]//MyTextInput[0]', "text", test_address['recipient'])
         # Checking Receiver Address filled or not
-        self.assertNotEqual('//DropDownWidget//MyTextInput[0]', '')
+        self.assertExists('//DropDownWidget//MyTextInput[@text=\"{}\"]'.format(test_address['recipient']), timeout=5)
         # ADD SUBJECT
         self.cli.setattr('//DropDownWidget/ScrollView[0]//MyMDTextField[0]', 'text', self.subject)
         # Checking Subject Field is Entered
-        self.assertNotEqual('//DropDownWidget/ScrollView[0]//MyMDTextField[0]', '')
+        self.assertExists('//DropDownWidget/ScrollView[0]//MyMDTextField[@text=\"{}\"]'.format(self.subject), timeout=5)
         # ADD MESSAGE BODY
         self.cli.setattr(
             '//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[0]', 'text',
             self.body)
         # Checking Message body is Entered
-        self.assertNotEqual('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text]', '')
+        self.assertExists('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"{}\"]'.format(self.body), timeout=5)
         # Click on Send Icon
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=3)
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
         # Check for redirected screen (Inbox Screen)
         self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=7)
 
@@ -116,6 +116,8 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.wait_click('//NavigationItem[@text=\"Sent\"]', timeout=3)
         # Checking current screen; Sent
         self.assertExists("//ScreenManager[@current=\"sent\"]", timeout=3)
-        # Checking number of messages in sent box
+        # Checking the message is rendered in sent box screen
+        self.assertExists('//SwipeToDeleteItem', timeout=5)
+        # Checking messages count in sent box
         total_sent_msgs = len(self.cli.select("//SwipeToDeleteItem"))
         self.assertEqual(total_sent_msgs, 1)
