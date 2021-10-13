@@ -20,13 +20,7 @@ class MyAddressScreen(TeleniumTestProcess):
         # This is for checking Current screen
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
         # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        self.open_side_navbar()
         # this is for scrolling Nav drawer
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
@@ -58,15 +52,17 @@ class MyAddressScreen(TeleniumTestProcess):
         # ADD SUBJECT
         self.cli.setattr('//DropDownWidget/ScrollView[0]//MyMDTextField[0]', 'text', self.subject)
         # Checking Subject Field is Entered
-        self.assertExists('//DropDownWidget/ScrollView[0]//MyMDTextField[@text=\"{}\"]'.format(self.subject), timeout=5)
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]//MyMDTextField[@text=\"{}\"]'.format(self.subject), timeout=5)
         # ADD MESSAGE BODY
         self.cli.setattr(
             '//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[0]', 'text',
             self.body)
         # Checking Message body is Entered
-        self.assertExists('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"{}\"]'.format(self.body), timeout=5)
-        # Click on Send Icon
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"{}\"]'.format(self.body), timeout=5)
+        # Click on BACK button
+        self.cli.wait_click('//MDToolbar//MDActionTopAppBarButton[@icon=\"arrow-left\"]', timeout=2)
         # Check for redirected screen (Inbox Screen)
         self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=7)
 
@@ -75,10 +71,7 @@ class MyAddressScreen(TeleniumTestProcess):
     def test_show_qrcode(self):
         """Show the Qr code of selected address"""
         # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        self.open_side_navbar()
         # Clicking on Sent Tab
         self.cli.wait_click('//NavigationItem[@text=\"My addresses\"]', timeout=3)
         # Checking current screen
@@ -95,29 +88,3 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.wait_click('//MDToolbar//MDActionTopAppBarButton[@icon=\"arrow-left\"]', timeout=2)
         # Checking current screen(My Address) after BACK press
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=3)
-
-    @skip_screen_checks
-    @ordered
-    def test_sent_box(self):
-        """
-            Checking Message in Sent Screen after sending a Message.
-        """
-        # Checking current screen
-        self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=3)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
-        # this is for scrolling Nav drawer
-        self.drag("//NavigationItem[@text=\"Purchase\"]", "//NavigationItem[@text=\"My addresses\"]")
-        # assert for checking scroll function
-        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
-        # Clicking on Sent Tab
-        self.cli.wait_click('//NavigationItem[@text=\"Sent\"]', timeout=3)
-        # Checking current screen; Sent
-        self.assertExists("//ScreenManager[@current=\"sent\"]", timeout=3)
-        # Checking the message is rendered in sent box screen
-        self.assertExists('//SwipeToDeleteItem', timeout=5)
-        # Checking messages count in sent box
-        total_sent_msgs = len(self.cli.select("//SwipeToDeleteItem"))
-        self.assertEqual(total_sent_msgs, 1)

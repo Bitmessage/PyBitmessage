@@ -39,16 +39,22 @@ class CreateRandomAddress(TeleniumTestProcess):
     @ordered
     def test_generate_random_address_label(self):
         """Creating New Adress For New User."""
+        # Checking the Button is rendered
+        self.assertExists(
+            '//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[@hint_text=\"Label\"]', timeout=2)
         # Click on Label Text Field to give address Label
-        self.cli.wait_click('//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[0]', timeout=2)
+        self.cli.wait_click(
+            '//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[@hint_text=\"Label\"]', timeout=2)
         # Enter a Label Randomly
         random_label = ""
         for _ in range(10):
             random_label += choice(ascii_lowercase)
             self.cli.setattr('//RandomBoxlayout//AnchorLayout[1]/MDTextField[0]', "text", random_label)
             self.cli.sleep(0.1)
+        # Checking the Button is rendered
+        self.assertExists('//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
         # Click on Proceed Next button to generate random Address
-        self.cli.wait_click('//RandomBoxlayout//MDFillRoundFlatIconButton[0]', timeout=2)
+        self.cli.wait_click('//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
         # Checking "My Address" Screen after creating a address
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
         # Checking the new address is created
