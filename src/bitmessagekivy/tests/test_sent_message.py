@@ -2,7 +2,7 @@ from .telenium_process import TeleniumTestProcess
 from .common import skip_screen_checks
 from .common import ordered
 
-test_address = {'receiver': 'BM-2cWmjntZ47WKEUtocrdvs19y5CivpKoi1h'}
+test_address = {'autoresponder_address': 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'}
 
 
 class SendMessage(TeleniumTestProcess):
@@ -17,8 +17,8 @@ class SendMessage(TeleniumTestProcess):
             Sending Message From Inbox Screen
             opens a pop-up(screen) which send message from sender to reciever
         """
-        # Checking current Screen(Login screen)
-        self.assert_wait_no_except('//ScreenManager[@current]', timeout=10, value='login')
+        # Checking current Screen(Inbox screen)
+        self.assert_wait_no_except('//ScreenManager[@current]', timeout=10, value='inbox')
         # Click on Composer Icon(Plus icon)
         self.cli.wait_click('//ComposerButton[0]/MDFloatingActionButton[@icon=\"plus\"]', timeout=2)
         # Checking Message Composer Screen(Create)
@@ -32,9 +32,13 @@ class SendMessage(TeleniumTestProcess):
         # Click on Send Icon to check validation working
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
         # Checking validation Pop up is Opened
-        self.assertExists('//MDDialog', timeout=5)
+        self.assertExists('//MDDialog[@open]', timeout=5)
+        # Checking the 'Ok' Button is rendered
+        self.assertExists('//MDFlatButton[@text=\"Ok\"]', timeout=5)
         # Click "OK" button to dismiss the Popup
         self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
+        # Checking the pop is closed
+        self.assertNotExists('//MDDialog[@open]', timeout=5)
         # Checking current screen after dialog dismiss
         self.assertExists("//ScreenManager[@current=\"create\"]", timeout=10)
 
@@ -44,7 +48,7 @@ class SendMessage(TeleniumTestProcess):
         """
             Validate the half filled form and press back button to save message in draft box.
         """
-        # Checking current screen
+        # Checking current screen (Msg composer screen)
         self.assertExists("//ScreenManager[@current=\"create\"]", timeout=2)
         # ADD SENDER'S ADDRESS
         # Checking State of Sender's Address Input Field (Empty)
@@ -61,21 +65,29 @@ class SendMessage(TeleniumTestProcess):
         # Assert to check Sender's address dropdown closed
         is_open = self.cli.getattr('//Create//CustomSpinner[@is_open]', 'is_open')
         self.assertEqual(is_open, False)
+        # Checking the sender address is selected
+        sender_address = self.cli.getattr(
+            '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[@text]', 'text')
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]//MDTextField[@text=\"{}\"]'.format(sender_address), timeout=2)
         # Assert check for empty Subject Field
-        self.assertNotEqual('//DropDownWidget/ScrollView[0]//MDTextField[0]', '')
+        self.assertExists('//DropDownWidget/ScrollView[0]//MyMDTextField[@text=\"\"]', timeout=5)
         # ADD SUBJECT
         self.cli.setattr('//DropDownWidget/ScrollView[0]//MyMDTextField[0]', 'text', self.test_subject)
         # Checking Subject Field is Entered
-        self.assertNotEqual('//DropDownWidget/ScrollView[0]//MyMDTextField[text]', '')
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]//MyMDTextField[@text=\"{}\"]'.format(self.test_subject), timeout=5)
         # Checking BODY Field(EMPTY)
         self.assertExists('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"\"]', timeout=2)
         # ADD BODY
         self.cli.setattr(
             '//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[0]', 'text', self.test_body)
         # Checking BODY is Entered
-        self.assertNotEqual('//DropDownWidget/ScrollView[0]/BoxLayout[0]/ScrollView[0]/MDTextField[text]', '')
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"{}\"]'.format(self.test_body),
+            timeout=2)
         # click on send icon
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=2)
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
         # Checking validation Pop up is Opened
         self.assertExists('//MDDialog', timeout=5)
         # clicked on 'Ok' button to close popup
@@ -93,9 +105,12 @@ class SendMessage(TeleniumTestProcess):
         # Checking Receiver Address Field
         self.assertExists('//DropDownWidget/ScrollView[0]//MyTextInput[@text=\"\"]', timeout=2)
         # Entering Receiver Address
-        self.cli.setattr('//DropDownWidget/ScrollView[0]//MyTextInput[0]', "text", test_address['receiver'])
+        self.cli.setattr(
+            '//DropDownWidget/ScrollView[0]//MyTextInput[0]', "text", test_address['autoresponder_address'])
         # Checking Receiver Address filled or not
-        self.assertNotEqual('//DropDownWidget/ScrollView[0]//MyTextInput[text]', '')
+        self.assertExists(
+            '//DropDownWidget/ScrollView[0]//MyTextInput[@text=\"{}\"]'.format(
+                test_address['autoresponder_address']), timeout=5)
         # Clicking on send icon
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
         # Checking the current screen
