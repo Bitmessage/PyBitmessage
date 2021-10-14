@@ -53,16 +53,16 @@ class AddressBook(TeleniumTestProcess):
         # Add an address Label to label Field
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"]', 'text', self.test_label)
         # Checking the Label Field should not be empty
-        self.assertEqual(
-            self.cli.getattr('//GrashofPopup/BoxLayout[0]/MDTextField[0][@text]', 'text'), self.test_label)
+        self.assertExists(
+            '//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
         # Add incorrect Address to Address Field to check validation
         self.cli.setattr(
             '//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]',
             'text', test_address['invalid_address'])
         # Checking the Address Field should not be empty
-        self.assertEqual(
-            self.cli.getattr('//GrashofPopup/BoxLayout[0]/MDTextField[1][@text]', 'text'),
-            test_address['invalid_address'])
+        self.assertExists(
+            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['invalid_address']),
+            timeout=2)
         # Add Correct Address
         self.cli.setattr(
             '//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]', 'text',
@@ -72,11 +72,12 @@ class AddressBook(TeleniumTestProcess):
             self.cli.getattr('//GrashofPopup/BoxLayout[0]/MDTextField[1][@text]', 'text'),
             test_address['autoresponder_address'])
         # Validating the Label field
-        self.assertExists('//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"Auto Responder\"]', timeout=3)
+        self.assertExists(
+            '//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
         # Validating the Valid Address is entered
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['autoresponder_address']),
-            timeout=3)
+            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(
+                test_address['autoresponder_address']), timeout=3)
         # Click on Save Button to save the address in address book
         self.cli.wait_click('//MDRaisedButton[@text=\"Save\"]', timeout=2)
         # Check Current Screen (Address Book)
@@ -97,11 +98,15 @@ class AddressBook(TeleniumTestProcess):
         # Add Label to label Field
         self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]', 'text', 'test_label2')
         # Checking the Label Field should not be empty
-        self.assertNotEqual('//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"]', '')
+        self.assertExists(
+            '//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format('test_label2'), timeout=2)
         # Add Address to Address Field
-        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[1]', 'text', test_address['recipient'])
+        self.cli.setattr(
+            '//GrashofPopup/BoxLayout[0]/MDTextField[1]', 'text', test_address['recipient'])
         # Checking the Address Field should not be empty
-        self.assertNotEqual('//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]', '')
+        self.assertExists(
+            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['recipient']),
+            timeout=2)
         # Checking for "Cancel" button is rendered
         self.assertExists('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)
         # Click on 'Cancel' Button to dismiss the popup
@@ -129,5 +134,5 @@ class AddressBook(TeleniumTestProcess):
         self.assertExists("//ScreenManager[@current=\"create\"]", timeout=5)
         # Checking the Address is populated to recipient field when we try to send message to saved address.
         self.assertExists(
-            '//DropDownWidget/ScrollView[0]//MyTextInput[@text="{}"]'.format(test_address['autoresponder_address']),
-            timeout=5)
+            '//DropDownWidget/ScrollView[0]//MyTextInput[@text="{}"]'.format(
+                test_address['autoresponder_address']), timeout=5)
