@@ -35,3 +35,10 @@ sample_deterministic_addr3 = 'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
 sample_deterministic_addr4 = 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
 sample_daddr3_512 = 18875720106589866286514488037355423395410802084648916523381
 sample_daddr4_512 = 25152821841976547050350277460563089811513157529113201589004
+
+sample_statusbar_msg = "new status bar message"
+sample_inbox_msg_receiver_address = 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
+sample_inbox_msg_ids = ['27e644765a3e4b2e973ee7ccf958ea20', '51fc5531-3989-4d69-bbb5-68d64b756f5b',
+                        '2c975c515f8b414db5eea60ba57ba455', 'bc1f2d8a-681c-4cc0-9a12-6067c7e1ac24']
+sample_test_subscription_address = ['BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq', 'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw']
+sample_subscription_name = 'test sub'

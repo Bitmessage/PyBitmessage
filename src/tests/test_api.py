@@ -6,12 +6,15 @@ import base64
 import json
 import time
 
+from binascii import hexlify
 from six.moves import xmlrpc_client  # nosec
 
 import psutil
 
 from .samples import (
-    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4)
+    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4, sample_statusbar_msg,
+    sample_inbox_msg_receiver_address, sample_inbox_msg_ids, sample_test_subscription_address,
+    sample_subscription_name)
 
 from .test_process import TestProcessProto
 
@@ -46,17 +49,9 @@ class TestAPIShutdown(TestAPIProto):
 
 
 # TODO: uncovered API commands
-# getAllInboxMessages
-# getAllInboxMessageIds
-# getInboxMessageById
-# getInboxMessagesByReceiver
-# trashMessage
-# trashInboxMessage
-# addSubscription
 # disseminatePreEncryptedMsg
 # disseminatePubkey
 # getMessageDataByDestinationHash
-# statusBar
 
 
 class TestAPI(TestAPIProto):
@@ -89,6 +84,53 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             self.api.test(),
             'API Error 0020: Invalid method: test'
+        )
+
+    def test_statusbar_method(self):
+        """Test statusbar method"""
+        self.api.clearUISignalQueue()
+        self.assertEqual(
+            self.api.statusBar(sample_statusbar_msg),
+            'null'
+        )
+        self.assertEqual(
+            self.api.getStatusBar(),
+            sample_statusbar_msg
+        )
+
+    def test_message_inbox(self):
+        """Test message inbox methods"""
+        self.assertTrue(
+            len(json.loads(
+                self.api.getAllInboxMessages())["inboxMessages"]) == 2
+        )
+        self.assertTrue(
+            len(json.loads(
+                self.api.getAllInboxMessageIds())["inboxMessageIds"]) == 2
+        )
+        self.assertTrue(
+            len(json.loads(
+                self.api.getInboxMessageById(hexlify(sample_inbox_msg_ids[2])))["inboxMessage"]) == 1
+        )
+        self.assertTrue(
+            len(json.loads(
+                self.api.getInboxMessagesByReceiver(sample_inbox_msg_receiver_address))["inboxMessages"]) == 2
+        )
+
+    def test_delete_message(self):
+        """Test delete message methods"""
+        messages_before_delete = len(json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"])
+        self.assertEqual(
+            self.api.trashMessage(hexlify(sample_inbox_msg_ids[0])),
+            'Trashed message (assuming message existed).'
+        )
+        self.assertEqual(
+            self.api.trashInboxMessage(hexlify(sample_inbox_msg_ids[1])),
+            'Trashed inbox message (assuming message existed).'
+        )
+        self.assertEqual(
+            len(json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"]),
+            messages_before_delete - 2
         )
 
     def test_clientstatus_consistency(self):
@@ -193,9 +235,28 @@ class TestAPI(TestAPIProto):
 
     def test_subscriptions(self):
         """Testing the API commands related to subscriptions"""
+
+        self.assertEqual(
+            self.api.addSubscription(sample_test_subscription_address[0], sample_subscription_name.encode('base64')),
+            'Added subscription.'
+        )
+
+        added_subscription = {'label': None, 'enabled': False}
+        # check_address
+        for sub in json.loads(self.api.listSubscriptions())['subscriptions']:
+            # special address, added when sqlThread starts
+            if sub['address'] == sample_test_subscription_address[0]:
+                added_subscription = sub
+                break
+
+        self.assertEqual(
+            base64.decodestring(added_subscription['label']) if added_subscription['label'] else None,
+            sample_subscription_name)
+        self.assertTrue(added_subscription['enabled'])
+
         for s in json.loads(self.api.listSubscriptions())['subscriptions']:
             # special address, added when sqlThread starts
-            if s['address'] == 'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw':
+            if s['address'] == sample_test_subscription_address[1]:
                 self.assertEqual(
                     base64.decodestring(s['label']),
                     'Bitmessage new releases/announcements')
@@ -206,7 +267,10 @@ class TestAPI(TestAPIProto):
                 'Could not find Bitmessage new releases/announcements'
                 ' in subscriptions')
         self.assertEqual(
-            self.api.deleteSubscription('BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw'),
+            self.api.deleteSubscription(sample_test_subscription_address[0]),
+            'Deleted subscription if it existed.')
+        self.assertEqual(
+            self.api.deleteSubscription(sample_test_subscription_address[1]),
             'Deleted subscription if it existed.')
         self.assertEqual(
             json.loads(self.api.listSubscriptions())['subscriptions'], [])

@@ -33,6 +33,8 @@ import defaults
 import shared
 import shutdown
 import state
+
+from testmode_init import populate_api_test_data
 from bmconfigparser import BMConfigParser
 from debug import logger  # this should go before any threads
 from helper_startup import (
@@ -294,6 +296,9 @@ class Main(object):
                 bitmessageqt.run()
         else:
             config.remove_option('bitmessagesettings', 'dontconnect')
+
+        if state.testmode:
+            populate_api_test_data()
 
         if daemon:
             while state.shutdown == 0:

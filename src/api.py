@@ -89,9 +89,10 @@ from addresses import (
 )
 from bmconfigparser import BMConfigParser
 from debug import logger
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
+from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready
 from inventory import Inventory
 from network.threads import StoppableThread
+from six.moves import queue
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -230,6 +231,7 @@ class singleAPI(StoppableThread):
 
             def serve_forever(self, poll_interval=None):
                 """Start the RPCServer"""
+                sql_ready.wait()
                 while state.shutdown == 0:
                     self.handle_request()
 
@@ -1422,10 +1424,24 @@ class BMRPCDispatcher(object):
         """Test two numeric params"""
         return a + b
 
+    @command('clearUISignalQueue')
+    def HandleclearUISignalQueue(self):
+        """clear UISignalQueue"""
+        queues.UISignalQueue.queue.clear()
+
     @command('statusBar')
     def HandleStatusBar(self, message):
         """Update GUI statusbar message"""
         queues.UISignalQueue.put(('updateStatusBar', message))
+
+    @command('getStatusBar')
+    def HandleGetStatusBar(self):
+        """Get GUI statusbar message"""
+        try:
+            _, data = queues.UISignalQueue.get(block=False)
+        except queue.Empty:
+            return None
+        return data
 
     @command('deleteAndVacuum')
     def HandleDeleteAndVacuum(self):
