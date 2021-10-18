@@ -136,3 +136,37 @@ class AddressBook(TeleniumTestProcess):
         self.assertExists(
             '//DropDownWidget/ScrollView[0]//MyTextInput[@text="{}"]'.format(
                 test_address['autoresponder_address']), timeout=5)
+        # CLICK BACK-BUTTON
+        self.cli.wait_click('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[@icon=\"arrow-left\"]', timeout=5)
+        # After Back press, redirected to 'inbox' screen
+        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=8)
+
+    @skip_screen_checks
+    def test_delete_address_from_saved_address(self):
+        """Delete a saved Address from Address Book"""
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=2)
+        # checking state of Nav drawer(Open)
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # this is for opening setting screen
+        self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=2)
+        # checking state of Nav drawer(closed)
+        self.assertExists("//MDNavigationDrawer[@state~=\"close\"]", timeout=2)
+        # Checking current screen
+        self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=8)
+        # Checking the Address is rendered
+        self.assertExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem', timeout=5)
+        # Waiting for the trash icon to be rendered
+        self.cli.wait('//MDList[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
+        # Enable the trash icon
+        self.cli.setattr('//MDList[0]//MDIconButton[@disabled]', 'disabled', False)
+        # Swiping over the Address to delete
+        self.cli.wait_drag('//MDList[0]//AvatarSampleWidget', '//MDList[0]//TimeTagRightSampleWidget', 2, timeout=5)
+        # Click on trash icon to delete the Address.
+        self.cli.wait_click('//MDList[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
+        # Checking the deleted Address is disappeared
+        self.assertNotExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem', timeout=5)
+        # Address count should be zero
+        self.assertEqual(len(self.cli.select('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]')), 0)
+        # After Deleting, Screen is redirected to Address Book screen
+        self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=8)
