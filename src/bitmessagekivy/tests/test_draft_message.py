@@ -40,11 +40,13 @@ class DraftMessage(TeleniumTestProcess):
         # Click on "Send" Icon
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
         # Checking validation Pop up is Opened
-        self.assertExists('//MDDialog', timeout=5)
+        self.assertExists('//MDDialog[@open]', timeout=5)
+        # checking the button is rendered
+        self.assertExists('//MDFlatButton[@text=\"Ok\"]', timeout=5)
         # Click "OK" button to dismiss the Popup
         self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
         # Checking validation Pop up is Closed
-        self.assertNotExists('//MDDialog', timeout=5)
+        self.assertNotExists('//MDDialog[@open]', timeout=5)
         # RECEIVER FIELD
         # Checking Receiver Address Field
         self.assertExists('//DropDownWidget/ScrollView[0]//MyTextInput[@text=\"\"]', timeout=5)
@@ -133,11 +135,19 @@ class DraftMessage(TeleniumTestProcess):
         """Deleting a Drafted Message"""
         # Checking current screen is Draft Screen
         self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=5)
-        # Checking the trash idcon is rendered
-        self.assertExists('//MDList[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
+        # Cheking the Message is rendered
+        self.assertExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
+        # Enable the trash icon
+        self.cli.setattr('//MDList[0]//MDIconButton[@disabled]', 'disabled', False)
+        # Waiting for the trash icon to be rendered
+        self.cli.wait('//MDList[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
+        # Swiping over the message to delete
+        self.cli.wait_drag('//MDList[0]//AvatarSampleWidget', '//MDList[0]//TimeTagRightSampleWidget', 2, timeout=5)
         # Click on trash icon to delete the message.
         self.cli.wait_click('//MDList[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
-        # Checking the message is deleted
+        # Checking the deleted message is disappeared
+        self.assertNotExists('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem', timeout=5)
+        # Message count should be zero
         self.assertEqual(len(self.cli.select('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]')), 0)
         # After Deleting, Screen is redirected to Draft screen
-        self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=10)
+        self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=8)
