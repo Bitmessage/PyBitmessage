@@ -65,10 +65,10 @@ class MyAddressScreen(TeleniumTestProcess):
         # Checking Message body is Entered
         # self.assertNotEqual('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text]', '')
         self.assertExists('//DropDownWidget/ScrollView[0]//ScrollView[0]/MDTextField[@text=\"{}\"]'.format(self.body), timeout=5)
-        # Click on Send Icon
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"send\"]', timeout=5)
-        # Check for redirected screen (Inbox Screen)
-        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=7)
+        # Click on BACK button
+        self.cli.wait_click('//MDToolbar//MDActionTopAppBarButton[@icon=\"arrow-left\"]', timeout=2)
+        # Checking current screen(My Address) after BACK press
+        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=3)
 
     @ordered
     def test_show_qrcode(self):
@@ -96,26 +96,5 @@ class MyAddressScreen(TeleniumTestProcess):
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=3)
 
     @ordered
-    def test_sent_box(self):
-        """
-            Checking Message in Sent Screen after sending a Message.
-        """
-        # Checking current screen
-        self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=3)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
-        # this is for scrolling Nav drawer
-        self.drag("//NavigationItem[@text=\"Purchase\"]", "//NavigationItem[@text=\"My addresses\"]")
-        # assert for checking scroll function
-        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
-        # Clicking on Sent Tab
-        self.cli.wait_click('//NavigationItem[@text=\"Sent\"]', timeout=3)
-        # Checking current screen; Sent
-        self.assertExists("//ScreenManager[@current=\"sent\"]", timeout=3)
-        # Checking the message is rendered in sent box screen
-        self.assertExists('//SwipeToDeleteItem', timeout=5)
-        # Checking messages count in sent box
-        total_sent_msgs = len(self.cli.select("//SwipeToDeleteItem"))
-        self.assertEqual(total_sent_msgs, 1)
+    def test_enable_disable_address(self):
+        pass
