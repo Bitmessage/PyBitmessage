@@ -142,6 +142,7 @@ class AddressBook(TeleniumTestProcess):
         self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=8)
 
     @skip_screen_checks
+    @ordered
     def test_delete_address_from_saved_address(self):
         """Delete a saved Address from Address Book"""
         # this is for opening Nav drawer
