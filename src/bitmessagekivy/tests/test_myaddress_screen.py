@@ -1,3 +1,4 @@
+
 from .telenium_process import TeleniumTestProcess
 from .common import ordered
 
@@ -78,7 +79,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
         # checking state of Nav drawer
         self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
-        # Clicking on Sent Tab
+        # Clicking on My Address Tab
         self.cli.wait_click('//NavigationItem[@text=\"My addresses\"]', timeout=3)
         # Checking current screen
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=3)
@@ -96,5 +97,107 @@ class MyAddressScreen(TeleniumTestProcess):
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=3)
 
     @ordered
+    def test_set_default_address(self):
+        """Selecting First Address From Drawer-Box"""
+        # Checking current screen
+        self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
+        # This is for checking the Side nav Bar is closed
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # This is for checking the menu button is appeared
+        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        # Scrolling up
+        self.cli.wait_drag("//NavigationItem[@text=\"Settings\"]", "//NavigationItem[@text=\"Purchase\"]", 2, timeout=2)
+        # Checking scroll state
+        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
+        # Click to open Address Dropdown
+        self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
+        # Checking the dropdown option is exist
+        self.assertExists('//MySpinnerOption[1]', timeout=5)
+        is_open = self.cli.getattr('//NavigationItem[0]/CustomSpinner[@is_open]', 'is_open')
+        # Check the state of dropdown.
+        self.assertEqual(is_open, True)
+        # Selection of an address to set as a default address.
+        self.cli.wait_click('//MySpinnerOption[1]', timeout=5)
+        self.assertNotExists('//MySpinnerOption', timeout=5)
+        # Checking current screen
+        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=5)
+
+    @ordered
     def test_enable_disable_address(self):
-        pass
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        # SCrolling down to click 'My address' Tab
+        self.cli.wait_drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 2, timeout=5)
+        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
+
+        # Clicking on My Address Tab
+        self.cli.wait_click('//NavigationItem[@text=\"My addresses\"]', timeout=3)
+        # This is for checking the Side nav Bar is closed
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
+
+
+
+        # self.assertNotExists('//MDDialog[@open]', timeout=3)
+        # # Click on address to open detail popup
+        # self.cli.wait_click('//MDList[0]/CustomTwoLineAvatarIconListItem[0]', timeout=5)
+        # self.assertExists('//MDDialog[@open]', timeout=3)
+        # # Check for Rendering the 'Cancel' button
+        # self.assertExists('//MyaddDetailPopup//MDLabel[@text=\"Cancel\"]', timeout=3)
+        # # Click 'cancel' button to dismiss popup
+        # self.cli.wait_click('//MyaddDetailPopup//MDLabel[@text=\"Cancel\"]', timeout=3)
+        # self.assertNotExists('//MDDialog[@open]', timeout=3)
+        # Click on toggle to disable address
+        self.cli.wait('//MDList//Thumb[0]', timeout=5)
+        self.assertExists('//MDList//Thumb[0]', timeout=5)
+        self.cli.wait_click('//MDList//Thumb[0]', timeout=5)
+        # self.assertExists('//ToggleBtn[@active="{}"]'.format(True), timeout=1)
+        disabled_address = self.cli.getattr('//MDList[0]/CustomTwoLineAvatarIconListItem[1]', 'secondary_text')
+        # Click on address to open detail popup (should not open because address is disabled)
+#         self.assertNotExists('//MDDialog[@open]', timeout=5)
+#         self.cli.wait('//MDList[0]/CustomTwoLineAvatarIconListItem[0]', timeout=5)
+# ?        self.cli.wait_click('//MDList[0]/CustomTwoLineAvatarIconListItem[0]', timeout=5)
+
+        # # Checking the dialog is open
+        # self.assertExists('//MDDialog[@open]', timeout=5)
+        # self.cli.wait('//MDFlatButton[@text=\"Ok\"]', timeout=5)
+        # self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
+        # # Checking the dialog is closed
+        # self.assertNotExists('//MDDialog[@open]', timeout=5)
+        # # Click on toggle to enable address
+        # # self.cli.wait_click('//MDList//Thumb[0]', timeout=5)
+        # # # Checking the address is enabled
+        # # is_active = self.cli.getattr('//ToggleBtn', 'active')
+        # # self.assertEqual(is_active, True)
+        # # self.assertNotExists('//MDDialog[@open]', timeout=3)
+        # # # Click on address to open detail popup
+        # # self.cli.wait_click('//MDList[0]/CustomTwoLineAvatarIconListItem[0]', timeout=5)
+        # # self.assertExists('//MDDialog[@open]', timeout=3)
+        # # # Click 'cancel' button to dismiss popup
+        # # self.cli.wait_click('//MyaddDetailPopup//MDLabel[@text=\"Cancel\"]', timeout=3)
+
+        # This is for checking the Side nav Bar is closed
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # This is for checking the menu button is appeared
+        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        # Scrolling up
+        self.cli.wait_drag("//NavigationItem[@text=\"Settings\"]", "//NavigationItem[@text=\"Purchase\"]", 2, timeout=2)
+        # Checking scroll state
+        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
+        # Click to open Address Dropdown
+        self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
+        # Checking the dropdown option is rendered
+        self.assertExists('//MySpinnerOption', timeout=5)
+        is_open = self.cli.getattr('//NavigationItem[0]/CustomSpinner[@is_open]', 'is_open')
+        # Check the state of dropdown.
+        self.assertEqual(is_open, True)
+        # Checking the disabled address should not be in dropdown
+        self.assertNotExists('//MySpinnerOption[@text="{}"]'.format(disabled_address), timeout=5)
