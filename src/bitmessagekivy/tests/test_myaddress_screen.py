@@ -19,13 +19,7 @@ class MyAddressScreen(TeleniumTestProcess):
         # This is for checking Current screen
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
         # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        self.open_side_navbar()
         # this is for scrolling Nav drawer
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
@@ -75,10 +69,7 @@ class MyAddressScreen(TeleniumTestProcess):
     def test_show_qrcode(self):
         """Show the Qr code of selected address"""
         # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=3)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        self.open_side_navbar()
         # Clicking on My Address Tab
         self.cli.wait_click('//NavigationItem[@text=\"My addresses\"]', timeout=3)
         # Checking current screen
@@ -102,15 +93,9 @@ class MyAddressScreen(TeleniumTestProcess):
         # Checking current screen
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
         # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        self.open_side_navbar()
         # Scrolling up
-        self.cli.wait_drag("//NavigationItem[@text=\"Settings\"]", "//NavigationItem[@text=\"Purchase\"]", 2, timeout=2)
+        self.cli.wait_drag("//NavigationItem[@text=\"Settings\"]", "//NavigationItem[@text=\"Purchase\"]", 1, timeout=2)
         # Checking scroll state
         self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
         # Click to open Address Dropdown
@@ -131,7 +116,7 @@ class MyAddressScreen(TeleniumTestProcess):
         # checking state of Nav drawer
         self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
         # SCrolling down to click 'My address' Tab
-        self.cli.wait_drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 2, timeout=5)
+        self.cli.wait_drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]", 1, timeout=5)
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
 
         # Clicking on My Address Tab
@@ -181,6 +166,22 @@ class MyAddressScreen(TeleniumTestProcess):
         # # self.cli.wait_click('//MyaddDetailPopup//MDLabel[@text=\"Cancel\"]', timeout=3)
 
         # This is for checking the Side nav Bar is closed
+        self.open_side_navbar()
+        # Scrolling up
+        self.cli.wait_drag("//NavigationItem[@text=\"Settings\"]", "//NavigationItem[@text=\"Purchase\"]", 1, timeout=5)
+        # Checking scroll state
+        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=8)
+        # Click to open Address Dropdown
+        self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
+        # Checking the dropdown option is rendered
+        self.assertExists('//MySpinnerOption', timeout=5)
+
+        # Checking the disabled address should not be in dropdown
+        self.assertNotExists('//MySpinnerOption[@text="{}"]'.format(disabled_address), timeout=5)
+
+
+    def open_side_navbar(self):
+        """Common method for opening navbar"""
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # This is for checking the menu button is appeared
         self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
@@ -188,16 +189,3 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
         self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
-        # Scrolling up
-        self.cli.wait_drag("//NavigationItem[@text=\"Settings\"]", "//NavigationItem[@text=\"Purchase\"]", 2, timeout=2)
-        # Checking scroll state
-        self.assertCheckScrollUp('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
-        # Click to open Address Dropdown
-        self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
-        # Checking the dropdown option is rendered
-        self.assertExists('//MySpinnerOption', timeout=5)
-        is_open = self.cli.getattr('//NavigationItem[0]/CustomSpinner[@is_open]', 'is_open')
-        # Check the state of dropdown.
-        self.assertEqual(is_open, True)
-        # Checking the disabled address should not be in dropdown
-        self.assertNotExists('//MySpinnerOption[@text="{}"]'.format(disabled_address), timeout=5)
