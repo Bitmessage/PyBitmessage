@@ -123,9 +123,7 @@ class SendMessage(TeleniumTestProcess):
             Checking Message in Sent Screen after sending a Message.
         """
         # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        self.open_side_navbar()
         # Clicking on Sent Tab
         self.cli.wait_click('//NavigationItem[@text=\"Sent\"]', timeout=5)
         # Checking current screen; Sent
