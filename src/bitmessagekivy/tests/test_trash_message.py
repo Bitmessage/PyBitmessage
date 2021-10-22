@@ -12,12 +12,8 @@ class TrashMessage(TeleniumTestProcess):
         """Delete Trash message permanently from trash message listing"""
         # Checking current Screen(Inbox screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
-        # Checking "Menu" is rendered
-        self.assertExists('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        # Method to open side navbar
+        self.open_side_navbar()
         # this is for opening Trash screen
         self.cli.wait_click('//NavigationItem[@text=\"Trash\"]', timeout=2)
         # Checking Trash Screen
@@ -34,9 +30,9 @@ class TrashMessage(TeleniumTestProcess):
         # Checking the Dialog popup is closed
         self.assertNotExists('//MDDialog[@open]', timeout=5)
         # Checking the delete icon is rendered and functional
-        self.assertExists('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=5)
+        self.assertExists('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
         # Click on the delete icon to delete the current message
-        self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=5)
+        self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@icon=\"trash-can\"]', timeout=5)
         # Checking Confirm Popup is Opened
         self.assertExists('//MDDialog[@open]', timeout=5)
         # Checking the popup's 'Yes' button is rendered.
