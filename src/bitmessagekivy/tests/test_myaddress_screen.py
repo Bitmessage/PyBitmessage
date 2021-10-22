@@ -178,14 +178,3 @@ class MyAddressScreen(TeleniumTestProcess):
 
         # Checking the disabled address should not be in dropdown
         self.assertNotExists('//MySpinnerOption[@text="{}"]'.format(disabled_address), timeout=5)
-
-
-    def open_side_navbar(self):
-        """Common method for opening navbar"""
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)

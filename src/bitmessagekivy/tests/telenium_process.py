@@ -118,3 +118,13 @@ class TeleniumTestProcess(TeleniumTestCase):
                 # Finally Sleep is used to make the menu button funcationlly available for the click process.
                 # (because Transition is little bit slow)
                 sleep(0.2)
+
+    def open_side_navbar(self):
+        """Common method for opening side navbar (Side Drawer)"""
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # This is for checking the menu button is appeared
+        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
