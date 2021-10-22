@@ -22,14 +22,8 @@ class AddressBook(TeleniumTestProcess):
         """Saving a new Address On Address Book Screen/Window"""
         # Checking current Screen(Inbox screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
-        # This is for checking the Side nav Bar is closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
-        # This is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        # Method to open side navbar (written in telenium_process.py)
+        self.open_side_navbar()
         # this is for scrolling Nav drawer
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
@@ -145,10 +139,8 @@ class AddressBook(TeleniumTestProcess):
     @ordered
     def test_delete_address_from_saved_address(self):
         """Delete a saved Address from Address Book"""
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=2)
-        # checking state of Nav drawer(Open)
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=2)
+        # Method to open side navbar (written in telenium_process.py)
+        self.open_side_navbar()
         # this is for opening setting screen
         self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=2)
         # checking state of Nav drawer(closed)
