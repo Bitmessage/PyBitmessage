@@ -114,3 +114,14 @@ class TeleniumTestProcess(TeleniumTestCase):
             if timeout > 0 and time() - start > timeout:
                 raise Exception("Timeout")
             sleep(0.1)
+
+    def open_side_navbar(self):
+        """Common method for opening Side navbar (Side Drawer)"""
+        # Checking the drawer is in 'closed' state
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # This is for checking the menu button is appeared
+        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
+        # this is for opening Nav drawer
+        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
+        # checking state of Nav drawer
+        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
