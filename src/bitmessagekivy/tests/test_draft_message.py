@@ -86,16 +86,7 @@ class DraftMessage(TeleniumTestProcess):
         """Click on a Drafted message to send message"""
         # OPEN NAVIGATION-DRAWER
         # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
-        # Click to open Draft Screen
-        self.cli.wait_click('//NavigationItem[@text=\"Draft\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"close\"]", timeout=5)
-        # Checking Draft Screen
-        self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=5)
-
+        self.open_side_navbar()
         # Checking messages in draft box
         self.assertEqual(len(self.cli.select('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem')), 1)
         # Wait to render the widget
