@@ -13,7 +13,7 @@ logger = logging.getLogger('default')
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
-def encodeBase58(num, alphabet=ALPHABET):
+def encodeBase58(num):
     """Encode a number in Base X
 
     Args:
@@ -23,30 +23,30 @@ def encodeBase58(num, alphabet=ALPHABET):
     if num < 0:
         return None
     if num == 0:
-        return alphabet[0]
+        return ALPHABET[0]
     arr = []
-    base = len(alphabet)
+    base = len(ALPHABET)
     while num:
         num, rem = divmod(num, base)
-        arr.append(alphabet[rem])
+        arr.append(ALPHABET[rem])
     arr.reverse()
     return ''.join(arr)
 
 
-def decodeBase58(string, alphabet=ALPHABET):
+def decodeBase58(string):
     """Decode a Base X encoded string into the number
 
     Args:
       string: The encoded string
       alphabet: The alphabet to use for encoding
     """
-    base = len(alphabet)
+    base = len(ALPHABET)
     num = 0
 
     try:
         for char in string:
             num *= base
-            num += alphabet.index(char)
+            num += ALPHABET.index(char)
     except ValueError:
         # character not found (like a space character or a 0)
         return 0
