@@ -10,14 +10,8 @@ class PaymentScreen(TeleniumTestProcess):
         """Select Subscription From List of Subscriptions"""
         # This is for checking Current screen
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
-        # This is for checking the Side nav Bar id closed
-        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
-        # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
-        # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
-        # checking state of Nav drawer
-        self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)
+        # Method to open the side navbar
+        self.open_side_navbar()
         # Dragging from sent to inbox to get Payment tab
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
