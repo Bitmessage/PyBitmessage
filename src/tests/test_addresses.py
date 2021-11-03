@@ -46,11 +46,15 @@ class TestAddresses(unittest.TestCase):
 
     def test_base58(self):
         """Check Base58 encoding and decoding"""
+        self.assertEqual(addresses.decodeBase58('1'), 0)
+        self.assertEqual(addresses.decodeBase58('!'), 0)
         self.assertEqual(
             addresses.decodeBase58(sample_addr4), sample_daddr4_512)
         self.assertEqual(
             addresses.decodeBase58(sample_addr3), sample_daddr3_512)
 
+        self.assertEqual(addresses.encodeBase58(0), '1')
+        self.assertEqual(addresses.encodeBase58(-1), None)
         self.assertEqual(
             sample_addr4, addresses.encodeBase58(sample_daddr4_512))
         self.assertEqual(
