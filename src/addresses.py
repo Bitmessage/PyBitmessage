@@ -20,6 +20,8 @@ def encodeBase58(num, alphabet=ALPHABET):
       num: The number to encode
       alphabet: The alphabet to use for encoding
     """
+    if num < 0:
+        return None
     if num == 0:
         return alphabet[0]
     arr = []
