@@ -11,7 +11,7 @@ shutdown = 0
 
 def signal_handler(signal, frame):
     global shutdown
-    print "Got signal %i in %s/%s" % (signal, current_process().name, current_thread().name)
+    print("Got signal %i in %s/%s" % (signal, current_process().name, current_thread().name))
     if current_process().name != "MainProcess":
         raise StopIteration("Interrupted")
     if current_thread().name != "PyBitmessage":
@@ -20,21 +20,21 @@ def signal_handler(signal, frame):
 
 
 def _doCPoW(target, initialHash):
-#    global shutdown
+    # global shutdown
     h = initialHash
     m = target
     out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
     out_m = ctypes.c_ulonglong(m)
-    print "C PoW start"
+    print("C PoW start")
     for c in range(0, 200000):
-        print "Iter: %i" % (c)
+        print("Iter: %i" % (c))
         nonce = bmpow(out_h, out_m)
         if shutdown:
             break
     trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     if shutdown != 0:
         raise StopIteration("Interrupted")
-    print "C PoW done"
+    print("C PoW done")
     return [trialValue, nonce]
 
 
