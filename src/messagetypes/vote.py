@@ -1,6 +1,6 @@
 import logging
 
-from messagetypes import MsgBase
+from pybitmessage.messagetypes import MsgBase
 
 logger = logging.getLogger('default')
 

@@ -1,10 +1,8 @@
 import logging
 from importlib import import_module
 from os import listdir, path
-from string import lower
 
-import messagetypes
-import paths
+from pybitmessage import paths
 
 logger = logging.getLogger('default')
 
@@ -12,7 +10,7 @@ logger = logging.getLogger('default')
 class MsgBase(object):  # pylint: disable=too-few-public-methods
     """Base class for message types"""
     def __init__(self):
-        self.data = {"": lower(type(self).__name__)}
+        self.data = {"": type(self).__name__.lower()}
 
 
 def constructObject(data):
@@ -21,10 +19,14 @@ def constructObject(data):
     if data[""] not in whitelist:
         return None
     try:
-        classBase = getattr(getattr(messagetypes, data[""]), data[""].title())
-    except (NameError, AttributeError):
+        classBase = getattr(import_module(".{}".format(data[""]), __name__), data[""].title())
+    except (NameError, AttributeError, ValueError, ImportError):
         logger.error("Don't know how to handle message type: \"%s\"", data[""], exc_info=True)
         return None
+    except:  # noqa:E722
+        logger.error("Don't know how to handle message type: \"%s\"", data[""], exc_info=True)
+        return None
+
     try:
         returnObj = classBase()
         returnObj.decode(data)
@@ -40,7 +42,7 @@ def constructObject(data):
 
 if paths.frozen is not None:
     import message  # noqa : F401 flake8: disable=unused-import
-    import vote     # noqa : F401 flake8: disable=unused-import
+    import vote  # noqa : F401 flake8: disable=unused-import
 else:
     for mod in listdir(path.dirname(__file__)):
         if mod == "__init__.py":
@@ -49,7 +51,7 @@ else:
         if splitted[1] != ".py":
             continue
         try:
-            import_module(".{}".format(splitted[0]), "messagetypes")
+            import_module(".{}".format(splitted[0]), __name__)
         except ImportError:
             logger.error("Error importing %s", mod, exc_info=True)
         else:
