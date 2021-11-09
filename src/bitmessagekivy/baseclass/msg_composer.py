@@ -23,7 +23,9 @@ from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.screenmanager import Screen
 from kivy.uix.textinput import TextInput
-
+from kivymd.uix.behaviors.hover_behavior import HoverBehavior
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.theming import ThemableBehavior
 import state
 import queues
 
@@ -237,7 +239,22 @@ class DropDownWidget(BoxLayout):
             """Callback of alert box"""
             dialog_box.dismiss()
             toast(text_item)
+    
 
+
+# class HoverItem(MDBoxLayout, ThemableBehavior, HoverBehavior):
+#     '''Custom item implementing hover behavior.'''
+#     def __init__(self, **kwargs):
+#         """Getting Text Input."""
+#         super(HoverItem, self).__init__(**kwargs)
+#         # import pdb; pdb.set_trace()
+
+#     def on_enter(self):
+#         # import pdb; pdb.set_trace()
+#         Window.set_system_cursor('hand')
+
+#     def on_leave(self):
+#         Window.set_system_cursor('arrow')
 
 class MyTextInput(MDTextField):
     """MyTextInput class for kivy Ui"""
@@ -251,6 +268,8 @@ class MyTextInput(MDTextField):
     def __init__(self, **kwargs):
         """Getting Text Input."""
         super(MyTextInput, self).__init__(**kwargs)
+        # import pdb; pdb.set_trace()
+
         self.__lineBreak__ = 0
 
     def on_text(self, instance, value):  # pylint: disable=unused-argument

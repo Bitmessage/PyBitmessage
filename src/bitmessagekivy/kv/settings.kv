@@ -540,4 +540,232 @@
                         MDRaisedButton:
                             text: app.tr._('Apply')
 
+        Tab:
+            text: 'Max acceptable Difficulty'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._(root.exp_text)
+                            halign: 'left'
+                    BoxLayout:
+                        id: box2_height
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Leave these input fields blank for the default behavior.")
+                            halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        height: dp(50) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Give up after")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: app.tr._('0')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("days and")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: '0'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "months"
+                                halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        # MDRaisedButton:
+                        #     text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+
+        Tab:
+            text: 'Demanded Difficulty'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._(root.exp_text)
+                            halign: 'left'
+                    BoxLayout:
+                        id: box2_height
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Leave these input fields blank for the default behavior.")
+                            halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        height: dp(50) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Give up after")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: app.tr._('0')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("days and")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: '0'
+                                pos_hint: {'center_y': .5, 'center_x': .5}59468066
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "months"
+                                halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        # MDRaisedButton:
+                        #     text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+
+        Tab:
+            text: 'Namecoin Integration'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._(root.exp_text)
+                            halign: 'left'
+                    BoxLayout:
+                        id: box2_height
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Leave these input fields blank for the default behavior.")
+                            halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        height: dp(50) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Give up after")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: app.tr._('0')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("days and")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: '0'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "months"
+                                halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        # MDRaisedButton:
+                        #     text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+
     Loader:
