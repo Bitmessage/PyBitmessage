@@ -46,7 +46,6 @@ class TrashMessage(TeleniumTestProcess):
         # self.assertEqual(self.cli.getattr('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[@disabled]', 'disabled'), False)
         self.assertNotExists('//MDDialog[@open]', timeout=5)
         self.assertExists('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=5)
-        import pdb; pdb.set_trace()
         # clicking on Trash Box icon to delete message.
         self.cli.wait_click('//MDList[0]/CutsomSwipeToDeleteItem[0]//MDIconButton[0]', timeout=5)
         # Checking Confirm Popup is Opened
