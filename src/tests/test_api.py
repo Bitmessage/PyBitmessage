@@ -420,6 +420,13 @@ class TestAPI(TestAPIProto):
         finally:
             self.assertEqual(self.api.deleteAddress(addr), 'success')
 
+        # sending from an address without private key
+        # (Bitmessage new releases/announcements)
+        result = self.api.sendBroadcast(
+            'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',
+            base64.encodestring('test_subject'), msg)
+        self.assertRegexpMatches(result, r'^API Error 0013:')
+
     def test_chan(self):
         """Testing chan creation/joining"""
         # Create chan with known address
