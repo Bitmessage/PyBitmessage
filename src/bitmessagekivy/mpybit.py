@@ -329,7 +329,7 @@ class NavigateApp(MDApp):
         """Adding to address Book"""
         width = .85 if platform == 'android' else .8
         self.add_popup = MDDialog(
-            title='add contact\'s',
+            title='Add contact\'s',
             type="custom",
             size_hint=(width, .23),
             content_cls=GrashofPopup(),

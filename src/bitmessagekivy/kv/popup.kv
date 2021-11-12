@@ -27,6 +27,7 @@
             multiline: False
             hint_text: app.tr._("Label")
             required: True
+            icon_right: 'label'
             helper_text_mode: "on_error"
             on_text: root.checkLabel_valid(self)
             canvas.before:
@@ -36,6 +37,7 @@
             id: address
             hint_text: app.tr._("Address")
             required: True
+            icon_right: 'book-plus'
             helper_text_mode: "on_error"
             multiline: False
             on_text: root.checkAddress_valid(self)
