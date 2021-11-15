@@ -45,6 +45,7 @@ PACKAGE_MANAGER = {
     "Debian": "apt-get install",
     "Ubuntu": "apt-get install",
     "Ubuntu 12": "apt-get install",
+    "Ubuntu 20": "apt-get install",
     "openSUSE": "zypper install",
     "Fedora": "dnf install",
     "Guix": "guix package -i",
@@ -58,6 +59,7 @@ PACKAGES = {
         "Debian": "python-qt4",
         "Ubuntu": "python-qt4",
         "Ubuntu 12": "python-qt4",
+        "Ubuntu 20": "",
         "openSUSE": "python-qt",
         "Fedora": "PyQt4",
         "Guix": "python2-pyqt@4.11.4",
@@ -75,6 +77,7 @@ PACKAGES = {
         "Debian": "python-msgpack",
         "Ubuntu": "python-msgpack",
         "Ubuntu 12": "msgpack-python",
+        "Ubuntu 20": "",
         "openSUSE": "python-msgpack-python",
         "Fedora": "python2-msgpack",
         "Guix": "python2-msgpack",
@@ -89,6 +92,7 @@ PACKAGES = {
         "Debian": "python-pyopencl",
         "Ubuntu": "python-pyopencl",
         "Ubuntu 12": "python-pyopencl",
+        "Ubuntu 20": "",
         "Fedora": "python2-pyopencl",
         "openSUSE": "",
         "OpenBSD": "",
@@ -106,10 +110,24 @@ PACKAGES = {
         "Debian": "python-setuptools",
         "Ubuntu": "python-setuptools",
         "Ubuntu 12": "python-setuptools",
+        "Ubuntu 20": "python-setuptools",
         "Fedora": "python2-setuptools",
         "openSUSE": "python-setuptools",
         "Guix": "python2-setuptools",
         "Gentoo": "dev-python/setuptools",
+        "optional": False,
+    },
+    "six": {
+        "OpenBSD": "py-six",
+        "FreeBSD": "py27-six",
+        "Debian": "python-six",
+        "Ubuntu": "python-six",
+        "Ubuntu 12": "python-six",
+        "Ubuntu 20": "python-six",
+        "Fedora": "python-six",
+        "openSUSE": "python-six",
+        "Guix": "python-six",
+        "Gentoo": "dev-python/six",
         "optional": False,
     }
 }
@@ -150,6 +168,8 @@ def detectOSRelease():
                     pass
         if detectOS.result == "Ubuntu" and version < 14:
             detectOS.result = "Ubuntu 12"
+        elif detectOS.result == "Ubuntu" and version >= 20:
+            detectOS.result = "Ubuntu 20"
 
 
 def try_import(module, log_extra=False):

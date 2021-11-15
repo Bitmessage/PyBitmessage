@@ -47,6 +47,7 @@ EXTRAS_REQUIRE_DEPS = {
         "Debian": ["libcap-dev python-prctl"],
         "Ubuntu": ["libcap-dev python-prctl"],
         "Ubuntu 12": ["libcap-dev python-prctl"],
+        "Ubuntu 20": [""],
         "openSUSE": [""],
         "Fedora": ["prctl"],
         "Guix": [""],
@@ -161,6 +162,10 @@ for lhs, rhs in EXTRAS_REQUIRE.items():
             print(
                 "Optional dependency `pip install .[{}]` would require `{}`"
                 " to be run as root".format(lhs, rhs_cmd))
+
+if detectOS.result == "Ubuntu 20":
+    print(
+        "Qt interface isn't supported in %s" % detectOS.result)
 
 if (not compiler or prereqs) and OPSYS in PACKAGE_MANAGER:
     print("You can install the missing dependencies by running, as root:")
