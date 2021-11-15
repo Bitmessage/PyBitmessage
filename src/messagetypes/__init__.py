@@ -1,16 +1,8 @@
 import logging
-from importlib import import_module
-from os import listdir, path
 
-from pybitmessage import paths
+from importlib import import_module
 
 logger = logging.getLogger('default')
-
-
-class MsgBase(object):  # pylint: disable=too-few-public-methods
-    """Base class for message types"""
-    def __init__(self):
-        self.data = {"": type(self).__name__.lower()}
 
 
 def constructObject(data):
@@ -40,14 +32,19 @@ def constructObject(data):
         return returnObj
 
 
-if paths.frozen is not None:
-    import message  # noqa : F401 flake8: disable=unused-import
-    import vote  # noqa : F401 flake8: disable=unused-import
+try:
+    from pybitmessage import paths
+except ImportError:
+    paths = None
+
+if paths and paths.frozen is not None:
+    from . import message, vote  # noqa: F401 flake8: disable=unused-import
 else:
-    for mod in listdir(path.dirname(__file__)):
+    import os
+    for mod in os.listdir(os.path.dirname(__file__)):
         if mod == "__init__.py":
             continue
-        splitted = path.splitext(mod)
+        splitted = os.path.splitext(mod)
         if splitted[1] != ".py":
             continue
         try:
