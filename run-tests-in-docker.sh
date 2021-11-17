@@ -1,5 +1,4 @@
 #!/bin/bash
 
-docker build --target travis -t pybm -f packages/docker/Dockerfile.bionic .
-docker run pybm
-
+docker build -t pybm-test -f packages/docker/Dockerfile.bionic .
+docker run pybm-test
