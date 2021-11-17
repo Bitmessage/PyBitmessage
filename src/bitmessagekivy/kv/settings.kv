@@ -465,6 +465,252 @@
                         MDRaisedButton:
                             text: app.tr._('Apply')
         Tab:
+            text: 'Demanded Difficulty'
+            ScrollView:
+                do_scroll_x: False
+
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(300) + self.minimum_height
+                    padding: 10
+                    BoxLayout:
+                        id: box_height
+                        orientation: 'vertical'
+                        # MDLabel:
+                        #     font_style: 'Body1'
+                        #     theme_text_color: 'Primary'
+                        #     text: app.tr._("Listening port")
+                        #     halign: 'left'
+                        #     bold: True
+
+                # BoxLayout:
+                #     size_hint_y: None
+                #     orientation: 'vertical'
+                #     height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                #     padding: 20
+                #     # spacing: 10
+                #     BoxLayout:
+                #         # size_hint_y: None
+                #         id: box1_height
+                #         # orientation: 'vertical'
+                #         # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "\n\n\nWhen someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1.\n\n"
+                            halign: 'left'
+
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: 5
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Total difficulty:")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/4), dp(30)
+                            hint_text: app.tr._('00000.0')
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        padding: 5
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "The 'Total difficulty' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work."
+                            halign: 'left'
+                    
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        spacing: 0
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Small message difficulty:")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/4), dp(30)
+                            hint_text: app.tr._('00000.0')
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+
+
+                    BoxLayout:
+                        size_hint_y: None
+                        padding: 0
+                        id: box1_height
+                        orientation: 'vertical'
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "The 'Small message difficulty' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn't really affect large messages."
+                            halign: 'left'
+
+
+                    # BoxLayout:
+                    #     id: box2_height
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     height: dp(30) + self.minimum_height
+                    #     MDLabel:
+                    #         font_style: 'Body1'
+                    #         theme_text_color: 'Primary'
+                    #         text: app.tr._("Leave these input fields blank for the default behavior.")
+                    #         halign: 'left'
+                    # BoxLayout:
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     padding: [10, 0, 0, 0]
+                    #     height: dp(50) + self.minimum_height
+                    #     BoxLayout:
+                    #         orientation: 'horizontal'
+                    #         MDLabel:
+                    #             font_style: 'Body1'
+                    #             theme_text_color: 'Primary'
+                    #             text: app.tr._("Give up after")
+                    #             halign: 'left'
+                    #         MDTextFieldRect:
+                    #             size_hint: None, None
+                    #             size: dp(70), dp(30)
+                    #             text: app.tr._('0')
+                    #             # pos_hint: {'center_y': .5, 'center_x': .5}
+                    #             input_filter: "int"
+                    #         MDLabel:
+                    #             font_style: 'Body1'
+                    #             theme_text_color: 'Primary'
+                    #             text: app.tr._("days and")
+                    #             halign: 'left'
+                    #         MDTextFieldRect:
+                    #             size_hint: None, None
+                    #             size: dp(70), dp(30)
+                    #             text: '0'
+                    #             # pos_hint: {'center_y': .5, 'center_x': .5}
+                    #             input_filter: "int"
+                    #         MDLabel:
+                    #             font_style: 'Body1'
+                    #             theme_text_color: 'Primary'
+                    #             text: "months"
+                    #             halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:10
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(10) + self.minimum_height
+                        MDRaisedButton:
+                            text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+
+        Tab:
+            text: 'Max acceptable Difficulty'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        spacing: 10
+                        
+                        # pos_hint: {'x': 0, 'y': 0.2}
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "\n\n\nHere you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable."
+                            halign: 'left'
+                    # BoxLayout:
+                    #     id: box2_height
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     height: dp(40) + self.minimum_height
+                    # BoxLayout:
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     padding: [10, 0, 0, 0]
+                    #     height: dp(50) + self.minimum_height
+
+                    GridLayout:
+                        cols: 2
+                        padding: [10, 0, 0, 0]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        spacing: 10
+                        height: dp(50) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Maximum acceptable total difficulty:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('00000.0')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Hardware GPU acceleration (OpenCL):")
+                                halign: 'left'
+                            MDDropDownItem:
+                                id: dropdown_item
+                                text: "None"
+                                pos_hint: {"center_x": 0, "center_y": 0}
+                                # current_item: "Item 0"
+                                # on_release: root.menu.open()
+
+                    # BoxLayout:
+                    #     size_hint_y: None
+                    #     spacing:5
+                    #     orientation: 'horizontal'
+                    #     pos_hint: {'center_y': .4, 'center_x': 1.15}
+                    #     halign: 'right'
+
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        pos_hint: {'center_y': 1, 'center_x': 1.15}
+                        halign: 'right'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        MDRaisedButton:
+                            text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('OK')
+        Tab:
             text: 'Resends Expire'
             ScrollView:
                 do_scroll_x: False
@@ -484,158 +730,6 @@
                             theme_text_color: 'Primary'
                             # text: app.tr._(root.exp_text)
                             text: "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months."
-                            halign: 'left'
-                    BoxLayout:
-                        id: box2_height
-                        size_hint_y: None
-                        orientation: 'vertical'
-                        height: dp(30) + self.minimum_height
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            text: app.tr._("Leave these input fields blank for the default behavior.")
-                            halign: 'left'
-                    BoxLayout:
-                        size_hint_y: None
-                        orientation: 'vertical'
-                        padding: [10, 0, 0, 0]
-                        height: dp(50) + self.minimum_height
-                        BoxLayout:
-                            orientation: 'horizontal'
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: app.tr._("Give up after")
-                                halign: 'left'
-                            MDTextFieldRect:
-                                size_hint: None, None
-                                size: dp(70), dp(30)
-                                text: app.tr._('0')
-                                pos_hint: {'center_y': .5, 'center_x': .5}
-                                input_filter: "int"
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: app.tr._("days and")
-                                halign: 'left'
-                            MDTextFieldRect:
-                                size_hint: None, None
-                                size: dp(70), dp(30)
-                                text: '0'
-                                pos_hint: {'center_y': .5, 'center_x': .5}
-                                input_filter: "int"
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: "months"
-                                halign: 'left'
-                    BoxLayout:
-                        size_hint_y: None
-                        spacing:5
-                        orientation: 'horizontal'
-                        # pos_hint: {'left': 0}
-                        # pos_hint: {'x':.75}
-                        height: dp(50) + self.minimum_height
-                        # MDRaisedButton:
-                        #     text: app.tr._('Cancel')
-                        MDRaisedButton:
-                            text: app.tr._('Apply')
-
-        Tab:
-            text: 'Max acceptable Difficulty'
-            ScrollView:
-                do_scroll_x: False
-                BoxLayout:
-                    size_hint_y: None
-                    orientation: 'vertical'
-                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
-                    padding: 20
-                    # spacing: 10
-                    BoxLayout:
-                        # size_hint_y: None
-                        id: box1_height
-                        orientation: 'vertical'
-                        # height: dp(100) + self.minimum_height
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            # text: app.tr._(root.exp_text)
-                            halign: 'left'
-                    BoxLayout:
-                        id: box2_height
-                        size_hint_y: None
-                        orientation: 'vertical'
-                        height: dp(30) + self.minimum_height
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            text: app.tr._("Leave these input fields blank for the default behavior.")
-                            halign: 'left'
-                    BoxLayout:
-                        size_hint_y: None
-                        orientation: 'vertical'
-                        padding: [10, 0, 0, 0]
-                        height: dp(50) + self.minimum_height
-                        BoxLayout:
-                            orientation: 'horizontal'
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: app.tr._("Give up after")
-                                halign: 'left'
-                            MDTextFieldRect:
-                                size_hint: None, None
-                                size: dp(70), dp(30)
-                                text: app.tr._('0')
-                                pos_hint: {'center_y': .5, 'center_x': .5}
-                                input_filter: "int"
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: app.tr._("days and")
-                                halign: 'left'
-                            MDTextFieldRect:
-                                size_hint: None, None
-                                size: dp(70), dp(30)
-                                text: '0'
-                                pos_hint: {'center_y': .5, 'center_x': .5}
-                                input_filter: "int"
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: "months"
-                                halign: 'left'
-                    BoxLayout:
-                        size_hint_y: None
-                        spacing:5
-                        orientation: 'horizontal'
-                        # pos_hint: {'left': 0}
-                        # pos_hint: {'x':.75}
-                        height: dp(50) + self.minimum_height
-                        # MDRaisedButton:
-                        #     text: app.tr._('Cancel')
-                        MDRaisedButton:
-                            text: app.tr._('Apply')
-
-        Tab:
-            text: 'Demanded Difficulty'
-            ScrollView:
-                do_scroll_x: False
-                BoxLayout:
-                    size_hint_y: None
-                    orientation: 'vertical'
-                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
-                    padding: 20
-                    # spacing: 10
-                    BoxLayout:
-                        # size_hint_y: None
-                        id: box1_height
-                        orientation: 'vertical'
-                        # height: dp(100) + self.minimum_height
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            # text: app.tr._(root.exp_text)
                             halign: 'left'
                     BoxLayout:
                         id: box2_height
@@ -867,5 +961,5 @@
                         MDRaisedButton:
                             text: app.tr._('Apply')
                         MDRaisedButton:
-                            text: app.tr._('Ok')
+                            text: app.tr._('OK')
     Loader:
