@@ -17,8 +17,8 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     # Testing environment
     language-pack-en \
     qtbase5-dev qt5-default tor tox xvfb \
-    # dpkg
-    debhelper dh-apparmor dh-python fakeroot python-stdeb
+    # stdeb
+    debhelper dh-apparmor dh-python fakeroot python-setuptools python-six wget
     # Wine
     # wget wine-stable winetricks mingw-w64 wine32 wine64
 
