@@ -13,9 +13,9 @@ def unittest_discover():
     loader = unittest.defaultTestLoader
     # randomize the order of tests in test cases
     loader.sortTestMethodsUsing = lambda a, b: random.randint(-1, 1)
-    # pybitmessage symlink may disappear on Windows
-    testsuite = loader.discover('src.tests')
-    testsuite.addTests([loader.discover('src.pyelliptic')])
+    # pybitmessage symlink disappears on Windows!
+    testsuite = loader.discover('pybitmessage.tests')
+    testsuite.addTests([loader.discover('pybitmessage.pyelliptic')])
 
     return testsuite
 
@@ -24,10 +24,9 @@ if __name__ == "__main__":
     success = unittest.TextTestRunner(verbosity=2).run(
         unittest_discover()).wasSuccessful()
     try:
-        from src.tests import common
+        from pybitmessage.tests import common
     except ImportError:
         checkup = False
-        print('ImportError from src.tests')
     else:
         checkup = common.checkup()
 
