@@ -115,7 +115,6 @@ def ShowTimeHistoy(act_time):
         if duration.days == 0 and crnt_date.strftime("%d/%m/%Y") == action_time.strftime("%d/%m/%Y")
         else action_time.strftime("%d %b")
     )
-    import pdb; pdb.set_trace()
     return display_data
 
 

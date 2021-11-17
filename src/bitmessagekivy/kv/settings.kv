@@ -482,7 +482,8 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: app.tr._(root.exp_text)
+                            # text: app.tr._(root.exp_text)
+                            text: "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months."
                             halign: 'left'
                     BoxLayout:
                         id: box2_height
@@ -701,61 +702,157 @@
                     orientation: 'vertical'
                     height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
                     padding: 20
+
                     # spacing: 10
                     BoxLayout:
                         # size_hint_y: None
                         id: box1_height
                         orientation: 'vertical'
+                        spacing: 10
+                        
+                        # pos_hint: {'x': 0, 'y': 0.2}
                         # height: dp(100) + self.minimum_height
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: app.tr._(root.exp_text)
+                            # text: app.tr._(root.exp_text)
+                            text: "\n\n\n\n\n\nBitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to test.\n\n(Getting your own Bitmessage address into Namecoin is still rather difficult).\n\nBitmessage can use either namecoind directly or a running nmcontrol instance\n\n"
                             halign: 'left'
+
                     BoxLayout:
                         id: box2_height
                         size_hint_y: None
                         orientation: 'vertical'
-                        height: dp(30) + self.minimum_height
-                        MDLabel:
-                            font_style: 'Body1'
-                            theme_text_color: 'Primary'
-                            text: app.tr._("Leave these input fields blank for the default behavior.")
-                            halign: 'left'
+                        height: dp(40) + self.minimum_height
                     BoxLayout:
                         size_hint_y: None
                         orientation: 'vertical'
                         padding: [10, 0, 0, 0]
                         height: dp(50) + self.minimum_height
+
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [10, 0, 0, 0]
+                        
+                        BoxLayout:
+                            orientation: 'horizontal'
+
+                            # padding_left: 10
+                            # MDCheckbox:
+                            #     id: chkbox
+                            #     size_hint: None, None
+                            #     size: dp(48), dp(50)
+                            #     # active: True
+                            #     halign: 'center'
+                            # MDLabel:
+                            #     font_style: 'Body1'
+                            #     theme_text_color: 'Primary'
+                            #     text: app.tr._("UPnP")
+                            #     halign: 'left'
+                            #     pos_hint: {'x': 0, 'y': 0}
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Connect to:")
+                                halign: 'left'
+                        
+                            # MDCheckbox:
+                            #     id: chkbox
+                            #     size_hint: None, None
+                            #     size: dp(48), dp(50)
+                            #     # active: True
+                            #     halign: 'center'
+                            Check:
+                                active: True
+                                pos_hint: {'x': 0, 'y': -0.2}
+                                
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Namecoind")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0}
+                        
+                            Check:
+                                active: False
+                                pos_hint: {'x': 0, 'y': -0.2}
+
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("NMControl")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0}
+
+                    GridLayout:
+                        cols: 2
+                        padding: [10, 0, 0, 0]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [30, 0, 0, 0]
+                        spacing: 10
+                        height: dp(100) + self.minimum_height
                         BoxLayout:
                             orientation: 'horizontal'
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: app.tr._("Give up after")
+                                text: app.tr._("hostname:")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
-                                size: dp(70), dp(30)
-                                text: app.tr._('0')
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('localhost')
                                 pos_hint: {'center_y': .5, 'center_x': .5}
-                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: app.tr._("days and")
+                                text: app.tr._("Port:")
+                                halign: 'left'
+                            # TextInput:
+                            #     size_hint: None, None
+                            #     hint_text: '9050'
+                            #     size: dp(app.window_size[0]/4), dp(30)
+                            #     input_filter: "int"
+                            #     readonly: False
+                            #     multiline: False
+                            #     font_size: '15sp'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('9050')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Username:")
                                 halign: 'left'
                             MDTextFieldRect:
                                 size_hint: None, None
-                                size: dp(70), dp(30)
-                                text: '0'
+                                size: dp(app.window_size[0]/4), dp(30)
                                 pos_hint: {'center_y': .5, 'center_x': .5}
-                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
                             MDLabel:
                                 font_style: 'Body1'
                                 theme_text_color: 'Primary'
-                                text: "months"
+                                text: app.tr._("Password:")
                                 halign: 'left'
+                                
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                password: True
+
+
                     BoxLayout:
                         size_hint_y: None
                         spacing:5
@@ -763,9 +860,8 @@
                         # pos_hint: {'left': 0}
                         # pos_hint: {'x':.75}
                         height: dp(50) + self.minimum_height
-                        # MDRaisedButton:
-                        #     text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Cancel')
                         MDRaisedButton:
                             text: app.tr._('Apply')
-
     Loader:

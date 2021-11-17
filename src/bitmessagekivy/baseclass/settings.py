@@ -1,13 +1,13 @@
 from kivy.uix.screenmanager import Screen
-
+from kivy.uix.checkbox import CheckBox
 
 class Setting(Screen):
     """Setting Screen for kivy Ui"""
-    exp_text = "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will\
-                send the message again after an additional two days. This will be continued with exponential backoff\
-                forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them.\
-                Here you may change that behavior by having Bitmessage give up after a certain number of days \
-                or months."
+    # exp_text = "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will\
+    #             send the message again after an additional two days. This will be continued with exponential backoff\
+    #             forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them.\
+    #             Here you may change that behavior by having Bitmessage give up after a certain number of days \
+    #             or months."
 
     # languages = {
     #     'ar': 'Arabic',
