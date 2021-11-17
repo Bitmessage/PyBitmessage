@@ -559,7 +559,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: app.tr._(root.exp_text)
+                            # text: app.tr._(root.exp_text)
                             halign: 'left'
                     BoxLayout:
                         id: box2_height
@@ -635,7 +635,7 @@
                         MDLabel:
                             font_style: 'Body1'
                             theme_text_color: 'Primary'
-                            text: app.tr._(root.exp_text)
+                            # text: app.tr._(root.exp_text)
                             halign: 'left'
                     BoxLayout:
                         id: box2_height
@@ -857,6 +857,8 @@
                         size_hint_y: None
                         spacing:5
                         orientation: 'horizontal'
+                        pos_hint: {'center_y': .4, 'center_x': 1.15}
+                        halign: 'right'
                         # pos_hint: {'left': 0}
                         # pos_hint: {'x':.75}
                         height: dp(50) + self.minimum_height
@@ -864,4 +866,6 @@
                             text: app.tr._('Cancel')
                         MDRaisedButton:
                             text: app.tr._('Apply')
+                        MDRaisedButton:
+                            text: app.tr._('Ok')
     Loader:
