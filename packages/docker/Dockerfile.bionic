@@ -22,13 +22,16 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     # Wine
     # wget wine-stable winetricks mingw-w64 wine32 wine64
 
+RUN apt-get install -yq python3.8 python3.8-dev python3.8-venv
+
 # cleanup
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -U builder
 
-RUN python3 -m pip install wheel
-RUN python3 -m pip install --upgrade virtualenv
+RUN python3.8 -m pip install wheel
+RUN python3.8 -m pip install --upgrade tox
+RUN python3.8 -m pip install --upgrade virtualenv
 
 # copy sources
 COPY . /home/builder/src
