@@ -13,8 +13,7 @@ import psutil
 
 from .samples import (
     sample_seed, sample_deterministic_addr3, sample_deterministic_addr4, sample_statusbar_msg,
-    sample_inbox_msg_receiver_address, sample_inbox_msg_ids, sample_test_subscription_address,
-    sample_subscription_name)
+    sample_inbox_msg_ids, sample_test_subscription_address, sample_subscription_name)
 
 from .test_process import TestProcessProto
 
@@ -114,7 +113,7 @@ class TestAPI(TestAPIProto):
         )
         self.assertTrue(
             len(json.loads(
-                self.api.getInboxMessagesByReceiver(sample_inbox_msg_receiver_address))["inboxMessages"]) == 2
+                self.api.getInboxMessagesByReceiver(sample_deterministic_addr4))["inboxMessages"]) == 2
         )
 
     def test_delete_message(self):

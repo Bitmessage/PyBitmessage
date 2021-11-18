@@ -310,6 +310,9 @@ class command(object):  # pylint: disable=too-few-public-methods
         self.aliases = aliases
 
     def __call__(self, func):
+        if func.__name__ in ["HandleclearUISignalQueue", "HandleGetStatusBar"] \
+                and not state.testmode:
+            return None
         if BMConfigParser().safeGet(
                 'bitmessagesettings', 'apivariant') == 'legacy':
             def wrapper(*args):
@@ -1428,6 +1431,7 @@ class BMRPCDispatcher(object):
     def HandleclearUISignalQueue(self):
         """clear UISignalQueue"""
         queues.UISignalQueue.queue.clear()
+        return "success"
 
     @command('statusBar')
     def HandleStatusBar(self, message):
