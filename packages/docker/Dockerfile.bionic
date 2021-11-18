@@ -27,6 +27,9 @@ RUN rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -U builder
 
+RUN python3 -m pip install wheel
+RUN python3 -m pip install --upgrade virtualenv
+
 # copy sources
 COPY . /home/builder/src
 RUN chown -R builder.builder /home/builder/src
