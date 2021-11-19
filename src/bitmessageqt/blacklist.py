@@ -197,11 +197,11 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
             sqlExecute(
                 '''DELETE FROM blacklist WHERE label=? AND address=?''',
-                str(labelAtCurrentRow), str(addressAtCurrentRow))
+                labelAtCurrentRow, addressAtCurrentRow)
         else:
             sqlExecute(
                 '''DELETE FROM whitelist WHERE label=? AND address=?''',
-                str(labelAtCurrentRow), str(addressAtCurrentRow))
+                labelAtCurrentRow, addressAtCurrentRow)
         self.tableWidgetBlacklist.removeRow(currentRow)
 
     def on_action_BlacklistClipboard(self):
