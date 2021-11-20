@@ -201,8 +201,9 @@ epub_exclude_files = ['search.html']
 autodoc_mock_imports = [
     'debug',
     'pybitmessage.bitmessagekivy',
-    'pybitmessage.bitmessageqt.addressvalidator',
+    'pybitmessage.bitmessageqt.foldertree',
     'pybitmessage.helper_startup',
+    'pybitmessage.mock',
     'pybitmessage.network.httpd',
     'pybitmessage.network.https',
     'ctypes',
@@ -216,9 +217,10 @@ autodoc_mock_imports = [
     'pycanberra',
     'pyopencl',
     'PyQt4',
-    'pyxdg',
+    'PyQt5',
     'qrcode',
     'stem',
+    'xdg',
 ]
 autodoc_member_order = 'bysource'
 
@@ -227,10 +229,11 @@ apidoc_module_dir = '../pybitmessage'
 apidoc_output_dir = 'autodoc'
 apidoc_excluded_paths = [
     'bitmessagekivy', 'build_osx.py',
-    'bitmessageqt/addressvalidator.py', 'bitmessageqt/migrationwizard.py',
-    'bitmessageqt/newaddresswizard.py', 'helper_startup.py',
-    'kivymd', 'main.py', 'navigationdrawer', 'network/http*',
-    'pybitmessage', 'tests', 'version.py'
+    'bitmessageqt/addressvalidator.py', 'bitmessageqt/foldertree.py',
+    'bitmessageqt/migrationwizard.py', 'bitmessageqt/newaddresswizard.py',
+    'helper_startup.py',
+    'kivymd', 'mock', 'main.py', 'navigationdrawer', 'network/http*',
+    'src', 'tests', 'version.py'
 ]
 apidoc_module_first = True
 apidoc_separate_modules = True
