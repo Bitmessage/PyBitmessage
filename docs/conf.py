@@ -23,7 +23,7 @@ copyright = u'2019, The Bitmessage Team'  # pylint: disable=redefined-builtin
 author = u'The Bitmessage Team'
 
 # The short X.Y version
-version = unicode(version.softwareVersion)
+version = version.softwareVersion
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -46,7 +46,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinxcontrib.apidoc',
-    'm2r',
+    'm2r2',
 ]
 
 default_role = 'obj'
@@ -199,13 +199,16 @@ epub_exclude_files = ['search.html']
 # -- Extension configuration -------------------------------------------------
 
 autodoc_mock_imports = [
-    'debug',
     'pybitmessage.bitmessagekivy',
     'pybitmessage.bitmessageqt.foldertree',
+    'pybitmessage.bitmessageqt.tests',
+    'pybitmessage.debug',
+    'pybitmessage.fallback.umsgpack',
     'pybitmessage.helper_startup',
     'pybitmessage.mock',
     'pybitmessage.network.httpd',
     'pybitmessage.network.https',
+    'pybitmessage.pyelliptic.tests',
     'ctypes',
     'dialog',
     'gi',
@@ -268,7 +271,7 @@ def linkcode_resolve(domain, info):
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/2.7/': None}
+intersphinx_mapping = {'https://docs.python.org/3/': None}
 
 # -- Options for todo extension ----------------------------------------------
 
