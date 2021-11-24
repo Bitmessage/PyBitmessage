@@ -18,3 +18,7 @@ docs/_*/*
 docs/autodoc/
 build
 pyan/
+**.coverage
+**htmlcov*
+**coverage.json
+
