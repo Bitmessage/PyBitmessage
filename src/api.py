@@ -304,15 +304,27 @@ class CommandHandler(type):
         return result
 
 
+class testmode(object):  # pylint: disable=too-few-public-methods
+    """Decorator to check testmode & route to command decorator"""
+
+    def __init__(self, *aliases):
+        self.aliases = aliases
+
+    def __call__(self, func):
+        """Testmode call method"""
+
+        if not state.testmode:
+            return None
+        return command(self.aliases[0]).__call__(func)
+
+
 class command(object):  # pylint: disable=too-few-public-methods
     """Decorator for API command method"""
     def __init__(self, *aliases):
         self.aliases = aliases
 
     def __call__(self, func):
-        if func.__name__ in ["HandleclearUISignalQueue", "HandleGetStatusBar"] \
-                and not state.testmode:
-            return None
+
         if BMConfigParser().safeGet(
                 'bitmessagesettings', 'apivariant') == 'legacy':
             def wrapper(*args):
@@ -1427,7 +1439,7 @@ class BMRPCDispatcher(object):
         """Test two numeric params"""
         return a + b
 
-    @command('clearUISignalQueue')
+    @testmode('clearUISignalQueue')
     def HandleclearUISignalQueue(self):
         """clear UISignalQueue"""
         queues.UISignalQueue.queue.clear()
@@ -1438,7 +1450,7 @@ class BMRPCDispatcher(object):
         """Update GUI statusbar message"""
         queues.UISignalQueue.put(('updateStatusBar', message))
 
-    @command('getStatusBar')
+    @testmode('getStatusBar')
     def HandleGetStatusBar(self):
         """Get GUI statusbar message"""
         try:
