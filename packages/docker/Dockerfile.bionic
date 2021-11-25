@@ -1,7 +1,11 @@
-FROM ubuntu:bionic AS pybm-travis-bionic
+FROM ubuntu:bionic AS base
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TRAVIS_SKIP_APT_UPDATE 1
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 RUN apt-get update
 
@@ -38,16 +42,20 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     build-essential libcap-dev tor \
     language-pack-en
 
+
 # cleanup
 RUN rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -U builder
+#####################################################################################################
 
-RUN echo 'builder ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+FROM base AS travis
 
 # travis2bash
 RUN wget -O /usr/local/bin/travis2bash.sh https://git.bitmessage.org/Bitmessage/buildbot-scripts/raw/branch/master/travis2bash.sh
 RUN chmod +x /usr/local/bin/travis2bash.sh
+
+RUN useradd -m -U builder
+RUN echo 'builder ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # copy sources
 COPY . /home/builder/src
@@ -55,10 +63,25 @@ RUN chown -R builder.builder /home/builder/src
 
 USER builder
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-
 WORKDIR /home/builder/src
 
 ENTRYPOINT /usr/local/bin/travis2bash.sh
+
+#####################################################################################################
+
+FROM base AS buildbot 
+
+# travis2bash
+RUN wget -O /usr/local/bin/travis2bash.sh https://git.bitmessage.org/Bitmessage/buildbot-scripts/raw/branch/master/travis2bash.sh
+RUN chmod +x /usr/local/bin/travis2bash.sh
+
+# copy entrypoint
+COPY packages/docker/buildbot-entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
+
+RUN useradd -m -U buildbot
+RUN echo 'buildbot ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER buildbot
+
+ENTRYPOINT /entrypoint.sh "$BUILDMASTER" "$WORKERNAME" "$WORKERPASS"
