@@ -99,12 +99,11 @@ class TestAPI(TestAPIProto):
 
     def test_message_inbox(self):
         """Test message inbox methods"""
-        print("getAllInboxMessages: ", json.loads(
-                self.api.getAllInboxMessages())["inboxMessages"])
         self.assertEqual(
             len(json.loads(
                 self.api.getAllInboxMessages())["inboxMessages"]),
-            2
+            2,
+            json.loads(self.api.getAllInboxMessages())["inboxMessages"]
         )
         self.assertEqual(
             len(json.loads(
