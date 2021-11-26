@@ -99,21 +99,27 @@ class TestAPI(TestAPIProto):
 
     def test_message_inbox(self):
         """Test message inbox methods"""
-        self.assertTrue(
+        print("getAllInboxMessages: ", json.loads(
+                self.api.getAllInboxMessages())["inboxMessages"])
+        self.assertEqual(
             len(json.loads(
-                self.api.getAllInboxMessages())["inboxMessages"]) == 2
+                self.api.getAllInboxMessages())["inboxMessages"]),
+            2
         )
-        self.assertTrue(
+        self.assertEqual(
             len(json.loads(
-                self.api.getAllInboxMessageIds())["inboxMessageIds"]) == 2
+                self.api.getAllInboxMessageIds())["inboxMessageIds"]),
+            2
         )
-        self.assertTrue(
+        self.assertEqual(
             len(json.loads(
-                self.api.getInboxMessageById(hexlify(sample_inbox_msg_ids[2])))["inboxMessage"]) == 1
+                self.api.getInboxMessageById(hexlify(sample_inbox_msg_ids[2])))["inboxMessage"]),
+            1
         )
-        self.assertTrue(
+        self.assertEqual(
             len(json.loads(
-                self.api.getInboxMessagesByReceiver(sample_deterministic_addr4))["inboxMessages"]) == 2
+                self.api.getInboxMessagesByReceiver(sample_deterministic_addr4))["inboxMessages"]),
+            2
         )
 
     def test_delete_message(self):
