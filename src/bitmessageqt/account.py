@@ -22,10 +22,8 @@ def getSortedAccounts():
     """Get a sorted list of address config sections"""
     configSections = BMConfigParser().addresses()
     configSections.sort(
-        cmp=lambda x, y: cmp(
-            BMConfigParser().get(x, 'label').decode('utf-8').lower(),
-            BMConfigParser().get(y, 'label').decode('utf-8').lower())
-    )
+        key=lambda item:
+        BMConfigParser().get(item, 'label').decode('utf-8').lower())
     return configSections
 
 
