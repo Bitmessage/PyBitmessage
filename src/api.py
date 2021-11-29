@@ -1118,9 +1118,8 @@ class BMRPCDispatcher(object):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = self.config.getboolean(
-                fromAddress, 'enabled')
-        except BaseException:
+            fromAddressEnabled = self.config.getboolean(fromAddress, 'enabled')
+        except ConfigParser.NoSectionError:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
         if not fromAddressEnabled:
@@ -1164,10 +1163,13 @@ class BMRPCDispatcher(object):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            self.config.getboolean(fromAddress, 'enabled')
-        except BaseException:
+            fromAddressEnabled = self.config.getboolean(fromAddress, 'enabled')
+        except ConfigParser.NoSectionError:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
+        if not fromAddressEnabled:
+            raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
+
         toAddress = str_broadcast_subscribers
 
         ackdata = helper_sent.insert(
