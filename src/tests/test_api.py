@@ -97,18 +97,19 @@ class TestAPI(TestAPIProto):
             sample_statusbar_msg
         )
 
-    def test_message_inbox(self):
+    def test_message_inbox_and_trash(self):
         """Test message inbox methods"""
+        # Inbox function related tests
         self.assertEqual(
             len(json.loads(
                 self.api.getAllInboxMessages())["inboxMessages"]),
-            2,
+            4,
             json.loads(self.api.getAllInboxMessages())["inboxMessages"]
         )
         self.assertEqual(
             len(json.loads(
                 self.api.getAllInboxMessageIds())["inboxMessageIds"]),
-            2
+            4
         )
         self.assertEqual(
             len(json.loads(
@@ -118,11 +119,10 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             len(json.loads(
                 self.api.getInboxMessagesByReceiver(sample_deterministic_addr4))["inboxMessages"]),
-            2
+            4
         )
 
-    def test_delete_message(self):
-        """Test delete message methods"""
+        # Trash function related tests
         messages_before_delete = len(json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"])
         self.assertEqual(
             self.api.trashMessage(hexlify(sample_inbox_msg_ids[0])),
