@@ -4,7 +4,8 @@ import Queue
 import sys
 import unittest
 
-from qtpy import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets
+from six import string_types
 
 import bitmessageqt
 import queues
@@ -39,10 +40,7 @@ class TestMain(unittest.TestCase):
 
     def test_translate(self):
         """Check the results of _translate() with various args"""
-        self.assertIsInstance(
-            _translate("MainWindow", "Test"),
-            unicode
-        )
+        self.assertIsInstance(_translate("MainWindow", "Test"), string_types)
 
 
 class TestUISignaler(TestBase):
