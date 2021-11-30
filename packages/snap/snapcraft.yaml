@@ -1,0 +1,36 @@
+name: pybitmessage
+version: '0.6.3'
+base: core18
+grade: devel
+confinement: strict
+summary: Reference client for Bitmessage, a P2P communications protocol
+description: The PyBitmessage
+adopt-info: pybitmessage
+
+apps:
+  pybitmessage:
+    command: pybitmessage
+    plugs: [network, network-bind, home, desktop, desktop-legacy, wayland, unity7]
+    desktop: share/applications/pybitmessage.desktop
+    environment:
+      LANG: C.UTF-8
+
+parts:
+  pybitmessage:
+    source: https://github.com/g1itch/PyBitmessage.git
+    source-branch: snap
+    plugin: python
+    python-version: python2
+    build-packages:
+      - libssl-dev
+      - python-all-dev
+    python-packages:
+      - defusedxml
+      - jsonrpclib
+      - qrcode
+      - stem
+    stage-packages:
+      - python-qt4
+      - python-sip
+      - sni-qt
+    parse-info: [setup.py]
