@@ -1,0 +1,61 @@
+name: pybitmessage
+base: core18
+grade: devel
+confinement: strict
+summary: Reference client for Bitmessage, a P2P communications protocol
+description: |
+  Bitmessage is a P2P communication protocol used to send encrypted messages to
+  another person or to many subscribers. It is decentralized and trustless,
+  meaning that you need-not inherently trust any entities like root certificate
+  authorities. It uses strong authentication, which means that the sender of a
+  message cannot be spoofed. BM aims to hide metadata from passive
+  eavesdroppers like those ongoing warrantless wiretapping programs. Hence
+  the sender and receiver of Bitmessages stay anonymous.
+adopt-info: pybitmessage
+
+apps:
+  pybitmessage:
+    command: desktop-launch pybitmessage
+    plugs: [desktop, home, network-bind, unity7]
+    desktop: share/applications/pybitmessage.desktop
+    passthrough:
+      autostart: pybitmessage.desktop
+
+parts:
+  pybitmessage:
+    # https://wiki.ubuntu.com/snapcraft/parts
+    after: [qt4conf, desktop-qt4, indicator-qt4]
+    source: https://github.com/Bitmessage/PyBitmessage.git
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version $(git describe --tags --abbrev=0 | tr -d v)
+    plugin: python
+    python-version: python2
+    build-packages:
+      - libssl-dev
+      - python-all-dev
+    python-packages:
+      - jsonrpclib
+      - qrcode
+      - pyxdg
+    stage-packages:
+      - python-qt4
+      - python-sip
+    # parse-info: [setup.py]
+  cleanup:
+    after: [pybitmessage]
+    plugin: nil
+    override-prime: |
+      set -eux
+      sed -ie \
+      's|.*Icon=.*|Icon=${SNAP}/share/icons/hicolor/scalable/apps/pybitmessage.svg|g' \
+      $SNAPCRAFT_PRIME/share/applications/pybitmessage.desktop
+      rm -rf $SNAPCRAFT_PRIME/lib/python2.7/site-packages/pip
+      for DIR in doc man icons themes fonts mime; do
+        rm -rf $SNAPCRAFT_PRIME/usr/share/$DIR/*
+      done
+      LIBS="libQtDeclarative libQtDesigner libQtHelp libQtScript libQtSql \
+        libQtXmlPatterns libdb-5 libicu libgdk libgio libglib libcairo"
+      for LIBGLOB in $LIBS; do
+        rm $SNAPCRAFT_PRIME/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/${LIBGLOB}*
+      done
