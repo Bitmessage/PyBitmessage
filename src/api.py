@@ -1459,6 +1459,13 @@ class BMRPCDispatcher(object):
             return None
         return data
 
+    @testmode('undeleteMessage')
+    def HandleUndeleteMessage(self, msgid):
+        """Undelete message"""
+        msgid = self._decode(msgid, "hex")
+        helper_inbox.undeleteMessage(msgid)
+        return "Undeleted message"
+
     @command('deleteAndVacuum')
     def HandleDeleteAndVacuum(self):
         """Cleanup trashes and vacuum messages database"""
