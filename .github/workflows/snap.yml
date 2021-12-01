@@ -1,0 +1,53 @@
+name: Build snap
+
+on:
+  push:
+  pull_request:
+    branches: 'v0.6'
+
+jobs:
+  build-snap:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Remove prev tag
+      if: ${{ github.ref == 'refs/heads/ci' }}
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          try {
+              await github.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: "tags/continuous"
+              })
+          } catch (e) {
+            console.log("The continuous doesn't exist yet: " + e)
+          }
+    - uses: actions/checkout@v2
+    - name: Install apt dependencies
+      run: |
+        sudo apt-get install -yq --no-install-suggests --no-install-recommends \
+        snapcraft
+    - name: Build snap
+      id: snap
+      run: |
+        pushd packages; snapcraft; popd
+        echo "::set-output name=asset_path::packages/*.snap"
+    - uses: actions/upload-artifact@v2
+      with:
+        name: snap
+        path: ${{ steps.snap.outputs.asset_path }}
+    - name: Release Continuous
+      if: ${{ github.ref == 'refs/heads/ci' }}
+      uses: softprops/action-gh-release@master
+      with:
+        prerelease: true
+        tag_name: continuous
+        target_commitish: ${{ github.sha }}
+        files: |
+          ${{ steps.snap.outputs.asset_path }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
