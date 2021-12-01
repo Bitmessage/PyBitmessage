@@ -9,8 +9,6 @@ from importlib import import_module
 from setuptools import setup, Extension
 from setuptools.command.install import install
 
-from src.version import softwareVersion
-
 
 EXTRAS_REQUIRE = {
     'docs': ['sphinx', 'sphinx_rtd_theme'],
@@ -49,6 +47,8 @@ class InstallCmd(install):
 
 
 if __name__ == "__main__":
+    from src.version import softwareVersion
+
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
