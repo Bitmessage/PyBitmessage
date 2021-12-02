@@ -3,11 +3,11 @@ Network statistics
 """
 
 
-def MockUploadSpeed():
+def uploadSpeed():
     """Getting upload speed"""
     return 0
 
 
-def MockDownloadSpeed():
+def downloadSpeed():
     """Getting download speed"""
     return 0

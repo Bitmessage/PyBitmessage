@@ -3,7 +3,7 @@
 # TODO make this dynamic, and watch out for frozen, like with messagetypes
 from singleton import Singleton
 
-
+# pylint: disable=old-style-class,too-few-public-methods
 @Singleton
 class MockInventory():
     """

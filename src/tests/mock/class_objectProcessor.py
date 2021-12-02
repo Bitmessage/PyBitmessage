@@ -43,6 +43,7 @@ class objectProcessor(threading.Thread):
     def run(self):
         """Process the objects from `.queues.objectProcessorQueue`"""
         while True:
+            # pylint: disable=unused-variable
             objectType, data = queues.objectProcessorQueue.get()
 
             if state.shutdown:

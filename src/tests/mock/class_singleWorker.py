@@ -18,6 +18,7 @@ class MockSingleWorker(StoppableThread):
     def __init__(self):
         super(MockSingleWorker, self).__init__(name="singleWorker")
         proofofwork.init()
+        self.busy = None
 
     def stopThread(self):
         """Signal through the queue that the thread should be stopped"""
@@ -35,7 +36,7 @@ class MockSingleWorker(StoppableThread):
 
         while state.shutdown == 0:
             self.busy = 0
-            command, data = queues.workerQueue.get()
+            command, _ = queues.workerQueue.get()
             self.busy = 1
             if command == 'stopThread':
                 self.busy = 0
