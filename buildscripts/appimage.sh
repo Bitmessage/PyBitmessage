@@ -9,8 +9,14 @@ chmod a+x pkg2appimage
 
 echo "Building AppImage"
 
-./pkg2appimage packages/AppImage/PyBitmessage.yml
+if grep docker /proc/1/cgroup; then
+    export APPIMAGE_EXTRACT_AND_RUN=1
+    mkdir PyBitmessage
+    wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O PyBitmessage/appimagetool \
+    && chmod +x PyBitmessage/appimagetool
+fi
 
+./pkg2appimage packages/AppImage/PyBitmessage.yml
 
 if [ -f "out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage" ]; then
     echo "Build Successful";
