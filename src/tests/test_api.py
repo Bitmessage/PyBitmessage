@@ -103,6 +103,7 @@ class TestAPI(TestAPIProto):
             len(json.loads(
                 self.api.getAllInboxMessages())["inboxMessages"]),
             4,
+            # Custom AssertError message for details
             json.loads(self.api.getAllInboxMessages())["inboxMessages"]
         )
         self.assertEqual(
