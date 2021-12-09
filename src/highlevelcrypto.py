@@ -17,10 +17,10 @@ from pyelliptic import arithmetic as a
 
 
 __all__ = [
-    'decodeWalletImportFormat',
+    'decodeWalletImportFormat', 'deterministic_keys',
     'double_sha512', 'calculateInventoryHash', 'encodeWalletImportFormat',
     'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'randomBytes',
-    'sign', 'verify']
+    'random_keys', 'sign', 'verify']
 
 
 # Hashes
@@ -72,6 +72,22 @@ def randomBytes(n):
         return os.urandom(n)
     except NotImplementedError:
         return OpenSSL.rand(n)
+
+
+# Keys
+
+def random_keys():
+    """Return a pair of keys, private and public"""
+    priv = randomBytes(32)
+    pub = pointMult(priv)
+    return priv, pub
+
+
+def deterministic_keys(passphrase, nonce):
+    """Generate keys from *passphrase* and *nonce* (encoded as varint)"""
+    priv = hashlib.sha512(passphrase + nonce).digest()[:32]
+    pub = pointMult(priv)
+    return priv, pub
 
 
 def makeCryptor(privkey):
