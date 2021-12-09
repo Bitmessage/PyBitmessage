@@ -15,7 +15,6 @@ from addresses import decodeAddress, encodeAddress, encodeVarint
 from bmconfigparser import BMConfigParser
 from fallback import RIPEMD160Hash
 from network import StoppableThread
-from pyelliptic.openssl import OpenSSL
 from six.moves import configparser, queue
 
 
@@ -128,17 +127,13 @@ class addressGenerator(StoppableThread):
                 # the \x00 or \x00\x00 bytes thus making the address shorter.
                 startTime = time.time()
                 numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
-                potentialPrivSigningKey = OpenSSL.rand(32)
-                potentialPubSigningKey = highlevelcrypto.pointMult(
-                    potentialPrivSigningKey)
+                privSigningKey, pubSigningKey = highlevelcrypto.random_keys()
                 while True:
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                    potentialPrivEncryptionKey = OpenSSL.rand(32)
-                    potentialPubEncryptionKey = highlevelcrypto.pointMult(
-                        potentialPrivEncryptionKey)
+                    potentialPrivEncryptionKey, potentialPubEncryptionKey = \
+                        highlevelcrypto.random_keys()
                     sha = hashlib.new('sha512')
-                    sha.update(
-                        potentialPubSigningKey + potentialPubEncryptionKey)
+                    sha.update(pubSigningKey + potentialPubEncryptionKey)
                     ripe = RIPEMD160Hash(sha.digest()).digest()
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
@@ -163,7 +158,7 @@ class addressGenerator(StoppableThread):
                     addressVersionNumber, streamNumber, ripe)
 
                 privSigningKeyWIF = highlevelcrypto.encodeWalletImportFormat(
-                    potentialPrivSigningKey)
+                    privSigningKey)
                 privEncryptionKeyWIF = highlevelcrypto.encodeWalletImportFormat(
                     potentialPrivEncryptionKey)
 
@@ -235,18 +230,15 @@ class addressGenerator(StoppableThread):
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                     while True:
                         numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                        potentialPrivSigningKey = hashlib.sha512(
-                            deterministicPassphrase
-                            + encodeVarint(signingKeyNonce)
-                        ).digest()[:32]
-                        potentialPrivEncryptionKey = hashlib.sha512(
-                            deterministicPassphrase
-                            + encodeVarint(encryptionKeyNonce)
-                        ).digest()[:32]
-                        potentialPubSigningKey = highlevelcrypto.pointMult(
-                            potentialPrivSigningKey)
-                        potentialPubEncryptionKey = highlevelcrypto.pointMult(
-                            potentialPrivEncryptionKey)
+                        potentialPrivSigningKey, potentialPubSigningKey = \
+                            highlevelcrypto.deterministic_keys(
+                                deterministicPassphrase,
+                                encodeVarint(signingKeyNonce))
+                        potentialPrivEncryptionKey, potentialPubEncryptionKey = \
+                            highlevelcrypto.deterministic_keys(
+                                deterministicPassphrase,
+                                encodeVarint(encryptionKeyNonce))
+
                         signingKeyNonce += 2
                         encryptionKeyNonce += 2
                         sha = hashlib.new('sha512')

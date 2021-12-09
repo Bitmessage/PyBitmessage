@@ -70,6 +70,22 @@ def randomBytes(n):
         return OpenSSL.rand(n)
 
 
+# Keys
+
+def random_keys():
+    """Return a pair of keys, private and public"""
+    priv = randomBytes(32)
+    pub = pointMult(priv)
+    return priv, pub
+
+
+def deterministic_keys(passphrase, nonce):
+    """Generate keys from *passphrase* and *nonce* (encoded as varint)"""
+    priv = hashlib.sha512(passphrase + nonce).digest()[:32]
+    pub = pointMult(priv)
+    return priv, pub
+
+
 def makeCryptor(privkey):
     """Return a private `.pyelliptic.ECC` instance"""
     private_key = a.changebase(privkey, 16, 256, minlen=32)
