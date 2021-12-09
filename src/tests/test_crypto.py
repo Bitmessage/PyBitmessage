@@ -74,6 +74,14 @@ class TestHighlevelcrypto(unittest.TestCase):
         self.assertEqual(
             highlevelcrypto.double_sha512(b'hello'), sample_double_sha512)
 
+    def test_randomBytes(self):
+        """Dummy checks for random bytes"""
+        for n in (8, 32, 64):
+            data = highlevelcrypto.randomBytes(n)
+            self.assertEqual(len(data), n)
+            self.assertNotEqual(len(set(data)), 1)
+            self.assertNotEqual(data, highlevelcrypto.randomBytes(n))
+
     def test_verify(self):
         """Verify sample signatures and newly generated ones"""
         pubkey_hex = hexlify(sample_pubsigningkey)
