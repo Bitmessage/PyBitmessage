@@ -17,10 +17,10 @@ from pyelliptic import arithmetic as a
 
 
 __all__ = [
-    'decodeWalletImportFormat', 'encodeWalletImportFormat',
-    'double_sha512', 'calculateInventoryHash',
+    'decodeWalletImportFormat', 'deterministic_keys',
+    'double_sha512', 'calculateInventoryHash', 'encodeWalletImportFormat',
     'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'randomBytes',
-    'sign', 'verify']
+    'random_keys', 'sign', 'verify']
 
 
 # WIF (uses arithmetic ):
@@ -74,6 +74,77 @@ def calculateInventoryHash(data):
     return double_sha512(data)[:32]
 
 
+# Keys
+
+def random_keys():
+    """Return a pair of keys, private and public"""
+    priv = randomBytes(32)
+    pub = pointMult(priv)
+    return priv, pub
+
+
+def deterministic_keys(passphrase, nonce):
+    """Generate keys from *passphrase* and *nonce* (encoded as varint)"""
+    priv = hashlib.sha512(passphrase + nonce).digest()[:32]
+    pub = pointMult(priv)
+    return priv, pub
+
+
+def hexToPubkey(pubkey):
+    """Convert a pubkey from hex to binary"""
+    pubkey_raw = a.changebase(pubkey[2:], 16, 256, minlen=64)
+    pubkey_bin = b'\x02\xca\x00 ' + pubkey_raw[:32] + b'\x00 ' + pubkey_raw[32:]
+    return pubkey_bin
+
+
+def privToPub(privkey):
+    """Converts hex private key into hex public key"""
+    private_key = a.changebase(privkey, 16, 256, minlen=32)
+    public_key = pointMult(private_key)
+    return hexlify(public_key)
+
+
+def pointMult(secret):
+    """
+    Does an EC point multiplication; turns a private key into a public key.
+
+    Evidently, this type of error can occur very rarely:
+
+    >>> File "highlevelcrypto.py", line 54, in pointMult
+    >>>  group = OpenSSL.EC_KEY_get0_group(k)
+    >>> WindowsError: exception: access violation reading 0x0000000000000008
+    """
+    while True:
+        try:
+            k = OpenSSL.EC_KEY_new_by_curve_name(
+                OpenSSL.get_curve('secp256k1'))
+            priv_key = OpenSSL.BN_bin2bn(secret, 32, None)
+            group = OpenSSL.EC_KEY_get0_group(k)
+            pub_key = OpenSSL.EC_POINT_new(group)
+
+            OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
+            OpenSSL.EC_KEY_set_private_key(k, priv_key)
+            OpenSSL.EC_KEY_set_public_key(k, pub_key)
+
+            size = OpenSSL.i2o_ECPublicKey(k, None)
+            mb = OpenSSL.create_string_buffer(size)
+            OpenSSL.i2o_ECPublicKey(k, OpenSSL.byref(OpenSSL.pointer(mb)))
+
+            return mb.raw
+
+        except Exception:
+            import traceback
+            import time
+            traceback.print_exc()
+            time.sleep(0.2)
+        finally:
+            OpenSSL.EC_POINT_free(pub_key)
+            OpenSSL.BN_free(priv_key)
+            OpenSSL.EC_KEY_free(k)
+
+
+# Encryption
+
 def makeCryptor(privkey, curve='secp256k1'):
     """Return a private `.pyelliptic.ECC` instance"""
     private_key = a.changebase(privkey, 16, 256, minlen=32)
@@ -84,24 +155,10 @@ def makeCryptor(privkey, curve='secp256k1'):
     return cryptor
 
 
-def hexToPubkey(pubkey):
-    """Convert a pubkey from hex to binary"""
-    pubkey_raw = a.changebase(pubkey[2:], 16, 256, minlen=64)
-    pubkey_bin = b'\x02\xca\x00 ' + pubkey_raw[:32] + b'\x00 ' + pubkey_raw[32:]
-    return pubkey_bin
-
-
 def makePubCryptor(pubkey):
     """Return a public `.pyelliptic.ECC` instance"""
     pubkey_bin = hexToPubkey(pubkey)
     return pyelliptic.ECC(curve='secp256k1', pubkey=pubkey_bin)
-
-
-def privToPub(privkey):
-    """Converts hex private key into hex public key"""
-    private_key = a.changebase(privkey, 16, 256, minlen=32)
-    public_key = pointMult(private_key)
-    return hexlify(public_key)
 
 
 def encrypt(msg, hexPubkey):
@@ -119,6 +176,8 @@ def decryptFast(msg, cryptor):
     """Decrypts message with an existing `.pyelliptic.ECC` object"""
     return cryptor.decrypt(msg)
 
+
+# Signatures
 
 def _choose_digest_alg(name):
     """
@@ -160,42 +219,3 @@ def verify(msg, sig, hexPubkey, digestAlg=None):
             sig, msg, digest_alg=_choose_digest_alg(digestAlg))
     except:
         return False
-
-
-def pointMult(secret):
-    """
-    Does an EC point multiplication; turns a private key into a public key.
-
-    Evidently, this type of error can occur very rarely:
-
-    >>> File "highlevelcrypto.py", line 54, in pointMult
-    >>>  group = OpenSSL.EC_KEY_get0_group(k)
-    >>> WindowsError: exception: access violation reading 0x0000000000000008
-    """
-    while True:
-        try:
-            k = OpenSSL.EC_KEY_new_by_curve_name(
-                OpenSSL.get_curve('secp256k1'))
-            priv_key = OpenSSL.BN_bin2bn(secret, 32, None)
-            group = OpenSSL.EC_KEY_get0_group(k)
-            pub_key = OpenSSL.EC_POINT_new(group)
-
-            OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
-            OpenSSL.EC_KEY_set_private_key(k, priv_key)
-            OpenSSL.EC_KEY_set_public_key(k, pub_key)
-
-            size = OpenSSL.i2o_ECPublicKey(k, None)
-            mb = OpenSSL.create_string_buffer(size)
-            OpenSSL.i2o_ECPublicKey(k, OpenSSL.byref(OpenSSL.pointer(mb)))
-
-            return mb.raw
-
-        except Exception:
-            import traceback
-            import time
-            traceback.print_exc()
-            time.sleep(0.2)
-        finally:
-            OpenSSL.EC_POINT_free(pub_key)
-            OpenSSL.BN_free(priv_key)
-            OpenSSL.EC_KEY_free(k)
