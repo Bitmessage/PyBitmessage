@@ -66,6 +66,14 @@ class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
 class TestHighlevelcrypto(unittest.TestCase):
     """Test highlevelcrypto public functions"""
 
+    def test_randomBytes(self):
+        """Dummy checks for random bytes"""
+        for n in (8, 32, 64):
+            data = highlevelcrypto.randomBytes(n)
+            self.assertEqual(len(data), n)
+            self.assertNotEqual(len(set(data)), 1)
+            self.assertNotEqual(data, highlevelcrypto.randomBytes(n))
+
     def test_signatures(self):
         """Verify sample signatures and newly generated ones"""
         pubkey_hex = hexlify(sample_pubsigningkey)
