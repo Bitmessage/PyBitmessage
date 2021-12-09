@@ -16,10 +16,10 @@ except ImportError:
     RIPEMD = None
 
 from .samples import (
-    sample_double_sha512,
+    sample_deterministic_ripe, sample_double_sha512,
     sample_msg, sample_pubsigningkey, sample_pubencryptionkey,
     sample_privsigningkey, sample_privencryptionkey, sample_ripe,
-    sample_sig, sample_sig_sha1
+    sample_seed, sample_sig, sample_sig_sha1
 )
 
 
@@ -81,6 +81,22 @@ class TestHighlevelcrypto(unittest.TestCase):
             self.assertEqual(len(data), n)
             self.assertNotEqual(len(set(data)), 1)
             self.assertNotEqual(data, highlevelcrypto.randomBytes(n))
+
+    def test_random_keys(self):
+        """Dummy checks for random keys"""
+        priv, pub = highlevelcrypto.random_keys()
+        self.assertEqual(len(priv), 32)
+        self.assertEqual(highlevelcrypto.pointMult(priv), pub)
+
+    def test_deterministic_keys(self):
+        """Generate deterministic keys, make ripe and compare it to sample"""
+        # encodeVarint(42) = b'*'
+        sigkey = highlevelcrypto.deterministic_keys(sample_seed, b'*')[1]
+        enkey = highlevelcrypto.deterministic_keys(sample_seed, b'+')[1]
+        self.assertEqual(
+            sample_deterministic_ripe,
+            hexlify(TestHashlib._hashdigest(
+                hashlib.sha512(sigkey + enkey).digest())))
 
     def test_verify(self):
         """Verify sample signatures and newly generated ones"""
