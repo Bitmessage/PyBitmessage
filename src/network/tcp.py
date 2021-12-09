@@ -16,7 +16,7 @@ import l10n
 import protocol
 import state
 from bmconfigparser import config
-from helper_random import randomBytes
+from highlevelcrypto import randomBytes
 from inventory import Inventory
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate

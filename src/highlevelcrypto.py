@@ -8,6 +8,7 @@ High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
 """
 
 import hashlib
+import os
 from binascii import hexlify
 
 import pyelliptic
@@ -17,7 +18,8 @@ from pyelliptic import arithmetic as a
 
 __all__ = [
     'decodeWalletImportFormat', 'encodeWalletImportFormat',
-    'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
+    'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'randomBytes',
+    'sign', 'verify']
 
 
 # WIF (uses arithmetic ):
@@ -47,6 +49,16 @@ def encodeWalletImportFormat(privKey):
     privKey = b'\x80' + privKey
     checksum = hashlib.sha256(hashlib.sha256(privKey).digest()).digest()[0:4]
     return a.changebase(privKey + checksum, 256, 58)
+
+
+# Random
+
+def randomBytes(n):
+    """Get n random bytes"""
+    try:
+        return os.urandom(n)
+    except NotImplementedError:
+        return OpenSSL.rand(n)
 
 
 def makeCryptor(privkey, curve='secp256k1'):
