@@ -29,11 +29,9 @@ class TestAPIThread(unittest.TestCase):
         # helper_startup.fixSocket()
         config = BMConfigParser()
 
-        config.set(
-            'bitmessagesettings', 'apiusername', 'username')
-        config.set(
-            'bitmessagesettings', 'apipassword', 'password')
-        config.save()
+        config.set('bitmessagesettings', 'apiusername', 'username')
+        config.set('bitmessagesettings', 'apipassword', 'password')
+        config.set('inventory', 'storage', 'filesystem')
 
         import api
         cls.thread = api.singleAPI()

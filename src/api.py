@@ -58,27 +58,25 @@ For further examples please reference `.tests.test_api`.
 """
 
 import base64
-import ConfigParser
 import errno
 import hashlib
-import httplib
 import json
 import random
 import socket
 import subprocess  # nosec B404
 import time
-import xmlrpclib
 from binascii import hexlify, unhexlify
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack, unpack
+
+from six.moves import configparser, http_client, queue, xmlrpc_server
 
 import defaults
 import helper_inbox
 import helper_sent
-import network.stats
 import proofofwork
 import queues
 import shared
+
 import shutdown
 import state
 from addresses import (
@@ -90,11 +88,17 @@ from addresses import (
 )
 from bmconfigparser import config
 from debug import logger
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready
+from helper_sql import (
+    SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready)
 from inventory import Inventory
-from network import BMConnectionPool
+
+try:
+    import network.stats as network_stats
+    from network import BMConnectionPool
+except ImportError:
+    network_stats = None
+
 from network.threads import StoppableThread
-from six.moves import queue
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -164,7 +168,7 @@ class ErrorCodes(type):
         return result
 
 
-class APIError(xmlrpclib.Fault):
+class APIError(xmlrpc_server.Fault):
     """
     APIError exception class
 
@@ -212,7 +216,7 @@ class singleAPI(StoppableThread):
         except AttributeError:
             errno.WSAEADDRINUSE = errno.EADDRINUSE
 
-        RPCServerBase = SimpleXMLRPCServer
+        RPCServerBase = xmlrpc_server.SimpleXMLRPCServer
         ct = 'text/xml'
         if config.safeGet(
                 'bitmessagesettings', 'apivariant') == 'json':
@@ -353,7 +357,7 @@ class command(object):  # pylint: disable=too-few-public-methods
 # Modified by Jonathan Warren (Atheros).
 # Further modified by the Bitmessage developers
 # http://code.activestate.com/recipes/501148
-class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+class BMXMLRPCRequestHandler(xmlrpc_server.SimpleXMLRPCRequestHandler):
     """The main API handler"""
 
     # pylint: disable=protected-access
@@ -394,7 +398,7 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             validuser = self.APIAuthenticateClient()
             if not validuser:
                 time.sleep(2)
-                self.send_response(httplib.UNAUTHORIZED)
+                self.send_response(http_client.UNAUTHORIZED)
                 self.end_headers()
                 return
                 # "RPC Username or password incorrect or HTTP header"
@@ -411,11 +415,11 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 )
         except Exception:  # This should only happen if the module is buggy
             # internal error, report as HTTP server error
-            self.send_response(httplib.INTERNAL_SERVER_ERROR)
+            self.send_response(http_client.INTERNAL_SERVER_ERROR)
             self.end_headers()
         else:
             # got a valid XML RPC response
-            self.send_response(httplib.OK)
+            self.send_response(http_client.OK)
             self.send_header("Content-type", self.server.content_type)
             self.send_header("Content-length", str(len(response)))
 
@@ -860,7 +864,7 @@ class BMRPCDispatcher(object):
                 ' Use deleteAddress API call instead.')
         try:
             self.config.remove_section(address)
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         self.config.save()
@@ -877,7 +881,7 @@ class BMRPCDispatcher(object):
         address = addBMIfNotPresent(address)
         try:
             self.config.remove_section(address)
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         self.config.save()
@@ -1131,7 +1135,7 @@ class BMRPCDispatcher(object):
         self._verifyAddress(fromAddress)
         try:
             fromAddressEnabled = self.config.getboolean(fromAddress, 'enabled')
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
         if not fromAddressEnabled:
@@ -1176,7 +1180,7 @@ class BMRPCDispatcher(object):
         self._verifyAddress(fromAddress)
         try:
             fromAddressEnabled = self.config.getboolean(fromAddress, 'enabled')
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
         if not fromAddressEnabled:
@@ -1438,7 +1442,10 @@ class BMRPCDispatcher(object):
         or "connectedAndReceivingIncomingConnections".
         """
 
-        connections_num = len(network.stats.connectedHostsList())
+        try:
+            connections_num = len(network_stats.connectedHostsList())
+        except AttributeError:
+            raise APIError(21, 'Could not import network_stats.')
         if connections_num == 0:
             networkStatus = 'notConnected'
         elif state.clientHasReceivedIncomingConnections:
@@ -1450,7 +1457,7 @@ class BMRPCDispatcher(object):
             'numberOfMessagesProcessed': state.numberOfMessagesProcessed,
             'numberOfBroadcastsProcessed': state.numberOfBroadcastsProcessed,
             'numberOfPubkeysProcessed': state.numberOfPubkeysProcessed,
-            'pendingDownload': network.stats.pendingDownload(),
+            'pendingDownload': network_stats.pendingDownload(),
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
@@ -1462,6 +1469,8 @@ class BMRPCDispatcher(object):
         Returns bitmessage connection information as dict with keys *inbound*,
         *outbound*.
         """
+        if network_stats is None:
+            raise APIError(21, 'Could not import network_stats.')
         inboundConnections = []
         outboundConnections = []
         for i in BMConnectionPool().inboundConnections.values():
