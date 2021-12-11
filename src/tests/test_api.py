@@ -58,7 +58,8 @@ class TestAPI(TestAPIProto):
     _seed = base64.encodestring(sample_seed)
 
     def _add_random_address(self, label):
-        return self.api.createRandomAddress(base64.encodestring(label))
+        addr = self.api.createRandomAddress(base64.encodestring(label))
+        return addr
 
     def test_user_password(self):
         """Trying to connect with wrong username/password"""
@@ -243,6 +244,15 @@ class TestAPI(TestAPIProto):
             entries['address'], sample_deterministic_addr4)
         self.assertEqual(
             base64.decodestring(entries['label']), 'tiger_4')
+        # Try sending to this address (#1898)
+        addr = self._add_random_address('random_2')
+        # TODO: it was never deleted
+        msg = base64.encodestring('test message')
+        msg_subject = base64.encodestring('test_subject')
+        result = self.api.sendMessage(
+            sample_deterministic_addr4, addr, msg_subject, msg)
+        self.assertNotRegexpMatches(result, r'^API Error')
+        self.api.deleteAddress(addr)
         # Remove known address
         self.api.deleteAddressBookEntry(sample_deterministic_addr4)
         # Addressbook should be empty again
