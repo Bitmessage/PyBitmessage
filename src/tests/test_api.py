@@ -13,7 +13,7 @@ import psutil
 
 from .samples import (
     sample_deterministic_addr3, sample_deterministic_addr4, sample_seed,
-    sample_inbox_msg_ids, sample_statusbar_msg,
+    sample_inbox_msg_ids,
     sample_subscription_addresses, sample_subscription_name
 )
 
@@ -86,18 +86,6 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             self.api.test(),
             'API Error 0020: Invalid method: test'
-        )
-
-    def test_statusbar_method(self):
-        """Test statusbar method"""
-        self.api.clearUISignalQueue()
-        self.assertEqual(
-            self.api.statusBar(sample_statusbar_msg),
-            'null'
-        )
-        self.assertEqual(
-            self.api.getStatusBar(),
-            sample_statusbar_msg
         )
 
     def test_message_inbox(self):
