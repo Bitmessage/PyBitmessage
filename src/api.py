@@ -67,7 +67,7 @@ import time
 from binascii import hexlify, unhexlify
 from struct import pack
 
-from six.moves import configparser, http_client, queue, xmlrpc_server
+from six.moves import configparser, http_client, xmlrpc_server
 
 import defaults
 import helper_inbox
@@ -1455,25 +1455,11 @@ class BMRPCDispatcher(object):
         """Test two numeric params"""
         return a + b
 
-    @testmode('clearUISignalQueue')
-    def HandleclearUISignalQueue(self):
-        """clear UISignalQueue"""
-        queues.UISignalQueue.queue.clear()
-        return "success"
-
     @command('statusBar')
     def HandleStatusBar(self, message):
         """Update GUI statusbar message"""
         queues.UISignalQueue.put(('updateStatusBar', message))
-
-    @testmode('getStatusBar')
-    def HandleGetStatusBar(self):
-        """Get GUI statusbar message"""
-        try:
-            _, data = queues.UISignalQueue.get(block=False)
-        except queue.Empty:
-            return None
-        return data
+        return "success"
 
     @testmode('undeleteMessage')
     def HandleUndeleteMessage(self, msgid):

@@ -12,7 +12,7 @@ from six.moves import xmlrpc_client  # nosec
 import psutil
 
 from .samples import (
-    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4, sample_statusbar_msg,
+    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4,
     sample_inbox_msg_ids, sample_test_subscription_address, sample_subscription_name)
 
 from .test_process import TestProcessProto
@@ -84,18 +84,6 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             self.api.test(),
             'API Error 0020: Invalid method: test'
-        )
-
-    def test_statusbar_method(self):
-        """Test statusbar method"""
-        self.api.clearUISignalQueue()
-        self.assertEqual(
-            self.api.statusBar(sample_statusbar_msg),
-            'null'
-        )
-        self.assertEqual(
-            self.api.getStatusBar(),
-            sample_statusbar_msg
         )
 
     def test_message_inbox(self):
