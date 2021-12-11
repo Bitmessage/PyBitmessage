@@ -1134,7 +1134,7 @@ class BMRPCDispatcher(object):
         queryreturn = sqlQuery(
             "SELECT label FROM addressbook WHERE address=?", toAddress)
         try:
-            toLabel, = queryreturn[0][0]
+            toLabel = queryreturn[0][0]
         except IndexError:
             pass
 
