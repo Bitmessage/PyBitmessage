@@ -6,6 +6,8 @@ ingredients:
   sources:
     - deb http://archive.ubuntu.com/ubuntu/ bionic main universe
   packages:
+    - python-defusedxml
+    - python-jsonrpclib
     - python-msgpack
     - python-qrcode
     - python-qt4
