@@ -1,4 +1,4 @@
-﻿"""
+"""
 Some shared functions
 
 .. deprecated:: 0.6.3
@@ -139,7 +139,7 @@ def reloadMyAddressHashes():
             else:
                 logger.error(
                     'Error in reloadMyAddressHashes: Can\'t handle'
-                    ' address versions other than 2, 3, or 4.\n'
+                    ' address versions other than 2, 3, or 4.'
                 )
 
     if not keyfileSecure:
