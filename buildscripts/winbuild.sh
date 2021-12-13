@@ -112,7 +112,7 @@ function install_pip_depends()
 {
 	cd "${BASE_DIR}" || exit 1
 	echo "Installing pip depends"
-	wine python -m pip install msgpack-python .[qrcode] .[tor]
+	wine python -m pip install msgpack-python .[json] .[qrcode] .[tor] .[xml]
 	python setup.py egg_info
 }
 
