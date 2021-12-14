@@ -44,7 +44,7 @@ from six.moves import range
 
 try:
     from PyQt5 import QtCore, QtGui
-except ImportError:
+except (ImportError, RuntimeError):
     from PyQt4 import QtCore, QtGui
 
 
