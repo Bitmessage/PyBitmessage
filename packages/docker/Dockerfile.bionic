@@ -103,3 +103,13 @@ RUN VERSION=$(python setup.py -V) \
 RUN buildscripts/appimage.sh
 RUN VERSION=$(python setup.py -V) \
    && out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage --appimage-extract-and-run -t
+
+FROM base AS appandroid
+
+COPY . /home/builder/src
+
+WORKDIR /home/builder/src
+
+RUN chmod +x buildscripts/androiddev.sh
+
+RUN buildscripts/androiddev.sh
