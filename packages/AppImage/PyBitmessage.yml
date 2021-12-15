@@ -16,6 +16,7 @@ ingredients:
     - python-sip
     - python-six
     - sni-qt
+    - xkb-data
   exclude:
     - libmng2
     - libncursesw5
