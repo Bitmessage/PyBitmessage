@@ -168,7 +168,7 @@ def detectOSRelease():
                     pass
         if detectOS.result == "Ubuntu" and ver < 14:
             detectOS.result = "Ubuntu 12"
-        elif detectOS.result == "Ubuntu" and version >= 20:
+        elif detectOS.result == "Ubuntu" and ver >= 20:
             detectOS.result = "Ubuntu 20"
 
 
