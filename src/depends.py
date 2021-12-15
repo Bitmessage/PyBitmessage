@@ -59,6 +59,7 @@ PACKAGES = {
         "Debian": "python-qtpy",
         "Ubuntu": "python-qtpy",
         "Ubuntu 12": "python-qtpy",
+        "Ubuntu 20": "python-qtpy",
         "openSUSE": "python-QtPy",
         "Fedora": "python2-QtPy",
         "Guix": "",
