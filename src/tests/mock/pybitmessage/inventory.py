@@ -6,7 +6,7 @@ from singleton import Singleton
 
 # pylint: disable=old-style-class,too-few-public-methods
 @Singleton
-class MockInventory():
+class Inventory():
     """
     Inventory singleton class which uses storage backends
     to manage the inventory.

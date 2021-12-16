@@ -15,7 +15,7 @@ from network import bmproto
 logger = logging.getLogger('default')
 
 
-class MockObjectProcessor(threading.Thread):
+class objectProcessor(threading.Thread):
     """
     The objectProcessor thread, of which there is only one, receives network
     objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.

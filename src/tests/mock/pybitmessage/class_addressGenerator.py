@@ -60,7 +60,7 @@ class StoppableThread(threading.Thread):
         self.stop.set()
 
 
-class FakeAddressGenerator(StoppableThread):
+class addressGenerator(StoppableThread):
     """A thread for creating fake addresses"""
     name = "addressGenerator"
     address_list = list(fake_addresses.keys())

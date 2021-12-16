@@ -12,7 +12,7 @@ from network import StoppableThread
 from six.moves import queue
 
 
-class MockSingleWorker(StoppableThread):
+class singleWorker(StoppableThread):
     """Thread for performing PoW"""
 
     def __init__(self):
