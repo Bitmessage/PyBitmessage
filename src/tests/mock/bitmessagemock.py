@@ -4,8 +4,9 @@ from class_objectProcessor import MockObjectProcessor
 from inventory import MockInventory
 
 
-def main():
+class MockMain():
     """Mock main function"""
+
     def start(self):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
@@ -14,7 +15,7 @@ def main():
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
         # Start the address generation thread
-        addressGeneratorThread = addressGenerator()
+        addressGeneratorThread = FakeAddressGenerator()
         # close the main program even if there are threads left
         addressGeneratorThread.daemon = True
         addressGeneratorThread.start()
@@ -34,3 +35,13 @@ def main():
         objectProcessorThread.start()
 
         MockInventory()  # init
+
+
+def main():
+    """Triggers main module"""
+    mainprogram = MockMain()
+    mainprogram.start()
+
+
+if __name__ == "__main__":
+    main()
