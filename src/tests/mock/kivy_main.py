@@ -1,14 +1,14 @@
 """Mock kivy app with mock threads."""
 
 from pybitmessage import state
-from pybitmessage.bitmessagekivy.mpybit import NavigateApp
-from class_addressGenerator import FakeAddressGenerator
+from pybitmessage.mpybit import NavigateApp
+from pybitmessage.class_addressGenerator import addressGenerator
 
 
 def main():
     """main method for starting threads"""
     # Start the address generation thread
-    addressGeneratorThread = FakeAddressGenerator()
+    addressGeneratorThread = addressGenerator()
     # close the main program even if there are threads left
     addressGeneratorThread.daemon = True
     addressGeneratorThread.start()
