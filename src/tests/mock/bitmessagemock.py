@@ -1,3 +1,6 @@
+"""
+Bitmessage mock
+"""
 from pybitmessage.class_addressGenerator import addressGenerator
 from pybitmessage.class_singleWorker import singleWorker
 from pybitmessage.class_objectProcessor import objectProcessor
@@ -5,12 +8,14 @@ from pybitmessage.inventory import Inventory
 from pybitmessage.bmconfigparser import BMConfigParser
 
 
-class MockMain():
+# pylint: disable=too-few-public-methods
+class MockMain:
     """Mock main function"""
 
+    # pylint: disable=no-self-use
     def start(self):
         """Start main application"""
-        # pylint: disable=too-many-statements,too-many-branches,too-many-locals
+        # pylint: disable=too-many-statements,too-many-branches,too-many-locals, unused-variable
         config = BMConfigParser()
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
