@@ -4,11 +4,11 @@ Thread for performing PoW
 
 from __future__ import division
 
+from six.moves import queue
+
 from pybitmessage import state
 from pybitmessage import queues
-
 from pybitmessage.threads import StoppableThread
-from six.moves import queue
 
 
 class singleWorker(StoppableThread):
@@ -28,7 +28,7 @@ class singleWorker(StoppableThread):
         super(singleWorker, self).stopThread()
 
     def run(self):
-
+        """To run single worker thread"""
         if state.shutdown > 0:
             return
 

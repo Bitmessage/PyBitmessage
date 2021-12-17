@@ -8,7 +8,7 @@ from pybitmessage.inventory import Inventory
 from pybitmessage.bmconfigparser import BMConfigParser
 
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods,no-init,old-style-class
 class MockMain:
     """Mock main function"""
 
