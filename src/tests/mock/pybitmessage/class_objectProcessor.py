@@ -9,8 +9,8 @@ import threading
 import queues
 import state
 
-from helper_sql import sql_ready, sqlExecute, sqlQuery
-from network import bmproto
+# from helper_sql import sql_ready, sqlExecute, sqlQuery
+# from network import bmproto
 
 logger = logging.getLogger('default')
 
@@ -28,16 +28,17 @@ class objectProcessor(threading.Thread):
         # objectProcessorQueue. Assuming that Bitmessage wasn't closed
         # forcefully, it should have saved the data in the queue into the
         # objectprocessorqueue table. Let's pull it out.
-        sql_ready.wait()
-        queryreturn = sqlQuery(
-            'SELECT objecttype, data FROM objectprocessorqueue')
-        for objectType, data in queryreturn:
-            queues.objectProcessorQueue.put((objectType, data))
-        sqlExecute('DELETE FROM objectprocessorqueue')
-        logger.debug(
-            'Loaded %s objects from disk into the objectProcessorQueue.',
-            len(queryreturn))
-        self._ack_obj = bmproto.BMStringParser()
+
+        # sql_ready.wait()
+        # queryreturn = sqlQuery(
+        #     'SELECT objecttype, data FROM objectprocessorqueue')
+        # for objectType, data in queryreturn:
+        #     queues.objectProcessorQueue.put((objectType, data))
+        # sqlExecute('DELETE FROM objectprocessorqueue')
+        # logger.debug(
+        #     'Loaded %s objects from disk into the objectProcessorQueue.',
+        #     len(queryreturn))
+        # self._ack_obj = bmproto.BMStringParser()
         self.successfullyDecryptMessageTimings = []
 
     def run(self):

@@ -5,10 +5,10 @@ import time
 
 from six.moves import queue
 
-try:
-    from multiqueue import MultiQueue
-except ImportError:
-    from .multiqueue import MultiQueue
+# try:
+#     from multiqueue import MultiQueue
+# except ImportError:
+#     from .multiqueue import MultiQueue
 
 
 class ObjectProcessorQueue(queue.Queue):
@@ -44,8 +44,8 @@ addressGeneratorQueue = queue.Queue()
 #: `.network.ReceiveQueueThread` instances dump objects they hear
 #: on the network into this queue to be processed.
 objectProcessorQueue = ObjectProcessorQueue()
-invQueue = MultiQueue()
-addrQueue = MultiQueue()
+# invQueue = MultiQueue()
+# addrQueue = MultiQueue()
 portCheckerQueue = queue.Queue()
 receiveDataQueue = queue.Queue()
 #: The address generator thread uses this queue to get information back

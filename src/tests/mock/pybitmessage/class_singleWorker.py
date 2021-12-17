@@ -4,11 +4,10 @@ Thread for performing PoW
 
 from __future__ import division
 
-import proofofwork
-import queues
-import state
+from pybitmessage import state
+from pybitmessage import queues
 
-from network import StoppableThread
+from pybitmessage.threads import StoppableThread
 from six.moves import queue
 
 
@@ -16,8 +15,7 @@ class singleWorker(StoppableThread):
     """Thread for performing PoW"""
 
     def __init__(self):
-        super(MockSingleWorker, self).__init__(name="singleWorker")
-        proofofwork.init()
+        super(singleWorker, self).__init__(name="singleWorker")
         self.busy = None
 
     def stopThread(self):
@@ -27,7 +25,7 @@ class singleWorker(StoppableThread):
             queues.workerQueue.put(("stopThread", "data"))
         except queue.Full:
             self.logger.error('workerQueue is Full')
-        super(MockSingleWorker, self).stopThread()
+        super(singleWorker, self).stopThread()
 
     def run(self):
 
