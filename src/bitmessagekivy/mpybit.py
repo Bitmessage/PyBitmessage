@@ -248,17 +248,21 @@ class NavigateApp(MDApp):
 
     def run(self):
         """Running the widgets"""
+        print('run 251 ---------------------------------')
         kivyuisignaler.release()
         super(NavigateApp, self).run()
 
     @staticmethod
     def showmeaddresses(name="text"):
+        print('showmeaddresses 257 ---------------------------------')
         """Show the addresses in spinner to make as dropdown"""
         if name == "text":
+            print('if')
             if BMConfigParser().addresses():
                 return BMConfigParser().addresses()[0][:16] + '..'
             return "textdemo"
         elif name == "values":
+            print('else')
             if BMConfigParser().addresses():
                 return [address[:16] + '..'
                         for address in BMConfigParser().addresses()]
@@ -266,6 +270,7 @@ class NavigateApp(MDApp):
 
     def getCurrentAccountData(self, text):
         """Get Current Address Account Data"""
+        print('getCurrentAccountData 273 ---------------------------------')
         if text != '':
             if os.path.exists(state.imageDir + '/default_identicon/{}.png'.format(text)):
                 self.load_selected_Image(text)
@@ -296,6 +301,8 @@ class NavigateApp(MDApp):
 
     def setCurrentAccountData(self, dt=0):
         """This method set the current accout data on all the screens"""
+        print('setCurrentAccountData 304 ---------------------------------')
+        
         self.root.ids.sc1.ids.ml.clear_widgets()
         self.root.ids.sc1.loadMessagelist(state.association)
 
@@ -319,6 +326,7 @@ class NavigateApp(MDApp):
 
     @staticmethod
     def getCurrentAccount():
+        print('getCurrentAccount 329 ----------------------------')
         """It uses to get current account label"""
         if state.association:
             return state.association
@@ -367,6 +375,7 @@ class NavigateApp(MDApp):
             toast(altet_txt)
 
     def is_camara_attached(self):
+        print('is_camara_attached -----------------------378')
         """This method is for checking is camera available or not"""
         self.root.ids.sc23.check_camera()
         is_available = self.root.ids.sc23.camera_avaialbe
@@ -414,6 +423,7 @@ class NavigateApp(MDApp):
 
     def getDefaultAccData(self, instance):
         """Getting Default Account Data"""
+        print('getDefaultAccData---------------------------------')
         if self.variable_1:
             state.association = first_addr = self.variable_1[0]
             # if BMConfigParser().get(str(first_addr), 'enabled') == 'true':
@@ -456,6 +466,7 @@ class NavigateApp(MDApp):
 
     @staticmethod
     def addressexist():
+        print('addressexist 469 --------------------------')
         """Checking address existence"""
         if BMConfigParser().addresses():
             return True

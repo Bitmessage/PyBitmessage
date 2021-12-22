@@ -350,7 +350,9 @@ class Main(object):
                 # pylint: disable=no-member,import-error,no-name-in-module,relative-import
                 from bitmessagekivy.mpybit import NavigateApp
                 state.kivyapp = NavigateApp()
+                print('state.kivyapp = NavigateApp() ------------------------')
                 state.kivyapp.run()
+                print('state.kivyapp.run() ----------------')
             else:
                 import bitmessageqt
                 bitmessageqt.run()
