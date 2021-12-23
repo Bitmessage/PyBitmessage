@@ -1,0 +1,964 @@
+<Setting>:
+    name: 'set'
+    MDTabs:
+        id: tab_panel
+        tab_display_mode:'text'
+
+        Tab:
+            text: app.tr._("User Interface")
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(250) + self.minimum_height
+                    padding: 10
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'horizontal'
+                        height: self.minimum_height
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                            disabled: True
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Start-on-login not yet supported on your OS")
+                            halign: 'left'
+                            pos_hint: {'center_x': 0, 'center_y': 0.6}
+                            disabled: True
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [20, 0, 0, 0]
+                        spacing: dp(10)
+                        height: dp(100) + self.minimum_height
+                        # pos_hint: {'center_x': 0, 'center_y': 0.6}
+                        BoxLayout:
+                            id: box_height
+                            orientation: 'vertical'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Tray")
+                                halign: 'left'
+                                bold: True
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Start Bitmessage in the tray(don't show main window)")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Minimize to tray")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Close to tray")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': .5}
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(100) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Hide connection notifications")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.2}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Show notification when message received")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.2}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Run in Portable Mode")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.2}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._('In portable Mode, messages and config files are stored in the same directory as the program rather then the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.')
+                            # text: 'huiiiii'
+                            halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(100) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Willingly include unencrypted destination address when sending to a mobile device")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.2}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Use identicons")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.2}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Reply below Quote")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0.2}
+                    Widget:
+                        size_hint_y: None
+                        height: 10
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        # padding: [0, 10, 0, 0]
+                        spacing: 10
+                        padding: [20, 0, 0, 0]
+                        height: dp(20) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Interface Language")
+                            # halign: 'right'
+                            bold: True
+                        MDDropDownItem:
+                            id: dropdown_item
+                            text: "System Setting"
+                            # pos_hint: {"center_x": .5, "center_y": .6}
+                            # current_item: "Item 0"
+                            # on_release: root.menu.open()
+                    BoxLayout:
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'x':.76}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            spacing: 10
+                            MDRaisedButton:
+                                text: app.tr._('Apply')
+                                # on_press: root.change_language()
+        Tab:
+            text: 'Network Settings'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(500) + self.minimum_height
+                    padding: 10
+                    BoxLayout:
+                        id: box_height
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Listening port")
+                            halign: 'left'
+                            bold: True
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [10, 0, 0, 0]
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Listen for connections on port:")
+                                halign: 'left'
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(100), dp(30)
+                                text: app.tr._('8444')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            padding_left: 10
+                            MDCheckbox:
+                                id: chkbox
+                                size_hint: None, None
+                                size: dp(48), dp(50)
+                                # active: True
+                                halign: 'center'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("UPnP")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Proxy server / Tor")
+                            halign: 'left'
+                            bold: True
+
+                    GridLayout:
+                        cols: 2
+                        padding: [10, 0, 0, 0]
+                        MDLabel:
+                            size_hint_x: None
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Type:")
+                            halign: 'left'
+                        MDDropDownItem:
+                            id: dropdown_item2
+                            dropdown_bg: [1, 1, 1, 1]
+                            text: 'none'
+                            pos_hint: {'x': 0.9, 'y': 0}
+                            items: [f"{i}" for i in ['System Setting','U.S. English']]
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [30, 0, 0, 0]
+                        spacing: 10
+                        height: dp(100) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Server hostname:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('localhost')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Port:")
+                                halign: 'left'
+                            # TextInput:
+                            #     size_hint: None, None
+                            #     hint_text: '9050'
+                            #     size: dp(app.window_size[0]/4), dp(30)
+                            #     input_filter: "int"
+                            #     readonly: False
+                            #     multiline: False
+                            #     font_size: '15sp'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('9050')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Username:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Pass:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Authentication")
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Listen for incoming connections when using proxy")
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0}
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        MDCheckbox:
+                            id: chkbox
+                            size_hint: None, None
+                            size: dp(48), dp(50)
+                            # active: True
+                            halign: 'center'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Only connect to onion services(*.onion)")
+                            halign: 'left'
+                            pos_hint: {'x': 0, 'y': 0}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Bandwidth limit")
+                            halign: 'left'
+                            bold: True
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Maximum download rate (kB/s):[0:unlimited]")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: app.window_size[0]/2, dp(30)
+                            hint_text: app.tr._('0')
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Maximum upload rate (kB/s):[0:unlimited]")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: app.window_size[0]/2, dp(30)
+                            hint_text: '0'
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'horizontal'
+                        padding: [30, 0, 0, 0]
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Maximum outbound connections:[0:none]")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: app.window_size[0]/2, dp(30)
+                            hint_text: '8'
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+                    BoxLayout:
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'x':.76}
+
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+        Tab:
+            text: 'Demanded Difficulty'
+            ScrollView:
+                do_scroll_x: False
+
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(300) + self.minimum_height
+                    padding: 10
+                    BoxLayout:
+                        id: box_height
+                        orientation: 'vertical'
+                        # MDLabel:
+                        #     font_style: 'Body1'
+                        #     theme_text_color: 'Primary'
+                        #     text: app.tr._("Listening port")
+                        #     halign: 'left'
+                        #     bold: True
+
+                # BoxLayout:
+                #     size_hint_y: None
+                #     orientation: 'vertical'
+                #     height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                #     padding: 20
+                #     # spacing: 10
+                #     BoxLayout:
+                #         # size_hint_y: None
+                #         id: box1_height
+                #         # orientation: 'vertical'
+                #         # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "\n\n\nWhen someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1.\n\n"
+                            halign: 'left'
+
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: 5
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Total difficulty:")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/4), dp(30)
+                            hint_text: app.tr._('00000.0')
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        padding: 5
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "The 'Total difficulty' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work."
+                            halign: 'left'
+                    
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        spacing: 0
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Small message difficulty:")
+                            halign: 'left'
+                        MDTextFieldRect:
+                            size_hint: None, None
+                            size: dp(app.window_size[0]/4), dp(30)
+                            hint_text: app.tr._('00000.0')
+                            pos_hint: {'center_y': .5, 'center_x': .5}
+                            input_filter: "int"
+
+
+                    BoxLayout:
+                        size_hint_y: None
+                        padding: 0
+                        id: box1_height
+                        orientation: 'vertical'
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "The 'Small message difficulty' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn't really affect large messages."
+                            halign: 'left'
+
+
+                    # BoxLayout:
+                    #     id: box2_height
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     height: dp(30) + self.minimum_height
+                    #     MDLabel:
+                    #         font_style: 'Body1'
+                    #         theme_text_color: 'Primary'
+                    #         text: app.tr._("Leave these input fields blank for the default behavior.")
+                    #         halign: 'left'
+                    # BoxLayout:
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     padding: [10, 0, 0, 0]
+                    #     height: dp(50) + self.minimum_height
+                    #     BoxLayout:
+                    #         orientation: 'horizontal'
+                    #         MDLabel:
+                    #             font_style: 'Body1'
+                    #             theme_text_color: 'Primary'
+                    #             text: app.tr._("Give up after")
+                    #             halign: 'left'
+                    #         MDTextFieldRect:
+                    #             size_hint: None, None
+                    #             size: dp(70), dp(30)
+                    #             text: app.tr._('0')
+                    #             # pos_hint: {'center_y': .5, 'center_x': .5}
+                    #             input_filter: "int"
+                    #         MDLabel:
+                    #             font_style: 'Body1'
+                    #             theme_text_color: 'Primary'
+                    #             text: app.tr._("days and")
+                    #             halign: 'left'
+                    #         MDTextFieldRect:
+                    #             size_hint: None, None
+                    #             size: dp(70), dp(30)
+                    #             text: '0'
+                    #             # pos_hint: {'center_y': .5, 'center_x': .5}
+                    #             input_filter: "int"
+                    #         MDLabel:
+                    #             font_style: 'Body1'
+                    #             theme_text_color: 'Primary'
+                    #             text: "months"
+                    #             halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:10
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(10) + self.minimum_height
+                        MDRaisedButton:
+                            text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+
+        Tab:
+            text: 'Max acceptable Difficulty'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        spacing: 10
+                        
+                        # pos_hint: {'x': 0, 'y': 0.2}
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "\n\n\nHere you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable."
+                            halign: 'left'
+                    # BoxLayout:
+                    #     id: box2_height
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     height: dp(40) + self.minimum_height
+                    # BoxLayout:
+                    #     size_hint_y: None
+                    #     orientation: 'vertical'
+                    #     padding: [10, 0, 0, 0]
+                    #     height: dp(50) + self.minimum_height
+
+                    GridLayout:
+                        cols: 2
+                        padding: [10, 0, 0, 0]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        spacing: 10
+                        height: dp(50) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Maximum acceptable total difficulty:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('00000.0')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Hardware GPU acceleration (OpenCL):")
+                                halign: 'left'
+                            MDDropDownItem:
+                                id: dropdown_item
+                                text: "None"
+                                pos_hint: {"center_x": 0, "center_y": 0}
+                                # current_item: "Item 0"
+                                # on_release: root.menu.open()
+
+                    # BoxLayout:
+                    #     size_hint_y: None
+                    #     spacing:5
+                    #     orientation: 'horizontal'
+                    #     pos_hint: {'center_y': .4, 'center_x': 1.15}
+                    #     halign: 'right'
+
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        pos_hint: {'center_y': 1, 'center_x': 1.15}
+                        halign: 'right'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        MDRaisedButton:
+                            text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('OK')
+        Tab:
+            text: 'Resends Expire'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months."
+                            halign: 'left'
+                    BoxLayout:
+                        id: box2_height
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(30) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            text: app.tr._("Leave these input fields blank for the default behavior.")
+                            halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        height: dp(50) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Give up after")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: app.tr._('0')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("days and")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(70), dp(30)
+                                text: '0'
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: "months"
+                                halign: 'left'
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        # MDRaisedButton:
+                        #     text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+
+        Tab:
+            text: 'Namecoin Integration'
+            ScrollView:
+                do_scroll_x: False
+                BoxLayout:
+                    size_hint_y: None
+                    orientation: 'vertical'
+                    height: dp(210 if app.app_platform == 'android' else 100)+ self.minimum_height
+                    padding: 20
+
+                    # spacing: 10
+                    BoxLayout:
+                        # size_hint_y: None
+                        id: box1_height
+                        orientation: 'vertical'
+                        spacing: 10
+                        
+                        # pos_hint: {'x': 0, 'y': 0.2}
+                        # height: dp(100) + self.minimum_height
+                        MDLabel:
+                            font_style: 'Body1'
+                            theme_text_color: 'Primary'
+                            # text: app.tr._(root.exp_text)
+                            text: "\n\n\n\n\n\nBitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to test.\n\n(Getting your own Bitmessage address into Namecoin is still rather difficult).\n\nBitmessage can use either namecoind directly or a running nmcontrol instance\n\n"
+                            halign: 'left'
+
+                    BoxLayout:
+                        id: box2_height
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        height: dp(40) + self.minimum_height
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [10, 0, 0, 0]
+                        height: dp(50) + self.minimum_height
+
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        padding: [10, 0, 0, 0]
+                        
+                        BoxLayout:
+                            orientation: 'horizontal'
+
+                            # padding_left: 10
+                            # MDCheckbox:
+                            #     id: chkbox
+                            #     size_hint: None, None
+                            #     size: dp(48), dp(50)
+                            #     # active: True
+                            #     halign: 'center'
+                            # MDLabel:
+                            #     font_style: 'Body1'
+                            #     theme_text_color: 'Primary'
+                            #     text: app.tr._("UPnP")
+                            #     halign: 'left'
+                            #     pos_hint: {'x': 0, 'y': 0}
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Connect to:")
+                                halign: 'left'
+                        
+                            # MDCheckbox:
+                            #     id: chkbox
+                            #     size_hint: None, None
+                            #     size: dp(48), dp(50)
+                            #     # active: True
+                            #     halign: 'center'
+                            Check:
+                                active: True
+                                pos_hint: {'x': 0, 'y': -0.2}
+                                
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Namecoind")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0}
+                        
+                            Check:
+                                active: False
+                                pos_hint: {'x': 0, 'y': -0.2}
+
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("NMControl")
+                                halign: 'left'
+                                pos_hint: {'x': 0, 'y': 0}
+
+                    GridLayout:
+                        cols: 2
+                        padding: [10, 0, 0, 0]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        orientation: 'vertical'
+                        padding: [30, 0, 0, 0]
+                        spacing: 10
+                        height: dp(100) + self.minimum_height
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("hostname:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('localhost')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Port:")
+                                halign: 'left'
+                            # TextInput:
+                            #     size_hint: None, None
+                            #     hint_text: '9050'
+                            #     size: dp(app.window_size[0]/4), dp(30)
+                            #     input_filter: "int"
+                            #     readonly: False
+                            #     multiline: False
+                            #     font_size: '15sp'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                hint_text: app.tr._('9050')
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                input_filter: "int"
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Username:")
+                                halign: 'left'
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            MDLabel:
+                                font_style: 'Body1'
+                                theme_text_color: 'Primary'
+                                text: app.tr._("Password:")
+                                halign: 'left'
+                                
+                            MDTextFieldRect:
+                                size_hint: None, None
+                                size: dp(app.window_size[0]/4), dp(30)
+                                pos_hint: {'center_y': .5, 'center_x': .5}
+                                password: True
+
+
+                    BoxLayout:
+                        size_hint_y: None
+                        spacing:5
+                        orientation: 'horizontal'
+                        pos_hint: {'center_y': .4, 'center_x': 1.15}
+                        halign: 'right'
+                        # pos_hint: {'left': 0}
+                        # pos_hint: {'x':.75}
+                        height: dp(50) + self.minimum_height
+                        MDRaisedButton:
+                            text: app.tr._('Cancel')
+                        MDRaisedButton:
+                            text: app.tr._('Apply')
+                        MDRaisedButton:
+                            text: app.tr._('OK')
+    Loader:

@@ -1,0 +1,333 @@
+<LoadingPopup>:
+    separator_color: 1, 1, 1, 1
+    background: "White.png"
+    Button:
+        id: btn
+        disabled: True
+        background_disabled_normal: "White.png"
+        Image:
+            source: app.image_path + '/loader.zip'
+            anim_delay: 0
+            #mipmap: True
+            size: root.size
+
+
+<GrashofPopup>:
+    id: popup_box
+    orientation: 'vertical'
+    # spacing:dp(20)
+    # spacing: "12dp"
+    size_hint_y: None
+    # height: "120dp"
+    height: label.height+address.height
+    BoxLayout:
+        orientation: 'vertical'
+        MDTextField:
+            id: label
+            multiline: False
+            hint_text: app.tr._("Label")
+            required: True
+            icon_right: 'label'
+            helper_text_mode: "on_error"
+            on_text: root.checkLabel_valid(self)
+            canvas.before:
+                Color:
+                    rgba: (0,0,0,1)
+        MDTextField:
+            id: address
+            hint_text: app.tr._("Address")
+            required: True
+            icon_right: 'book-plus'
+            helper_text_mode: "on_error"
+            multiline: False
+            on_text: root.checkAddress_valid(self)
+            canvas.before:
+                Color:
+                    rgba: (0,0,0,1)
+
+<AddbookDetailPopup>:
+    id: addbook_popup_box
+    size_hint_y: None
+    height: 2.5*(add_label.height) 
+    orientation: 'vertical'
+    spacing:dp(5)
+    MDLabel
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: app.tr._("Label")
+        font_size: '17sp'
+        halign: 'left'
+    MDTextField:
+        id: add_label
+        font_style: 'Body1'
+        font_size: '15sp'
+        halign: 'left'
+        text: app.tr._(root.address_label)
+        theme_text_color: 'Primary'
+        required: True
+        helper_text_mode: "on_error"
+        on_text: root.checkLabel_valid(self)
+        canvas.before:
+            Color:
+                rgba: (0,0,0,1)
+    MDLabel:
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: app.tr._("Address")
+        font_size: '17sp'
+        halign: 'left'
+    Widget:
+        size_hint_y: None
+        height: dp(1)
+    BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+            id: address
+            font_style: 'Body1'
+            theme_text_color: 'Primary'
+            text: app.tr._(root.address)
+            font_size: '15sp'
+            halign: 'left'
+        IconRightSampleWidget:
+            pos_hint: {'center_x': 0, 'center_y': 1}
+            icon: 'content-copy'
+            on_press: app.copy_composer_text(root.address)
+
+
+<MyaddDetailPopup>:
+    id: myadd_popup
+    size_hint_y: None
+    height: "130dp"
+    spacing:dp(25)
+
+    #height: dp(1.5*(myaddr_label.height))
+    orientation: 'vertical'
+    MDLabel:
+        id: myaddr_label
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: app.tr._("Label")
+        font_size: '17sp'
+        halign: 'left'
+    MDLabel:
+        font_style: 'Body1'
+        theme_text_color: 'Primary'
+        text: root.address_label
+        font_size: '15sp'
+        halign: 'left'
+    MDLabel:
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: app.tr._("Address")
+        font_size: '17sp'
+        halign: 'left'
+    BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+            id: label_address
+            font_style: 'Body1'
+            theme_text_color: 'Primary'
+            text: app.tr._(root.address)
+            font_size: '15sp'
+            halign: 'left'
+        IconRightSampleWidget:
+            pos_hint: {'center_x': 0, 'center_y': 1}
+            icon: 'content-copy'
+            on_press: app.copy_composer_text(root.address)
+    BoxLayout:
+        id: my_add_btn
+        spacing:5
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: self.minimum_height
+        MDRaisedButton:
+            size_hint: 2, None
+            height: dp(40)
+            on_press: root.send_message_from()
+            MDLabel:
+                font_style: 'H6'
+                text: app.tr._('Send message from')
+                font_size: '13sp'
+                color: (1,1,1,1)
+                halign: 'center'
+        MDRaisedButton:
+            size_hint: 1.5, None
+            height: dp(40)
+            on_press: app.root.ids.scr_mngr.current = 'showqrcode'
+            on_press: app.root.ids.sc15.qrdisplay(root, root.address)
+            MDLabel:
+                font_style: 'H6'
+                text: app.tr._('Show QR code')
+                font_size: '13sp'
+                color: (1,1,1,1)
+                halign: 'center'
+        MDRaisedButton:
+            size_hint: 1.5, None
+            height: dp(40)
+            on_press: root.close_pop()
+            MDLabel:
+                font_style: 'H6'
+                text: app.tr._('Cancel')
+                font_size: '13sp'
+                color: (1,1,1,1)
+                halign: 'center'
+
+<AppClosingPopup>:
+    id: closing_popup
+    size_hint : (None,None)
+    height: 1.4*(popup_label.height+ my_add_btn.children[0].height)
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    background: app.image_path + '/popup.jpeg'
+    auto_dismiss: False
+    separator_height: 0
+    BoxLayout:
+        id: myadd_popup_box
+        size_hint_y: None
+        spacing:dp(70)
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            spacing:dp(25)
+            MDLabel:
+                id: popup_label
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: app.tr._("Bitmessage isn't connected to the network.\n If you quit now, it may cause delivery delays.\n Wait until connected and the synchronisation finishes?")
+                font_size: '17sp'
+                halign: 'center'
+        BoxLayout:
+            id: my_add_btn
+            spacing:5
+            orientation: 'horizontal'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.closingAction(self.children[0].text)
+                on_press: app.stop()
+                MDLabel:
+                    font_style: 'H6'
+                    text: app.tr._('Yes')
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                on_press: root.closingAction(self.children[0].text)
+                MDLabel:
+                    font_style: 'H6'
+                    text: app.tr._('No')
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+            MDRaisedButton:
+                size_hint: 1.5, None
+                height: dp(40)
+                #on_press: root.dismiss()
+                on_press: root.closingAction(self.children[0].text)
+                MDLabel:
+                    font_style: 'H6'
+                    text: app.tr._('Cancel')
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+<SenderDetailPopup>:
+    id: myadd_popup
+    size_hint : (None,None)
+    # height: 2*(sd_label.height+ sd_btn.children[0].height)
+    width :app.window_size[0] - (app.window_size[0]/10 if app.app_platform == 'android' else app.window_size[0]/4)
+    background: app.image_path + '/popup.jpeg'
+    auto_dismiss: False
+    separator_height: 0
+    BoxLayout:
+        id: myadd_popup_box
+        size_hint_y: None
+        orientation: 'vertical'
+        spacing:dp(8 if app.app_platform == 'android' else 3)
+        BoxLayout:
+            orientation: 'vertical'
+            MDLabel:
+                id: from_add_label
+                font_style: 'Subtitle2'
+                theme_text_color: 'Primary'
+                text: app.tr._("From :")
+                font_size: '15sp'
+                halign: 'left'
+        Widget:
+            size_hint_y: None
+            height: dp(1 if app.app_platform == 'android' else 0)
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            orientation: 'horizontal'
+            MDLabel:
+                id: sd_label
+                font_style: 'Body2'
+                theme_text_color: 'Primary'
+                text: app.tr._("[b]" + root.from_addr + "[/b]")
+                font_size: '15sp'
+                halign: 'left'
+                markup: True
+            IconRightSampleWidget:
+                icon: 'content-copy'
+                on_press: app.copy_composer_text(root.from_addr)
+        Widget:
+            id: space_1
+            size_hint_y: None
+            height: dp(2 if app.app_platform == 'android' else 0)
+        BoxLayout:
+            id: to_addtitle
+        Widget:
+            id:space_2
+            size_hint_y: None
+            height: dp(1 if app.app_platform == 'android' else 0)
+        BoxLayout:
+            id: to_addId
+        BoxLayout:
+            size_hint_y: None
+            orientation: 'vertical'
+            height: 50
+            MDLabel:
+                font_style: 'Body2'
+                theme_text_color: 'Primary'
+                text: app.tr._("Date : " + root.time_tag)
+                font_size: '15sp'
+                halign: 'left'
+        BoxLayout:
+            id: sd_btn
+            orientation: 'vertical'
+            MDRaisedButton:
+                id: dismiss_btn
+                on_press: root.dismiss()
+                size_hint: .2, 0
+                pos_hint: {'x': 0.8, 'y': 0}
+                MDLabel:
+                    font_style: 'H6'
+                    text: app.tr._('Cancel')
+                    font_size: '13sp'
+                    color: (1,1,1,1)
+                    halign: 'center'
+
+<ToAddrBoxlayout>:
+    orientation: 'horizontal'
+    MDLabel:
+        font_style: 'Body2'
+        theme_text_color: 'Primary'
+        text: app.tr._(root.to_addr)
+        font_size: '15sp'
+        halign: 'left'
+    IconRightSampleWidget:
+        icon: 'content-copy'
+        on_press: app.copy_composer_text(root.to_addr)
+
+<ToAddressTitle>:
+    orientation: 'vertical'
+    MDLabel:
+        id: to_add_label
+        font_style: 'Subtitle2'
+        theme_text_color: 'Primary'
+        text: "To :"
+        font_size: '15sp'
+        halign: 'left'

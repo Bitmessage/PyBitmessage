@@ -1,0 +1,62 @@
+<ArrowImg@Image>:
+    source: app.image_path +('/down-arrow.png' if self.parent.is_open == True else '/right-arrow.png')
+    size: 15, 15
+    x: self.parent.x + self.parent.width - self.width - 5
+    y: self.parent.y + self.parent.height/2 - self.height + 5
+
+<SearchBar@BoxLayout>:
+    # id: search_bar
+    size_hint_y: None
+    height: self.minimum_height
+
+    MDIconButton:
+        icon: 'magnify'
+
+    MDTextField:
+        id: search_field
+        hint_text: 'Search'
+        on_text: app.searchQuery(self)
+        canvas.before:
+            Color:
+                rgba: (0,0,0,1)
+
+<Loader@MDSpinner>:
+    id: spinner
+    size_hint: None, None
+    size: dp(46), dp(46)
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    active: False
+
+<ComposerButton@BoxLayout>:
+    size_hint_y: None
+    height: dp(56)
+    spacing: '10dp'
+    pos_hint: {'center_x':0.45, 'center_y': .1}
+
+    Widget:
+
+    MDFloatingActionButton:
+        icon: 'plus'
+        opposite_colors: True
+        elevation_normal: 8
+        md_bg_color: [0.941, 0, 0,1]
+        on_press: app.root.ids.scr_mngr.current = 'create'
+        on_press: app.clear_composer()
+
+
+
+<ToggleBtn>:
+    size_hint: None, None
+    size: dp(36), dp(48)
+    pos_hint: {'center_x': .95, 'center_y': .4}
+    on_active: app.root.ids.sc10.toggleAction(self)
+
+<CustomTwoLineAvatarIconListItem>:
+    canvas:
+        Color:
+            id: set_clr
+            # rgba: 0.5, 0.5, 0.5, 0.5
+            rgba: 0,0,0,0
+        Rectangle: #woohoo!!!
+            size: self.size
+            pos: self.pos
