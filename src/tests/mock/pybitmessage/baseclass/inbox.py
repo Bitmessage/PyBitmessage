@@ -3,7 +3,7 @@
 
 # from pybitmessage import kivy_helper_search
 # from pybitmessage.bmconfigparser import BMConfigParser
-from ..helper_sql import sqlExecute
+from pybitmessage.helper_sql import sqlExecute
 from functools import partial
 from kivy.clock import Clock
 from kivy.metrics import dp
@@ -14,15 +14,15 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
 
-from .. import state
+from pybitmessage import state
 
-from .common import (
+from common import (
     showLimitedCnt, avatarImageFirstLetter,
     ThemeClsColor, toast, SwipeToDeleteItem,
     ShowTimeHistoy
 )
-from.maildetail import MailDetail
-from .trash import Trash
+from maildetail import MailDetail
+from trash import Trash
 
 
 class Inbox(Screen):

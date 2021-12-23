@@ -5,7 +5,7 @@ The raw image data can be keep in memory for further access
 import hashlib
 from io import BytesIO
 
-from PIL import Image
+# from PIL import Image
 from kivy.core.image import Image as CoreImage
 from kivy.uix.image import Image as kiImage
 # pylint: disable=import-error
@@ -22,8 +22,9 @@ def generate(Generate_string=None):
     """Generating string"""
     hash_string = generate_hash(Generate_string)
     color = random_color(hash_string)
-    image = Image.new(MODE, V_RESOLUTION, BACKGROUND_COLOR)
-    image = generate_image(image, color, hash_string)
+    # image = Image.new(MODE, V_RESOLUTION, BACKGROUND_COLOR)
+    # image = generate_image(image, color, hash_string)
+    image = open("/home/cis/Downloads/1.png")
     image = image.resize(RESOLUTION, 0)
     data = BytesIO()
     image.save(data, format='png')

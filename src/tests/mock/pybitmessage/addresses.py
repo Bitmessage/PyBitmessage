@@ -6,7 +6,7 @@ import hashlib
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
 
-from debug import logger
+# from debug import logger
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -213,16 +213,16 @@ def decodeAddress(address):
     try:
         addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
     except varintDecodeError as e:
-        logger.error(str(e))
+        # logger.error(str(e))
         status = 'varintmalformed'
         return status, 0, 0, ''
 
     if addressVersionNumber > 4:
-        logger.error('cannot decode address version numbers this high')
+        # logger.error('cannot decode address version numbers this high')
         status = 'versiontoohigh'
         return status, 0, 0, ''
     elif addressVersionNumber == 0:
-        logger.error('cannot decode address version numbers of zero.')
+        # logger.error('cannot decode address version numbers of zero.')
         status = 'versiontoohigh'
         return status, 0, 0, ''
 
@@ -230,7 +230,7 @@ def decodeAddress(address):
         streamNumber, bytesUsedByStreamNumber = \
             decodeVarint(data[bytesUsedByVersionNumber:])
     except varintDecodeError as e:
-        logger.error(str(e))
+        # logger.error(str(e))
         status = 'varintmalformed'
         return status, 0, 0, ''
 

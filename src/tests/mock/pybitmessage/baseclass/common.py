@@ -8,7 +8,7 @@ from kivymd.uix.list import (
 )
 from kivy.uix.image import Image
 from kivymd.uix.label import MDLabel
-from pybitmessage.get_platform import platform
+# from pybitmessage.get_platform import platform
 platform = "linux"
 from kivymd.toast import kivytoast
 from kivymd.uix.card import MDCardSwipe

@@ -245,8 +245,8 @@ class NavigateApp(MDApp):
         kivysignalthread.daemon = True
         kivysignalthread.start()
         Window.bind(on_keyboard=self.on_key, on_request_close=self.on_request_close)
-        # return Builder.load_file(
-        #     os.path.join(os.path.dirname(__file__), 'main.kv'))
+        return Builder.load_file(
+            os.path.join(os.path.dirname(__file__), 'main.kv'))
         # return Builder.load_file('/home/cis/Bitmessagepeter/KivyPoject/PyBitmessage/src/tests/mock/pybitmessage/main.kv')
 
 
