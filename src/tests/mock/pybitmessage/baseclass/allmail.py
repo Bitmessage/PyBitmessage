@@ -1,5 +1,5 @@
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlExecute, sqlQuery
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute, sqlQuery
 from functools import partial
 from kivy.clock import Clock
 from kivy.properties import (
@@ -9,14 +9,14 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
 
-import state
+from pybitmessage import state
 
 from pybitmessage.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
     avatarImageFirstLetter, CutsomSwipeToDeleteItem,
     ShowTimeHistoy
 )
-from pybitmessage.baseclass.maildetail import MailDetail
+# from pybitmessage.baseclass.maildetail import MailDetail
 # from pybitmessage.baseclass.trash import Trash
 
 
@@ -155,7 +155,7 @@ class Allmails(Screen):
                 else:
                     src_mng_obj = self.parent.parent
                 src_mng_obj.screens[11].clear_widgets()
-                src_mng_obj.screens[11].add_widget(MailDetail())
+                # src_mng_obj.screens[11].add_widget(MailDetail())
                 src_mng_obj.current = 'mailDetail'
         else:
             instance.ids.delete_msg.disabled = False

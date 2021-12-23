@@ -1,10 +1,10 @@
 import time
 
 from pybitmessage import kivy_helper_search
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlExecute
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute
 from functools import partial
-from addresses import decodeAddress
+from pybitmessage.addresses import decodeAddress
 from kivy.clock import Clock
 from kivy.properties import (
     ListProperty,
@@ -13,13 +13,13 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
 
-import state
+from pybitmessage import state
 
 from pybitmessage.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
     SwipeToDeleteItem, ShowTimeHistoy
 )
-from pybitmessage.baseclass.maildetail import MailDetail
+# from pybitmessage.baseclass.maildetail import MailDetail
 
 
 class Draft(Screen):
@@ -137,7 +137,7 @@ class Draft(Screen):
                 else:
                     src_mng_obj = self.parent.parent
                 src_mng_obj.screens[11].clear_widgets()
-                src_mng_obj.screens[11].add_widget(MailDetail())
+                # src_mng_obj.screens[11].add_widget(MailDetail())
                 src_mng_obj.current = 'mailDetail'
         else:
             instance.ids.delete_msg.disabled = False

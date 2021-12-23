@@ -1,7 +1,7 @@
 from turtle import pd
 from pybitmessage.get_platform import platform
 from pybitmessage import kivy_helper_search
-from helper_sql import sqlExecute
+from pybitmessage.helper_sql import sqlExecute
 from functools import partial
 from kivy.clock import Clock
 from kivy.properties import (
@@ -13,7 +13,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
 from kivy.uix.screenmanager import Screen
 
-import state
+from pybitmessage import state
 
 from pybitmessage.baseclass.common import (
     avatarImageFirstLetter, toast,

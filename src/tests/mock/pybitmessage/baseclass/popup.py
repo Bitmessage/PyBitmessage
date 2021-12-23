@@ -13,7 +13,7 @@ from pybitmessage import state
 from pybitmessage.addresses import decodeAddress
 from datetime import datetime
 
-from common import toast
+from pybitmessage.baseclass.common import toast
 
 
 class LoadingPopup(Popup):

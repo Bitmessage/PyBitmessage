@@ -16,13 +16,13 @@ from kivymd.uix.label import MDLabel
 
 from pybitmessage import state
 
-from common import (
+from pybitmessage.baseclass.common import (
     showLimitedCnt, avatarImageFirstLetter,
     ThemeClsColor, toast, SwipeToDeleteItem,
     ShowTimeHistoy
 )
-from maildetail import MailDetail
-from trash import Trash
+# from maildetail import MailDetail
+# from trash import Trash
 
 
 class Inbox(Screen):
@@ -182,7 +182,7 @@ class Inbox(Screen):
                 else:
                     src_mng_obj = self.parent.parent
                 src_mng_obj.screens[11].clear_widgets()
-                src_mng_obj.screens[11].add_widget(MailDetail())
+                # src_mng_obj.screens[11].add_widget(MailDetail())
                 src_mng_obj.current = "mailDetail"
         else:
             instance.ids.delete_msg.disabled = False
@@ -223,7 +223,7 @@ class Inbox(Screen):
     def update_trash(self):
         """Update trash screen mails which is deleted from inbox"""
         self.manager.parent.ids.sc5.clear_widgets()
-        self.manager.parent.ids.sc5.add_widget(Trash())
+        # self.manager.parent.ids.sc5.add_widget(Trash())
         # try:
         #     self.parent.screens[4].clear_widgets()
         #     self.parent.screens[4].add_widget(Trash())

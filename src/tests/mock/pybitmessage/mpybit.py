@@ -18,7 +18,7 @@ from pybitmessage.bmconfigparser import BMConfigParser
 # from debug import logger
 from functools import partial
 from pybitmessage.helper_sql import sqlExecute, sqlQuery
-from pybitmessage.kivymd.app import MDApp
+from kivymd.app import MDApp
 from kivy.clock import Clock
 from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
@@ -47,7 +47,7 @@ from kivy.uix.screenmanager import RiseInTransition, SlideTransition, FallOutTra
 from pybitmessage import queues
 from pybitmessage.semaphores import kivyuisignaler
 
-import state
+from pybitmessage import state
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 
 from kivy.lang import Observable
@@ -58,8 +58,8 @@ import ast
 
 from pybitmessage.baseclass.common import toast
 
-from qr_scanner.zbarcam import ZBarCam
-from pyzbar.pyzbar import ZBarSymbol
+# from qr_scanner.zbarcam import ZBarCam
+# from pyzbar.pyzbar import ZBarSymbol
 
 if platform != "android":
     from kivy.config import Config

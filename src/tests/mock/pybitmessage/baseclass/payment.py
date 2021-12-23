@@ -15,7 +15,7 @@ from kivymd.uix.list import (
 from pybitmessage.baseclass.common import toast
 
 # import queues
-import state
+from pybitmessage import state
 
 
 class Payment(Screen):
