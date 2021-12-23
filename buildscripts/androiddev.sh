@@ -58,23 +58,14 @@ install_ndk()
 }
 
 # INSTALL SDK
-function install_sdk()
+install_sdk()
 {
-    if [[ "$get_python_version" -eq " 2 " ]];
-    then
-        ANDROID_SDK_BUILD_TOOLS_VERSION="28.0.3"
-    elif [[ "$get_python_version" -eq " 3 " ]];
-    then    
-        ANDROID_SDK_BUILD_TOOLS_VERSION="29.0.2"
-    else
-        exit    
-    fi       
+    ANDROID_SDK_BUILD_TOOLS_VERSION="29.0.2"     
     ANDROID_SDK_HOME="${ANDROID_HOME}/android-sdk"
     # get the latest version from https://developer.android.com/studio/index.html
     ANDROID_SDK_TOOLS_VERSION="4333796"
     ANDROID_SDK_TOOLS_ARCHIVE="sdk-tools-linux-${ANDROID_SDK_TOOLS_VERSION}.zip"
     ANDROID_SDK_TOOLS_DL_URL="https://dl.google.com/android/repository/${ANDROID_SDK_TOOLS_ARCHIVE}"
-    echo "Downloading sdk.........................................................................."
     wget -nc ${ANDROID_SDK_TOOLS_DL_URL}
     mkdir --parents "${ANDROID_SDK_HOME}"
     unzip -q "${ANDROID_SDK_TOOLS_ARCHIVE}" -d "${ANDROID_SDK_HOME}"
@@ -84,7 +75,7 @@ function install_sdk()
     echo '### Sources for Android SDK Manager' > "${ANDROID_SDK_HOME}/.android/repositories.cfg"
     # accept Android licenses (JDK necessary!)
     apt -y update -qq
-    apt -y install -qq --no-install-recommends openjdk-8-jdk
+    apt -y install -qq --no-install-recommends openjdk-11-jdk
     apt -y autoremove
     yes | "${ANDROID_SDK_HOME}/tools/bin/sdkmanager" "build-tools;${ANDROID_SDK_BUILD_TOOLS_VERSION}" > /dev/null    
     # download platforms, API, build tools
@@ -98,23 +89,14 @@ function install_sdk()
 }
 
 # INSTALL APACHE-ANT
-function install_ant()
+install_ant()
 {
-    if [[ "$get_python_version" -eq " 2 " ]];
-    then
-        APACHE_ANT_VERSION="1.9.4"
-    elif [[ "$get_python_version" -eq " 3 " ]];
-    then    
-        APACHE_ANT_VERSION="1.10.7"
-    else
-        exit    
-    fi   
+    APACHE_ANT_VERSION="1.10.12"   
 
     APACHE_ANT_ARCHIVE="apache-ant-${APACHE_ANT_VERSION}-bin.tar.gz"
     APACHE_ANT_DL_URL="http://archive.apache.org/dist/ant/binaries/${APACHE_ANT_ARCHIVE}"
     APACHE_ANT_HOME="${ANDROID_HOME}/apache-ant"
     APACHE_ANT_HOME_V="${APACHE_ANT_HOME}-${APACHE_ANT_VERSION}"
-    echo "Downloading ant.........................................................................."
     wget -nc ${APACHE_ANT_DL_URL}
     tar -xf "${APACHE_ANT_ARCHIVE}" -C "${ANDROID_HOME}"
     ln -sfn "${APACHE_ANT_HOME_V}" "${APACHE_ANT_HOME}"
