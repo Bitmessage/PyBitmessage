@@ -11,13 +11,13 @@ from kivymd.uix.label import MDLabel
 
 import state
 
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
     avatarImageFirstLetter, CutsomSwipeToDeleteItem,
     ShowTimeHistoy
 )
-from bitmessagekivy.baseclass.maildetail import MailDetail
-# from bitmessagekivy.baseclass.trash import Trash
+from pybitmessage.baseclass.maildetail import MailDetail
+# from pybitmessage.baseclass.trash import Trash
 
 
 class Allmails(Screen):

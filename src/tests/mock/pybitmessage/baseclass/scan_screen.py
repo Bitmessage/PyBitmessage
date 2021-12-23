@@ -1,4 +1,4 @@
-from bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 import os
 
 from kivy.clock import Clock

@@ -1,4 +1,4 @@
-from bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from functools import partial
@@ -14,7 +14,7 @@ from kivy.uix.screenmanager import Screen
 
 import state
 
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.baseclass.common import (
     toast, showLimitedCnt, ThemeClsColor,
     CutsomSwipeToDeleteItem, ShowTimeHistoy,
     avatarImageFirstLetter

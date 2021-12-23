@@ -1,6 +1,6 @@
 import time
 
-from bitmessagekivy import kivy_helper_search
+from pybitmessage import kivy_helper_search
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute
 from functools import partial
@@ -15,11 +15,11 @@ from kivymd.uix.label import MDLabel
 
 import state
 
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor,
     SwipeToDeleteItem, ShowTimeHistoy
 )
-from bitmessagekivy.baseclass.maildetail import MailDetail
+from pybitmessage.baseclass.maildetail import MailDetail
 
 
 class Draft(Screen):

@@ -35,7 +35,6 @@ def _get_platform():
         return "linux"
     return "unknown"
 
-
 platform = _get_platform()
 
 if platform not in ("android", "unknown"):

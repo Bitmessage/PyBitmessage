@@ -9,7 +9,7 @@ from kivy.uix.screenmanager import Screen
 
 import state
 
-from bitmessagekivy.baseclass.common import toast
+from pybitmessage.baseclass.common import toast
 
 
 class Login(Screen):

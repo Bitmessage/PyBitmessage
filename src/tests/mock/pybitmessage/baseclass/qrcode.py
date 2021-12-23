@@ -1,5 +1,5 @@
 import state
-from bitmessagekivy.baseclass.common import toast
+from pybitmessage.baseclass.common import toast
 from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty
 from kivy_garden.qrcode import QRCodeWidget

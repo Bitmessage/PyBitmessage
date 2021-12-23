@@ -1,5 +1,5 @@
-# from bitmessagekivy import identiconGeneration
-from bitmessagekivy import kivy_helper_search
+# from pybitmessage import identiconGeneration
+from pybitmessage import kivy_helper_search
 from bmconfigparser import BMConfigParser
 from functools import partial
 from helper_sql import sqlExecute
@@ -12,11 +12,11 @@ from kivymd.uix.label import MDLabel
 
 import state
 
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.baseclass.common import (
     showLimitedCnt, ThemeClsColor, avatarImageFirstLetter,
     toast, SwipeToDeleteItem, ShowTimeHistoy
 )
-from bitmessagekivy.baseclass.maildetail import MailDetail
+from pybitmessage.baseclass.maildetail import MailDetail
 
 
 class Sent(Screen):

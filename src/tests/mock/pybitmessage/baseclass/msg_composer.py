@@ -1,6 +1,6 @@
 import time
 
-from bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlQuery
 from kivy.clock import Clock
@@ -30,7 +30,7 @@ import state
 import queues
 
 from addresses import decodeAddress, addBMIfNotPresent
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.baseclass.common import (
     toast, showLimitedCnt
 )
 from kivymd.uix.textfield import MDTextField

@@ -1,6 +1,6 @@
 from turtle import pd
-from bitmessagekivy.get_platform import platform
-from bitmessagekivy import kivy_helper_search
+from pybitmessage.get_platform import platform
+from pybitmessage import kivy_helper_search
 from helper_sql import sqlExecute
 from functools import partial
 from kivy.clock import Clock
@@ -15,11 +15,11 @@ from kivy.uix.screenmanager import Screen
 
 import state
 
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.baseclass.common import (
     avatarImageFirstLetter, toast,
     ThemeClsColor, SwipeToDeleteItem
 )
-from bitmessagekivy.baseclass.popup import AddbookDetailPopup
+from pybitmessage.baseclass.popup import AddbookDetailPopup
 
 
 class AddressBook(Screen):

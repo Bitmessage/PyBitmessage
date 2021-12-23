@@ -8,7 +8,8 @@ from kivymd.uix.list import (
 )
 from kivy.uix.image import Image
 from kivymd.uix.label import MDLabel
-from bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
+platform = "linux"
 from kivymd.toast import kivytoast
 from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
@@ -27,7 +28,7 @@ data_screens = {
         "Factory": "MailDetail()",
         "name_screen": "mailDetail",
         "object": 0,
-        "Import": "from bitmessagekivy.baseclass.maildetail import MailDetail",
+        "Import": "from pybitmessage.baseclass.maildetail import MailDetail",
     },
 }
 

@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from bitmessagekivy.get_platform import platform
-from helper_sql import sqlExecute, sqlQuery
+# from pybitmessage.get_platform import platform
+platform = "linux"
+from ..helper_sql import sqlExecute, sqlQuery
 
 from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
@@ -19,12 +20,12 @@ from kivymd.uix.list import (
 )
 from kivy.uix.screenmanager import Screen
 
-import state
+from .. import state
 
-from bitmessagekivy.baseclass.common import (
+from .common import (
     toast, avatarImageFirstLetter, ShowTimeHistoy
 )
-from bitmessagekivy.baseclass.popup import SenderDetailPopup
+from .popup import SenderDetailPopup
 
 
 class OneLineListTitle(OneLineListItem):

@@ -1,8 +1,9 @@
-# from bitmessagekivy.get_platform import platform
-# from bitmessagekivy import identiconGeneration
-from bitmessagekivy import kivy_helper_search
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlExecute
+# from pybitmessage.get_platform import platform
+# from pybitmessage import identiconGeneration
+
+# from pybitmessage import kivy_helper_search
+# from pybitmessage.bmconfigparser import BMConfigParser
+from ..helper_sql import sqlExecute
 from functools import partial
 from kivy.clock import Clock
 from kivy.metrics import dp
@@ -13,15 +14,15 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.label import MDLabel
 
-import state
+from .. import state
 
-from bitmessagekivy.baseclass.common import (
+from .common import (
     showLimitedCnt, avatarImageFirstLetter,
     ThemeClsColor, toast, SwipeToDeleteItem,
     ShowTimeHistoy
 )
-from bitmessagekivy.baseclass.maildetail import MailDetail
-from bitmessagekivy.baseclass.trash import Trash
+from.maildetail import MailDetail
+from .trash import Trash
 
 
 class Inbox(Screen):
@@ -112,9 +113,10 @@ class Inbox(Screen):
 
     def inboxDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used for retrieving inbox data"""
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, self.account, "inbox", where, what, False, start_indx, end_indx
-        )
+        # self.queryreturn = kivy_helper_search.search_sql(
+        #     xAddress, self.account, "inbox", where, what, False, start_indx, end_indx
+        # )
+        pass
 
     def set_mdList(self, data):
         """This method is used to create the mdList"""

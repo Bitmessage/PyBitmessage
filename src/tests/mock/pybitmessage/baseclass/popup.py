@@ -1,5 +1,5 @@
-from bitmessagekivy.get_platform import platform
-from bitmessagekivy import kivy_helper_search
+from ..get_platform import platform
+from .. import kivy_helper_search
 
 from kivy.clock import Clock
 from kivy.metrics import dp
@@ -8,11 +8,11 @@ from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 
-import state
-from addresses import decodeAddress
+from .. import state
+from ..addresses import decodeAddress
 from datetime import datetime
 
-from bitmessagekivy.baseclass.common import toast
+from .common import toast
 
 
 class LoadingPopup(Popup):

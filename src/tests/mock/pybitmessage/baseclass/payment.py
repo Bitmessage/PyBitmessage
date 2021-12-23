@@ -12,7 +12,7 @@ from kivymd.uix.list import (
 )
 
 # from bmconfigparser import BMConfigParser
-from bitmessagekivy.baseclass.common import toast
+from pybitmessage.baseclass.common import toast
 
 # import queues
 import state
