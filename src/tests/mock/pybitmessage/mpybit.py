@@ -9,7 +9,8 @@
 Bitmessage android(mobile) interface
 """
 
-from pybitmessage.get_platform import platform
+# from pybitmessage.get_platform import platform
+platform = 'linux'
 import os
 # from pybitmessage import identiconGeneration
 from pybitmessage import kivy_helper_search
@@ -61,32 +62,32 @@ from pybitmessage.baseclass.common import toast
 # from qr_scanner.zbarcam import ZBarCam
 # from pyzbar.pyzbar import ZBarSymbol
 
-if platform != "android":
-    from kivy.config import Config
-    Config.set("input", "mouse", "mouse, multitouch_on_demand")
-elif platform == "android":
-    from jnius import autoclass, cast
-    from android.runnable import run_on_ui_thread
-    from android import python_act as PythonActivity
+# if platform != "android":
+#     from kivy.config import Config
+#     Config.set("input", "mouse", "mouse, multitouch_on_demand")
+# elif platform == "android":
+#     from jnius import autoclass, cast
+#     from android.runnable import run_on_ui_thread
+#     from android import python_act as PythonActivity
 
-    Toast = autoclass("android.widget.Toast")
-    String = autoclass("java.lang.String")
-    CharSequence = autoclass("java.lang.CharSequence")
-    context = PythonActivity.mActivity
+#     Toast = autoclass("android.widget.Toast")
+#     String = autoclass("java.lang.String")
+#     CharSequence = autoclass("java.lang.CharSequence")
+#     context = PythonActivity.mActivity
 
-    @run_on_ui_thread
-    def show_toast(text, length):
-        """Its showing toast on screen"""
-        t = Toast.makeText(context, text, length)
-        t.show()
+#     @run_on_ui_thread
+#     def show_toast(text, length):
+#         """Its showing toast on screen"""
+#         t = Toast.makeText(context, text, length)
+#         t.show()
 
 
 with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
     all_data = ast.literal_eval(read_file.read())
     data_screens = list(all_data.keys())
 
-for modules in data_screens:
-    exec(all_data[modules]['Import'])
+# for modules in data_screens:
+#     exec(all_data[modules]['Import'])
 
 # pylint: disable=too-few-public-methods,too-many-arguments,attribute-defined-outside-init
 
@@ -217,7 +218,7 @@ class NavigateApp(MDApp):
     nav_drawer = ObjectProperty()
     state.screen_density = Window.size
     window_size = state.screen_density
-    app_platform = platform
+    app_platform = 'linux'
     title = "PyBitmessage"
     imgstatus = False
     count = 0
@@ -239,15 +240,15 @@ class NavigateApp(MDApp):
                 )
             )
             print('{0}.kv'.format(all_data[kv]["kv_string"]))
-            # import pdb; pdb.set_trace()
-        # self.obj_1 = AddressBook()
+            import pdb; pdb.set_trace()
+        self.obj_1 = AddressBook()
         kivysignalthread = UIkivySignaler()
         kivysignalthread.daemon = True
         kivysignalthread.start()
         Window.bind(on_keyboard=self.on_key, on_request_close=self.on_request_close)
-        return Builder.load_file(
-            os.path.join(os.path.dirname(__file__), 'main.kv'))
-        # return Builder.load_file('/home/cis/Bitmessagepeter/KivyPoject/PyBitmessage/src/tests/mock/pybitmessage/main.kv')
+        # return Builder.load_file(
+            # os.path.join(os.path.dirname(__file__), 'main.kv'))
+        return Builder.load_file('/home/cis/Bitmessagepeter/KivyPoject/PyBitmessage/src/tests/mock/pybitmessage/main.kv')
 
 
     def run(self):
@@ -725,24 +726,24 @@ class NavigateApp(MDApp):
     @staticmethod
     def current_address_label(current_add_label=None, current_addr=None):
         """Getting current address labels"""
-        addresses = [addr for addr in BMConfigParser().addresses()
-                        if BMConfigParser().get(str(addr), 'enabled') == 'true']
-        if addresses:
-            if current_add_label:
-                first_name = current_add_label
-                addr = current_addr
-            else:
-                addr = addresses[0]
-                first_name = BMConfigParser().get(addr, 'label')
-                if BMConfigParser().get(addr, 'enabled') != 'true':
-                    return ''
-            f_name = first_name.split()
-            label = f_name[0][:14].capitalize() + '...' if len(
-                f_name[0]) > 15 else f_name[0].capitalize()
-            address = ' (' + addr + ')'
-            return label + address
-        return ''
-
+        # addresses = [addr for addr in BMConfigParser().addresses()
+        #                 if BMConfigParser().get(str(addr), 'enabled') == 'true']
+        # if addresses:
+        #     if current_add_label:
+        #         first_name = current_add_label
+        #         addr = current_addr
+        #     else:
+        #         addr = addresses[0]
+        #         first_name = BMConfigParser().get(addr, 'label')
+        #         if BMConfigParser().get(addr, 'enabled') != 'true':
+        #             return ''
+        #     f_name = first_name.split()
+        #     label = f_name[0][:14].capitalize() + '...' if len(
+        #         f_name[0]) > 15 else f_name[0].capitalize()
+        #     address = ' (' + addr + ')'
+        #     return label + address
+        # return ''
+        
     def searchQuery(self, instance):
         # """Showing searched mails"""
         # state.search_screen = self.root.ids.scr_mngr.current
@@ -842,48 +843,47 @@ class NavigateApp(MDApp):
         # toolbar_obj.right_action_items = dynamic_list
         pass 
     def load_screen(self, instance):
-        # """This method is used for loading screen on every click"""
-        # if instance.text == 'Inbox':
-        #     self.root.ids.scr_mngr.current = 'inbox'
-        #     self.root.ids.sc1.children[1].active = True
-        # elif instance.text == 'All Mails':
-        #     self.root.ids.scr_mngr.current = 'allmails'
-        #     try:
-        #         self.root.ids.sc17.children[1].active = True
-        #     except Exception:
-        #         self.root.ids.sc17.children[0].children[1].active = True
-        # elif instance.text == 'Trash':
-        #     self.root.ids.scr_mngr.current = 'trash'
-        #     try:
-        #         self.root.ids.sc5.children[1].active = True
-        #     except Exception as e:
-        #         self.root.ids.sc5.children[0].children[1].active = True
-        # Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
-        pass
+        """This method is used for loading screen on every click"""
+        if instance.text == 'Inbox':
+            self.root.ids.scr_mngr.current = 'inbox'
+            self.root.ids.sc1.children[1].active = True
+        elif instance.text == 'All Mails':
+            self.root.ids.scr_mngr.current = 'allmails'
+            try:
+                self.root.ids.sc17.children[1].active = True
+            except Exception:
+                self.root.ids.sc17.children[0].children[1].active = True
+        elif instance.text == 'Trash':
+            self.root.ids.scr_mngr.current = 'trash'
+            try:
+                self.root.ids.sc5.children[1].active = True
+            except Exception as e:
+                self.root.ids.sc5.children[0].children[1].active = True
+        Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
 
     def load_screen_callback(self, instance, dt=0):
-        # """This method is rotating loader for few seconds"""
-        # if instance.text == 'Inbox':
-        #     self.root.ids.sc1.ids.ml.clear_widgets()
-        #     self.root.ids.sc1.loadMessagelist(state.association)
-        #     self.root.ids.sc1.children[1].active = False
-        # elif instance.text == 'All Mails':
-        #     self.root.ids.sc17.clear_widgets()
-        #     self.root.ids.sc17.add_widget(Allmails())
-        #     try:
-        #         self.root.ids.sc17.children[1].active = False
-        #     except Exception:
-        #         self.root.ids.sc17.children[0].children[1].active = False
-        # elif instance.text == 'Trash':
-        #     # self.root.ids.sc5.ids.ml.clear_widgets()
-        #     # self.root.ids.sc5.init_ui(0)
-        #     self.root.ids.sc5.clear_widgets()
-        #     self.root.ids.sc5.add_widget(Trash())
-        #     try:
-        #         self.root.ids.sc5.children[1].active = False
-        #     except Exception as e:
-        #         self.root.ids.sc5.children[0].children[1].active = False
-        pass
+        """This method is rotating loader for few seconds"""
+        if instance.text == 'Inbox':
+            self.root.ids.sc1.ids.ml.clear_widgets()
+            self.root.ids.sc1.loadMessagelist(state.association)
+            self.root.ids.sc1.children[1].active = False
+        elif instance.text == 'All Mails':
+            self.root.ids.sc17.clear_widgets()
+            self.root.ids.sc17.add_widget(Allmails())
+            try:
+                self.root.ids.sc17.children[1].active = False
+            except Exception:
+                self.root.ids.sc17.children[0].children[1].active = False
+        elif instance.text == 'Trash':
+            # self.root.ids.sc5.ids.ml.clear_widgets()
+            # self.root.ids.sc5.init_ui(0)
+            self.root.ids.sc5.clear_widgets()
+            self.root.ids.sc5.add_widget(Trash())
+            try:
+                self.root.ids.sc5.children[1].active = False
+            except Exception as e:
+                self.root.ids.sc5.children[0].children[1].active = False
+
     def on_request_close(self, *args):  # pylint: disable=no-self-use
         """This method is for app closing request"""
         AppClosingPopup().open()

@@ -1,6 +1,6 @@
 from pybitmessage.get_platform import platform
 from functools import partial
-from bmconfigparser import BMConfigParser
+from pybitmessage.bmconfigparser import BMConfigParser
 from kivy.clock import Clock
 # from kivy.metrics import dp
 from kivy.properties import (
@@ -17,7 +17,7 @@ from kivymd.uix.list import (
 from kivymd.uix.selectioncontrol import MDSwitch
 from kivy.uix.screenmanager import Screen
 
-import state
+from pybitmessage import state
 
 from pybitmessage.baseclass.common import (
     avatarImageFirstLetter, AvatarSampleWidget, ThemeClsColor,
