@@ -1,4 +1,4 @@
-import state
+from pybitmessage import state
 from pybitmessage.baseclass.common import toast
 from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty

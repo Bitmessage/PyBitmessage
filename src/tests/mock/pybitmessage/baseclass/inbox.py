@@ -34,18 +34,22 @@ class Inbox(Screen):
 
     def __init__(self, *args, **kwargs):
         """Method Parsing the address"""
+        # import pdb; pdb.set_trace()
         super(Inbox, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
     @staticmethod
     def set_defaultAddress():
         """This method set's default address"""
+        # import pdb; pdb.set_trace()
+        
         if state.association == "":
             if state.kivyapp.variable_1:
                 state.association = state.kivyapp.variable_1[0]
 
     def init_ui(self, dt=0):
         """Clock schdule for method inbox accounts"""
+        # import pdb; pdb.set_trace()
         self.loadMessagelist()
 
     def loadMessagelist(self, where="", what=""):

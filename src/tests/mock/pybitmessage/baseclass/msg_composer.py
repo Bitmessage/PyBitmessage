@@ -1,8 +1,8 @@
 import time
 
 from pybitmessage.get_platform import platform
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlExecute, sqlQuery
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute, sqlQuery
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.factory import Factory
@@ -26,10 +26,10 @@ from kivy.uix.textinput import TextInput
 from kivymd.uix.behaviors.hover_behavior import HoverBehavior
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.theming import ThemableBehavior
-import state
-import queues
+from pybitmessage import state
+from pybitmessage import queues
 
-from addresses import decodeAddress, addBMIfNotPresent
+from pybitmessage.addresses import decodeAddress, addBMIfNotPresent
 from pybitmessage.baseclass.common import (
     toast, showLimitedCnt
 )

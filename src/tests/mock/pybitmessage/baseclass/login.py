@@ -1,13 +1,13 @@
-import queues
+from pybitmessage import queues
 
-from bmconfigparser import BMConfigParser
+from pybitmessage.bmconfigparser import BMConfigParser
 from kivy.clock import Clock
 from kivy.properties import StringProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
 from kivy.uix.screenmanager import Screen
 
-import state
+from pybitmessage import state
 
 from pybitmessage.baseclass.common import toast
 

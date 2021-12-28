@@ -45,11 +45,13 @@ class ScanScreen(Screen):
 
     def __init__(self, *args, **kwargs):
         """Getting AddressBook Details"""
+        import pdb;pdb.set_trace()
         super(ScanScreen, self).__init__(*args, **kwargs)
         self.check_camera()
 
     def check_camera(self):
         """This method is used for checking camera avaibility"""
+        import pdb;pdb.set_trace()
         if platform != "android":
             import cv2
             cap = cv2.VideoCapture(0)

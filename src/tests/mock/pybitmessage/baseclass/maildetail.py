@@ -22,10 +22,10 @@ from kivy.uix.screenmanager import Screen
 
 from pybitmessage import state
 
-from common import (
+from .common import (
     toast, avatarImageFirstLetter, ShowTimeHistoy
 )
-from popup import SenderDetailPopup
+from .popup import SenderDetailPopup
 
 
 class OneLineListTitle(OneLineListItem):
