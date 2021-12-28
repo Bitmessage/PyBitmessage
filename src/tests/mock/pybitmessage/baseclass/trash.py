@@ -40,7 +40,7 @@ class Trash(Screen):
             if state.kivyapp.variable_1:
                 state.association = state.kivyapp.variable_1[0]
         self.ids.tag_label.text = ''
-        self.trashDataQuery(0, 20)
+        # self.trashDataQuery(0, 20)
         if len(self.trash_messages):
             self.ids.ml.clear_widgets()
             self.ids.tag_label.text = 'Trash'
@@ -118,7 +118,7 @@ class Trash(Screen):
 
     def update_trash_screen_on_scroll(self, total_trash_msg):
         """Load more data on scroll down"""
-        self.trashDataQuery(total_trash_msg, 5)
+        # self.trashDataQuery(total_trash_msg, 5)
         self.set_mdList()
 
     def delete_permanently(self, data_index, folder, instance, *args):

@@ -77,15 +77,16 @@ class Sent(Screen):
 
     def sentDataQuery(self, xAddress, where, what, start_indx=0, end_indx=20):
         """This method is used to retrieving data from sent table"""
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress,
-            self.account,
-            'sent',
-            where,
-            what,
-            False,
-            start_indx,
-            end_indx)
+        # self.queryreturn = kivy_helper_search.search_sql(
+        #     xAddress,
+        #     self.account,
+        #     'sent',
+        #     where,
+        #     what,
+        #     False,
+        #     start_indx,
+        #     end_indx)
+        pass
 
     def set_mdlist(self, data, set_index=0):
         """This method is used to create the mdList"""

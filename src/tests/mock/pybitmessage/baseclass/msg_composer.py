@@ -44,9 +44,7 @@ class Create(Screen):
         super(Create, self).__init__(**kwargs)
         Window.softinput_mode = "below_target"
         widget_1 = DropDownWidget()
-        widget_1.ids.txt_input.word_list = [
-            addr[1] for addr in sqlQuery(
-                "SELECT label, address from addressbook")]
+        widget_1.ids.txt_input.word_list = []
         widget_1.ids.txt_input.starting_no = 2
         self.add_widget(widget_1)
         self.children[0].ids.id_scroll.bind(scroll_y=self.check_scroll_y)
