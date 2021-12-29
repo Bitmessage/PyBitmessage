@@ -93,19 +93,19 @@ class DropDownWidget(BoxLayout):
             if status == "success":
                 navApp.root.ids.sc3.children[0].active = True
                 if state.detailPageType == "draft" and state.send_draft_mail:
-                    sqlExecute(
-                        "UPDATE sent SET toaddress = ?"
-                        ", fromaddress = ? , subject = ?"
-                        ", message = ?, folder = 'sent'"
-                        ", senttime = ?, lastactiontime = ?"
-                        " WHERE ackdata = ?;",
-                        toAddress,
-                        fromAddress,
-                        subject,
-                        message,
-                        int(time.time()),
-                        int(time.time()),
-                        state.send_draft_mail)
+                    # sqlExecute(
+                    #     "UPDATE sent SET toaddress = ?"
+                    #     ", fromaddress = ? , subject = ?"
+                    #     ", message = ?, folder = 'sent'"
+                    #     ", senttime = ?, lastactiontime = ?"
+                    #     " WHERE ackdata = ?;",
+                    #     toAddress,
+                    #     fromAddress,
+                    #     subject,
+                    #     message,
+                    #     int(time.time()),
+                    #     int(time.time()),
+                    #     state.send_draft_mail)
                     self.parent.parent.screens[13].clear_widgets()
                     self.parent.parent.screens[13].add_widget(Factory.Draft())
                     # state.detailPageType = ''
@@ -121,28 +121,28 @@ class DropDownWidget(BoxLayout):
                         print("streamNumber > 1 or streamNumber == 0")
                     stealthLevel = BMConfigParser().safeGetInt(
                         'bitmessagesettings', 'ackstealthlevel')
-                    from helper_ackPayload import genAckPayload
+                    # from helper_ackPayload import genAckPayload
                     # ackdata = genAckPayload(streamNumber, stealthLevel)
                     # t = ()
-                    sqlExecute(
-                        '''INSERT INTO sent VALUES
-                        (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                        '',
-                        addBMIfNotPresent(toAddress),
-                        ripe,
-                        fromAddress,
-                        subject,
-                        message,
-                        genAckPayload(streamNumber, stealthLevel),  #ackdata
-                        int(time.time()),
-                        int(time.time()),
-                        0,
-                        'msgqueued',
-                        0,
-                        'sent',
-                        3,  #encoding
-                        BMConfigParser().safeGetInt(
-                            'bitmessagesettings', 'ttl'))
+                    # sqlExecute(
+                    #     '''INSERT INTO sent VALUES
+                    #     (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    #     '',
+                    #     addBMIfNotPresent(toAddress),
+                    #     ripe,
+                    #     fromAddress,
+                    #     subject,
+                    #     message,
+                    #     genAckPayload(streamNumber, stealthLevel),  #ackdata
+                    #     int(time.time()),
+                    #     int(time.time()),
+                    #     0,
+                    #     'msgqueued',
+                    #     0,
+                    #     'sent',
+                    #     3,  #encoding
+                    #     BMConfigParser().safeGetInt(
+                    #         'bitmessagesettings', 'ttl'))
                 state.check_sent_acc = fromAddress
                 # state.msg_counter_objs = self.parent.parent.parent.parent\
                 #     .parent.parent.children[2].children[0].ids

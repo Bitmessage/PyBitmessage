@@ -71,4 +71,4 @@ def search_sql(
                 start_indx, end_indx)
     # elif folder == "addressbook":
     #     sqlStatementBase += " limit {0}, {1}".format(start_indx, end_indx)
-    return sqlQuery(sqlStatementBase, sqlArguments)
+    return []#sqlQuery(sqlStatementBase, sqlArguments)

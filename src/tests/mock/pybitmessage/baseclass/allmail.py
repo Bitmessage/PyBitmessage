@@ -69,15 +69,16 @@ class Allmails(Screen):
 
     def allMessageQuery(self, start_indx, end_indx):
         """Retrieving data from inbox or sent both tables"""
-        self.all_mails = sqlQuery(
-            "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
-            " As id, DATE(senttime) As actionTime, senttime as msgtime FROM sent WHERE"
-            " folder = 'sent' and fromaddress = '{0}'"
-            " UNION SELECT toaddress, fromaddress, subject, message, folder,"
-            " msgid As id, DATE(received) As actionTime, received as msgtime FROM inbox"
-            " WHERE folder = 'inbox' and toaddress = '{0}'"
-            " ORDER BY actionTime DESC limit {1}, {2}".format(
-                self.account, start_indx, end_indx))
+        self.all_mails = []
+        # sqlQuery(
+        #     "SELECT toaddress, fromaddress, subject, message, folder, ackdata"
+        #     " As id, DATE(senttime) As actionTime, senttime as msgtime FROM sent WHERE"
+        #     " folder = 'sent' and fromaddress = '{0}'"
+        #     " UNION SELECT toaddress, fromaddress, subject, message, folder,"
+        #     " msgid As id, DATE(received) As actionTime, received as msgtime FROM inbox"
+        #     " WHERE folder = 'inbox' and toaddress = '{0}'"
+        #     " ORDER BY actionTime DESC limit {1}, {2}".format(
+        #         self.account, start_indx, end_indx))
 
     def set_AllmailCnt(self, Count):  # pylint: disable=no-self-use
         """This method is used to set allmails message count"""

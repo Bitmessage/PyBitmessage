@@ -49,9 +49,9 @@ class AddressBook(Screen):
             what = state.searcing_text
         xAddress = ''
         self.ids.tag_label.text = ''
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, "addressbook", where, what, False)
-        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        # self.queryreturn = kivy_helper_search.search_sql(
+        #     xAddress, account, "addressbook", where, what, False)
+        # self.queryreturn = [obj for obj in reversed(self.queryreturn)]
         if self.queryreturn:
             self.ids.tag_label.text = 'Address Book'
             self.has_refreshed = True
@@ -151,8 +151,8 @@ class AddressBook(Screen):
         # if len(self.ids.ml.children) == 0:
         if self.ids.ml.children is not None:
             self.ids.tag_label.text = ''
-        sqlExecute(
-            "DELETE FROM  addressbook WHERE address = '{}';".format(address))
+        # sqlExecute(
+        #     "DELETE FROM  addressbook WHERE address = '{}';".format(address))
         toast('Address Deleted')
 
     def close_pop(self, instance):
@@ -162,17 +162,18 @@ class AddressBook(Screen):
 
     def update_addbook_label(self, instance):
         """Updating the label of address book address"""
-        address_list = kivy_helper_search.search_sql(folder="addressbook")
+        # address_list = kivy_helper_search.search_sql(folder="addressbook")
+        address_list = []
         stored_labels = [labels[0] for labels in address_list]
         add_dict = dict(address_list)
         label = str(self.addbook_popup.content_cls.ids.add_label.text)
         if label in stored_labels and self.address == add_dict[label]:
             stored_labels.remove(label)
         if label and label not in stored_labels:
-            sqlExecute(
-                "UPDATE addressbook SET label = '{}' WHERE"
-                " address = '{}';".format(
-                    label, self.addbook_popup.content_cls.address))
+            # sqlExecute(
+            #     "UPDATE addressbook SET label = '{}' WHERE"
+            #     " address = '{}';".format(
+            #         label, self.addbook_popup.content_cls.address))
             state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
             state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()

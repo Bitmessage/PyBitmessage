@@ -75,35 +75,37 @@ class singleCleaner(StoppableThread):
                 'updateStatusBar',
                 'Doing housekeeping (Flushing inventory in memory to disk...)'
             ))
-            Inventory().flush()
+            # Inventory().flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
 
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
             # FIXME redundant?
-            if state.thisapp.daemon or not state.enableGUI:
-                queues.UISignalQueue.queue.clear()
+            # if state.thisapp.daemon or not state.enableGUI:
+            #     queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < \
                     int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
-                Inventory().clean()
+                import pdb;pdb.set_trace()
+                # Inventory().clean()
                 queues.workerQueue.put(('sendOnionPeerObj', ''))
                 # pubkeys
-                sqlExecute(
-                    "DELETE FROM pubkeys WHERE time<? AND usedpersonally='no'",
-                    int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys)
+                # sqlExecute(
+                #     "DELETE FROM pubkeys WHERE time<? AND usedpersonally='no'",
+                #     int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys)
 
                 # Let us resend getpubkey objects if we have not yet heard
                 # a pubkey, and also msg objects if we have not yet heard
                 # an acknowledgement
-                queryreturn = sqlQuery(
-                    "SELECT toaddress, ackdata, status FROM sent"
-                    " WHERE ((status='awaitingpubkey' OR status='msgsent')"
-                    " AND folder='sent' AND sleeptill<? AND senttime>?)",
-                    int(time.time()), int(time.time())
-                    - state.maximumLengthOfTimeToBotherResendingMessages
-                )
+                queryreturn = []
+                # sqlQuery(
+                #     "SELECT toaddress, ackdata, status FROM sent"
+                #     " WHERE ((status='awaitingpubkey' OR status='msgsent')"
+                #     " AND folder='sent' AND sleeptill<? AND senttime>?)",
+                #     int(time.time()), int(time.time())
+                #     - state.maximumLengthOfTimeToBotherResendingMessages
+                # )
                 for row in queryreturn:
                     if len(row) < 2:
                         self.logger.error(
@@ -183,9 +185,9 @@ class singleCleaner(StoppableThread):
             'updateStatusBar',
             'Doing work necessary to again attempt to request a public key...'
         ))
-        sqlExecute(
-            '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
-            address)
+        # sqlExecute(
+        #     '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
+        #     address)
         queues.workerQueue.put(('sendmessage', ''))
 
     def resendMsg(self, ackdata):
@@ -194,9 +196,9 @@ class singleCleaner(StoppableThread):
             'It has been a long time and we haven\'t heard an acknowledgement'
             ' to our msg. Sending again.'
         )
-        sqlExecute(
-            '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
-            ackdata)
+        # sqlExecute(
+        #     '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
+        #     ackdata)
         queues.workerQueue.put(('sendmessage', ''))
         queues.UISignalQueue.put((
             'updateStatusBar',
@@ -208,10 +210,10 @@ def deleteTrashMsgPermonantly():
     """This method is used to delete old messages"""
     ndays_before_time = datetime.now() - timedelta(days=30)
     old_messages = time.mktime(ndays_before_time.timetuple())
-    sqlExecute(
-        "delete from sent where folder = 'trash' and lastactiontime <= ?;",
-        int(old_messages))
-    sqlExecute(
-        "delete from inbox where folder = 'trash' and received <= ?;",
-        int(old_messages))
+    # sqlExecute(
+    #     "delete from sent where folder = 'trash' and lastactiontime <= ?;",
+    #     int(old_messages))
+    # sqlExecute(
+    #     "delete from inbox where folder = 'trash' and received <= ?;",
+    #     int(old_messages))
     return

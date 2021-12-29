@@ -15,6 +15,7 @@ from queues import (
 
 
 def doCleanShutdown():
+    import pdb; pdb.set_trace()
     """
     Used to tell all the treads to finish work and exit.
     """
