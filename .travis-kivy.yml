@@ -10,6 +10,7 @@ addons:
       - libcap-dev
       - libmtdev-dev
       - xvfb
+      - xclip
 install:
   - pip3 install -r kivy-requirements.txt
   - python3 setup.py install
