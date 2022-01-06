@@ -7,7 +7,7 @@ from six.moves import queue
 from pybitmessage import state
 from pybitmessage import queues
 
-from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.bmconfigparser import config
 
 from pybitmessage.network.threads import StoppableThread
 
@@ -68,13 +68,13 @@ class addressGenerator(StoppableThread):
             else:
                 label = ''
 
-            BMConfigParser().add_section(address)
-            BMConfigParser().set(address, 'label', label)
-            BMConfigParser().set(address, 'enabled', 'true')
-            BMConfigParser().set(
+            config.add_section(address)
+            config.set(address, 'label', label)
+            config.set(address, 'enabled', 'true')
+            config.set(
                 address, 'privsigningkey', fake_addresses[address]['privsigningkey'])
-            BMConfigParser().set(
+            config.set(
                 address, 'privencryptionkey', fake_addresses[address]['privencryptionkey'])
-            BMConfigParser().save()
+            config.save()
 
             queues.addressGeneratorQueue.task_done()

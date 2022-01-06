@@ -1,0 +1,1 @@
+../../../../src/bitmessagekivy/get_platform.py
