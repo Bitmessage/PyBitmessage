@@ -51,6 +51,10 @@ discoveredPeers = {}
 
 dandelion = 0
 
+kivy = False
+
+kivyapp = None
+
 testmode = False
 
 clientHasReceivedIncomingConnections = False
