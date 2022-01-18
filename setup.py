@@ -136,7 +136,7 @@ if __name__ == "__main__":
         packages=packages,
         package_data={'': [
             'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
-            'translations/*.ts', 'translations/*.qm', 'default.ini',
+            'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
         data_files=data_files,
