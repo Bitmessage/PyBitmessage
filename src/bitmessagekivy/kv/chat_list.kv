@@ -1,0 +1,58 @@
+<ChatList>:
+	name: 'chlist'
+    canvas.before:
+        Color:
+            rgba: 1,1,1,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    MDTabs:
+        id: chat_panel
+        tab_display_mode:'text'
+
+        Tab:
+            text: app.tr._("Chats")
+        	BoxLayout:
+                id: chat_box
+                orientation: 'vertical'
+                ScrollView:
+                    id: scroll_y
+                    do_scroll_x: False
+                    MDList:
+                        id: ml
+                        MDLabel:
+                            font_style: 'Caption'
+                            theme_text_color: 'Primary'
+                            text: app.tr._('No Chat')
+                            halign: 'center'
+                            size_hint_y: None
+                            bold: True
+                            valign: 'top'
+                    #     OneLineAvatarListItem:
+                    #         text: "Single-line item with avatar"
+                    #         divider: None
+                    #         _no_ripple_effect: True
+                    #         ImageLeftWidget:
+                    #             source: './images/text_images/A.png'
+                    #     OneLineAvatarListItem:
+                    #         text: "Single-line item with avatar"
+                    #         divider: None
+                    #         _no_ripple_effect: True
+                    #         ImageLeftWidget:
+                    #             source: './images/text_images/B.png'
+                    #     OneLineAvatarListItem:
+                    #         text: "Single-line item with avatar"
+                    #         divider: None
+                    #         _no_ripple_effect: True
+                    #         ImageLeftWidget:
+                    #             source: './images/text_images/A.png'
+        Tab:
+            text: app.tr._("Contacts")
+            BoxLayout:
+                id: contact_box
+                orientation: 'vertical'
+                ScrollView:
+                    id: scroll_y
+                    do_scroll_x: False
+                    MDList:
+                        id: ml

@@ -1,0 +1,178 @@
+<Create>:
+    name: 'create'
+    Loader:
+
+
+<DropDownWidget>:
+    ScrollView:
+        id: id_scroll
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height + 3 * self.parent.height/5
+            padding: dp(20)
+            spacing: 15
+            BoxLayout:
+                orientation: 'vertical'
+                MDTextField:
+                    id: ti
+                    size_hint_y: None
+                    hint_text: 'Type or Select sender address'
+                    icon_right: 'account'
+                    icon_right_color: app.theme_cls.primary_light
+                    font_size: '15sp'
+                    multiline: False
+                    required: True
+                    # height: self.parent.height/2
+                    height: 100
+                    current_hint_text_color: 0,0,0,0.5
+                    helper_text_mode: "on_error"
+                    canvas.before:
+                        Color:
+                            rgba: (0,0,0,1)
+
+                           
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(40)
+                    CustomSpinner:
+                        id: btn
+                        background_color: app.theme_cls.primary_dark
+                        values: app.variable_1
+                        on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
+                        option_cls: Factory.get("ComposerSpinnerOption")
+                        #background_color: color_button if self.state == 'normal' else color_button_pressed
+                        #background_down: 'atlas://data/images/defaulttheme/spinner'
+                        background_normal: ''
+                        background_color: app.theme_cls.primary_color
+                        color: color_font
+                        font_size: '13.5sp'
+                        ArrowImg:
+                    
+
+            RelativeLayout:
+                orientation: 'horizontal'
+                BoxLayout:
+                    orientation: 'vertical'
+                    txt_input: txt_input
+                    rv: rv
+                    size : (890, 60)
+                    MyTextInput:
+                        id: txt_input
+                        size_hint_y: None
+                        font_size: '15sp'
+                        color: color_font
+                        # height: self.parent.height/2
+                        current_hint_text_color: 0,0,0,0.5
+                        height: 100
+                        hint_text: app.tr._('Type or Scan QR code for recipients address')
+                        canvas.before:
+                            Color:
+                                rgba: (0,0,0,1)
+
+                    RV:
+                        id: rv
+                MDIconButton:
+                    icon: 'qrcode-scan'
+                    pos_hint: {'center_x': 0.95, 'y': 0.6}
+                    on_release:
+                        if root.is_camara_attached(): app.root.ids.scr_mngr.current = 'scanscreen'
+                        else: root.camera_alert()
+                    on_press:
+                        app.root.ids.sc23.get_screen('composer')
+
+            MyMDTextField:
+                id: subject
+                hint_text: 'Subject'
+                height: 100
+                font_size: '15sp'
+                icon_right: 'notebook-outline'
+                icon_right_color: app.theme_cls.primary_light
+                current_hint_text_color: 0,0,0,0.5
+                font_color_normal: 0, 0, 0, 1
+                size_hint_y: None
+                required: True
+                multiline: False
+                helper_text_mode: "on_focus"
+                canvas.before:
+                    Color:
+                        rgba: (0,0,0,1)
+
+            # MyMDTextField:
+            #     id: body
+            #     multiline: True
+            #     hint_text: 'body'
+            #     size_hint_y: None
+            #     font_size: '15sp'
+            #     required: True
+            #     helper_text_mode: "on_error"
+            #     canvas.before:
+            #         Color:
+            #             rgba: (0,0,0,1)
+            ScrollView:
+                id: scrlv
+                MDTextField:
+                    id: body
+                    hint_text: 'Body'
+                    mode: "fill"
+                    fill_color: 1/255, 144/255, 254/255, 0.1
+                    multiline: True
+                    font_color_normal: 0, 0, 0, .4
+                    icon_right: 'grease-pencil'
+                    icon_right_color: app.theme_cls.primary_light
+                    size_hint: 1, 1
+                    height: app.window_size[1]/4
+                    canvas.before:
+                        Color:
+                            rgba: 125/255, 125/255, 125/255, 1
+            BoxLayout:
+                spacing:50
+
+<MyTextInput>:
+    readonly: False
+    multiline: False
+
+
+<SelectableLabel>:
+    # Draw a background to indicate selection
+    color: 0,0,0,1
+    canvas.before:
+        Color:
+            rgba: app.theme_cls.primary_dark if self.selected else (1, 1, 1, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<RV>:
+    canvas:
+        Color:
+            rgba: 0,0,0,.2
+
+        Line:
+            rectangle: self.x +1 , self.y, self.width - 2, self.height -2
+    bar_width: 10
+    scroll_type:['bars']
+    viewclass: 'SelectableLabel'
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(20)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+
+
+<MyMDTextField@MDTextField>:
+    canvas.before:
+        Color:
+            rgba: (0,0,0,1)
+            
+
+
+<ComposerSpinnerOption@SpinnerOption>:
+    font_size: '13.5sp'
+    #background_color: color_button if self.state == 'down' else color_button_pressed
+    #background_down: 'atlas://data/images/defaulttheme/button'
+    background_normal: 'atlas://data/images/defaulttheme/textinput_active'
+    background_color: app.theme_cls.primary_color
+    color: color_font
