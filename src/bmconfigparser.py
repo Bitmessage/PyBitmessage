@@ -69,6 +69,7 @@ class BMConfigParser(SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return SafeConfigParser.set(self, section, option, value)
 
+    # pylint: disable=redefined-builtin, too-many-return-statements
     def get(self, section, option, raw=False, vars=None):
         if sys.version_info[0] == 3:
             # pylint: disable=arguments-differ
@@ -187,7 +188,7 @@ class BMConfigParser(SafeConfigParser):
                     try:
                         if not self.validate(
                                 section, option,
-                                self[section][option]
+                                self[section][option]  # pylint: disable=unsubscriptable-object
                         ):
                             try:
                                 newVal = BMConfigDefaults[section][option]
