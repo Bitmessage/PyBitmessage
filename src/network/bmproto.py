@@ -25,7 +25,7 @@ from network.bmobject import (
     BMObjectInvalidError, BMObjectUnwantedStreamError
 )
 from network.constants import (
-    ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
+    ADDRESS_ALIVE, MAX_MESSAGE_SIZE,
     MAX_OBJECT_PAYLOAD_SIZE, MAX_TIME_OFFSET
 )
 from network.dandelion import Dandelion
@@ -350,7 +350,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """
         items = self.decode_payload_content("l32s")
 
-        if len(items) > MAX_OBJECT_COUNT:
+        if len(items) > protocol.MAX_OBJECT_COUNT:
             logger.error(
                 'Too many items in %sinv message!', 'd' if dandelion else '')
             raise BMProtoExcessiveDataError()

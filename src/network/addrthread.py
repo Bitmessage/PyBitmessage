@@ -3,12 +3,13 @@ Announce addresses as they are received from other hosts
 """
 from six.moves import queue
 
-
+# magic imports!
 import state
 from helper_random import randomshuffle
-from network.assemble import assemble_addr
+from protocol import assembleAddrMessage
+from queues import addrQueue  # FIXME: init with queue
 from network.connectionpool import BMConnectionPool
-from queues import addrQueue
+
 from threads import StoppableThread
 
 
@@ -41,7 +42,7 @@ class AddrThread(StoppableThread):
                             continue
                         filtered.append((stream, peer, seen))
                     if filtered:
-                        i.append_write_buf(assemble_addr(filtered))
+                        i.append_write_buf(assembleAddrMessage(filtered))
 
             addrQueue.iterate()
             for i in range(len(chunk)):

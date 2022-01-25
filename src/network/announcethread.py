@@ -3,10 +3,12 @@ Announce myself (node address)
 """
 import time
 
+# magic imports!
 import state
 from bmconfigparser import BMConfigParser
-from network.assemble import assemble_addr
+from protocol import assembleAddrMessage
 from network.connectionpool import BMConnectionPool
+
 from node import Peer
 from threads import StoppableThread
 
@@ -40,4 +42,4 @@ class AnnounceThread(StoppableThread):
                         BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'port')),
                     time.time())
-                connection.append_write_buf(assemble_addr([addr]))
+                connection.append_write_buf(assembleAddrMessage([addr]))

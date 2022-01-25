@@ -20,9 +20,7 @@ from bmconfigparser import BMConfigParser
 from helper_random import randomBytes
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
-from network.assemble import assemble_addr
 from network.bmproto import BMProto
-from network.constants import MAX_OBJECT_COUNT
 from network.dandelion import Dandelion
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
@@ -205,7 +203,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
         if templist:
-            self.append_write_buf(assemble_addr(templist))
+            self.append_write_buf(protocol.assembleAddrMessage(templist))
 
     def sendBigInv(self):
         """
@@ -244,7 +242,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             # Remove -1 below when sufficient time has passed for users to
             # upgrade to versions of PyBitmessage that accept inv with 50,000
             # items
-            if objectCount >= MAX_OBJECT_COUNT - 1:
+            if objectCount >= protocol.MAX_OBJECT_COUNT - 1:
                 sendChunk()
                 payload = b''
                 objectCount = 0
