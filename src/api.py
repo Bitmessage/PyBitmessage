@@ -87,7 +87,7 @@ from addresses import (
     decodeVarint,
     varintDecodeError
 )
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready
 from inventory import Inventory
@@ -190,8 +190,8 @@ class singleAPI(StoppableThread):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((
-                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
-                BMConfigParser().getint('bitmessagesettings', 'apiport')
+                config.get('bitmessagesettings', 'apiinterface'),
+                config.getint('bitmessagesettings', 'apiport')
             ))
             s.shutdown(socket.SHUT_RDWR)
             s.close()
@@ -204,7 +204,7 @@ class singleAPI(StoppableThread):
         :class:`jsonrpclib.SimpleJSONRPCServer` is created and started here
         with `BMRPCDispatcher` dispatcher.
         """
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        port = config.getint('bitmessagesettings', 'apiport')
         try:
             getattr(errno, 'WSAEADDRINUSE')
         except AttributeError:
@@ -212,7 +212,7 @@ class singleAPI(StoppableThread):
 
         RPCServerBase = SimpleXMLRPCServer
         ct = 'text/xml'
-        if BMConfigParser().safeGet(
+        if config.safeGet(
                 'bitmessagesettings', 'apivariant') == 'json':
             try:
                 from jsonrpclib.SimpleJSONRPCServer import (
@@ -242,7 +242,7 @@ class singleAPI(StoppableThread):
                         'Failed to start API listener on port %s', port)
                     port = random.randint(32767, 65535)
                 se = StoppableRPCServer(
-                    (BMConfigParser().get(
+                    (config.get(
                         'bitmessagesettings', 'apiinterface'),
                      port),
                     BMXMLRPCRequestHandler, True, encoding='UTF-8')
@@ -252,15 +252,15 @@ class singleAPI(StoppableThread):
             else:
                 if attempt > 0:
                     logger.warning('Setting apiport to %s', port)
-                    BMConfigParser().set(
+                    config.set(
                         'bitmessagesettings', 'apiport', str(port))
-                    BMConfigParser().save()
+                    config.save()
                 break
 
         se.register_instance(BMRPCDispatcher())
         se.register_introspection_functions()
 
-        apiNotifyPath = BMConfigParser().safeGet(
+        apiNotifyPath = config.safeGet(
             'bitmessagesettings', 'apinotifypath')
 
         if apiNotifyPath:
@@ -271,7 +271,7 @@ class singleAPI(StoppableThread):
                 logger.warning(
                     'Failed to call %s, removing apinotifypath setting',
                     apiNotifyPath)
-                BMConfigParser().remove_option(
+                config.remove_option(
                     'bitmessagesettings', 'apinotifypath')
 
         se.serve_forever()
@@ -286,7 +286,7 @@ class CommandHandler(type):
         # pylint: disable=protected-access
         result = super(CommandHandler, mcs).__new__(
             mcs, name, bases, namespace)
-        result.config = BMConfigParser()
+        result.config = config
         result._handlers = {}
         apivariant = result.config.safeGet('bitmessagesettings', 'apivariant')
         for func in namespace.values():
@@ -325,7 +325,7 @@ class command(object):  # pylint: disable=too-few-public-methods
 
     def __call__(self, func):
 
-        if BMConfigParser().safeGet(
+        if config.safeGet(
                 'bitmessagesettings', 'apivariant') == 'legacy':
             def wrapper(*args):
                 """
@@ -444,9 +444,9 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             encstr = self.headers.get('Authorization').split()[1]
             emailid, password = encstr.decode('base64').split(':')
             return (
-                emailid == BMConfigParser().get(
+                emailid == config.get(
                     'bitmessagesettings', 'apiusername'
-                ) and password == BMConfigParser().get(
+                ) and password == config.get(
                     'bitmessagesettings', 'apipassword'))
         else:
             logger.warning(

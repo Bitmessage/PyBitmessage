@@ -1,4 +1,4 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, no-self-use
 """
 Various tests for config
 """
@@ -40,58 +40,59 @@ class TestConfig(unittest.TestCase):
     """A test case for bmconfigparser"""
     configfile = StringIO('')
 
-    def setUp(self):
-        """creates a backup of BMConfigparser current state"""
-        BMConfigParser().write(self.configfile)
-        self.configfile.seek(0)
-
-    def tearDown(self):
-        """restore to the backup of BMConfigparser"""
-        # pylint: disable=protected-access
-        BMConfigParser()._reset()
-        BMConfigParser().readfp(self.configfile)
-
     def test_safeGet(self):
         """safeGet retuns provided default for nonexistent option or None"""
+        config = BMConfigParser()
         self.assertIs(
-            BMConfigParser().safeGet('nonexistent', 'nonexistent'), None)
+            config.safeGet('nonexistent', 'nonexistent'), None)
         self.assertEqual(
-            BMConfigParser().safeGet('nonexistent', 'nonexistent', 42), 42)
+            config.safeGet('nonexistent', 'nonexistent', 42), 42)
 
     def test_safeGetBoolean(self):
         """safeGetBoolean returns False for nonexistent option, no default"""
+        config = BMConfigParser()
         self.assertIs(
-            BMConfigParser().safeGetBoolean('nonexistent', 'nonexistent'),
+            config.safeGetBoolean('nonexistent', 'nonexistent'),
             False
         )
         # no arg for default
         # pylint: disable=too-many-function-args
         with self.assertRaises(TypeError):
-            BMConfigParser().safeGetBoolean(
+            config.safeGetBoolean(
                 'nonexistent', 'nonexistent', True)
 
     def test_safeGetInt(self):
         """safeGetInt retuns provided default for nonexistent option or 0"""
+        config = BMConfigParser()
         self.assertEqual(
-            BMConfigParser().safeGetInt('nonexistent', 'nonexistent'), 0)
+            config.safeGetInt('nonexistent', 'nonexistent'), 0)
         self.assertEqual(
-            BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
+            config.safeGetInt('nonexistent', 'nonexistent', 42), 42)
 
     def test_safeGetFloat(self):
         """safeGetFloat retuns provided default for nonexistent option or 0.0"""
+        config = BMConfigParser()
         self.assertEqual(
-            BMConfigParser().safeGetFloat('nonexistent', 'nonexistent'), 0.0)
+            config.safeGetFloat('nonexistent', 'nonexistent'), 0.0)
         self.assertEqual(
-            BMConfigParser().safeGetFloat('nonexistent', 'nonexistent', 42.0), 42.0)
+            config.safeGetFloat('nonexistent', 'nonexistent', 42.0), 42.0)
 
     def test_reset(self):
         """safeGetInt retuns provided default for bitmessagesettings option or 0"""
+        config = BMConfigParser()
         test_config_object = StringIO(test_config)
-        BMConfigParser().readfp(test_config_object)
-
+        config.readfp(test_config_object)
         self.assertEqual(
-            BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)
+            config.safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)
         # pylint: disable=protected-access
-        BMConfigParser()._reset()
+        config._reset()
+        self.assertEqual(config.sections(), [])
+
+    def test_defaults(self):
+        """Loading defaults"""
+        config = BMConfigParser()
+        config.add_section('bitmessagesettings')
+        config.set("bitmessagesettings", "maxaddrperstreamsend", "100")
+        config.read()
         self.assertEqual(
-            BMConfigParser().safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 500)
+            config.safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 500)

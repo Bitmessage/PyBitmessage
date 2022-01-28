@@ -8,7 +8,7 @@ import random  # nosec
 import knownnodes
 import protocol
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from queues import queue, portCheckerQueue
 
 logger = logging.getLogger('default')
@@ -29,9 +29,9 @@ def getDiscoveredPeer():
 
 def chooseConnection(stream):
     """Returns an appropriate connection"""
-    haveOnion = BMConfigParser().safeGet(
+    haveOnion = config.safeGet(
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
-    onionOnly = BMConfigParser().safeGetBoolean(
+    onionOnly = config.safeGetBoolean(
         "bitmessagesettings", "onionservicesonly")
     try:
         retval = portCheckerQueue.get(False)

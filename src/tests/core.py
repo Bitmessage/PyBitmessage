@@ -21,7 +21,7 @@ import state
 import helper_sent
 import helper_addressbook
 
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_msgcoding import MsgEncode, MsgDecode
 from helper_sql import sqlQuery
 from network import asyncore_pollchoose as asyncore, knownnodes
@@ -66,9 +66,9 @@ class TestCore(unittest.TestCase):
     def tearDown(self):
         """Reset possible unexpected settings after test"""
         knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
-        BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
-        BMConfigParser().remove_option('bitmessagesettings', 'onionservicesonly')
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
+        config.remove_option('bitmessagesettings', 'dontconnect')
+        config.remove_option('bitmessagesettings', 'onionservicesonly')
+        config.set('bitmessagesettings', 'socksproxytype', 'none')
 
     def test_msgcoding(self):
         """test encoding and decoding (originally from helper_msgcoding)"""
@@ -110,7 +110,7 @@ class TestCore(unittest.TestCase):
     @unittest.skip('Bad environment for asyncore.loop')
     def test_tcpconnection(self):
         """initial fill script from network.tcp"""
-        BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
+        config.set('bitmessagesettings', 'dontconnect', 'true')
         try:
             for peer in (Peer("127.0.0.1", 8448),):
                 direct = TCPConnection(peer)
@@ -175,7 +175,7 @@ class TestCore(unittest.TestCase):
                 self.fail("IndexError because of empty knownNodes!")
 
     def _initiate_bootstrap(self):
-        BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
+        config.set('bitmessagesettings', 'dontconnect', 'true')
         self._wipe_knownnodes()
         knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
         knownnodes.cleanupKnownNodes()
@@ -188,8 +188,8 @@ class TestCore(unittest.TestCase):
         fail otherwise.
         """
         _started = time.time()
-        BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
-        proxy_type = BMConfigParser().safeGet(
+        config.remove_option('bitmessagesettings', 'dontconnect')
+        proxy_type = config.safeGet(
             'bitmessagesettings', 'socksproxytype')
         if proxy_type == 'SOCKS5':
             connection_base = Socks5BMConnection
@@ -250,7 +250,7 @@ class TestCore(unittest.TestCase):
 
     def test_bootstrap(self):
         """test bootstrapping"""
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
+        config.set('bitmessagesettings', 'socksproxytype', 'none')
         self._initiate_bootstrap()
         self._check_connection()
         self._check_knownnodes()
@@ -262,7 +262,7 @@ class TestCore(unittest.TestCase):
     @unittest.skipIf(tor_port_free, 'no running tor detected')
     def test_bootstrap_tor(self):
         """test bootstrapping with tor"""
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+        config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
         self._initiate_bootstrap()
         self._check_connection()
         self._check_knownnodes()
@@ -272,8 +272,8 @@ class TestCore(unittest.TestCase):
         """ensure bitmessage doesn't try to connect to non-onion nodes
         if onionservicesonly set, wait at least 3 onion nodes
         """
-        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
-        BMConfigParser().set('bitmessagesettings', 'onionservicesonly', 'true')
+        config.set('bitmessagesettings', 'socksproxytype', 'SOCKS5')
+        config.set('bitmessagesettings', 'onionservicesonly', 'true')
         self._load_knownnodes(knownnodes_file + '.bak')
         if len([
             node for node in knownnodes.knownNodes[1]
@@ -282,7 +282,7 @@ class TestCore(unittest.TestCase):
             with knownnodes.knownNodesLock:
                 for f in ('a', 'b', 'c', 'd'):
                     knownnodes.addKnownNode(1, Peer(f * 16 + '.onion', 8444))
-        BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+        config.remove_option('bitmessagesettings', 'dontconnect')
         tried_hosts = set()
         for _ in range(360):
             time.sleep(1)
@@ -301,7 +301,7 @@ class TestCore(unittest.TestCase):
     def test_udp(self):
         """check default udp setting and presence of Announcer thread"""
         self.assertTrue(
-            BMConfigParser().safeGetBoolean('bitmessagesettings', 'udp'))
+            config.safeGetBoolean('bitmessagesettings', 'udp'))
         for thread in threading.enumerate():
             if thread.name == 'Announcer':  # find Announcer thread
                 break

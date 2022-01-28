@@ -8,7 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from foldertree import AddressBookCompleter
 from messageview import MessageView
 from messagecompose import MessageCompose
@@ -561,7 +561,7 @@ class Ui_MainWindow(object):
         self.blackwhitelist = Blacklist()
         self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
         # Initialize the Blacklist or Whitelist
-        if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
+        if config.get('bitmessagesettings', 'blackwhitelist') == 'white':
             self.blackwhitelist.radioButtonWhitelist.click()
         self.blackwhitelist.rerenderBlackWhiteList()
 
@@ -663,7 +663,7 @@ class Ui_MainWindow(object):
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
         if dontconnect is None:
-            dontconnect = BMConfigParser().safeGetBoolean(
+            dontconnect = config.safeGetBoolean(
                 'bitmessagesettings', 'dontconnect')
         self.actionNetworkSwitch.setText(
             _translate("MainWindow", "Go online", None)
@@ -710,7 +710,7 @@ class Ui_MainWindow(object):
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
         try:
-            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl')/60/60)
+            hours = int(config.getint('bitmessagesettings', 'ttl')/60/60)
         except:
             pass
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))

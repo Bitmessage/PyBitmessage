@@ -16,7 +16,7 @@ import paths
 import queues
 import state
 import widgets
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
 from network import knownnodes, AnnounceThread
@@ -24,11 +24,11 @@ from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
 
-def getSOCKSProxyType(config):
+def getSOCKSProxyType(config_):
     """Get user socksproxytype setting from *config*"""
     try:
         result = ConfigParser.SafeConfigParser.get(
-            config, 'bitmessagesettings', 'socksproxytype')
+            config_, 'bitmessagesettings', 'socksproxytype')
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         return None
     else:
@@ -45,7 +45,7 @@ class SettingsDialog(QtGui.QDialog):
 
         self.parent = parent
         self.firstrun = firstrun
-        self.config = BMConfigParser()
+        self.config = config
         self.net_restart_needed = False
         self.timer = QtCore.QTimer()
 
@@ -80,7 +80,7 @@ class SettingsDialog(QtGui.QDialog):
             )
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
-    def adjust_from_config(self, config):
+    def adjust_from_config(self, config_):
         """Adjust all widgets state according to config settings"""
         # pylint: disable=too-many-branches,too-many-statements
         if not self.parent.tray.isSystemTrayAvailable():
@@ -89,31 +89,31 @@ class SettingsDialog(QtGui.QDialog):
                 "MainWindow", "Tray (not available in your system)"))
             for setting in (
                     'minimizetotray', 'trayonclose', 'startintray'):
-                config.set('bitmessagesettings', setting, 'false')
+                config_.set('bitmessagesettings', setting, 'false')
         else:
             self.checkBoxMinimizeToTray.setChecked(
-                config.getboolean('bitmessagesettings', 'minimizetotray'))
+                config_.getboolean('bitmessagesettings', 'minimizetotray'))
             self.checkBoxTrayOnClose.setChecked(
-                config.safeGetBoolean('bitmessagesettings', 'trayonclose'))
+                config_.safeGetBoolean('bitmessagesettings', 'trayonclose'))
             self.checkBoxStartInTray.setChecked(
-                config.getboolean('bitmessagesettings', 'startintray'))
+                config_.getboolean('bitmessagesettings', 'startintray'))
 
         self.checkBoxHideTrayConnectionNotifications.setChecked(
-            config.getboolean(
+            config_.getboolean(
                 'bitmessagesettings', 'hidetrayconnectionnotifications'))
         self.checkBoxShowTrayNotifications.setChecked(
-            config.getboolean('bitmessagesettings', 'showtraynotifications'))
+            config_.getboolean('bitmessagesettings', 'showtraynotifications'))
 
         self.checkBoxStartOnLogon.setChecked(
-            config.getboolean('bitmessagesettings', 'startonlogon'))
+            config_.getboolean('bitmessagesettings', 'startonlogon'))
 
         self.checkBoxWillinglySendToMobile.setChecked(
-            config.safeGetBoolean(
+            config_.safeGetBoolean(
                 'bitmessagesettings', 'willinglysendtomobile'))
         self.checkBoxUseIdenticons.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'useidenticons'))
+            config_.safeGetBoolean('bitmessagesettings', 'useidenticons'))
         self.checkBoxReplyBelow.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'replybelow'))
+            config_.safeGetBoolean('bitmessagesettings', 'replybelow'))
 
         if state.appdata == paths.lookupExeFolder():
             self.checkBoxPortableMode.setChecked(True)
@@ -142,57 +142,57 @@ class SettingsDialog(QtGui.QDialog):
 
         # On the Network settings tab:
         self.lineEditTCPPort.setText(str(
-            config.get('bitmessagesettings', 'port')))
+            config_.get('bitmessagesettings', 'port')))
         self.checkBoxUPnP.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'upnp'))
+            config_.safeGetBoolean('bitmessagesettings', 'upnp'))
         self.checkBoxUDP.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'udp'))
+            config_.safeGetBoolean('bitmessagesettings', 'udp'))
         self.checkBoxAuthentication.setChecked(
-            config.getboolean('bitmessagesettings', 'socksauthentication'))
+            config_.getboolean('bitmessagesettings', 'socksauthentication'))
         self.checkBoxSocksListen.setChecked(
-            config.getboolean('bitmessagesettings', 'sockslisten'))
+            config_.getboolean('bitmessagesettings', 'sockslisten'))
         self.checkBoxOnionOnly.setChecked(
-            config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'))
+            config_.safeGetBoolean('bitmessagesettings', 'onionservicesonly'))
 
-        self._proxy_type = getSOCKSProxyType(config)
+        self._proxy_type = getSOCKSProxyType(config_)
         self.comboBoxProxyType.setCurrentIndex(
             0 if not self._proxy_type
             else self.comboBoxProxyType.findText(self._proxy_type))
         self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
 
         self.lineEditSocksHostname.setText(
-            config.get('bitmessagesettings', 'sockshostname'))
+            config_.get('bitmessagesettings', 'sockshostname'))
         self.lineEditSocksPort.setText(str(
-            config.get('bitmessagesettings', 'socksport')))
+            config_.get('bitmessagesettings', 'socksport')))
         self.lineEditSocksUsername.setText(
-            config.get('bitmessagesettings', 'socksusername'))
+            config_.get('bitmessagesettings', 'socksusername'))
         self.lineEditSocksPassword.setText(
-            config.get('bitmessagesettings', 'sockspassword'))
+            config_.get('bitmessagesettings', 'sockspassword'))
 
         self.lineEditMaxDownloadRate.setText(str(
-            config.get('bitmessagesettings', 'maxdownloadrate')))
+            config_.get('bitmessagesettings', 'maxdownloadrate')))
         self.lineEditMaxUploadRate.setText(str(
-            config.get('bitmessagesettings', 'maxuploadrate')))
+            config_.get('bitmessagesettings', 'maxuploadrate')))
         self.lineEditMaxOutboundConnections.setText(str(
-            config.get('bitmessagesettings', 'maxoutboundconnections')))
+            config_.get('bitmessagesettings', 'maxoutboundconnections')))
 
         # Demanded difficulty tab
         self.lineEditTotalDifficulty.setText(str((float(
-            config.getint(
+            config_.getint(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
         ) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.lineEditSmallMessageDifficulty.setText(str((float(
-            config.getint(
+            config_.getint(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         ) / defaults.networkDefaultPayloadLengthExtraBytes)))
 
         # Max acceptable difficulty tab
         self.lineEditMaxAcceptableTotalDifficulty.setText(str((float(
-            config.getint(
+            config_.getint(
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
         ) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(
-            config.getint(
+            config_.getint(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')
         ) / defaults.networkDefaultPayloadLengthExtraBytes)))
 
@@ -203,21 +203,21 @@ class SettingsDialog(QtGui.QDialog):
         self.comboBoxOpenCL.addItems(openclpow.vendors)
         self.comboBoxOpenCL.setCurrentIndex(0)
         for i in range(self.comboBoxOpenCL.count()):
-            if self.comboBoxOpenCL.itemText(i) == config.safeGet(
+            if self.comboBoxOpenCL.itemText(i) == config_.safeGet(
                     'bitmessagesettings', 'opencl'):
                 self.comboBoxOpenCL.setCurrentIndex(i)
                 break
 
         # Namecoin integration tab
-        nmctype = config.get('bitmessagesettings', 'namecoinrpctype')
+        nmctype = config_.get('bitmessagesettings', 'namecoinrpctype')
         self.lineEditNamecoinHost.setText(
-            config.get('bitmessagesettings', 'namecoinrpchost'))
+            config_.get('bitmessagesettings', 'namecoinrpchost'))
         self.lineEditNamecoinPort.setText(str(
-            config.get('bitmessagesettings', 'namecoinrpcport')))
+            config_.get('bitmessagesettings', 'namecoinrpcport')))
         self.lineEditNamecoinUser.setText(
-            config.get('bitmessagesettings', 'namecoinrpcuser'))
+            config_.get('bitmessagesettings', 'namecoinrpcuser'))
         self.lineEditNamecoinPassword.setText(
-            config.get('bitmessagesettings', 'namecoinrpcpassword'))
+            config_.get('bitmessagesettings', 'namecoinrpcpassword'))
 
         if nmctype == "namecoind":
             self.radioButtonNamecoinNamecoind.setChecked(True)
@@ -232,9 +232,9 @@ class SettingsDialog(QtGui.QDialog):
 
         # Message Resend tab
         self.lineEditDays.setText(str(
-            config.get('bitmessagesettings', 'stopresendingafterxdays')))
+            config_.get('bitmessagesettings', 'stopresendingafterxdays')))
         self.lineEditMonths.setText(str(
-            config.get('bitmessagesettings', 'stopresendingafterxmonths')))
+            config_.get('bitmessagesettings', 'stopresendingafterxmonths')))
 
     def comboBoxProxyTypeChanged(self, comboBoxIndex):
         """A callback for currentIndexChanged event of comboBoxProxyType"""

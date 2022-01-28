@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 
 import queues
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from network.threads import StoppableThread
 
 SMTPDOMAIN = "bmaddr.lan"
@@ -51,7 +51,7 @@ class smtpDeliver(StoppableThread):
                 ackData, message = data
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
-                dest = BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '')
+                dest = config.safeGet("bitmessagesettings", "smtpdeliver", '')
                 if dest == '':
                     continue
                 try:
@@ -62,9 +62,9 @@ class smtpDeliver(StoppableThread):
                     msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
                     toLabel = map(
-                        lambda y: BMConfigParser().safeGet(y, "label"),
+                        lambda y: config.safeGet(y, "label"),
                         filter(
-                            lambda x: x == toAddress, BMConfigParser().addresses())
+                            lambda x: x == toAddress, config.addresses())
                     )
                     if toLabel:
                         msg['To'] = "\"%s\" <%s>" % (Header(toLabel[0], 'utf-8'), toAddress + '@' + SMTPDOMAIN)

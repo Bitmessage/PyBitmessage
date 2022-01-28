@@ -26,7 +26,7 @@ from addresses import (
     calculateInventoryHash, decodeAddress, decodeVarint,
     encodeAddress, encodeVarint, varintDecodeError
 )
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from fallback import RIPEMD160Hash
 from helper_sql import sql_ready, SqlBulkExecute, sqlExecute, sqlQuery
 from network import bmproto, knownnodes
@@ -98,7 +98,7 @@ class objectProcessor(threading.Thread):
                     'The object is too big after decompression (stopped'
                     ' decompressing at %ib, your configured limit %ib).'
                     ' Ignoring',
-                    e.size, BMConfigParser().safeGetInt('zlib', 'maxsize'))
+                    e.size, config.safeGetInt('zlib', 'maxsize'))
             except varintDecodeError as e:
                 logger.debug(
                     'There was a problem with a varint while processing an'
@@ -242,12 +242,12 @@ class objectProcessor(threading.Thread):
                 ' one of my pubkeys but the stream number on which we'
                 ' heard this getpubkey object doesn\'t match this'
                 ' address\' stream number. Ignoring.')
-        if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
+        if config.safeGetBoolean(myAddress, 'chan'):
             return logger.info(
                 'Ignoring getpubkey request because it is for one of my'
                 ' chan addresses. The other party should already have'
                 ' the pubkey.')
-        lastPubkeySendTime = BMConfigParser().safeGetInt(
+        lastPubkeySendTime = config.safeGetInt(
             myAddress, 'lastpubkeysendtime')
         # If the last time we sent our pubkey was more recent than
         # 28 days ago...
@@ -613,13 +613,13 @@ class objectProcessor(threading.Thread):
         # If the toAddress version number is 3 or higher and not one of
         # my chan addresses:
         if decodeAddress(toAddress)[1] >= 3 \
-                and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
+                and not config.safeGetBoolean(toAddress, 'chan'):
             # If I'm not friendly with this person:
             if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(
                     fromAddress):
-                requiredNonceTrialsPerByte = BMConfigParser().getint(
+                requiredNonceTrialsPerByte = config.getint(
                     toAddress, 'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = BMConfigParser().getint(
+                requiredPayloadLengthExtraBytes = config.getint(
                     toAddress, 'payloadlengthextrabytes')
                 if not protocol.isProofOfWorkSufficient(
                         data, requiredNonceTrialsPerByte,
@@ -631,7 +631,7 @@ class objectProcessor(threading.Thread):
         # to black or white lists.
         blockMessage = False
         # If we are using a blacklist
-        if BMConfigParser().get(
+        if config.get(
                 'bitmessagesettings', 'blackwhitelist') == 'black':
             queryreturn = sqlQuery(
                 "SELECT label FROM blacklist where address=? and enabled='1'",
@@ -649,7 +649,7 @@ class objectProcessor(threading.Thread):
                     'Message ignored because address not in whitelist.')
                 blockMessage = True
 
-        # toLabel = BMConfigParser().safeGet(toAddress, 'label', toAddress)
+        # toLabel = config.safeGet(toAddress, 'label', toAddress)
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
                 messageEncodingType, message)
@@ -675,18 +675,18 @@ class objectProcessor(threading.Thread):
             # If we are behaving as an API then we might need to run an
             # outside command to let some program know that a new message
             # has arrived.
-            if BMConfigParser().safeGetBoolean(
+            if config.safeGetBoolean(
                     'bitmessagesettings', 'apienabled'):
-                apiNotifyPath = BMConfigParser().safeGet(
+                apiNotifyPath = config.safeGet(
                     'bitmessagesettings', 'apinotifypath')
                 if apiNotifyPath:
                     subprocess.call([apiNotifyPath, "newMessage"])
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
-            if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') \
+            if config.safeGetBoolean(toAddress, 'mailinglist') \
                     and messageEncodingType != 0:
-                mailingListName = BMConfigParser().safeGet(
+                mailingListName = config.safeGet(
                     toAddress, 'mailinglistname', '')
                 # Let us send out this message as a broadcast
                 subject = self.addMailingListNameToSubject(
@@ -724,8 +724,8 @@ class objectProcessor(threading.Thread):
         if (
             self.ackDataHasAValidHeader(ackData) and not blockMessage
             and messageEncodingType != 0
-            and not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
-            and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
+            and not config.safeGetBoolean(toAddress, 'dontsendack')
+            and not config.safeGetBoolean(toAddress, 'chan')
         ):
             self._ack_obj.send_data(ackData[24:])
 
@@ -960,8 +960,8 @@ class objectProcessor(threading.Thread):
         # If we are behaving as an API then we might need to run an
         # outside command to let some program know that a new message
         # has arrived.
-        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-            apiNotifyPath = BMConfigParser().safeGet(
+        if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
+            apiNotifyPath = config.safeGet(
                 'bitmessagesettings', 'apinotifypath')
             if apiNotifyPath:
                 subprocess.call([apiNotifyPath, "newBroadcast"])

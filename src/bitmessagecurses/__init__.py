@@ -28,7 +28,7 @@ import shutdown
 import state
 
 from addresses import addBMIfNotPresent, decodeAddress
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 
@@ -618,19 +618,19 @@ def handlech(c, stdscr):
                             r, t = d.inputbox("New address label", init=label)
                             if r == d.DIALOG_OK:
                                 label = t
-                                BMConfigParser().set(a, "label", label)
+                                config.set(a, "label", label)
                                 # Write config
-                                BMConfigParser().save()
+                                config.save()
                                 addresses[addrcur][0] = label
                         elif t == "4":      # Enable address
                             a = addresses[addrcur][2]
-                            BMConfigParser().set(a, "enabled", "true")       # Set config
+                            config.set(a, "enabled", "true")       # Set config
                             # Write config
-                            BMConfigParser().save()
+                            config.save()
                             # Change color
-                            if BMConfigParser().safeGetBoolean(a, 'chan'):
+                            if config.safeGetBoolean(a, 'chan'):
                                 addresses[addrcur][3] = 9       # orange
-                            elif BMConfigParser().safeGetBoolean(a, 'mailinglist'):
+                            elif config.safeGetBoolean(a, 'mailinglist'):
                                 addresses[addrcur][3] = 5       # magenta
                             else:
                                 addresses[addrcur][3] = 0       # black
@@ -638,26 +638,26 @@ def handlech(c, stdscr):
                             shared.reloadMyAddressHashes()      # Reload address hashes
                         elif t == "5":       # Disable address
                             a = addresses[addrcur][2]
-                            BMConfigParser().set(a, "enabled", "false")     # Set config
+                            config.set(a, "enabled", "false")     # Set config
                             addresses[addrcur][3] = 8       # Set color to gray
                             # Write config
-                            BMConfigParser().save()
+                            config.save()
                             addresses[addrcur][1] = False
                             shared.reloadMyAddressHashes()      # Reload address hashes
                         elif t == "6":      # Delete address
                             r, t = d.inputbox("Type in \"I want to delete this address\"", width=50)
                             if r == d.DIALOG_OK and t == "I want to delete this address":
-                                BMConfigParser().remove_section(addresses[addrcur][2])
-                                BMConfigParser().save()
+                                config.remove_section(addresses[addrcur][2])
+                                config.save()
                                 del addresses[addrcur]
                         elif t == "7":      # Special address behavior
                             a = addresses[addrcur][2]
                             set_background_title(d, "Special address behavior")
-                            if BMConfigParser().safeGetBoolean(a, "chan"):
+                            if config.safeGetBoolean(a, "chan"):
                                 scrollbox(d, unicode(
                                     "This is a chan address. You cannot use it as a pseudo-mailing list."))
                             else:
-                                m = BMConfigParser().safeGetBoolean(a, "mailinglist")
+                                m = config.safeGetBoolean(a, "mailinglist")
                                 r, t = d.radiolist(
                                     "Select address behavior",
                                     choices=[
@@ -665,24 +665,24 @@ def handlech(c, stdscr):
                                         ("2", "Behave as a pseudo-mailing-list address", m)])
                                 if r == d.DIALOG_OK:
                                     if t == "1" and m:
-                                        BMConfigParser().set(a, "mailinglist", "false")
+                                        config.set(a, "mailinglist", "false")
                                         if addresses[addrcur][1]:
                                             addresses[addrcur][3] = 0       # Set color to black
                                         else:
                                             addresses[addrcur][3] = 8       # Set color to gray
                                     elif t == "2" and m is False:
                                         try:
-                                            mn = BMConfigParser().get(a, "mailinglistname")
+                                            mn = config.get(a, "mailinglistname")
                                         except ConfigParser.NoOptionError:
                                             mn = ""
                                         r, t = d.inputbox("Mailing list name", init=mn)
                                         if r == d.DIALOG_OK:
                                             mn = t
-                                            BMConfigParser().set(a, "mailinglist", "true")
-                                            BMConfigParser().set(a, "mailinglistname", mn)
+                                            config.set(a, "mailinglist", "true")
+                                            config.set(a, "mailinglistname", mn)
                                             addresses[addrcur][3] = 6       # Set color to magenta
                                     # Write config
-                                    BMConfigParser().save()
+                                    config.save()
                 elif menutab == 5:
                     set_background_title(d, "Subscriptions Dialog Box")
                     if len(subscriptions) <= subcur:
@@ -1002,7 +1002,7 @@ def loadInbox():
             if toaddr == BROADCAST_STR:
                 tolabel = BROADCAST_STR
             else:
-                tolabel = BMConfigParser().get(toaddr, "label")
+                tolabel = config.get(toaddr, "label")
         except:  # noqa:E722
             tolabel = ""
         if tolabel == "":
@@ -1011,8 +1011,8 @@ def loadInbox():
 
         # Set label for from address
         fromlabel = ""
-        if BMConfigParser().has_section(fromaddr):
-            fromlabel = BMConfigParser().get(fromaddr, "label")
+        if config.has_section(fromaddr):
+            fromlabel = config.get(fromaddr, "label")
         if fromlabel == "":         # Check Address Book
             qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", fromaddr)
             if qr != []:
@@ -1062,15 +1062,15 @@ def loadSent():
                 for r in qr:
                     tolabel, = r
         if tolabel == "":
-            if BMConfigParser().has_section(toaddr):
-                tolabel = BMConfigParser().get(toaddr, "label")
+            if config.has_section(toaddr):
+                tolabel = config.get(toaddr, "label")
         if tolabel == "":
             tolabel = toaddr
 
         # Set label for from address
         fromlabel = ""
-        if BMConfigParser().has_section(fromaddr):
-            fromlabel = BMConfigParser().get(fromaddr, "label")
+        if config.has_section(fromaddr):
+            fromlabel = config.get(fromaddr, "label")
         if fromlabel == "":
             fromlabel = fromaddr
 
@@ -1146,7 +1146,7 @@ def loadSubscriptions():
 def loadBlackWhiteList():
     """load black/white list"""
     global bwtype
-    bwtype = BMConfigParser().get("bitmessagesettings", "blackwhitelist")
+    bwtype = config.get("bitmessagesettings", "blackwhitelist")
     if bwtype == "black":
         ret = sqlQuery("SELECT label, address, enabled FROM blacklist")
     else:
@@ -1205,16 +1205,16 @@ def run(stdscr):
             curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK)        # orangish
 
     # Init list of address in 'Your Identities' tab
-    configSections = BMConfigParser().addresses()
+    configSections = config.addresses()
     for addressInKeysFile in configSections:
-        isEnabled = BMConfigParser().getboolean(addressInKeysFile, "enabled")
-        addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
+        isEnabled = config.getboolean(addressInKeysFile, "enabled")
+        addresses.append([config.get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
         # Set address color
         if not isEnabled:
             addresses[len(addresses) - 1].append(8)         # gray
-        elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan'):
+        elif config.safeGetBoolean(addressInKeysFile, 'chan'):
             addresses[len(addresses) - 1].append(9)         # orange
-        elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist'):
+        elif config.safeGetBoolean(addressInKeysFile, 'mailinglist'):
             addresses[len(addresses) - 1].append(5)         # magenta
         else:
             addresses[len(addresses) - 1].append(0)         # black

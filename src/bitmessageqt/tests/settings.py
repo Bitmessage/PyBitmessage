@@ -2,7 +2,7 @@ import threading
 import time
 
 from main import TestBase
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from bitmessageqt import settings
 
 
@@ -14,14 +14,14 @@ class TestSettings(TestBase):
 
     def test_udp(self):
         """Test the effect of checkBoxUDP"""
-        udp_setting = BMConfigParser().safeGetBoolean(
+        udp_setting = config.safeGetBoolean(
             'bitmessagesettings', 'udp')
         self.assertEqual(udp_setting, self.dialog.checkBoxUDP.isChecked())
         self.dialog.checkBoxUDP.setChecked(not udp_setting)
         self.dialog.accept()
         self.assertEqual(
             not udp_setting,
-            BMConfigParser().safeGetBoolean('bitmessagesettings', 'udp'))
+            config.safeGetBoolean('bitmessagesettings', 'udp'))
         time.sleep(5)
         for thread in threading.enumerate():
             if thread.name == 'Announcer':  # find Announcer thread

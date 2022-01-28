@@ -16,7 +16,7 @@ except ImportError:
     from collections import Iterable
 
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from network.node import Peer
 
 state.Peer = Peer
@@ -130,7 +130,7 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
             return
 
     if not is_self:
-        if len(knownNodes[stream]) > BMConfigParser().safeGetInt(
+        if len(knownNodes[stream]) > config.safeGetInt(
                 "knownnodes", "maxnodes"):
             return
 
@@ -164,8 +164,6 @@ def readKnownNodes():
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
-
-    config = BMConfigParser()
 
     # your own onion address, if setup
     onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
@@ -210,7 +208,7 @@ def decreaseRating(peer):
 def trimKnownNodes(recAddrStream=1):
     """Triming Knownnodes"""
     if len(knownNodes[recAddrStream]) < \
-            BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
+            config.safeGetInt("knownnodes", "maxnodes"):
         return
     with knownNodesLock:
         oldestList = sorted(

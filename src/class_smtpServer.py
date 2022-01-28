@@ -15,7 +15,7 @@ from email.parser import Parser
 
 import queues
 from addresses import decodeAddress
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlExecute
 from network.threads import StoppableThread
@@ -51,8 +51,8 @@ class smtpServerChannel(smtpd.SMTPChannel):
         authstring = arg[6:]
         try:
             decoded = base64.b64decode(authstring)
-            correctauth = "\x00" + BMConfigParser().safeGet(
-                "bitmessagesettings", "smtpdusername", "") + "\x00" + BMConfigParser().safeGet(
+            correctauth = "\x00" + config.safeGet(
+                "bitmessagesettings", "smtpdusername", "") + "\x00" + config.safeGet(
                     "bitmessagesettings", "smtpdpassword", "")
             logger.debug('authstring: %s / %s', correctauth, decoded)
             if correctauth == decoded:
@@ -84,7 +84,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         """Send a bitmessage"""
         # pylint: disable=arguments-differ
         streamNumber, ripe = decodeAddress(toAddress)[2:]
-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        stealthLevel = config.safeGetInt('bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -103,7 +103,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             'sent',  # folder
             2,  # encodingtype
             # not necessary to have a TTL higher than 2 days
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)
+            min(config.getint('bitmessagesettings', 'ttl'), 86400 * 2)
         )
 
         queues.workerQueue.put(('sendmessage', toAddress))
@@ -136,7 +136,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             sender, domain = p.sub(r'\1', mailfrom).split("@")
             if domain != SMTPDOMAIN:
                 raise Exception("Bad domain %s" % domain)
-            if sender not in BMConfigParser().addresses():
+            if sender not in config.addresses():
                 raise Exception("Nonexisting user %s" % sender)
         except Exception as err:
             logger.debug('Bad envelope from %s: %r', mailfrom, err)
@@ -146,7 +146,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 sender, domain = msg_from.split("@")
                 if domain != SMTPDOMAIN:
                     raise Exception("Bad domain %s" % domain)
-                if sender not in BMConfigParser().addresses():
+                if sender not in config.addresses():
                     raise Exception("Nonexisting user %s" % sender)
             except Exception as err:
                 logger.error('Bad headers from %s: %r', msg_from, err)

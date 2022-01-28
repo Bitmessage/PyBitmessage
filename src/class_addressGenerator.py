@@ -12,7 +12,7 @@ import shared
 import state
 import tr
 from addresses import decodeAddress, encodeAddress, encodeVarint
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from fallback import RIPEMD160Hash
 from network import StoppableThread
 from pyelliptic import arithmetic
@@ -72,7 +72,7 @@ class addressGenerator(StoppableThread):
                     eighteenByteRipe = queueValue
 
                 numberOfNullBytesDemandedOnFrontOfRipeHash = \
-                    BMConfigParser().safeGetInt(
+                    config.safeGetInt(
                         'bitmessagesettings',
                         'numberofnullbytesonaddress',
                         2 if eighteenByteRipe else 1
@@ -84,7 +84,7 @@ class addressGenerator(StoppableThread):
                     payloadLengthExtraBytes = queueValue
 
                 numberOfNullBytesDemandedOnFrontOfRipeHash = \
-                    BMConfigParser().safeGetInt(
+                    config.safeGetInt(
                         'bitmessagesettings',
                         'numberofnullbytesonaddress',
                         2 if eighteenByteRipe else 1
@@ -103,14 +103,14 @@ class addressGenerator(StoppableThread):
                     ' one version %s address which it cannot do.\n',
                     addressVersionNumber)
             if nonceTrialsPerByte == 0:
-                nonceTrialsPerByte = BMConfigParser().getint(
+                nonceTrialsPerByte = config.getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
             if nonceTrialsPerByte < \
                     defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
                 nonceTrialsPerByte = \
                     defaults.networkDefaultProofOfWorkNonceTrialsPerByte
             if payloadLengthExtraBytes == 0:
-                payloadLengthExtraBytes = BMConfigParser().getint(
+                payloadLengthExtraBytes = config.getint(
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
             if payloadLengthExtraBytes < \
                     defaults.networkDefaultPayloadLengthExtraBytes:
@@ -178,19 +178,19 @@ class addressGenerator(StoppableThread):
                 privEncryptionKeyWIF = arithmetic.changebase(
                     privEncryptionKey + checksum, 256, 58)
 
-                BMConfigParser().add_section(address)
-                BMConfigParser().set(address, 'label', label)
-                BMConfigParser().set(address, 'enabled', 'true')
-                BMConfigParser().set(address, 'decoy', 'false')
-                BMConfigParser().set(address, 'noncetrialsperbyte', str(
+                config.add_section(address)
+                config.set(address, 'label', label)
+                config.set(address, 'enabled', 'true')
+                config.set(address, 'decoy', 'false')
+                config.set(address, 'noncetrialsperbyte', str(
                     nonceTrialsPerByte))
-                BMConfigParser().set(address, 'payloadlengthextrabytes', str(
+                config.set(address, 'payloadlengthextrabytes', str(
                     payloadLengthExtraBytes))
-                BMConfigParser().set(
+                config.set(
                     address, 'privsigningkey', privSigningKeyWIF)
-                BMConfigParser().set(
+                config.set(
                     address, 'privencryptionkey', privEncryptionKeyWIF)
-                BMConfigParser().save()
+                config.save()
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
@@ -317,7 +317,7 @@ class addressGenerator(StoppableThread):
                             privEncryptionKey + checksum, 256, 58)
 
                         try:
-                            BMConfigParser().add_section(address)
+                            config.add_section(address)
                             addressAlreadyExists = False
                         except configparser.DuplicateSectionError:
                             addressAlreadyExists = True
@@ -337,25 +337,25 @@ class addressGenerator(StoppableThread):
                             ))
                         else:
                             self.logger.debug('label: %s', label)
-                            BMConfigParser().set(address, 'label', label)
-                            BMConfigParser().set(address, 'enabled', 'true')
-                            BMConfigParser().set(address, 'decoy', 'false')
+                            config.set(address, 'label', label)
+                            config.set(address, 'enabled', 'true')
+                            config.set(address, 'decoy', 'false')
                             if command == 'joinChan' \
                                     or command == 'createChan':
-                                BMConfigParser().set(address, 'chan', 'true')
-                            BMConfigParser().set(
+                                config.set(address, 'chan', 'true')
+                            config.set(
                                 address, 'noncetrialsperbyte',
                                 str(nonceTrialsPerByte))
-                            BMConfigParser().set(
+                            config.set(
                                 address, 'payloadlengthextrabytes',
                                 str(payloadLengthExtraBytes))
-                            BMConfigParser().set(
+                            config.set(
                                 address, 'privSigningKey',
                                 privSigningKeyWIF)
-                            BMConfigParser().set(
+                            config.set(
                                 address, 'privEncryptionKey',
                                 privEncryptionKeyWIF)
-                            BMConfigParser().save()
+                            config.save()
 
                             queues.UISignalQueue.put((
                                 'writeNewAddressToTable',
@@ -387,7 +387,7 @@ class addressGenerator(StoppableThread):
                                     "MainWindow", "Done generating address")
                             ))
                     elif saveAddressToDisk and not live \
-                            and not BMConfigParser().has_section(address):
+                            and not config.has_section(address):
                         listOfNewAddressesToSendOutThroughTheAPI.append(
                             address)
 

@@ -18,7 +18,7 @@ from PyQt4 import QtGui
 
 import queues
 from addresses import decodeAddress
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute
 from .foldertree import AccountMixin
@@ -28,16 +28,16 @@ from .utils import str_broadcast_subscribers
 def getSortedAccounts():
     """Get a sorted list of configSections"""
 
-    configSections = BMConfigParser().addresses()
+    configSections = config.addresses()
     configSections.sort(
         cmp=lambda x, y: cmp(
             unicode(
-                BMConfigParser().get(
+                config.get(
                     x,
                     'label'),
                 'utf-8').lower(),
             unicode(
-                BMConfigParser().get(
+                config.get(
                     y,
                     'label'),
                 'utf-8').lower()))
@@ -80,7 +80,7 @@ def getSortedSubscriptions(count=False):
 
 def accountClass(address):
     """Return a BMAccount for the address"""
-    if not BMConfigParser().has_section(address):
+    if not config.has_section(address):
         # .. todo:: This BROADCAST section makes no sense
         if address == str_broadcast_subscribers:
             subscription = BroadcastAccount(address)
@@ -93,7 +93,7 @@ def accountClass(address):
                 return NoAccount(address)
         return subscription
     try:
-        gateway = BMConfigParser().get(address, "gateway")
+        gateway = config.get(address, "gateway")
         for _, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
@@ -114,9 +114,9 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
         if address_type is None:
             if address is None:
                 self.type = AccountMixin.ALL
-            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+            elif config.safeGetBoolean(self.address, 'mailinglist'):
                 self.type = AccountMixin.MAILINGLIST
-            elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
+            elif config.safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
                     '''select label from subscriptions where address=?''', self.address):
@@ -133,10 +133,10 @@ class BMAccount(object):
     def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
-        if BMConfigParser().has_section(address):
-            if BMConfigParser().safeGetBoolean(self.address, 'chan'):
+        if config.has_section(address):
+            if config.safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
-            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+            elif config.safeGetBoolean(self.address, 'mailinglist'):
                 self.type = AccountMixin.MAILINGLIST
         elif self.address == str_broadcast_subscribers:
             self.type = AccountMixin.BROADCAST
@@ -150,7 +150,7 @@ class BMAccount(object):
         """Get a label for this bitmessage account"""
         if address is None:
             address = self.address
-        label = BMConfigParser().safeGet(address, 'label', address)
+        label = config.safeGet(address, 'label', address)
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', address)
         if queryreturn != []:
@@ -216,7 +216,7 @@ class GatewayAccount(BMAccount):
 
         # pylint: disable=unused-variable
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        stealthLevel = config.safeGetInt('bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -235,7 +235,7 @@ class GatewayAccount(BMAccount):
             'sent',  # folder
             2,  # encodingtype
             # not necessary to have a TTL higher than 2 days
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)
+            min(config.getint('bitmessagesettings', 'ttl'), 86400 * 2)
         )
 
         queues.workerQueue.put(('sendmessage', self.toAddress))

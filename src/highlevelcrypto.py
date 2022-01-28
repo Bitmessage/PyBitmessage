@@ -13,7 +13,7 @@ import pyelliptic
 from pyelliptic import OpenSSL
 from pyelliptic import arithmetic as a
 
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 
 __all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
 
@@ -72,7 +72,7 @@ def sign(msg, hexPrivkey):
     Signs with hex private key using SHA1 or SHA256 depending on
     "digestalg" setting
     """
-    digestAlg = BMConfigParser().safeGet(
+    digestAlg = config.safeGet(
         'bitmessagesettings', 'digestalg', 'sha256')
     if digestAlg == "sha1":
         # SHA1, this will eventually be deprecated

@@ -25,7 +25,7 @@ import time
 
 import queues
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import BMConnectionPool, knownnodes, StoppableThread
@@ -50,11 +50,11 @@ class singleCleaner(StoppableThread):
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
             state.maximumLengthOfTimeToBotherResendingMessages = (
-                BMConfigParser().getfloat(
+                config.getfloat(
                     'bitmessagesettings', 'stopresendingafterxdays')
                 * 24 * 60 * 60
             ) + (
-                BMConfigParser().getfloat(
+                config.getfloat(
                     'bitmessagesettings', 'stopresendingafterxmonths')
                 * (60 * 60 * 24 * 365) / 12)
         except:  # noqa:E722

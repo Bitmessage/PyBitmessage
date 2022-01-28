@@ -8,7 +8,7 @@ from cgi import escape
 
 from PyQt4 import QtCore, QtGui
 
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from settingsmixin import SettingsMixin
 from tr import _translate
@@ -106,9 +106,9 @@ class AccountMixin(object):
         if self.address is None:
             self.type = self.ALL
             self.setFlags(self.flags() & ~QtCore.Qt.ItemIsEditable)
-        elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
+        elif config.safeGetBoolean(self.address, 'chan'):
             self.type = self.CHAN
-        elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+        elif config.safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
                 '''select label from subscriptions where address=?''', self.address):
@@ -125,7 +125,7 @@ class AccountMixin(object):
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
                 retval = unicode(
-                    BMConfigParser().get(self.address, 'label'), 'utf-8')
+                    config.get(self.address, 'label'), 'utf-8')
             except Exception:
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -237,7 +237,7 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         else:
             try:
                 return unicode(
-                    BMConfigParser().get(self.address, 'label'),
+                    config.get(self.address, 'label'),
                     'utf-8', 'ignore')
             except:
                 return unicode(self.address, 'utf-8')
@@ -263,13 +263,13 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         """Save account label (if you edit in the the UI, this will be triggered and will save it to keys.dat)"""
         if role == QtCore.Qt.EditRole \
                 and self.type != AccountMixin.SUBSCRIPTION:
-            BMConfigParser().set(
+            config.set(
                 str(self.address), 'label',
                 str(value.toString().toUtf8())
                 if isinstance(value, QtCore.QVariant)
                 else value.encode('utf-8')
             )
-            BMConfigParser().save()
+            config.save()
         return super(Ui_AddressWidget, self).setData(column, role, value)
 
     def setAddress(self, address):
@@ -382,7 +382,7 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
         if role == QtCore.Qt.ToolTipRole:
             return self.label + " (" + self.address + ")"
         elif role == QtCore.Qt.DecorationRole:
-            if BMConfigParser().safeGetBoolean(
+            if config.safeGetBoolean(
                     'bitmessagesettings', 'useidenticons'):
                 return avatarize(self.address or self.label)
         elif role == QtCore.Qt.ForegroundRole:
@@ -408,7 +408,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
                 newLabel = unicode(
-                    BMConfigParser().get(self.address, 'label'),
+                    config.get(self.address, 'label'),
                     'utf-8', 'ignore')
             except:
                 queryreturn = sqlQuery(
@@ -521,9 +521,9 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                     AccountMixin.NORMAL,
                     AccountMixin.MAILINGLIST, AccountMixin.CHAN):
                 try:
-                    BMConfigParser().get(self.address, 'label')
-                    BMConfigParser().set(self.address, 'label', self.label)
-                    BMConfigParser().save()
+                    config.get(self.address, 'label')
+                    config.set(self.address, 'label', self.label)
+                    config.save()
                 except:
                     sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
             elif self.type == AccountMixin.SUBSCRIPTION:

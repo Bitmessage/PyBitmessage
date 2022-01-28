@@ -15,7 +15,7 @@ import paths
 import proofofwork
 import queues
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from foldertree import AccountMixin
 from helper_sql import sqlExecute, sqlQuery
 from l10n import getTranslationLanguage
@@ -79,7 +79,7 @@ def checkAddressBook(myapp):
 def checkHasNormalAddress():
     for address in account.getSortedAccounts():
         acct = account.accountClass(address)
-        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
+        if acct.type == AccountMixin.NORMAL and config.safeGetBoolean(address, 'enabled'):
             return address
     return False
 
@@ -142,11 +142,11 @@ def createSupportMessage(myapp):
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if proofofwork.bmpow else "False"
     openclpow = str(
-        BMConfigParser().safeGet('bitmessagesettings', 'opencl')
+        config.safeGet('bitmessagesettings', 'opencl')
     ) if openclEnabled() else "None"
     locale = getTranslationLanguage()
-    socks = getSOCKSProxyType(BMConfigParser()) or "N/A"
-    upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', "N/A")
+    socks = getSOCKSProxyType(config) or "N/A"
+    upnp = config.safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(unicode(SUPPORT_MESSAGE, 'utf-8').format(

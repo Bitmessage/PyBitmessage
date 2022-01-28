@@ -28,7 +28,7 @@ import tr
 from addresses import (
     calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
 )
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
 from network import knownnodes, StoppableThread
@@ -195,9 +195,9 @@ class singleWorker(StoppableThread):
         self.logger.info("Quitting...")
 
     def _getKeysForAddress(self, address):
-        privSigningKeyBase58 = BMConfigParser().get(
+        privSigningKeyBase58 = config.get(
             address, 'privsigningkey')
-        privEncryptionKeyBase58 = BMConfigParser().get(
+        privEncryptionKeyBase58 = config.get(
             address, 'privencryptionkey')
 
         privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
@@ -299,15 +299,15 @@ class singleWorker(StoppableThread):
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
-            BMConfigParser().set(
+            config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            BMConfigParser().save()
+            config.save()
         except configparser.NoSectionError:
             # The user deleted the address out of the keys.dat file
             # before this finished.
             pass
         except:  # noqa:E722
-            self.logger.warning("BMConfigParser().set didn't work")
+            self.logger.warning("config.set didn't work")
 
     def sendOutOrStoreMyV3Pubkey(self, adressHash):
         """
@@ -321,7 +321,7 @@ class singleWorker(StoppableThread):
             # The address has been deleted.
             self.logger.warning("Can't find %s in myAddressByHash", hexlify(adressHash))
             return
-        if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
+        if config.safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
             return
         _, addressVersionNumber, streamNumber, adressHash = decodeAddress(
@@ -363,9 +363,9 @@ class singleWorker(StoppableThread):
 
         payload += pubSigningKey + pubEncryptionKey
 
-        payload += encodeVarint(BMConfigParser().getint(
+        payload += encodeVarint(config.getint(
             myAddress, 'noncetrialsperbyte'))
-        payload += encodeVarint(BMConfigParser().getint(
+        payload += encodeVarint(config.getint(
             myAddress, 'payloadlengthextrabytes'))
 
         signature = highlevelcrypto.sign(payload, privSigningKeyHex)
@@ -387,9 +387,9 @@ class singleWorker(StoppableThread):
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
-            BMConfigParser().set(
+            config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            BMConfigParser().save()
+            config.save()
         except configparser.NoSectionError:
             # The user deleted the address out of the keys.dat file
             # before this finished.
@@ -403,10 +403,10 @@ class singleWorker(StoppableThread):
         whereas in the past it directly appended it to the outgoing buffer, I think. Same with all the other methods in
         this class.
         """
-        if not BMConfigParser().has_section(myAddress):
+        if not config.has_section(myAddress):
             # The address has been deleted.
             return
-        if shared.BMConfigParser().safeGetBoolean(myAddress, 'chan'):
+        if config.safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
             return
         _, addressVersionNumber, streamNumber, addressHash = decodeAddress(
@@ -437,9 +437,9 @@ class singleWorker(StoppableThread):
 
         dataToEncrypt += pubSigningKey + pubEncryptionKey
 
-        dataToEncrypt += encodeVarint(BMConfigParser().getint(
+        dataToEncrypt += encodeVarint(config.getint(
             myAddress, 'noncetrialsperbyte'))
-        dataToEncrypt += encodeVarint(BMConfigParser().getint(
+        dataToEncrypt += encodeVarint(config.getint(
             myAddress, 'payloadlengthextrabytes'))
 
         # When we encrypt, we'll use a hash of the data
@@ -482,9 +482,9 @@ class singleWorker(StoppableThread):
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
-            BMConfigParser().set(
+            config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            BMConfigParser().save()
+            config.save()
         except Exception as err:
             self.logger.error(
                 'Error: Couldn\'t add the lastpubkeysendtime'
@@ -628,9 +628,9 @@ class singleWorker(StoppableThread):
             dataToEncrypt += protocol.getBitfield(fromaddress)
             dataToEncrypt += pubSigningKey + pubEncryptionKey
             if addressVersionNumber >= 3:
-                dataToEncrypt += encodeVarint(BMConfigParser().getint(
+                dataToEncrypt += encodeVarint(config.getint(
                     fromaddress, 'noncetrialsperbyte'))
-                dataToEncrypt += encodeVarint(BMConfigParser().getint(
+                dataToEncrypt += encodeVarint(config.getint(
                     fromaddress, 'payloadlengthextrabytes'))
             # message encoding type
             dataToEncrypt += encodeVarint(encoding)
@@ -756,7 +756,7 @@ class singleWorker(StoppableThread):
             # then we won't need an entry in the pubkeys table;
             # we can calculate the needed pubkey using the private keys
             # in our keys.dat file.
-            elif BMConfigParser().has_section(toaddress):
+            elif config.has_section(toaddress):
                 if not sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' '''
                     ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
@@ -905,7 +905,7 @@ class singleWorker(StoppableThread):
             embeddedTime = int(time.time() + TTL)
 
             # if we aren't sending this to ourselves or a chan
-            if not BMConfigParser().has_section(toaddress):
+            if not config.has_section(toaddress):
                 state.ackdataForWhichImWatching[ackdata] = 0
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -956,7 +956,7 @@ class singleWorker(StoppableThread):
                 if protocol.isBitSetWithinBitfield(behaviorBitfield, 30):
                     # if we are Not willing to include the receiver's
                     # RIPE hash on the message..
-                    if not shared.BMConfigParser().safeGetBoolean(
+                    if not config.safeGetBoolean(
                             'bitmessagesettings', 'willinglysendtomobile'
                     ):
                         self.logger.info(
@@ -1058,9 +1058,9 @@ class singleWorker(StoppableThread):
                     )
 
                     if status != 'forcepow':
-                        maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
+                        maxacceptablenoncetrialsperbyte = config.getint(
                             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-                        maxacceptablepayloadlengthextrabytes = BMConfigParser().getint(
+                        maxacceptablepayloadlengthextrabytes = config.getint(
                             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')
                         cond1 = maxacceptablenoncetrialsperbyte and \
                             requiredAverageProofOfWorkNonceTrialsPerByte > maxacceptablenoncetrialsperbyte
@@ -1096,7 +1096,7 @@ class singleWorker(StoppableThread):
                 behaviorBitfield = protocol.getBitfield(fromaddress)
 
                 try:
-                    privEncryptionKeyBase58 = BMConfigParser().get(
+                    privEncryptionKeyBase58 = config.get(
                         toaddress, 'privencryptionkey')
                 except (configparser.NoSectionError, configparser.NoOptionError) as err:
                     queues.UISignalQueue.put((
@@ -1185,9 +1185,9 @@ class singleWorker(StoppableThread):
                     payload += encodeVarint(
                         defaults.networkDefaultPayloadLengthExtraBytes)
                 else:
-                    payload += encodeVarint(BMConfigParser().getint(
+                    payload += encodeVarint(config.getint(
                         fromaddress, 'noncetrialsperbyte'))
-                    payload += encodeVarint(BMConfigParser().getint(
+                    payload += encodeVarint(config.getint(
                         fromaddress, 'payloadlengthextrabytes'))
 
             # This hash will be checked by the receiver of the message
@@ -1200,7 +1200,7 @@ class singleWorker(StoppableThread):
             )
             payload += encodeVarint(encodedMessage.length)
             payload += encodedMessage.data
-            if BMConfigParser().has_section(toaddress):
+            if config.has_section(toaddress):
                 self.logger.info(
                     'Not bothering to include ackdata because we are'
                     ' sending to ourselves or a chan.'
@@ -1305,7 +1305,7 @@ class singleWorker(StoppableThread):
             objectType = 2
             Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
-            if BMConfigParser().has_section(toaddress) or \
+            if config.has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -1333,7 +1333,7 @@ class singleWorker(StoppableThread):
 
             # Update the sent message in the sent table with the
             # necessary information.
-            if BMConfigParser().has_section(toaddress) or \
+            if config.has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 newStatus = 'msgsentnoackexpected'
             else:
@@ -1349,7 +1349,7 @@ class singleWorker(StoppableThread):
 
             # If we are sending to ourselves or a chan, let's put
             # the message in our own inbox.
-            if BMConfigParser().has_section(toaddress):
+            if config.has_section(toaddress):
                 # Used to detect and ignore duplicate messages in our inbox
                 sigHash = hashlib.sha512(hashlib.sha512(
                     signature).digest()).digest()[32:]
@@ -1363,10 +1363,10 @@ class singleWorker(StoppableThread):
                 # If we are behaving as an API then we might need to run an
                 # outside command to let some program know that a new message
                 # has arrived.
-                if BMConfigParser().safeGetBoolean(
+                if config.safeGetBoolean(
                         'bitmessagesettings', 'apienabled'):
 
-                    apiNotifyPath = BMConfigParser().safeGet(
+                    apiNotifyPath = config.safeGet(
                         'bitmessagesettings', 'apinotifypath')
 
                     if apiNotifyPath:

@@ -6,7 +6,7 @@ import os
 from PyQt4 import QtCore, QtGui
 
 import paths
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 
 
 class LanguageBox(QtGui.QComboBox):
@@ -41,7 +41,7 @@ class LanguageBox(QtGui.QComboBox):
                 self.addItem(
                     locale.nativeLanguageName() or localeShort, localeShort)
 
-        configuredLocale = BMConfigParser().safeGet(
+        configuredLocale = config.safeGet(
             'bitmessagesettings', 'userlocale', "system")
         for i in range(self.count()):
             if self.itemData(i) == configuredLocale:

@@ -16,7 +16,7 @@ import connectionpool
 import knownnodes
 import protocol
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
@@ -403,7 +403,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkStream()
         except BMObjectUnwantedStreamError:
-            acceptmismatch = BMConfigParser().get(
+            acceptmismatch = config.get(
                 "inventory", "acceptmismatch")
             BMProto.stopDownloadingObject(
                 self.object.inventoryHash, acceptmismatch)
@@ -619,9 +619,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 Peer(self.destination.host, self.peerNode.port)
                 in connectionpool.BMConnectionPool().inboundConnections
                 or len(connectionpool.BMConnectionPool())
-                > BMConfigParser().safeGetInt(
+                > config.safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
-                + BMConfigParser().safeGetInt(
+                + config.safeGetInt(
                     'bitmessagesettings', 'maxbootstrapconnections')
             ):
                 self.append_write_buf(protocol.assembleErrorMessage(

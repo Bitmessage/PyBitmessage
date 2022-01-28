@@ -74,7 +74,7 @@ a.datas += [
 
 # append the translations directory
 a.datas += addTranslations()
-
+a.datas += [('default.ini', os.path.join(srcPath, 'default.ini'), 'DATA')]
 
 excluded_binaries = [
     'QtOpenGL4.dll',

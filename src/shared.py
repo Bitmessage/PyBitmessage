@@ -19,7 +19,7 @@ from binascii import hexlify
 import highlevelcrypto
 import state
 from addresses import decodeAddress, encodeVarint
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
 from helper_sql import sqlQuery
 
@@ -116,8 +116,8 @@ def reloadMyAddressHashes():
     keyfileSecure = checkSensitiveFilePermissions(os.path.join(
         state.appdata, 'keys.dat'))
     hasEnabledKeys = False
-    for addressInKeysFile in BMConfigParser().addresses():
-        isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
+    for addressInKeysFile in config.addresses():
+        isEnabled = config.getboolean(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
             # status
@@ -126,7 +126,7 @@ def reloadMyAddressHashes():
                 # Returns a simple 32 bytes of information encoded
                 # in 64 Hex characters, or null if there was an error.
                 privEncryptionKey = hexlify(decodeWalletImportFormat(
-                    BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
+                    config.get(addressInKeysFile, 'privencryptionkey')))
                 # It is 32 bytes encoded as 64 hex characters
                 if len(privEncryptionKey) == 64:
                     myECCryptorObjects[hashobj] = \

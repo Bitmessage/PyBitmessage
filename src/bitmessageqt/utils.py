@@ -5,7 +5,7 @@ from PyQt4 import QtGui
 
 import state
 from addresses import addBMIfNotPresent
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 
 str_broadcast_subscribers = '[Broadcast subscribers]'
 str_chan = '[chan]'
@@ -14,14 +14,14 @@ str_chan = '[chan]'
 def identiconize(address):
     size = 48
 
-    if not BMConfigParser().getboolean('bitmessagesettings', 'useidenticons'):
+    if not config.getboolean('bitmessagesettings', 'useidenticons'):
         return QtGui.QIcon()
 
     # If you include another identicon library, please generate an
     # example identicon with the following md5 hash:
     # 3fd4bf901b9d4ea1394f0fb358725b28
 
-    identicon_lib = BMConfigParser().safeGet(
+    identicon_lib = config.safeGet(
         'bitmessagesettings', 'identiconlib', 'qidenticon_two_x')
 
     # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr"
@@ -30,7 +30,7 @@ def identiconize(address):
     # It can be used as a pseudo-password to salt the generation of
     # the identicons to decrease the risk of attacks where someone creates
     # an address to mimic someone else's identicon.
-    identiconsuffix = BMConfigParser().get('bitmessagesettings', 'identiconsuffix')
+    identiconsuffix = config.get('bitmessagesettings', 'identiconsuffix')
     if identicon_lib[:len('qidenticon')] == 'qidenticon':
         # originally by:
         # :Author:Shin Adachi <shn@glucose.jp>

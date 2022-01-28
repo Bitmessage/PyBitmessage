@@ -8,7 +8,7 @@ import time
 
 import asyncore_pollchoose as asyncore
 from advanceddispatcher import AdvancedDispatcher
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from node import Peer
 
 logger = logging.getLogger('default')
@@ -114,12 +114,12 @@ class Proxy(AdvancedDispatcher):
         self.isOutbound = True
         self.fullyEstablished = False
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        if BMConfigParser().safeGetBoolean(
+        if config.safeGetBoolean(
                 "bitmessagesettings", "socksauthentication"):
             self.auth = (
-                BMConfigParser().safeGet(
+                config.safeGet(
                     "bitmessagesettings", "socksusername"),
-                BMConfigParser().safeGet(
+                config.safeGet(
                     "bitmessagesettings", "sockspassword"))
         else:
             self.auth = None

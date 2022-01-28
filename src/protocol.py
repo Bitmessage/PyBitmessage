@@ -18,7 +18,7 @@ import highlevelcrypto
 import state
 from addresses import (
     encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
 from fallback import RIPEMD160Hash
 from helper_sql import sqlExecute
@@ -72,7 +72,7 @@ def getBitfield(address):
     # bitfield of features supported by me (see the wiki).
     bitfield = 0
     # send ack
-    if not BMConfigParser().safeGetBoolean(address, 'dontsendack'):
+    if not config.safeGetBoolean(address, 'dontsendack'):
         bitfield |= BITFIELD_DOESACK
     return pack('>I', bitfield)
 
@@ -238,7 +238,7 @@ def haveSSL(server=False):
 
 def checkSocksIP(host):
     """Predicate to check if we're using a SOCKS proxy"""
-    sockshostname = BMConfigParser().safeGet(
+    sockshostname = config.safeGet(
         'bitmessagesettings', 'sockshostname')
     try:
         if not state.socksIP:
@@ -341,19 +341,19 @@ def assembleVersionMessage(
         '>L', 2130706433)
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
-    extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
+    extport = config.safeGetInt('bitmessagesettings', 'extport')
     if (
         extport and ((server and not checkSocksIP(remoteHost)) or (
-            BMConfigParser().get('bitmessagesettings', 'socksproxytype')
+            config.get('bitmessagesettings', 'socksproxytype')
             == 'none' and not server))
     ):
         payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
         payload += pack(
-            '>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
+            '>H', config.getint('bitmessagesettings', 'onionport'))
     else:  # no extport and not incoming over Tor
         payload += pack(
-            '>H', BMConfigParser().getint('bitmessagesettings', 'port'))
+            '>H', config.getint('bitmessagesettings', 'port'))
 
     if nodeid is not None:
         payload += nodeid[0:8]

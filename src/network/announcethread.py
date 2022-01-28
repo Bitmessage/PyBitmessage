@@ -4,7 +4,7 @@ Announce myself (node address)
 import time
 
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from network.assemble import assemble_addr
 from network.connectionpool import BMConnectionPool
 from node import Peer
@@ -37,7 +37,7 @@ class AnnounceThread(StoppableThread):
                     stream,
                     Peer(
                         '127.0.0.1',
-                        BMConfigParser().safeGetInt(
+                        config.safeGetInt(
                             'bitmessagesettings', 'port')),
                     time.time())
                 connection.append_write_buf(assemble_addr([addr]))

@@ -17,7 +17,7 @@ import paths
 import queues
 import state
 import tr
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
 
 bitmsglib = 'bitmsghash.so'
@@ -119,7 +119,7 @@ def _doFastPoW(target, initialHash):
     except:  # noqa:E722
         pool_size = 4
     try:
-        maxCores = BMConfigParser().getint('bitmessagesettings', 'maxcores')
+        maxCores = config.getint('bitmessagesettings', 'maxcores')
     except:  # noqa:E722
         maxCores = 99999
     if pool_size > maxCores:

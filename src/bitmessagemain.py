@@ -35,7 +35,7 @@ import shutdown
 import state
 
 from testmode_init import populate_api_test_data
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger  # this should go before any threads
 from helper_startup import (
     adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
@@ -92,7 +92,6 @@ class Main(object):
         fixSocket()
         adjustHalfOpenConnectionsLimit()
 
-        config = BMConfigParser()
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
@@ -408,11 +407,11 @@ All parameters are optional.
     @staticmethod
     def getApiAddress():
         """This function returns API address and port"""
-        if not BMConfigParser().safeGetBoolean(
+        if not config.safeGetBoolean(
                 'bitmessagesettings', 'apienabled'):
             return None
-        address = BMConfigParser().get('bitmessagesettings', 'apiinterface')
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        address = config.get('bitmessagesettings', 'apiinterface')
+        port = config.getint('bitmessagesettings', 'apiport')
         return {'address': address, 'port': port}
 
 

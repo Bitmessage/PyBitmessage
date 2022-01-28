@@ -16,7 +16,7 @@ import helper_random
 import knownnodes
 import protocol
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_random import randomBytes
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
@@ -177,7 +177,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         # We are going to share a maximum number of 1000 addrs (per overlapping
         # stream) with our peer. 500 from overlapping streams, 250 from the
         # left child stream, and 250 from the right child stream.
-        maxAddrCount = BMConfigParser().safeGetInt(
+        maxAddrCount = config.safeGetInt(
             "bitmessagesettings", "maxaddrperstreamsend", 500)
 
         templist = []
@@ -406,9 +406,9 @@ class TCPServer(AdvancedDispatcher):
             else:
                 if attempt > 0:
                     logger.warning('Setting port to %s', port)
-                    BMConfigParser().set(
+                    config.set(
                         'bitmessagesettings', 'port', str(port))
-                    BMConfigParser().save()
+                    config.save()
                 break
         self.destination = Peer(host, port)
         self.bound = True
@@ -431,9 +431,9 @@ class TCPServer(AdvancedDispatcher):
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
             len(connectionpool.BMConnectionPool())
-            > BMConfigParser().safeGetInt(
+            > config.safeGetInt(
                 'bitmessagesettings', 'maxtotalconnections')
-                + BMConfigParser().safeGetInt(
+                + config.safeGetInt(
                     'bitmessagesettings', 'maxbootstrapconnections') + 10
         ):
             # 10 is a sort of buffer, in between it will go through
