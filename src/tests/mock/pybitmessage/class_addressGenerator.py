@@ -2,10 +2,6 @@
 A thread for creating addresses
 """
 
-import logging
-import random
-import threading
-
 from six.moves import queue
 
 from pybitmessage import state
@@ -13,7 +9,7 @@ from pybitmessage import queues
 
 from pybitmessage.bmconfigparser import BMConfigParser
 
-# from network.threads import StoppableThread
+from pybitmessage.threads import StoppableThread
 
 
 fake_addresses = {
@@ -40,37 +36,18 @@ fake_addresses = {
 }
 
 
-class StoppableThread(threading.Thread):
-    """Base class for application threads with stopThread method"""
-    name = None
-    logger = logging.getLogger('default')
-
-    def __init__(self, name=None):
-        if name:
-            self.name = name
-        super(StoppableThread, self).__init__(name=self.name)
-        self.stop = threading.Event()
-        self._stopped = False
-        random.seed()
-        self.logger.info('Init thread %s', self.name)
-
-    def stopThread(self):
-        """Stop the thread"""
-        self._stopped = True
-        self.stop.set()
-
-
-class FakeAddressGenerator(StoppableThread):
+class addressGenerator(StoppableThread):
     """A thread for creating fake addresses"""
     name = "addressGenerator"
     address_list = list(fake_addresses.keys())
 
     def stopThread(self):
+        """"To stop address generator thread"""
         try:
             queues.addressGeneratorQueue.put(("stopThread", "data"))
         except queue.Full:
             self.logger.warning('addressGeneratorQueue is Full')
-        super(FakeAddressGenerator, self).stopThread()
+        super(addressGenerator, self).stopThread()
 
     def run(self):
         """
