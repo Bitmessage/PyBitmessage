@@ -1,10 +1,10 @@
 """
 Tests for openclpow module
 """
-import hashlib
+
 import unittest
-from struct import pack, unpack
-from pybitmessage import openclpow
+
+from pybitmessage import openclpow, proofofwork
 
 
 class TestOpenClPow(unittest.TestCase):
@@ -25,7 +25,5 @@ class TestOpenClPow(unittest.TestCase):
             "b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3"
         ).decode("hex")
         nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target_)
-        trialValue, = unpack(
-            '>Q', hashlib.sha512(hashlib.sha512(
-                pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
-        self.assertLess((nonce - trialValue), target_)
+        self.assertLess(
+            nonce - proofofwork.trial_value(nonce, initialHash), target_)

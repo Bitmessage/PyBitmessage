@@ -4,9 +4,10 @@ Test if OpenSSL is working correctly
 import unittest
 
 try:
+    from pyelliptic.ecc import ECC
     from pyelliptic.openssl import OpenSSL
 except ImportError:
-    from pybitmessage.pyelliptic import OpenSSL
+    from pybitmessage.pyelliptic import ECC, OpenSSL
 
 try:
     OpenSSL.BN_bn2binpad
@@ -55,3 +56,10 @@ class TestOpenSSL(unittest.TestCase):
             if b.raw != c.raw.rjust(OpenSSL.BN_num_bytes(n), b'\x00'):
                 bad += 1
         self.assertEqual(bad, 0)
+
+    def test_random_keys(self):
+        """A dummy test for random keys in ECC object"""
+        eccobj = ECC(curve='secp256k1')
+        self.assertEqual(len(eccobj.privkey), 32)
+        pubkey = eccobj.get_pubkey()
+        self.assertEqual(pubkey[:4], b'\x02\xca\x00\x20')

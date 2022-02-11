@@ -7,15 +7,83 @@ High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
   `More discussion. <https://github.com/yann2192/pyelliptic/issues/32>`_
 """
 
+import hashlib
+import os
 from binascii import hexlify
 
 import pyelliptic
 from pyelliptic import OpenSSL
 from pyelliptic import arithmetic as a
 
-from bmconfigparser import BMConfigParser
 
 __all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
+
+
+# Hashes
+
+def double_sha512(data):
+    """Binary double SHA512 digest"""
+    return hashlib.sha512(hashlib.sha512(data).digest()).digest()
+
+
+def calculateInventoryHash(data):
+    """Calculate inventory hash from object data"""
+    return double_sha512(data)[:32]
+
+
+# WIF (uses arithmetic ):
+def decodeWalletImportFormat(WIFstring):
+    """
+    Convert private key from base58 that's used in the config file to
+    8-bit binary string.
+    """
+    fullString = a.changebase(WIFstring, 58, 256)
+    privkey = fullString[:-4]
+    if fullString[-4:] != \
+       hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
+        raise ValueError('Checksum failed')
+    elif privkey[0:1] == b'\x80':  # checksum passed
+        return privkey[1:]
+
+    raise ValueError('No hex 80 prefix')
+
+
+# An excellent way for us to store our keys
+# is in Wallet Import Format. Let us convert now.
+# https://en.bitcoin.it/wiki/Wallet_import_format
+def encodeWalletImportFormat(privKey):
+    """
+    Convert private key from binary 8-bit string into base58check WIF string.
+    """
+    privKey = b'\x80' + privKey
+    checksum = hashlib.sha256(hashlib.sha256(privKey).digest()).digest()[0:4]
+    return a.changebase(privKey + checksum, 256, 58)
+
+
+# Random
+
+def randomBytes(n):
+    """Get n random bytes"""
+    try:
+        return os.urandom(n)
+    except NotImplementedError:
+        return OpenSSL.rand(n)
+
+
+# Keys
+
+def random_keys():
+    """Return a pair of keys, private and public"""
+    priv = randomBytes(32)
+    pub = pointMult(priv)
+    return priv, pub
+
+
+def deterministic_keys(passphrase, nonce):
+    """Generate keys from *passphrase* and *nonce* (encoded as varint)"""
+    priv = hashlib.sha512(passphrase + nonce).digest()[:32]
+    pub = pointMult(priv)
+    return priv, pub
 
 
 def makeCryptor(privkey):
@@ -67,22 +135,17 @@ def decryptFast(msg, cryptor):
     return cryptor.decrypt(msg)
 
 
-def sign(msg, hexPrivkey):
+def sign(msg, hexPrivkey, digestAlg="sha256"):
     """
     Signs with hex private key using SHA1 or SHA256 depending on
-    "digestalg" setting
+    *digestAlg* keyword.
     """
-    digestAlg = BMConfigParser().safeGet(
-        'bitmessagesettings', 'digestalg', 'sha256')
-    if digestAlg == "sha1":
-        # SHA1, this will eventually be deprecated
-        return makeCryptor(hexPrivkey).sign(
-            msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
-    elif digestAlg == "sha256":
-        # SHA256. Eventually this will become the default
-        return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
-    else:
+    if digestAlg not in ("sha1", "sha256"):
         raise ValueError("Unknown digest algorithm %s" % digestAlg)
+    # SHA1, this will eventually be deprecated
+    return makeCryptor(hexPrivkey).sign(
+        msg, digest_alg=OpenSSL.digest_ecdsa_sha1
+        if digestAlg == "sha1" else OpenSSL.EVP_sha256)
 
 
 def verify(msg, sig, hexPubkey):

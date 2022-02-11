@@ -12,8 +12,10 @@ from six.moves import xmlrpc_client  # nosec
 import psutil
 
 from .samples import (
-    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4, sample_statusbar_msg,
-    sample_inbox_msg_ids, sample_test_subscription_address, sample_subscription_name)
+    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4,
+    sample_statusbar_msg, sample_inbox_msg_ids, sample_subscription_addresses,
+    sample_subscription_name
+)
 
 from .test_process import TestProcessProto
 
@@ -263,9 +265,10 @@ class TestAPI(TestAPIProto):
 
     def test_subscriptions(self):
         """Testing the API commands related to subscriptions"""
-
         self.assertEqual(
-            self.api.addSubscription(sample_test_subscription_address[0], sample_subscription_name.encode('base64')),
+            self.api.addSubscription(
+                sample_subscription_addresses[0],
+                sample_subscription_name.encode('base64')),
             'Added subscription.'
         )
 
@@ -273,18 +276,19 @@ class TestAPI(TestAPIProto):
         # check_address
         for sub in json.loads(self.api.listSubscriptions())['subscriptions']:
             # special address, added when sqlThread starts
-            if sub['address'] == sample_test_subscription_address[0]:
+            if sub['address'] == sample_subscription_addresses[0]:
                 added_subscription = sub
                 break
 
         self.assertEqual(
-            base64.decodestring(added_subscription['label']) if added_subscription['label'] else None,
+            base64.decodestring(added_subscription['label'])
+            if added_subscription['label'] else None,
             sample_subscription_name)
         self.assertTrue(added_subscription['enabled'])
 
         for s in json.loads(self.api.listSubscriptions())['subscriptions']:
             # special address, added when sqlThread starts
-            if s['address'] == sample_test_subscription_address[1]:
+            if s['address'] == sample_subscription_addresses[1]:
                 self.assertEqual(
                     base64.decodestring(s['label']),
                     'Bitmessage new releases/announcements')
@@ -295,10 +299,10 @@ class TestAPI(TestAPIProto):
                 'Could not find Bitmessage new releases/announcements'
                 ' in subscriptions')
         self.assertEqual(
-            self.api.deleteSubscription(sample_test_subscription_address[0]),
+            self.api.deleteSubscription(sample_subscription_addresses[0]),
             'Deleted subscription if it existed.')
         self.assertEqual(
-            self.api.deleteSubscription(sample_test_subscription_address[1]),
+            self.api.deleteSubscription(sample_subscription_addresses[1]),
             'Deleted subscription if it existed.')
         self.assertEqual(
             json.loads(self.api.listSubscriptions())['subscriptions'], [])

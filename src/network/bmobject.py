@@ -6,7 +6,7 @@ import time
 
 import protocol
 import state
-from addresses import calculateInventoryHash
+from highlevelcrypto import calculateInventoryHash
 from inventory import Inventory
 from network.dandelion import Dandelion
 

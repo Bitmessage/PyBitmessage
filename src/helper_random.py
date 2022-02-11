@@ -1,12 +1,7 @@
 """Convenience functions for random operations. Not suitable for security / cryptography operations."""
 
-import os
 import random
 
-try:
-    from pyelliptic.openssl import OpenSSL
-except ImportError:
-    from .pyelliptic.openssl import OpenSSL
 
 NoneType = type(None)
 
@@ -14,14 +9,6 @@ NoneType = type(None)
 def seed():
     """Initialize random number generator"""
     random.seed()
-
-
-def randomBytes(n):
-    """Method randomBytes."""
-    try:
-        return os.urandom(n)
-    except NotImplementedError:
-        return OpenSSL.rand(n)
 
 
 def randomshuffle(population):

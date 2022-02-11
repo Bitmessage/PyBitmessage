@@ -269,12 +269,11 @@ def isProofOfWorkSufficient(
     if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
         payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
     endOfLifeTime, = unpack('>Q', data[8:16])
-    TTL = endOfLifeTime - (int(recvTime) if recvTime else int(time.time()))
+    TTL = endOfLifeTime - int(recvTime if recvTime else time.time())
     if TTL < 300:
         TTL = 300
-    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-        data[:8] + hashlib.sha512(data[8:]).digest()
-    ).digest()).digest()[0:8])
+    POW, = unpack('>Q', highlevelcrypto.double_sha512(
+        data[:8] + hashlib.sha512(data[8:]).digest())[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
             len(data) + payloadLengthExtraBytes

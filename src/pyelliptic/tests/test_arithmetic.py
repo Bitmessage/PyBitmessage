@@ -23,6 +23,12 @@ sample_privsigningkey = \
 sample_privencryptionkey = \
     b'4b0b73a54e19b059dc274ab69df095fe699f43b17397bca26fdf40f4d7400a3a'
 
+# [chan] bitmessage
+sample_wif_privsigningkey = \
+    b'a2e8b841a531c1c558ee0680c396789c7a2ea3ac4795ae3f000caf9fe367d144'
+sample_wif_privencryptionkey = \
+    b'114ec0e2dca24a826a0eed064b0405b0ac148abc3b1d52729697f4d7b873fdc6'
+
 sample_factor = \
     66858749573256452658262553961707680376751171096153613379801854825275240965733
 # G * sample_factor
@@ -39,6 +45,38 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(
             sample_point,
             arithmetic.base10_multiply(arithmetic.G, sample_factor))
+
+    def test_base58(self):
+        """Test encoding/decoding base58 using arithmetic functions"""
+        self.assertEqual(
+            arithmetic.decode(arithmetic.changebase(
+                b'2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK', 58, 256), 256),
+            25152821841976547050350277460563089811513157529113201589004)
+        self.assertEqual(
+            arithmetic.decode(arithmetic.changebase(
+                b'2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN', 58, 256), 256),
+            18875720106589866286514488037355423395410802084648916523381)
+        self.assertEqual(
+            arithmetic.changebase(arithmetic.encode(
+                25152821841976547050350277460563089811513157529113201589004,
+                256), 256, 58), b'2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK')
+        self.assertEqual(
+            arithmetic.changebase(arithmetic.encode(
+                18875720106589866286514488037355423395410802084648916523381,
+                256), 256, 58), b'2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN')
+
+    def test_wif(self):
+        """Decode WIFs of [chan] bitmessage and check the keys"""
+        self.assertEqual(
+            sample_wif_privsigningkey,
+            arithmetic.changebase(arithmetic.changebase(
+                b'5K42shDERM5g7Kbi3JT5vsAWpXMqRhWZpX835M2pdSoqQQpJMYm', 58, 256
+            )[1:-4], 256, 16))
+        self.assertEqual(
+            sample_wif_privencryptionkey,
+            arithmetic.changebase(arithmetic.changebase(
+                b'5HwugVWm31gnxtoYcvcK7oywH2ezYTh6Y4tzRxsndAeMi6NHqpA', 58, 256
+            )[1:-4], 256, 16))
 
     def test_decode(self):
         """Decode sample privsigningkey from hex to int and compare to factor"""
