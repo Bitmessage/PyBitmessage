@@ -11,10 +11,12 @@ ingredients:
     - python-msgpack
     - python-qrcode
     - python-qt4
+    - python-qtpy
     - python-setuptools
     - python-sip
     - python-six
     - sni-qt
+    - xkb-data
   exclude:
     - libmng2
     - libncursesw5
