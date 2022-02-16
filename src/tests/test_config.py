@@ -75,6 +75,18 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(
             self.config.safeGetFloat('nonexistent', 'nonexistent', 42.0), 42.0)
 
+    def test_setTemp(self):
+        """Set a temporary value and ensure it's returned by get()"""
+        self.config.setTemp('bitmessagesettings', 'connect', 'true')
+        self.assertIs(
+            self.config.safeGetBoolean('bitmessagesettings', 'connect'), True)
+        written_fp = StringIO('')
+        self.config.write(written_fp)
+        self.config._reset()
+        self.config.read_file(written_fp)
+        self.assertIs(
+            self.config.safeGetBoolean('bitmessagesettings', 'connect'), False)
+
     def test_reset(self):
         """Some logic for testing _reset()"""
         test_config_object = StringIO(test_config)
