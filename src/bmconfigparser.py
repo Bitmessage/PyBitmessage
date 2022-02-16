@@ -36,6 +36,15 @@ class BMConfigParser(SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return SafeConfigParser.set(self, section, option, value)
 
+    def get(self, section, option, **kwargs):
+        """Try returning temporary value before using parent get()"""
+        try:
+            return self._temp[section][option]
+        except KeyError:
+            pass
+        return SafeConfigParser.get(
+            self, section, option, **kwargs)
+
     def setTemp(self, section, option, value=None):
         """Temporary set option to value, not saving."""
         try:
@@ -91,8 +100,11 @@ class BMConfigParser(SafeConfigParser):
         return SafeConfigParser.items(self, section, True, variables)
 
     def _reset(self):
-        """Reset current config. There doesn't appear to be a built in
-            method for this"""
+        """
+        Reset current config.
+        There doesn't appear to be a built in method for this.
+        """
+        self._temp = {}
         sections = self.sections()
         for x in sections:
             self.remove_section(x)
