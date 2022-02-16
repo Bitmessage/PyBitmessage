@@ -1674,7 +1674,8 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.blackwhitelist.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
-                if config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
+                if config.getboolean(
+                        'bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
                     QtCore.QTimer.singleShot(0, self.appIndicatorHide)
             elif event.oldState() & QtCore.Qt.WindowMinimized:
                 # The window state has just been changed to
@@ -3058,7 +3059,8 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
-            label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + config.get(
+            label = "\"" + tableWidget.item(
+                currentInboxRow, 2).subject + "\" in " + config.get(
                 recipientAddress, "label")
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
                        label,
