@@ -4,7 +4,6 @@ BMConfigParser class definition and default configuration settings
 
 import os
 import shutil
-import sys  # FIXME: bad style! write more generally
 from threading import Event
 from datetime import datetime
 
@@ -52,41 +51,36 @@ class BMConfigParser(SafeConfigParser):
         except KeyError:
             self._temp[section] = {option: value}
 
-    def safeGetBoolean(self, section, field):
+    def safeGetBoolean(self, section, option):
         """Return value as boolean, False on exceptions"""
         try:
-            # Used in the python2.7
-            # return self.getboolean(section, field)
-            # Used in the python3.5.2
-            # print(config, section, field)
-            return self.getboolean(section, field)
+            return self.getboolean(section, option)
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return False
 
-    def safeGetInt(self, section, field, default=0):
+    def safeGetInt(self, section, option, default=0):
         """Return value as integer, default on exceptions,
         0 if default missing"""
         try:
-            # Used in the python2.7
-            # return self.getint(section, field)
-            # Used in the python3.7.0
-            return int(self.get(section, field))
+            return int(self.get(section, option))
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
-    def safeGetFloat(self, section, field, default=0.0):
+    def safeGetFloat(self, section, option, default=0.0):
         """Return value as float, default on exceptions,
         0.0 if default missing"""
         try:
-            return self.getfloat(section, field)
+            return self.getfloat(section, option)
         except (configparser.NoSectionError, configparser.NoOptionError,
                 ValueError, AttributeError):
             return default
 
     def safeGet(self, section, option, default=None):
-        """Return value as is, default on exceptions, None if default missing"""
+        """
+        Return value as is, default on exceptions, None if default missing
+        """
         try:
             return self.get(section, option)
         except (configparser.NoSectionError, configparser.NoOptionError,
@@ -111,26 +105,14 @@ class BMConfigParser(SafeConfigParser):
 
     def read(self, filenames=None):
         self._reset()
-        SafeConfigParser.read(self, os.path.join(os.path.dirname(__file__), 'default.ini'))
+        SafeConfigParser.read(
+            self, os.path.join(os.path.dirname(__file__), 'default.ini'))
         if filenames:
             SafeConfigParser.read(self, filenames)
 
-    if sys.version_info[0] == 3:
-        @staticmethod
-        def addresses(hidden=False):
-            """Return a list of local bitmessage addresses (from section labels)"""
-            return [x for x in config.sections() if x.startswith('BM-') and (
-                    hidden or not config.safeGetBoolean(x, 'hidden'))]
-
-        def readfp(self, fp, filename=None):
-            # pylint: disable=no-member
-            SafeConfigParser.read_file(self, fp)
-    else:
-        @staticmethod
-        def addresses():
-            """Return a list of local bitmessage addresses (from section labels)"""
-            return [
-                x for x in config.sections() if x.startswith('BM-')]
+    def addresses(self):
+        """Return a list of local bitmessage addresses (from section labels)"""
+        return [x for x in self.sections() if x.startswith('BM-')]
 
     def save(self):
         """Save the runtime config onto the filesystem"""
@@ -173,4 +155,7 @@ class BMConfigParser(SafeConfigParser):
         return True
 
 
-config = BMConfigParser()
+if not getattr(BMConfigParser, 'read_file', False):
+    BMConfigParser.read_file = BMConfigParser.readfp
+
+config = BMConfigParser()  # TODO: remove this crutch

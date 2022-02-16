@@ -81,7 +81,7 @@ class TestConfig(unittest.TestCase):
         """safeGetInt retuns provided default for bitmessagesettings option or 0"""
         config = BMConfigParser()
         test_config_object = StringIO(test_config)
-        config.readfp(test_config_object)
+        config.read_file(test_config_object)
         self.assertEqual(
             config.safeGetInt('bitmessagesettings', 'maxaddrperstreamsend'), 100)
         # pylint: disable=protected-access
