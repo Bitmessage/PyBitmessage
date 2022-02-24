@@ -134,13 +134,13 @@ function build_dll(){
 	cd src/bitmsghash || exit 1
 	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Create dll"
-		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native \
+		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=x86-64 \
                     "-I$HOME/.wine64/drive_c/OpenSSL-Win64/include" \
                     -I/usr/x86_64-w64-mingw32/include \
                     "-L$HOME/.wine64/drive_c/OpenSSL-Win64/lib" \
                     -c bitmsghash.cpp
 		x86_64-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
-                    -D_WIN32 -O3 -march=native \
+                    -D_WIN32 -O3 -march=x86-64 \
                     "-I$HOME/.wine64/drive_c/OpenSSL-Win64/include" \
                     "-L$HOME/.wine64/drive_c/OpenSSL-Win64" \
                     -L/usr/lib/x86_64-linux-gnu/wine \
@@ -148,13 +148,13 @@ function build_dll(){
                     -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
 	else
 		echo "Create dll"
-		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native \
+		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=i686 \
                     "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
                     -I/usr/i686-w64-mingw32/include \
                     "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib" \
                     -c bitmsghash.cpp
 		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
-                    -D_WIN32 -O3 -march=native \
+                    -D_WIN32 -O3 -march=i686 \
                     "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
                     "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW" \
                     -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
