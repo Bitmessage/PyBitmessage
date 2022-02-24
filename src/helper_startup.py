@@ -86,7 +86,7 @@ def loadConfig():
         config.set(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes',
             str(defaults.networkDefaultPayloadLengthExtraBytes))
-
+        config.set('bitmessagesettings', 'dontconnect', 'true')
         # UI setting to stop trying to send messages after X days/months
         # config.set('bitmessagesettings', 'stopresendingafterxdays', '')
         # config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
