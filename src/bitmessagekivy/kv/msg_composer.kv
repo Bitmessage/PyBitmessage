@@ -76,7 +76,7 @@
                     icon: 'qrcode-scan'
                     pos_hint: {'center_x': 0.95, 'y': 0.6}
                     on_release:
-                        if root.is_camara_attached(): app.root.ids.scr_mngr.current = 'scanscreen'
+                        if root.is_camara_attached(): app.set_screen('scanscreen')
                         else: root.camera_alert()
                     on_press:
                         app.root.ids.sc23.get_screen('composer')

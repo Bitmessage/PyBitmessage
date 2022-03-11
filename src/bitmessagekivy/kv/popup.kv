@@ -153,7 +153,7 @@
         MDRaisedButton:
             size_hint: 1.5, None
             height: dp(40)
-            on_press: app.root.ids.scr_mngr.current = 'showqrcode'
+            on_press: app.set_screen('showqrcode')
             on_press: app.root.ids.sc15.qrdisplay(root, root.address)
             MDLabel:
                 font_style: 'H6'
