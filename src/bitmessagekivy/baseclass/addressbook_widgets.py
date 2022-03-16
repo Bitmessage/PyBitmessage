@@ -1,4 +1,4 @@
-# pylint: disable=no-member, too-many-arguments, no-self-use
+# pylint: disable=no-member, too-many-arguments
 """
 Addressbook widgets are here.
 """
@@ -24,13 +24,11 @@ class HelperAddressBook(object):
             theme_text_color='Primary',
             # FIXME: searching_text supposed to be inside kivy_sate.py and need to create a PR for kivy_state.py
             text="No contact found!" if state.searching_text
-            else "No contact found yet...... ",
-            halign='center',
-            size_hint_y=None,
-            valign='top')
+            else "No contact found yet...... ", halign='center', size_hint_y=None, valign='top')
         return content
 
-    def address_detail_popup(self, send_message, update_address, close_popup, width, obj):
+    @staticmethod
+    def address_detail_popup(obj, send_message, update_address, close_popup, width):
         """This function shows the address's details and opens the popup."""
         show_dialogue = MDDialog(
             type="custom",

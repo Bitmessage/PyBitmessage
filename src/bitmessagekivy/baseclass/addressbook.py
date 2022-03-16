@@ -18,9 +18,9 @@ from kivy.properties import (
 )
 from kivy.uix.screenmanager import Screen
 
-from helper_sql import sqlExecute
 
 import state
+
 
 from bitmessagekivy.get_platform import platform
 from bitmessagekivy import kivy_helper_search
@@ -30,6 +30,8 @@ from bitmessagekivy.baseclass.common import (
 )
 from bitmessagekivy.baseclass.popup import AddbookDetailPopup
 from bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
+from debug import logger
+from helper_sql import sqlExecute
 
 
 class AddressBook(Screen, HelperAddressBook):
@@ -49,7 +51,7 @@ class AddressBook(Screen, HelperAddressBook):
     def init_ui(self, dt=0):
         """Clock Schdule for method AddressBook"""
         self.loadAddresslist(None, 'All', '')
-        print(dt)
+        logger.debug(dt)
 
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook"""
@@ -118,8 +120,8 @@ class AddressBook(Screen, HelperAddressBook):
                 self.address = obj.address = address
                 width = .9 if platform == 'android' else .8
                 self.addbook_popup = self.address_detail_popup(
-                    self.send_message_to, self.update_addbook_label, self.close_pop,
-                    width=width, obj=obj)
+                    obj, self.send_message_to, self.update_addbook_label,
+                    self.close_pop, width)
                 self.addbook_popup.auto_dismiss = False
                 self.addbook_popup.open()
         else:
@@ -132,7 +134,7 @@ class AddressBook(Screen, HelperAddressBook):
         if self.ids.ml.children is not None:
             self.ids.tag_label.text = ''
         sqlExecute(
-            "DELETE FROM  addressbook WHERE address = '{}';".format(address))
+            "DELETE FROM  addressbook WHERE address = ?", address)
         toast('Address Deleted')
 
     def close_pop(self, instance):
@@ -150,9 +152,8 @@ class AddressBook(Screen, HelperAddressBook):
             stored_labels.remove(label)
         if label and label not in stored_labels:
             sqlExecute(
-                "UPDATE addressbook SET label = '{}' WHERE"
-                " address = '{}';".format(
-                    label, self.addbook_popup.content_cls.address))
+                "UPDATE addressbook SET label = ? WHERE"
+                " address = ?", label, self.addbook_popup.content_cls.address)
             state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
             state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()
