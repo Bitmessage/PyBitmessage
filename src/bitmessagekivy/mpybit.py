@@ -6,9 +6,12 @@
 from kivy.app import App
 from kivy.uix.label import Label
 
+from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
+
 
 class NavigateApp(App):
     """Navigation Layout of class"""
+    kivy_state_obj = KivyStateVariables()
 
     def build(self):
         """Method builds the widget"""
