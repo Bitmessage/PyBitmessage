@@ -162,11 +162,5 @@ class AddressBook(Screen, HelperAddressBook):
     def send_message_to(self, instance):
         """Method used to fill to_address of composer autofield"""
         state.kivyapp.set_navbar_for_composer()
-        window_obj = state.kivyapp.root.ids
-        window_obj.sc3.children[1].ids.txt_input.text = self.address
-        window_obj.sc3.children[1].ids.ti.text = ''
-        window_obj.sc3.children[1].ids.btn.text = 'Select'
-        window_obj.sc3.children[1].ids.subject.text = ''
-        window_obj.sc3.children[1].ids.body.text = ''
-        window_obj.scr_mngr.current = 'create'
+        self.compose_message(None, self.address)
         self.addbook_popup.dismiss()

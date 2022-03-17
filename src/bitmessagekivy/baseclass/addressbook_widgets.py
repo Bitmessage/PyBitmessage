@@ -50,3 +50,17 @@ class HelperAddressBook(object):
             ],
         )
         return show_dialogue
+
+    @staticmethod
+    def compose_message(from_addr=None, to_addr=None):
+        """This UI independent method for message sending to reciever"""
+        window_obj = state.kivyapp.root.ids
+        if to_addr:
+            window_obj.sc3.children[1].ids.txt_input.text = to_addr
+        if from_addr:
+            window_obj.sc3.children[1].ids.txt_input.text = from_addr
+        window_obj.sc3.children[1].ids.ti.text = ''
+        window_obj.sc3.children[1].ids.btn.text = 'Select'
+        window_obj.sc3.children[1].ids.subject.text = ''
+        window_obj.sc3.children[1].ids.body.text = ''
+        window_obj.scr_mngr.current = 'create'
