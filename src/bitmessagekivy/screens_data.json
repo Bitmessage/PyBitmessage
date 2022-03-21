@@ -2,5 +2,10 @@
     "Login": {
         "kv_string": "login",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.login import *"
+    },
+    "My addresses": {
+        "kv_string": "myaddress",
+        "name_screen": "myaddress",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.myaddress import MyAddress"
     }
 }
