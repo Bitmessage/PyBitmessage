@@ -1,6 +1,6 @@
 # A container for PyBitmessage daemon
 
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 
 RUN apt-get update
 
@@ -8,8 +8,6 @@ RUN apt-get update
 RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     build-essential libcap-dev libssl-dev \
     python-all-dev python-msgpack python-pip python-setuptools
-
-RUN pip2 install --upgrade pip
 
 EXPOSE 8444 8442
 
@@ -19,18 +17,17 @@ ENV BITMESSAGE_HOME ${HOME}
 WORKDIR ${HOME}
 ADD . ${HOME}
 
-# Install tests dependencies
-RUN pip2 install -r requirements.txt
 # Install
-RUN python2 setup.py install
+RUN pip2 install .
+
+# Cleanup
+RUN rm -rf /var/lib/apt/lists/*
+RUN rm -rf ${HOME}
 
 # Create a user
-RUN useradd bitmessage && chown -R bitmessage ${HOME}
+RUN useradd -r bitmessage && chown -R bitmessage ${HOME}
 
 USER bitmessage
-
-# Clean HOME
-RUN rm -rf ${HOME}/*
 
 # Generate default config
 RUN pybitmessage -t
