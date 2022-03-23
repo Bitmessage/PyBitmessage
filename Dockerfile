@@ -18,7 +18,7 @@ WORKDIR ${HOME}
 ADD . ${HOME}
 
 # Install
-RUN pip2 install .
+RUN pip2 install jsonrpclib .
 
 # Cleanup
 RUN rm -rf /var/lib/apt/lists/*
@@ -35,6 +35,9 @@ RUN pybitmessage -t
 # Setup environment
 RUN APIPASS=$(tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo) \
   && echo "\napiusername: api\napipassword: $APIPASS" \
-  && echo "apienabled = true\napiinterface = 0.0.0.0\napiusername = api\napipassword = $APIPASS" >> keys.dat
+  && sed -ie "s|\(apiinterface = \).*|\10\.0\.0\.0|g" keys.dat \
+  && sed -ie "s|\(apivariant = \).*|\1json|g" keys.dat \
+  && sed -ie "s|\(apiusername = \).*|\1api|g" keys.dat \
+  && sed -ie "s|\(apipassword = \).*|\1$APIPASS|g" keys.dat
 
 CMD ["pybitmessage", "-d"]
