@@ -1,4 +1,4 @@
-# pylint: disable=no-member, too-many-arguments
+# pylint: disable=no-member, too-many-arguments, too-few-public-methods
 """
 Addressbook widgets are here.
 """
@@ -10,11 +10,13 @@ from kivymd.uix.label import MDLabel
 
 import state
 
+no_address_found = "No contact found yet......"
+empty_search_label = "No contact found!"
 
-class HelperAddressBook(object):
-    """Widget used in Addressbook are here"""
-    def __init__(self):
-        pass
+
+# pylint: disable=no-init, old-style-class
+class DefaultLabelMixin:
+    """Common label on blank screen"""
 
     @staticmethod
     def default_label_when_empty():
@@ -22,10 +24,14 @@ class HelperAddressBook(object):
         content = MDLabel(
             font_style='Caption',
             theme_text_color='Primary',
-            # FIXME: searching_text supposed to be inside kivy_sate.py and need to create a PR for kivy_state.py
-            text="No contact found!" if state.searching_text
-            else "No contact found yet...... ", halign='center', size_hint_y=None, valign='top')
+            # FIXME: searching_text supposed to be inside kivy_sate.py, typo and need to create a PR for kivy_state.py
+            text=empty_search_label if state.searching_text else no_address_found,
+            halign='center', size_hint_y=None, valign='top')
         return content
+
+
+class HelperAddressBook(DefaultLabelMixin):
+    """Widget used in Addressbook are here"""
 
     @staticmethod
     def address_detail_popup(obj, send_message, update_address, close_popup, width):

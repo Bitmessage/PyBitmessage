@@ -9,6 +9,7 @@ All saved addresses are managed in Addressbook
 
 """
 
+import os
 from functools import partial
 
 from kivy.clock import Clock
@@ -82,8 +83,9 @@ class AddressBook(Screen, HelperAddressBook):
             listItem.secondary_text = item[1]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
-            image = state.imageDir + "/text_images/{}.png".format(
-                avatarImageFirstLetter(item[0].strip()))
+            image = os.path.join(
+                state.imageDir, "text_images", "{}.png".format(avatarImageFirstLetter(item[0].strip()))
+            )
             message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(
                 self.addBook_detail, item[1], item[0], message_row))
