@@ -60,5 +60,10 @@
         "kv_string": "maildetail",
         "name_screen": "mailDetail",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail"
+    },
+    "Draft": {
+        "kv_string": "draft",
+        "name_screen": "draft",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.draft import Draft"
     }
 }

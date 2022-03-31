@@ -12,6 +12,20 @@ class DraftMessage(TeleniumTestProcess):
     test_subject = 'Test Subject text'
     test_body = 'Hey, This is draft Message Body'
 
+    @ordered
+    def test_draft_screen(self):
+        """Test draft screen is open"""
+        # Checking current Screen(Inbox screen)
+        self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
+        # Method to open side navbar
+        self.open_side_navbar()
+        # this is for opening Draft screen
+        self.cli.wait_click('//NavigationItem[@text=\"Draft\"]', timeout=2)
+        # Checking the drawer is in 'closed' state
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # Checking Draft Screen
+        self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=5)
+
     @skip_screen_checks
     @ordered
     def test_save_message_to_draft(self):
