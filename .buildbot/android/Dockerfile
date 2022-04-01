@@ -2,16 +2,18 @@
 FROM ubuntu:bionic AS android
 # FROM ubuntu:20.04 AS buildbot-bionic
 
+RUN apt -y update -qq
+RUN apt -y install wget
+
 RUN wget -nc "https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip"
 RUN wget -nc "https://dl.google.com/android/repository/android-ndk-r23b-linux.zip"
 RUN wget -nc "http://archive.apache.org/dist/ant/binaries/apache-ant-1.10.12-bin.tar.gz"
 
 # SYSTEM DEPENDENCIES
 
-RUN apt -y update -qq
 RUN apt -y install --no-install-recommends python3-pip \
     pip3 python3 virtualenv python3-setuptools \
-    python3-wheel git wget unzip sudo patch bzip2 lzma
+    python3-wheel git unzip sudo patch bzip2 lzma
 RUN apt -y autoremove
 
 # BUILD DEPENDENCIES
