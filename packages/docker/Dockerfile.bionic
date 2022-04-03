@@ -27,7 +27,6 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     dh-apparmor debhelper dh-python python-msgpack python-qt4 git python-stdeb \
     python-all-dev python-crypto python-psutil \
     fakeroot python-pytest python3-wheel \
-    libglib2.0-dev \
     # Code quality
     pylint python-pycodestyle python3-pycodestyle pycodestyle python-flake8 \
     python3-flake8 flake8 python-pyflakes python3-pyflakes pyflakes pyflakes3 \

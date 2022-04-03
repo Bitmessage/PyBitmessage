@@ -16,6 +16,7 @@ ingredients:
     - python-six
     - sni-qt
   exclude:
+    - libglib2.0-0
     - libmng2
     - libncursesw5
     - libqt4-declarative
@@ -31,5 +32,6 @@ ingredients:
     - ../deb_dist/pybitmessage_*_amd64.deb
 
 script:
+  - rm -rf usr/share/glib-2.0/schemas
   - cp usr/share/icons/hicolor/scalable/apps/pybitmessage.svg .
   - mv usr/bin/python2.7 usr/bin/python2
