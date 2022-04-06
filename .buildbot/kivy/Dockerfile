@@ -13,7 +13,8 @@ RUN apt-get install -yq python-setuptools \
     python-dev \
     python3-virtualenv \
     python3-pip \
+    wget
 
-RUN sudo wget -O "/usr/local/bin/travis2bash.sh" "https://git.bitmessage.org/Bitmessage/buildbot-scripts/raw/branch/master/travis2bash.sh"
+RUN wget -O /usr/local/bin/travis2bash.sh https://git.bitmessage.org/Bitmessage/buildbot-scripts/raw/branch/master/travis2bash.sh
 
-RUN sudo chmod a+rx "/usr/local/bin/travis2bash.sh"
+RUN chmod a+rx "/usr/local/bin/travis2bash.sh"
