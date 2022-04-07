@@ -20,7 +20,9 @@ fi
 
 if [ -f "out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage" ]; then
     echo "Build Successful";
-    echo "Run out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage"
+    echo "Run out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage";
+    out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage -t
 else
-    echo "Build Failed"
+    echo "Build Failed";
+    exit 1
 fi

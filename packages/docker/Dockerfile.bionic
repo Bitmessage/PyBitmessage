@@ -23,12 +23,8 @@ WORKDIR /home/builder/src
 RUN VERSION=$(python setup.py -V) \
    && python setup.py sdist \
    && python setup.py --command-packages=stdeb.command bdist_deb \
-   && dpkg-deb -I deb_dist/pybitmessage_${VERSION}-1_amd64.deb
-
-RUN buildscripts/appimage.sh
-RUN VERSION=$(python setup.py -V) \
-   && out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage \
-   --appimage-extract-and-run -t
+   && dpkg-deb -I deb_dist/pybitmessage_${VERSION}-1_amd64.deb \
+   && buildscripts/appimage.sh
 
 ###############################################################################
 
