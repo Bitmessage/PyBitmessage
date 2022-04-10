@@ -20,10 +20,11 @@ COPY . /home/builder/src
 
 WORKDIR /home/builder/src
 
-RUN VERSION=$(python setup.py -V) \
-   && python setup.py sdist \
+CMD python setup.py sdist \
    && python setup.py --command-packages=stdeb.command bdist_deb \
-   && dpkg-deb -I deb_dist/pybitmessage_${VERSION}-1_amd64.deb \
+   && dpkg-deb -I deb_dist/*.deb \
+   && cp deb_dist/*.deb /dist/ \
+   && ln -s /dist out \
    && buildscripts/appimage.sh
 
 ###############################################################################
