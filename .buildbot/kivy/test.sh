@@ -1,3 +1,3 @@
 #!/bin/bash
 
-travis2bash.sh .travis-kivy.yml
+xvfb-run python3 tests-kivy.py

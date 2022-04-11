@@ -2,19 +2,23 @@
 FROM ubuntu:bionic AS kivy
 # FROM ubuntu:20.04 AS buildbot-bionic
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update
 
 RUN apt-get -y install sudo
 
 RUN apt-get install -yq python-setuptools \
     python-setuptools libssl-dev libpq-dev python-prctl python-dev \
-    python-dev python-virtualenv python-pip virtualenv \
-    libssl-dev \
-    python-dev \
+    python-virtualenv python-pip virtualenv \
+    libjpeg-dev zlib1g-dev python3-dev \
     python3-virtualenv \
     python3-pip \
-    wget
+    wget \
+    build-essential libcap-dev libmtdev-dev xvfb xclip git python3-opencv
+    
+RUN pip3 install Cython Pillow pyzbar telenium
 
-RUN wget -O /usr/local/bin/travis2bash.sh https://git.bitmessage.org/Bitmessage/buildbot-scripts/raw/branch/master/travis2bash.sh
+RUN pip3 install --upgrade setuptools pip
 
-RUN chmod a+rx "/usr/local/bin/travis2bash.sh"
+RUN pip3 install -e git+https://github.com/kivymd/KivyMD#egg=kivymd
