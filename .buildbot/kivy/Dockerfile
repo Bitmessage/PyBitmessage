@@ -16,7 +16,9 @@ RUN apt-get install -yq python-setuptools \
     python3-pip \
     wget \
     build-essential libcap-dev libmtdev-dev xvfb xclip git python3-opencv
-    
+
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
 RUN pip3 install Cython Pillow pyzbar telenium
 
 RUN pip3 install --upgrade setuptools pip
