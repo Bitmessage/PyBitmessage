@@ -1,14 +1,15 @@
+"""Test packets creation and parsing"""
 
-import unittest
 from binascii import unhexlify
 from struct import pack
 
 from pybitmessage import addresses, protocol
 
 from .samples import magic
+from .test_protocol import TestSocketInet
 
 
-class TestSerialize(unittest.TestCase):
+class TestSerialize(TestSocketInet):
     """Test serializing and deserializing packet data"""
 
     def test_varint(self):
