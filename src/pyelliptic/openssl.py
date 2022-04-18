@@ -747,9 +747,9 @@ class _OpenSSL(object):
         if data != 0:
             if sys.version_info.major == 3 and isinstance(data, type('')):
                 data = data.encode()
-            buffer_ = self.create_string_buffer(data, size + 1)
+            buffer_ = self.create_string_buffer(data, size)
         else:
-            buffer_ = self.create_string_buffer(size + 1)
+            buffer_ = self.create_string_buffer(size)
         return buffer_
 
 
