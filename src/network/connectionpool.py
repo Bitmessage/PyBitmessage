@@ -164,7 +164,7 @@ class BMConnectionPool(object):
     def getListeningIP():
         """What IP are we supposed to be listening on?"""
         if config.safeGet(
-                "bitmessagesettings", "onionhostname").endswith(".onion"):
+                "bitmessagesettings", "onionhostname", "").endswith(".onion"):
             host = config.safeGet(
                 "bitmessagesettings", "onionbindip")
         else:

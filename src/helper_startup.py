@@ -241,8 +241,6 @@ def updateConfig():
                 * defaults.networkDefaultPayloadLengthExtraBytes)
         )
 
-    if not config.has_option('bitmessagesettings', 'onionhostname'):
-        config.set('bitmessagesettings', 'onionhostname', '')
     if not config.has_option('bitmessagesettings', 'onionport'):
         config.set('bitmessagesettings', 'onionport', '8444')
     if not config.has_option('bitmessagesettings', 'onionbindip'):
