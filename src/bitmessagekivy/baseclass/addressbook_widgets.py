@@ -6,31 +6,11 @@ Addressbook widgets are here.
 
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.label import MDLabel
 
 import state
 
-no_address_found = "No contact found yet......"
-empty_search_label = "No contact found!"
 
-
-# pylint: disable=no-init, old-style-class
-class DefaultLabelMixin:
-    """Common label on blank screen"""
-
-    @staticmethod
-    def default_label_when_empty():
-        """This function returns default message while no address is there."""
-        content = MDLabel(
-            font_style='Caption',
-            theme_text_color='Primary',
-            # FIXME: searching_text supposed to be inside kivy_sate.py, typo and need to create a PR for kivy_state.py
-            text=empty_search_label if state.searching_text else no_address_found,
-            halign='center', size_hint_y=None, valign='top')
-        return content
-
-
-class HelperAddressBook(DefaultLabelMixin):
+class HelperAddressBook(object):
     """Widget used in Addressbook are here"""
 
     @staticmethod
