@@ -7,7 +7,7 @@ processes the network objects
 import hashlib
 import logging
 import random
-import subprocess  # nosec
+import subprocess  # nosec B404
 import threading
 import time
 from binascii import hexlify
@@ -458,7 +458,7 @@ class objectProcessor(threading.Thread):
 
         for key, cryptorObject in sorted(
                 shared.myECCryptorObjects.items(),
-                key=lambda x: random.random()):
+                key=lambda x: random.random()):  # nosec B311
             try:
                 # continue decryption attempts to avoid timing attacks
                 if initialDecryptionSuccessful:
@@ -680,7 +680,8 @@ class objectProcessor(threading.Thread):
                 apiNotifyPath = config.safeGet(
                     'bitmessagesettings', 'apinotifypath')
                 if apiNotifyPath:
-                    subprocess.call([apiNotifyPath, "newMessage"])
+                    subprocess.call(  # nosec B603
+                        [apiNotifyPath, "newMessage"])
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
@@ -776,7 +777,7 @@ class objectProcessor(threading.Thread):
             initialDecryptionSuccessful = False
             for key, cryptorObject in sorted(
                     shared.MyECSubscriptionCryptorObjects.items(),
-                    key=lambda x: random.random()):
+                    key=lambda x: random.random()):  # nosec B311
                 try:
                     # continue decryption attempts to avoid timing attacks
                     if initialDecryptionSuccessful:
@@ -964,7 +965,7 @@ class objectProcessor(threading.Thread):
             apiNotifyPath = config.safeGet(
                 'bitmessagesettings', 'apinotifypath')
             if apiNotifyPath:
-                subprocess.call([apiNotifyPath, "newBroadcast"])
+                subprocess.call([apiNotifyPath, "newBroadcast"])  # nosec B603
 
         # Display timing data
         logger.info(

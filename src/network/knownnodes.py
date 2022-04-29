@@ -7,7 +7,7 @@ Manipulations with knownNodes dictionary.
 import json
 import logging
 import os
-import pickle
+import pickle  # nosec B403
 import threading
 import time
 try:

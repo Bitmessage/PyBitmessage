@@ -398,7 +398,7 @@ class TCPServer(AdvancedDispatcher):
             try:
                 if attempt > 0:
                     logger.warning('Failed to bind on port %s', port)
-                    port = random.randint(32767, 65535)
+                    port = random.randint(32767, 65535)  # nosec B311
                 self.bind((host, port))
             except socket.error as e:
                 if e.errno in (asyncore.EADDRINUSE, asyncore.WSAEADDRINUSE):

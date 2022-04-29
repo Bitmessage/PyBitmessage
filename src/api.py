@@ -62,9 +62,9 @@ import errno
 import hashlib
 import httplib
 import json
-import random  # nosec
+import random
 import socket
-import subprocess
+import subprocess  # nosec B404
 import time
 import xmlrpclib
 from binascii import hexlify, unhexlify
@@ -240,7 +240,7 @@ class singleAPI(StoppableThread):
                 if attempt > 0:
                     logger.warning(
                         'Failed to start API listener on port %s', port)
-                    port = random.randint(32767, 65535)
+                    port = random.randint(32767, 65535)  # nosec B311
                 se = StoppableRPCServer(
                     (config.get(
                         'bitmessagesettings', 'apiinterface'),
@@ -266,7 +266,7 @@ class singleAPI(StoppableThread):
         if apiNotifyPath:
             logger.info('Trying to call %s', apiNotifyPath)
             try:
-                subprocess.call([apiNotifyPath, "startingUp"])
+                subprocess.call([apiNotifyPath, "startingUp"])  # nosec B603
             except OSError:
                 logger.warning(
                     'Failed to call %s, removing apinotifypath setting',

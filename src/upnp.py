@@ -328,7 +328,7 @@ class uPnPThread(StoppableThread):
                 elif i == 1 and self.extPort:
                     extPort = self.extPort  # try external port from last time next
                 else:
-                    extPort = randint(32767, 65535)
+                    extPort = randint(32767, 65535)  # nosec B311
                 logger.debug(
                     "Attempt %i, requesting UPnP mapping for %s:%i on external port %i",
                     i,

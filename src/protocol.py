@@ -56,7 +56,7 @@ OBJECT_I2P = 0x493250
 OBJECT_ADDR = 0x61646472
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
-    '>Q', random.randrange(1, 18446744073709551615))
+    '>Q', random.randrange(1, 18446744073709551615))  # nosec B311
 
 # Compiled struct for packing/unpacking headers
 # New code should use CreatePacket instead of Header.pack

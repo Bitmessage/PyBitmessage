@@ -140,7 +140,7 @@ class Dandelion:  # pylint: disable=old-style-class
         """
         try:
             # pick a random from available stems
-            stem = choice(range(len(self.stem)))
+            stem = choice(range(len(self.stem)))  # nosec B311
             if self.stem[stem] == parent:
                 # one stem available and it's the parent
                 if len(self.stem) == 1:

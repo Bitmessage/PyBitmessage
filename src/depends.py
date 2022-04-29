@@ -17,7 +17,7 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     )
 
 import logging  # noqa:E402
-import subprocess
+import subprocess  # nosec B404
 
 from importlib import import_module
 
