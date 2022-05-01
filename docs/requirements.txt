@@ -1,3 +1,3 @@
-m2r
+m2r2
 sphinxcontrib-apidoc
 docutils<=0.17.1
