@@ -18,10 +18,9 @@ from kivy.properties import (
     StringProperty
 )
 from kivy.uix.screenmanager import Screen
-
+from kivy.app import App
 
 import state
-
 
 from bitmessagekivy.get_platform import platform
 from bitmessagekivy import kivy_helper_search
@@ -49,6 +48,8 @@ class AddressBook(Screen, HelperAddressBook):
         """Getting AddressBook Details"""
         super(AddressBook, self).__init__(*args, **kwargs)
         self.addbook_popup = None
+        self.kivy_running_app = App.get_running_app()
+        self.kivy_state = self.kivy_running_app.kivy_state_obj
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
@@ -58,10 +59,10 @@ class AddressBook(Screen, HelperAddressBook):
 
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook"""
-        if state.searching_text:
+        if self.kivy_state.searching_text:
             self.ids.scroll_y.scroll_y = 1.0
             where = ['label', 'address']
-            what = state.searching_text
+            what = self.kivy_state.searching_text
         xAddress = ''
         self.ids.tag_label.text = ''
         self.queryreturn = kivy_helper_search.search_sql(
