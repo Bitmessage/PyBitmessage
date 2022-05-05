@@ -11,7 +11,10 @@ from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 
 class NavigateApp(App):
     """Navigation Layout of class"""
-    kivy_state_obj = KivyStateVariables()
+
+    def __init__(self):
+        super(NavigateApp, self).__init__()
+        self.kivy_state_obj = KivyStateVariables()
 
     def build(self):
         """Method builds the widget"""
