@@ -13,8 +13,8 @@ class KivyStateVariables(object):
         self.association = ''
         self.navinstance = None
         self.mail_id = 0
-        self.myAddressObj = None
-        self.detailPageType = None
+        self.my_address_obj = None
+        self.detail_page_type = None
         self.ackdata = None
         self.status = None
         self.screen_density = None
@@ -25,12 +25,12 @@ class KivyStateVariables(object):
         self.trash_count = 0
         self.draft_count = 0
         self.all_count = 0
-        self.searcing_text = ''
+        self.searching_text = ''
         self.search_screen = ''
         self.send_draft_mail = None
         self.is_allmail = False
         self.in_composer = False
-        self.availabe_credit = 0
+        self.available_credit = 0
         self.in_sent_method = False
         self.in_search_mode = False
-        self.imageDir = None
+        self.image_dir = None
