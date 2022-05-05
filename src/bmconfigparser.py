@@ -154,6 +154,21 @@ class BMConfigParser(SafeConfigParser):
             return False
         return True
 
+    def search_addresses(self, address, searched_text):
+        """Return the searched label of MyAddress"""
+        return [x for x in [self.get(address, 'label').lower(),
+                address.lower()] if searched_text in x]
+
+    def disable_address(self, address):
+        """"Disabling the specific Address"""
+        self.set(str(address), 'enabled', 'false')
+        self.save()
+
+    def enable_address(self, address):
+        """"Enabling the specific Address"""
+        self.set(address, 'enabled', 'true')
+        self.save()
+
 
 if not getattr(BMConfigParser, 'read_file', False):
     BMConfigParser.read_file = BMConfigParser.readfp
