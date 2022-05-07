@@ -1,3 +1,5 @@
 #!/bin/sh
 
-python setup.py install --user
+pip3 install -r kivy-requirements.txt
+
+pip3 install .
