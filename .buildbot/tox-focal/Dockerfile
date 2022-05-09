@@ -11,3 +11,5 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     language-pack-en qt5dxcb-plugin tor xvfb
 
 RUN python3.9 -m pip install --upgrade pip tox virtualenv
+
+ADD . .
