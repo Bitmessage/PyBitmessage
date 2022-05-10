@@ -46,3 +46,8 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
         return ackdata
     else:
         return None
+
+
+def delete(ack_data):
+    """Perform Delete query"""
+    sqlExecute("DELETE FROM sent WHERE ackdata = ?", ack_data)
