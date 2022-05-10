@@ -3,6 +3,7 @@ Test the alternatives for crypto primitives
 """
 
 import hashlib
+import ssl
 import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify
@@ -11,9 +12,9 @@ from pybitmessage import highlevelcrypto
 
 
 try:
-    from Crypto.Hash import RIPEMD
+    from Crypto.Hash import RIPEMD160
 except ImportError:
-    RIPEMD = None
+    RIPEMD160 = None
 
 from .samples import (
     sample_pubsigningkey, sample_pubencryptionkey,
@@ -42,6 +43,8 @@ class RIPEMD160TestCase(object):
         self.assertEqual(hexlify(self._hashdigest(pubkey_sha)), sample_ripe)
 
 
+@unittest.skipIf(
+    ssl.OPENSSL_VERSION.startswith('OpenSSL 3'), 'no ripemd160 in openssl 3')
 class TestHashlib(RIPEMD160TestCase, unittest.TestCase):
     """RIPEMD160 test case for hashlib"""
     @staticmethod
@@ -51,12 +54,12 @@ class TestHashlib(RIPEMD160TestCase, unittest.TestCase):
         return hasher.digest()
 
 
-@unittest.skipUnless(RIPEMD, 'pycrypto package not found')
+@unittest.skipUnless(RIPEMD160, 'pycrypto package not found')
 class TestCrypto(RIPEMD160TestCase, unittest.TestCase):
     """RIPEMD160 test case for Crypto"""
     @staticmethod
     def _hashdigest(data):
-        return RIPEMD.RIPEMD160Hash(data).digest()
+        return RIPEMD160.new(data).digest()
 
 
 class TestHighlevelcrypto(unittest.TestCase):
