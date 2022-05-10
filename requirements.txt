@@ -1,6 +1,6 @@
 coverage
 psutil
-pycrypto
+pycryptodome
 PyQt5;python_version>="3.7"
 python_prctl;platform_system=="Linux"
 six
