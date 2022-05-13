@@ -1,8 +1,9 @@
 """
 Various tests for config
 """
+import logging
 import unittest
-
+from six.moves import configparser
 from six import StringIO
 from pybitmessage.bmconfigparser import BMConfigParser
 
@@ -32,7 +33,17 @@ acceptmismatch = False
 maxnodes = 15000
 
 [zlib]
-maxsize = 1048576"""
+maxsize = 1048576
+
+[BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih]
+label = Test_address1
+enabled = true
+decoy = false
+noncetrialsperbyte = 1000
+payloadlengthextrabytes = 1000
+privsigningkey = 5HsCSd1UFrsdoAoeSNSP2pUBPbHSaZBJE9GbWa1PwDzPhDz7qwx
+privencryptionkey = 5JNNReZVMYSzQEhREV835PNnkNtLsPybd5KMZ2ufeXeEuSTpgeC
+"""
 
 
 # pylint: disable=protected-access
@@ -104,3 +115,31 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(
             self.config.safeGetInt(
                 'bitmessagesettings', 'maxaddrperstreamsend'), 500)
+
+    def test_disable_identity(self):
+        """Test Disable the identity"""
+        test_config_object = StringIO(test_config)
+        self.config.read_file(test_config_object)
+        try:
+            address_status = self.config.safeGet('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled')
+            if address_status == 'true':
+                self.config.setTemp('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled', 'false')
+                self.assertEqual(self.config.safeGet('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled'), 'false')
+            else:
+                self.assertEqual(self.config.safeGet('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled'), 'true')
+        except configparser.NoSectionError as err:
+            logging.warning("Address does not found: %s", err)
+
+    def test_enable_identity(self):
+        """Test Enable the identity"""
+        test_config_object = StringIO(test_config)
+        self.config.read_file(test_config_object)
+        try:
+            address_status = self.config.safeGet('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled')
+            if address_status == 'false':
+                self.config.setTemp('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled', 'true')
+                self.assertEqual(self.config.safeGet('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled'), 'true')
+            else:
+                self.assertEqual(self.config.safeGet('BM-2cUkVw5kgWfNjydbCHW7sewmG6fbkTxcih', 'enabled'), 'false')
+        except configparser.NoSectionError as err:
+            logging.warning("Address does not found: %s", err)
