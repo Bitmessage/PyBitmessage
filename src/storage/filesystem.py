@@ -9,7 +9,7 @@ from os import listdir, makedirs, path, remove, rmdir
 from threading import RLock
 
 from paths import lookupAppdataFolder
-from storage import InventoryItem, InventoryStorage
+from .storage import InventoryItem, InventoryStorage
 
 logger = logging.getLogger('default')
 
