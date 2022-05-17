@@ -47,3 +47,46 @@ sample_subscription_addresses = [
     'BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq',
     'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw']
 sample_subscription_name = 'test sub'
+
+
+# Encryption
+
+sample_iv = unhexlify(
+    'bddb7c2829b08038'
+    '753084a2f3991681'
+)
+
+sample_ephem_pubkey = unhexlify(
+    '040293213dcf1388b6'
+    '1c2ae5cf80fee6ff'
+    'ffc049a2f9fe7365'
+    'fe3867813ca81292'
+    'df94686c6afb565a'
+    'c6149b153d61b3b2'
+    '87ee2c7f997c1423'
+    '8796c12b43a3865a'
+)
+
+sample_ciphertext = unhexlify(
+    '64203d5b24688e25'
+    '47bba345fa139a5a'
+    '1d962220d4d48a0c'
+    'f3b1572c0d95b616'
+    '43a6f9a0d75af7ea'
+    'cc1bd957147bf723'
+)
+
+sample_mac = unhexlify(
+    'f2526d61b4851fb2'
+    '3409863826fd2061'
+    '65edc021368c7946'
+    '571cead69046e619'
+)
+
+sample_encrypted_payload = \
+    sample_iv + sample_ephem_pubkey + sample_ciphertext + sample_mac
+
+
+# Message composing
+
+sample_msg_template = b'\x00\x00\x00\x02\x01\x01' + sample_encrypted_payload
