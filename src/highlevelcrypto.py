@@ -11,8 +11,7 @@ import hashlib
 import os
 from binascii import hexlify
 
-import pyelliptic
-from pyelliptic import OpenSSL
+from pyelliptic import ECC, OpenSSL
 from pyelliptic import arithmetic as a
 
 
@@ -98,8 +97,7 @@ def makeCryptor(privkey):
     pubkey_bin = (
         b'\x02\xca\x00\x20' + public_key[1:-32] + b'\x00\x20' + public_key[-32:]
     )
-    cryptor = pyelliptic.ECC(
-        curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
+    cryptor = ECC(curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
     return cryptor
 
 
@@ -113,7 +111,7 @@ def hexToPubkey(pubkey):
 def makePubCryptor(pubkey):
     """Return a public `.pyelliptic.ECC` instance"""
     pubkey_bin = hexToPubkey(pubkey)
-    return pyelliptic.ECC(curve='secp256k1', pubkey=pubkey_bin)
+    return ECC(curve='secp256k1', pubkey=pubkey_bin)
 
 
 def privToPub(privkey):
@@ -125,7 +123,7 @@ def privToPub(privkey):
 
 def encrypt(msg, hexPubkey):
     """Encrypts message with hex public key"""
-    return pyelliptic.ECC(curve='secp256k1').encrypt(
+    return ECC(curve='secp256k1').encrypt(
         msg, hexToPubkey(hexPubkey))
 
 
