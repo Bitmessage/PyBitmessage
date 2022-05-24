@@ -3,6 +3,8 @@ FROM ubuntu:bionic AS kivy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV SKIPCACHE=2022-05-24
+
 RUN apt-get update
 
 RUN apt-get install -yq \
