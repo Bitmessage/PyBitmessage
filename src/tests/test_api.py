@@ -12,8 +12,10 @@ from six.moves import xmlrpc_client  # nosec
 import psutil
 
 from .samples import (
-    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4, sample_statusbar_msg,
-    sample_inbox_msg_ids, sample_test_subscription_address, sample_subscription_name)
+    sample_deterministic_addr3, sample_deterministic_addr4, sample_seed,
+    sample_inbox_msg_ids, sample_statusbar_msg,
+    sample_subscription_addresses, sample_subscription_name
+)
 
 from .test_process import TestProcessProto
 
@@ -114,43 +116,38 @@ class TestAPI(TestAPIProto):
         )
         self.assertEqual(
             len(json.loads(
-                self.api.getInboxMessageById(hexlify(sample_inbox_msg_ids[2])))["inboxMessage"]),
+                self.api.getInboxMessageById(
+                    hexlify(sample_inbox_msg_ids[2])))["inboxMessage"]),
             1
         )
         self.assertEqual(
             len(json.loads(
-                self.api.getInboxMessagesByReceiver(sample_deterministic_addr4))["inboxMessages"]),
+                self.api.getInboxMessagesByReceiver(
+                    sample_deterministic_addr4))["inboxMessages"]),
             4
         )
 
     def test_message_trash(self):
         """Test message inbox methods"""
 
-        messages_before_delete = len(json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"])
-        self.assertEqual(
-            self.api.trashMessage(hexlify(sample_inbox_msg_ids[0])),
-            'Trashed message (assuming message existed).'
-        )
-        self.assertEqual(
-            self.api.trashInboxMessage(hexlify(sample_inbox_msg_ids[1])),
-            'Trashed inbox message (assuming message existed).'
-        )
-        self.assertEqual(
-            len(json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"]),
-            messages_before_delete - 2
-        )
-        self.assertEqual(
-            self.api.undeleteMessage(hexlify(sample_inbox_msg_ids[0])),
-            'Undeleted message'
-        )
-        self.assertEqual(
-            self.api.undeleteMessage(hexlify(sample_inbox_msg_ids[1])),
-            'Undeleted message'
-        )
-        self.assertEqual(
-            len(json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"]),
-            messages_before_delete
-        )
+        messages_before_delete = len(
+            json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"])
+        for msgid in sample_inbox_msg_ids[:2]:
+            self.assertEqual(
+                self.api.trashMessage(hexlify(msgid)),
+                'Trashed message (assuming message existed).'
+            )
+        self.assertEqual(len(
+            json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"]
+        ), messages_before_delete - 2)
+        for msgid in sample_inbox_msg_ids[:2]:
+            self.assertEqual(
+                self.api.undeleteMessage(hexlify(msgid)),
+                'Undeleted message'
+            )
+        self.assertEqual(len(
+            json.loads(self.api.getAllInboxMessageIds())["inboxMessageIds"]
+        ), messages_before_delete)
 
     def test_clientstatus_consistency(self):
         """If networkStatus is notConnected networkConnections should be 0"""
@@ -265,7 +262,9 @@ class TestAPI(TestAPIProto):
         """Testing the API commands related to subscriptions"""
 
         self.assertEqual(
-            self.api.addSubscription(sample_test_subscription_address[0], sample_subscription_name.encode('base64')),
+            self.api.addSubscription(
+                sample_subscription_addresses[0],
+                sample_subscription_name.encode('base64')),
             'Added subscription.'
         )
 
@@ -273,18 +272,23 @@ class TestAPI(TestAPIProto):
         # check_address
         for sub in json.loads(self.api.listSubscriptions())['subscriptions']:
             # special address, added when sqlThread starts
-            if sub['address'] == sample_test_subscription_address[0]:
+            if sub['address'] == sample_subscription_addresses[0]:
                 added_subscription = sub
+                self.assertEqual(
+                    base64.decodestring(sub['label']), sample_subscription_name
+                )
+                self.assertTrue(sub['enabled'])
                 break
 
         self.assertEqual(
-            base64.decodestring(added_subscription['label']) if added_subscription['label'] else None,
+            base64.decodestring(added_subscription['label'])
+            if added_subscription['label'] else None,
             sample_subscription_name)
         self.assertTrue(added_subscription['enabled'])
 
         for s in json.loads(self.api.listSubscriptions())['subscriptions']:
             # special address, added when sqlThread starts
-            if s['address'] == sample_test_subscription_address[1]:
+            if s['address'] == sample_subscription_addresses[1]:
                 self.assertEqual(
                     base64.decodestring(s['label']),
                     'Bitmessage new releases/announcements')
@@ -295,17 +299,16 @@ class TestAPI(TestAPIProto):
                 'Could not find Bitmessage new releases/announcements'
                 ' in subscriptions')
         self.assertEqual(
-            self.api.deleteSubscription(sample_test_subscription_address[0]),
+            self.api.deleteSubscription(sample_subscription_addresses[0]),
             'Deleted subscription if it existed.')
         self.assertEqual(
-            self.api.deleteSubscription(sample_test_subscription_address[1]),
+            self.api.deleteSubscription(sample_subscription_addresses[1]),
             'Deleted subscription if it existed.')
         self.assertEqual(
             json.loads(self.api.listSubscriptions())['subscriptions'], [])
 
     def test_send(self):
         """Test message sending"""
-        # self.api.createDeterministicAddresses(self._seed, 1, 4)
         addr = self._add_random_address('random_2')
         msg = base64.encodestring('test message')
         msg_subject = base64.encodestring('test_subject')
@@ -330,13 +333,6 @@ class TestAPI(TestAPIProto):
                     break
             else:
                 raise KeyError
-            # Find the message in inbox
-            # for m in json.loads(
-            #     self.api.getInboxMessagesByReceiver(
-            #         'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'))['inboxMessages']:
-            #     if m['subject'] == msg_subject:
-            #         inbox_msg = m['message']
-            #         break
         except ValueError:
             self.fail('sendMessage returned error or ackData is not hex')
         except KeyError:
