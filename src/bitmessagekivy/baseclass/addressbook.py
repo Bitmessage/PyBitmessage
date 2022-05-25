@@ -156,9 +156,10 @@ class AddressBook(Screen, HelperAddressBook):
         if label in stored_labels and self.address == add_dict[label]:
             stored_labels.remove(label)
         if label and label not in stored_labels:
-            sqlExecute(
-                "UPDATE addressbook SET label = ? WHERE"
-                " address = ?", label, self.addbook_popup.content_cls.address)
+            sqlExecute("""
+                UPDATE addressbook
+                SET label = ?
+                WHERE address = ?""", label, self.addbook_popup.content_cls.address)
             state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
             state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()
