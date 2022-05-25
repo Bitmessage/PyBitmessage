@@ -28,9 +28,6 @@ from bitmessagekivy.get_platform import platform
 
 ThemeClsColor = [0.12, 0.58, 0.95, 1]
 
-kivy_running_app = App.get_running_app()
-kivy_state = kivy_running_app.kivy_state_obj
-
 
 data_screens = {
     "MailDetail": {
@@ -74,12 +71,10 @@ def show_limited_cnt(total_msg):
 def avatar_image_first_letter(letter_string):
     """Returns first letter for the avatar image"""
     try:
-        if isinstance(letter_string, int):
-            return letter_string[0]
-        elif isinstance(letter_string, str) and letter_string[0].isalnum():
-            return letter_string.title()[0]
-        else:
-            return '!'
+        image_letter = letter_string.title()[0]
+        if image_letter.isalnum():
+            return image_letter
+        return '!'
     except IndexError:
         return '!'
 
@@ -128,7 +123,7 @@ class SwipeToDeleteItem(MDCardSwipe):
     opening_time = NumericProperty(0.5)
 
 
-class CutsomSwipeToDeleteItem(MDCardSwipe):
+class CustomSwipeToDeleteItem(MDCardSwipe):
     """Custom swipe delete class for App UI"""
     text = StringProperty()
     cla = Window.size[0] / 2
@@ -138,6 +133,8 @@ class CutsomSwipeToDeleteItem(MDCardSwipe):
 
 def empty_screen_label(label_str=None, no_search_res_found=None):
     """Returns default text on screen when no address is there."""
+    kivy_running_app = App.get_running_app()
+    kivy_state = kivy_running_app.kivy_state_obj
     content = MDLabel(
         font_style='Caption',
         theme_text_color='Primary',
@@ -153,13 +150,13 @@ def mdlist_message_content(queryreturn, data):
     secondary_txt_len = 10
     third_txt_len = 25
     dot_str = '...........'
-
+    dot_str2 = '...!'
     for mail in queryreturn:
         third_text = mail[3].replace('\n', ' ')
         data.append({
             'text': mail[1].strip(),
             'secondary_text': mail[2][:secondary_txt_len] + dot_str if len(
                 mail[2]) > secondary_txt_len else mail[2] + '\n' + " " + (
-                    third_text[:third_txt_len] + '...!') if len(
+                    third_text[:third_txt_len] + dot_str2) if len(
                         third_text) > third_txt_len else third_text,
             'ackdata': mail[5], 'senttime': mail[6]})
