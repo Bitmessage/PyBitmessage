@@ -16,6 +16,7 @@ ingredients:
     - python-six
     - sni-qt
   exclude:
+    - libdb5.3
     - libglib2.0-0
     - libmng2
     - libncursesw5
@@ -25,6 +26,7 @@ ingredients:
     - libqt4-script
     - libqt4-scripttools
     - libqt4-sql
+    - libqt4-test
     - libqt4-xmlpatterns
     - libqtassistantclient4
     - libreadline7
