@@ -57,6 +57,18 @@ ENTRYPOINT ["tox"]
 
 ###############################################################################
 
+FROM base AS snap
+
+RUN apt-get install -yq --no-install-suggests --no-install-recommends snapcraft
+
+COPY . /home/builder/src
+
+WORKDIR /home/builder/src
+
+CMD cd packages && snapcraft && cp *.snap /dist/
+
+###############################################################################
+
 FROM base AS winebuild
 
 RUN dpkg --add-architecture i386
