@@ -14,15 +14,26 @@ from binascii import hexlify
 from pyelliptic import ECC, OpenSSL
 from pyelliptic import arithmetic as a
 
+from fallback import RIPEMD160Hash
 
 __all__ = [
     'decodeWalletImportFormat', 'deterministic_keys',
     'double_sha512', 'calculateInventoryHash', 'encodeWalletImportFormat',
     'encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'randomBytes',
-    'random_keys', 'sign', 'verify']
+    'random_keys', 'sign', 'to_ripe', 'verify']
 
 
 # Hashes
+
+def _bm160(data):
+    """RIPEME160(SHA512(data)) -> bytes"""
+    return RIPEMD160Hash(hashlib.sha512(data).digest()).digest()
+
+
+def to_ripe(signing_key, encryption_key):
+    """Convert two public keys to a ripe hash"""
+    return _bm160(signing_key + encryption_key)
+
 
 def double_sha512(data):
     """Binary double SHA512 digest"""

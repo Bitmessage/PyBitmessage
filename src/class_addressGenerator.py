@@ -1,9 +1,11 @@
 """
 A thread for creating addresses
 """
-import hashlib
+
 import time
 from binascii import hexlify
+
+from six.moves import configparser, queue
 
 import defaults
 import highlevelcrypto
@@ -13,9 +15,7 @@ import state
 import tr
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from bmconfigparser import config
-from fallback import RIPEMD160Hash
 from network import StoppableThread
-from six.moves import configparser, queue
 
 
 class AddressGeneratorException(Exception):
@@ -132,9 +132,8 @@ class addressGenerator(StoppableThread):
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
                     potentialPrivEncryptionKey, potentialPubEncryptionKey = \
                         highlevelcrypto.random_keys()
-                    sha = hashlib.new('sha512')
-                    sha.update(pubSigningKey + potentialPubEncryptionKey)
-                    ripe = RIPEMD160Hash(sha.digest()).digest()
+                    ripe = highlevelcrypto.to_ripe(
+                        pubSigningKey, potentialPubEncryptionKey)
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
                         == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
@@ -241,10 +240,8 @@ class addressGenerator(StoppableThread):
 
                         signingKeyNonce += 2
                         encryptionKeyNonce += 2
-                        sha = hashlib.new('sha512')
-                        sha.update(
-                            potentialPubSigningKey + potentialPubEncryptionKey)
-                        ripe = RIPEMD160Hash(sha.digest()).digest()
+                        ripe = highlevelcrypto.to_ripe(
+                            potentialPubSigningKey, potentialPubEncryptionKey)
                         if (
                             ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
                             == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash

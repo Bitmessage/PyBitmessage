@@ -20,7 +20,6 @@ from addresses import (
     encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
 from bmconfigparser import config
 from debug import logger
-from fallback import RIPEMD160Hash
 from helper_sql import sqlExecute
 from version import softwareVersion
 
@@ -458,9 +457,9 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         specifiedNonceTrialsPerByteLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])[1]
@@ -476,7 +475,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         signature = decryptedData[readPosition:readPosition + signatureLength]
 
         if not highlevelcrypto.verify(
-                signedData, signature, hexlify(publicSigningKey)):
+                signedData, signature, hexlify(pubSigningKey)):
             logger.info(
                 'ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
             return 'failed'
@@ -484,9 +483,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         logger.info(
             'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
 
-        sha = hashlib.new('sha512')
-        sha.update(publicSigningKey + publicEncryptionKey)
-        embeddedRipe = RIPEMD160Hash(sha.digest()).digest()
+        embeddedRipe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
 
         if embeddedRipe != ripe:
             # Although this pubkey object had the tag were were looking for
@@ -504,7 +501,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             'addressVersion: %s, streamNumber: %s\nripe %s\n'
             'publicSigningKey in hex: %s\npublicEncryptionKey in hex: %s',
             addressVersion, streamNumber, hexlify(ripe),
-            hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+            hexlify(pubSigningKey), hexlify(pubEncryptionKey)
         )
 
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
