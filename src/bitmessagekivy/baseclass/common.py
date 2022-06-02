@@ -145,18 +145,26 @@ def empty_screen_label(label_str=None, no_search_res_found=None):
     return content
 
 
-def mdlist_message_content(queryreturn, data):
-    """Method to check the length of message content"""
+def set_mail_details(mail):
+    """Return mail details"""
     secondary_txt_len = 10
     third_txt_len = 25
     dot_str = '...........'
     dot_str2 = '...!'
+    third_text = mail[3].replace('\n', ' ')
+
+    mail_details_data = {
+        'text': mail[1].strip(),
+        'secondary_text': mail[2][:secondary_txt_len] + dot_str if len(mail[2]) > secondary_txt_len
+        else mail[2] + '\n' + " " + (third_text[:third_txt_len] + dot_str2)
+        if len(third_text) > third_txt_len else third_text,
+        'ackdata': mail[5], 'senttime': mail[6]
+    }
+    return mail_details_data
+
+
+def mdlist_message_content(queryreturn, data):
+    """Set Mails details in MD_list"""
     for mail in queryreturn:
-        third_text = mail[3].replace('\n', ' ')
-        data.append({
-            'text': mail[1].strip(),
-            'secondary_text': mail[2][:secondary_txt_len] + dot_str if len(
-                mail[2]) > secondary_txt_len else mail[2] + '\n' + " " + (
-                    third_text[:third_txt_len] + dot_str2) if len(
-                        third_text) > third_txt_len else third_text,
-            'ackdata': mail[5], 'senttime': mail[6]})
+        mdlist_data = set_mail_details(mail)
+        data.append(mdlist_data)
