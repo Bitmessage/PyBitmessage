@@ -95,14 +95,11 @@ def show_time_history(act_time):
     action_time = datetime.fromtimestamp(int(act_time))
     crnt_date = datetime.now()
     duration = crnt_date - action_time
-    display_data = (
-        action_time.strftime("%d/%m/%Y")
-        if duration.days >= 365
-        else action_time.strftime("%I:%M %p").lstrip("0")
-        if duration.days == 0 and crnt_date.strftime("%d/%m/%Y") == action_time.strftime("%d/%m/%Y")
-        else action_time.strftime("%d %b")
-    )
-    return display_data
+    if duration.days < 1:
+        return action_time.strftime("%I:%M %p")
+    if duration.days < 365:
+        return action_time.strftime("%d %b")
+    return action_time.strftime("%d/%m/%Y")
 
 
 # pylint: disable=too-few-public-methods
@@ -145,20 +142,30 @@ def empty_screen_label(label_str=None, no_search_res_found=None):
     return content
 
 
-def set_mail_details(mail):
-    """Return mail details"""
+def retrieve_secondary_text(mail):
+    """Retriving mail details"""
     secondary_txt_len = 10
     third_txt_len = 25
     dot_str = '...........'
     dot_str2 = '...!'
     third_text = mail[3].replace('\n', ' ')
 
+    if len(third_text) > third_txt_len:
+        if len(mail[2]) > secondary_txt_len:  # pylint: disable=no-else-return
+            return mail[2][:secondary_txt_len] + dot_str
+        else:
+            return mail[2] + '\n' + " " + (third_text[:third_txt_len] + dot_str2)
+    else:
+        return third_text
+
+
+def set_mail_details(mail):
+    """Setting mail details"""
     mail_details_data = {
         'text': mail[1].strip(),
-        'secondary_text': mail[2][:secondary_txt_len] + dot_str if len(mail[2]) > secondary_txt_len
-        else mail[2] + '\n' + " " + (third_text[:third_txt_len] + dot_str2)
-        if len(third_text) > third_txt_len else third_text,
-        'ackdata': mail[5], 'senttime': mail[6]
+        'secondary_text': retrieve_secondary_text(mail),
+        'ackdata': mail[5],
+        'senttime': mail[6]
     }
     return mail_details_data
 
