@@ -1,25 +1,22 @@
+"""TestAPIThread class definition"""
+
 import time
-import unittest
 
 from six.moves import queue, xmlrpc_client
 
-from pybitmessage import pathmagic
-
+from .partial import TestPartialRun
 from .samples import sample_statusbar_msg  # any
 
 
-class TestAPIThread(unittest.TestCase):
+class TestAPIThread(TestPartialRun):
     """Test case running the API thread"""
 
     @classmethod
     def setUpClass(cls):
-        pathmagic.setup()  # need this because of import state in network ):
+        super(TestAPIThread, cls).setUpClass()
 
         import helper_sql
-        import helper_startup
         import queues
-        import state
-        from bmconfigparser import BMConfigParser
 
         #  pylint: disable=too-few-public-methods
         class SqlReadyMock(object):
@@ -30,16 +27,11 @@ class TestAPIThread(unittest.TestCase):
                 return
 
         helper_sql.sql_ready = SqlReadyMock
-        cls.state = state
         cls.queues = queues
 
-        helper_startup.loadConfig()
-        # helper_startup.fixSocket()
-        config = BMConfigParser()
-
-        config.set('bitmessagesettings', 'apiusername', 'username')
-        config.set('bitmessagesettings', 'apipassword', 'password')
-        config.set('inventory', 'storage', 'filesystem')
+        cls.config.set('bitmessagesettings', 'apiusername', 'username')
+        cls.config.set('bitmessagesettings', 'apipassword', 'password')
+        cls.config.set('inventory', 'storage', 'filesystem')
 
         import api
         cls.thread = api.singleAPI()
@@ -66,7 +58,3 @@ class TestAPIThread(unittest.TestCase):
 
         self.assertEqual(cmd, 'updateStatusBar')
         self.assertEqual(data, sample_statusbar_msg)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.state.shutdown = 1
