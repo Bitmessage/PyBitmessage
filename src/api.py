@@ -1,5 +1,5 @@
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2022 The Bitmessage developers
+# Copyright (c) 2012-2023 The Bitmessage developers
 
 """
 This is not what you run to start the Bitmessage API.
@@ -68,6 +68,7 @@ import time
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
 
+import six
 from six.moves import configparser, http_client, xmlrpc_server
 
 import defaults
@@ -98,7 +99,7 @@ try:
 except ImportError:
     network_stats = None
 
-from network.threads import StoppableThread
+from network import StoppableThread
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -160,7 +161,7 @@ class ErrorCodes(type):
 
     def __new__(mcs, name, bases, namespace):
         result = super(ErrorCodes, mcs).__new__(mcs, name, bases, namespace)
-        for code in mcs._CODES.iteritems():
+        for code in six.iteritems(mcs._CODES):
             # beware: the formatting is adjusted for list-table
             result.__doc__ += """   * - %04i
          - %s
@@ -388,10 +389,14 @@ class BMXMLRPCRequestHandler(xmlrpc_server.SimpleXMLRPCRequestHandler):
             L = []
             while size_remaining:
                 chunk_size = min(size_remaining, max_chunk_size)
-                L.append(self.rfile.read(chunk_size))
+                chunk = self.rfile.read(chunk_size)
+                if not chunk:
+                    break
+                L.append(chunk)
                 size_remaining -= len(L[-1])
-            data = ''.join(L)
+            data = b''.join(L)
 
+            # data = self.decode_request_content(data)
             # pylint: disable=attribute-defined-outside-init
             self.cookies = []
 
@@ -448,7 +453,8 @@ class BMXMLRPCRequestHandler(xmlrpc_server.SimpleXMLRPCRequestHandler):
         if 'Authorization' in self.headers:
             # handle Basic authentication
             encstr = self.headers.get('Authorization').split()[1]
-            emailid, password = encstr.decode('base64').split(':')
+            emailid, password = base64.b64decode(
+                encstr).decode('utf-8').split(':')
             return (
                 emailid == config.get(
                     'bitmessagesettings', 'apiusername'
@@ -464,9 +470,9 @@ class BMXMLRPCRequestHandler(xmlrpc_server.SimpleXMLRPCRequestHandler):
 
 
 # pylint: disable=no-self-use,no-member,too-many-public-methods
+@six.add_metaclass(CommandHandler)
 class BMRPCDispatcher(object):
     """This class is used to dispatch API commands"""
-    __metaclass__ = CommandHandler
 
     @staticmethod
     def _decode(text, decode_type):
