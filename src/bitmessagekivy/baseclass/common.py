@@ -40,6 +40,13 @@ data_screens = {
 }
 
 
+def kivy_state_variables():
+    """Return kivy_state variable"""
+    kivy_running_app = App.get_running_app()
+    kivy_state = kivy_running_app.kivy_state_obj
+    return kivy_state
+
+
 def chip_tag(text):
     """Create a new ChipTag"""
     obj = MDChip()
@@ -65,7 +72,8 @@ def toast(text):
 def show_limited_cnt(total_msg):
     """This method set the total count limit in badge_text"""
     max_msg_count = '99+'
-    return max_msg_count if total_msg > 99 else str(total_msg)
+    total_msg_limit = 99
+    return max_msg_count if total_msg > total_msg_limit else str(total_msg)
 
 
 def avatar_image_first_letter(letter_string):
@@ -130,8 +138,7 @@ class CustomSwipeToDeleteItem(MDCardSwipe):
 
 def empty_screen_label(label_str=None, no_search_res_found=None):
     """Returns default text on screen when no address is there."""
-    kivy_running_app = App.get_running_app()
-    kivy_state = kivy_running_app.kivy_state_obj
+    kivy_state = kivy_state_variables()
     content = MDLabel(
         font_style='Caption',
         theme_text_color='Primary',
