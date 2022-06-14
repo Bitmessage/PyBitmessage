@@ -26,7 +26,7 @@ from bitmessagekivy.get_platform import platform
 from bitmessagekivy import kivy_helper_search
 from bitmessagekivy.baseclass.common import (
     avatarImageFirstLetter, toast, empty_screen_label,
-    ThemeClsColor, SwipeToDeleteItem
+    ThemeClsColor, SwipeToDeleteItem, kivy_state_variables
 )
 from bitmessagekivy.baseclass.popup import AddbookDetailPopup
 from bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
@@ -48,8 +48,7 @@ class AddressBook(Screen, HelperAddressBook):
         """Getting AddressBook Details"""
         super(AddressBook, self).__init__(*args, **kwargs)
         self.addbook_popup = None
-        self.kivy_running_app = App.get_running_app()
-        self.kivy_state = self.kivy_running_app.kivy_state_obj
+        self.kivy_state = kivy_state_variables()
         Clock.schedule_once(self.init_ui, 0)
 
     def init_ui(self, dt=0):
@@ -160,13 +159,13 @@ class AddressBook(Screen, HelperAddressBook):
                 UPDATE addressbook
                 SET label = ?
                 WHERE address = ?""", label, self.addbook_popup.content_cls.address)
-            state.kivyapp.root.ids.sc11.ids.ml.clear_widgets()
-            state.kivyapp.root.ids.sc11.loadAddresslist(None, 'All', '')
+            App.get_running_app().root.ids.sc11.ids.ml.clear_widgets()
+            App.get_running_app().root.ids.sc11.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()
             toast('Saved')
 
     def send_message_to(self, instance):
         """Method used to fill to_address of composer autofield"""
-        state.kivyapp.set_navbar_for_composer()
+        App.get_running_app().set_navbar_for_composer()
         self.compose_message(None, self.address)
         self.addbook_popup.dismiss()
