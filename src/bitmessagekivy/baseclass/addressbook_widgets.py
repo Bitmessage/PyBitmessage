@@ -3,11 +3,9 @@
 Addressbook widgets are here.
 """
 
-
+from kivy.app import App
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-
-import state
 
 
 class HelperAddressBook(object):
@@ -40,7 +38,7 @@ class HelperAddressBook(object):
     @staticmethod
     def compose_message(from_addr=None, to_addr=None):
         """This UI independent method for message sending to reciever"""
-        window_obj = state.kivyapp.root.ids
+        window_obj = App.get_runnint_app().root.ids
         if to_addr:
             window_obj.sc3.children[1].ids.txt_input.text = to_addr
         if from_addr:
