@@ -20,8 +20,6 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 from kivy.app import App
 
-import state
-
 from bitmessagekivy.get_platform import platform
 from bitmessagekivy import kivy_helper_search
 from bitmessagekivy.baseclass.common import (
@@ -86,7 +84,7 @@ class AddressBook(Screen, HelperAddressBook):
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             image = os.path.join(
-                state.imageDir, "text_images", "{}.png".format(avatarImageFirstLetter(item[0].strip()))
+                self.kivy_state.imageDir, "text_images", "{}.png".format(avatarImageFirstLetter(item[0].strip()))
             )
             message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(
