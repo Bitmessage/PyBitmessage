@@ -24,7 +24,7 @@ apps:
 parts:
   pybitmessage:
     # https://wiki.ubuntu.com/snapcraft/parts
-    after: [qt4conf, desktop-qt4, indicator-qt4]
+    after: [qt4conf, desktop-qt4, indicator-qt4, tor]
     source: https://github.com/Bitmessage/PyBitmessage.git
     override-pull: |
       snapcraftctl pull
@@ -38,10 +38,25 @@ parts:
       - jsonrpclib
       - qrcode
       - pyxdg
+      - stem
     stage-packages:
       - python-qt4
       - python-sip
     # parse-info: [setup.py]
+  tor:
+    source: https://dist.torproject.org/tor-0.4.6.9.tar.gz
+    source-checksum: sha256/c7e93380988ce20b82aa19c06cdb2f10302b72cfebec7c15b5b96bcfc94ca9a9
+    source-type: tar
+    plugin: autotools
+    build-packages:
+      - libssl-dev
+      - zlib1g-dev
+    after: [libevent]
+  libevent:
+    source: https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz
+    source-checksum: sha256/92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb
+    source-type: tar
+    plugin: autotools
   cleanup:
     after: [pybitmessage]
     plugin: nil
