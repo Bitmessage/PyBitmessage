@@ -26,7 +26,7 @@ from bitmessagekivy.baseclass.common import (
     avatarImageFirstLetter, toast, empty_screen_label,
     ThemeClsColor, SwipeToDeleteItem, kivy_state_variables
 )
-from bitmessagekivy.baseclass.popup import AddbookDetailPopup
+from bitmessagekivy.baseclass.popup import SavedAddressDetailPopup
 from bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
 from debug import logger
 from helper_sql import sqlExecute
@@ -117,7 +117,7 @@ class AddressBook(Screen, HelperAddressBook):
         if instance.state == 'closed':
             instance.ids.delete_msg.disabled = True
             if instance.open_progress == 0.0:
-                obj = AddbookDetailPopup()
+                obj = SavedAddressDetailPopup()
                 self.address_label = obj.address_label = label
                 self.address = obj.address = address
                 width = .9 if platform == 'android' else .8
