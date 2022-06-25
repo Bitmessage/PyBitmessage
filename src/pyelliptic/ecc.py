@@ -497,7 +497,11 @@ class ECC(object):
         key = sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
         key_e, key_m = key[:32], key[32:]
         if not equals(hmac_sha256(key_m, data[:len(data) - 32]), mac):
+            print("b1")
             raise RuntimeError("Fail to verify data")
+        print("b2")
         ctx = Cipher(key_e, _iv, 0, ciphername)
+        print("c")
         retval = ctx.ciphering(ciphertext)
+        print("d")
         return retval
