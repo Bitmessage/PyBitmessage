@@ -164,11 +164,11 @@ class _OpenSSL(object):
         self.EC_KEY_check_key.argtypes = [ctypes.c_void_p]
 
         self.EC_KEY_get0_private_key = self._lib.EC_KEY_get0_private_key
-        self.EC_KEY_get0_private_key.restype = ctypes.c_void_p
+        self.EC_KEY_get0_private_key.restype = ctypes.POINTER(BIGNUM)
         self.EC_KEY_get0_private_key.argtypes = [ctypes.c_void_p]
 
         self.EC_KEY_get0_public_key = self._lib.EC_KEY_get0_public_key
-        self.EC_KEY_get0_public_key.restype = ctypes.c_void_p
+        self.EC_KEY_get0_public_key.restype = ctypes.POINTER(EC_POINT)
         self.EC_KEY_get0_public_key.argtypes = [ctypes.c_void_p]
 
         self.EC_KEY_get0_group = self._lib.EC_KEY_get0_group
