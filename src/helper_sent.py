@@ -7,7 +7,7 @@ import uuid
 from addresses import decodeAddress
 from bmconfigparser import config
 from helper_ackPayload import genAckPayload
-from helper_sql import sqlExecute
+from helper_sql import sqlExecute, sqlQuery
 
 
 # pylint: disable=too-many-arguments
@@ -51,3 +51,11 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
 def delete(ack_data):
     """Perform Delete query"""
     sqlExecute("DELETE FROM sent WHERE ackdata = ?", ack_data)
+
+
+def retrieve_message_details(ack_data):
+    """Retrieving Message details"""
+    data = sqlQuery(
+        "select toaddress, fromaddress, subject, message, received from inbox where msgid = ?", ack_data
+    )
+    return data
