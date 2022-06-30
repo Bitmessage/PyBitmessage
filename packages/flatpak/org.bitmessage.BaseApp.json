@@ -1,0 +1,57 @@
+{
+ "id": "org.bitmessage.BaseApp",
+ "branch": "stable",
+ "runtime": "org.freedesktop.Platform",
+ "sdk": "org.freedesktop.Sdk",
+ "runtime-version": "19.08",
+ "separate-locales": false,
+ "modules": [
+  "shared-modules/python2.7/python-2.7.json",
+  "shared-modules/qt4/qt4-4.8.7-minimal.json",
+  {
+    "name": "python-sip",
+    "sources": [
+      {
+        "type": "archive",
+        "url": "https://www.riverbankcomputing.com/static/Downloads/sip/4.19.25/sip-4.19.25.tar.gz",
+        "sha256": "b39d93e937647807bac23579edbff25fe46d16213f708370072574ab1f1b4211"
+      }
+    ],
+    "buildsystem": "simple",
+    "build-commands": [
+      "python configure.py --sip-module PyQt4.sip --no-dist-info",
+      "make",
+      "make install"
+    ]
+  },
+  {
+    "name": "python-qt4",
+    "sources": [
+      {
+        "type": "archive",
+        "url": "http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.12.3/PyQt4_gpl_x11-4.12.3.tar.gz",
+        "sha256": "a00f5abef240a7b5852b7924fa5fdf5174569525dc076cd368a566619e56d472"
+      }
+    ],
+    "buildsystem": "simple",
+    "build-commands": [
+      "python configure.py -w --confirm-license",
+      "make",
+      "make install"
+    ]
+  },
+  {
+    "name" : "PyBitmessage-dependencies",
+    "buildsystem" : "simple",
+    "build-options": {
+      "build-args": [
+        "--share=network"
+      ]
+    },
+    "build-commands": [
+      "pip --version",
+      "pip install setuptools msgpack six"
+    ]
+  }
+ ]
+}

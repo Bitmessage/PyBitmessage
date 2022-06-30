@@ -1,4 +1,12 @@
 .. mdinclude:: ../README.md
+   :end-line: 20
+
+Build Instructions
+------------------
+.. toctree::
+   :maxdepth: 1
+
+   Flatpak_Build
 
 Documentation
 -------------
