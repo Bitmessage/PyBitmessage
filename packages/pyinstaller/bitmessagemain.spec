@@ -76,7 +76,7 @@ a.datas += [
 sql_dir = os.path.join(srcPath, 'sql')
 
 a.datas += [
-    ('sql', os.path.join(sql_dir, file_), 'DATA')
+    (os.path.join('sql', file_), os.path.join(sql_dir, file_), 'DATA')
     for file_ in os.listdir(sql_dir) if file_.endswith('.sql')
 ]
 
