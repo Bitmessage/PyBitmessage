@@ -7,6 +7,7 @@ Protocol documentation
    :maxdepth: 2
 
    protocol
+   address
    encryption
    pow
 
