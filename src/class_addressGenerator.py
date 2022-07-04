@@ -187,9 +187,10 @@ class addressGenerator(StoppableThread):
                 config.set(address, 'payloadlengthextrabytes', str(
                     payloadLengthExtraBytes))
                 config.set(
-                    address, 'privsigningkey', privSigningKeyWIF)
+                    address, 'privsigningkey', privSigningKeyWIF.decode())
                 config.set(
-                    address, 'privencryptionkey', privEncryptionKeyWIF)
+                    address, 'privencryptionkey',
+                    privEncryptionKeyWIF.decode())
                 config.save()
 
                 # The API and the join and create Chan functionality
@@ -350,11 +351,11 @@ class addressGenerator(StoppableThread):
                                 address, 'payloadlengthextrabytes',
                                 str(payloadLengthExtraBytes))
                             config.set(
-                                address, 'privSigningKey',
-                                privSigningKeyWIF)
+                                address, 'privsigningkey',
+                                privSigningKeyWIF.decode())
                             config.set(
-                                address, 'privEncryptionKey',
-                                privEncryptionKeyWIF)
+                                address, 'privencryptionkey',
+                                privEncryptionKeyWIF.decode())
                             config.save()
 
                             queues.UISignalQueue.put((
