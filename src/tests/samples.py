@@ -36,7 +36,7 @@ sample_point = (
     94730058721143827257669456336351159718085716196507891067256111928318063085006
 )
 
-sample_seed = 'TIGER, tiger, burning bright. In the forests of the night'
+sample_seed = b'TIGER, tiger, burning bright. In the forests of the night'
 # Deterministic addresses with stream 1 and versions 3, 4
 sample_deterministic_ripe = b'00cfb69416ae76f68a81c459de4e13460c7d17eb'
 sample_deterministic_addr3 = 'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
