@@ -1,4 +1,5 @@
-# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error
+# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error, unused-argument
+
 """
     All Common widgets of kivy are managed here.
 """
@@ -182,3 +183,19 @@ def mdlist_message_content(queryreturn, data):
     for mail in queryreturn:
         mdlist_data = set_mail_details(mail)
         data.append(mdlist_data)
+
+
+def mail_detail_screen(screen_name, msg_id, instance, folder, *args):
+    """Common function for all screens to open Mail detail."""
+    kivy_state = kivy_state_variables()
+    if instance.open_progress == 0.0:
+        kivy_state.detailPageType = folder
+        kivy_state.mail_id = msg_id
+        if screen_name.manager:
+            src_mng_obj = screen_name.manager
+        else:
+            src_mng_obj = screen_name.parent.parent
+        src_mng_obj.screens[11].clear_widgets()
+        from bitmessagekivy.baseclass.maildetail import MailDetail
+        src_mng_obj.screens[11].add_widget(MailDetail())
+        src_mng_obj.current = "mailDetail"
