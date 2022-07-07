@@ -41,5 +41,10 @@
         "kv_string": "sent",
         "name_screen": "sent",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.sent import Sent"
+    },
+    "Trash": {
+        "kv_string": "trash",
+        "name_screen": "trash",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.trash import Trash"
     }
 }
