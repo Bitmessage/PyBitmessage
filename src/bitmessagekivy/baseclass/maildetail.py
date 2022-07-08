@@ -147,7 +147,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.kivy_state.searching_text = ''
         self.children[0].children[0].active = True
         if self.kivy_state.detail_page_type == 'sent':
-            App.get_running_app().root.ids.sc4.ids.sent_search.ids.search_field.text = ''
+            App.get_running_app().root.ids.id_sent.ids.sent_search.ids.search_field.text = ''
             delete(self.kivy_state.mail_id)
             msg_count_objs.send_cnt.ids.badge_txt.text = str(int(self.kivy_state.sent_count) - 1)
             self.kivy_state.sent_count = str(int(self.kivy_state.sent_count) - 1)

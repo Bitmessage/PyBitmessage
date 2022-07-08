@@ -36,5 +36,10 @@
         "kv_string": "settings",
         "name_screen": "set",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.settings import Setting"
+    },
+    "Sent": {
+        "kv_string": "sent",
+        "name_screen": "sent",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.sent import Sent"
     }
 }

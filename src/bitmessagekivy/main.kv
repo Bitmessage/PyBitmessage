@@ -130,7 +130,7 @@
                     text: app.tr._('Sent')
                     icon: 'send'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'sent'
+                    on_release: app.set_screen('sent')
                     on_release: root.parent.set_state()
                 NavigationItem:
                     id: draft_cnt
@@ -229,6 +229,8 @@ MDNavigationLayout:
             id:id_settings
         Inbox:
             id:id_inbox
+        Sent:
+            id:id_sent
 
     MDNavigationDrawer:
         id: nav_drawer
