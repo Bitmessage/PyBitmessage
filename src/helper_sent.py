@@ -59,3 +59,11 @@ def retrieve_message_details(ack_data):
         "select toaddress, fromaddress, subject, message, received from inbox where msgid = ?", ack_data
     )
     return data
+
+
+def trash(ackdata):
+    """Mark a message in the `sent` as `trash`"""
+    rowcount = sqlExecute(
+        '''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdata
+    )
+    return rowcount
