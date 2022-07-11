@@ -81,6 +81,7 @@ class TeleniumTestProcess(TeleniumTestCase):
                 # Finally Sleep is used to make the menu button funcationlly available for the click process.
                 # (because Transition is little bit slow)
                 sleep(0.2)
+        raise AssertionError("Timeout")
 
     def drag(self, xpath1, xpath2):
         """this method is for dragging"""
