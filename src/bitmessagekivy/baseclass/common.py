@@ -1,5 +1,4 @@
-# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error, unused-argument
-
+# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error
 """
     All Common widgets of kivy are managed here.
 """
@@ -183,3 +182,13 @@ def mdlist_message_content(queryreturn, data):
     for mail in queryreturn:
         mdlist_data = set_mail_details(mail)
         data.append(mdlist_data)
+
+
+def msg_content_length(body, subject, max_length=50):
+    """This function concatinate body and subject if len(subject) > 50"""
+    continue_str = '........'
+    if len(subject) >= max_length:
+        subject = subject[:max_length] + continue_str
+    else:
+        subject = ((subject + ',' + body)[0:50] + continue_str).replace('\t', '').replace('  ', '')
+    return subject
