@@ -26,7 +26,8 @@ import helper_sent
 from bitmessagekivy.baseclass.common import (
     showLimitedCnt, toast, ThemeClsColor, mail_detail_screen,
     avatarImageFirstLetter, CustomSwipeToDeleteItem,
-    ShowTimeHistoy, empty_screen_label, kivy_state_variables
+    ShowTimeHistoy, empty_screen_label, kivy_state_variables,
+    msg_content_length
 )
 
 from debug import logger
@@ -91,16 +92,6 @@ class Allmails(Screen):
         allmailCnt_obj = App.get_running_app().root.ids.content_drawer.ids.allmail_cnt
         allmailCnt_obj.ids.badge_txt.text = showLimitedCnt(int(Count))
 
-    @staticmethod
-    def msg_content_length(body, subject, max_length=50):
-        """This function concatinate body and subject if len(subject) > 50 characters"""
-        continue_str = '........'
-        if len(subject) >= max_length:
-            subject = subject[:max_length] + continue_str
-        else:
-            subject = ((subject + ',' + body)[0:max_length] + continue_str).replace('\t', '').replace('  ', '')
-        return subject
-
     def set_mdlist(self):
         """This method is used to create mdList for allmaills"""
         data_exist = len(self.ids.ml.children)
@@ -111,7 +102,7 @@ class Allmails(Screen):
                 text=item[1],
             )
             listItem = message_row.ids.content
-            secondary_text = self.msg_content_length(body, subject)
+            secondary_text = msg_content_length(body, subject)
             listItem.secondary_text = secondary_text
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
