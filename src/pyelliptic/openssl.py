@@ -392,7 +392,7 @@ class _OpenSSL(object):
         self.EVP_DigestUpdate = self._lib.EVP_DigestUpdate
         self.EVP_DigestUpdate.restype = ctypes.c_int
         self.EVP_DigestUpdate.argtypes = [ctypes.c_void_p,
-                                          ctypes.c_void_p, ctypes.c_int]
+                                          ctypes.c_void_p, ctypes.c_size_t]
 
         self.EVP_DigestFinal = self._lib.EVP_DigestFinal
         self.EVP_DigestFinal.restype = ctypes.c_int
@@ -472,7 +472,7 @@ class _OpenSSL(object):
         self.HMAC = self._lib.HMAC
         self.HMAC.restype = ctypes.c_void_p
         self.HMAC.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
-                              ctypes.c_void_p, ctypes.c_int,
+                              ctypes.c_void_p, ctypes.c_size_t,
                               ctypes.c_void_p, ctypes.c_void_p]
 
         try:
