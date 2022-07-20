@@ -49,11 +49,8 @@ def lookupAppdataFolder():
             sys.exit(
                 'Could not find home folder, please report this message'
                 ' and your OS X version to the BitMessage Github.')
-    elif 'win32' in sys.platform or 'win64' in sys.platform:
-        dataFolder = os.path.join(
-            os.environ['APPDATA'].decode(
-                sys.getfilesystemencoding(), 'ignore'), APPNAME
-        ) + os.path.sep
+    elif sys.platform.startswith('win'):
+        dataFolder = os.path.join(os.environ['APPDATA'], APPNAME) + os.path.sep
     else:
         try:
             dataFolder = os.path.join(os.environ['XDG_CONFIG_HOME'], APPNAME)
