@@ -1,0 +1,422 @@
+#:import IconLeftWidget kivymd.uix.list.IconLeftWidget
+#:import images_path kivymd.images_path
+#:import Spinner kivy.uix.spinner.Spinner
+#:import Factory kivy.factory.Factory
+
+#:import MDCheckbox kivymd.uix.selectioncontrol.MDCheckbox
+#:import MDList kivymd.uix.list.MDList
+#:import OneLineListItem kivymd.uix.list.OneLineListItem
+#:import MDTextField kivymd.uix.textfield.MDTextField
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import MDCard kivymd.uix.card.MDCard
+#:import colors kivymd.color_definitions.colors
+#:import MDTabs kivymd.uix.tab.MDTabs
+#:import MDFloatingActionButton kivymd.uix.button.MDFloatingActionButton
+#:import Factory kivy.factory.Factory
+#:import MDScrollViewRefreshLayout kivymd.uix.refreshlayout.MDScrollViewRefreshLayout
+#:import MDSpinner kivymd.uix.spinner.MDSpinner
+#:import MDTabsBase kivymd.uix.tab.MDTabsBase
+##:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
+<Tab@BoxLayout+MDTabsBase>
+
+#:set color_button (0.784, 0.443, 0.216, 1)  # brown
+#:set color_button_pressed (0.659, 0.522, 0.431, 1)  # darker brown
+#:set color_font   (0.957, 0.890, 0.843, 1)  # off white
+
+<MySpinnerOption@SpinnerOption>:
+    font_size: '12.5sp'
+    #background_color: color_button if self.state == 'down' else color_button_pressed
+    #background_down: 'atlas://data/images/defaulttheme/button'
+    background_normal: 'atlas://data/images/defaulttheme/textinput_active'
+    background_color: app.theme_cls.primary_color
+    # text_autoupdate: True
+    color: color_font
+
+<NavigationItem>
+    #on_press: root.active = not root.active
+    on_press: root.currentlyActive()
+    active_color: root.theme_cls.primary_color if root.active else root.theme_cls.text_color
+
+    IconLeftWidget:
+        icon: root.icon
+        theme_text_color: "Custom"
+        text_color: root.active_color
+
+    BadgeText:
+        id: badge_txt
+        text: f"{root.badge_text}"
+        theme_text_color: "Custom"
+        #text_color: root.active_color
+        halign: 'right'
+
+<NavigationDrawerDivider>:
+    canvas:
+        Color:
+            rgba: self.theme_cls.divider_color
+        Line:
+            points: root.x, root.y + dp(8), root.x + self.width, root.y + dp(8)
+
+<ContentNavigationDrawer>
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        FloatLayout:
+            size_hint_y: None
+            height: "200dp"
+
+            MDIconButton:
+                id: reset_image
+                icon: "refresh"
+                x: root.parent.x + dp(10)
+                pos_hint: {"top": 1, 'left': 1}
+                color: [1,0,0,1]
+                on_release: app.rest_default_avatar_img()
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                # opacity: 1 if app.current_address_label() else 0
+                # disabled: False if app.current_address_label() else True
+                opacity: 0
+                disabled: True
+
+            MDIconButton:
+                id: file_manager
+                icon: "file-image"
+                x: root.parent.x + dp(10)
+                pos_hint: {"top": 1, 'right': 1}
+                color: [1,0,0,1]
+                on_release: app.file_manager_open()
+                # md_bg_color: app.theme_cls.primary_color
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                opacity: 1 if app.current_address_label() else 0
+                disabled: False if app.current_address_label() else True
+
+            BoxLayout:
+                id: top_box
+                size_hint_y: None
+                height: "200dp"
+                #padding: "10dp"
+                x: root.parent.x
+                pos_hint: {"top": 1}
+                Image:
+                    #source: './images/drawer_logo1.png'
+                    source: app.get_default_logo(self)
+
+        ScrollView:
+            id: scroll_y
+            pos_hint: {"top": 1}
+
+            GridLayout:
+                id: box_item
+                cols: 1
+                size_hint_y: None
+                height: self.minimum_height
+                NavigationDrawerDivider:
+                NavigationDrawerSubheader:
+                    text: app.tr._('Accounts')
+                    #text: app.tr._('Hello World')
+                    height:"35dp"
+                NavigationItem:
+                    # size: 50,50
+                    height: dp(48)
+                    CustomSpinner:
+                        id: btn
+                        pos_hint:{"x":0,"y":0}
+                        option_cls: Factory.get("MySpinnerOption")
+                        font_size: '12.5sp'
+                        text: app.getDefaultAccData(self)
+                        color: color_font
+                        background_normal: ''
+                        background_color: app.theme_cls.primary_color
+                        on_text:app.getCurrentAccountData(self.text)
+                        ArrowImg:
+                NavigationItem:
+                    id: inbox_cnt
+                    text: app.tr._('Inbox')
+                    #text: app.tr._('Hello World')
+                    icon: 'email-open'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'inbox'
+                    on_release: root.parent.set_state()
+                    on_press: app.load_screen(self)
+                NavigationItem:
+                    id: send_cnt
+                    text: app.tr._('Sent')
+                    icon: 'send'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'sent'
+                    on_release: root.parent.set_state()
+                NavigationItem:
+                    id: draft_cnt
+                    text: app.tr._('Draft')
+                    icon: 'message-draw'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'draft'
+                    on_release: root.parent.set_state()
+                NavigationItem:
+                    id: trash_cnt
+                    text: app.tr._('Trash')
+                    icon: 'delete'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'trash'
+                    on_press: root.parent.set_state()
+                    on_press: app.load_screen(self)
+                NavigationItem:
+                    id: allmail_cnt
+                    text: app.tr._('All Mails')
+                    icon: 'mailbox'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'allmails'
+                    on_release: root.parent.set_state()
+                    on_press: app.load_screen(self)
+                # NavigationItem:
+                #     id: chat_rm
+                #     text: app.tr._('Chat Room')
+                #     icon: 'wechat'
+                #     divider: None
+                #     on_release: app.root.ids.scr_mngr.current = 'chlist'
+                #     on_release: root.parent.set_state()
+                NavigationDrawerDivider:
+                NavigationDrawerSubheader:
+                    text: app.tr._("All labels")
+                NavigationItem:
+                    text: app.tr._('Address Book')
+                    icon: 'book-multiple'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'addressbook'
+                    on_release: root.parent.set_state()
+                NavigationItem:
+                    text: app.tr._('Settings')
+                    icon: 'application-settings'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'set'
+                    on_release: root.parent.set_state()
+                NavigationItem:
+                    text: app.tr._('Purchase')
+                    icon: 'shopping'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'payment'
+                    on_release: root.parent.set_state()
+                # NavigationItem:
+                #     text: app.tr._('Credits')
+                #     icon: 'wallet'
+                #     divider: None
+                #     on_release: app.root.ids.scr_mngr.current = 'credits'
+                #     on_release: root.parent.set_state()
+                NavigationItem:
+                    text: app.tr._('New address')
+                    icon: 'account-plus'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'login'
+                    on_release: root.parent.set_state()
+                    on_press: app.reset_login_screen()
+                NavigationItem:
+                    text: app.tr._('Network status')
+                    icon: 'server-network'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'networkstat'
+                    on_release: root.parent.set_state()
+                NavigationItem:
+                    text: app.tr._('My addresses')
+                    icon: 'account-multiple'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'myaddress'
+                    on_release: root.parent.set_state()
+
+MDNavigationLayout:
+    id: nav_layout
+
+    MDToolbar:
+        id: toolbar
+        title: app.current_address_label()
+        opacity: 1 if app.addressexist() else 0
+        disabled: False if app.addressexist() else True
+        pos_hint: {"top": 1}
+        md_bg_color: app.theme_cls.primary_color
+        elevation: 10
+        left_action_items: [['menu', lambda x: nav_drawer.set_state("toggle")]]
+        right_action_items: [['account-plus', lambda x: app.addingtoaddressbook()]]
+
+    ScreenManager:
+        id: scr_mngr
+        size_hint_y: None
+        height: root.height - toolbar.height
+        Inbox:
+            id:sc1
+#         # Page:
+#         #     id:sc2
+        Create:
+            id:sc3
+        Sent:
+            id:sc4
+        Trash:
+            id:sc5
+        Login:
+            id:sc6
+        Random:
+            id:sc7
+        # Spam:
+        #     id:sc8
+        Setting:
+            id:sc9
+        MyAddress:
+            id:sc10
+        AddressBook:
+            id:sc11
+        Payment:
+            id:sc12
+        NetworkStat:
+            id:sc13
+        MailDetail:
+            id:sc14
+        ShowQRCode:
+            id:sc15
+        Draft:
+            id:sc16
+        Allmails:
+            id:sc17
+        # Credits:
+        #     id:sc18
+        # Starred:
+        #     id:sc19
+        # Archieve:
+        #     id:sc20
+        # ChatRoom:
+        #     id:sc21
+        # ChatList:
+        #     id:sc22
+        ScanScreen:
+            id:sc23
+
+    MDNavigationDrawer:
+        id: nav_drawer
+
+        ContentNavigationDrawer:
+            id: content_drawer
+
+    
+<ArrowImg@Image>:
+    source: app.image_path +('/down-arrow.png' if self.parent.is_open == True else '/right-arrow.png')
+    size: 15, 15
+    x: self.parent.x + self.parent.width - self.width - 5
+    y: self.parent.y + self.parent.height/2 - self.height + 5
+
+
+<SearchBar@BoxLayout>:
+    # id: search_bar
+    size_hint_y: None
+    height: self.minimum_height
+
+    MDIconButton:
+        icon: 'magnify'
+
+    MDTextField:
+        id: search_field
+        hint_text: 'Search'
+        on_text: app.searchQuery(self)
+        canvas.before:
+            Color:
+                rgba: (0,0,0,1)
+
+
+<Loader@MDSpinner>:
+    id: spinner
+    size_hint: None, None
+    size: dp(46), dp(46)
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    active: False
+
+<ComposerButton@BoxLayout>:
+    size_hint_y: None
+    height: dp(56)
+    spacing: '10dp'
+    pos_hint: {'center_x':0.45, 'center_y': .1}
+
+    Widget:
+
+    MDFloatingActionButton:
+        icon: 'plus'
+        opposite_colors: True
+        elevation_normal: 8
+        md_bg_color: [0.941, 0, 0,1]
+        on_press: app.root.ids.scr_mngr.current = 'create'
+        on_press: app.clear_composer()
+
+
+<SwipeToDeleteItem>:
+    size_hint_y: None
+    height: content.height
+
+    MDCardSwipeLayerBox:
+        padding: "8dp"
+
+        MDIconButton:
+            id: delete_msg
+            icon: "trash-can"
+            pos_hint: {"center_y": .5}
+            md_bg_color: (1, 0, 0, 1)
+            disabled: True
+
+    MDCardSwipeFrontBox:
+
+        TwoLineAvatarIconListItem:
+            id: content
+            text: root.text
+            _no_ripple_effect: True
+
+            AvatarSampleWidget:
+                id: avater_img
+                # source: './images/kivy/avatar.png'
+                source: None
+
+            TimeTagRightSampleWidget:
+                id: time_tag
+                text: ''
+                font_size: "11sp"
+                font_style: "Caption"
+                size: [120, 140] if app.app_platform == "android" else [64, 80]
+
+
+<CutsomSwipeToDeleteItem>:
+    size_hint_y: None
+    height: content.height
+
+    MDCardSwipeLayerBox:
+        padding: "8dp"
+
+        MDIconButton:
+            id: delete_msg
+            icon: "trash-can"
+            pos_hint: {"center_y": .5}
+            md_bg_color: (1, 0, 0, 1)
+            disabled: True
+
+    MDCardSwipeFrontBox:
+
+        TwoLineAvatarIconListItem:
+            id: content
+            text: root.text
+            _no_ripple_effect: True
+
+            AvatarSampleWidget:
+                id: avater_img
+                # source: './images/kivy/avatar.png'
+                source: None
+
+            TimeTagRightSampleWidget:
+                id: time_tag
+                text: 'time'
+                font_size: "11sp"
+                font_style: "Caption"
+                size: [120, 140] if app.app_platform == "android" else [64, 80]
+            MDChip:
+                id: chip_tag
+                size_hint: (0.16 if app.app_platform == "android" else 0.08, None)
+                text: 'test'
+                icon: ""
+                pos_hint: {"center_x": 0.91 if app.app_platform == "android" else 0.94, "center_y": 0.3}
+                # height: dp(18)
+                height: '18dp'
+                text_color: (1,1,1,1)
+                radius: [8]

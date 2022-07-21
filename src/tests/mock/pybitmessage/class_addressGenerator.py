@@ -47,7 +47,7 @@ class addressGenerator(StoppableThread):
             queues.addressGeneratorQueue.put(("stopThread", "data"))
         except queue.Full:
             self.logger.warning('addressGeneratorQueue is Full')
-        super(addressGenerator, self).stopThread()  # pylint: disable=super-with-arguments
+        super(addressGenerator, self).stopThread()
 
     def run(self):
         """
@@ -58,23 +58,22 @@ class addressGenerator(StoppableThread):
             queueValue = queues.addressGeneratorQueue.get()
             try:
                 address = self.address_list.pop(0)
+                print("queueValue: ", queueValue)
+                if len(queueValue) >= 3:
+                    label = queueValue[3]
+                else:
+                    label = ''
+
+                BMConfigParser().add_section(address)
+                BMConfigParser().set(address, 'label', label)
+                BMConfigParser().set(address, 'enabled', 'true')
+                BMConfigParser().set(
+                    address, 'privsigningkey', fake_addresses[address]['privsigningkey'])
+                BMConfigParser().set(
+                    address, 'privencryptionkey', fake_addresses[address]['privencryptionkey'])
+                BMConfigParser().save()
+
+                queues.addressGeneratorQueue.task_done()
             except IndexError:
                 self.logger.error(
                     'Program error: you can only create 5 fake addresses')
-                continue
-
-            if len(queueValue) >= 3:
-                label = queueValue[3]
-            else:
-                label = ''
-
-            BMConfigParser().add_section(address)
-            BMConfigParser().set(address, 'label', label)
-            BMConfigParser().set(address, 'enabled', 'true')
-            BMConfigParser().set(
-                address, 'privsigningkey', fake_addresses[address]['privsigningkey'])
-            BMConfigParser().set(
-                address, 'privencryptionkey', fake_addresses[address]['privencryptionkey'])
-            BMConfigParser().save()
-
-            queues.addressGeneratorQueue.task_done()
