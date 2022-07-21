@@ -1,13 +1,11 @@
 # pylint: disable=too-few-public-methods
 
 from .telenium_process import TeleniumTestProcess
-from .common import skip_screen_checks
 
 
 class NetworkStatusScreen(TeleniumTestProcess):
     """NetworkStatus Screen Functionality Testing"""
 
-    @skip_screen_checks
     def test_network_status(self):
         """Show NetworkStatus"""
         # This is for checking Current screen

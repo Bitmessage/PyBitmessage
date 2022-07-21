@@ -3,6 +3,7 @@
 from pybitmessage import state
 from pybitmessage.bitmessagekivy.mpybit import NavigateApp
 from class_addressGenerator import FakeAddressGenerator
+import network
 
 
 def main():
