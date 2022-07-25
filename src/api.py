@@ -883,6 +883,16 @@ class BMRPCDispatcher(object):
         shared.reloadMyAddressHashes()
         return "success"
 
+    @command('enableAddress')
+    def HandleEnableAddress(self, address, enable=True):
+        """Enable or disable the address depending on the *enable* value"""
+        self._verifyAddress(address)
+        address = addBMIfNotPresent(address)
+        config.set(address, 'enabled', str(enable))
+        self.config.save()
+        shared.reloadMyAddressHashes()
+        return "success"
+
     @command('getAllInboxMessages')
     def HandleGetAllInboxMessages(self):
         """

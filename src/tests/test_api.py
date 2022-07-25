@@ -413,6 +413,11 @@ class TestAPI(TestAPIProto):
             self.assertEqual(self.api.deleteAndVacuum(), 'done')
             self.assertIsNone(json.loads(
                 self.api.getSentMessageById(sent_msgid)))
+            # Try sending from disabled address
+            self.assertEqual(self.api.enableAddress(addr, False), 'success')
+            result = self.api.sendBroadcast(
+                addr, base64.encodestring('test_subject'), msg)
+            self.assertRegexpMatches(result, r'^API Error 0014:')
         finally:
             self.assertEqual(self.api.deleteAddress(addr), 'success')
 
