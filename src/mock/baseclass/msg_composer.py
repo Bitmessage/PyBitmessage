@@ -32,11 +32,11 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.dialog import MDDialog
 
 from pybitmessage import state
-from pybitmessage.bitmessagekivy import kivy_state
+from pybitmessage import kivy_state
 from pybitmessage import queues
 
 from pybitmessage.addresses import decodeAddress, addBMIfNotPresent
-from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 from pybitmessage.bmconfigparser import BMConfigParser
 
 

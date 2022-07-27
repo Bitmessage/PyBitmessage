@@ -9,7 +9,7 @@
 Bitmessage android(mobile) interface
 """
 
-from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 import os
 from pybitmessage.bmconfigparser import BMConfigParser
 from functools import partial
@@ -41,13 +41,13 @@ from kivy.uix.screenmanager import SlideTransition, FallOutTransition
 
 from pybitmessage import queues
 from pybitmessage import state
-from pybitmessage.bitmessagekivy import kivy_state
+from pybitmessage import kivy_state
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 
 from kivy.lang import Observable
 import ast
 
-# from pybitmessage.bitmessagekivy.baseclass.common import toast
+# from pybitmessage.baseclass.common import toast
 
 
 if platform != "android":
@@ -207,7 +207,7 @@ class NavigateApp(MDApp):
     state.screen_density = Window.size
     window_size = state.screen_density
     app_platform = platform
-    title = "PyBitmessageChange"
+    title = "PyBitmessageChange123"
     imgstatus = False
     count = 0
     manager_open = False
@@ -219,12 +219,7 @@ class NavigateApp(MDApp):
     def build(self):
         """Method builds the widget"""
         for kv in data_screens:
-            Builder.load_file(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    'kv',
-                    # f'{all_data[kv]["kv_string"]}.kv',
-                    '{0}.kv'.format(all_data[kv]["kv_string"]),
+            Builder.load_file(os.path.join(os.path.dirname(__file__),'kv','{0}.kv'.format(all_data[kv]["kv_string"]),
                 )
             )
         # self.obj_1 = AddressBook()
@@ -233,6 +228,9 @@ class NavigateApp(MDApp):
         # kivysignalthread.start()
         Window.bind(on_keyboard=self.on_key, on_request_close=self.on_request_close)
         return Builder.load_file(os.path.join(os.path.dirname(__file__), 'main.kv'))
+
+    def set_screen(self, screen_name):
+        self.root.ids.scr_mngr.current = screen_name
 
     def run(self):
         """Running the widgets"""

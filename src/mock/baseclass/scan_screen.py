@@ -16,7 +16,7 @@ from kivy.properties import (
 )
 from kivy.uix.screenmanager import Screen
 
-from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 
 
 class ScanScreen(Screen):

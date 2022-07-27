@@ -17,7 +17,7 @@ from baseclass.common import showLimitedCnt
 from kivymd.uix.label import MDLabel
 
 from pybitmessage import state
-from pybitmessage.bitmessagekivy import kivy_state
+from pybitmessage import kivy_state
 
 
 class Inbox(Screen):

@@ -25,7 +25,7 @@ from kivymd.uix.list import (
 )
 
 from pybitmessage import state
-from pybitmessage.bitmessagekivy import kivy_state
+from pybitmessage import kivy_state
 
 from .common import (
     toast, avatarImageFirstLetter, ShowTimeHistoy

@@ -23,7 +23,7 @@ from baseclass.common import (
 from kivymd.uix.label import MDLabel
 
 from pybitmessage import state
-from pybitmessage.bitmessagekivy import kivy_state
+from pybitmessage import kivy_state
 
 
 class Allmails(Screen):

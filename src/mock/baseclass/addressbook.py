@@ -19,9 +19,9 @@ from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
 
-from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 from pybitmessage import state
-from pybitmessage.bitmessagekivy import kivy_state
+from pybitmessage import kivy_state
 
 
 class AddressBook(Screen):

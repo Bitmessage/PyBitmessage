@@ -1,7 +1,7 @@
 """Mock kivy app with mock threads."""
 
 from pybitmessage import state
-from pybitmessage.bitmessagekivy.mpybit import NavigateApp
+from mpybit import NavigateApp
 from class_addressGenerator import FakeAddressGenerator
 
 

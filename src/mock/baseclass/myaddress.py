@@ -5,7 +5,7 @@
 Kivy My Address Book screen
 """
 
-from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.get_platform import platform
 from functools import partial
 from pybitmessage.bmconfigparser import BMConfigParser
 from kivy.clock import Clock
