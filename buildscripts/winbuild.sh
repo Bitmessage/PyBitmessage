@@ -96,16 +96,18 @@ function install_openssl(){
 
 function install_pyinstaller()
 {
-	cd "${BASE_DIR}" || exit 1
-	echo "Installing PyInstaller"
-	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
-                # 3.6 is the last version to support python 2.7
-		wine python -m pip install -I pyinstaller==3.6
-	else
-		# 3.2.1 is the last version to work on XP
-		# see https://github.com/pyinstaller/pyinstaller/issues/2931
-		wine python -m pip install -I pyinstaller==3.2.1
-	fi
+    cd "${BASE_DIR}" || exit 1
+    echo "Installing PyInstaller"
+    if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
+        # 3.6 is the last version to support python 2.7
+	# but the resulting executable cannot run in wine
+	# see https://github.com/pyinstaller/pyinstaller/issues/4628
+	wine python -m pip install -I pyinstaller==3.5
+    else
+	# 3.2.1 is the last version to work on XP
+	# see https://github.com/pyinstaller/pyinstaller/issues/2931
+	wine python -m pip install -I pyinstaller==3.2.1
+    fi
 }
 
 function install_pip_depends()
@@ -169,11 +171,14 @@ function build_exe(){
 }
 
 function dryrun_exe(){
-       cd "${BASE_DIR}" || exit 1
-       if [ ! "${MACHINE_TYPE}" == 'x86_64' ]; then
-	   local VERSION=$(python setup.py --version)
-	   wine packages/pyinstaller/dist/Bitmessage_x86_$VERSION.exe -t
-       fi
+    cd "${BASE_DIR}" || exit 1
+    local VERSION=$(python setup.py --version)
+    if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
+	EXE=Bitmessage_x64_$VERSION.exe
+    else
+	EXE=Bitmessage_x86_$VERSION.exe
+    fi
+    wine packages/pyinstaller/dist/$EXE -t
 }
 
 # prepare on ubuntu
