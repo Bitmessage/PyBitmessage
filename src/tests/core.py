@@ -40,6 +40,7 @@ try:
 except (OSError, socket.error):
     tor_port_free = False
 
+frozen = getattr(sys, 'frozen', None)
 knownnodes_file = os.path.join(state.appdata, 'knownnodes.dat')
 
 
@@ -298,6 +299,7 @@ class TestCore(unittest.TestCase):
                     return
         self.fail('Failed to find at least 3 nodes to connect within 360 sec')
 
+    @unittest.skipIf(frozen, 'skip fragile test')
     def test_udp(self):
         """check default udp setting and presence of Announcer thread"""
         self.assertTrue(
@@ -370,6 +372,7 @@ class TestCore(unittest.TestCase):
             '''select typeof(msgid) from sent where ackdata=?''', result)
         self.assertEqual(column_type[0][0] if column_type else '', 'text')
 
+    @unittest.skipIf(frozen, 'not packed test_pattern into the bundle')
     def test_old_knownnodes_pickle(self):
         """Testing old (v0.6.2) version knownnodes.dat file"""
         try:
@@ -411,10 +414,21 @@ class TestCore(unittest.TestCase):
 
 
 def run():
-    """Starts all tests defined in this module"""
+    """Starts all tests intended for core run"""
     loader = unittest.defaultTestLoader
     loader.sortTestMethodsUsing = None
     suite = loader.loadTestsFromTestCase(TestCore)
+    if frozen:
+        try:
+            from pybitmessage import tests
+            suite.addTests(loader.loadTestsFromModule(tests))
+        except ImportError:
+            pass
+        try:
+            from pyelliptic import tests
+            suite.addTests(loader.loadTestsFromModule(tests))
+        except ImportError:
+            pass
     try:
         import bitmessageqt.tests
         from xvfbwrapper import Xvfb
