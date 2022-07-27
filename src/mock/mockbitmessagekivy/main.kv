@@ -1,22 +1,22 @@
-#:import get_color_from_hex kivy.utils.get_color_from_hex
-#:import Factory kivy.factory.Factory
-#:import Spinner kivy.uix.spinner.Spinner
-
-#:import colors kivymd.color_definitions.colors
-#:import images_path kivymd.images_path
-
 #:import IconLeftWidget kivymd.uix.list.IconLeftWidget
-#:import MDCard kivymd.uix.card.MDCard
+#:import images_path kivymd.images_path
+#:import Spinner kivy.uix.spinner.Spinner
+#:import Factory kivy.factory.Factory
+
 #:import MDCheckbox kivymd.uix.selectioncontrol.MDCheckbox
-#:import MDFloatingActionButton kivymd.uix.button.MDFloatingActionButton
 #:import MDList kivymd.uix.list.MDList
+#:import OneLineListItem kivymd.uix.list.OneLineListItem
+#:import MDTextField kivymd.uix.textfield.MDTextField
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import MDCard kivymd.uix.card.MDCard
+#:import colors kivymd.color_definitions.colors
+#:import MDTabs kivymd.uix.tab.MDTabs
+#:import MDFloatingActionButton kivymd.uix.button.MDFloatingActionButton
+#:import Factory kivy.factory.Factory
 #:import MDScrollViewRefreshLayout kivymd.uix.refreshlayout.MDScrollViewRefreshLayout
 #:import MDSpinner kivymd.uix.spinner.MDSpinner
-#:import MDTextField kivymd.uix.textfield.MDTextField
-#:import MDTabs kivymd.uix.tab.MDTabs
 #:import MDTabsBase kivymd.uix.tab.MDTabsBase
-#:import OneLineListItem kivymd.uix.list.OneLineListItem
-
+##:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
 <Tab@BoxLayout+MDTabsBase>
 
 #:set color_button (0.784, 0.443, 0.216, 1)  # brown
@@ -25,11 +25,15 @@
 
 <MySpinnerOption@SpinnerOption>:
     font_size: '12.5sp'
+    #background_color: color_button if self.state == 'down' else color_button_pressed
+    #background_down: 'atlas://data/images/defaulttheme/button'
     background_normal: 'atlas://data/images/defaulttheme/textinput_active'
     background_color: app.theme_cls.primary_color
+    # text_autoupdate: True
     color: color_font
 
 <NavigationItem>
+    #on_press: root.active = not root.active
     on_press: root.currentlyActive()
     active_color: root.theme_cls.primary_color if root.active else root.theme_cls.text_color
 
@@ -42,6 +46,7 @@
         id: badge_txt
         text: f"{root.badge_text}"
         theme_text_color: "Custom"
+        #text_color: root.active_color
         halign: 'right'
 
 <NavigationDrawerDivider>:
@@ -69,6 +74,8 @@
                 on_release: app.rest_default_avatar_img()
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
+                # opacity: 1 if app.current_address_label() else 0
+                # disabled: False if app.current_address_label() else True
                 opacity: 0
                 disabled: True
 
@@ -79,6 +86,7 @@
                 pos_hint: {"top": 1, 'right': 1}
                 color: [1,0,0,1]
                 on_release: app.file_manager_open()
+                # md_bg_color: app.theme_cls.primary_color
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
                 opacity: 1 if app.current_address_label() else 0
@@ -88,9 +96,11 @@
                 id: top_box
                 size_hint_y: None
                 height: "200dp"
+                #padding: "10dp"
                 x: root.parent.x
                 pos_hint: {"top": 1}
                 Image:
+                    #source: './images/drawer_logo1.png'
                     source: app.get_default_logo(self)
 
         ScrollView:
@@ -105,8 +115,10 @@
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
                     text: app.tr._('Accounts')
+                    #text: app.tr._('Hello World')
                     height:"35dp"
                 NavigationItem:
+                    # size: 50,50
                     height: dp(48)
                     CustomSpinner:
                         id: btn
@@ -122,6 +134,7 @@
                 NavigationItem:
                     id: inbox_cnt
                     text: app.tr._('Inbox')
+                    #text: app.tr._('Hello World')
                     icon: 'email-open'
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'inbox'
@@ -157,6 +170,13 @@
                     on_release: app.root.ids.scr_mngr.current = 'allmails'
                     on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
+                # NavigationItem:
+                #     id: chat_rm
+                #     text: app.tr._('Chat Room')
+                #     icon: 'wechat'
+                #     divider: None
+                #     on_release: app.root.ids.scr_mngr.current = 'chlist'
+                #     on_release: root.parent.set_state()
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
                     text: app.tr._("All labels")
@@ -178,6 +198,12 @@
                     divider: None
                     on_release: app.root.ids.scr_mngr.current = 'payment'
                     on_release: root.parent.set_state()
+                # NavigationItem:
+                #     text: app.tr._('Credits')
+                #     icon: 'wallet'
+                #     divider: None
+                #     on_release: app.root.ids.scr_mngr.current = 'credits'
+                #     on_release: root.parent.set_state()
                 NavigationItem:
                     text: app.tr._('New address')
                     icon: 'account-plus'
@@ -216,8 +242,52 @@ MDNavigationLayout:
         id: scr_mngr
         size_hint_y: None
         height: root.height - toolbar.height
+        Inbox:
+            id:sc1
+#         # Page:
+#         #     id:sc2
+        Create:
+            id:sc3
+        Sent:
+            id:sc4
+        Trash:
+            id:sc5
+        Login:
+            id:sc6
+        Random:
+            id:sc7
+        # Spam:
+        #     id:sc8
+        Setting:
+            id:sc9
+        MyAddress:
+            id:sc10
+        AddressBook:
+            id:sc11
+        Payment:
+            id:sc12
         NetworkStat:
             id:sc13
+        MailDetail:
+            id:sc14
+        ShowQRCode:
+            id:sc15
+        Draft:
+            id:sc16
+        Allmails:
+            id:sc17
+        # Credits:
+        #     id:sc18
+        # Starred:
+        #     id:sc19
+        # Archieve:
+        #     id:sc20
+        # ChatRoom:
+        #     id:sc21
+        # ChatList:
+        #     id:sc22
+        ScanScreen:
+            id:sc23
 
     MDNavigationDrawer:
         id: nav_drawer
@@ -234,6 +304,7 @@ MDNavigationLayout:
 
 
 <SearchBar@BoxLayout>:
+    # id: search_bar
     size_hint_y: None
     height: self.minimum_height
 
@@ -296,6 +367,7 @@ MDNavigationLayout:
 
             AvatarSampleWidget:
                 id: avater_img
+                # source: './images/kivy/avatar.png'
                 source: None
 
             TimeTagRightSampleWidget:
@@ -329,6 +401,7 @@ MDNavigationLayout:
 
             AvatarSampleWidget:
                 id: avater_img
+                # source: './images/kivy/avatar.png'
                 source: None
 
             TimeTagRightSampleWidget:
@@ -343,6 +416,7 @@ MDNavigationLayout:
                 text: 'test'
                 icon: ""
                 pos_hint: {"center_x": 0.91 if app.app_platform == "android" else 0.94, "center_y": 0.3}
+                # height: dp(18)
                 height: '18dp'
                 text_color: (1,1,1,1)
                 radius: [8]
