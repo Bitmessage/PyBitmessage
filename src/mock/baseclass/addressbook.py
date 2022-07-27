@@ -40,7 +40,7 @@ class AddressBook(Screen):
 
     def init_ui(self, dt=0):
         """Clock Schdule for method AddressBook"""
-        self.loadAddresslist(None, 'All', '')
+        self.loadAddresslist()
         print(dt)
 
     def loadAddresslist(self):

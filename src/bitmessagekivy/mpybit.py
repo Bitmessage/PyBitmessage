@@ -47,7 +47,7 @@ from kivymd.uix.bottomsheet import MDCustomBottomSheet
 from kivy.lang import Observable
 import ast
 
-# from pybitmessage.baseclass.common import toast
+from baseclass.common import toast
 
 
 if platform != "android":
@@ -748,7 +748,7 @@ class NavigateApp(MDApp):
         """This method is rotating loader for few seconds"""
         if instance.text == 'Inbox':
             self.root.ids.sc1.ids.ml.clear_widgets()
-            self.root.ids.sc1.loadMessagelist(state.association)
+            self.root.ids.sc1.loadMessagelist()
             self.root.ids.sc1.children[1].active = False
         elif instance.text == 'All Mails':
             self.root.ids.sc17.clear_widgets()

@@ -33,7 +33,7 @@ class Trash(Screen):
         super(Trash, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
-    def init_ui(self):
+    def init_ui(self, dt=0):
         """Clock Schdule for method trash screen"""
         if state.association == '':
             if state.kivyapp.variable_1:

@@ -39,7 +39,7 @@ class Inbox(Screen):
             if state.kivyapp.variable_1:
                 kivy_state.association = state.kivyapp.variable_1[0]
 
-    def init_ui(self):
+    def init_ui(self, dt=0):
         """Clock schdule for method inbox accounts"""
         self.loadMessagelist()
 

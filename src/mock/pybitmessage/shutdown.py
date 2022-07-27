@@ -7,14 +7,7 @@
 
 """shutdown function"""
 
-import queue as Queue
-import threading
-import time
-
 from pybitmessage import state
-from pybitmessage.network.threads import StoppableThread
-from pybitmessage.queues import (
-    addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)
 
 
 def doCleanShutdown():
