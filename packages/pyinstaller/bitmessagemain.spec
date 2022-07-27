@@ -7,6 +7,7 @@ import time
 from PyInstaller.utils.hooks import copy_metadata
 
 
+DEBUG = False
 site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
 arch = 32 if ctypes.sizeof(ctypes.c_voidp) == 4 else 64
@@ -25,6 +26,10 @@ snapshot = False
 
 hookspath = os.path.join(spec_root, 'hooks')
 
+excludes = ['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter', 'tests']
+if not DEBUG:
+    excludes += ['pybitmessage.tests', 'pyelliptic.tests']
+
 a = Analysis(
     [os.path.join(srcPath, 'bitmessagemain.py')],
     datas=[
@@ -39,7 +44,7 @@ a = Analysis(
         'plugins.menu_qrcode', 'plugins.proxyconfig_stem'
     ],
     runtime_hooks=[os.path.join(hookspath, 'pyinstaller_rthook_plugins.py')],
-    excludes=['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter', 'tests']
+    excludes=excludes
 )
 
 
@@ -122,10 +127,10 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     name=fname,
-    debug=False,
+    debug=DEBUG,
     strip=None,
     upx=False,
-    console=False, icon=os.path.join(srcPath, 'images', 'can-icon.ico')
+    console=DEBUG, icon=os.path.join(srcPath, 'images', 'can-icon.ico')
 )
 
 coll = COLLECT(

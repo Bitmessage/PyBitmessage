@@ -313,8 +313,11 @@ class Main(object):
                 # pylint: disable=relative-import
                 from tests import core as test_core
             except ImportError:
-                self.stop()
-                return
+                try:
+                    from pybitmessage.tests import core as test_core
+                except ImportError:
+                    self.stop()
+                    return
 
             test_core_result = test_core.run()
             self.stop()
