@@ -216,9 +216,6 @@ def pointMult(secret):
             mb = OpenSSL.create_string_buffer(size)
             OpenSSL.i2o_ECPublicKey(k, OpenSSL.byref(OpenSSL.pointer(mb)))
 
-            OpenSSL.EC_POINT_free(pub_key)
-            OpenSSL.BN_free(priv_key)
-            OpenSSL.EC_KEY_free(k)
             return mb.raw
 
         except Exception:
@@ -226,3 +223,7 @@ def pointMult(secret):
             import time
             traceback.print_exc()
             time.sleep(0.2)
+        finally:
+            OpenSSL.EC_POINT_free(pub_key)
+            OpenSSL.BN_free(priv_key)
+            OpenSSL.EC_KEY_free(k)
