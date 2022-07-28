@@ -2,12 +2,14 @@
 import unittest
 from binascii import unhexlify
 
-from pybitmessage import addresses
+from pybitmessage import addresses, highlevelcrypto
 
 from .samples import (
     sample_address, sample_daddr3_512, sample_daddr4_512,
     sample_deterministic_addr4, sample_deterministic_addr3,
-    sample_deterministic_ripe, sample_ripe)
+    sample_deterministic_ripe, sample_ripe,
+    sample_privsigningkey_wif, sample_privencryptionkey_wif,
+    sample_wif_privsigningkey, sample_wif_privencryptionkey)
 
 sample_addr3 = sample_deterministic_addr3.split('-')[1]
 sample_addr4 = sample_deterministic_addr4.split('-')[1]
@@ -59,3 +61,26 @@ class TestAddresses(unittest.TestCase):
             sample_addr4, addresses.encodeBase58(sample_daddr4_512))
         self.assertEqual(
             sample_addr3, addresses.encodeBase58(sample_daddr3_512))
+
+    def test_wif(self):
+        """Decode WIFs of [chan] bitmessage and check the keys"""
+        self.assertEqual(
+            sample_wif_privsigningkey,
+            highlevelcrypto.decodeWalletImportFormat(
+                sample_privsigningkey_wif))
+        self.assertEqual(
+            sample_wif_privencryptionkey,
+            highlevelcrypto.decodeWalletImportFormat(
+                sample_privencryptionkey_wif))
+        self.assertEqual(
+            sample_privsigningkey_wif,
+            highlevelcrypto.encodeWalletImportFormat(
+                sample_wif_privsigningkey))
+        self.assertEqual(
+            sample_privencryptionkey_wif,
+            highlevelcrypto.encodeWalletImportFormat(
+                sample_wif_privencryptionkey))
+
+        with self.assertRaises(ValueError):
+            highlevelcrypto.decodeWalletImportFormat(
+                sample_privencryptionkey_wif[:-2])

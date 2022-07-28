@@ -2,6 +2,13 @@
 
 from binascii import unhexlify
 
+# hello, page 1 of the Specification
+sample_hash_data = b'hello'
+sample_double_sha512 = unhexlify(
+    '0592a10584ffabf96539f3d780d776828c67da1ab5b169e9e8aed838aaecc9ed36d49ff14'
+    '23c55f019e050c66c6324f53588be88894fef4dcffdb74b98e2b200')
+
+sample_bm160 = unhexlify('79a324faeebcbf9849f310545ed531556882487e')
 
 magic = 0xE9BEB4D9
 
@@ -29,9 +36,10 @@ sample_point = (
     94730058721143827257669456336351159718085716196507891067256111928318063085006
 )
 
-sample_seed = 'TIGER, tiger, burning bright. In the forests of the night'
-# Deterministic addresses with stream 1 and versions 3, 4
+sample_seed = b'TIGER, tiger, burning bright. In the forests of the night'
+# RIPE hash on step 22 with signing key nonce 42
 sample_deterministic_ripe = b'00cfb69416ae76f68a81c459de4e13460c7d17eb'
+# Deterministic addresses with stream 1 and versions 3, 4
 sample_deterministic_addr3 = 'BM-2DBPTgeSawWYZceFD69AbDT5q4iUWtj1ZN'
 sample_deterministic_addr4 = 'BM-2cWzSnwjJ7yRP3nLEWUV5LisTZyREWSzUK'
 sample_daddr3_512 = 18875720106589866286514488037355423395410802084648916523381
@@ -47,3 +55,23 @@ sample_subscription_addresses = [
     'BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq',
     'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw']
 sample_subscription_name = 'test sub'
+
+sample_msg = unhexlify(
+    '0592a10584ffabf96539f3d780d776828c67da1ab5b169e9e8aed838aaecc9ed36d49ff'
+    '1423c55f019e050c66c6324f53588be88894fef4dcffdb74b98e2b200')
+sample_sig = unhexlify(
+    '304402202302475351db6b822de15d922e29397541f10d8a19780ba2ca4a920b1035f075'
+    '02205e5bba40d5f07a24c23a89ba5f01a3828371dfbb685dd5375fa1c29095fd232b')
+sample_sig_sha1 = unhexlify(
+    '30460221008ad234687d1bdc259932e28ea6ee091b88b0900d8134902aa8c2fd7f016b96e'
+    'd022100dafb94e28322c2fa88878f9dcbf0c2d33270466ab3bbffaec3dca0a2d1ef9354')
+
+# [chan] bitmessage
+sample_wif_privsigningkey = unhexlify(
+    b'a2e8b841a531c1c558ee0680c396789c7a2ea3ac4795ae3f000caf9fe367d144')
+sample_wif_privencryptionkey = unhexlify(
+    b'114ec0e2dca24a826a0eed064b0405b0ac148abc3b1d52729697f4d7b873fdc6')
+sample_privsigningkey_wif = \
+    b'5K42shDERM5g7Kbi3JT5vsAWpXMqRhWZpX835M2pdSoqQQpJMYm'
+sample_privencryptionkey_wif = \
+    b'5HwugVWm31gnxtoYcvcK7oywH2ezYTh6Y4tzRxsndAeMi6NHqpA'

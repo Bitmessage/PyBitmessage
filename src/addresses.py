@@ -2,10 +2,15 @@
 Operations with addresses
 """
 # pylint: disable=inconsistent-return-statements
-import hashlib
+
 import logging
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
+
+try:
+    from highlevelcrypto import double_sha512
+except ImportError:
+    from .highlevelcrypto import double_sha512
 
 
 logger = logging.getLogger('default')
@@ -134,15 +139,6 @@ def decodeVarint(data):
         return (encodedValue, 9)
 
 
-def calculateInventoryHash(data):
-    """Calculate inventory hash from object data"""
-    sha = hashlib.new('sha512')
-    sha2 = hashlib.new('sha512')
-    sha.update(data)
-    sha2.update(sha.digest())
-    return sha2.digest()[0:32]
-
-
 def encodeAddress(version, stream, ripe):
     """Convert ripe to address"""
     if version >= 2 and version < 4:
@@ -166,12 +162,7 @@ def encodeAddress(version, stream, ripe):
     storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
 
     # Generate the checksum
-    sha = hashlib.new('sha512')
-    sha.update(storedBinaryData)
-    currentHash = sha.digest()
-    sha = hashlib.new('sha512')
-    sha.update(currentHash)
-    checksum = sha.digest()[0:4]
+    checksum = double_sha512(storedBinaryData)[0:4]
 
     # FIXME: encodeBase58 should take binary data, to reduce conversions
     # encodeBase58(storedBinaryData + checksum)
@@ -207,13 +198,7 @@ def decodeAddress(address):
     data = unhexlify(hexdata)
     checksum = data[-4:]
 
-    sha = hashlib.new('sha512')
-    sha.update(data[:-4])
-    currentHash = sha.digest()
-    sha = hashlib.new('sha512')
-    sha.update(currentHash)
-
-    if checksum != sha.digest()[0:4]:
+    if checksum != double_sha512(data[:-4])[0:4]:
         status = 'checksumfailed'
         return status, 0, 0, ''
 

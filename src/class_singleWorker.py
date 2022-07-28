@@ -25,9 +25,7 @@ import queues
 import shared
 import state
 import tr
-from addresses import (
-    calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
-)
+from addresses import decodeAddress, decodeVarint, encodeVarint
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from inventory import Inventory
@@ -50,6 +48,8 @@ class singleWorker(StoppableThread):
 
     def __init__(self):
         super(singleWorker, self).__init__(name="singleWorker")
+        self.digestAlg = config.safeGet(
+            'bitmessagesettings', 'digestalg', 'sha256')
         proofofwork.init()
 
     def stopThread(self):
@@ -73,18 +73,16 @@ class singleWorker(StoppableThread):
         queryreturn = sqlQuery(
             '''SELECT DISTINCT toaddress FROM sent'''
             ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
-        for row in queryreturn:
-            toAddress, = row
-            # toStatus
-            _, toAddressVersionNumber, toStreamNumber, toRipe = \
-                decodeAddress(toAddress)
+        for toAddress, in queryreturn:
+            toAddressVersionNumber, toStreamNumber, toRipe = \
+                decodeAddress(toAddress)[1:]
             if toAddressVersionNumber <= 3:
                 state.neededPubkeys[toAddress] = 0
             elif toAddressVersionNumber >= 4:
-                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+                doubleHashOfAddressData = highlevelcrypto.double_sha512(
                     encodeVarint(toAddressVersionNumber)
                     + encodeVarint(toStreamNumber) + toRipe
-                ).digest()).digest()
+                )
                 # Note that this is the first half of the sha512 hash.
                 privEncryptionKey = doubleHashOfAddressData[:32]
                 tag = doubleHashOfAddressData[32:]
@@ -195,15 +193,18 @@ class singleWorker(StoppableThread):
         self.logger.info("Quitting...")
 
     def _getKeysForAddress(self, address):
-        privSigningKeyBase58 = config.get(
-            address, 'privsigningkey')
-        privEncryptionKeyBase58 = config.get(
-            address, 'privencryptionkey')
+        try:
+            privSigningKeyBase58 = config.get(address, 'privsigningkey')
+            privEncryptionKeyBase58 = config.get(address, 'privencryptionkey')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            self.logger.error(
+                'Could not read or decode privkey for address %s', address)
+            raise ValueError
 
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
+        privSigningKeyHex = hexlify(
+            highlevelcrypto.decodeWalletImportFormat(privSigningKeyBase58))
+        privEncryptionKeyHex = hexlify(
+            highlevelcrypto.decodeWalletImportFormat(privEncryptionKeyBase58))
 
         # The \x04 on the beginning of the public keys are not sent.
         # This way there is only one acceptable way to encode
@@ -254,9 +255,7 @@ class singleWorker(StoppableThread):
         message once it is done with the POW"""
         # Look up my stream number based on my address hash
         myAddress = shared.myAddressesByHash[adressHash]
-        # status
-        _, addressVersionNumber, streamNumber, adressHash = (
-            decodeAddress(myAddress))
+        addressVersionNumber, streamNumber = decodeAddress(myAddress)[1:3]
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
@@ -269,18 +268,15 @@ class singleWorker(StoppableThread):
         payload += protocol.getBitfield(myAddress)
 
         try:
-            # privSigningKeyHex, privEncryptionKeyHex
-            _, _, pubSigningKey, pubEncryptionKey = \
-                self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
-            self.logger.error(
+            pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                myAddress)[2:]
+        except ValueError:
+            return
+        except Exception:
+            return self.logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
-            return
+                ' address. %s\n', exc_info=True)
 
         payload += pubSigningKey + pubEncryptionKey
 
@@ -288,7 +284,7 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For pubkey message)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
@@ -318,9 +314,8 @@ class singleWorker(StoppableThread):
         try:
             myAddress = shared.myAddressesByHash[adressHash]
         except KeyError:
-            # The address has been deleted.
-            self.logger.warning("Can't find %s in myAddressByHash", hexlify(adressHash))
-            return
+            return self.logger.warning(  # The address has been deleted.
+                "Can't find %s in myAddressByHash", hexlify(adressHash))
         if config.safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
             return
@@ -351,15 +346,13 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
-            self.logger.error(
+        except ValueError:
+            return
+        except Exception:
+            return self.logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
-            return
+                ' address. %s\n', exc_info=True)
 
         payload += pubSigningKey + pubEncryptionKey
 
@@ -368,7 +361,8 @@ class singleWorker(StoppableThread):
         payload += encodeVarint(config.getint(
             myAddress, 'payloadlengthextrabytes'))
 
-        signature = highlevelcrypto.sign(payload, privSigningKeyHex)
+        signature = highlevelcrypto.sign(
+            payload, privSigningKeyHex, self.digestAlg)
         payload += encodeVarint(len(signature))
         payload += signature
 
@@ -376,7 +370,7 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For pubkey message)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
@@ -425,15 +419,13 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
-            self.logger.error(
+        except ValueError:
+            return
+        except Exception:
+            return self.logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
-            return
+                ' address. %s\n', exc_info=True)
 
         dataToEncrypt += pubSigningKey + pubEncryptionKey
 
@@ -449,14 +441,13 @@ class singleWorker(StoppableThread):
         # unencrypted, the pubkey with part of the hash so that nodes
         # know which pubkey object to try to decrypt
         # when they want to send a message.
-        doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+        doubleHashOfAddressData = highlevelcrypto.double_sha512(
             encodeVarint(addressVersionNumber)
             + encodeVarint(streamNumber) + addressHash
-        ).digest()).digest()
+        )
         payload += doubleHashOfAddressData[32:]  # the tag
         signature = highlevelcrypto.sign(
-            payload + dataToEncrypt, privSigningKeyHex
-        )
+            payload + dataToEncrypt, privSigningKeyHex, self.digestAlg)
         dataToEncrypt += encodeVarint(len(signature))
         dataToEncrypt += signature
 
@@ -469,7 +460,7 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For pubkey message)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,
@@ -505,7 +496,7 @@ class singleWorker(StoppableThread):
         objectType = protocol.OBJECT_ONIONPEER
         # FIXME: ideally the objectPayload should be signed
         objectPayload = encodeVarint(peer.port) + protocol.encodeHost(peer.host)
-        tag = calculateInventoryHash(objectPayload)
+        tag = highlevelcrypto.calculateInventoryHash(objectPayload)
 
         if Inventory().by_type_and_tag(objectType, tag):
             return  # not expired
@@ -519,7 +510,7 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For onionpeer object)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         Inventory()[inventoryHash] = (
             objectType, streamNumber, buffer(payload),
             embeddedTime, buffer(tag)
@@ -613,10 +604,10 @@ class singleWorker(StoppableThread):
 
             payload += encodeVarint(streamNumber)
             if addressVersionNumber >= 4:
-                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+                doubleHashOfAddressData = highlevelcrypto.double_sha512(
                     encodeVarint(addressVersionNumber)
                     + encodeVarint(streamNumber) + ripe
-                ).digest()).digest()
+                )
                 tag = doubleHashOfAddressData[32:]
                 payload += tag
             else:
@@ -641,7 +632,7 @@ class singleWorker(StoppableThread):
             dataToSign = payload + dataToEncrypt
 
             signature = highlevelcrypto.sign(
-                dataToSign, privSigningKeyHex)
+                dataToSign, privSigningKeyHex, self.digestAlg)
             dataToEncrypt += encodeVarint(len(signature))
             dataToEncrypt += signature
 
@@ -686,7 +677,7 @@ class singleWorker(StoppableThread):
                 )
                 continue
 
-            inventoryHash = calculateInventoryHash(payload)
+            inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
             objectType = 3
             Inventory()[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
@@ -795,10 +786,10 @@ class singleWorker(StoppableThread):
                     if toAddressVersionNumber <= 3:
                         toTag = ''
                     else:
-                        toTag = hashlib.sha512(hashlib.sha512(
+                        toTag = highlevelcrypto.double_sha512(
                             encodeVarint(toAddressVersionNumber)
                             + encodeVarint(toStreamNumber) + toRipe
-                        ).digest()).digest()[32:]
+                        )[32:]
                     if toaddress in state.neededPubkeys or \
                             toTag in state.neededPubkeys:
                         # We already sent a request for the pubkey
@@ -832,11 +823,11 @@ class singleWorker(StoppableThread):
                         # already contains the toAddress and cryptor
                         # object associated with the tag for this toAddress.
                         if toAddressVersionNumber >= 4:
-                            doubleHashOfToAddressData = hashlib.sha512(
-                                hashlib.sha512(
-                                    encodeVarint(toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe
-                                ).digest()
-                            ).digest()
+                            doubleHashOfToAddressData = \
+                                highlevelcrypto.double_sha512(
+                                    encodeVarint(toAddressVersionNumber)
+                                    + encodeVarint(toStreamNumber) + toRipe
+                                )
                             # The first half of the sha512 hash.
                             privEncryptionKey = doubleHashOfToAddressData[:32]
                             # The second half of the sha512 hash.
@@ -1116,8 +1107,9 @@ class singleWorker(StoppableThread):
                         ' from the keys.dat file for our own address. %s\n',
                         err)
                     continue
-                privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58))
+                privEncryptionKeyHex = hexlify(
+                    highlevelcrypto.decodeWalletImportFormat(
+                        privEncryptionKeyBase58))
                 pubEncryptionKeyBase256 = unhexlify(highlevelcrypto.privToPub(
                     privEncryptionKeyHex))[1:]
                 requiredAverageProofOfWorkNonceTrialsPerByte = \
@@ -1223,7 +1215,8 @@ class singleWorker(StoppableThread):
             payload += fullAckPayload
             dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
-            signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
+            signature = highlevelcrypto.sign(
+                dataToSign, privSigningKeyHex, self.digestAlg)
             payload += encodeVarint(len(signature))
             payload += signature
 
@@ -1301,7 +1294,7 @@ class singleWorker(StoppableThread):
                 )
                 continue
 
-            inventoryHash = calculateInventoryHash(encryptedPayload)
+            inventoryHash = highlevelcrypto.calculateInventoryHash(encryptedPayload)
             objectType = 2
             Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
@@ -1351,8 +1344,7 @@ class singleWorker(StoppableThread):
             # the message in our own inbox.
             if config.has_section(toaddress):
                 # Used to detect and ignore duplicate messages in our inbox
-                sigHash = hashlib.sha512(hashlib.sha512(
-                    signature).digest()).digest()[32:]
+                sigHash = highlevelcrypto.double_sha512(signature)[32:]
                 t = (inventoryHash, toaddress, fromaddress, subject, int(
                     time.time()), message, 'inbox', encoding, 0, sigHash)
                 helper_inbox.insert(t)
@@ -1407,16 +1399,13 @@ class singleWorker(StoppableThread):
             # neededPubkeys dictionary. But if we are recovering
             # from a restart of the client then we have to put it in now.
 
-            # Note that this is the first half of the sha512 hash.
-            privEncryptionKey = hashlib.sha512(hashlib.sha512(
+            doubleHashOfAddressData = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + ripe
-            ).digest()).digest()[:32]
+            )
+            privEncryptionKey = doubleHashOfAddressData[:32]
             # Note that this is the second half of the sha512 hash.
-            tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersionNumber)
-                + encodeVarint(streamNumber) + ripe
-            ).digest()).digest()[32:]
+            tag = doubleHashOfAddressData[32:]
             if tag not in state.neededPubkeys:
                 # We'll need this for when we receive a pubkey reply:
                 # it will be encrypted and we'll need to decrypt it.
@@ -1459,7 +1448,7 @@ class singleWorker(StoppableThread):
 
         payload = self._doPOWDefaults(payload, TTL)
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')

@@ -1,9 +1,11 @@
 """
 A thread for creating addresses
 """
-import hashlib
+
 import time
 from binascii import hexlify
+
+from six.moves import configparser, queue
 
 import defaults
 import highlevelcrypto
@@ -13,11 +15,7 @@ import state
 import tr
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from bmconfigparser import config
-from fallback import RIPEMD160Hash
 from network import StoppableThread
-from pyelliptic import arithmetic
-from pyelliptic.openssl import OpenSSL
-from six.moves import configparser, queue
 
 
 class AddressGeneratorException(Exception):
@@ -129,18 +127,13 @@ class addressGenerator(StoppableThread):
                 # the \x00 or \x00\x00 bytes thus making the address shorter.
                 startTime = time.time()
                 numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
-                potentialPrivSigningKey = OpenSSL.rand(32)
-                potentialPubSigningKey = highlevelcrypto.pointMult(
-                    potentialPrivSigningKey)
+                privSigningKey, pubSigningKey = highlevelcrypto.random_keys()
                 while True:
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                    potentialPrivEncryptionKey = OpenSSL.rand(32)
-                    potentialPubEncryptionKey = highlevelcrypto.pointMult(
-                        potentialPrivEncryptionKey)
-                    sha = hashlib.new('sha512')
-                    sha.update(
-                        potentialPubSigningKey + potentialPubEncryptionKey)
-                    ripe = RIPEMD160Hash(sha.digest()).digest()
+                    potentialPrivEncryptionKey, potentialPubEncryptionKey = \
+                        highlevelcrypto.random_keys()
+                    ripe = highlevelcrypto.to_ripe(
+                        pubSigningKey, potentialPubEncryptionKey)
                     if (
                         ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
                         == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
@@ -163,20 +156,10 @@ class addressGenerator(StoppableThread):
                 address = encodeAddress(
                     addressVersionNumber, streamNumber, ripe)
 
-                # An excellent way for us to store our keys
-                # is in Wallet Import Format. Let us convert now.
-                # https://en.bitcoin.it/wiki/Wallet_import_format
-                privSigningKey = b'\x80' + potentialPrivSigningKey
-                checksum = hashlib.sha256(hashlib.sha256(
-                    privSigningKey).digest()).digest()[0:4]
-                privSigningKeyWIF = arithmetic.changebase(
-                    privSigningKey + checksum, 256, 58)
-
-                privEncryptionKey = b'\x80' + potentialPrivEncryptionKey
-                checksum = hashlib.sha256(hashlib.sha256(
-                    privEncryptionKey).digest()).digest()[0:4]
-                privEncryptionKeyWIF = arithmetic.changebase(
-                    privEncryptionKey + checksum, 256, 58)
+                privSigningKeyWIF = highlevelcrypto.encodeWalletImportFormat(
+                    privSigningKey)
+                privEncryptionKeyWIF = highlevelcrypto.encodeWalletImportFormat(
+                    potentialPrivEncryptionKey)
 
                 config.add_section(address)
                 config.set(address, 'label', label)
@@ -246,24 +229,19 @@ class addressGenerator(StoppableThread):
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                     while True:
                         numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                        potentialPrivSigningKey = hashlib.sha512(
-                            deterministicPassphrase
-                            + encodeVarint(signingKeyNonce)
-                        ).digest()[:32]
-                        potentialPrivEncryptionKey = hashlib.sha512(
-                            deterministicPassphrase
-                            + encodeVarint(encryptionKeyNonce)
-                        ).digest()[:32]
-                        potentialPubSigningKey = highlevelcrypto.pointMult(
-                            potentialPrivSigningKey)
-                        potentialPubEncryptionKey = highlevelcrypto.pointMult(
-                            potentialPrivEncryptionKey)
+                        potentialPrivSigningKey, potentialPubSigningKey = \
+                            highlevelcrypto.deterministic_keys(
+                                deterministicPassphrase,
+                                encodeVarint(signingKeyNonce))
+                        potentialPrivEncryptionKey, potentialPubEncryptionKey = \
+                            highlevelcrypto.deterministic_keys(
+                                deterministicPassphrase,
+                                encodeVarint(encryptionKeyNonce))
+
                         signingKeyNonce += 2
                         encryptionKeyNonce += 2
-                        sha = hashlib.new('sha512')
-                        sha.update(
-                            potentialPubSigningKey + potentialPubEncryptionKey)
-                        ripe = RIPEMD160Hash(sha.digest()).digest()
+                        ripe = highlevelcrypto.to_ripe(
+                            potentialPubSigningKey, potentialPubEncryptionKey)
                         if (
                             ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
                             == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
@@ -300,21 +278,12 @@ class addressGenerator(StoppableThread):
                         saveAddressToDisk = False
 
                     if saveAddressToDisk and live:
-                        # An excellent way for us to store our keys is
-                        # in Wallet Import Format. Let us convert now.
-                        # https://en.bitcoin.it/wiki/Wallet_import_format
-                        privSigningKey = b'\x80' + potentialPrivSigningKey
-                        checksum = hashlib.sha256(hashlib.sha256(
-                            privSigningKey).digest()).digest()[0:4]
-                        privSigningKeyWIF = arithmetic.changebase(
-                            privSigningKey + checksum, 256, 58)
-
-                        privEncryptionKey = b'\x80' + \
-                            potentialPrivEncryptionKey
-                        checksum = hashlib.sha256(hashlib.sha256(
-                            privEncryptionKey).digest()).digest()[0:4]
-                        privEncryptionKeyWIF = arithmetic.changebase(
-                            privEncryptionKey + checksum, 256, 58)
+                        privSigningKeyWIF = \
+                            highlevelcrypto.encodeWalletImportFormat(
+                                potentialPrivSigningKey)
+                        privEncryptionKeyWIF = \
+                            highlevelcrypto.encodeWalletImportFormat(
+                                potentialPrivEncryptionKey)
 
                         try:
                             config.add_section(address)
@@ -367,10 +336,10 @@ class addressGenerator(StoppableThread):
                                 highlevelcrypto.makeCryptor(
                                     hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe] = address
-                            tag = hashlib.sha512(hashlib.sha512(
+                            tag = highlevelcrypto.double_sha512(
                                 encodeVarint(addressVersionNumber)
                                 + encodeVarint(streamNumber) + ripe
-                            ).digest()).digest()[32:]
+                            )[32:]
                             shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
                                 # If this is a chan address,

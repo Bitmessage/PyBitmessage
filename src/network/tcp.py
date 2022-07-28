@@ -17,7 +17,7 @@ import knownnodes
 import protocol
 import state
 from bmconfigparser import config
-from helper_random import randomBytes
+from highlevelcrypto import randomBytes
 from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
 from network.assemble import assemble_addr
