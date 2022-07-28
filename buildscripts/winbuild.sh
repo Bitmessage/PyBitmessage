@@ -100,7 +100,7 @@ function install_pyinstaller()
 	echo "Installing PyInstaller"
 	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
                 # 3.6 is the last version to support python 2.7
-		wine python -m pip install -I pyinstaller==3.6
+		wine python -m pip install -I pyinstaller==3.5
 	else
 		# 3.2.1 is the last version to work on XP
 		# see https://github.com/pyinstaller/pyinstaller/issues/2931
