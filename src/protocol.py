@@ -90,6 +90,11 @@ def isBitSetWithinBitfield(fourByteString, n):
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
 
+# Streams
+
+
+MIN_VALID_STREAM = 1
+MAX_VALID_STREAM = 2**63 - 1
 
 # IP addresses
 

@@ -22,7 +22,8 @@ from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
     BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError,
     BMObjectInsufficientPOWError, BMObjectInvalidDataError,
-    BMObjectInvalidError, BMObjectUnwantedStreamError
+    BMObjectInvalidError, BMObjectUnwantedStreamError,
+    BMObjectInvalidStreamError
 )
 from network.constants import (
     ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
@@ -409,6 +410,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.object.inventoryHash, acceptmismatch)
             if not acceptmismatch:
                 raise
+        except BMObjectInvalidStreamError:
+            BMProto.stopDownloadingObject(
+                self.object.inventoryHash)
+            raise
 
         try:
             self.object.checkObjectByType()

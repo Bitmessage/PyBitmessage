@@ -36,6 +36,12 @@ class BMObjectUnwantedStreamError(Exception):
     errorCodes = ("Object in unwanted stream")
 
 
+class BMObjectInvalidStreamError(Exception):
+    """Exception indicating the object is in a stream
+    outside of specification."""
+    errorCodes = ("Object in invalid stream")
+
+
 class BMObjectInvalidError(Exception):
     """The object's data does not match object specification."""
     errorCodes = ("Invalid object")
@@ -106,6 +112,9 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
                 'The streamNumber %i isn\'t one we are interested in.',
                 self.streamNumber)
             raise BMObjectUnwantedStreamError()
+        if self.streamNumber < protocol.MIN_VALID_STREAM \
+           or self.streamNumber > protocol.MAX_VALID_STREAM:
+            raise BMObjectInvalidStreamError()
 
     def checkAlreadyHave(self):
         """
