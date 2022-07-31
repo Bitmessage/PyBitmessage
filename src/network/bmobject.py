@@ -19,12 +19,6 @@ class BMObjectInsufficientPOWError(Exception):
     errorCodes = ("Insufficient proof of work")
 
 
-class BMObjectInvalidDataError(Exception):
-    """Exception indicating the data being parsed
-    does not match the specification."""
-    errorCodes = ("Data invalid")
-
-
 class BMObjectExpiredError(Exception):
     """Exception indicating the object's lifetime has expired."""
     errorCodes = ("Object expired")
@@ -34,12 +28,6 @@ class BMObjectUnwantedStreamError(Exception):
     """Exception indicating the object is in a stream
     we didn't advertise as being interested in."""
     errorCodes = ("Object in unwanted stream")
-
-
-class BMObjectInvalidStreamError(Exception):
-    """Exception indicating the object is in a stream
-    outside of specification."""
-    errorCodes = ("Object in invalid stream")
 
 
 class BMObjectInvalidError(Exception):
@@ -107,14 +95,16 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
 
     def checkStream(self):
         """Check if object's stream matches streams we are interested in"""
+        if self.streamNumber < protocol.MIN_VALID_STREAM \
+           or self.streamNumber > protocol.MAX_VALID_STREAM:
+            logger.warning(
+                'The object has invalid stream: %s', self.streamNumber)
+            raise BMObjectInvalidError()
         if self.streamNumber not in state.streamsInWhichIAmParticipating:
             logger.debug(
                 'The streamNumber %i isn\'t one we are interested in.',
                 self.streamNumber)
             raise BMObjectUnwantedStreamError()
-        if self.streamNumber < protocol.MIN_VALID_STREAM \
-           or self.streamNumber > protocol.MAX_VALID_STREAM:
-            raise BMObjectInvalidStreamError()
 
     def checkAlreadyHave(self):
         """

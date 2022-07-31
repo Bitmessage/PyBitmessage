@@ -21,9 +21,8 @@ from inventory import Inventory
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
     BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError,
-    BMObjectInsufficientPOWError, BMObjectInvalidDataError,
-    BMObjectInvalidError, BMObjectUnwantedStreamError,
-    BMObjectInvalidStreamError
+    BMObjectInsufficientPOWError, BMObjectInvalidError,
+    BMObjectUnwantedStreamError
 )
 from network.constants import (
     ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
@@ -130,8 +129,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 logger.debug('too much data, skipping')
             except BMObjectInsufficientPOWError:
                 logger.debug('insufficient PoW, skipping')
-            except BMObjectInvalidDataError:
-                logger.debug('object invalid data, skipping')
             except BMObjectExpiredError:
                 logger.debug('object expired, skipping')
             except BMObjectUnwantedStreamError:
@@ -410,9 +407,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.object.inventoryHash, acceptmismatch)
             if not acceptmismatch:
                 raise
-        except BMObjectInvalidStreamError:
-            BMProto.stopDownloadingObject(
-                self.object.inventoryHash)
+        except BMObjectInvalidError:
+            BMProto.stopDownloadingObject(self.object.inventoryHash)
             raise
 
         try:
