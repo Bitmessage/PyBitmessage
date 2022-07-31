@@ -403,7 +403,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkStream()
         except BMObjectUnwantedStreamError:
-            acceptmismatch = config.get(
+            acceptmismatch = config.getboolean(
                 "inventory", "acceptmismatch")
             BMProto.stopDownloadingObject(
                 self.object.inventoryHash, acceptmismatch)
