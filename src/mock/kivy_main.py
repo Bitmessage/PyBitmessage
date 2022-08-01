@@ -1,7 +1,11 @@
 """Mock kivy app with mock threads."""
+# pylint: disable=unused-import
+# flake8: noqa:E401
 
 from pybitmessage import state
 from pybitmessage.bitmessagekivy.mpybit import NavigateApp
+
+import multiqueue
 from class_addressGenerator import FakeAddressGenerator
 
 

@@ -8,13 +8,7 @@ from six.moves import queue
 try:
     from multiqueue import MultiQueue
 except ImportError:
-    try:
-        from .multiqueue import MultiQueue
-    except ImportError:
-        import sys
-        if 'bitmessagemock' not in sys.modules:
-            raise
-        MultiQueue = queue.Queue
+    from .multiqueue import MultiQueue
 
 
 class ObjectProcessorQueue(queue.Queue):
