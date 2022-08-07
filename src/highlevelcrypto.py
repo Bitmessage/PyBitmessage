@@ -18,16 +18,13 @@ from bmconfigparser import config
 __all__ = ['encrypt', 'makeCryptor', 'pointMult', 'privToPub', 'sign', 'verify']
 
 
-def makeCryptor(privkey):
+def makeCryptor(privkey, curve='secp256k1'):
     """Return a private `.pyelliptic.ECC` instance"""
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
-    privkey_bin = b'\x02\xca\x00\x20' + private_key
-    pubkey_bin = (
-        b'\x02\xca\x00\x20' + public_key[1:-32] + b'\x00\x20' + public_key[-32:]
-    )
     cryptor = pyelliptic.ECC(
-        curve='secp256k1', privkey=privkey_bin, pubkey=pubkey_bin)
+        pubkey_x=public_key[1:-32], pubkey_y=public_key[-32:],
+        raw_privkey=private_key, curve=curve)
     return cryptor
 
 
