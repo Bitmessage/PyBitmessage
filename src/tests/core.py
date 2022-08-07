@@ -299,7 +299,6 @@ class TestCore(unittest.TestCase):
                     return
         self.fail('Failed to find at least 3 nodes to connect within 360 sec')
 
-    @unittest.skipIf(frozen, 'skip fragile test')
     def test_udp(self):
         """check default udp setting and presence of Announcer thread"""
         self.assertTrue(
