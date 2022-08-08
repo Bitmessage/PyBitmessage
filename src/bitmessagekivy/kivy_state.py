@@ -5,6 +5,9 @@ Kivy State variables are assigned here, they are separated from state.py
 =================================
 """
 
+import os
+import threading
+
 
 class KivyStateVariables(object):
     """This Class hold all the kivy state variables"""
@@ -33,4 +36,5 @@ class KivyStateVariables(object):
         self.available_credit = 0
         self.in_sent_method = False
         self.in_search_mode = False
-        self.image_dir = None
+        self.image_dir = os.path.abspath(os.path.join('images', 'kivy'))
+        self.kivyui_ready = threading.Event()
