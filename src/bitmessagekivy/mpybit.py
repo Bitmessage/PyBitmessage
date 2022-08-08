@@ -7,6 +7,7 @@ Bitmessage android(mobile) interface
 
 import ast
 import os
+import importlib
 
 from kivy.lang import Builder
 from kivy.lang import Observable
@@ -21,8 +22,12 @@ with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_
     all_data = ast.literal_eval(read_file.read())
     data_screens = list(all_data.keys())
 
-for modules in data_screens:
-    exec(all_data[modules]['Import'])
+for key in all_data:
+    if all_data[key]['Import']:
+        import_data = all_data.get(key)['Import']
+        import_to = import_data.split("import")[1].strip()
+        import_from = import_data.split("import")[0].split('from')[1].strip()
+        importlib.import_module(import_from, import_to)
 
 
 class Lang(Observable):
