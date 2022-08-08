@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module, too-few-public-methods
+# pylint: disable=no-name-in-module, too-few-public-methods, import-error, unused-argument
 
 
 """
@@ -11,12 +11,27 @@ import importlib
 
 from kivy.lang import Builder
 from kivy.lang import Observable
+from kivy.clock import Clock
+from kivy.properties import (
+    BooleanProperty,
+    NumericProperty,
+    StringProperty
+)
+from kivy.metrics import dp
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.spinner import Spinner
+from kivy.core.window import Window
+
 
 from kivymd.app import MDApp
+from kivymd.uix.list import (
+    OneLineAvatarIconListItem,
+    OneLineListItem
+)
 
 from pybitmessage.semaphores import kivyuisignaler
 from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
-
+from pybitmessage.bmconfigparser import config
 
 with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
     all_data = ast.literal_eval(read_file.read())
@@ -46,6 +61,76 @@ class Lang(Observable):
         return text
 
 
+class NavigationItem(OneLineAvatarIconListItem):
+    """NavigationItem class for kivy Ui"""
+    badge_text = StringProperty()
+    icon = StringProperty()
+    active = BooleanProperty(False)
+
+    def currentlyActive(self):
+        """Currenly active"""
+        for nav_obj in self.parent.children:
+            nav_obj.active = False
+        self.active = True
+
+
+class NavigationDrawerDivider(OneLineListItem):
+    """
+    A small full-width divider that can be placed
+    in the :class:`MDNavigationDrawer`
+    """
+
+    disabled = True
+    divider = None
+    _txt_top_pad = NumericProperty(dp(8))
+    _txt_bot_pad = NumericProperty(dp(8))
+
+    def __init__(self, **kwargs):
+        # pylint: disable=bad-super-call
+        super(OneLineListItem, self).__init__(**kwargs)
+        self.height = dp(16)
+
+
+class NavigationDrawerSubheader(OneLineListItem):
+    """
+    A subheader for separating content in :class:`MDNavigationDrawer`
+    Works well alongside :class:`NavigationDrawerDivider`
+    """
+
+    disabled = True
+    divider = None
+    theme_text_color = 'Secondary'
+
+
+class ContentNavigationDrawer(BoxLayout):
+    """ContentNavigationDrawer class for kivy Uir"""
+
+    def __init__(self, *args, **kwargs):
+        """Method used for contentNavigationDrawer"""
+        super(ContentNavigationDrawer, self).__init__(*args, **kwargs)
+        Clock.schedule_once(self.init_ui, 0)
+
+    def init_ui(self, dt=0):
+        """Clock Schdule for class contentNavigationDrawer"""
+        self.ids.scroll_y.bind(scroll_y=self.check_scroll_y)
+
+    def check_scroll_y(self, instance, somethingelse):
+        """show data on scroll down"""
+        if self.ids.btn.is_open:
+            self.ids.btn.is_open = False
+
+
+class CustomSpinner(Spinner):
+    """CustomSpinner class for kivy Ui"""
+
+    def __init__(self, *args, **kwargs):
+        """Method used for setting size of spinner"""
+        super(CustomSpinner, self).__init__(*args, **kwargs)
+        self.dropdown_cls.max_height = Window.size[1] / 3
+        self.values = list(addr for addr in config.addresses()
+                           if config.get(str(addr), 'enabled') == 'true')
+
+
 class NavigateApp(MDApp):
     """Navigation Layout of class"""
     def __init__(self):
@@ -53,6 +138,8 @@ class NavigateApp(MDApp):
         self.kivy_state_obj = KivyStateVariables()
 
     title = "PyBitmessage"
+    image_path = os.path.join('./images', 'kivy')  # TODO: get path from kivy_state variable
+
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def build(self):  # pylint:disable=no-self-use
@@ -75,3 +162,10 @@ class NavigateApp(MDApp):
         """Running the widgets"""
         kivyuisignaler.release()
         super(NavigateApp, self).run()
+
+    def loadMyAddressScreen(self, action):
+        """loadMyAddressScreen method spin the loader"""
+        if len(self.root.ids.sc10.children) <= 2:
+            self.root.ids.sc10.children[0].active = action
+        else:
+            self.root.ids.sc10.children[1].active = action
