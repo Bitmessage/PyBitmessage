@@ -29,7 +29,6 @@ from kivymd.uix.list import (
     OneLineListItem
 )
 
-from pybitmessage.semaphores import kivyuisignaler
 from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bmconfigparser import config
 
@@ -62,7 +61,7 @@ class Lang(Observable):
 
 
 class NavigationItem(OneLineAvatarIconListItem):
-    """NavigationItem class for kivy Ui"""
+    """UI for NavigationItem class on Side Navigation bar"""
     badge_text = StringProperty()
     icon = StringProperty()
     active = BooleanProperty(False)
@@ -76,8 +75,7 @@ class NavigationItem(OneLineAvatarIconListItem):
 
 class NavigationDrawerDivider(OneLineListItem):
     """
-    A small full-width divider that can be placed
-    in the :class:`MDNavigationDrawer`
+    A small full-width divider line for Side Navigation bar
     """
 
     disabled = True
@@ -103,10 +101,10 @@ class NavigationDrawerSubheader(OneLineListItem):
 
 
 class ContentNavigationDrawer(BoxLayout):
-    """ContentNavigationDrawer class for kivy Uir"""
+    """Helper for Side navigation bar which contains screen names"""
 
     def __init__(self, *args, **kwargs):
-        """Method used for contentNavigationDrawer"""
+        """Method used for to initialize side navbar"""
         super(ContentNavigationDrawer, self).__init__(*args, **kwargs)
         Clock.schedule_once(self.init_ui, 0)
 
@@ -121,7 +119,9 @@ class ContentNavigationDrawer(BoxLayout):
 
 
 class CustomSpinner(Spinner):
-    """CustomSpinner class for kivy Ui"""
+    """
+    A Dropdown on side navigation bar which hold the identity and can switch to other identity
+    """
 
     def __init__(self, *args, **kwargs):
         """Method used for setting size of spinner"""
@@ -138,8 +138,7 @@ class NavigateApp(MDApp):
         self.kivy_state_obj = KivyStateVariables()
 
     title = "PyBitmessage"
-    image_path = os.path.join('./images', 'kivy')  # TODO: get path from kivy_state variable
-
+    image_path = KivyStateVariables().image_dir
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def build(self):  # pylint:disable=no-self-use
@@ -160,12 +159,12 @@ class NavigateApp(MDApp):
 
     def run(self):
         """Running the widgets"""
-        kivyuisignaler.release()
+        self.kivy_state_obj.kivyui_ready.set()
         super(NavigateApp, self).run()
 
     def loadMyAddressScreen(self, action):
         """loadMyAddressScreen method spin the loader"""
-        if len(self.root.ids.sc10.children) <= 2:
-            self.root.ids.sc10.children[0].active = action
+        if len(self.root.ids.id_myaddress.children) <= 2:
+            self.root.ids.id_myaddress.children[0].active = action
         else:
-            self.root.ids.sc10.children[1].active = action
+            self.root.ids.id_myaddress.children[1].active = action
