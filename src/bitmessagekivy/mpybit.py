@@ -15,7 +15,8 @@ from kivy.clock import Clock
 from kivy.properties import (
     BooleanProperty,
     NumericProperty,
-    StringProperty
+    StringProperty,
+    ListProperty
 )
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
@@ -133,11 +134,15 @@ class CustomSpinner(Spinner):
 
 class NavigateApp(MDApp):
     """Navigation Layout of class"""
+
     def __init__(self):
         super(NavigateApp, self).__init__()
         self.kivy_state_obj = KivyStateVariables()
 
     title = "PyBitmessage"
+    identity_list = ListProperty(
+        addr for addr in config.addresses() if config.get(str(addr), 'enabled') == 'true'
+    )
     image_path = KivyStateVariables().image_dir
     tr = Lang("en")  # for changing in franch replace en with fr
 
@@ -168,3 +173,8 @@ class NavigateApp(MDApp):
             self.root.ids.id_myaddress.children[0].active = action
         else:
             self.root.ids.id_myaddress.children[1].active = action
+
+    def reset_login_screen(self):
+        """This method is used for clearing the widgets of random screen"""
+        if self.root.ids.id_newidentity.ids.add_random_bx.children:
+            self.root.ids.id_newidentity.ids.add_random_bx.clear_widgets()
