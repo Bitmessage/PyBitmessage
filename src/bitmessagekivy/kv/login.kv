@@ -82,7 +82,7 @@
                                 on_release:
                                     app.set_screen('random')
                                 on_press:
-                                    app.root.ids.sc7.reset_address_label()
+                                    app.root.ids.id_newidentity.reset_address_label()
 
         #info-area-outer
         BoxLayout:
@@ -177,7 +177,7 @@
                 width: dp(190)
                 helper_text_mode: "on_error"
                 # helper_text: "Please enter your label name"
-                on_text: app.root.ids.sc7.add_validation(self)
+                on_text: app.root.ids.id_newidentity.add_validation(self)
                 canvas.before:
                     Color:
                         rgba: (0,0,0,1)
@@ -186,7 +186,7 @@
             MDFillRoundFlatIconButton:
                 icon: "chevron-double-right"
                 text: app.tr._("Proceed Next")
-                on_release: app.root.ids.sc7.generateaddress()
+                on_release: app.root.ids.id_newidentity.generateaddress()
 
         Widget:
 
