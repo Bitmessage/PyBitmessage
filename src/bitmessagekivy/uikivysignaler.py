@@ -25,7 +25,7 @@ class UIkivySignaler(Thread):
                 command, data = queues.UISignalQueue.get()
                 if command == 'writeNewAddressToTable':
                     address = data[1]
-                    App.get_running_app().variable_1.append(address)
+                    App.get_running_app().identity_list.append(address)
                 elif command == 'updateSentItemStatusByAckdata':
                     App.get_running_app().status_dispatching(data)
                 elif command == 'writeNewpaymentAddressToTable':
