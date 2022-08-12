@@ -21,14 +21,15 @@ def lookupExeFolder():
     if frozen:
         exeFolder = (
             # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
-            os.path.dirname(sys.executable).split(os.path.sep)[0] + os.path.sep
-            if frozen == "macosx_app" else
-            os.path.dirname(sys.executable) + os.path.sep)
+            os.path.dirname(sys.executable).split(os.path.sep)[0]
+            if frozen == "macosx_app" else os.path.dirname(sys.executable))
+    elif os.getenv('APPIMAGE'):
+        exeFolder = os.path.dirname(os.getenv('APPIMAGE'))
     elif __file__:
-        exeFolder = os.path.dirname(__file__) + os.path.sep
+        exeFolder = os.path.dirname(__file__)
     else:
-        exeFolder = ''
-    return exeFolder
+        return ''
+    return exeFolder + os.path.sep
 
 
 def lookupAppdataFolder():
