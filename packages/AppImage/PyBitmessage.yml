@@ -14,6 +14,7 @@ ingredients:
     - python-setuptools
     - python-sip
     - python-six
+    - python-xdg
     - sni-qt
   exclude:
     - libdb5.3

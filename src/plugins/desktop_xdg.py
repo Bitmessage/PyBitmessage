@@ -11,6 +11,9 @@ class DesktopXDG(object):
         menu_entry = Menu.parse().getMenu('Office').getMenuEntry(
             'pybitmessage.desktop')
         self.desktop = menu_entry.DesktopEntry if menu_entry else None
+        appimage = os.getenv('APPIMAGE')
+        if appimage:
+            self.desktop.set('Exec', appimage)
 
     def adjust_startonlogon(self, autostart=False):
         """Configure autostart according to settings"""
