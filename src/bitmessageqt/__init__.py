@@ -1758,7 +1758,6 @@ class MyForm(settingsmixin.SMainWindow):
     connected = False
 
     def setStatusIcon(self, color):
-        # print 'setting status icon color'
         _notifications_enabled = not config.getboolean(
             'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
@@ -1771,14 +1770,24 @@ class MyForm(settingsmixin.SMainWindow):
                     'Bitmessage',
                     _translate("MainWindow", "Connection lost"),
                     sound.SOUND_DISCONNECTED)
-            if not config.safeGetBoolean('bitmessagesettings', 'upnp') and \
-                    config.get('bitmessagesettings', 'socksproxytype') == "none":
+            proxy = config.safeGet(
+                'bitmessagesettings', 'socksproxytype', 'none')
+            if proxy == 'none' and not config.safeGetBoolean(
+                    'bitmessagesettings', 'upnp'):
                 self.updateStatusBar(
                     _translate(
                         "MainWindow",
                         "Problems connecting? Try enabling UPnP in the Network"
                         " Settings"
                     ))
+            elif proxy == 'SOCKS5' and config.safeGetBoolean(
+                    'bitmessagesettings', 'onionservicesonly'):
+                self.updateStatusBar((
+                    _translate(
+                        "MainWindow",
+                        "With recent tor you may never connect having"
+                        " 'onionservicesonly' set in your config."), 1
+                ))
             self.connected = False
 
             if self.actionStatus is not None:
@@ -4307,5 +4316,7 @@ def run():
     # only show after wizards and connect dialogs have completed
     if not config.getboolean('bitmessagesettings', 'startintray'):
         myapp.show()
+        QtCore.QTimer.singleShot(
+            30000, lambda: myapp.setStatusIcon(state.statusIconColor))
 
     app.exec_()
