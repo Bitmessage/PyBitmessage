@@ -5,8 +5,8 @@
 Bitmessage android(mobile) interface
 """
 
-import ast
 import os
+import json
 import importlib
 
 from kivy.lang import Builder
@@ -34,7 +34,7 @@ from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bmconfigparser import config
 
 with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
-    all_data = ast.literal_eval(read_file.read())
+    all_data = json.load(read_file)
     data_screens = list(all_data.keys())
 
 for key in all_data:
@@ -115,8 +115,8 @@ class ContentNavigationDrawer(BoxLayout):
 
     def check_scroll_y(self, instance, somethingelse):
         """show data on scroll down"""
-        if self.ids.btn.is_open:
-            self.ids.btn.is_open = False
+        if self.ids.identity_dropdown.is_open:
+            self.ids.identity_dropdown.is_open = False
 
 
 class CustomSpinner(Spinner):
