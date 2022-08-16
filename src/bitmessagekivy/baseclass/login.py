@@ -61,9 +61,9 @@ class Random(Screen):
     def address_created_callback(self, dt=0):
         """New address created"""
         App.get_running_app().loadMyAddressScreen(False)
-        App.get_running_app().root.ids.sc10.ids.ml.clear_widgets()
-        App.get_running_app().root.ids.sc10.is_add_created = True
-        App.get_running_app().root.ids.sc10.init_ui()
+        App.get_running_app().root.ids.id_myaddress.ids.ml.clear_widgets()
+        App.get_running_app().root.ids.id_myaddress.is_add_created = True
+        App.get_running_app().root.ids.id_myaddress.init_ui()
         self.reset_address_spinner()
         toast('New address created')
 
@@ -71,10 +71,10 @@ class Random(Screen):
         """reseting spinner address and UI"""
         addresses = [addr for addr in config.addresses()
                      if config.get(str(addr), 'enabled') == 'true']
-        self.manager.parent.ids.content_drawer.ids.btn.values = []
-        self.manager.parent.ids.sc3.children[1].ids.btn.values = []
-        self.manager.parent.ids.content_drawer.ids.btn.values = addresses
-        self.manager.parent.ids.sc3.children[1].ids.btn.values = addresses
+        self.manager.parent.ids.content_drawer.ids.identity_dropdown.values = []
+        self.manager.parent.ids.sc3.children[1].ids.identity_dropdown.values = []
+        self.manager.parent.ids.content_drawer.ids.identity_dropdown.values = addresses
+        self.manager.parent.ids.sc3.children[1].ids.identity_dropdown.values = addresses
 
     @staticmethod
     def add_validation(instance):
