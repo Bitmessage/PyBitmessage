@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module, too-few-public-methods, import-error, unused-argument
-
+# pylint: disable=attribute-defined-outside-init
 
 """
 Bitmessage android(mobile) interface
@@ -29,6 +29,9 @@ from kivymd.uix.list import (
     OneLineAvatarIconListItem,
     OneLineListItem
 )
+from kivymd.uix.bottomsheet import MDCustomBottomSheet
+
+from debug import logger
 
 from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bmconfigparser import config
@@ -178,3 +181,18 @@ class NavigateApp(MDApp):
         """This method is used for clearing the widgets of random screen"""
         if self.root.ids.id_newidentity.ids.add_random_bx.children:
             self.root.ids.id_newidentity.ids.add_random_bx.clear_widgets()
+
+    def open_payment_layout(self, sku):
+        """It basically open up a payment layout for kivy UI"""
+        pml = PaymentMethodLayout()
+        self.product_id = sku
+        self.custom_sheet = MDCustomBottomSheet(screen=pml)
+        self.custom_sheet.open()
+
+    def initiate_purchase(self, method_name):
+        """initiate_purchase module"""
+        logger.debug("Purchasing {} through {}".format(self.product_id, method_name))
+
+
+class PaymentMethodLayout(BoxLayout):
+    """PaymentMethodLayout class for kivy Ui"""
