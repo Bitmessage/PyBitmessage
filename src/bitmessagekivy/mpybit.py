@@ -31,21 +31,24 @@ from kivymd.uix.list import (
 )
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 
-from debug import logger
-
 from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bmconfigparser import config
+from debug import logger
 
-with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
-    all_data = json.load(read_file)
-    data_screens = list(all_data.keys())
 
-for key in all_data:
-    if all_data[key]['Import']:
-        import_data = all_data.get(key)['Import']
-        import_to = import_data.split("import")[1].strip()
-        import_from = import_data.split("import")[0].split('from')[1].strip()
-        importlib.import_module(import_from, import_to)
+def load_screen_json():
+    """Load screens data from json"""
+    with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
+        all_data = json.load(read_file)
+        data_screens = list(all_data.keys())
+
+    for key in all_data:
+        if all_data[key]['Import']:
+            import_data = all_data.get(key)['Import']
+            import_to = import_data.split("import")[1].strip()
+            import_from = import_data.split("import")[0].split('from')[1].strip()
+            importlib.import_module(import_from, import_to)
+    return data_screens, all_data
 
 
 class Lang(Observable):
@@ -132,7 +135,7 @@ class CustomSpinner(Spinner):
         super(CustomSpinner, self).__init__(*args, **kwargs)
         self.dropdown_cls.max_height = Window.size[1] / 3
         self.values = list(addr for addr in config.addresses()
-                           if config.get(str(addr), 'enabled') == 'true')
+                           if config.getboolean(str(addr), 'enabled'))
 
 
 class NavigateApp(MDApp):
@@ -140,23 +143,24 @@ class NavigateApp(MDApp):
 
     def __init__(self):
         super(NavigateApp, self).__init__()
+        self.data_screens, self.all_data = load_screen_json()
         self.kivy_state_obj = KivyStateVariables()
 
     title = "PyBitmessage"
     identity_list = ListProperty(
-        addr for addr in config.addresses() if config.get(str(addr), 'enabled') == 'true'
+        addr for addr in config.addresses() if config.getboolean(str(addr), 'enabled')
     )
     image_path = KivyStateVariables().image_dir
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def build(self):  # pylint:disable=no-self-use
         """Method builds the widget"""
-        for kv in data_screens:
+        for kv in self.data_screens:
             Builder.load_file(
                 os.path.join(
                     os.path.dirname(__file__),
                     'kv',
-                    '{0}.kv'.format(all_data[kv]["kv_string"]),
+                    '{0}.kv'.format(self.all_data[kv]["kv_string"]),
                 )
             )
         return Builder.load_file(os.path.join(os.path.dirname(__file__), 'main.kv'))
@@ -191,7 +195,7 @@ class NavigateApp(MDApp):
 
     def initiate_purchase(self, method_name):
         """initiate_purchase module"""
-        logger.debug("Purchasing {} through {}".format(self.product_id, method_name))
+        logger.debug("Purchasing %s through %s", self.product_id, method_name)
 
 
 class PaymentMethodLayout(BoxLayout):
