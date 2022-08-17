@@ -5,19 +5,25 @@ FROM ubuntu:bionic AS android
 
 ENV ANDROID_HOME="/opt/android"
 
+RUN apt update -qq > /dev/null && apt install -qq --yes --no-install-recommends \
+    locales && \
+    locale-gen en_US.UTF-8
+ENV LANG="en_US.UTF-8" \
+    LANGUAGE="en_US.UTF-8" \
+    LC_ALL="en_US.UTF-8"
+    
 RUN apt -y update -qq \
     && apt -y install -qq --no-install-recommends curl unzip ca-certificates \
     && apt -y autoremove
 
 
 ENV ANDROID_NDK_HOME="${ANDROID_HOME}/android-ndk"
-ENV ANDROID_NDK_VERSION="22b"
+ENV ANDROID_NDK_VERSION="23b"
 ENV ANDROID_NDK_HOME_V="${ANDROID_NDK_HOME}-r${ANDROID_NDK_VERSION}"
 
 # get the latest version from https://developer.android.com/ndk/downloads/index.html
-ENV ANDROID_NDK_ARCHIVE="android-ndk-r${ANDROID_NDK_VERSION}-linux-x86_64.zip"
+ENV ANDROID_NDK_ARCHIVE="android-ndk-r${ANDROID_NDK_VERSION}-linux.zip"
 ENV ANDROID_NDK_DL_URL="https://dl.google.com/android/repository/${ANDROID_NDK_ARCHIVE}"
-
 # download and install Android NDK
 RUN curl "${ANDROID_NDK_DL_URL}" \
         --output "${ANDROID_NDK_ARCHIVE}" \
@@ -113,5 +119,5 @@ RUN apt -y update -qq \
 
 # INSTALL ANDROID PACKAGES
 
-RUN pip3 install buildozer==1.2.0 
+RUN pip3 install buildozer==1.4.0 
 RUN pip3 install --upgrade cython==0.29.15
