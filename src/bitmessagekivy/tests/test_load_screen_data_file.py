@@ -1,0 +1,26 @@
+
+import unittest
+from pybitmessage.bitmessagekivy.mpybit import load_screen_json
+from .common import skip_screen_checks
+from .common import ordered
+
+
+
+class TestLoadScreenData(unittest.TestCase):
+    """Screen Data Json test"""
+
+    @skip_screen_checks
+    @ordered
+    def test_load_json(self):
+        """Test to load a valid json"""
+        file_name = 'screens_data.json'
+        loaded_screen_names = load_screen_json(file_name)
+        self.assertEqual(loaded_screen_names[2], 'success')
+
+    @skip_screen_checks
+    @ordered
+    def test_load_invalid_file(self):
+        """Test to load an invalid json"""
+        file_name = 'invalid_screens_data.json'
+        loaded_screen_names = load_screen_json(file_name)
+        self.assertEqual(loaded_screen_names[2], 'File not found')

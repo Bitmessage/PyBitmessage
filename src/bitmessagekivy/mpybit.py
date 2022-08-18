@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module, too-few-public-methods, import-error, unused-argument
-# pylint: disable=attribute-defined-outside-init, global-variable-not-assigned
+# pylint: disable=attribute-defined-outside-init, global-variable-not-assigned, unused-variable
 
 """
 Bitmessage android(mobile) interface
@@ -40,22 +40,20 @@ logger = logging.getLogger('default')
 data_screen_dict = {}
 
 
-def load_screen_json():
+def load_screen_json(data_file="screens_data.json"):
     """Load screens data from json"""
 
-    data_file = "screens_data.json"
     with open(os.path.join(os.path.dirname(__file__), data_file)) as read_file:
         all_data = json.load(read_file)
         data_screens = list(all_data.keys())
 
-    global data_screen_dict
     for key in all_data:
         if all_data[key]['Import']:
             import_data = all_data.get(key)['Import']
             import_to = import_data.split("import")[1].strip()
             import_from = import_data.split("import")[0].split('from')[1].strip()
             data_screen_dict[import_to] = importlib.import_module(import_from, import_to)
-    return data_screens, all_data
+    return data_screens, all_data, 'success'
 
 
 def get_identity_list():
@@ -158,7 +156,7 @@ class NavigateApp(MDApp):
 
     def __init__(self):
         super(NavigateApp, self).__init__()
-        self.data_screens, self.all_data = load_screen_json()
+        self.data_screens, self.all_data, response = load_screen_json()
         self.kivy_state_obj = KivyStateVariables()
 
     title = "PyBitmessage"
@@ -213,3 +211,7 @@ class NavigateApp(MDApp):
 
 class PaymentMethodLayout(BoxLayout):
     """PaymentMethodLayout class for kivy Ui"""
+
+
+if __name__ == '__main__':
+    NavigateApp().run()
