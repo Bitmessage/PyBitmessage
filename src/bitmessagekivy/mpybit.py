@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module, too-few-public-methods, import-error, unused-argument
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init, global-variable-not-assigned
 
 """
 Bitmessage android(mobile) interface
@@ -8,6 +8,7 @@ Bitmessage android(mobile) interface
 import os
 import json
 import importlib
+import logging
 
 from kivy.lang import Builder
 from kivy.lang import Observable
@@ -33,22 +34,36 @@ from kivymd.uix.bottomsheet import MDCustomBottomSheet
 
 from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bmconfigparser import config
-from debug import logger
+
+logger = logging.getLogger('default')
+
+data_screen_dict = {}
 
 
 def load_screen_json():
     """Load screens data from json"""
-    with open(os.path.join(os.path.dirname(__file__), "screens_data.json")) as read_file:
+
+    data_file = "screens_data.json"
+    with open(os.path.join(os.path.dirname(__file__), data_file)) as read_file:
         all_data = json.load(read_file)
         data_screens = list(all_data.keys())
 
+    global data_screen_dict
     for key in all_data:
         if all_data[key]['Import']:
             import_data = all_data.get(key)['Import']
             import_to = import_data.split("import")[1].strip()
             import_from = import_data.split("import")[0].split('from')[1].strip()
-            importlib.import_module(import_from, import_to)
+            data_screen_dict[import_to] = importlib.import_module(import_from, import_to)
     return data_screens, all_data
+
+
+def get_identity_list():
+    """Get list of identities and access 'identity_list' variable in .kv file"""
+    identity_list = ListProperty(
+        addr for addr in config.addresses() if config.getboolean(str(addr), 'enabled')
+    )
+    return identity_list
 
 
 class Lang(Observable):
@@ -147,9 +162,7 @@ class NavigateApp(MDApp):
         self.kivy_state_obj = KivyStateVariables()
 
     title = "PyBitmessage"
-    identity_list = ListProperty(
-        addr for addr in config.addresses() if config.getboolean(str(addr), 'enabled')
-    )
+    identity_list = get_identity_list()
     image_path = KivyStateVariables().image_dir
     tr = Lang("en")  # for changing in franch replace en with fr
 
