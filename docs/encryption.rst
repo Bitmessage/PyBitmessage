@@ -44,7 +44,7 @@ Encryption
  5. Use the X component of public key P and calculate the SHA512 hash H.
  6. The first 32 bytes of H are called key_e and the last 32 bytes are called
     key_m.
- 7. Pad the input text to a multiple of 16 bytes, in accordance to PKCS7.
+ 7. Pad the input text to a multiple of 16 bytes, in accordance to PKCS7. [#f1]_
  8. Encrypt the data with AES-256-CBC, using IV as initialization vector,
     key_e as encryption key and the padded input text as payload. Call the
     output cipher text.
@@ -84,15 +84,15 @@ Partial Example
 
        ::
 
-          04 09 d4 e5  c0 ab 3d 25
-          fe 04 8c 64  c9 da 1a 24
-          2c 7f 19 41  7e 95 17 cd
-          26 69 50 d7  2c 75 57 13
-          58 5c 61 78  e9 7f e0 92
-          fc 89 7c 9a  1f 17 20 d5
-          77 0a e8 ea  ad 2f a8 fc
-          bd 08 e9 32  4a 5d de 18
-          57
+          04
+	  09 d4 e5 c0  ab 3d 25 fe
+	  04 8c 64 c9  da 1a 24 2c
+	  7f 19 41 7e  95 17 cd 26
+	  69 50 d7 2c  75 57 13 58
+	  5c 61 78 e9  7f e0 92 fc
+	  89 7c 9a 1f  17 20 d5 77
+	  0a e8 ea ad  2f a8 fc bd
+	  08 e9 32 4a  5d de 18 57
      - Public key, 0x04 prefix, then 32 bytes X and 32 bytes Y.
 
 
@@ -129,15 +129,15 @@ Partial Example
 
        ::
 
-	  04 02 93 21  3d cf 13 88
-	  b6 1c 2a e5  cf 80 fe e6
-	  ff ff c0 49  a2 f9 fe 73
-	  65 fe 38 67  81 3c a8 12
-	  92 df 94 68  6c 6a fb 56
-	  5a c6 14 9b  15 3d 61 b3
-	  b2 87 ee 2c  7f 99 7c 14
-	  23 87 96 c1  2b 43 a3 86
-	  5a
+	  04
+	  02 93 21 3d  cf 13 88 b6
+	  1c 2a e5 cf  80 fe e6 ff
+	  ff c0 49 a2  f9 fe 73 65
+	  fe 38 67 81  3c a8 12 92
+	  df 94 68 6c  6a fb 56 5a
+	  c6 14 9b 15  3d 61 b3 b2
+	  87 ee 2c 7f  99 7c 14 23
+	  87 96 c1 2b  43 a3 86 5a
      - Public key R
 
 .. list-table:: Derived public key P (point multiply r with K):
@@ -150,15 +150,15 @@ Partial Example
 
        ::
 
-	  04 0d b8 e3  ad 8c 0c d7
-	  3f a2 b3 46  71 b7 b2 47
-	  72 9b 10 11  41 57 9d 19
-	  9e 0d c0 bd  02 4e ae fd
-	  89 ca c8 f5  28 dc 90 b6
-	  68 11 ab ac  51 7d 74 97
-	  be 52 92 93  12 29 be 0b
-	  74 3e 05 03  f4 43 c3 d2
-	  96
+	  04
+	  0d b8 e3 ad  8c 0c d7 3f
+	  a2 b3 46 71  b7 b2 47 72
+	  9b 10 11 41  57 9d 19 9e
+	  0d c0 bd 02  4e ae fd 89
+	  ca c8 f5 28  dc 90 b6 68
+	  11 ab ac 51  7d 74 97 be
+	  52 92 93 12  29 be 0b 74
+	  3e 05 03 f4  43 c3 d2 96
      - Public key P
    * -
 
@@ -230,3 +230,25 @@ Partial Example
 	  43 a6 f9 a0  d7 5a f7 ea
 	  cc 1b d9 57  14 7b f7 23
      - 3 blocks of 16 bytes of encrypted data.
+
+.. list-table:: MAC:
+   :header-rows: 1
+   :widths: auto
+
+   * - Data
+     - Comments
+   * -
+
+       ::
+
+	  f2 52 6d 61  b4 85 1f b2
+	  34 09 86 38  26 fd 20 61
+	  65 ed c0 21  36 8c 79 46
+	  57 1c ea d6  90 46 e6 19
+     - 32 bytes hash
+
+
+.. rubric:: Footnotes
+
+.. [#f1] The pyelliptic implementation used in PyBitmessage takes unpadded data,
+	 see :obj:`.pyelliptic.Cipher.ciphering`.
