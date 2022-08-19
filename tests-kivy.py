@@ -28,6 +28,7 @@ if __name__ == "__main__":
 
         ffmpeg = subprocess.Popen([  # pylint: disable=consider-using-with
             "ffmpeg", "-y", "-nostdin", "-f", "x11grab", "-video_size", "vga",
+            "-v", "quiet", "-nostats",
             "-draw_mouse", "0", "-i", os.environ['DISPLAY'],
             "-codec:v", "libvpx-vp9", "-lossless", "1", "-r", "60",
             "../out/test.webm"
