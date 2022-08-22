@@ -18,10 +18,11 @@ from kivy.uix.boxlayout import BoxLayout
 
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
+from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import (
     IRightBodyTouch
 )
-
+from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
 
 from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
@@ -32,6 +33,9 @@ from pybitmessage.bitmessagekivy.base_navigation import (
 )
 
 from pybitmessage.bmconfigparser import config
+from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.bitmessagekivy.baseclass.common import toast
+from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup
 
 logger = logging.getLogger('default')
 
@@ -100,15 +104,15 @@ class IdentitySpinner(BaseIdentitySpinner):
 class NavigateApp(MDApp):
     """Navigation Layout of class"""
 
-    def __init__(self):
-        super(NavigateApp, self).__init__()
-        self.data_screens, self.all_data, response = load_screen_json()
-        self.kivy_state_obj = KivyStateVariables()
-
     title = "PyBitmessage"
     identity_list = get_identity_list()
     image_path = KivyStateVariables().image_dir
     tr = Lang("en")  # for changing in franch replace en with fr
+
+    def __init__(self):
+        super(NavigateApp, self).__init__()
+        self.data_screens, self.all_data, response = load_screen_json()
+        self.kivy_state_obj = KivyStateVariables()
 
     def build(self):
         """Method builds the widget"""
@@ -130,6 +134,70 @@ class NavigateApp(MDApp):
         """Running the widgets"""
         self.kivy_state_obj.kivyui_ready.set()
         super(NavigateApp, self).run()
+
+    def addingtoaddressbook(self):
+        """Dialog for saving address"""
+        width = .85 if platform == 'android' else .8
+        self.add_popup = MDDialog(
+            title='Add contact',
+            type="custom",
+            size_hint=(width, .23),
+            content_cls=AddAddressPopup(),
+            buttons=[
+                MDRaisedButton(
+                    text="Save",
+                    on_release=self.savecontact,
+                ),
+                MDRaisedButton(
+                    text="Cancel",
+                    on_release=self.close_pop,
+                ),
+                MDRaisedButton(
+                    text="Scan QR code",
+                    on_release=self.scan_qr_code,
+                ),
+            ],
+        )
+        self.add_popup.auto_dismiss = False
+        self.add_popup.open()
+
+    def scan_qr_code(self, instance):
+        """this method is used for showing QR code scanner"""
+        if self.is_camara_attached():
+            self.add_popup.dismiss()
+            self.root.ids.id_scanscreen.get_screen(self.root.ids.scr_mngr.current, self.add_popup)
+            self.root.ids.scr_mngr.current = 'scanscreen'
+        else:
+            alert_text = (
+                'Currently this feature is not avaialbe!' if platform == 'android' else 'Camera is not available!')
+            self.add_popup.dismiss()
+            toast(alert_text)
+
+    def is_camara_attached(self):
+        """This method is for checking the camera is available or not"""
+        self.root.ids.id_scanscreen.check_camera()
+        is_available = self.root.ids.id_scanscreen.camera_available
+        return is_available
+
+    def savecontact(self, instance):
+        """Method is used for saving contacts"""
+        pupup_obj = self.add_popup.content_cls
+        label = pupup_obj.ids.label.text.strip()
+        address = pupup_obj.ids.address.text.strip()
+        if label == '' and address == '':
+            pupup_obj.ids.label.focus = True
+            pupup_obj.ids.address.focus = True
+        elif address == '':
+            pupup_obj.ids.address.focus = True
+        elif label == '':
+            pupup_obj.ids.label.focus = True
+        else:
+            pupup_obj.ids.address.focus = True
+
+    def close_pop(self, instance):
+        """Close the popup"""
+        self.add_popup.dismiss()
+        toast('Canceled')
 
     def loadMyAddressScreen(self, action):
         """loadMyAddressScreen method spin the loader"""
