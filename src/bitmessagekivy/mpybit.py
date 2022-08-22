@@ -28,7 +28,7 @@ from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bitmessagekivy.base_navigation import (
     BaseLanguage, BaseNavigationItem, BaseNavigationDrawerDivider,
     BaseNavigationDrawerSubheader, BaseContentNavigationDrawer,
-    BaseCustomSpinner
+    BaseIdentitySpinner
 )
 
 from pybitmessage.bmconfigparser import config
@@ -93,7 +93,7 @@ class BadgeText(IRightBodyTouch, MDLabel):
     """BadgeText class for kivy Ui"""
 
 
-class IdentitySpinner(BaseCustomSpinner):
+class IdentitySpinner(BaseIdentitySpinner):
     """Identity Dropdown in Side Navigation bar"""
 
 
