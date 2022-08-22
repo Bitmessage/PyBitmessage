@@ -11,25 +11,15 @@ import importlib
 import logging
 
 from kivy.lang import Builder
-from kivy.lang import Observable
-from kivy.clock import Clock
 from kivy.properties import (
-    BooleanProperty,
-    NumericProperty,
-    StringProperty,
     ListProperty
 )
-from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.spinner import Spinner
-from kivy.core.window import Window
-
 
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import (
-    OneLineAvatarIconListItem,
-    IRightBodyTouch,
+    IRightBodyTouch
 )
 
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
@@ -71,6 +61,7 @@ def get_identity_list():
     )
     return identity_list
 
+
 class Lang(BaseLanguage):
     """UI Language"""
 
@@ -102,8 +93,8 @@ class BadgeText(IRightBodyTouch, MDLabel):
     """BadgeText class for kivy Ui"""
 
 
-class CustomSpinner(BaseCustomSpinner):
-    """CustomSpinner class for kivy Ui"""
+class IdentitySpinner(BaseCustomSpinner):
+    """Identity Dropdown in Side Navigation bar"""
 
 
 class NavigateApp(MDApp):
@@ -119,7 +110,7 @@ class NavigateApp(MDApp):
     image_path = KivyStateVariables().image_dir
     tr = Lang("en")  # for changing in franch replace en with fr
 
-    def build(self):  # pylint:disable=no-self-use
+    def build(self):
         """Method builds the widget"""
         for kv in self.data_screens:
             Builder.load_file(
