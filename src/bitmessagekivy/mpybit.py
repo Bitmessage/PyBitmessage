@@ -9,7 +9,9 @@ import os
 import json
 import importlib
 import logging
+from functools import partial
 
+from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.properties import (
     ListProperty
@@ -31,7 +33,6 @@ from pybitmessage.bitmessagekivy.base_navigation import (
     BaseNavigationDrawerSubheader, BaseContentNavigationDrawer,
     BaseIdentitySpinner
 )
-
 from pybitmessage.bmconfigparser import config
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.bitmessagekivy.baseclass.common import toast
@@ -205,6 +206,26 @@ class NavigateApp(MDApp):
             self.root.ids.id_myaddress.children[0].active = action
         else:
             self.root.ids.id_myaddress.children[1].active = action
+
+    def load_screen(self, instance):
+        """This method is used for loading screen on every click"""
+        if instance.text == 'Trash':
+            self.root.ids.scr_mngr.current = 'trash'
+            try:
+                self.root.ids.id_trash.children[1].active = True
+            except Exception as e:
+                self.root.ids.id_trash.children[0].children[1].active = True
+        Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
+
+    def load_screen_callback(self, instance, dt=0):
+        """This method is rotating loader for few seconds"""
+        if instance.text == 'Trash':
+            self.root.ids.id_trash.clear_widgets()
+            self.root.ids.id_trash.add_widget(data_screen_dict['Trash'].Trash())
+            try:
+                self.root.ids.id_trash.children[1].active = False
+            except Exception as e:
+                self.root.ids.id_trash.children[0].children[1].active = False
 
     def reset_login_screen(self):
         """This method is used for clearing the widgets of random screen"""
