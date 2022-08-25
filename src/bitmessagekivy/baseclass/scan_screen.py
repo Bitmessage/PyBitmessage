@@ -18,7 +18,7 @@ from kivy.properties import (
 )
 from kivy.uix.screenmanager import Screen
 
-from bitmessagekivy.get_platform import platform
+from pybitmessage.bitmessagekivy.get_platform import platform
 
 from debug import logger
 

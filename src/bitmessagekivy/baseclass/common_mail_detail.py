@@ -3,8 +3,8 @@
     All Common widgets of kivy are managed here.
 """
 
-from bitmessagekivy.baseclass.maildetail import MailDetail
-from bitmessagekivy.baseclass.common import kivy_state_variables
+from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail
+from pybitmessage.bitmessagekivy.baseclass.common import kivy_state_variables
 
 
 def mail_detail_screen(screen_name, msg_id, instance, folder, *args):  # pylint: disable=unused-argument

@@ -15,10 +15,10 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 from kivy.app import App
 
-from bitmessagekivy import kivy_helper_search
-from bitmessagekivy.get_platform import platform
+from pybitmessage.bitmessagekivy import kivy_helper_search
+from pybitmessage.bitmessagekivy.get_platform import platform
 
-from bitmessagekivy.baseclass.common import toast
+from pybitmessage.bitmessagekivy.baseclass.common import toast
 
 from addresses import decodeAddress
 from debug import logger

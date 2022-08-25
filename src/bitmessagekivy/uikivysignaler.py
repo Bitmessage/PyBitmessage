@@ -8,7 +8,7 @@ import queues
 import state
 
 from debug import logger
-from bitmessagekivy.baseclass.common import kivy_state_variables
+from pybitmessage.bitmessagekivy.baseclass.common import kivy_state_variables
 
 
 class UIkivySignaler(Thread):

@@ -15,7 +15,7 @@ from kivymd.uix.list import (
     OneLineAvatarIconListItem
 )
 
-from bitmessagekivy.baseclass.common import toast, kivy_state_variables
+from pybitmessage.bitmessagekivy.baseclass.common import toast, kivy_state_variables
 
 
 class Payment(Screen):

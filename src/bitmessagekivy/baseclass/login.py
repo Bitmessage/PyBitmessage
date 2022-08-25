@@ -14,7 +14,7 @@ from kivy.app import App
 
 from backend.address_generator import AddressGenerator  # pylint: disable=import-error
 from kivymd.uix.behaviors.elevation import RectangularElevationBehavior
-from bitmessagekivy.baseclass.common import toast
+from pybitmessage.bitmessagekivy.baseclass.common import toast
 from bmconfigparser import config
 
 

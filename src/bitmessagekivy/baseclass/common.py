@@ -23,7 +23,7 @@ from kivymd.toast import kivytoast
 from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
 
-from bitmessagekivy.get_platform import platform
+from pybitmessage.bitmessagekivy.get_platform import platform
 
 
 ThemeClsColor = [0.12, 0.58, 0.95, 1]
@@ -35,7 +35,7 @@ data_screens = {
         "Factory": "MailDetail()",
         "name_screen": "mailDetail",
         "object": 0,
-        "Import": "from bitmessagekivy.baseclass.maildetail import MailDetail",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail",
     },
 }
 

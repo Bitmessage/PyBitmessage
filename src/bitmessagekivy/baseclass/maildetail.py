@@ -25,11 +25,11 @@ from kivymd.uix.list import (
     IRightBodyTouch
 )
 
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.bitmessagekivy.baseclass.common import (
     toast, avatarImageFirstLetter, ShowTimeHistoy, kivy_state_variables
 )
-from bitmessagekivy.baseclass.popup import SenderDetailPopup
-from bitmessagekivy.get_platform import platform
+from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
+from pybitmessage.bitmessagekivy.get_platform import platform
 from helper_sql import sqlQuery
 from helper_sent import delete, retrieve_message_details
 from helper_inbox import trash

@@ -20,14 +20,14 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 from kivy.app import App
 
-from bitmessagekivy.get_platform import platform
-from bitmessagekivy import kivy_helper_search
-from bitmessagekivy.baseclass.common import (
+from pybitmessage.bitmessagekivy.get_platform import platform
+from pybitmessage.bitmessagekivy import kivy_helper_search
+from pybitmessage.bitmessagekivy.baseclass.common import (
     avatarImageFirstLetter, toast, empty_screen_label,
     ThemeClsColor, SwipeToDeleteItem, kivy_state_variables
 )
-from bitmessagekivy.baseclass.popup import SavedAddressDetailPopup
-from bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
+from pybitmessage.bitmessagekivy.baseclass.popup import SavedAddressDetailPopup
+from pybitmessage.bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
 from debug import logger
 from helper_sql import sqlExecute
 
