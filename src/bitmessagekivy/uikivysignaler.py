@@ -2,13 +2,17 @@
     UI Singnaler for kivy interface
 """
 
+import logging
+
 from threading import Thread
 from kivy.app import App
-import queues
-import state
 
-from debug import logger
+from pybitmessage import queues
+from pybitmessage import state
+
 from pybitmessage.bitmessagekivy.baseclass.common import kivy_state_variables
+
+logger = logging.getLogger('default')
 
 
 class UIkivySignaler(Thread):

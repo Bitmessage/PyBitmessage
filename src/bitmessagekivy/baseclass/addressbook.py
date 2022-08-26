@@ -10,6 +10,7 @@ All saved addresses are managed in Addressbook
 """
 
 import os
+import logging
 from functools import partial
 
 from kivy.clock import Clock
@@ -28,8 +29,9 @@ from pybitmessage.bitmessagekivy.baseclass.common import (
 )
 from pybitmessage.bitmessagekivy.baseclass.popup import SavedAddressDetailPopup
 from pybitmessage.bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
-from debug import logger
-from helper_sql import sqlExecute
+from pybitmessage.helper_sql import sqlExecute
+
+logger = logging.getLogger('default')
 
 
 class AddressBook(Screen, HelperAddressBook):

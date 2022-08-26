@@ -5,7 +5,7 @@
 All the popup are managed here.
 
 """
-
+import logging
 from datetime import datetime
 
 from kivy.clock import Clock
@@ -20,8 +20,9 @@ from pybitmessage.bitmessagekivy.get_platform import platform
 
 from pybitmessage.bitmessagekivy.baseclass.common import toast
 
-from addresses import decodeAddress
-from debug import logger
+from pybitmessage.addresses import decodeAddress
+
+logger = logging.getLogger('default')
 
 
 class AddressChangingLoader(Popup):

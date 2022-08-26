@@ -7,6 +7,7 @@ QR code Scan Screen used in message composer to get recipient address
 """
 
 import os
+import logging
 import cv2
 
 from kivy.clock import Clock
@@ -20,13 +21,13 @@ from kivy.uix.screenmanager import Screen
 
 from pybitmessage.bitmessagekivy.get_platform import platform
 
-from debug import logger
+logger = logging.getLogger('default')
 
 
 class ScanScreen(Screen):
     """ScanScreen is for scaning Qr code"""
     # pylint: disable=W0212
-    camera_avaialbe = BooleanProperty(False)
+    camera_available = BooleanProperty(False)
     previous_open_screen = StringProperty()
     pop_up_instance = ObjectProperty()
 
@@ -42,13 +43,13 @@ class ScanScreen(Screen):
             is_cam_open = cap.isOpened()
             while is_cam_open:
                 logger.debug('Camera is available!')
-                self.camera_avaialbe = True
+                self.camera_available = True
                 break
             else:
                 logger.debug("Camera is not available!")
-                self.camera_avaialbe = False
+                self.camera_available = False
         else:
-            self.camera_avaialbe = True
+            self.camera_available = True
 
     def get_screen(self, screen_name, instance=None):
         """This method is used for getting previous screen name"""

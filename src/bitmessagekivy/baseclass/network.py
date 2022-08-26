@@ -9,9 +9,9 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
 
-from network import objectracker, stats
+from pybitmessage.network import objectracker, stats
 
-import state
+from pybitmessage import state
 
 
 class NetworkStat(Screen):

@@ -30,9 +30,9 @@ from pybitmessage.bitmessagekivy.baseclass.common import (
 )
 from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
 from pybitmessage.bitmessagekivy.get_platform import platform
-from helper_sql import sqlQuery
-from helper_sent import delete, retrieve_message_details
-from helper_inbox import trash
+from pybitmessage.helper_sql import sqlQuery
+from pybitmessage.helper_sent import delete, retrieve_message_details
+from pybitmessage.helper_inbox import trash
 
 
 class OneLineListTitle(OneLineListItem):

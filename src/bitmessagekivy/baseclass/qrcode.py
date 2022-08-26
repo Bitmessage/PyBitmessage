@@ -4,11 +4,14 @@
 Generate QRcode of saved addresses in addressbook.
 """
 
+import logging
+
 from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty
 from kivy_garden.qrcode import QRCodeWidget
-from debug import logger
+
+logger = logging.getLogger('default')
 
 
 class ShowQRCode(Screen):
