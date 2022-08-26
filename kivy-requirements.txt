@@ -3,3 +3,4 @@ https://github.com/kivymd/KivyMD/archive/master.zip
 opencv-python
 pyzbar
 telenium
+Pillow
