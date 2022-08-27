@@ -1760,10 +1760,13 @@ class MyForm(settingsmixin.SMainWindow):
     def setStatusIcon(self, color):
         _notifications_enabled = not config.getboolean(
             'bitmessagesettings', 'hidetrayconnectionnotifications')
+        if color not in ('red', 'yellow', 'green'):
+            return
+
+        self.pushButtonStatusIcon.setIcon(
+            QtGui.QIcon(":/newPrefix/images/%sicon.png" % color))
+        state.statusIconColor = color
         if color == 'red':
-            self.pushButtonStatusIcon.setIcon(
-                QtGui.QIcon(":/newPrefix/images/redicon.png"))
-            state.statusIconColor = 'red'
             # if the connection is lost then show a notification
             if self.connected and _notifications_enabled:
                 self.notifierShow(
@@ -1794,41 +1797,26 @@ class MyForm(settingsmixin.SMainWindow):
                 self.actionStatus.setText(_translate(
                     "MainWindow", "Not Connected"))
                 self.setTrayIconFile("can-icon-24px-red.png")
-        if color == 'yellow':
-            if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
-                self.statusbar.clearMessage()
-            self.pushButtonStatusIcon.setIcon(
-                QtGui.QIcon(":/newPrefix/images/yellowicon.png"))
-            state.statusIconColor = 'yellow'
-            # if a new connection has been established then show a notification
-            if not self.connected and _notifications_enabled:
-                self.notifierShow(
-                    'Bitmessage',
-                    _translate("MainWindow", "Connected"),
-                    sound.SOUND_CONNECTED)
-            self.connected = True
+            return
 
-            if self.actionStatus is not None:
-                self.actionStatus.setText(_translate(
-                    "MainWindow", "Connected"))
-                self.setTrayIconFile("can-icon-24px-yellow.png")
-        if color == 'green':
-            if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
-                self.statusbar.clearMessage()
-            self.pushButtonStatusIcon.setIcon(
-                QtGui.QIcon(":/newPrefix/images/greenicon.png"))
-            state.statusIconColor = 'green'
-            if not self.connected and _notifications_enabled:
-                self.notifierShow(
-                    'Bitmessage',
-                    _translate("MainWindow", "Connected"),
-                    sound.SOUND_CONNECTION_GREEN)
-            self.connected = True
+        if self.statusbar.currentMessage() == (
+            "Warning: You are currently not connected. Bitmessage will do"
+            " the work necessary to send the message but it won't send"
+            " until you connect."
+        ):
+            self.statusbar.clearMessage()
+        # if a new connection has been established then show a notification
+        if not self.connected and _notifications_enabled:
+            self.notifierShow(
+                'Bitmessage',
+                _translate("MainWindow", "Connected"),
+                sound.SOUND_CONNECTED)
+        self.connected = True
 
-            if self.actionStatus is not None:
-                self.actionStatus.setText(_translate(
-                    "MainWindow", "Connected"))
-                self.setTrayIconFile("can-icon-24px-green.png")
+        if self.actionStatus is not None:
+            self.actionStatus.setText(_translate(
+                "MainWindow", "Connected"))
+            self.setTrayIconFile("can-icon-24px-%s.png" % color)
 
     def initTrayIcon(self, iconFileName, app):
         self.currentTrayIconFileName = iconFileName
