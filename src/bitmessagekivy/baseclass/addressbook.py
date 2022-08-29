@@ -159,8 +159,8 @@ class AddressBook(Screen, HelperAddressBook):
                 UPDATE addressbook
                 SET label = ?
                 WHERE address = ?""", label, self.addbook_popup.content_cls.address)
-            App.get_running_app().root.ids.sc11.ids.ml.clear_widgets()
-            App.get_running_app().root.ids.sc11.loadAddresslist(None, 'All', '')
+            App.get_running_app().root.ids.id_addressbook.ids.ml.clear_widgets()
+            App.get_running_app().root.ids.id_addressbook.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()
             toast('Saved')
 
