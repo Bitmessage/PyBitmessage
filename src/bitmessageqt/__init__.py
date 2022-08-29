@@ -1631,11 +1631,11 @@ class MyForm(settingsmixin.SMainWindow):
     # menu button 'delete all treshed messages'
     def click_actionDeleteAllTrashedMessages(self):
         if QtGui.QMessageBox.question(
-            self,
-            _translate("MainWindow", "Delete trash?"),
-            _translate("MainWindow", "Are you sure you want to delete all trashed messages?"),
-            QtGui.QMessageBox.Yes,
-            QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+                self,
+                _translate("MainWindow", "Delete trash?"),
+                _translate("MainWindow", "Are you sure you want to delete all trashed messages?"),
+                QtGui.QMessageBox.Yes,
+                QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
         sqlStoredProcedure('deleteandvacuume')
         self.rerenderTabTreeMessages()
@@ -1771,7 +1771,7 @@ class MyForm(settingsmixin.SMainWindow):
                     _translate("MainWindow", "Connection lost"),
                     sound.SOUND_DISCONNECTED)
             if not config.safeGetBoolean('bitmessagesettings', 'upnp') and \
-                config.get('bitmessagesettings', 'socksproxytype') == "none":
+                    config.get('bitmessagesettings', 'socksproxytype') == "none":
                 self.updateStatusBar(
                     _translate(
                         "MainWindow",
@@ -2133,13 +2133,13 @@ class MyForm(settingsmixin.SMainWindow):
                             toAddress = acct.toAddress
                         else:
                             if QtGui.QMessageBox.question(
-                                self,
-                                "Sending an email?",
-                                _translate(
-                                    "MainWindow", 
-                                    "You are trying to send an email instead of a bitmessage. "
-                                    "This requires registering with a gateway. Attempt to register?"),
-                                QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
+                                    self,
+                                    "Sending an email?",
+                                    _translate(
+                                        "MainWindow",
+                                        "You are trying to send an email instead of a bitmessage. "
+                                        "This requires registering with a gateway. Attempt to register?"),
+                                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
                                 continue
                             email = acct.getLabel()
                             if email[-14:] != "@mailchuck.com": #attempt register
@@ -3735,8 +3735,8 @@ class MyForm(settingsmixin.SMainWindow):
             otherAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.UserRole)
         account = accountClass(myAddress)
         if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
-            (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
-            (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
+                (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
+                (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
             text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
@@ -4069,8 +4069,8 @@ class MyForm(settingsmixin.SMainWindow):
             return
         # only account names of normal addresses (no chans/mailinglists)
         if (not isinstance(item, Ui_AddressWidget)) or \
-            (not self.getCurrentTreeWidget()) or \
-            self.getCurrentTreeWidget().currentItem() is None:
+                (not self.getCurrentTreeWidget()) or \
+                self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
         if (not self.getCurrentItem()) or (not isinstance(self.getCurrentItem(), Ui_AddressWidget)):
