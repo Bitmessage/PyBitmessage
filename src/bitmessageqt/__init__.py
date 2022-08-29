@@ -1628,11 +1628,12 @@ class MyForm(settingsmixin.SMainWindow):
 
     # menu button 'delete all treshed messages'
     def click_actionDeleteAllTrashedMessages(self):
-        if QtGui.QMessageBox.question(self,
-                _translate("MainWindow", "Delete trash?"),
-                _translate("MainWindow", "Are you sure you want to delete all trashed messages?"),
-                QtGui.QMessageBox.Yes,
-                QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+        if QtGui.QMessageBox.question(
+            self,
+            _translate("MainWindow", "Delete trash?"),
+            _translate("MainWindow", "Are you sure you want to delete all trashed messages?"),
+            QtGui.QMessageBox.Yes,
+            QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
         sqlStoredProcedure('deleteandvacuume')
         self.rerenderTabTreeMessages()
@@ -2129,9 +2130,13 @@ class MyForm(settingsmixin.SMainWindow):
                             subject = acct.subject
                             toAddress = acct.toAddress
                         else:
-                            if QtGui.QMessageBox.question(self, "Sending an email?", _translate("MainWindow", 
-                                "You are trying to send an email instead of a bitmessage. "
-                                "This requires registering with a gateway. Attempt to register?"),
+                            if QtGui.QMessageBox.question(
+                                self,
+                                "Sending an email?",
+                                _translate(
+                                    "MainWindow", 
+                                    "You are trying to send an email instead of a bitmessage. "
+                                    "This requires registering with a gateway. Attempt to register?"),
                                 QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
                                 continue
                             email = acct.getLabel()
