@@ -22,8 +22,11 @@ class UISignaler(QThread):
             command, data = queues.UISignalQueue.get()
             if command == 'writeNewAddressToTable':
                 label, address, streamNumber = data
-                self.emit(SIGNAL(
-                    "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
+                self.emit(
+                    SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    label,
+                    address,
+                    str(streamNumber))
             elif command == 'updateStatusBar':
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
             elif command == 'updateSentItemStatusByToAddress':
@@ -46,7 +49,11 @@ class UISignaler(QThread):
                     toAddress, fromLabel, fromAddress, subject, message, ackdata)
             elif command == 'updateNetworkStatusTab':
                 outbound, add, destination = data
-                self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), outbound, add, destination)
+                self.emit(
+                    SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    outbound,
+                    add,
+                    destination)
             elif command == 'updateNumberOfMessagesProcessed':
                 self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
             elif command == 'updateNumberOfPubkeysProcessed':
@@ -73,7 +80,11 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("newVersionAvailable(PyQt_PyObject)"), data)
             elif command == 'alert':
                 title, text, exitAfterUserClicksOk = data
-                self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
+                self.emit(
+                    SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"),
+                    title,
+                    text,
+                    exitAfterUserClicksOk)
             else:
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)

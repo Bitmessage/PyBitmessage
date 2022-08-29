@@ -13,6 +13,8 @@ class RetranslateMixin(object):
                 getattr(self, attr).setText(getattr(defaults, attr).text())
             elif isinstance(value, QtGui.QTableWidget):
                 for i in range (value.columnCount()):
-                    getattr(self, attr).horizontalHeaderItem(i).setText(getattr(defaults, attr).horizontalHeaderItem(i).text())
+                    getattr(self, attr).horizontalHeaderItem(i).setText(
+                        getattr(defaults, attr).horizontalHeaderItem(i).text())
                 for i in range (value.rowCount()):
-                    getattr(self, attr).verticalHeaderItem(i).setText(getattr(defaults, attr).verticalHeaderItem(i).text())
+                    getattr(self, attr).verticalHeaderItem(i).setText(
+                        getattr(defaults, attr).verticalHeaderItem(i).text())

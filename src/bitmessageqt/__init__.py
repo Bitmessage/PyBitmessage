@@ -162,9 +162,10 @@ class MyForm(settingsmixin.SMainWindow):
                                QtCore.SIGNAL(
                                    "triggered()"),
                                self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(self.ui.pushButtonAddChan, QtCore.SIGNAL(
-            "clicked()"),
-                               self.click_actionJoinChan) # also used for creating chans.
+        QtCore.QObject.connect(
+            self.ui.pushButtonAddChan,
+            QtCore.SIGNAL("clicked()"),
+            self.click_actionJoinChan) # also used for creating chans.
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
@@ -479,7 +480,13 @@ class MyForm(settingsmixin.SMainWindow):
 
         i = 0
         for toAddress in db:
-            widget = Ui_SubscriptionWidget(treeWidget, i, toAddress, db[toAddress]["inbox"]['count'], db[toAddress]["inbox"]['label'], db[toAddress]["inbox"]['enabled'])
+            widget = Ui_SubscriptionWidget(
+                treeWidget,
+                i,
+                toAddress,
+                db[toAddress]["inbox"]['count'],
+                db[toAddress]["inbox"]['label'],
+                db[toAddress]["inbox"]['enabled'])
             j = 0
             unread = 0
             for folder in folders:
@@ -538,7 +545,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         # get number of (unread) messages
         total = 0
-        queryreturn = sqlQuery('SELECT toaddress, folder, count(msgid) as cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
+        queryreturn = sqlQuery(
+            "SELECT toaddress, folder, count(msgid) as cnt "
+            "FROM inbox "
+            "WHERE read = 0 "
+            "GROUP BY toaddress, folder")
         for row in queryreturn:
             toaddress, folder, cnt = row
             total += cnt
@@ -634,8 +645,10 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile)
             if addressVersionNumber == 1:
                 displayMsg = _translate(
-                    "MainWindow", "One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. "
-                    + "May we delete it now?").arg(addressInKeysFile)
+                    "MainWindow",
+                    "One of your addresses, %1, is an old version 1 address. "
+                    "Version 1 addresses are no longer supported. "
+                    "May we delete it now?").arg(addressInKeysFile)
                 reply = QtGui.QMessageBox.question(
                     self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
@@ -745,14 +758,15 @@ class MyForm(settingsmixin.SMainWindow):
         self.unreadCount = 0
 
         # Set the icon sizes for the identicons
-        identicon_size = 3*7
+        identicon_size = 3 * 7
         self.ui.tableWidgetInbox.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.treeWidgetChans.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.treeWidgetYourIdentities.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.treeWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        
+
         self.UISignalThread = UISignaler.get()
+
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -762,9 +776,12 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
+            "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+            self.displayNewInboxMessage)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+            "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,"
+            "PyQt_PyObject,PyQt_PyObject)"),
+            self.displayNewSentMessage)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -817,7 +834,7 @@ class MyForm(settingsmixin.SMainWindow):
             TTL = 28*24*60*60
         self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
         self.updateHumanFriendlyTTLDescription(TTL)
-        
+
         QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
             "valueChanged(int)"), self.updateTTL)
 
@@ -889,7 +906,13 @@ class MyForm(settingsmixin.SMainWindow):
             font.setBold(True)
         else:
             numberOfDays = int(round(TTL / (24*60*60)))
-            self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n day(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfDays))
+            self.ui.labelHumanFriendlyTTLDescription.setText(
+                _translate(
+                    "MainWindow",
+                    "%n day(s)",
+                    None,
+                    QtCore.QCoreApplication.CodecForTr,
+                    numberOfDays))
             font.setBold(False)
         self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
         self.ui.labelHumanFriendlyTTLDescription.setFont(font)
@@ -1559,36 +1582,81 @@ class MyForm(settingsmixin.SMainWindow):
                 # may manage your keys by editing the keys.dat file stored in
                 # the same directory as this program. It is important that you
                 # back up this file.', QMessageBox.Ok)
-                reply = QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file."), QtGui.QMessageBox.Ok)
+                reply = QtGui.QMessageBox.information(
+                    self,
+                    'keys.dat?',
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in the same directory"
+                        "as this program. It is important that you back up this file."
+                    ),
+                    QtGui.QMessageBox.Ok)
 
             else:
-                QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(state.appdata), QtGui.QMessageBox.Ok)
+                QtGui.QMessageBox.information(
+                    self,
+                    'keys.dat?',
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in"
+                        "\n %1 \n"
+                        "It is important that you back up this file."
+                    ).arg(state.appdata),
+                    QtGui.QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
             if state.appdata == '':
-                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(
+                    self,
+                    _translate("MainWindow", "Open keys.dat?"),
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in the same directory as"
+                        "this program. It is important that you back up this file."
+                        "Would you like to open the file now?"
+                        "(Be sure to close Bitmessage before making any changes.)"),
+                    QtGui.QMessageBox.Yes,
+                    QtGui.QMessageBox.No)
             else:
-                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(state.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(
+                    self,
+                    _translate("MainWindow", "Open keys.dat?"),
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in\n %1 \n"
+                        "It is important that you back up this file. Would you like to open the file now?"
+                        "(Be sure to close Bitmessage before making any changes.)").arg(state.appdata),
+                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 openKeysFile()
 
     # menu button 'delete all treshed messages'
     def click_actionDeleteAllTrashedMessages(self):
-        if QtGui.QMessageBox.question(self, _translate("MainWindow", "Delete trash?"), _translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+        if QtGui.QMessageBox.question(
+                self,
+                _translate("MainWindow", "Delete trash?"),
+                _translate("MainWindow", "Are you sure you want to delete all trashed messages?"),
+                QtGui.QMessageBox.Yes,
+                QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
         sqlStoredProcedure('deleteandvacuume')
         self.rerenderTabTreeMessages()
         self.rerenderTabTreeSubscriptions()
         self.rerenderTabTreeChans()
         if self.getCurrentFolder(self.ui.treeWidgetYourIdentities) == "trash":
-            self.loadMessagelist(self.ui.tableWidgetInbox, self.getCurrentAccount(self.ui.treeWidgetYourIdentities), "trash")
+            self.loadMessagelist(
+                self.ui.tableWidgetInbox,
+                self.getCurrentAccount(self.ui.treeWidgetYourIdentities),
+                "trash")
         elif self.getCurrentFolder(self.ui.treeWidgetSubscriptions) == "trash":
-            self.loadMessagelist(self.ui.tableWidgetInboxSubscriptions, self.getCurrentAccount(self.ui.treeWidgetSubscriptions), "trash")
+            self.loadMessagelist(
+                self.ui.tableWidgetInboxSubscriptions,
+                self.getCurrentAccount(self.ui.treeWidgetSubscriptions),
+                "trash")
         elif self.getCurrentFolder(self.ui.treeWidgetChans) == "trash":
-            self.loadMessagelist(self.ui.tableWidgetInboxChans, self.getCurrentAccount(self.ui.treeWidgetChans), "trash")
+            self.loadMessagelist(
+                self.ui.tableWidgetInboxChans,
+                self.getCurrentAccount(self.ui.treeWidgetChans),
+                "trash")
 
     # menu button 'regenerate deterministic addresses'
     def click_actionRegenerateDeterministicAddresses(self):
@@ -1704,7 +1772,7 @@ class MyForm(settingsmixin.SMainWindow):
                     _translate("MainWindow", "Connection lost"),
                     sound.SOUND_DISCONNECTED)
             if not config.safeGetBoolean('bitmessagesettings', 'upnp') and \
-                config.get('bitmessagesettings', 'socksproxytype') == "none":
+                    config.get('bitmessagesettings', 'socksproxytype') == "none":
                 self.updateStatusBar(
                     _translate(
                         "MainWindow",
@@ -1836,7 +1904,9 @@ class MyForm(settingsmixin.SMainWindow):
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
-                    except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                    except:
+                        # If someone misses adding a "_translate" to a string before passing it to this function,
+                        # this function won't receive a qstring which will cause an exception.
                         newlinePosition = 0
                     if newlinePosition > 1:
                         sent.item(i, 3).setText(
@@ -1864,7 +1934,9 @@ class MyForm(settingsmixin.SMainWindow):
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
-                    except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                    except:
+                        # If someone misses adding a "_translate" to a string before passing it to this function, 
+                        # this function won't receive a qstring which will cause an exception.
                         newlinePosition = 0
                     if newlinePosition > 1:
                         sent.item(i, 3).setText(
@@ -1910,12 +1982,16 @@ class MyForm(settingsmixin.SMainWindow):
             os._exit(0)
 
     def rerenderMessagelistFromLabels(self):
-        for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
+        for messagelist in (self.ui.tableWidgetInbox,
+                            self.ui.tableWidgetInboxChans,
+                            self.ui.tableWidgetInboxSubscriptions):
             for i in range(messagelist.rowCount()):
                 messagelist.item(i, 1).setLabel()
 
     def rerenderMessagelistToLabels(self):
-        for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
+        for messagelist in (self.ui.tableWidgetInbox,
+                            self.ui.tableWidgetInboxChans,
+                            self.ui.tableWidgetInboxSubscriptions):
             for i in range(messagelist.rowCount()):
                 messagelist.item(i, 0).setLabel()
 
@@ -1978,11 +2054,16 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderTabTreeSubscriptions()
 
     def click_pushButtonTTL(self):
-        QtGui.QMessageBox.information(self, 'Time To Live', _translate(
-            "MainWindow", """The TTL, or Time-To-Live is the length of time that the network will hold the message.
- The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement, it
- will resend the message automatically. The longer the Time-To-Live, the
- more work your computer must do to send the message. A Time-To-Live of four or five days is often appropriate."""), QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.information(
+            self,
+            'Time To Live',
+            _translate(
+                "MainWindow", """The TTL, or Time-To-Live is the length of time that the network will hold the message.
+                 The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement
+                 ,it will resend the message automatically. The longer the Time-To-Live, the
+                 more work your computer must do to send the message.
+                 A Time-To-Live of four or five days is often appropriate."""),
+            QtGui.QMessageBox.Ok)
 
     def click_pushButtonClear(self):
         self.ui.lineEditSubject.setText("")
@@ -2055,14 +2136,21 @@ class MyForm(settingsmixin.SMainWindow):
                             subject = acct.subject
                             toAddress = acct.toAddress
                         else:
-                            if QtGui.QMessageBox.question(self, "Sending an email?", _translate("MainWindow", 
-                                "You are trying to send an email instead of a bitmessage. This requires registering with a gateway. Attempt to register?"),
-                                QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
+                            if QtGui.QMessageBox.question(
+                                    self,
+                                    "Sending an email?",
+                                    _translate(
+                                        "MainWindow",
+                                        "You are trying to send an email instead of a bitmessage. "
+                                        "This requires registering with a gateway. Attempt to register?"),
+                                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
                                 continue
                             email = acct.getLabel()
-                            if email[-14:] != "@mailchuck.com": #attempt register
+                            if email[-14:] != "@mailchuck.com": # attempt register
                                 # 12 character random email address
-                                email = ''.join(random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)) + "@mailchuck.com"
+                                email = ''.join(
+                                        random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
+                                        ) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
                             config.set(fromAddress, 'label', email)
@@ -2152,12 +2240,24 @@ class MyForm(settingsmixin.SMainWindow):
                         toAddress = addBMIfNotPresent(toAddress)
 
                         if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                            QtGui.QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
-                                "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
+                            QtGui.QMessageBox.about(
+                                self,
+                                _translate("MainWindow", "Address version number"),
+                                _translate(
+                                    "MainWindow",
+                                    "Concerning the address %1, Bitmessage cannot understand address version numbers"
+                                    " of %2. Perhaps upgrade Bitmessage to the latest version."
+                                ).arg(toAddress).arg(str(addressVersionNumber)))
                             continue
                         if streamNumber > 1 or streamNumber == 0:
-                            QtGui.QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
-                                "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
+                            QtGui.QMessageBox.about(
+                                self,
+                                _translate("MainWindow", "Stream number"),
+                                _translate(
+                                    "MainWindow",
+                                    "Concerning the address %1, Bitmessage cannot handle stream numbers of %2."
+                                    " Perhaps upgrade Bitmessage to the latest version."
+                                ).arg(toAddress).arg(str(streamNumber)))
                             continue
                         self.statusbar.clearMessage()
                         if state.statusIconColor == 'red':
@@ -2267,7 +2367,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.comboBoxSendFrom.clear()
         for addressInKeysFile in getSortedAccounts():
             isEnabled = config.getboolean(
-                addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
+                addressInKeysFile, 'enabled')
             isMaillinglist = config.safeGetBoolean(addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
                 label = unicode(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
@@ -2291,7 +2391,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.comboBoxSendFromBroadcast.clear()
         for addressInKeysFile in getSortedAccounts():
             isEnabled = config.getboolean(
-                addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
+                addressInKeysFile, 'enabled')
             isChan = config.safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
                 label = unicode(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
@@ -3178,7 +3278,11 @@ class MyForm(settingsmixin.SMainWindow):
                 message, = row
 
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
-        filename = QtGui.QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self,
+            _translate("MainWindow","Save As..."),
+            defaultFilename,
+            "Text files (*.txt);;All files (*.*)")
         if filename == '':
             return
         try:
@@ -3635,8 +3739,8 @@ class MyForm(settingsmixin.SMainWindow):
             otherAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.UserRole)
         account = accountClass(myAddress)
         if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
-            (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
-            (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
+                (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
+                (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
             text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
@@ -3968,7 +4072,9 @@ class MyForm(settingsmixin.SMainWindow):
         if column != 0:
             return
         # only account names of normal addresses (no chans/mailinglists)
-        if (not isinstance(item, Ui_AddressWidget)) or (not self.getCurrentTreeWidget()) or self.getCurrentTreeWidget().currentItem() is None:
+        if (not isinstance(item, Ui_AddressWidget)) or \
+                (not self.getCurrentTreeWidget()) or \
+                self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
         if (not self.getCurrentItem()) or (not isinstance(self.getCurrentItem(), Ui_AddressWidget)):
