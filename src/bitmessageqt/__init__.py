@@ -904,12 +904,12 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             numberOfDays = int(round(TTL / (24*60*60)))
             self.ui.labelHumanFriendlyTTLDescription.setText(
-                    _translate(
-                        "MainWindow",
-                        "%n day(s)",
-                        None,
-                        QtCore.QCoreApplication.CodecForTr,
-                        numberOfDays))
+                _translate(
+                    "MainWindow",
+                    "%n day(s)",
+                    None,
+                    QtCore.QCoreApplication.CodecForTr,
+                    numberOfDays))
             font.setBold(False)
         self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
         self.ui.labelHumanFriendlyTTLDescription.setFont(font)
@@ -1580,14 +1580,14 @@ class MyForm(settingsmixin.SMainWindow):
                 # the same directory as this program. It is important that you
                 # back up this file.', QMessageBox.Ok)
                 reply = QtGui.QMessageBox.information(
-                            self,
-                            'keys.dat?',
-                            _translate(
-                                "MainWindow",
-                                "You may manage your keys by editing the keys.dat file stored in the same directory"
-                                "as this program. It is important that you back up this file."
-                            ),
-                            QtGui.QMessageBox.Ok)
+                    self,
+                    'keys.dat?',
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in the same directory"
+                        "as this program. It is important that you back up this file."
+                    ),
+                    QtGui.QMessageBox.Ok)
 
             else:
                 QtGui.QMessageBox.information(
@@ -1603,26 +1603,26 @@ class MyForm(settingsmixin.SMainWindow):
         elif sys.platform == 'win32' or sys.platform == 'win64':
             if state.appdata == '':
                 reply = QtGui.QMessageBox.question(
-                            self,
-                            _translate("MainWindow", "Open keys.dat?"),
-                            _translate(
-                                "MainWindow",
-                                "You may manage your keys by editing the keys.dat file stored in the same directory as"
-                                "this program. It is important that you back up this file."
-                                "Would you like to open the file now?"
-                                "(Be sure to close Bitmessage before making any changes.)"),
-                            QtGui.QMessageBox.Yes,
-                            QtGui.QMessageBox.No)
+                    self,
+                    _translate("MainWindow", "Open keys.dat?"),
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in the same directory as"
+                        "this program. It is important that you back up this file."
+                        "Would you like to open the file now?"
+                        "(Be sure to close Bitmessage before making any changes.)"),
+                    QtGui.QMessageBox.Yes,
+                    QtGui.QMessageBox.No)
             else:
                 reply = QtGui.QMessageBox.question(
-                            self,
-                            _translate("MainWindow", "Open keys.dat?"),
-                            _translate(
-                                "MainWindow",
-                                "You may manage your keys by editing the keys.dat file stored in\n %1 \n"
-                                "It is important that you back up this file. Would you like to open the file now?"
-                                "(Be sure to close Bitmessage before making any changes.)").arg(state.appdata),
-                            QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                    self,
+                    _translate("MainWindow", "Open keys.dat?"),
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat file stored in\n %1 \n"
+                        "It is important that you back up this file. Would you like to open the file now?"
+                        "(Be sure to close Bitmessage before making any changes.)").arg(state.appdata),
+                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 openKeysFile()
 
