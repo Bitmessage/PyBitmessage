@@ -4061,8 +4061,8 @@ class MyForm(settingsmixin.SMainWindow):
         if column != 0:
             return
         # only account names of normal addresses (no chans/mailinglists)
-        if (not isinstance(item, Ui_AddressWidget)) or
-            (not self.getCurrentTreeWidget()) or
+        if (not isinstance(item, Ui_AddressWidget)) or \
+            (not self.getCurrentTreeWidget()) or \
             self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
