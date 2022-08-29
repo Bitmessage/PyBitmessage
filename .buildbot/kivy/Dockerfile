@@ -1,9 +1,9 @@
 # A container for buildbot
-FROM ubuntu:bionic AS kivy
+FROM ubuntu:focal AS kivy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ENV SKIPCACHE=2022-07-20
+ENV SKIPCACHE=2022-08-29
 
 RUN apt-get update
 
