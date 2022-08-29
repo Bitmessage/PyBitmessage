@@ -38,3 +38,5 @@ class KivyStateVariables(object):
         self.in_search_mode = False
         self.image_dir = os.path.abspath(os.path.join('images', 'kivy'))
         self.kivyui_ready = threading.Event()
+        self.file_manager = None
+        self.manager_open = False
