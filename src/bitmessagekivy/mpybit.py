@@ -258,12 +258,12 @@ class NavigateApp(MDApp):
             if check_permission(Permission.WRITE_EXTERNAL_STORAGE) and \
                     check_permission(Permission.READ_EXTERNAL_STORAGE):
                 self.file_manager.show(os.getenv('EXTERNAL_STORAGE'))
-                self.manager_open = True
+                self.kivy_state_obj.manager_open = True
             else:
                 request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
         else:
             self.file_manager.show(os.environ["HOME"])
-            self.manager_open = True
+            self.kivy_state_obj.manager_open = True
 
     def select_path(self, path):
         """This method is used to set the select image"""
@@ -292,7 +292,7 @@ class NavigateApp(MDApp):
 
     def exit_manager(self, *args):
         """Called when the user reaches the root of the directory tree."""
-        self.manager_open = False
+        self.kivy_state_obj.manager_open = False
         self.file_manager.close()
 
     def load_selected_Image(self, curerentAddr):
