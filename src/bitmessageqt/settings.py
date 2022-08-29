@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 
+import six
 from PyQt4 import QtCore, QtGui
 
 import debug
@@ -159,6 +160,26 @@ class SettingsDialog(QtGui.QDialog):
             0 if not self._proxy_type
             else self.comboBoxProxyType.findText(self._proxy_type))
         self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
+
+        if self._proxy_type:
+            for node, info in six.iteritems(
+                knownnodes.knownNodes.get(
+                    min(state.streamsInWhichIAmParticipating), [])
+            ):
+                if (
+                    node.host.endswith('.onion') and len(node.host) > 22
+                    and not info.get('self')
+                ):
+                    break
+            else:
+                if self.checkBoxOnionOnly.isChecked():
+                    self.checkBoxOnionOnly.setText(
+                        self.checkBoxOnionOnly.text() + ", " + _translate(
+                            "MainWindow", "may cause connection problems!"))
+                    self.checkBoxOnionOnly.setStyleSheet(
+                        "QCheckBox { color : red; }")
+                else:
+                    self.checkBoxOnionOnly.setEnabled(False)
 
         self.lineEditSocksHostname.setText(
             config.get('bitmessagesettings', 'sockshostname'))
