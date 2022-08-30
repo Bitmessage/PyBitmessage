@@ -1,6 +1,6 @@
 # pylint: disable=unused-import, too-many-public-methods, unused-variable, too-many-ancestors
 # pylint: disable=no-name-in-module, too-few-public-methods, import-error, unused-argument
-# pylint: disable=attribute-defined-outside-init, global-variable-not-assigned
+# pylint: disable=attribute-defined-outside-init, global-variable-not-assigned, too-many-instance-attributes
 
 """
 Bitmessage android(mobile) interface
