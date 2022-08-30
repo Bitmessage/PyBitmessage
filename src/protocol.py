@@ -101,7 +101,7 @@ MAX_VALID_STREAM = 2**63 - 1
 
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
-    if host.find('.onion') > -1:
+    if host.endswith('.onion'):
         return b'\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
     elif host.find(':') == -1:
@@ -112,7 +112,7 @@ def encodeHost(host):
 
 def networkType(host):
     """Determine if a host is IPv4, IPv6 or an onion address"""
-    if host.find('.onion') > -1:
+    if host.endswith('.onion'):
         return 'onion'
     elif host.find(':') == -1:
         return 'IPv4'
