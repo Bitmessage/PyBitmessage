@@ -7,6 +7,7 @@ from pybitmessage.bitmessagekivy.mpybit import NavigateApp
 
 import multiqueue
 from class_addressGenerator import FakeAddressGenerator
+from pybitmessage.mock.network import stats, objectracker
 
 
 def main():
