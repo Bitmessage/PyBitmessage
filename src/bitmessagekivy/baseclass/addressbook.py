@@ -24,7 +24,7 @@ from kivy.app import App
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.bitmessagekivy import kivy_helper_search
 from pybitmessage.bitmessagekivy.baseclass.common import (
-    avatarImageFirstLetter, toast, empty_screen_label,
+    avatar_image_first_letter, toast, empty_screen_label,
     ThemeClsColor, SwipeToDeleteItem, kivy_state_variables
 )
 from pybitmessage.bitmessagekivy.baseclass.popup import SavedAddressDetailPopup
@@ -86,7 +86,7 @@ class AddressBook(Screen, HelperAddressBook):
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             image = os.path.join(
-                self.kivy_state.imageDir, "text_images", "{}.png".format(avatarImageFirstLetter(item[0].strip()))
+                self.kivy_state.imageDir, "text_images", "{}.png".format(avatar_image_first_letter(item[0].strip()))
             )
             message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(
