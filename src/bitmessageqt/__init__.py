@@ -162,9 +162,10 @@ class MyForm(settingsmixin.SMainWindow):
                                QtCore.SIGNAL(
                                    "triggered()"),
                                self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(self.ui.pushButtonAddChan, QtCore.SIGNAL(
-            "clicked()"),
-                               self.click_actionJoinChan) # also used for creating chans.
+        QtCore.QObject.connect(
+            self.ui.pushButtonAddChan,
+            QtCore.SIGNAL("clicked()"),
+            self.click_actionJoinChan) # also used for creating chans.
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
@@ -480,12 +481,12 @@ class MyForm(settingsmixin.SMainWindow):
         i = 0
         for toAddress in db:
             widget = Ui_SubscriptionWidget(
-                        treeWidget,
-                        i,
-                        toAddress,
-                        db[toAddress]["inbox"]['count'],
-                        db[toAddress]["inbox"]['label'],
-                        db[toAddress]["inbox"]['enabled'])
+                treeWidget,
+                i,
+                toAddress,
+                db[toAddress]["inbox"]['count'],
+                db[toAddress]["inbox"]['label'],
+                db[toAddress]["inbox"]['enabled'])
             j = 0
             unread = 0
             for folder in folders:
@@ -545,10 +546,10 @@ class MyForm(settingsmixin.SMainWindow):
         # get number of (unread) messages
         total = 0
         queryreturn = sqlQuery(
-                        "SELECT toaddress, folder, count(msgid) as cnt "
-                        "FROM inbox "
-                        "WHERE read = 0 "
-                        "GROUP BY toaddress, folder")
+            "SELECT toaddress, folder, count(msgid) as cnt "
+            "FROM inbox "
+            "WHERE read = 0 "
+            "GROUP BY toaddress, folder")
         for row in queryreturn:
             toaddress, folder, cnt = row
             total += cnt
@@ -2053,12 +2054,15 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderTabTreeSubscriptions()
 
     def click_pushButtonTTL(self):
-        QtGui.QMessageBox.information(self, 'Time To Live', _translate(
-            "MainWindow", """The TTL, or Time-To-Live is the length of time that the network will hold the message.
-             The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement, it
-             will resend the message automatically. The longer the Time-To-Live, the
-             more work your computer must do to send the message.
-             A Time-To-Live of four or five days is often appropriate."""),
+        QtGui.QMessageBox.information(
+            self,
+            'Time To Live',
+            _translate(
+                "MainWindow", """The TTL, or Time-To-Live is the length of time that the network will hold the message.
+                 The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement,
+                 it will resend the message automatically. The longer the Time-To-Live, the
+                 more work your computer must do to send the message.
+                 A Time-To-Live of four or five days is often appropriate."""),
              QtGui.QMessageBox.Ok)
 
     def click_pushButtonClear(self):
@@ -2145,8 +2149,8 @@ class MyForm(settingsmixin.SMainWindow):
                             if email[-14:] != "@mailchuck.com": #attempt register
                                 # 12 character random email address
                                 email = ''.join(
-                                            random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
-                                        ) + "@mailchuck.com"
+                                        random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
+                                    ) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
                             config.set(fromAddress, 'label', email)
@@ -2243,7 +2247,7 @@ class MyForm(settingsmixin.SMainWindow):
                                     "MainWindow",
                                     "Concerning the address %1, Bitmessage cannot understand address version numbers"
                                     " of %2. Perhaps upgrade Bitmessage to the latest version."
-                                    ).arg(toAddress).arg(str(addressVersionNumber)))
+                                ).arg(toAddress).arg(str(addressVersionNumber)))
                             continue
                         if streamNumber > 1 or streamNumber == 0:
                             QtGui.QMessageBox.about(
@@ -3275,10 +3279,10 @@ class MyForm(settingsmixin.SMainWindow):
 
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
         filename = QtGui.QFileDialog.getSaveFileName(
-                        self,
-                        _translate("MainWindow","Save As..."),
-                        defaultFilename,
-                        "Text files (*.txt);;All files (*.*)")
+            self,
+            _translate("MainWindow","Save As..."),
+            defaultFilename,
+            "Text files (*.txt);;All files (*.*)")
         if filename == '':
             return
         try:
