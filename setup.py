@@ -72,7 +72,8 @@ if __name__ == "__main__":
         'pybitmessage.network',
         'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
-        'pybitmessage.storage'
+        'pybitmessage.storage',
+        'pybitmessage.mock'
     ]
 
     if sys.version_info[0] == 3:
