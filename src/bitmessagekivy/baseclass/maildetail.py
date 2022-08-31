@@ -26,7 +26,7 @@ from kivymd.uix.list import (
 )
 
 from pybitmessage.bitmessagekivy.baseclass.common import (
-    toast, avatarImageFirstLetter, ShowTimeHistoy, kivy_state_variables
+    toast, avatar_image_first_letter, show_time_history, kivy_state_variables
 )
 from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
 from pybitmessage.bitmessagekivy.get_platform import platform
@@ -133,11 +133,11 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.message = body
         if len(data[0]) == 7:
             self.status = data[0][4]
-        self.time_tag = ShowTimeHistoy(data[0][4]) if self.kivy_state.detailPageType == 'inbox' \
-            else ShowTimeHistoy(data[0][6])
+        self.time_tag = show_time_history(data[0][4]) if self.kivy_state.detailPageType == 'inbox' \
+            else show_time_history(data[0][6])
         self.avatarImg = os.path.join(self.kivy_state.imageDir, 'draft-icon.png') \
             if self.kivy_state.detailPageType == 'draft' \
-            else (os.path.join(self.kivy_state.imageDir, 'text_images', '{0}.png'.format(avatarImageFirstLetter(
+            else (os.path.join(self.kivy_state.imageDir, 'text_images', '{0}.png'.format(avatar_image_first_letter(
                 self.subject.strip()))))
         self.timeinseconds = data[0][4] if self.kivy_state.detailPageType == 'inbox' else data[0][6]
 
