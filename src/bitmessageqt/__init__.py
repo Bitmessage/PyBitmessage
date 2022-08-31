@@ -2146,11 +2146,11 @@ class MyForm(settingsmixin.SMainWindow):
                                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
                                 continue
                             email = acct.getLabel()
-                            if email[-14:] != "@mailchuck.com": #attempt register
+                            if email[-14:] != "@mailchuck.com": # attempt register
                                 # 12 character random email address
                                 email = ''.join(
-                                        random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
-                                    ) + "@mailchuck.com"
+                                            random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
+                                        ) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
                             config.set(fromAddress, 'label', email)
