@@ -2149,7 +2149,7 @@ class MyForm(settingsmixin.SMainWindow):
                             if email[-14:] != "@mailchuck.com": # attempt register
                                 # 12 character random email address
                                 email = ''.join(
-                                            random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
+                                        random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
                                         ) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
