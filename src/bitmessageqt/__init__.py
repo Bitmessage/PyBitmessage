@@ -2059,11 +2059,11 @@ class MyForm(settingsmixin.SMainWindow):
             'Time To Live',
             _translate(
                 "MainWindow", """The TTL, or Time-To-Live is the length of time that the network will hold the message.
-                 The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement,
-                 it will resend the message automatically. The longer the Time-To-Live, the
+                 The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement
+                 ,it will resend the message automatically. The longer the Time-To-Live, the
                  more work your computer must do to send the message.
                  A Time-To-Live of four or five days is often appropriate."""),
-             QtGui.QMessageBox.Ok)
+            QtGui.QMessageBox.Ok)
 
     def click_pushButtonClear(self):
         self.ui.lineEditSubject.setText("")
