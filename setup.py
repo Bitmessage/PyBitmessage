@@ -76,10 +76,15 @@ if __name__ == "__main__":
     ]
 
     if sys.version_info[0] == 3:
-        packages.extend(['pybitmessage.bitmessagekivy', 'pybitmessage.bitmessagekivy.baseclass'])
+        packages.extend(
+            [
+                'pybitmessage.bitmessagekivy',
+                'pybitmessage.bitmessagekivy.baseclass'
+            ]
+        )
 
     if os.environ.get('INSTALL_TESTS', False):
-        packages.append('pybitmessage.mock')
+        packages.extend(['pybitmessage.mock', 'pybitmessage.backend'])
 
     # this will silently accept alternative providers of msgpack
     # if they are already installed
@@ -138,8 +143,8 @@ if __name__ == "__main__":
         package_dir={'pybitmessage': 'src'},
         packages=packages,
         package_data={'': [
-            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
-            'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
+            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem', 'bitmessagekivy/main.kv',
+            'bitmessagekivy/kv/*.kv', 'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
             'images/*.png', 'images/*.ico', 'images/*.icns', 'bitmessagekivy/screens_data.json'
         ]},
         data_files=data_files,
