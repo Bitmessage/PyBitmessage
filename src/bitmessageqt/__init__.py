@@ -1610,9 +1610,9 @@ class MyForm(settingsmixin.SMainWindow):
                     _translate("MainWindow", "Open keys.dat?"),
                     _translate(
                         "MainWindow",
-                        "You may manage your keys by editing the keys.dat file stored in the same directory as"
-                        "this program. It is important that you back up this file."
-                        "Would you like to open the file now?"
+                        "You may manage your keys by editing the keys.dat file stored in the same directory as "
+                        "this program. It is important that you back up this file. "
+                        "Would you like to open the file now? "
                         "(Be sure to close Bitmessage before making any changes.)"),
                     QtGui.QMessageBox.Yes,
                     QtGui.QMessageBox.No)
