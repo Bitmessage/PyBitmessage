@@ -3,6 +3,7 @@
     All Common widgets of kivy are managed here.
 """
 
+import os
 from datetime import datetime
 
 from kivy.core.window import Window
@@ -10,7 +11,8 @@ from kivy.metrics import dp
 from kivy.uix.image import Image
 from kivy.properties import (
     NumericProperty,
-    StringProperty
+    StringProperty,
+    ListProperty
 )
 from kivy.app import App
 
@@ -24,7 +26,7 @@ from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
 
 from pybitmessage.bitmessagekivy.get_platform import platform
-
+from pybitmessage.bmconfigparser import config
 
 ThemeClsColor = [0.12, 0.58, 0.95, 1]
 
@@ -38,6 +40,20 @@ data_screens = {
         "Import": "from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail",
     },
 }
+
+
+def load_image_path():
+    """Return the path of kivy images"""
+    image_path = os.path.abspath(os.path.join('images', 'kivy'))
+    return image_path
+
+
+def get_identity_list():
+    """Get list of identities and access 'identity_list' variable in .kv file"""
+    identity_list = ListProperty(
+        addr for addr in config.addresses() if config.getboolean(str(addr), 'enabled')
+    )
+    return identity_list
 
 
 def kivy_state_variables():
