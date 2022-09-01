@@ -7,16 +7,11 @@ Bitmessage android(mobile) interface
 """
 
 import os
-import json
-import importlib
 import logging
 from functools import partial
 
 from kivy.clock import Clock
 from kivy.lang import Builder
-from kivy.properties import (
-    ListProperty
-)
 from kivy.uix.boxlayout import BoxLayout
 
 from kivymd.app import MDApp
@@ -35,39 +30,15 @@ from pybitmessage.bitmessagekivy.base_navigation import (
     BaseNavigationDrawerSubheader, BaseContentNavigationDrawer,
     BaseIdentitySpinner
 )
-from pybitmessage.bmconfigparser import config
+from pybitmessage.bmconfigparser import config  # noqa: F401
 from pybitmessage.bitmessagekivy import identiconGeneration
 from pybitmessage.bitmessagekivy.get_platform import platform
-from pybitmessage.bitmessagekivy.baseclass.common import toast
+from pybitmessage.bitmessagekivy.baseclass.common import toast, load_image_path, get_identity_list
+from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
+
 from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup
 
 logger = logging.getLogger('default')
-
-data_screen_dict = {}
-
-
-def load_screen_json(data_file="screens_data.json"):
-    """Load screens data from json"""
-
-    with open(os.path.join(os.path.dirname(__file__), data_file)) as read_file:
-        all_data = json.load(read_file)
-        data_screens = list(all_data.keys())
-
-    for key in all_data:
-        if all_data[key]['Import']:
-            import_data = all_data.get(key)['Import']
-            import_to = import_data.split("import")[1].strip()
-            import_from = import_data.split("import")[0].split('from')[1].strip()
-            data_screen_dict[import_to] = importlib.import_module(import_from, import_to)
-    return data_screens, all_data, 'success'
-
-
-def get_identity_list():
-    """Get list of identities and access 'identity_list' variable in .kv file"""
-    identity_list = ListProperty(
-        addr for addr in config.addresses() if config.getboolean(str(addr), 'enabled')
-    )
-    return identity_list
 
 
 class Lang(BaseLanguage):
@@ -110,13 +81,14 @@ class NavigateApp(MDApp):
 
     title = "PyBitmessage"
     identity_list = get_identity_list()
-    image_path = KivyStateVariables().image_dir
+    image_path = load_image_path()
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def __init__(self):
         super(NavigateApp, self).__init__()
-        self.data_screens, self.all_data, response = load_screen_json()
+        self.data_screens, self.all_data, self.data_screen_dict, response = load_screen_json()
         self.kivy_state_obj = KivyStateVariables()
+        self.image_dir = load_image_path()
 
     def build(self):
         """Method builds the widget"""
@@ -224,7 +196,7 @@ class NavigateApp(MDApp):
         """This method is rotating loader for few seconds"""
         if instance.text == 'Trash':
             self.root.ids.id_trash.clear_widgets()
-            self.root.ids.id_trash.add_widget(data_screen_dict['Trash'].Trash())
+            self.root.ids.id_trash.add_widget(self.data_screen_dict['Trash'].Trash())
             try:
                 self.root.ids.id_trash.children[1].active = False
             except Exception as e:

@@ -1,6 +1,6 @@
 
 import unittest
-from pybitmessage.bitmessagekivy.mpybit import load_screen_json
+from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
 from .common import skip_screen_checks
 from .common import ordered
 

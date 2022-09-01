@@ -35,7 +35,7 @@
                 BoxLayout:
                     size_hint_y: None
                     height: dp(40)
-                    IdentitySpinner:
+                    CustomSpinner:
                         id: btn
                         background_color: app.theme_cls.primary_dark
                         values: app.variable_1
@@ -79,7 +79,7 @@
                         if root.is_camara_attached(): app.set_screen('scanscreen')
                         else: root.camera_alert()
                     on_press:
-                        app.root.ids.id_scanscreen.get_screen('composer')
+                        app.root.ids.is_scanscreen.get_screen('composer')
 
             MyMDTextField:
                 id: subject
