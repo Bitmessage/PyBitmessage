@@ -140,7 +140,7 @@ if __name__ == "__main__":
         package_data={'': [
             'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
             'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
-            'images/*.png', 'images/*.ico', 'images/*.icns'
+            'images/*.png', 'images/*.ico', 'images/*.icns', 'bitmessagekivy/screens_data.json'
         ]},
         data_files=data_files,
         ext_modules=[bitmsghash],
