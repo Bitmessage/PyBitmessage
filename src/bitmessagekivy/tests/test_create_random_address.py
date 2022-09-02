@@ -3,7 +3,6 @@ from random import choice
 from string import ascii_lowercase
 from telenium.client import TeleniumHttpException
 from .telenium_process import TeleniumTestProcess
-from .common import skip_screen_checks
 from .common import ordered
 
 
@@ -14,7 +13,6 @@ class CreateRandomAddress(TeleniumTestProcess):
     def populate_test_data():
         pass
 
-    @skip_screen_checks
     @ordered
     # This method tests the landing screen when the app runs first time and
     # the landing screen should be "login" where we can create new address
@@ -35,7 +33,6 @@ class CreateRandomAddress(TeleniumTestProcess):
                 self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
         self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
 
-    @skip_screen_checks
     @ordered
     def test_generate_random_address_label(self):
         """Creating New Adress For New User."""
@@ -60,7 +57,6 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Checking the new address is created
         self.assertExists('//MDList[0]/CustomTwoLineAvatarIconListItem', timeout=10)
 
-    @skip_screen_checks
     @ordered
     def test_set_default_address(self):
         """Select First Address From Drawer-Box"""
