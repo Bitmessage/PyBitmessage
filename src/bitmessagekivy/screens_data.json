@@ -1,38 +1,8 @@
 {
-    "Inbox": {
-        "kv_string": "inbox",
-        "name_screen": "inbox",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.inbox import Inbox"
-    },
-    "Sent": {
-        "kv_string": "sent",
-        "name_screen": "sent",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.sent import Sent"
-    },
-    "Draft": {
-        "kv_string": "draft",
-        "name_screen": "draft",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.draft import Draft"
-    },
-    "Trash": {
-        "kv_string": "trash",
-        "name_screen": "trash",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.trash import Trash"
-    },
-    "All Mails": {
-        "kv_string": "allmails",
-        "name_screen": "allmails",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.allmail import Allmails"
-    },
     "Address Book": {
         "kv_string": "addressbook",
         "name_screen": "addressbook",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.addressbook import AddressBook"
-    },
-    "Settings": {
-        "kv_string": "settings",
-        "name_screen": "set",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.settings import Setting"
     },
     "Payment": {
         "kv_string": "payment",
@@ -44,32 +14,14 @@
         "name_screen": "networkstat",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.network import NetworkStat"
     },
-    "My addresses": {
-        "kv_string": "myaddress",
-        "name_screen": "myaddress",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.myaddress import MyAddress"
-    },
     "MailDetail": {
         "kv_string": "maildetail",
         "name_screen": "mailDetail",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail"
     },
-    "Create": {
-        "kv_string": "msg_composer",
-        "name_screen": "create",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.msg_composer import Create"
-    },
     "Login": {
         "kv_string": "login",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.login import *"
-    },
-    "Scanner": {
-        "kv_string": "scan_screen",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.scan_screen import ScanScreen"
-    },
-    "Popups": {
-        "kv_string": "popup",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.popup import *"
     },
     "Qrcode": {
         "kv_string": "qrcode",
