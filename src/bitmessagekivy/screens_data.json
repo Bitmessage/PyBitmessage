@@ -9,11 +9,6 @@
         "name_screen": "payment",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.payment import Payment"
     },
-    "Network status": {
-        "kv_string": "network",
-        "name_screen": "networkstat",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.network import NetworkStat"
-    },
     "MailDetail": {
         "kv_string": "maildetail",
         "name_screen": "mailDetail",
