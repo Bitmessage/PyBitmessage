@@ -81,8 +81,8 @@
                 on_release: app.file_manager_open()
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
-                opacity: 1 if app.current_address_label() else 0
-                disabled: False if app.current_address_label() else True
+                # opacity: 1 if app.current_address_label() else 0
+                # disabled: False if app.current_address_label() else True
 
             BoxLayout:
                 id: top_box
@@ -113,11 +113,11 @@
                         pos_hint:{"x":0,"y":0}
                         option_cls: Factory.get("MySpinnerOption")
                         font_size: '12.5sp'
-                        text: app.getDefaultAccData(self)
+                        # text: app.getDefaultAccData(self)
                         color: color_font
                         background_normal: ''
                         background_color: app.theme_cls.primary_color
-                        on_text:app.getCurrentAccountData(self.text)
+                        # on_text:app.getCurrentAccountData(self.text)
                         ArrowImg:
                 NavigationItem:
                     id: inbox_cnt
@@ -203,9 +203,9 @@ MDNavigationLayout:
 
     MDTopAppBar:
         id: toolbar
-        title: app.current_address_label()
-        opacity: 1 if app.addressexist() else 0
-        disabled: False if app.addressexist() else True
+        # title: app.current_address_label()
+        # opacity: 1 if app.addressexist() else 0
+        # disabled: False if app.addressexist() else True
         pos_hint: {"top": 1}
         md_bg_color: app.theme_cls.primary_color
         elevation: 10
@@ -232,8 +232,8 @@ MDNavigationLayout:
         #     id:sc9
         # MyAddress:
         #     id:id_myaddress
-        AddressBook:
-            id:id_addressbook
+        # AddressBook:
+        #     id:id_addressbook
         Payment:
             id:id_payment
         # NetworkStat:
@@ -273,7 +273,7 @@ MDNavigationLayout:
     MDTextField:
         id: search_field
         hint_text: 'Search'
-        on_text: app.searchQuery(self)
+        # on_text: app.searchQuery(self)
         canvas.before:
             Color:
                 rgba: (0,0,0,1)
@@ -300,7 +300,7 @@ MDNavigationLayout:
         elevation_normal: 8
         md_bg_color: [0.941, 0, 0,1]
         on_press: app.root.ids.scr_mngr.current = 'create'
-        on_press: app.clear_composer()
+        # on_press: app.clear_composer()
 
 
 <SwipeToDeleteItem>:
