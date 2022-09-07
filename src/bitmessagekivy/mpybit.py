@@ -13,6 +13,7 @@ from functools import partial
 
 from kivy.clock import Clock
 from kivy.lang import Builder
+from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 
 from kivymd.app import MDApp
@@ -80,10 +81,13 @@ class IdentitySpinner(BaseIdentitySpinner):
 class NavigateApp(MDApp):
     """Navigation Layout of class"""
 
+    kivy_state = KivyStateVariables()
     title = "PyBitmessage"
     identity_list = get_identity_list()
     image_path = load_image_path()
     app_platform = platform
+    kivy_state.screen_density = Window.size
+    window_size = kivy_state.screen_density
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def __init__(self):
