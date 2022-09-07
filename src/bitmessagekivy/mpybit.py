@@ -258,9 +258,9 @@ class NavigateApp(MDApp):
                     self.kivy_state_obj.association, android_path)
                 )
             else:
-                if not os.path.exists(self.kivy_state_obj.image_dir + '/default_identicon/'):
-                    os.makedirs(self.kivy_state_obj.image_dir + '/default_identicon/')
-                newImg.save(self.kivy_state_obj.image_dir + '/default_identicon/{0}.png'.format(
+                if not os.path.exists(self.image_dir.image_dir + '/default_identicon/'):
+                    os.makedirs(self.image_dir.image_dir + '/default_identicon/')
+                newImg.save(self.image_dir.image_dir + '/default_identicon/{0}.png'.format(
                     self.kivy_state_obj.association)
                 )
             self.load_selected_Image(self.kivy_state_obj.association)
@@ -277,7 +277,7 @@ class NavigateApp(MDApp):
     def load_selected_Image(self, curerentAddr):
         """This method load the selected image on screen"""
         top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
-        top_box_obj.source = self.kivy_state_obj.image_dir + '/default_identicon/{0}.png'.format(curerentAddr)
+        top_box_obj.source = self.image_dir.image_dir + '/default_identicon/{0}.png'.format(curerentAddr)
         self.root.ids.content_drawer.ids.reset_image.opacity = 1
         self.root.ids.content_drawer.ids.reset_image.disabled = False
         top_box_obj.reload()
@@ -285,7 +285,7 @@ class NavigateApp(MDApp):
     def rest_default_avatar_img(self):
         """set default avatar generated image"""
         self.set_identicon(self.kivy_state_obj.association)
-        img_path = self.kivy_state_obj.image_dir + '/default_identicon/{}.png'.format(
+        img_path = self.image_dir.image_dir + '/default_identicon/{}.png'.format(
             self.kivy_state_obj.association
         )
         try:
@@ -296,6 +296,21 @@ class NavigateApp(MDApp):
         except Exception as e:
             pass
         toast('Avatar reset')
+
+    def get_default_logo(self, instance):
+        """Getting default logo image"""
+        if self.identity_list:
+            first_addr = self.identity_list[0]
+            if config.getboolean(str(first_addr), 'enabled'):
+                if os.path.exists(
+                    self.image_dir.imageDir + '/default_identicon/{}.png'.format(first_addr)):
+                    return self.image_dir.imageDir + '/default_identicon/{}.png'.format(
+                            first_addr)
+                else:
+                    img = identiconGeneration.generate(first_addr)
+                    instance.texture = img.texture
+                    return
+        return self.image_dir.imageDir + '/drawer_logo1.png'
 
     def reset_login_screen(self):
         """This method is used for clearing the widgets of random screen"""
