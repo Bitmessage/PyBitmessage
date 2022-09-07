@@ -8,6 +8,7 @@ Bitmessage android(mobile) interface
 
 import os
 import logging
+import sys
 from functools import partial
 
 from kivy.clock import Clock
@@ -86,6 +87,7 @@ class NavigateApp(MDApp):
 
     def __init__(self):
         super(NavigateApp, self).__init__()
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
         self.data_screens, self.all_data, self.data_screen_dict, response = load_screen_json()
         self.kivy_state_obj = KivyStateVariables()
         self.image_dir = load_image_path()
@@ -312,4 +314,5 @@ class PaymentMethodLayout(BoxLayout):
 
 
 if __name__ == '__main__':
+    # workaround for relative imports
     NavigateApp().run()
