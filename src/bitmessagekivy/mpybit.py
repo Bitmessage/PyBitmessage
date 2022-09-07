@@ -83,6 +83,7 @@ class NavigateApp(MDApp):
     title = "PyBitmessage"
     identity_list = get_identity_list()
     image_path = load_image_path()
+    app_platform = platform
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def __init__(self):
