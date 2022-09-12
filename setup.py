@@ -84,7 +84,7 @@ if __name__ == "__main__":
         )
 
     if os.environ.get('INSTALL_TESTS', False):
-        packages.extend(['pybitmessage.mock', 'pybitmessage.backend'])
+        packages.extend(['pybitmessage.mock', 'pybitmessage.backend', 'pybitmessage.bitmessagekivy.tests'])
 
     # this will silently accept alternative providers of msgpack
     # if they are already installed

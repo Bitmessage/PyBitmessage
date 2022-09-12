@@ -1,25 +1,6 @@
 {
-    "Address Book": {
-        "kv_string": "addressbook",
-        "name_screen": "addressbook",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.addressbook import AddressBook"
-    },
-    "Payment": {
-        "kv_string": "payment",
-        "name_screen": "payment",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.payment import Payment"
-    },
-    "MailDetail": {
-        "kv_string": "maildetail",
-        "name_screen": "mailDetail",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail"
-    },
     "Login": {
         "kv_string": "login",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.login import *"
-    },
-    "Qrcode": {
-        "kv_string": "qrcode",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.qrcode import ShowQRCode"
     }
 }

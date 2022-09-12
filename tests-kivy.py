@@ -35,6 +35,7 @@ if __name__ == "__main__":
         ])
         sleep(2)  # let ffmpeg start
     result = unittest.TextTestRunner(verbosity=2).run(unittest_discover())
+    sleep(1)
     if in_docker:
         ffmpeg.terminate()
         try:

@@ -2,9 +2,9 @@
 Common methods and functions for kivy and qt.
 """
 
-import queues
-from bmconfigparser import config
-from defaults import (
+from pybitmessage import queues
+from pybitmessage.bmconfigparser import config
+from pybitmessage.defaults import (
     networkDefaultProofOfWorkNonceTrialsPerByte,
     networkDefaultPayloadLengthExtraBytes
 )

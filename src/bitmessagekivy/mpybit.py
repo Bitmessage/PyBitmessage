@@ -1,6 +1,6 @@
-# pylint: disable=unused-import, too-many-public-methods, unused-variable, too-many-ancestors
-# pylint: disable=no-name-in-module, too-few-public-methods, import-error, unused-argument
-# pylint: disable=attribute-defined-outside-init, global-variable-not-assigned, too-many-instance-attributes
+# pylint: disable=too-many-public-methods, unused-variable, too-many-ancestors
+# pylint: disable=no-name-in-module, too-few-public-methods, unused-argument
+# pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
 
 """
 Bitmessage android(mobile) interface
@@ -10,6 +10,7 @@ import os
 import logging
 import sys
 from functools import partial
+from PIL import Image as PilImage
 
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -39,6 +40,7 @@ from pybitmessage.bitmessagekivy.baseclass.common import toast, load_image_path,
 from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
 
 from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup
+from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
 
 logger = logging.getLogger('default')
 
@@ -90,8 +92,13 @@ class NavigateApp(MDApp):
     window_size = kivy_state.screen_density
     tr = Lang("en")  # for changing in franch replace en with fr
 
+    if os.environ.get('INSTALL_TESTS', False):
+        # Set kivy app resolution while running kivy tests
+        window_size = (720, 1280)
+
     def __init__(self):
         super(NavigateApp, self).__init__()
+        # workaround for relative imports
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
         self.data_screens, self.all_data, self.data_screen_dict, response = load_screen_json()
         self.kivy_state_obj = KivyStateVariables()
@@ -164,18 +171,12 @@ class NavigateApp(MDApp):
 
     def savecontact(self, instance):
         """Method is used for saving contacts"""
-        pupup_obj = self.add_popup.content_cls
-        label = pupup_obj.ids.label.text.strip()
-        address = pupup_obj.ids.address.text.strip()
-        if label == '' and address == '':
-            pupup_obj.ids.label.focus = True
-            pupup_obj.ids.address.focus = True
-        elif address == '':
-            pupup_obj.ids.address.focus = True
-        elif label == '':
-            pupup_obj.ids.label.focus = True
-        else:
-            pupup_obj.ids.address.focus = True
+        popup_obj = self.add_popup.content_cls
+        label = popup_obj.ids.label.text.strip()
+        address = popup_obj.ids.address.text.strip()
+        popup_obj.ids.label.focus = not label
+        # default focus on address field
+        popup_obj.ids.address.focus = label or not address
 
     def close_pop(self, instance):
         """Close the popup"""
@@ -233,6 +234,7 @@ class NavigateApp(MDApp):
         self.file_manager.previous = False
         self.file_manager.current_path = '/'
         if platform == 'android':
+            # pylint: disable=import-error
             from android.permissions import request_permissions, Permission, check_permission
             if check_permission(Permission.WRITE_EXTERNAL_STORAGE) and \
                     check_permission(Permission.READ_EXTERNAL_STORAGE):
@@ -247,21 +249,21 @@ class NavigateApp(MDApp):
     def select_path(self, path):
         """This method is used to set the select image"""
         try:
-            from PIL import Image as PilImage
             newImg = PilImage.open(path).resize((300, 300))
             if platform == 'android':
                 android_path = os.path.join(
-                    os.environ['ANDROID_PRIVATE'] + '/app' + '/images' + '/kivy/')
-                if not os.path.exists(android_path + '/default_identicon/'):
-                    os.makedirs(android_path + '/default_identicon/')
-                newImg.save('{1}/default_identicon/{0}.png'.format(
-                    self.kivy_state_obj.association, android_path)
+                    os.path.join(os.environ['ANDROID_PRIVATE'], 'app', 'images', 'kivy')
+                )
+                if not os.path.exists(os.path.join(android_path, 'default_identicon')):
+                    os.makedirs(os.path.join(android_path, 'default_identicon'))
+                newImg.save(os.path.join(android_path, 'default_identicon', '{}.png'.format(
+                    self.kivy_state_obj.association))
                 )
             else:
-                if not os.path.exists(self.image_dir + '/default_identicon/'):
-                    os.makedirs(self.image_dir + '/default_identicon/')
-                newImg.save(self.image_dir + '/default_identicon/{0}.png'.format(
-                    self.kivy_state_obj.association)
+                if not os.path.exists(os.path.join(self.image_dir, 'default_identicon')):
+                    os.makedirs(os.path.join(self.image_dir, 'default_identicon'))
+                newImg.save(os.path.join(self.image_dir, 'default_identicon', '{0}.png'.format(
+                    self.kivy_state_obj.association))
                 )
             self.load_selected_Image(self.kivy_state_obj.association)
             toast('Image changed')
@@ -277,7 +279,7 @@ class NavigateApp(MDApp):
     def load_selected_Image(self, curerentAddr):
         """This method load the selected image on screen"""
         top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
-        top_box_obj.source = self.image_dir + '/default_identicon/{0}.png'.format(curerentAddr)
+        top_box_obj.source = os.path.join(self.image_dir, 'default_identicon', '{0}.png'.format(curerentAddr))
         self.root.ids.content_drawer.ids.reset_image.opacity = 1
         self.root.ids.content_drawer.ids.reset_image.disabled = False
         top_box_obj.reload()
@@ -285,8 +287,8 @@ class NavigateApp(MDApp):
     def rest_default_avatar_img(self):
         """set default avatar generated image"""
         self.set_identicon(self.kivy_state_obj.association)
-        img_path = self.image_dir + '/default_identicon/{}.png'.format(
-            self.kivy_state_obj.association
+        img_path = os.path.join(
+            self.image_dir, 'default_identicon', '{}.png'.format(self.kivy_state_obj.association)
         )
         try:
             if os.path.exists(img_path):
@@ -303,14 +305,18 @@ class NavigateApp(MDApp):
             first_addr = self.identity_list[0]
             if config.getboolean(str(first_addr), 'enabled'):
                 if os.path.exists(
-                    self.image_dir + '/default_identicon/{}.png'.format(first_addr)
+                    os.path.join(
+                        self.image_dir, 'default_identicon', '{}.png'.format(first_addr)
+                    )
                 ):
-                    return self.image_dir + '/default_identicon/{}.png'.format(first_addr)
+                    return os.path.join(
+                        self.image_dir, 'default_identicon', '{}.png'.format(first_addr)
+                    )
                 else:
                     img = identiconGeneration.generate(first_addr)
                     instance.texture = img.texture
                     return
-        return self.image_dir + '/drawer_logo1.png'
+        return os.path.join(self.image_dir, 'drawer_logo1.png')
 
     def reset_login_screen(self):
         """This method is used for clearing the widgets of random screen"""
@@ -334,5 +340,4 @@ class PaymentMethodLayout(BoxLayout):
 
 
 if __name__ == '__main__':
-    # workaround for relative imports
     NavigateApp().run()
