@@ -106,13 +106,13 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def init_ui(self, dt=0):
         """Clock Schdule for method MailDetail mails"""
-        self.page_type = self.kivy_state.detailPageType if self.kivy_state.detailPageType else ''
+        self.page_type = self.kivy_state.detail_page_type if self.kivy_state.detail_page_type else ''
         try:
-            if self.kivy_state.detailPageType in ('sent', 'draft'):
+            if self.kivy_state.detail_page_type in ('sent', 'draft'):
                 data = retrieve_message_details(self.kivy_state.mail_id)
                 self.assign_mail_details(data)
                 App.get_running_app().set_mail_detail_header()
-            elif self.kivy_state.detailPageType == 'inbox':
+            elif self.kivy_state.detail_page_type == 'inbox':
                 data = sqlQuery(
                     "select toaddress, fromaddress, subject, message, received from inbox"
                     " where msgid = ?", self.kivy_state.mail_id)
@@ -133,27 +133,27 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.message = body
         if len(data[0]) == 7:
             self.status = data[0][4]
-        self.time_tag = show_time_history(data[0][4]) if self.kivy_state.detailPageType == 'inbox' \
+        self.time_tag = show_time_history(data[0][4]) if self.kivy_state.detail_page_type == 'inbox' \
             else show_time_history(data[0][6])
         self.avatarImg = os.path.join(self.kivy_state.imageDir, 'draft-icon.png') \
-            if self.kivy_state.detailPageType == 'draft' \
+            if self.kivy_state.detail_page_type == 'draft' \
             else (os.path.join(self.kivy_state.imageDir, 'text_images', '{0}.png'.format(avatar_image_first_letter(
                 self.subject.strip()))))
-        self.timeinseconds = data[0][4] if self.kivy_state.detailPageType == 'inbox' else data[0][6]
+        self.timeinseconds = data[0][4] if self.kivy_state.detail_page_type == 'inbox' else data[0][6]
 
     def delete_mail(self):
         """Method for mail delete"""
         msg_count_objs = App.get_running_app().root.ids.content_drawer.ids
         self.kivy_state.searching_text = ''
         self.children[0].children[0].active = True
-        if self.kivy_state.detailPageType == 'sent':
+        if self.kivy_state.detail_page_type == 'sent':
             App.get_running_app().root.ids.sc4.ids.sent_search.ids.search_field.text = ''
             delete(self.kivy_state.mail_id)
             msg_count_objs.send_cnt.ids.badge_txt.text = str(int(self.kivy_state.sent_count) - 1)
             self.kivy_state.sent_count = str(int(self.kivy_state.sent_count) - 1)
             self.parent.screens[2].ids.ml.clear_widgets()
             self.parent.screens[2].loadSent(self.kivy_state.association)
-        elif self.kivy_state.detailPageType == 'inbox':
+        elif self.kivy_state.detail_page_type == 'inbox':
             App.get_running_app().root.ids.sc1.ids.inbox_search.ids.search_field.text = ''
             trash(self.kivy_state.mail_id)
             msg_count_objs.inbox_cnt.ids.badge_txt.text = str(
@@ -162,7 +162,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             self.parent.screens[0].ids.ml.clear_widgets()
             self.parent.screens[0].loadMessagelist(self.kivy_state.association)
 
-        elif self.kivy_state.detailPageType == 'draft':
+        elif self.kivy_state.detail_page_type == 'draft':
             delete(self.kivy_state.mail_id)
             msg_count_objs.draft_cnt.ids.badge_txt.text = str(
                 int(self.kivy_state.draft_count) - 1)
@@ -170,7 +170,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             self.parent.screens[13].clear_widgets()
             self.parent.screens[13].add_widget(Factory.Draft())
 
-        if self.kivy_state.detailPageType != 'draft':
+        if self.kivy_state.detail_page_type != 'draft':
             msg_count_objs.trash_cnt.ids.badge_txt.text = str(
                 int(self.kivy_state.trash_count) + 1)
             msg_count_objs.allmail_cnt.ids.badge_txt.text = str(
@@ -186,12 +186,12 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def callback_for_delete(self, dt=0):
         """Delete method from allmails"""
-        if self.kivy_state.detailPageType:
+        if self.kivy_state.detail_page_type:
             self.children[0].children[0].active = False
             App.get_running_app().set_common_header()
             self.parent.current = 'allmails' \
-                if self.kivy_state.is_allmail else self.kivy_state.detailPageType
-            self.kivy_state.detailPageType = ''
+                if self.kivy_state.is_allmail else self.kivy_state.detail_page_type
+            self.kivy_state.detail_page_type = ''
             toast('Deleted')
 
     def get_message_details_to_reply(self, data):

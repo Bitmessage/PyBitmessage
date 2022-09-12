@@ -11,7 +11,7 @@ def mail_detail_screen(screen_name, msg_id, instance, folder, *args):  # pylint:
     """Common function for all screens to open Mail detail."""
     kivy_state = kivy_state_variables()
     if instance.open_progress == 0.0:
-        kivy_state.detailPageType = folder
+        kivy_state.detail_page_type = folder
         kivy_state.mail_id = msg_id
         if screen_name.manager:
             src_mng_obj = screen_name.manager
