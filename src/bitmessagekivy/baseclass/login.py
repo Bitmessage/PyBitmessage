@@ -71,11 +71,9 @@ class Random(Screen):
     def reset_address_spinner(self):
         """reseting spinner address and UI"""
         addresses = [addr for addr in config.addresses()
-                     if config.get(str(addr), 'enabled') == 'true']
+                     if config.getboolean(str(addr), 'enabled')]
         self.manager.parent.ids.content_drawer.ids.identity_dropdown.values = []
-        self.manager.parent.ids.sc3.children[1].ids.identity_dropdown.values = []
         self.manager.parent.ids.content_drawer.ids.identity_dropdown.values = addresses
-        self.manager.parent.ids.sc3.children[1].ids.identity_dropdown.values = addresses
 
     @staticmethod
     def add_validation(instance):
