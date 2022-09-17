@@ -1,21 +1,18 @@
 ## Repository contributions to the PyBitmessage project
 
-- You can get paid for merged commits if you register at [Tip4Commit](https://tip4commit.com/github/Bitmessage/PyBitmessage)
-
 ### Code
 
 - Try to refer to github issue tracker or other permanent sources of discussion about the issue.
-- It is clear from the diff *what* you have done, it may be less clear *why* you have done it so explain why this change is necessary rather than what it does
+- It is clear from the diff *what* you have done, it may be less clear *why* you have done it so explain why this change is necessary rather than what it does.
 
 ### Documentation
 
-- If there has been a change to the code, there's a good possibility there should be a corresponding change to the documentation 
-- If you can't run `fab build_docs` successfully, ask for someone to run it against your branch
+Use `tox -e py27-doc` to build a local copy of the documentation.
 
 ### Tests
 
 - If there has been a change to the code, there's a good possibility there should be a corresponding change to the tests
-- If you can't run `fab tests` successfully, ask for someone to run it against your branch
+- To run tests locally use `tox` or `./run-tests-in-docker.sh`
 
 ## Translations
 
