@@ -21,5 +21,10 @@
         "kv_string": "msg_composer",
         "name_screen": "create",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.msg_composer import Create"
+    },
+    "Network status": {
+        "kv_string": "network",
+        "name_screen": "networkstat",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.network import NetworkStat"
     }
 }

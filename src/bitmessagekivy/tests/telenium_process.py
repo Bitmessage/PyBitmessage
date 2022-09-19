@@ -121,8 +121,8 @@ class TeleniumTestProcess(TeleniumTestCase):
         # Checking the drawer is in 'closed' state
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
+        self.assertExists('//ActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
         # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
+        self.cli.wait_click('//ActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
         self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)

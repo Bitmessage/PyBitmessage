@@ -5,13 +5,20 @@
    Network status
 """
 
+import os
+
 from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
 
-from pybitmessage.network import objectracker, stats
-
 from pybitmessage import state
+
+if os.environ.get('INSTALL_TESTS', False):
+    from pybitmessage.mock import kivy_main
+    stats = kivy_main.network.stats
+    objectracker = kivy_main.network.objectracker
+else:
+    from pybitmessage.network import stats, objectracker
 
 
 class NetworkStat(Screen):

@@ -5,20 +5,23 @@
 
 import os
 from kivy.config import Config
-import multiqueue
+from pybitmessage.mock import multiqueue
 from pybitmessage import state
 
-if os.environ.get('INSTALL_TESTS', False):
-    Config.set('graphics', 'height', 1280)
-    Config.set('graphics', 'width', 720)
-    Config.set('graphics', 'position', 'custom')
-    Config.set('graphics', 'top', 0)
-    Config.set('graphics', 'left', 0)
+if os.environ.get("INSTALL_TESTS", False):
+    Config.set("graphics", "height", 1280)
+    Config.set("graphics", "width", 720)
+    Config.set("graphics", "position", "custom")
+    Config.set("graphics", "top", 0)
+    Config.set("graphics", "left", 0)
 
 
 from pybitmessage.mock.class_addressGenerator import FakeAddressGenerator  # noqa:E402
 from pybitmessage.bitmessagekivy.mpybit import NavigateApp  # noqa:E402
-from pybitmessage.mock.network import stats, objectracker  # noqa:E402
+from pybitmessage.mock import network  # noqa:E402
+
+stats = network.stats
+objectracker = network.objectracker
 
 
 def main():
@@ -33,5 +36,5 @@ def main():
     state.kivyapp.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
