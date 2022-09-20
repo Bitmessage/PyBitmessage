@@ -1,10 +1,15 @@
 """
 Storing inventory items
 """
-import collections
 
-InventoryItem = collections.namedtuple(
-    'InventoryItem', 'type stream payload expires tag')
+from collections import namedtuple
+try:
+    from collections import MutableMapping  # pylint: disable=deprecated-class
+except ImportError:
+    from collections.abc import MutableMapping
+
+
+InventoryItem = namedtuple('InventoryItem', 'type stream payload expires tag')
 
 
 class Storage(object):  # pylint: disable=too-few-public-methods
@@ -13,7 +18,7 @@ class Storage(object):  # pylint: disable=too-few-public-methods
     pass
 
 
-class InventoryStorage(Storage, collections.MutableMapping):
+class InventoryStorage(Storage, MutableMapping):
     """Module used for inventory storage"""
 
     def __init__(self):  # pylint: disable=super-init-not-called
@@ -54,7 +59,7 @@ class InventoryStorage(Storage, collections.MutableMapping):
         raise NotImplementedError
 
 
-class MailboxStorage(Storage, collections.MutableMapping):
+class MailboxStorage(Storage, MutableMapping):
     """Method for storing mails"""
 
     def __delitem__(self, key):
