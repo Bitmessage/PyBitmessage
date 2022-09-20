@@ -2,6 +2,7 @@
 Storing inventory items
 """
 
+from abc import abstractmethod
 from collections import namedtuple
 try:
     from collections import MutableMapping  # pylint: disable=deprecated-class
@@ -12,67 +13,40 @@ except ImportError:
 InventoryItem = namedtuple('InventoryItem', 'type stream payload expires tag')
 
 
-class Storage(object):  # pylint: disable=too-few-public-methods
-    """Base class for storing inventory
-    (extendable for other items to store)"""
-    pass
+class InventoryStorage(MutableMapping):
+    """
+    Base class for storing inventory
+    (extendable for other items to store)
+    """
 
-
-class InventoryStorage(Storage, MutableMapping):
-    """Module used for inventory storage"""
-
-    def __init__(self):  # pylint: disable=super-init-not-called
+    def __init__(self):
         self.numberOfInventoryLookupsPerformed = 0
 
-    def __contains__(self, _):
-        raise NotImplementedError
+    @abstractmethod
+    def __contains__(self, item):
+        pass
 
-    def __getitem__(self, _):
-        raise NotImplementedError
-
-    def __setitem__(self, _, value):
-        raise NotImplementedError
-
-    def __delitem__(self, _):
-        raise NotImplementedError
-
-    def __iter__(self):
-        raise NotImplementedError
-
-    def __len__(self):
-        raise NotImplementedError
-
+    @abstractmethod
     def by_type_and_tag(self, objectType, tag):
         """Return objects filtered by object type and tag"""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def unexpired_hashes_by_stream(self, stream):
         """Return unexpired inventory vectors filtered by stream"""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def flush(self):
         """Flush cache"""
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def clean(self):
         """Free memory / perform garbage collection"""
-        raise NotImplementedError
+        pass
 
 
-class MailboxStorage(Storage, MutableMapping):
-    """Method for storing mails"""
-
-    def __delitem__(self, key):
-        raise NotImplementedError
-
-    def __getitem__(self, key):
-        raise NotImplementedError
-
-    def __iter__(self):
-        raise NotImplementedError
-
-    def __len__(self):
-        raise NotImplementedError
-
-    def __setitem__(self, key, value):
-        raise NotImplementedError
+class MailboxStorage(MutableMapping):
+    """An abstract class for storing mails. TODO"""
+    pass
