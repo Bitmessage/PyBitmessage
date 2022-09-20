@@ -1,4 +1,4 @@
 mistune<=0.8.4
 m2r
 sphinxcontrib-apidoc
-docutils<=0.17.1
+docutils<0.20.0
