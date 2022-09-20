@@ -7,6 +7,7 @@ import tempfile
 import time
 import unittest
 
+from pybitmessage.storage import storage
 from pybitmessage.addresses import calculateInventoryHash
 
 from .partial import TestPartialRun
@@ -42,3 +43,16 @@ class TestFilesystemInventory(TestPartialRun):
         super(TestFilesystemInventory, cls).tearDownClass()
         cls.inventory.flush()
         shutil.rmtree(os.path.join(cls.home, cls.inventory.topDir))
+
+
+class TestStorageAbstract(unittest.TestCase):
+    """A test case for refactoring of the storage abstract classes"""
+
+    def test_inventory_storage(self):
+        """Check inherited abstract methods"""
+        with self.assertRaisesRegexp(
+            TypeError, "^Can't instantiate abstract class.*"
+            "methods __contains__, __delitem__, __getitem__, __iter__,"
+            " __len__, __setitem__"
+        ):  # pylint: disable=abstract-class-instantiated
+            storage.InventoryStorage()

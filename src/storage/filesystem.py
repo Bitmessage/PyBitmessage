@@ -16,7 +16,6 @@ logger = logging.getLogger('default')
 
 class FilesystemInventory(InventoryStorage):
     """Filesystem for inventory storage"""
-    # pylint: disable=too-many-ancestors, abstract-method
     topDir = "inventory"
     objectDir = "objects"
     metadataFilename = "metadata"
@@ -45,6 +44,9 @@ class FilesystemInventory(InventoryStorage):
             if hashval in streamDict:
                 return True
         return False
+
+    def __delitem__(self, hash_):
+        raise NotImplementedError
 
     def __getitem__(self, hashval):
         for streamDict in self._inventory.values():
