@@ -75,6 +75,25 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(
             self.config.safeGetFloat('nonexistent', 'nonexistent', 42.0), 42.0)
 
+    def test_set(self):
+        """Check exceptions in set()"""
+        with self.assertRaises(TypeError):
+            self.config.set('bitmessagesettings', 'any', 42)
+        with self.assertRaises(ValueError):
+            self.config.set(
+                'bitmessagesettings', 'maxoutboundconnections', 'none')
+        with self.assertRaises(ValueError):
+            self.config.set(
+                'bitmessagesettings', 'maxoutboundconnections', '9')
+
+    def test_validate(self):
+        """Check validation"""
+        self.assertTrue(
+            self.config.validate('nonexistent', 'nonexistent', 'any'))
+        for val in range(9):
+            self.assertTrue(self.config.validate(
+                'bitmessagesettings', 'maxoutboundconnections', str(val)))
+
     def test_setTemp(self):
         """Set a temporary value and ensure it's returned by get()"""
         self.config.setTemp('bitmessagesettings', 'connect', 'true')
@@ -86,6 +105,16 @@ class TestConfig(unittest.TestCase):
         self.config.read_file(written_fp)
         self.assertIs(
             self.config.safeGetBoolean('bitmessagesettings', 'connect'), False)
+
+    def test_addresses(self):
+        """Check the addresses() method"""
+        self.config.read()
+        for num in range(1, 4):
+            addr = 'BM-%s' % num
+            self.config.add_section(addr)
+            self.config.set(addr, 'label', 'account %s' % (4 - num))
+        self.assertEqual(self.config.addresses(), ['BM-1', 'BM-2', 'BM-3'])
+        self.assertEqual(self.config.addresses(True), ['BM-3', 'BM-2', 'BM-1'])
 
     def test_reset(self):
         """Some logic for testing _reset()"""
