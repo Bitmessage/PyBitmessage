@@ -7,7 +7,7 @@ title = mockone
 package.name = mock
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.mock
+package.domain = org.test
 
 # (str) Source code where the main.py live
 source.dir = ../../src
@@ -36,7 +36,17 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy
+requirements =
+	openssl,
+	sqlite3,
+	python3,
+	kivy,
+	kivymd,
+	bitmsghash,
+	kivy-garden,
+	qrcode,
+	Pillow,
+	msgpack
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -88,7 +98,7 @@ fullscreen = 0
 #android.presplash_lottie = "path/to/lottie/file.json"
 
 # (list) Permissions
-#android.permissions = INTERNET
+android.permissions = INTERNET, CAMERA, WRITE_EXTERNAL_STORAGE
 
 # (int) Android API to use  (targetSdkVersion AND compileSdkVersion)
 # note: when changing, Dockerfile also needs to be changed to install corresponding build tools
@@ -225,7 +235,7 @@ android.ant_path = /opt/android/apache-ant
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.archs = armeabi-v7a, arm64-v8a, x86, x86_64
+android.archs = armeabi-v7a
 
 # (int) overrides automatic versionCode computation (used in build.gradle)
 # this is not the same as app version and should only be edited if you know what you're doing
@@ -257,7 +267,8 @@ android.allow_backup = True
 #p4a.source_dir =
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-#p4a.local_recipes =
+p4a.local_recipes = /home/surbhi/aug_peter/PyBitmessage/packages/android/python-for-android/recipes/
+
 
 # (str) Filename to the hook for p4a
 #p4a.hook =
