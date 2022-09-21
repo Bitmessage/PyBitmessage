@@ -42,9 +42,6 @@ requirements =
 	python3,
 	kivy,
 	kivymd,
-	bitmsghash,
-	kivy-garden,
-	qrcode,
 	Pillow,
 	msgpack
 
