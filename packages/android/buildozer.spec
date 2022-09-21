@@ -267,7 +267,7 @@ android.allow_backup = True
 #p4a.source_dir =
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-p4a.local_recipes = /home/surbhi/aug_peter/PyBitmessage/packages/android/python-for-android/recipes/
+p4a.local_recipes = ../android/python-for-android/recipes/
 
 
 # (str) Filename to the hook for p4a
