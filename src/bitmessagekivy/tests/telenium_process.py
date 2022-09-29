@@ -73,13 +73,13 @@ class TeleniumTestProcess(TeleniumTestCase):
             try:
                 if self.cli.getattr(selector, 'current') == value:
                     self.assertTrue(selector, value)
-                    break
+                    return
             except TeleniumHttpException:
                 sleep(0.1)
                 continue
             finally:
-                # Finally Sleep is used to make the menu button funcationlly available for the click process.
-                # (because Transition is little bit slow)
+                # Finally Sleep is used to make the menu button functionally available for the click process.
+                # (because screen transition is little bit slow)
                 sleep(0.2)
         raise AssertionError("Timeout")
 

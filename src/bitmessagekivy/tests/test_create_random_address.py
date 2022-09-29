@@ -1,8 +1,11 @@
-from time import time
+"""
+    Test for creating new identity
+"""
+
 from random import choice
 from string import ascii_lowercase
-from telenium.client import TeleniumHttpException
 from .telenium_process import TeleniumTestProcess
+from .common import skip_screen_checks
 from .common import ordered
 
 
@@ -22,15 +25,9 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
         # Click on "Proceed Next" Button to "generate random label for address" screen
         # Some widgets cannot renders suddenly and become not functional so we used loop with a timeout.
-        start = time()
-        deadline = start + 2
-        while time() < deadline:
-            try:
-                # Clicking on Proceed Next Button to redirect to "random" screen
-                self.cli.wait_click('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
-            except TeleniumHttpException:
-                # Checking Current Screen(Random Screen) after Clicking on "Proceed Next" Button
-                self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
+        self.assertExists("//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]", timeout=5)
+        # Clicking on Proceed Next Button to redirect to "random" screen
+        self.cli.wait_click('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
         self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
 
     @ordered
@@ -57,6 +54,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         # Checking the new address is created
         self.assertExists('//MDList[0]/CustomTwoLineAvatarIconListItem', timeout=10)
 
+    @skip_screen_checks
     @ordered
     def test_set_default_address(self):
         """Select First Address From Drawer-Box"""
