@@ -7,5 +7,9 @@
         "kv_string": "myaddress",
         "name_screen": "myaddress",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.myaddress import MyAddress"
+    },
+    "Scanner": {
+        "kv_string": "scan_screen",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.scan_screen import ScanScreen"
     }
 }
