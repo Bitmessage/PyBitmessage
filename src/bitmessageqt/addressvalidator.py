@@ -3,11 +3,12 @@ Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
 
-from PyQt4 import QtGui
 from Queue import Empty
 
-from account import getSortedAccounts
+from PyQt4 import QtGui
+
 from addresses import decodeAddress, addBMIfNotPresent
+from bmconfigparser import config
 from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
 from utils import str_chan
@@ -124,7 +125,7 @@ class AddressPassPhraseValidatorMixin(object):
 
         if self.addressMandatory or address is not None:
             # check if address already exists:
-            if address in getSortedAccounts():
+            if address in config.addresses():
                 self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
                 return (QtGui.QValidator.Intermediate, pos)
 

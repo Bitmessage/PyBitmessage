@@ -77,7 +77,7 @@ def checkAddressBook(myapp):
 
 
 def checkHasNormalAddress():
-    for address in account.getSortedAccounts():
+    for address in config.addresses():
         acct = account.accountClass(address)
         if acct.type == AccountMixin.NORMAL and config.safeGetBoolean(address, 'enabled'):
             return address

@@ -9,8 +9,9 @@ from PyQt4 import QtCore, QtGui
 
 import queues
 import widgets
-from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass, getSortedAccounts
+from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
+from bmconfigparser import config
 from inventory import Inventory
 from tr import _translate
 
@@ -120,7 +121,7 @@ class NewAddressDialog(QtGui.QDialog):
 
         # Let's fill out the 'existing address' combo box with addresses
         # from the 'Your Identities' tab.
-        for address in getSortedAccounts():
+        for address in config.addresses(True):
             self.radioButtonExisting.click()
             self.comboBoxExisting.addItem(address)
         self.groupBoxDeterministic.setHidden(True)

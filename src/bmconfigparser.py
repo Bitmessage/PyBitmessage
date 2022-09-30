@@ -110,9 +110,12 @@ class BMConfigParser(SafeConfigParser):
         if filenames:
             SafeConfigParser.read(self, filenames)
 
-    def addresses(self):
+    def addresses(self, sort=False):
         """Return a list of local bitmessage addresses (from section labels)"""
-        return [x for x in self.sections() if x.startswith('BM-')]
+        sections = [x for x in self.sections() if x.startswith('BM-')]
+        if sort:
+            sections.sort(key=lambda item: self.get(item, 'label').lower())
+        return sections
 
     def save(self):
         """Save the runtime config onto the filesystem"""

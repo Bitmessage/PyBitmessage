@@ -25,25 +25,6 @@ from .foldertree import AccountMixin
 from .utils import str_broadcast_subscribers
 
 
-def getSortedAccounts():
-    """Get a sorted list of configSections"""
-
-    configSections = config.addresses()
-    configSections.sort(
-        cmp=lambda x, y: cmp(
-            unicode(
-                config.get(
-                    x,
-                    'label'),
-                'utf-8').lower(),
-            unicode(
-                config.get(
-                    y,
-                    'label'),
-                'utf-8').lower()))
-    return configSections
-
-
 def getSortedSubscriptions(count=False):
     """
     Actually return a grouped dictionary rather than a sorted list

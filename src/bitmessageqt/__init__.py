@@ -22,6 +22,9 @@ import shared
 import state
 from debug import logger
 from tr import _translate
+from account import (
+    accountClass, getSortedSubscriptions,
+    BMAccount, GatewayAccount, MailchuckAccount, AccountColor)
 from addresses import decodeAddress, addBMIfNotPresent
 from bitmessageui import Ui_MainWindow
 from bmconfigparser import config
@@ -40,9 +43,6 @@ import helper_addressbook
 import helper_search
 import l10n
 from utils import str_broadcast_subscribers, avatarize
-from account import (
-    getSortedAccounts, getSortedSubscriptions, accountClass, BMAccount,
-    GatewayAccount, MailchuckAccount, AccountColor)
 import dialogs
 from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
@@ -522,7 +522,7 @@ class MyForm(settingsmixin.SMainWindow):
         db = {}
         enabled = {}
 
-        for toAddress in getSortedAccounts():
+        for toAddress in config.addresses(True):
             isEnabled = config.getboolean(
                 toAddress, 'enabled')
             isChan = config.safeGetBoolean(
@@ -640,7 +640,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
-        for addressInKeysFile in getSortedAccounts():
+        for addressInKeysFile in config.addresses():
             status, addressVersionNumber, streamNumber, hash = decodeAddress(
                 addressInKeysFile)
             if addressVersionNumber == 1:
@@ -2020,8 +2020,7 @@ class MyForm(settingsmixin.SMainWindow):
             label, address = row
             newRows[address] = [label, AccountMixin.SUBSCRIPTION]
         # chans
-        addresses = getSortedAccounts()
-        for address in addresses:
+        for address in config.addresses(True):
             account = accountClass(address)
             if (account.type == AccountMixin.CHAN and config.safeGetBoolean(address, 'enabled')):
                 newRows[address] = [account.getLabel(), AccountMixin.CHAN]
@@ -2365,7 +2364,9 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
-        for addressInKeysFile in getSortedAccounts():
+        for addressInKeysFile in config.addresses(True):
+            # I realize that this is poor programming practice but I don't care.
+            # It's easier for others to read.
             isEnabled = config.getboolean(
                 addressInKeysFile, 'enabled')
             isMaillinglist = config.safeGetBoolean(addressInKeysFile, 'mailinglist')
@@ -2389,7 +2390,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderComboBoxSendFromBroadcast(self):
         self.ui.comboBoxSendFromBroadcast.clear()
-        for addressInKeysFile in getSortedAccounts():
+        for addressInKeysFile in config.addresses(True):
             isEnabled = config.getboolean(
                 addressInKeysFile, 'enabled')
             isChan = config.safeGetBoolean(addressInKeysFile, 'chan')
