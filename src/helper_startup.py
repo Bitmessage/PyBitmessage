@@ -19,10 +19,9 @@ try:
     import paths
     import state
     from bmconfigparser import config, config_ready
-
 except ImportError:
     from . import defaults, helper_random, paths, state
-    from bmconfigparser import config, config_ready
+    from .bmconfigparser import config, config_ready
 
 try:
     from plugins.plugin import get_plugin
