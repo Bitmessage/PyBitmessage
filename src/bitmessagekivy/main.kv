@@ -104,10 +104,13 @@
                     text: app.tr._('Accounts')
                     height:"35dp"
                 NavigationItem:
+                    text: 'dropdown_nav_item'
                     height: dp(48)
                     IdentitySpinner:
                         id: identity_dropdown
                         pos_hint:{"x":0,"y":0}
+                        name: "identity_dropdown"
+                        text: 'Select Address'
                         option_cls: Factory.get("MySpinnerOption")
                         font_size: '12.5sp'
                         color: color_font
@@ -119,7 +122,7 @@
                     text: app.tr._('Inbox')
                     icon: 'email-open'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'inbox'
+                    on_release: app.set_screen('inbox')
                     on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
                 NavigationItem:
@@ -224,6 +227,8 @@ MDNavigationLayout:
             id:id_networkstat
         Setting:
             id:id_settings
+        Inbox:
+            id:id_inbox
 
     MDNavigationDrawer:
         id: nav_drawer

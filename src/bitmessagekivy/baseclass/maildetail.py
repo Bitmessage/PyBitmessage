@@ -154,7 +154,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             self.parent.screens[2].ids.ml.clear_widgets()
             self.parent.screens[2].loadSent(self.kivy_state.selected_address)
         elif self.kivy_state.detail_page_type == 'inbox':
-            App.get_running_app().root.ids.sc1.ids.inbox_search.ids.search_field.text = ''
+            App.get_running_app().root.ids.id_inbox.ids.inbox_search.ids.search_field.text = ''
             trash(self.kivy_state.mail_id)
             msg_count_objs.inbox_cnt.ids.badge_txt.text = str(
                 int(self.kivy_state.inbox_count) - 1)

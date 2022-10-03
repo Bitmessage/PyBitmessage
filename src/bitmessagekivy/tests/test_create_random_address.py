@@ -2,16 +2,15 @@
     Test for creating new identity
 """
 
+from time import sleep
 from random import choice
 from string import ascii_lowercase
 from .telenium_process import TeleniumTestProcess
-from .common import skip_screen_checks
 from .common import ordered
 
 
 class CreateRandomAddress(TeleniumTestProcess):
     """This is for testing randrom address creation"""
-
     @staticmethod
     def populate_test_data():
         pass
@@ -23,11 +22,15 @@ class CreateRandomAddress(TeleniumTestProcess):
         """Click on Proceed Button to Proceed to Next Screen."""
         # Checking current Screen(Login screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
-        # Click on "Proceed Next" Button to "generate random label for address" screen
-        # Some widgets cannot renders suddenly and become not functional so we used loop with a timeout.
-        self.assertExists("//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]", timeout=5)
+        self.assertExists(
+            '''//Login//Screen[@name=\"check_screen\"]'''
+            '''//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]''', timeout=5
+        )
         # Clicking on Proceed Next Button to redirect to "random" screen
-        self.cli.wait_click('//Screen[0]//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
+        self.cli.wait_click(
+            '''//Login//Screen[@name=\"check_screen\"]'''
+            '''//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]''', timeout=5
+        )
         self.assertExists("//ScreenManager[@current=\"random\"]", timeout=5)
 
     @ordered
@@ -35,26 +38,27 @@ class CreateRandomAddress(TeleniumTestProcess):
         """Creating New Adress For New User."""
         # Checking the Button is rendered
         self.assertExists(
-            '//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[@hint_text=\"Label\"]', timeout=2)
+            '//Random//RandomBoxlayout//MDTextField[@hint_text=\"Label\"]', timeout=1)
         # Click on Label Text Field to give address Label
         self.cli.wait_click(
-            '//RandomBoxlayout/BoxLayout[0]/AnchorLayout[1]/MDTextField[@hint_text=\"Label\"]', timeout=2)
+            '//Random//RandomBoxlayout//MDTextField[@hint_text=\"Label\"]', timeout=2)
         # Enter a Label Randomly
         random_label = ""
         for _ in range(10):
             random_label += choice(ascii_lowercase)
-            self.cli.setattr('//RandomBoxlayout//AnchorLayout[1]/MDTextField[0]', "text", random_label)
+            self.cli.setattr('//Random//MDTextField[0]', "text", random_label)
             self.cli.sleep(0.1)
         # Checking the Button is rendered
-        self.assertExists('//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
+        self.assertExists(
+            '//Random//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
         # Click on Proceed Next button to generate random Address
-        self.cli.wait_click('//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
+        self.cli.wait_click(
+            '//Random//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
         # Checking "My Address" Screen after creating a address
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
         # Checking the new address is created
-        self.assertExists('//MDList[0]/CustomTwoLineAvatarIconListItem', timeout=10)
+        self.assertExists('//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem', timeout=10)
 
-    @skip_screen_checks
     @ordered
     def test_set_default_address(self):
         """Select First Address From Drawer-Box"""
@@ -63,13 +67,40 @@ class CreateRandomAddress(TeleniumTestProcess):
         # This is for opening side navbar
         self.open_side_navbar()
         # Click to open Address Dropdown
-        self.cli.wait_click('//NavigationItem[0]/CustomSpinner[0]', timeout=5)
-        # Checking the dropdown option is exist
-        self.assertExists('//MySpinnerOption[0]', timeout=5)
-        is_open = self.cli.getattr('//NavigationItem[0]/CustomSpinner[@is_open]', 'is_open')
+        self.assertExists('//NavigationItem[0][@text=\"dropdown_nav_item\"]', timeout=2)
+        self.assertExists(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
+            '/IdentitySpinner[@name=\"identity_dropdown\"]', timeout=1
+        )
+        is_open = self.cli.getattr(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
+            '/IdentitySpinner[@name=\"identity_dropdown\"][@is_open]', "is_open")
+        self.assertEqual(is_open, False)
+        self.cli.wait(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
+            '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=2
+        )
+        self.cli.wait_click(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
+            '/IdentitySpinner[@name=\"identity_dropdown\"]', timeout=1
+        )
+        if self.cli.wait(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
+                '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=2):
+            sleep(0.2)
         # Check the state of dropdown.
+        is_open = self.cli.getattr(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
+            '/IdentitySpinner[@name=\"identity_dropdown\"][@is_open]', 'is_open'
+        )
         self.assertEqual(is_open, True)
+        # List of addresses
+        addresses_in_dropdown = self.cli.getattr(
+            '//NavigationItem[0][@text=\"dropdown_nav_item\"]/IdentitySpinner[@values]', 'values'
+        )
+        # Checking the dropdown options are exists
+        self.assertGreaterEqual(len(self.cli.getattr(
+            '//MySpinnerOption[@text]', 'text')), len(addresses_in_dropdown)
+        )
         # Selection of an address to set as a default address.
         self.cli.wait_click('//MySpinnerOption[0]', timeout=5)
-        # Checking current screen
-        self.assertExists("//ScreenManager[@current=\"inbox\"]", timeout=5)
