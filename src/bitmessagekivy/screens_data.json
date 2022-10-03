@@ -11,5 +11,10 @@
     "Scanner": {
         "kv_string": "scan_screen",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.scan_screen import ScanScreen"
+    },
+    "Payment": {
+        "kv_string": "payment",
+        "name_screen": "payment",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.payment import Payment"
     }
 }

@@ -44,7 +44,7 @@ data_screens = {
 
 def load_image_path():
     """Return the path of kivy images"""
-    image_path = os.path.abspath(os.path.join('images', 'kivy'))
+    image_path = os.path.abspath(os.path.join('pybitmessage', 'images', 'kivy'))
     return image_path
 
 
