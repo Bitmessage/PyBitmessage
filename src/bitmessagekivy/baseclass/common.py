@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error
+# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error, unused-argument
 """
     All Common widgets of kivy are managed here.
 """
@@ -24,6 +24,8 @@ from kivymd.uix.label import MDLabel
 from kivymd.toast import kivytoast
 from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
 
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.bmconfigparser import config
@@ -208,3 +210,27 @@ def msg_content_length(body, subject, max_length=50):
     else:
         subject = ((subject + ',' + body)[0:50] + continue_str).replace('\t', '').replace('  ', '')
     return subject
+
+
+def composer_common_dialog(alert_msg):
+    """Common alert popup for message composer"""
+    is_android_width = .8
+    other_platform_width = .55
+    dialog_height = .25
+    width = is_android_width if platform == 'android' else other_platform_width
+
+    dialog_box = MDDialog(
+        text=alert_msg,
+        size_hint=(width, dialog_height),
+        buttons=[
+            MDFlatButton(
+                text="Ok", on_release=lambda x: callback_for_menu_items("Ok")
+            ),
+        ],
+    )
+    dialog_box.open()
+
+    def callback_for_menu_items(text_item, *arg):
+        """Callback of alert box"""
+        dialog_box.dismiss()
+        toast(text_item)

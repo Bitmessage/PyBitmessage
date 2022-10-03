@@ -23,7 +23,6 @@
                     font_size: '15sp'
                     multiline: False
                     required: True
-                    # height: self.parent.height/2
                     height: 100
                     current_hint_text_color: 0,0,0,0.5
                     helper_text_mode: "on_error"
@@ -38,11 +37,8 @@
                     IdentitySpinner:
                         id: btn
                         background_color: app.theme_cls.primary_dark
-                        values: app.variable_1
-                        on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
+                        values: app.identity_list
                         option_cls: Factory.get("ComposerSpinnerOption")
-                        #background_color: color_button if self.state == 'normal' else color_button_pressed
-                        #background_down: 'atlas://data/images/defaulttheme/spinner'
                         background_normal: ''
                         background_color: app.theme_cls.primary_color
                         color: color_font
@@ -62,7 +58,6 @@
                         size_hint_y: None
                         font_size: '15sp'
                         color: color_font
-                        # height: self.parent.height/2
                         current_hint_text_color: 0,0,0,0.5
                         height: 100
                         hint_text: app.tr._('Type or Scan QR code for recipients address')
@@ -79,7 +74,7 @@
                         if root.is_camara_attached(): app.set_screen('scanscreen')
                         else: root.camera_alert()
                     on_press:
-                        app.root.ids.is_scanscreen.get_screen('composer')
+                        app.root.ids.id_scanscreen.get_screen('composer')
 
             MyMDTextField:
                 id: subject
@@ -98,17 +93,6 @@
                     Color:
                         rgba: (0,0,0,1)
 
-            # MyMDTextField:
-            #     id: body
-            #     multiline: True
-            #     hint_text: 'body'
-            #     size_hint_y: None
-            #     font_size: '15sp'
-            #     required: True
-            #     helper_text_mode: "on_error"
-            #     canvas.before:
-            #         Color:
-            #             rgba: (0,0,0,1)
             ScrollView:
                 id: scrlv
                 MDTextField:
@@ -171,8 +155,6 @@
 
 <ComposerSpinnerOption@SpinnerOption>:
     font_size: '13.5sp'
-    #background_color: color_button if self.state == 'down' else color_button_pressed
-    #background_down: 'atlas://data/images/defaulttheme/button'
     background_normal: 'atlas://data/images/defaulttheme/textinput_active'
     background_color: app.theme_cls.primary_color
     color: color_font

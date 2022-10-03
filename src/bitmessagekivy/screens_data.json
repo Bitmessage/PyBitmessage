@@ -16,5 +16,10 @@
         "kv_string": "payment",
         "name_screen": "payment",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.payment import Payment"
+    },
+    "Create": {
+        "kv_string": "msg_composer",
+        "name_screen": "create",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.msg_composer import Create"
     }
 }
