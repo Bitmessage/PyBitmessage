@@ -74,6 +74,13 @@ if __name__ == "__main__":
         'pybitmessage.pyelliptic',
         'pybitmessage.storage'
     ]
+    package_data = {'': [
+        'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
+        'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
+        'images/*.png', 'images/*.ico', 'images/*.icns',
+        'bitmessagekivy/main.kv', 'bitmessagekivy/screens_data.json',
+        'bitmessagekivy/kv/*.kv'
+    ]}
 
     if sys.version_info[0] == 3:
         packages.extend(
@@ -85,6 +92,7 @@ if __name__ == "__main__":
 
     if os.environ.get('INSTALL_TESTS', False):
         packages.extend(['pybitmessage.mock', 'pybitmessage.backend', 'pybitmessage.bitmessagekivy.tests'])
+        package_data[''].extend(['bitmessagekivy/tests/sampleData/*.dat'])
 
     # this will silently accept alternative providers of msgpack
     # if they are already installed
@@ -142,11 +150,7 @@ if __name__ == "__main__":
         ],
         package_dir={'pybitmessage': 'src'},
         packages=packages,
-        package_data={'': [
-            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem', 'bitmessagekivy/main.kv',
-            'bitmessagekivy/kv/*.kv', 'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
-            'images/*.png', 'images/*.ico', 'images/*.icns', 'bitmessagekivy/screens_data.json'
-        ]},
+        package_data=package_data,
         data_files=data_files,
         ext_modules=[bitmsghash],
         zip_safe=False,
