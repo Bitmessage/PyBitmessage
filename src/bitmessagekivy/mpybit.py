@@ -88,13 +88,7 @@ class NavigateApp(MDApp):
     identity_list = get_identity_list()
     image_path = load_image_path()
     app_platform = platform
-    kivy_state.screen_density = Window.size
-    window_size = kivy_state.screen_density
     tr = Lang("en")  # for changing in franch replace en with fr
-
-    if os.environ.get('INSTALL_TESTS', False):
-        # Set kivy app resolution while running kivy tests
-        window_size = (720, 1280)
 
     def __init__(self):
         super(NavigateApp, self).__init__()
@@ -103,6 +97,8 @@ class NavigateApp(MDApp):
         self.data_screens, self.all_data, self.data_screen_dict, response = load_screen_json()
         self.kivy_state_obj = KivyStateVariables()
         self.image_dir = load_image_path()
+        self.kivy_state_obj.screen_density = Window.size
+        self.window_size = self.kivy_state_obj.screen_density
 
     def build(self):
         """Method builds the widget"""
