@@ -1,4 +1,9 @@
 {
+    "Inbox": {
+        "kv_string": "inbox",
+        "name_screen": "inbox",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.inbox import Inbox"
+    },
     "Login": {
         "kv_string": "login",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.login import *"
