@@ -259,7 +259,7 @@ def isProofOfWorkSufficient(
         data, nonceTrialsPerByte=0, payloadLengthExtraBytes=0, recvTime=0):
     """
     Validate an object's Proof of Work using method described
-    `here <https://bitmessage.org/wiki/Proof_of_work>`_
+    :doc:`here </pow>`
 
     Arguments:
         int nonceTrialsPerByte (default: from `.defaults`)
