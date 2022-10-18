@@ -26,5 +26,10 @@
         "kv_string": "network",
         "name_screen": "networkstat",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.network import NetworkStat"
+    },
+    "Settings": {
+        "kv_string": "settings",
+        "name_screen": "set",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.settings import Setting"
     }
 }
