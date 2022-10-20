@@ -11,7 +11,7 @@ import queues
 import widgets
 from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
-from bmconfigparser import config
+from bmconfigparser import config as global_config
 from inventory import Inventory
 from tr import _translate
 
@@ -121,7 +121,7 @@ class NewAddressDialog(QtGui.QDialog):
 
         # Let's fill out the 'existing address' combo box with addresses
         # from the 'Your Identities' tab.
-        for address in config.addresses(True):
+        for address in global_config.addresses(True):
             self.radioButtonExisting.click()
             self.comboBoxExisting.addItem(address)
         self.groupBoxDeterministic.setHidden(True)
@@ -231,7 +231,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
     QDialog for special address behaviour (e.g. mailing list functionality)
     """
 
-    def __init__(self, parent=None, config=None):
+    def __init__(self, parent=None, config=global_config):
         super(SpecialAddressBehaviorDialog, self).__init__(parent)
         widgets.load('specialaddressbehavior.ui', self)
         self.address = parent.getCurrentAccount()
@@ -293,7 +293,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
 
 class EmailGatewayDialog(QtGui.QDialog):
     """QDialog for email gateway control"""
-    def __init__(self, parent, config=None, account=None):
+    def __init__(self, parent, config=global_config, account=None):
         super(EmailGatewayDialog, self).__init__(parent)
         widgets.load('emailgateway.ui', self)
         self.parent = parent
