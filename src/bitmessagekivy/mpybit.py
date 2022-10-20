@@ -39,8 +39,9 @@ from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.bitmessagekivy.baseclass.common import toast, load_image_path, get_identity_list
 from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
 
-from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup
+from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup, AddressChangingLoader
 from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
+from pybitmessage.bitmessagekivy.uikivysignaler import UIkivySignaler
 
 from pybitmessage.mock.helper_startup import loadConfig
 
@@ -121,6 +122,9 @@ class NavigateApp(MDApp):
     def run(self):
         """Running the widgets"""
         loadConfig()
+        kivysignalthread = UIkivySignaler()
+        kivysignalthread.daemon = True
+        kivysignalthread.start()
         self.kivy_state_obj.kivyui_ready.set()
         super(NavigateApp, self).run()
 
@@ -191,7 +195,10 @@ class NavigateApp(MDApp):
 
     def load_screen(self, instance):
         """This method is used for loading screen on every click"""
-        if instance.text == 'Trash':
+        if instance.text == 'Inbox':
+            self.root.ids.scr_mngr.current = 'inbox'
+            self.root.ids.id_inbox.children[1].active = True
+        elif instance.text == 'Trash':
             self.root.ids.scr_mngr.current = 'trash'
             try:
                 self.root.ids.id_trash.children[1].active = True
@@ -201,13 +208,91 @@ class NavigateApp(MDApp):
 
     def load_screen_callback(self, instance, dt=0):
         """This method is rotating loader for few seconds"""
-        if instance.text == 'Trash':
+        if instance.text == 'Inbox':
+            self.root.ids.id_inbox.ids.ml.clear_widgets()
+            self.root.ids.id_inbox.loadMessagelist(self.kivy_state_obj.selected_address)
+            self.root.ids.id_inbox.children[1].active = False
+        elif instance.text == 'Trash':
             self.root.ids.id_trash.clear_widgets()
             self.root.ids.id_trash.add_widget(self.data_screen_dict['Trash'].Trash())
             try:
                 self.root.ids.id_trash.children[1].active = False
             except Exception as e:
                 self.root.ids.id_trash.children[0].children[1].active = False
+
+    @staticmethod
+    def get_enabled_addresses():
+        """Getting list of all the enabled addresses"""
+        addresses = [addr for addr in config.addresses()
+                     if config.getboolean(str(addr), 'enabled')]
+        return addresses
+
+    @staticmethod
+    def format_address(address):
+        """Formatting address"""
+        return " ({0})".format(address)
+
+    @staticmethod
+    def format_label(label):
+        """Formatting label"""
+        if label:
+            f_name = label.split()
+            truncate_string = '...'
+            f_name_max_length = 15
+            formatted_label = f_name[0][:14].capitalize() + truncate_string if len(
+                f_name[0]) > f_name_max_length else f_name[0].capitalize()
+            return formatted_label
+        return ''
+
+    @staticmethod
+    def format_address_and_label(address=None):
+        """Getting formatted address information"""
+        if not address:
+            try:
+                address = NavigateApp.get_enabled_addresses()[0]
+            except IndexError:
+                return ''
+        return "{0}{1}".format(
+            NavigateApp.format_label(config.get(address, "label")),
+            NavigateApp.format_address(address)
+        )
+
+    def getDefaultAccData(self, instance):
+        """Getting Default Account Data"""
+        if self.identity_list:
+            self.kivy_state_obj.selected_address = first_addr = self.identity_list[0]
+            return first_addr
+        return 'Select Address'
+
+    def getCurrentAccountData(self, text):
+        """Get Current Address Account Data"""
+        if text != '':
+            if os.path.exists(os.path.join(
+                    self.image_dir, 'default_identicon', '{}.png'.format(text))
+            ):
+                self.load_selected_Image(text)
+            else:
+                self.set_identicon(text)
+                self.root.ids.content_drawer.ids.reset_image.opacity = 0
+                self.root.ids.content_drawer.ids.reset_image.disabled = True
+            address_label = self.format_address_and_label(text)
+            self.root_window.children[1].ids.toolbar.title = address_label
+            self.kivy_state_obj.selected_address = text
+            AddressChangingLoader().open()
+            for nav_obj in self.root.ids.content_drawer.children[
+                    0].children[0].children[0].children:
+                nav_obj.active = True if nav_obj.text == 'Inbox' else False
+            self.fileManagerSetting()
+            Clock.schedule_once(self.setCurrentAccountData, 0.5)
+
+    def setCurrentAccountData(self, dt=0):
+        """This method set the current accout data on all the screens"""
+        self.root.ids.id_inbox.ids.ml.clear_widgets()
+        self.root.ids.id_inbox.loadMessagelist(self.kivy_state_obj.selected_address)
+
+        self.root.ids.id_sent.ids.ml.clear_widgets()
+        self.root.ids.id_sent.children[2].children[2].ids.search_field.text = ''
+        self.root.ids.id_sent.loadSent(self.kivy_state_obj.selected_address)
 
     def fileManagerSetting(self):
         """This method is for file manager setting"""
@@ -316,6 +401,13 @@ class NavigateApp(MDApp):
                     instance.texture = img.texture
                     return
         return os.path.join(self.image_dir, 'drawer_logo1.png')
+
+    @staticmethod
+    def have_any_address():
+        """Checking existance of any address"""
+        if config.addresses():
+            return True
+        return False
 
     def reset_login_screen(self):
         """This method is used for clearing the widgets of random screen"""

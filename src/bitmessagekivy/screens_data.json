@@ -46,5 +46,9 @@
         "kv_string": "trash",
         "name_screen": "trash",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.trash import Trash"
+    },
+    "Popups": {
+        "kv_string": "popup",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.popup import *"
     }
 }

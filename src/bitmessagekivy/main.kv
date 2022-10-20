@@ -69,8 +69,8 @@
                 on_release: app.rest_default_avatar_img()
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
-                opacity: 0
-                disabled: True
+                opacity: 1 if app.have_any_address() else 0
+                disabled: False if app.have_any_address() else True
 
             MDIconButton:
                 id: file_manager
@@ -81,6 +81,9 @@
                 on_release: app.file_manager_open()
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
+                opacity: 1 if app.have_any_address() else 0
+                disabled: False if app.have_any_address() else True
+
             BoxLayout:
                 id: top_box
                 size_hint_y: None
@@ -113,9 +116,11 @@
                         text: 'Select Address'
                         option_cls: Factory.get("MySpinnerOption")
                         font_size: '12.5sp'
+                        text: app.getDefaultAccData(self)
                         color: color_font
                         background_normal: ''
                         background_color: app.theme_cls.primary_color
+                        on_text: app.getCurrentAccountData(self.text)
                         ArrowImg:
                 NavigationItem:
                     id: inbox_cnt
@@ -201,6 +206,9 @@ MDNavigationLayout:
 
     MDTopAppBar:
         id: toolbar
+        title: app.format_address_and_label()
+        opacity: 1 if app.have_any_address() else 0
+        disabled: False if app.have_any_address() else True
         pos_hint: {"top": 1}
         md_bg_color: app.theme_cls.primary_color
         elevation: 10
