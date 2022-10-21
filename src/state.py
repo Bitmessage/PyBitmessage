@@ -69,3 +69,5 @@ ackdataForWhichImWatching = {}
 
 thisapp = None
 """Singleton instance"""
+
+backend_py3_compatible = False
