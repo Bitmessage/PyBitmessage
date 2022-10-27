@@ -152,7 +152,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             msg_count_objs.send_cnt.ids.badge_txt.text = str(int(self.kivy_state.sent_count) - 1)
             self.kivy_state.sent_count = str(int(self.kivy_state.sent_count) - 1)
             self.parent.screens[2].ids.ml.clear_widgets()
-            self.parent.screens[2].loadSent(self.kivy_state.association)
+            self.parent.screens[2].loadSent(self.kivy_state.selected_address)
         elif self.kivy_state.detail_page_type == 'inbox':
             App.get_running_app().root.ids.sc1.ids.inbox_search.ids.search_field.text = ''
             trash(self.kivy_state.mail_id)
@@ -160,7 +160,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
                 int(self.kivy_state.inbox_count) - 1)
             self.kivy_state.inbox_count = str(int(self.kivy_state.inbox_count) - 1)
             self.parent.screens[0].ids.ml.clear_widgets()
-            self.parent.screens[0].loadMessagelist(self.kivy_state.association)
+            self.parent.screens[0].loadMessagelist(self.kivy_state.selected_address)
 
         elif self.kivy_state.detail_page_type == 'draft':
             delete(self.kivy_state.mail_id)

@@ -131,7 +131,7 @@ class MyAddress(Screen, HelperMyAddress):
 
     def set_address_status(self, item, meny, is_enable):
         """Setting the identity status enable/disable on UI"""
-        if self.kivy_state.association == item['secondary_text'] and is_enable:
+        if self.kivy_state.selected_address == item['secondary_text'] and is_enable:
             meny.add_widget(self.is_active_badge())
         else:
             meny.add_widget(ToggleBtn(active=True if is_enable else False))

@@ -253,15 +253,15 @@ class NavigateApp(MDApp):
                 if not os.path.exists(os.path.join(android_path, 'default_identicon')):
                     os.makedirs(os.path.join(android_path, 'default_identicon'))
                 newImg.save(os.path.join(android_path, 'default_identicon', '{}.png'.format(
-                    self.kivy_state_obj.association))
+                    self.kivy_state_obj.selected_address))
                 )
             else:
                 if not os.path.exists(os.path.join(self.image_dir, 'default_identicon')):
                     os.makedirs(os.path.join(self.image_dir, 'default_identicon'))
                 newImg.save(os.path.join(self.image_dir, 'default_identicon', '{0}.png'.format(
-                    self.kivy_state_obj.association))
+                    self.kivy_state_obj.selected_address))
                 )
-            self.load_selected_Image(self.kivy_state_obj.association)
+            self.load_selected_Image(self.kivy_state_obj.selected_address)
             toast('Image changed')
         except Exception:
             toast('Exit')
@@ -282,9 +282,9 @@ class NavigateApp(MDApp):
 
     def rest_default_avatar_img(self):
         """set default avatar generated image"""
-        self.set_identicon(self.kivy_state_obj.association)
+        self.set_identicon(self.kivy_state_obj.selected_address)
         img_path = os.path.join(
-            self.image_dir, 'default_identicon', '{}.png'.format(self.kivy_state_obj.association)
+            self.image_dir, 'default_identicon', '{}.png'.format(self.kivy_state_obj.selected_address)
         )
         try:
             if os.path.exists(img_path):

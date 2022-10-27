@@ -13,7 +13,7 @@ class KivyStateVariables(object):
     """This Class hold all the kivy state variables"""
 
     def __init__(self):
-        self.association = ''
+        self.selected_address = ''
         self.navinstance = None
         self.mail_id = 0
         self.my_address_obj = None
