@@ -41,6 +41,12 @@ class Inbox(Screen):
 
     def init_ui(self, dt=0):
         """loadMessagelist() call at specific interval"""
+        self.loadMessagelist()
+
+    def loadMessagelist(self, where="", what=""):
+        """Load inbox list for inbox messages"""
+        self.set_defaultAddress()
+        self.account = self.kivy_state.selected_address
 
     def refresh_callback(self, *args):
         """Load inbox messages while wating-loader spins & called in inbox.kv"""
