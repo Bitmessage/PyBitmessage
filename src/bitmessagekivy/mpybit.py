@@ -319,6 +319,14 @@ class NavigateApp(MDApp):
         if self.root.ids.id_newidentity.ids.add_random_bx.children:
             self.root.ids.id_newidentity.ids.add_random_bx.clear_widgets()
 
+    def set_common_header(self):
+        """Common header for all the Screens"""
+        self.root.ids.toolbar.right_action_items = [
+            ['account-plus', lambda x: self.addingtoaddressbook()]]
+        self.root.ids.toolbar.left_action_items = [
+            ['menu', lambda x: self.root.ids.nav_drawer.set_state("toggle")]]
+        return
+
     def open_payment_layout(self, sku):
         """It basically open up a payment layout for kivy UI"""
         pml = PaymentMethodLayout()
