@@ -91,6 +91,7 @@ from bmconfigparser import config
 from debug import logger
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready
 from inventory import Inventory
+from network import BMConnectionPool
 from network.threads import StoppableThread
 from six.moves import queue
 from version import softwareVersion
@@ -1439,6 +1440,33 @@ class BMRPCDispatcher(object):
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
+        }
+
+    @command('listConnections')
+    def HandleListConnections(self):
+        """
+        Returns bitmessage connection information as dict with keys *inbound,
+        *outbound.
+        """
+        inboundConnections = []
+        outboundConnections = []
+        for i in BMConnectionPool().inboundConnections.values():
+            inboundConnections.append({
+                'host': i.destination.host,
+                'port': i.destination.port,
+                'fullyEstablished': i.fullyEstablished,
+                'userAgent': str(i.userAgent)
+            })
+        for i in BMConnectionPool().outboundConnections.values():
+            outboundConnections.append({
+                'host': i.destination.host,
+                'port': i.destination.port,
+                'fullyEstablished': i.fullyEstablished,
+                'userAgent': str(i.userAgent)
+            })
+        return {
+            'inbound': inboundConnections,
+            'outbound': outboundConnections
         }
 
     @command('helloWorld')

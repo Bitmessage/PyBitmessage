@@ -157,6 +157,12 @@ class TestAPI(TestAPIProto):
         else:
             self.assertGreater(status["networkConnections"], 0)
 
+    def test_listconnections_consistency(self):
+        """Checking the return of API command 'listConnections'"""
+        result = json.loads(self.api.listConnections())
+        self.assertGreaterEqual(len(result["inbound"]), 0)
+        self.assertGreaterEqual(len(result["outbound"]), 0)
+
     def test_list_addresses(self):
         """Checking the return of API command 'listAddresses'"""
         self.assertEqual(
