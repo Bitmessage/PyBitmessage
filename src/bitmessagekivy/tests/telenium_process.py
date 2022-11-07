@@ -119,6 +119,7 @@ class TeleniumTestProcess(TeleniumTestCase):
     def open_side_navbar(self):
         """Common method for opening Side navbar (Side Drawer)"""
         # Checking the drawer is in 'closed' state
+        self.cli.execute('app.ContentNavigationDrawer.MDNavigationDrawer.opening_time=0')
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # This is for checking the menu button is appeared
         self.assertExists('//ActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
