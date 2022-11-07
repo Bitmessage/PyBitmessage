@@ -779,10 +779,13 @@ class BMRPCDispatcher(object):
         return queues.apiAddressGeneratorReturnQueue.get()
 
     @command('createChan')
-    def HandleCreateChan(self, passphrase):
+    def HandleCreateChan(self, passphrase, label=None):
         """
         Creates a new chan. passphrase must be base64 encoded.
         Returns the corresponding Bitmessage address.
+
+        :param str passphrase: base64 encoded passphrase
+        :param str label: label to set for the chan
         """
 
         passphrase = self._decode(passphrase, "base64")
@@ -791,8 +794,9 @@ class BMRPCDispatcher(object):
         # It would be nice to make the label the passphrase but it is
         # possible that the passphrase contains non-utf-8 characters.
         try:
-            passphrase.decode('utf-8')
-            label = str_chan + ' ' + passphrase
+            if label is None:
+                passphrase.decode('utf-8')
+                label = str_chan + ' ' + passphrase
         except UnicodeDecodeError:
             label = str_chan + ' ' + repr(passphrase)
 
