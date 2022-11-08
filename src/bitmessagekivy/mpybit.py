@@ -39,7 +39,9 @@ from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.bitmessagekivy.baseclass.common import toast, load_image_path, get_identity_list
 from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
 
-from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup, AddressChangingLoader
+from pybitmessage.bitmessagekivy.baseclass.popup import (
+    AddAddressPopup, AppClosingPopup, AddressChangingLoader
+)
 from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
 from pybitmessage.bitmessagekivy.uikivysignaler import UIkivySignaler
 
@@ -113,6 +115,7 @@ class NavigateApp(MDApp):
                     '{0}.kv'.format(self.all_data[kv]["kv_string"]),
                 )
             )
+        Window.bind(on_request_close=self.on_request_close)
         return Builder.load_file(os.path.join(os.path.dirname(__file__), 'main.kv'))
 
     def set_screen(self, screen_name):
@@ -300,6 +303,11 @@ class NavigateApp(MDApp):
                 self.root.ids.content_drawer.ids.file_manager.disabled:
             self.root.ids.content_drawer.ids.file_manager.opacity = 1
             self.root.ids.content_drawer.ids.file_manager.disabled = False
+
+    def on_request_close(self, *args):  # pylint: disable=no-self-use
+        """This method is for app closing request"""
+        AppClosingPopup().open()
+        return True
 
     def set_identicon(self, text):
         """Show identicon in address spinner"""
