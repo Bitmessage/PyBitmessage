@@ -31,9 +31,9 @@ def main():
     # close the main program even if there are threads left
     addressGeneratorThread.daemon = True
     addressGeneratorThread.start()
-
     state.kivyapp = NavigateApp()
     state.kivyapp.run()
+    addressGeneratorThread.stopThread()
 
 
 if __name__ == "__main__":
