@@ -42,6 +42,8 @@ from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
 from pybitmessage.bitmessagekivy.baseclass.popup import AddAddressPopup
 from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
 
+from pybitmessage.mock.helper_startup import loadConfig
+
 logger = logging.getLogger('default')
 
 
@@ -118,6 +120,7 @@ class NavigateApp(MDApp):
 
     def run(self):
         """Running the widgets"""
+        loadConfig()
         self.kivy_state_obj.kivyui_ready.set()
         super(NavigateApp, self).run()
 
