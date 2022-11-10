@@ -16,6 +16,8 @@ class PaymentScreen(TeleniumTestProcess):
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
         # this is for opening Payment screen
         self.cli.wait_click('//NavigationItem[@text=\"Purchase\"]', timeout=5)
+        # Checking the navbar is in closed state
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # Assert for checking Current Screen
         self.assertExists("//ScreenManager[@current=\"payment\"]", timeout=5)
         # Scrolling Down Product list
