@@ -70,7 +70,7 @@ import time
 import xmlrpclib
 from binascii import hexlify, unhexlify
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
-from struct import pack
+from struct import pack, unpack
 
 import defaults
 import helper_inbox
@@ -1275,7 +1275,7 @@ class BMRPCDispatcher(object):
         return {'subscriptions': data}
 
     @command('disseminatePreEncryptedMsg')
-    def HandleDisseminatePreEncryptedMsg(
+    def HandleDisseminatePreEncryptedMsg(  # pylint: disable=too-many-locals
         self, encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte,
             requiredPayloadLengthExtraBytes):
         """Handle a request to disseminate an encrypted message"""
@@ -1286,13 +1286,22 @@ class BMRPCDispatcher(object):
         # to the rest of the Bitmessage network as if it had generated
         # the message itself. Please do not yet add this to the api doc.
         encryptedPayload = self._decode(encryptedPayload, "hex")
+        expiresTime = unpack('>Q', encryptedPayload[0:8])[0]
+        objectType = unpack('>I', encryptedPayload[8:12])[0]
+        TTL = expiresTime - time.time() + 300  # a bit of extra padding
         # Let us do the POW and attach it to the front
         target = 2**64 / (
-            (
-                len(encryptedPayload)
-                + requiredPayloadLengthExtraBytes
-                + 8
-            ) * requiredAverageProofOfWorkNonceTrialsPerByte)
+            requiredAverageProofOfWorkNonceTrialsPerByte * (
+                len(encryptedPayload) + 8
+                + requiredPayloadLengthExtraBytes + ((
+                    TTL * (
+                        len(encryptedPayload) + 8
+                        + requiredPayloadLengthExtraBytes
+                    )) / (2 ** 16))
+            ))
+        logger.debug("expiresTime: %s", expiresTime)
+        logger.debug("TTL: %s", TTL)
+        logger.debug("objectType: %s", objectType)
         logger.info(
             '(For msg message via API) Doing proof of work. Total  required'
             ' difficulty: %s\nRequired small message difficulty: %s',
@@ -1311,18 +1320,22 @@ class BMRPCDispatcher(object):
             nonce / (time.time() - powStartTime)
         )
         encryptedPayload = pack('>Q', nonce) + encryptedPayload
-        toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
+        parserPos = 20
+        _, objectVersionLength = decodeVarint(
+            encryptedPayload[parserPos:parserPos + 10])
+        parserPos += objectVersionLength
+        toStreamNumber, _ = decodeVarint(
+            encryptedPayload[parserPos:parserPos + 10])
         inventoryHash = calculateInventoryHash(encryptedPayload)
-        objectType = 2
-        TTL = 2.5 * 24 * 60 * 60
         Inventory()[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload,
-            int(time.time()) + TTL, ''
+            expiresTime, ''
         )
         logger.info(
             'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
             ' command): %s', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
+        return hexlify(inventoryHash)
 
     @command('trashSentMessageByAckData')
     def HandleTrashSentMessageByAckDAta(self, ackdata):
