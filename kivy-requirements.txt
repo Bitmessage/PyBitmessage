@@ -1,5 +1,5 @@
 kivy-garden.qrcode
-kivymd==1.0.2
+kivymd==1.1.1
 opencv-python
 pyzbar
 git+https://github.com/tito/telenium@9b54ff1#egg=telenium
