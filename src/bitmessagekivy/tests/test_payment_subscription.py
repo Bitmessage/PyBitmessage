@@ -1,11 +1,9 @@
 from .telenium_process import TeleniumTestProcess
-from .common import skip_screen_checks
 
 
 class PaymentScreen(TeleniumTestProcess):
     """SubscriptionPayment Screen Functionality Testing"""
 
-    @skip_screen_checks
     def test_select_subscription(self):
         """Select Subscription From List of Subscriptions"""
         # This is for checking Current screen
