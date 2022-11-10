@@ -2,5 +2,5 @@ kivy-garden.qrcode
 kivymd==1.0.2
 opencv-python
 pyzbar
-telenium
+git+https://github.com/tito/telenium@9b54ff1#egg=telenium
 Pillow
