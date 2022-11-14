@@ -29,18 +29,15 @@ class CreateRandomAddress(TeleniumTestProcess):
         )
         # Assert the checkbox is rendered
         self.assertExists(
-            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check', timeout=5)
-        # Checking Status of checkbox before click
-        self.assertEqual(self.cli.getattr(
-            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check[@active]', 'active'), False
+            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check[@active=false]', timeout=5
         )
         # Clicking on the checkbox
         self.cli.wait_click(
             '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check', timeout=5
         )
         # Checking Status of checkbox after click
-        self.assertEqual(self.cli.getattr(
-            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check', 'active'), True
+        self.assertExists(
+            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check[@active=true]', timeout=5
         )
         # Checking the Proceed Next button is rendered or not
         self.assertExists(

@@ -12,7 +12,7 @@ class NetworkStatusScreen(TeleniumTestProcess):
     def test_network_status(self):
         """Show NetworkStatus"""
         # This is for checking Current screen
-        self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
+        self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
         # Method to open side navbar
         # due to rapid transition effect, it doesn't click on menu-bar
         self.open_side_navbar()
