@@ -22,6 +22,27 @@ class CreateRandomAddress(TeleniumTestProcess):
         """Click on Proceed Button to Proceed to Next Screen."""
         # Checking current Screen(Login screen)
         self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='login')
+        # Dragging from sent to PROS: to NOTE:
+        self.drag(
+            '''//Login//Screen//ContentHead[1][@section_name=\"PROS:\"]''',
+            '''//Login//Screen//ContentHead[0][@section_name=\"NOTE:\"]'''
+        )
+        # Assert the checkbox is rendered
+        self.assertExists(
+            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check', timeout=5)
+        # Checking Status of checkbox before click
+        self.assertEqual(self.cli.getattr(
+            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check[@active]', 'active'), False
+        )
+        # Clicking on the checkbox
+        self.cli.wait_click(
+            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check', timeout=5
+        )
+        # Checking Status of checkbox after click
+        self.assertEqual(self.cli.getattr(
+            '//Login//Screen[@name=\"check_screen\"]//AnchorLayout[1]/Check', 'active'), True
+        )
+        # Checking the Proceed Next button is rendered or not
         self.assertExists(
             '''//Login//Screen[@name=\"check_screen\"]'''
             '''//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]''', timeout=5

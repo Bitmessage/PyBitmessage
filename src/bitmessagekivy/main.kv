@@ -113,7 +113,6 @@
                         id: identity_dropdown
                         pos_hint:{"x":0,"y":0}
                         name: "identity_dropdown"
-                        text: 'Select Address'
                         option_cls: Factory.get("MySpinnerOption")
                         font_size: '12.5sp'
                         text: app.getDefaultAccData(self)
@@ -219,6 +218,8 @@ MDNavigationLayout:
         id: scr_mngr
         size_hint_y: None
         height: root.height - toolbar.height
+        Inbox:
+            id:id_inbox
         Login:
             id:sc6
         Random:
@@ -235,8 +236,6 @@ MDNavigationLayout:
             id:id_networkstat
         Setting:
             id:id_settings
-        Inbox:
-            id:id_inbox
         Sent:
             id:id_sent
         Trash:
