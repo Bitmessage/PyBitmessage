@@ -32,6 +32,7 @@ class TestECC(unittest.TestCase):
 
     def test_decode_keys(self):
         """Check keys decoding"""
+        # pylint: disable=protected-access
         curve_secp256k1 = pyelliptic.OpenSSL.get_curve('secp256k1')
         curve, raw_privkey, _ = pyelliptic.ECC._decode_privkey(
             sample_privkey_bin)
