@@ -11,7 +11,7 @@ class DesktopXDG(object):
         try:
             self.desktop = Menu.parse().getMenu('Office').getMenuEntry(
                 'pybitmessage.desktop').DesktopEntry
-        except Exceptions.ParsingError:
+        except (AttributeError, Exceptions.ParsingError):
             raise TypeError  # TypeError disables startonlogon
         appimage = os.getenv('APPIMAGE')
         if appimage:
