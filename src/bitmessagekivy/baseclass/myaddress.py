@@ -220,7 +220,7 @@ class MyAddress(Screen, HelperMyAddress):
         addresses = [addr for addr in config.addresses()
                      if config.getboolean(str(addr), 'enabled')]
         self.parent.parent.ids.content_drawer.ids.identity_dropdown.values = addresses
-        # self.parent.parent.ids.sc3.children[1].ids.btn.values = addresses
+        self.parent.parent.ids.id_create.children[1].ids.btn.values = addresses
         self.kivy_running_app.identity_list = addresses
 
     def toggleAction(self, instance):

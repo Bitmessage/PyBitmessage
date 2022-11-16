@@ -217,14 +217,14 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.kivy_state.in_composer = True
         data = retrieve_message_details(self.kivy_state.mail_id)
         self.get_message_details_to_reply(data)
-        App.get_running_app().root.ids.sc3.children[1].ids.rv.data = ''
+        App.get_running_app().root.ids.id_create.children[1].ids.rv.data = ''
         self.parent.current = 'create'
         App.get_running_app().set_navbar_for_composer()
 
     def get_message_details_for_draft_reply(self, data):
         """Getting and setting message details fill into fields when draft reply"""
         composer_ids = (
-            self.parent.parent.ids.sc3.children[1].ids)
+            self.parent.parent.ids.id_create.children[1].ids)
         composer_ids.ti.text = data[0][1]
         composer_ids.btn.text = data[0][1]
         composer_ids.txt_input.text = data[0][0]
