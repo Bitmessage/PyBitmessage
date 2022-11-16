@@ -309,6 +309,28 @@ class NavigateApp(MDApp):
         AppClosingPopup().open()
         return True
 
+    def clear_composer(self):
+        """If slow down, the new composer edit screen"""
+        self.set_navbar_for_composer()
+        composer_obj = self.root.ids.id_create.children[1].ids
+        composer_obj.ti.text = ''
+        composer_obj.composer_dropdown.text = 'Select'
+        composer_obj.txt_input.text = ''
+        composer_obj.subject.text = ''
+        composer_obj.body.text = ''
+        self.kivy_state_obj.in_composer = True
+        self.kivy_state_obj = False
+
+    def set_navbar_for_composer(self):
+        """Clearing toolbar data when composer open"""
+        self.root.ids.toolbar.left_action_items = [
+            ['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.toolbar.right_action_items = [
+            ['refresh',
+             lambda x: self.root.ids.id_create.children[1].reset_composer()],
+            ['send',
+             lambda x: self.root.ids.id_create.children[1].send(self)]]
+
     def set_identicon(self, text):
         """Show identicon in address spinner"""
         img = identiconGeneration.generate(text)

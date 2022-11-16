@@ -38,6 +38,7 @@
                         id: btn
                         background_color: app.theme_cls.primary_dark
                         values: app.identity_list
+                        on_text: root.auto_fill_fromaddr() if self.text != 'Select' else ''
                         option_cls: Factory.get("ComposerSpinnerOption")
                         background_normal: ''
                         background_color: app.theme_cls.primary_color
