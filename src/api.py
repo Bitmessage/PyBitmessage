@@ -39,17 +39,18 @@ To use the API concider such simple example:
 
 .. code-block:: python
 
-    import jsonrpclib
+    from jsonrpclib import jsonrpc
 
-    from pybitmessage import bmconfigparser, helper_startup
+    from pybitmessage import helper_startup
+    from pybitmessage.bmconfigparser import config
 
     helper_startup.loadConfig()  # find and load local config file
-    conf = bmconfigparser.BMConfigParser()
-    api_uri = "http://%s:%s@127.0.0.1:8442/" % (
-        conf.safeGet('bitmessagesettings', 'apiusername'),
-        conf.safeGet('bitmessagesettings', 'apipassword')
+    api_uri = "http://%s:%s@127.0.0.1:%s/" % (
+        config.safeGet('bitmessagesettings', 'apiusername'),
+        config.safeGet('bitmessagesettings', 'apipassword'),
+        config.safeGet('bitmessagesettings', 'apiport')
     )
-    api = jsonrpclib.ServerProxy(api_uri)
+    api = jsonrpc.ServerProxy(api_uri)
     print(api.clientStatus())
 
 
@@ -1445,8 +1446,8 @@ class BMRPCDispatcher(object):
     @command('listConnections')
     def HandleListConnections(self):
         """
-        Returns bitmessage connection information as dict with keys *inbound,
-        *outbound.
+        Returns bitmessage connection information as dict with keys *inbound*,
+        *outbound*.
         """
         inboundConnections = []
         outboundConnections = []
