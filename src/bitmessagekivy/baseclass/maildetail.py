@@ -31,8 +31,6 @@ from pybitmessage.bitmessagekivy.baseclass.common import (
 from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.helper_sql import sqlQuery
-from pybitmessage.helper_sent import delete, retrieve_message_details
-from pybitmessage.helper_inbox import trash
 
 
 class OneLineListTitle(OneLineListItem):
@@ -109,8 +107,6 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.page_type = self.kivy_state.detail_page_type if self.kivy_state.detail_page_type else ''
         try:
             if self.kivy_state.detail_page_type in ('sent', 'draft'):
-                data = retrieve_message_details(self.kivy_state.mail_id)
-                self.assign_mail_details(data)
                 App.get_running_app().set_mail_detail_header()
             elif self.kivy_state.detail_page_type == 'inbox':
                 data = sqlQuery(
@@ -148,14 +144,12 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.children[0].children[0].active = True
         if self.kivy_state.detail_page_type == 'sent':
             App.get_running_app().root.ids.id_sent.ids.sent_search.ids.search_field.text = ''
-            delete(self.kivy_state.mail_id)
             msg_count_objs.send_cnt.ids.badge_txt.text = str(int(self.kivy_state.sent_count) - 1)
             self.kivy_state.sent_count = str(int(self.kivy_state.sent_count) - 1)
             self.parent.screens[2].ids.ml.clear_widgets()
             self.parent.screens[2].loadSent(self.kivy_state.selected_address)
         elif self.kivy_state.detail_page_type == 'inbox':
             App.get_running_app().root.ids.id_inbox.ids.inbox_search.ids.search_field.text = ''
-            trash(self.kivy_state.mail_id)
             msg_count_objs.inbox_cnt.ids.badge_txt.text = str(
                 int(self.kivy_state.inbox_count) - 1)
             self.kivy_state.inbox_count = str(int(self.kivy_state.inbox_count) - 1)
@@ -163,7 +157,6 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             self.parent.screens[0].loadMessagelist(self.kivy_state.selected_address)
 
         elif self.kivy_state.detail_page_type == 'draft':
-            delete(self.kivy_state.mail_id)
             msg_count_objs.draft_cnt.ids.badge_txt.text = str(
                 int(self.kivy_state.draft_count) - 1)
             self.kivy_state.draft_count = str(int(self.kivy_state.draft_count) - 1)
@@ -215,9 +208,8 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
     def inbox_reply(self):
         """Reply inbox messages"""
         self.kivy_state.in_composer = True
-        data = retrieve_message_details(self.kivy_state.mail_id)
-        self.get_message_details_to_reply(data)
         App.get_running_app().root.ids.id_create.children[1].ids.rv.data = ''
+        App.get_running_app().root.ids.sc3.children[1].ids.rv.data = ''
         self.parent.current = 'create'
         App.get_running_app().set_navbar_for_composer()
 
@@ -234,8 +226,6 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
     def write_msg(self, navApp):
         """Write on draft mail"""
         self.kivy_state.send_draft_mail = self.kivy_state.mail_id
-        data = retrieve_message_details(self.kivy_state.mail_id)
-        self.get_message_details_for_draft_reply(data)
         self.parent.current = 'create'
         navApp.set_navbar_for_composer()
 

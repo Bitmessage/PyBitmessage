@@ -55,5 +55,10 @@
         "kv_string": "allmails",
         "name_screen": "allmails",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.allmail import Allmails"
+    },
+    "MailDetail": {
+        "kv_string": "maildetail",
+        "name_screen": "mailDetail",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.maildetail import MailDetail"
     }
 }
