@@ -50,5 +50,10 @@
     "Popups": {
         "kv_string": "popup",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.popup import *"
+    },
+    "All Mails": {
+        "kv_string": "allmails",
+        "name_screen": "allmails",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.allmail import Allmails"
     }
 }

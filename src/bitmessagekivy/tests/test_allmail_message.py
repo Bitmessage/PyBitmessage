@@ -6,7 +6,7 @@ from .common import ordered
 class AllMailMessage(TeleniumTestProcess):
     """AllMail Screen Functionality Testing"""
 
-    @skip_screen_checks
+    # @skip_screen_checks
     @ordered
     def test_show_allmail_list(self):
         """Show All Messages on Mail Screen/Window"""
