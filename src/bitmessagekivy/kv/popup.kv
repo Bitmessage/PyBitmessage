@@ -29,7 +29,7 @@
             required: True
             icon_right: 'label'
             helper_text_mode: "on_error"
-            on_text: root.checkLabel_valid(self)
+            # TODO: on_text: root.checkLabel_valid(self) is not used now but it will be used later
             canvas.before:
                 Color:
                     rgba: (0,0,0,1)
@@ -40,7 +40,7 @@
             icon_right: 'book-plus'
             helper_text_mode: "on_error"
             multiline: False
-            on_text: root.checkAddress_valid(self)
+            # TODO: on_text: root.checkAddress_valid(self) is not used now but it will be used later
             canvas.before:
                 Color:
                     rgba: (0,0,0,1)

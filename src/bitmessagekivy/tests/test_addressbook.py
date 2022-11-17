@@ -16,7 +16,7 @@ class AddressBook(TeleniumTestProcess):
     test_subject = 'Test Subject'
     test_body = 'Hey,This is draft Message Body from Address Book'
 
-    @skip_screen_checks
+    # @skip_screen_checks
     @ordered
     def test_save_address(self):
         """Saving a new Address On Address Book Screen/Window"""
@@ -28,78 +28,68 @@ class AddressBook(TeleniumTestProcess):
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
-        # this is for opening setting screen
+        # this is for opening addressbook screen
         self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=5)
         # Checking current screen
         self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
         # This is for checking the Side nav Bar is closed
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # Check for rendered button
-        self.assertExists('//MDActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
+        self.assertExists('//ActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
         # Click on "Account-Plus' Icon to open popup to save a new Address
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
+        self.cli.wait_click('//ActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
         # Checking the Label Field shows Validation for empty string
-        self.assertExists('//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"][@text=\"\"]', timeout=5)
+        self.assertExists('//AddAddressPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"][@text=\"\"]', timeout=5)
         # Checking the Address Field shows Validation for empty string
-        self.assertExists('//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"][@text=\"\"]', timeout=5)
-        # Click On save Button to check Field validation
-        self.cli.wait_click('//MDRaisedButton[@text=\"Save\"]', timeout=5)
+        self.assertExists('//AddAddressPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"][@text=\"\"]', timeout=5)
         # Add an address Label to label Field
-        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"]', 'text', self.test_label)
+        self.cli.setattr('//AddAddressPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"]', 'text', self.test_label)
         # Checking the Label Field should not be empty
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
-        # Add incorrect Address to Address Field to check validation
-        self.cli.setattr(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]',
-            'text', test_address['invalid_address'])
-        # Checking the Address Field should not be empty
-        self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['invalid_address']),
-            timeout=2)
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
         # Add Correct Address
         self.cli.setattr(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]', 'text',
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]', 'text',
             test_address['autoresponder_address'])
         # Checking the Address Field contains correct address
         self.assertEqual(
-            self.cli.getattr('//GrashofPopup/BoxLayout[0]/MDTextField[1][@text]', 'text'),
+            self.cli.getattr('//AddAddressPopup/BoxLayout[0]/MDTextField[1][@text]', 'text'),
             test_address['autoresponder_address'])
         # Validating the Label field
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
         # Validating the Valid Address is entered
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(
                 test_address['autoresponder_address']), timeout=3)
-        # Click on Save Button to save the address in address book
-        self.cli.wait_click('//MDRaisedButton[@text=\"Save\"]', timeout=2)
-        # Check Current Screen (Address Book)
+        # Checking cancel button
+        self.assertExists('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)
+        # Click on 'Cancel' Button to dismiss the popup
+        self.cli.wait_click('//MDRaisedButton[@text=\"Cancel\"]', timeout=2)
+        # Checking current screen
         self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
-        # Checking new address should be added
-        self.assertExists('//SwipeToDeleteItem', timeout=5)
 
     @skip_screen_checks
     @ordered
     def test_dismiss_addressbook_popup(self):
         """This method is to perform Dismiss add Address popup"""
         # Checking the "Address saving" Popup is not opened
-        self.assertNotExists('//GrashofPopup', timeout=5)
+        self.assertNotExists('//AddAddressPopup', timeout=5)
         # Checking the "Add account" Button is rendered
-        self.assertExists('//MDActionTopAppBarButton[@icon=\"account-plus\"]', timeout=6)
+        self.assertExists('//ActionTopAppBarButton[@icon=\"account-plus\"]', timeout=6)
         # Click on Account-Plus Icon to open popup for add Address
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
+        self.cli.wait_click('//ActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
         # Add Label to label Field
-        self.cli.setattr('//GrashofPopup/BoxLayout[0]/MDTextField[0]', 'text', 'test_label2')
+        self.cli.setattr('//AddAddressPopup/BoxLayout[0]/MDTextField[0]', 'text', 'test_label2')
         # Checking the Label Field should not be empty
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format('test_label2'), timeout=2)
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format('test_label2'), timeout=2)
         # Add Address to Address Field
         self.cli.setattr(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[1]', 'text', test_address['recipient'])
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[1]', 'text', test_address['recipient'])
         # Checking the Address Field should not be empty
         self.assertExists(
-            '//GrashofPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['recipient']),
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['recipient']),
             timeout=2)
         # Checking for "Cancel" button is rendered
         self.assertExists('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)

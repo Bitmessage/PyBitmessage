@@ -13,7 +13,6 @@ import os
 import logging
 from functools import partial
 
-from kivy.clock import Clock
 from kivy.properties import (
     ListProperty,
     StringProperty
@@ -49,12 +48,6 @@ class AddressBook(Screen, HelperAddressBook):
         super(AddressBook, self).__init__(*args, **kwargs)
         self.addbook_popup = None
         self.kivy_state = kivy_state_variables()
-        Clock.schedule_once(self.init_ui, 0)
-
-    def init_ui(self, dt=0):
-        """Clock Schdule for method AddressBook"""
-        self.loadAddresslist(None, 'All', '')
-        logger.debug(dt)
 
     def loadAddresslist(self, account, where="", what=""):
         """Clock Schdule for method AddressBook"""

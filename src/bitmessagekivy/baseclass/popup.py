@@ -58,7 +58,7 @@ class AddAddressPopup(BoxLayout):
     def checkAddress_valid(self, instance):
         """Checking address is valid or not"""
         my_addresses = (
-            App.get_running_app().root.ids.content_drawer.ids.btn.values)
+            App.get_running_app().root.ids.content_drawer.ids.identity_dropdown.values)
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()

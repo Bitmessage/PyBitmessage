@@ -47,6 +47,11 @@
         "name_screen": "trash",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.trash import Trash"
     },
+    "Address Book": {
+        "kv_string": "addressbook",
+        "name_screen": "addressbook",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.addressbook import AddressBook"
+    },
     "Popups": {
         "kv_string": "popup",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.popup import *"
