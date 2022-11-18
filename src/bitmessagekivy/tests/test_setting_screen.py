@@ -15,11 +15,11 @@ class SettingScreen(TeleniumTestProcess):
         # this is for scrolling Nav drawer
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
-        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
+        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=10)
         # this is for opening setting screen
-        self.cli.wait_click('//NavigationItem[@text=\"Settings\"]', timeout=3)
+        self.cli.wait_click('//NavigationItem[@text=\"Settings\"]', timeout=5)
         # Checking current screen
-        self.assertExists("//ScreenManager[@current=\"set\"]", timeout=3)
+        self.assertExists("//ScreenManager[@current=\"set\"]", timeout=5)
         # Scrolling down currrent screen
         self.cli.wait_drag(
             '//MDTabs[0]//MDLabel[@text=\"Close to tray\"]',
