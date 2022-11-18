@@ -92,7 +92,6 @@
                     BoxLayout:
                         size_hint_y: None
                         orientation: 'vertical'
-                        height: dp(100) + self.minimum_height
                         BoxLayout:
                             orientation: 'horizontal'
                             MDCheckbox:
@@ -106,7 +105,6 @@
                                 theme_text_color: 'Primary'
                                 text: app.tr._("Hide connection notifications")
                                 halign: 'left'
-                                pos_hint: {'x': 0, 'y': 0.2}
                         BoxLayout:
                             orientation: 'horizontal'
                             MDCheckbox:
@@ -120,21 +118,7 @@
                                 theme_text_color: 'Primary'
                                 text: app.tr._("Show notification when message received")
                                 halign: 'left'
-                                pos_hint: {'x': 0, 'y': 0.2}
-                        BoxLayout:
-                            orientation: 'horizontal'
-                            MDCheckbox:
-                                id: chkbox
-                                size_hint: None, None
-                                size: dp(48), dp(50)
-                                # active: True
-                                halign: 'center'
-                            MDLabel:
-                                font_style: 'Body1'
-                                theme_text_color: 'Primary'
-                                text: app.tr._("Run in Portable Mode")
-                                halign: 'left'
-                                pos_hint: {'x': 0, 'y': 0.2}
+                                
                     BoxLayout:
                         orientation: 'vertical'
                         MDLabel:
