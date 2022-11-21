@@ -153,7 +153,7 @@ class MyaddDetailPopup(BoxLayout):
         App.get_running_app().set_navbar_for_composer()
         window_obj = App.get_running_app().root.ids
         window_obj.id_create.children[1].ids.ti.text = self.address
-        window_obj.id_create.children[1].ids.btn.text = self.address
+        window_obj.id_create.children[1].ids.composer_dropdown.text = self.address
         window_obj.id_create.children[1].ids.txt_input.text = ''
         window_obj.id_create.children[1].ids.subject.text = ''
         window_obj.id_create.children[1].ids.body.text = ''

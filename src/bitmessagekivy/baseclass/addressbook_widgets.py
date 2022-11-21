@@ -44,7 +44,7 @@ class HelperAddressBook(object):
         if from_addr:
             window_obj.id_create.children[1].ids.txt_input.text = from_addr
         window_obj.id_create.children[1].ids.ti.text = ''
-        window_obj.id_create.children[1].ids.btn.text = 'Select'
+        window_obj.id_create.children[1].ids.composer_dropdown.text = 'Select'
         window_obj.id_create.children[1].ids.subject.text = ''
         window_obj.id_create.children[1].ids.body.text = ''
         window_obj.scr_mngr.current = 'create'

@@ -74,8 +74,8 @@ class Random(Screen):
                      if config.getboolean(str(addr), 'enabled')]
         self.manager.parent.ids.content_drawer.ids.identity_dropdown.values = []
         self.manager.parent.ids.content_drawer.ids.identity_dropdown.values = addresses
-        self.manager.parent.ids.id_create.children[1].ids.btn.values = []
-        self.manager.parent.ids.id_create.children[1].ids.btn.values = addresses
+        self.manager.parent.ids.id_create.children[1].ids.composer_dropdown.values = []
+        self.manager.parent.ids.id_create.children[1].ids.composer_dropdown.values = addresses
 
     @staticmethod
     def add_validation(instance):

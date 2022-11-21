@@ -48,8 +48,8 @@ class Create(Screen):
 
     def check_scroll_y(self, instance, somethingelse):  # pylint: disable=unused-argument
         """show data on scroll down"""
-        if self.children[1].ids.btn.is_open:
-            self.children[1].ids.btn.is_open = False
+        if self.children[1].ids.composer_dropdown.is_open:
+            self.children[1].ids.composer_dropdown.is_open = False
 
 
 class RV(RecycleView):
@@ -91,7 +91,7 @@ class DropDownWidget(BoxLayout):
     def reset_composer(self):
         """Method will reset composer"""
         self.ids.ti.text = ""
-        self.ids.btn.text = "Select"
+        self.ids.composer_dropdown.text = "Select"
         self.ids.txt_input.text = ""
         self.ids.subject.text = ""
         self.ids.body.text = ""
@@ -99,7 +99,7 @@ class DropDownWidget(BoxLayout):
 
     def auto_fill_fromaddr(self):
         """Fill the text automatically From Address"""
-        self.ids.ti.text = self.ids.btn.text
+        self.ids.ti.text = self.ids.composer_dropdown.text
         self.ids.ti.focus = True
 
     def is_camara_attached(self):
