@@ -422,6 +422,25 @@ class NavigateApp(MDApp):
         if self.root.ids.id_newidentity.ids.add_random_bx.children:
             self.root.ids.id_newidentity.ids.add_random_bx.clear_widgets()
 
+    def reset(self, *args):
+        """Set transition direction"""
+        self.root.ids.scr_mngr.transition.direction = 'left'
+        self.root.ids.scr_mngr.transition.unbind(on_complete=self.reset)
+
+    def back_press(self):
+        """Method for, reverting composer to previous page"""
+        if self.root.ids.scr_mngr.current == 'showqrcode':
+            self.set_common_header()
+            self.root.ids.scr_mngr.current = 'myaddress'
+        self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
+        self.kivy_state.in_composer = False
+
+    def set_toolbar_for_QrCode(self):
+        """This method is use for setting Qr code toolbar."""
+        self.root.ids.toolbar.left_action_items = [
+            ['arrow-left', lambda x: self.back_press()]]
+        self.root.ids.toolbar.right_action_items = []
+
     def set_common_header(self):
         """Common header for all the Screens"""
         self.root.ids.toolbar.right_action_items = [
