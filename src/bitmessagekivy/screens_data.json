@@ -70,5 +70,10 @@
         "kv_string": "draft",
         "name_screen": "draft",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.draft import Draft"
+    },
+    "Qrcode": {
+        "kv_string": "qrcode",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.qrcode import ShowQRCode"
     }
+  
 }
