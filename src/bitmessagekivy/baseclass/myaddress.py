@@ -161,7 +161,7 @@ class MyAddress(Screen, HelperMyAddress):
 
     def myadd_detail(self, fromaddress, label, *args):
         """Load myaddresses details"""
-        if config.get(fromaddress, 'enabled'):
+        if config.getboolean(fromaddress, 'enabled'):
             obj = MyaddDetailPopup()
             self.address_label = obj.address_label = label
             self.text_address = obj.address = fromaddress
