@@ -34,11 +34,8 @@ class PaymentScreen(TeleniumTestProcess):
         self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=3)
         # Click on BUY Button
         self.cli.wait_click('//MDRaisedButton[@text=\"BUY\"]', timeout=2)
-        # self.assertEqual('//PaymentMethodLayout[@disabled]', 'True') #Returns None when condition True
-        # CLick on the Payment Method
-        self.cli.click_on('//ScrollView[0]/ListItemWithLabel[0]')
-        # Check pop up is opened
-        self.assertTrue('//PaymentMethodLayout[@disabled]', 'False')
+        # assert check the buying option popup is closed
+        self.assertExists('//PaymentMethodLayout[@disabled=false]', timeout=5)
         # Click out side to dismiss the popup
         self.cli.wait_click('//MDRaisedButton[3]', timeout=2)
         # Checking Current screen(Payment screen)
