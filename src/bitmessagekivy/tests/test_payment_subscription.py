@@ -13,7 +13,7 @@ class PaymentScreen(TeleniumTestProcess):
         # Dragging from sent to inbox to get Payment tab
         self.drag("//NavigationItem[@text=\"Sent\"]", "//NavigationItem[@text=\"Inbox\"]")
         # assert for checking scroll function
-        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=3)
+        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
         # this is for opening Payment screen
         self.cli.wait_click('//NavigationItem[@text=\"Purchase\"]', timeout=5)
         # Checking the navbar is in closed state
@@ -25,18 +25,20 @@ class PaymentScreen(TeleniumTestProcess):
             '//ProductCategoryLayout[0]/ProductLayout[0]',
             '//ProductCategoryLayout[0]/ProductLayout[1]')
         # assert for checking scroll function
-        self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=3)
+        self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=5)
         # Scrolling Up Product list
         self.drag(
             '//ProductCategoryLayout[0]/ProductLayout[1]',
             '//ProductCategoryLayout[0]/ProductLayout[0]')
         # assert for checking scroll function
-        self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=3)
+        self.assertCheckScrollDown('//Payment//ScrollView[0]', timeout=5)
         # Click on BUY Button
-        self.cli.wait_click('//MDRaisedButton[@text=\"BUY\"]', timeout=2)
-        # assert check the buying option popup is closed
-        self.assertExists('//PaymentMethodLayout[@disabled=false]', timeout=5)
+        self.cli.wait_click('//MDRaisedButton[@text=\"BUY\"]', timeout=5)
+        # CLick on the Payment Method
+        self.cli.click_on('//ScrollView[0]//ListItemWithLabel[0]')
+        # Check pop up is opened
+        self.assertExists('//PaymentMethodLayout[@disabled=false]', timeout=10)
         # Click out side to dismiss the popup
-        self.cli.wait_click('//MDRaisedButton[3]', timeout=2)
+        self.cli.wait_click('//MDRaisedButton[5]', timeout=5)
         # Checking Current screen(Payment screen)
-        self.assertExists("//ScreenManager[@current=\"payment\"]", timeout=3)
+        self.assertExists("//ScreenManager[@current=\"payment\"]", timeout=5)

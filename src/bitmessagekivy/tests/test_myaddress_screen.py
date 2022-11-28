@@ -64,6 +64,11 @@ class MyAddressScreen(TeleniumTestProcess):
         )
         # Clicking on 'Ok' Button To Dismiss the popup
         self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
+        # Check the thumb button on address
+        self.assertExists(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn/Thumb",
+            timeout=5
+        )
         # Clicking on toggle button to enable the address
         self.cli.wait_click(
             "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn/Thumb",
@@ -72,7 +77,7 @@ class MyAddressScreen(TeleniumTestProcess):
         # Checking the address is enabled
         self.assertExists(
             "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn[@active=true]",
-            timeout=5
+            timeout=15
         )
         # Checking the current screen is MyAddress
         self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=5)
@@ -80,13 +85,16 @@ class MyAddressScreen(TeleniumTestProcess):
     @ordered
     def test_show_Qrcode(self):
         """Show the Qr code of selected address"""
-        # Checking labels from addresss list
-        first_label = self.cli.getattr('//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[1][@text]', 'text')
-        second_label = self.cli.getattr('//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[0][@text]', 'text')
         # Checking first label
-        self.assertEqual(first_label, 'test1')
+        self.assertExists(
+            '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[1][@text=\"test1\"]',
+            timeout=5
+        )
         # Checking second label
-        self.assertEqual(second_label, 'test2')
+        self.assertExists(
+            '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[0][@text=\"test2\"]',
+            timeout=5
+        )
         # Click on Address to open popup
         self.cli.wait_click('//MDList[0]/CustomTwoLineAvatarIconListItem[@text=\"test1\"]', timeout=5)
         # Check the Popup is opened
