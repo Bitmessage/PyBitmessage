@@ -54,7 +54,13 @@ class TeleniumTestProcess(TeleniumTestCase):
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
         # pylint: disable=no-member
-        super(TeleniumTestProcess, cls).tearDownClass()
+        try:
+            sleep(1)
+            cls.process.kill()
+        except:
+            # pylint: disable=bad-super-call
+            sleep(1)
+            super(TeleniumTestCase, cls).tearDownClass()
         cleanup()
 
     def assert_wait_no_except(self, selector, timeout=-1, value='inbox'):
