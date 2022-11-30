@@ -7,6 +7,16 @@ from bmconfigparser import config
 from singleton import Singleton
 
 
+def create_inventory_instance(backend="sqlite"):
+    """
+    Create an instance of the inventory class
+    defined in `storage.<backend>`.
+    """
+    return getattr(
+        getattr(storage, backend),
+        "{}Inventory".format(backend.title()))()
+
+
 @Singleton
 class Inventory():
     """
@@ -15,11 +25,7 @@ class Inventory():
     """
     def __init__(self):
         self._moduleName = config.safeGet("inventory", "storage")
-        self._inventoryClass = getattr(
-            getattr(storage, self._moduleName),
-            "{}Inventory".format(self._moduleName.title())
-        )
-        self._realInventory = self._inventoryClass()
+        self._realInventory = create_inventory_instance(self._moduleName)
         self.numberOfInventoryLookupsPerformed = 0
 
     # cheap inheritance copied from asyncore
