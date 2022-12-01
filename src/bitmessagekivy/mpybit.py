@@ -45,7 +45,7 @@ from pybitmessage.bitmessagekivy.baseclass.popup import (
 from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
 from pybitmessage.bitmessagekivy.uikivysignaler import UIkivySignaler
 
-from pybitmessage.mock.helper_startup import loadConfig
+from pybitmessage.mock.helper_startup import loadConfig, total_encrypted_messages_per_month
 
 logger = logging.getLogger('default')
 
@@ -93,6 +93,7 @@ class NavigateApp(MDApp):
     identity_list = get_identity_list()
     image_path = load_image_path()
     app_platform = platform
+    encrypted_messages_per_month = total_encrypted_messages_per_month()
     tr = Lang("en")  # for changing in franch replace en with fr
 
     def __init__(self):

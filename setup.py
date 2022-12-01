@@ -79,7 +79,8 @@ if __name__ == "__main__":
         'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
         'images/*.png', 'images/*.ico', 'images/*.icns',
         'bitmessagekivy/main.kv', 'bitmessagekivy/screens_data.json',
-        'bitmessagekivy/kv/*.kv'
+        'bitmessagekivy/kv/*.kv', 'images/kivy/payment/*.png', 'images/kivy/*.gif',
+        'images/kivy/text_images*.png'
     ]}
 
     if sys.version_info[0] == 3:

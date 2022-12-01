@@ -1,71 +1,144 @@
-#:import get_color_from_hex kivy.utils.get_color_from_hex
-
 <Payment>:
     name: "payment"
-    BoxLayout:
-        ScrollView:
-            bar_width:0
-            do_scroll_x: False
-            #scroll_y:0
-
+    id: id_payment_screen
+    payment_plan_id: ""
+    MDTabs:
+        id: tab_panel
+        tab_display_mode:'text'
+        Tab:
+            title: app.tr._("Payment")
+            id: id_payment plan
+            padding: "12dp"
+            spacing: "12dp"
             BoxLayout:
-                spacing: dp(8)
-                padding: dp(5)
-                size_hint_y: None
-                height: self.minimum_height
-                orientation: "vertical"
+                ScrollView:
+                    bar_width:0
+                    do_scroll_x: False
+                    BoxLayout:
+                        spacing: dp(5)
+                        padding: dp(5)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: "vertical"
+                        ProductCategoryLayout:
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "40dp"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                MDLabel:
+                                    text: f"You have {app.encrypted_messages_per_month} messages left"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                    pos_hint: {"center_x": .5, "center_y": .5}
 
-                ProductCategoryLayout:
-                    category_text: "Monthly-Subscriptions"
-
-                    ProductLayout:
-                        heading_text: "Gas (Play Billing Codelab)"
-                        price_text: "$0.99"
-                        source: app.image_path + "/payment/buynew1.png"
-                        description_text: "Buy gasoline to ride!"
-                        product_id: "SKUGASBILLING"
-                    
-                    ProductLayout:
-                        heading_text: "Upgrade your car (Play Billing Codelab)"
-                        price_text: "$1.49"
-                        source: app.image_path + "/payment/buynew1.png"
-                        description_text: "Buy a premium outfit for your car!"
-                        product_id: "SKUUPGRADECAR"
-                    
-                    ProductLayout:
-                        heading_text: "Month in gold status (Play Billing Codelab)"
-                        price_text: "$0.99"
-                        source: app.image_path + "/payment/buynew1.png"
-                        description_text: "Enjoy a gold status for a month!"
-                        product_id: "SKUMONTHLYGOLD"
-                
-                ProductCategoryLayout:
-                    category_text: "One-time payment"
-                    
-                    ProductLayout:
-                        heading_text: "Gas (Play Billing Codelab)"
-                        price_text: "$0.99"
-                        source: app.image_path + "/payment/buynew1.png"
-                        description_text: "Buy gasoline to ride!"
-                        product_id: "SKUONETIMEGAS"
-                    
-                ProductCategoryLayout:
-                    category_text: "Annual-Subscriptions"
-
-                    ProductLayout:
-                        heading_text: "Gas (Play Billing Codelab)"
-                        price_text: "$0.99"
-                        source: app.image_path + "/payment/buynew1.png"
-                        description_text: "Buy gasoline to ride!"
-                        product_id: "SKUANNUALGAS"
-                    
-                    ProductLayout:
-                        heading_text: "Year in gold status (Play Billing Codelab)"
-                        price_text: "$10.99"
-                        source: app.image_path + "/payment/buynew1.png"
-                        description_text: "Enjoy a gold status for a year!"
-                        product_id: "SKUANNUALGOLD"
-
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "300dp"
+                                md_bg_color: [1, 0.6, 0,0.5]
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                MDLabel:
+                                    text: "Free"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                MDRectangleFlatIconButton:
+                                    text: "[Currently this plan is active.]"
+                                    icon: 'shield-check'
+                                    line_color: 0, 0, 0, 0
+                                    text_color: 'ffffff'
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    font_size: '18sp'
+                                MDSeparator:
+                                    height: "1dp"
+                                MDLabel:
+                                    text: "You can get zero encrypted message per month"
+                                    halign:'center'
+                                    bold: True
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "300dp"
+                                md_bg_color:  [0, 0.6, 0.8,0.8]
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                payment_plan_id: "sub_standard"
+                                MDLabel:
+                                    text: "Standard"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                MDSeparator:
+                                    height: "1dp"
+                                MDLabel:
+                                    text: "You can get 100 encrypted message per month"
+                                    halign:'center'
+                                MDRaisedButton:
+                                    text: "Get it now"
+                                    theme_text_color: 'Primary'
+                                    md_bg_color:  [1, 1, 1,1]
+                                    pos_hint: {'center_x': .5}
+                                    on_release:app.open_payment_layout(root.payment_plan_id)
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "300dp"
+                                md_bg_color: [1, 0.6, 0.8,0.5]
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                payment_plan_id: "sub_premium"
+                                MDLabel:
+                                    text: "Premium"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                MDSeparator:
+                                    height: "1dp"
+                                MDLabel:
+                                    text: "You can get 1000 encrypted message per month"
+                                    halign:'center'
+                                MDRaisedButton:
+                                    text: "Get it now"
+                                    theme_text_color: 'Primary'
+                                    md_bg_color:  [1, 1, 1,1]
+                                    pos_hint: {'center_x': .5}
+                                    on_release:app.open_payment_layout(root.payment_plan_id)
+        Tab:
+            title: app.tr._("Extra-Messages")
+            id: id_payment_tab
+            BoxLayout:
+                ScrollView:
+                    bar_width:0
+                    do_scroll_x: False
+                    BoxLayout:
+                        spacing: dp(8)
+                        padding: dp(5)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: "vertical"
+                        ProductCategoryLayout:
+                            category_text: "Extra-Messages"
+                            ProductLayout:
+                                heading_text: "100 Encrypted messages "
+                                price_text: "$0.99"
+                                source: app.image_path + "/payment/buynew1.png"
+                                description_text: "Buy extra one hundred encrypted messages!"
+                                product_id: "SKUGASBILLING"
+                            ProductLayout:
+                                heading_text: "1000 Encrypted messages "
+                                price_text: "$1.49"
+                                source: app.image_path + "/payment/buynew1.png"
+                                description_text: "Buy extra one thousand encrypted messages!"
+                                product_id: "SKUUPGRADECAR"
 <ProductCategoryLayout@BoxLayout>:
     size_hint_y: None
     height: self.minimum_height
@@ -94,7 +167,6 @@
     MDLabel:
         text: root.text_
         font_size: sp(15) 
-
 <ProductLayout>:
     heading_text: ""
     price_text: ""
@@ -117,7 +189,6 @@
     #heading area
     BoxLayout:
         size_hint_y: 0.3
-        
         #text heading
         BoxLayout:
             Widget:
@@ -169,7 +240,6 @@
             MDLabel:
                 text: root.description_text
                 font_size: sp(15)
-    
     #Button Area
     BoxLayout:
         size_hint_y: 0.4
@@ -201,7 +271,7 @@
     RightLabel:
         text: root.right_label_text
         theme_text_color: "Custom"
-        text_color: 0,0,0,.4
+        text_color: 0,0,0,0.5
         font_size: sp(12)
 
 <PaymentMethodLayout>:
@@ -239,14 +309,16 @@
 
             ListItemWithLabel:
                 source: app.image_path + "/payment/btc.png"
-                text: "BTC"
+                text: "BTC (Currently this feature is not available)"
                 method_name: "btc"
-            
+                theme_text_color: 'Secondary'
+                md_bg_color:  [0, 0, 0,1]
             ListItemWithLabel:
                 source: app.image_path + "/payment/paypal.png"
-                text: "Paypal"
+                text: "Paypal (Currently this feature is not available)"
                 method_name: "som"
-            
+                theme_text_color: 'Secondary'
+                md_bg_color:  [0, 0, 0,1]
             ListItemWithLabel:
                 source: app.image_path + "/payment/buy.png"
                 text: "One more method"
