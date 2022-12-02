@@ -25,6 +25,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.assertExists('//NavigationItem[@text=\"My addresses\"]', timeout=5)
         # this is for opening setting screen
         self.cli.wait_click('//NavigationItem[@text=\"My addresses\"]', timeout=5)
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # Checking current screen
         self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=5)
 
@@ -36,6 +37,7 @@ class MyAddressScreen(TeleniumTestProcess):
             '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[@text=\"test2\"]',
             '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[@text=\"test1\"]'
         )
+        self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=10)
         # Checking list of Addresses
         self.assertExists("//MyAddress//CustomTwoLineAvatarIconListItem", timeout=5)
         # Checking the Toggle button is rendered on addresses
@@ -64,27 +66,17 @@ class MyAddressScreen(TeleniumTestProcess):
         )
         # Clicking on 'Ok' Button To Dismiss the popup
         self.cli.wait_click('//MDFlatButton[@text=\"Ok\"]', timeout=5)
-        # Check the thumb button on address
+        # Checking the address is disabled
         self.assertExists(
-            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn/Thumb",
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn[@active=false]",
             timeout=5
         )
-        # Clicking on toggle button to enable the address
-        self.cli.wait_click(
-            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn/Thumb",
-            timeout=5
-        )
-        # Checking the address is enabled
-        self.assertExists(
-            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn[@active=true]",
-            timeout=15
-        )
-        # Checking the current screen is MyAddress
-        self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=5)
 
     @ordered
     def test_show_Qrcode(self):
         """Show the Qr code of selected address"""
+        # Checking the current screen is MyAddress
+        self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=5)
         # Checking first label
         self.assertExists(
             '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[1][@text=\"test1\"]',
@@ -95,20 +87,66 @@ class MyAddressScreen(TeleniumTestProcess):
             '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[0][@text=\"test2\"]',
             timeout=5
         )
+        self.assertExists(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn[@active=false]",
+            timeout=5
+        )
+        self.assertExists(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test1\"]//ToggleBtn[@active=true]",
+            timeout=5
+        )
         # Click on Address to open popup
         self.cli.wait_click('//MDList[0]/CustomTwoLineAvatarIconListItem[@text=\"test1\"]', timeout=5)
         # Check the Popup is opened
         self.assertExists('//MyaddDetailPopup//MDLabel[@text=\"Show QR code\"]', timeout=5)
         # Cick on 'Show QR code' button to view QR Code
-        self.cli.wait_click('//MyaddDetailPopup//MDLabel[@text=\"Show QR code\"]')
+        self.cli.wait_click('//MyaddDetailPopup//MDLabel[@text=\"Show QR code\"]', timeout=5)
         # Check Current screen is QR Code screen
-        self.assertExists("//ShowQRCode[@name~=\"showqrcode\"]", timeout=2)
+        self.assertExists("//ShowQRCode[@name~=\"showqrcode\"]", timeout=5)
         # Check BACK button
         self.assertExists('//ActionTopAppBarButton[@icon~=\"arrow-left\"]', timeout=5)
         # Click on BACK button
         self.cli.wait_click('//ActionTopAppBarButton[@icon~=\"arrow-left\"]', timeout=5)
         # Checking current screen(My Address) after BACK press
         self.assertExists("//MyAddress[@name~=\"myaddress\"]", timeout=5)
+        # Checking first label
+        self.assertExists(
+            '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[1][@text=\"test1\"]',
+            timeout=5
+        )
+        # Checking second label
+        self.assertExists(
+            '//MyAddress//MDList[0]/CustomTwoLineAvatarIconListItem[0][@text=\"test2\"]',
+            timeout=5
+        )
+        self.cli.sleep(0.3)
+
+    @ordered
+    def test_enable_address(self):
+        """Test to enable the disabled address"""
+        # Checking list of Addresses
+        self.assertExists("//MyAddress//CustomTwoLineAvatarIconListItem", timeout=5)
+        # Check the thumb button on address
+        self.assertExists(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn/Thumb",
+            timeout=5
+        )
+        # Checking the address is disabled
+        self.assertExists(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn[@active=false]",
+            timeout=5
+        )
+        self.cli.sleep(0.3)
+        # Clicking on toggle button to enable the address
+        self.cli.wait_click(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn/Thumb",
+            timeout=10
+        )
+        # Checking the address is enabled
+        self.assertExists(
+            "//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]//ToggleBtn[@active=true]",
+            timeout=10
+        )
 
     @ordered
     def test_send_message_from(self):
@@ -128,9 +166,9 @@ class MyAddressScreen(TeleniumTestProcess):
         # Checking Popup Opened
         self.assertExists('//MyaddDetailPopup//MDLabel[@text=\"Send message from\"]', timeout=5)
         # Click on Send Message Button to redirect Create Screen
-        self.cli.wait_click('//MyaddDetailPopup//MDRaisedButton[0]/MDLabel[0]', timeout=2)
+        self.cli.wait_click('//MyaddDetailPopup//MDRaisedButton[0]/MDLabel[0]', timeout=5)
         # Checking Current screen(Create)
-        self.assertExists("//Create[@name~=\"create\"]", timeout=2)
+        self.assertExists("//Create[@name~=\"create\"]", timeout=5)
         # Entering Receiver Address
         self.cli.setattr(
             '//DropDownWidget/ScrollView[0]//MyTextInput[0]', "text", data[1])

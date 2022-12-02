@@ -12,7 +12,7 @@ class FileManagerOpening(TeleniumTestProcess):
         # Method to open side navbar
         self.open_side_navbar()
         # Click to open Address Dropdown
-        self.assertExists('//NavigationItem[0][@text=\"dropdown_nav_item\"]', timeout=2)
+        self.assertExists('//NavigationItem[0][@text=\"dropdown_nav_item\"]', timeout=5)
         self.assertExists(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
             '/IdentitySpinner[@name=\"identity_dropdown\"]', timeout=1
@@ -24,7 +24,7 @@ class FileManagerOpening(TeleniumTestProcess):
         )
         self.cli.wait(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
-            '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=2
+            '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=5
         )
         self.cli.wait_click(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'

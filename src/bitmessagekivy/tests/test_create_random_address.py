@@ -59,7 +59,7 @@ class CreateRandomAddress(TeleniumTestProcess):
             '//Random//RandomBoxlayout//MDTextField[@hint_text=\"Label\"]', timeout=1)
         # Click on Label Text Field to give address Label
         self.cli.wait_click(
-            '//Random//RandomBoxlayout//MDTextField[@hint_text=\"Label\"]', timeout=2)
+            '//Random//RandomBoxlayout//MDTextField[@hint_text=\"Label\"]', timeout=5)
         # Enter a Label Randomly
         random_label = ""
         for _ in range(10):
@@ -68,10 +68,10 @@ class CreateRandomAddress(TeleniumTestProcess):
             self.cli.sleep(0.1)
         # Checking the Button is rendered
         self.assertExists(
-            '//Random//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
+            '//Random//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
         # Click on Proceed Next button to generate random Address
         self.cli.wait_click(
-            '//Random//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=3)
+            '//Random//RandomBoxlayout//MDFillRoundFlatIconButton[@text=\"Proceed Next\"]', timeout=5)
         # Checking "My Address" Screen after creating a address
         self.assertExists("//ScreenManager[@current=\"myaddress\"]", timeout=5)
         # Checking the new address is created
@@ -85,7 +85,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         # This is for opening side navbar
         self.open_side_navbar()
         # Click to open Address Dropdown
-        self.assertExists('//NavigationItem[0][@text=\"dropdown_nav_item\"]', timeout=2)
+        self.assertExists('//NavigationItem[0][@text=\"dropdown_nav_item\"]', timeout=5)
         self.assertExists(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
             '/IdentitySpinner[@name=\"identity_dropdown\"]', timeout=1
@@ -96,7 +96,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         self.assertEqual(is_open, False)
         self.cli.wait(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
-            '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=2
+            '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=5
         )
         self.cli.wait_click(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
@@ -104,7 +104,7 @@ class CreateRandomAddress(TeleniumTestProcess):
         )
         if self.cli.wait(
             '//NavigationItem[0][@text=\"dropdown_nav_item\"]'
-                '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=2):
+                '/IdentitySpinner[@name=\"identity_dropdown\"][@state=\"normal\"]', timeout=5):
             sleep(0.2)
         # Check the state of dropdown.
         is_open = self.cli.getattr(

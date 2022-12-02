@@ -13,8 +13,9 @@ class TrashMessage(TeleniumTestProcess):
         # Method to open side navbar
         self.open_side_navbar()
         # this is for opening Trash screen
-        self.cli.wait_click('//NavigationItem[@text=\"Trash\"]', timeout=2)
+        self.cli.wait_click('//NavigationItem[@text=\"Trash\"]', timeout=5)
         # Checking the drawer is in 'closed' state
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # Checking Trash Screen
         self.assertExists("//ScreenManager[@current=\"trash\"]", timeout=5)
+        self.cli.sleep(0.5)

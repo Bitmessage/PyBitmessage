@@ -30,10 +30,10 @@ class AddressBook(TeleniumTestProcess):
         self.assertCheckScrollDown('//ContentNavigationDrawer//ScrollView[0]', timeout=5)
         # this is for opening addressbook screen
         self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=5)
-        # Checking current screen
-        self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
         # This is for checking the Side nav Bar is closed
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # Checking current screen
+        self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
         # Check for rendered button
         self.assertExists('//ActionTopAppBarButton[@icon=\"account-plus\"]', timeout=5)
         # Click on "Account-Plus' Icon to open popup to save a new Address
@@ -46,7 +46,7 @@ class AddressBook(TeleniumTestProcess):
         self.cli.setattr('//AddAddressPopup/BoxLayout[0]/MDTextField[@hint_text=\"Label\"]', 'text', self.test_label)
         # Checking the Label Field should not be empty
         self.assertExists(
-            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=5)
         # Add Correct Address
         self.cli.setattr(
             '//AddAddressPopup/BoxLayout[0]/MDTextField[@hint_text=\"Address\"]', 'text',
@@ -57,15 +57,15 @@ class AddressBook(TeleniumTestProcess):
             test_address['autoresponder_address'])
         # Validating the Label field
         self.assertExists(
-            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=2)
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format(self.test_label), timeout=5)
         # Validating the Valid Address is entered
         self.assertExists(
             '//AddAddressPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(
-                test_address['autoresponder_address']), timeout=3)
+                test_address['autoresponder_address']), timeout=5)
         # Checking cancel button
         self.assertExists('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)
         # Click on 'Cancel' Button to dismiss the popup
-        self.cli.wait_click('//MDRaisedButton[@text=\"Cancel\"]', timeout=2)
+        self.cli.wait_click('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)
         # Checking current screen
         self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
 
@@ -83,18 +83,18 @@ class AddressBook(TeleniumTestProcess):
         self.cli.setattr('//AddAddressPopup/BoxLayout[0]/MDTextField[0]', 'text', 'test_label2')
         # Checking the Label Field should not be empty
         self.assertExists(
-            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format('test_label2'), timeout=2)
+            '//AddAddressPopup/BoxLayout[0]/MDTextField[0][@text=\"{}\"]'.format('test_label2'), timeout=5)
         # Add Address to Address Field
         self.cli.setattr(
             '//AddAddressPopup/BoxLayout[0]/MDTextField[1]', 'text', test_address['recipient'])
         # Checking the Address Field should not be empty
         self.assertExists(
             '//AddAddressPopup/BoxLayout[0]/MDTextField[1][@text=\"{}\"]'.format(test_address['recipient']),
-            timeout=2)
+            timeout=5)
         # Checking for "Cancel" button is rendered
         self.assertExists('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)
         # Click on 'Cancel' Button to dismiss the popup
-        self.cli.wait_click('//MDRaisedButton[@text=\"Cancel\"]', timeout=2)
+        self.cli.wait_click('//MDRaisedButton[@text=\"Cancel\"]', timeout=5)
         # Check Current Screen (Address Book)
         self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=5)
 
@@ -103,13 +103,13 @@ class AddressBook(TeleniumTestProcess):
     def test_send_message_to_saved_address(self):
         """This method is to send msg to the saved address from addressbook"""
         # Checking the Message detail Dialog box is not opened
-        self.assertNotExists('//MDDialog', timeout=3)
+        self.assertNotExists('//MDDialog', timeout=5)
         # Checking the saved address is rendered
         self.assertExists('//AddressBook/BoxLayout[0]//SwipeToDeleteItem[0]', timeout=5)
         # Click on a Address to open address Details popup
         self.cli.wait_click('//AddressBook/BoxLayout[0]//SwipeToDeleteItem[0]', timeout=5)
         # Checking the Message detail Dialog is opened
-        self.assertExists('//MDDialog', timeout=3)
+        self.assertExists('//MDDialog', timeout=5)
         # Checking the buttons are rendered
         self.assertExists('//MDRaisedButton', timeout=5)
         # Click on the Send to message Button
@@ -132,9 +132,9 @@ class AddressBook(TeleniumTestProcess):
         # Method to open side navbar (written in telenium_process.py)
         self.open_side_navbar()
         # this is for opening setting screen
-        self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=2)
+        self.cli.wait_click('//NavigationItem[@text=\"Address Book\"]', timeout=5)
         # checking state of Nav drawer(closed)
-        self.assertExists("//MDNavigationDrawer[@state~=\"close\"]", timeout=2)
+        self.assertExists("//MDNavigationDrawer[@state~=\"close\"]", timeout=5)
         # Checking current screen
         self.assertExists("//ScreenManager[@current=\"addressbook\"]", timeout=8)
         # Checking the Address is rendered

@@ -78,7 +78,7 @@ class TeleniumTestProcess(TeleniumTestCase):
     def drag(self, xpath1, xpath2):
         """this method is for dragging"""
         self.cli.drag(xpath1, xpath2, 1)
-        self.cli.sleep(0.3)
+        self.cli.sleep(1)
 
     def assertCheckScrollDown(self, selector, timeout=-1):
         """this method is for checking scroll"""
@@ -92,7 +92,7 @@ class TeleniumTestProcess(TeleniumTestCase):
                 return False
             if timeout > 0 and time() - start > timeout:
                 raise Exception("Timeout")
-            sleep(0.1)
+            sleep(0.5)
 
     def assertCheckScrollUp(self, selector, timeout=-1):
         """this method is for checking scroll UP"""
@@ -106,7 +106,7 @@ class TeleniumTestProcess(TeleniumTestCase):
                 return False
             if timeout > 0 and time() - start > timeout:
                 raise Exception("Timeout")
-            sleep(0.1)
+            sleep(0.5)
 
     def open_side_navbar(self):
         """Common method for opening Side navbar (Side Drawer)"""
