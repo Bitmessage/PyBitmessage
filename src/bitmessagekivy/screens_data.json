@@ -74,6 +74,10 @@
     "Qrcode": {
         "kv_string": "qrcode",
         "Import": "from pybitmessage.bitmessagekivy.baseclass.qrcode import ShowQRCode"
+    },
+    "Chat": {
+        "kv_string": "chat",
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.chat import Chat"
     }
   
 }

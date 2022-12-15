@@ -161,6 +161,16 @@
                     on_press: app.load_screen(self)
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
+                    text: app.tr._('Chat')
+                NavigationItem:
+                    id: draft_cnt
+                    text: app.tr._('Chat')
+                    icon: 'chat'
+                    divider: None
+                    on_release: app.root.ids.scr_mngr.current = 'chat'
+                    on_release: root.parent.set_state()
+                NavigationDrawerDivider:
+                NavigationDrawerSubheader:
                     text: app.tr._("All labels")
                 NavigationItem:
                     text: app.tr._('Address Book')
@@ -248,6 +258,8 @@ MDNavigationLayout:
             id:id_addressbook
         ShowQRCode:
             id:id_showqrcode
+        Chat:
+            id: id_chat
 
     MDNavigationDrawer:
         id: nav_drawer
