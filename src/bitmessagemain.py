@@ -32,7 +32,6 @@ import traceback
 import defaults
 # Network subsystem
 import network
-import shared
 import shutdown
 import state
 
@@ -181,9 +180,6 @@ class Main(object):
         Inventory()  # init
 
         if state.enableObjProc:  # Not needed if objproc is disabled
-            shared.reloadMyAddressHashes()
-            shared.reloadBroadcastSendersForWhichImWatching()
-
             # Start the address generation thread
             addressGeneratorThread = addressGenerator()
             # close the main program even if there are threads left
