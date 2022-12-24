@@ -49,7 +49,7 @@ Encryption
     key_e as encryption key and the padded input text as payload. Call the
     output cipher text.
  9. Calculate a 32 byte MAC with HMACSHA256, using key_m as salt and
-    IV + R + cipher text as data. Call the output MAC.
+    IV + R [#f2]_ + cipher text as data. Call the output MAC.
 
 The resulting data is: IV + R + cipher text + MAC
 
@@ -252,3 +252,5 @@ Partial Example
 
 .. [#f1] The pyelliptic implementation used in PyBitmessage takes unpadded data,
 	 see :obj:`.pyelliptic.Cipher.ciphering`.
+.. [#f2] The pyelliptic encodes the pubkey with curve and length,
+	 see :obj:`.pyelliptic.ECC.get_pubkey`
