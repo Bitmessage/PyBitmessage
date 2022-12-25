@@ -129,11 +129,12 @@ Partial Example
 
        ::
 
-	  04
+	  02 ca 00 20
 	  02 93 21 3d  cf 13 88 b6
 	  1c 2a e5 cf  80 fe e6 ff
 	  ff c0 49 a2  f9 fe 73 65
 	  fe 38 67 81  3c a8 12 92
+	  00 20
 	  df 94 68 6c  6a fb 56 5a
 	  c6 14 9b 15  3d 61 b3 b2
 	  87 ee 2c 7f  99 7c 14 23
