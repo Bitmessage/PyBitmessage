@@ -9,6 +9,7 @@ import random
 import socket
 import time
 
+# magic imports!
 import addresses
 import helper_random
 import l10n
@@ -23,9 +24,9 @@ from tr import _translate
 import asyncore_pollchoose as asyncore
 import connectionpool
 import knownnodes
+from constants import MAX_OBJECT_COUNT
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
-from network.constants import MAX_OBJECT_COUNT
 from network.dandelion import Dandelion
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection

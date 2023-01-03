@@ -3,11 +3,12 @@ Announce myself (node address)
 """
 import time
 
+# magic imports!
 import state
 from bmconfigparser import config
 from protocol import assembleAddrMessage
-
 from network.connectionpool import BMConnectionPool
+
 from node import Peer
 from threads import StoppableThread
 

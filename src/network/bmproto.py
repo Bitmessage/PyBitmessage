@@ -11,6 +11,7 @@ import struct
 import time
 from binascii import hexlify
 
+# magic imports!
 import addresses
 import connectionpool
 import knownnodes
@@ -18,22 +19,24 @@ import protocol
 import state
 from bmconfigparser import config
 from inventory import Inventory
+from queues import invQueue, objectProcessorQueue, portCheckerQueue
+from randomtrackingdict import RandomTrackingDict
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
     BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError,
     BMObjectInsufficientPOWError, BMObjectInvalidError,
     BMObjectUnwantedStreamError
 )
-from network.constants import (
+from network.dandelion import Dandelion
+from network.proxy import ProxyError
+
+from constants import (
     ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
     MAX_OBJECT_PAYLOAD_SIZE, MAX_TIME_OFFSET
 )
-from network.dandelion import Dandelion
-from network.proxy import ProxyError
 from node import Node, Peer
 from objectracker import ObjectTracker, missingObjects
-from queues import invQueue, objectProcessorQueue, portCheckerQueue
-from randomtrackingdict import RandomTrackingDict
+
 
 logger = logging.getLogger('default')
 

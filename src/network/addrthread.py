@@ -3,13 +3,13 @@ Announce addresses as they are received from other hosts
 """
 from six.moves import queue
 
-
+# magic imports!
 import state
 from helper_random import randomshuffle
 from protocol import assembleAddrMessage
-
+from queues import addrQueue  # FIXME: init with queue
 from network.connectionpool import BMConnectionPool
-from queues import addrQueue
+
 from threads import StoppableThread
 
 
