@@ -39,7 +39,6 @@ class AnnounceThread(StoppableThread):
                     stream,
                     Peer(
                         '127.0.0.1',
-                        config.safeGetInt(
-                            'bitmessagesettings', 'port')),
-                    time.time())
+                        config.safeGetInt('bitmessagesettings', 'port')),
+                    int(time.time()))
                 connection.append_write_buf(assembleAddrMessage([addr]))
