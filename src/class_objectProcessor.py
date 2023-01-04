@@ -1033,7 +1033,7 @@ class objectProcessor(threading.Thread):
 
         magic, command, payloadLength, checksum = protocol.Header.unpack(
             ackData[:protocol.Header.size])
-        if magic != 0xE9BEB4D9:
+        if magic != protocol.magic:
             logger.info('Ackdata magic bytes were wrong. Not sending ackData.')
             return False
         payload = ackData[protocol.Header.size:]

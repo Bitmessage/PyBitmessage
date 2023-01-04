@@ -3,8 +3,6 @@
 from binascii import unhexlify
 
 
-magic = 0xE9BEB4D9
-
 # 500 identical peers:
 # 1626611891, 1, 1, 127.0.0.1, 8444
 sample_addr_data = unhexlify(

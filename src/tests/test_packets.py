@@ -5,7 +5,7 @@ from struct import pack
 
 from pybitmessage import addresses, protocol
 
-from .samples import magic, sample_addr_data
+from .samples import sample_addr_data
 from .test_protocol import TestSocketInet
 
 
@@ -45,7 +45,7 @@ class TestSerialize(TestSocketInet):
 
     def test_packet(self):
         """Check the packet created by protocol.CreatePacket()"""
-        head = unhexlify(b'%x' % magic)
+        head = unhexlify(b'%x' % protocol.magic)
         self.assertEqual(
             protocol.CreatePacket(b'ping')[:len(head)], head)
 

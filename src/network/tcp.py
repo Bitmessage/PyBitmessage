@@ -24,7 +24,6 @@ from tr import _translate
 import asyncore_pollchoose as asyncore
 import connectionpool
 import knownnodes
-from constants import MAX_OBJECT_COUNT
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
 from network.dandelion import Dandelion
@@ -247,7 +246,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             # Remove -1 below when sufficient time has passed for users to
             # upgrade to versions of PyBitmessage that accept inv with 50,000
             # items
-            if objectCount >= MAX_OBJECT_COUNT - 1:
+            if objectCount >= protocol.MAX_OBJECT_COUNT - 1:
                 sendChunk()
                 payload = b''
                 objectCount = 0
