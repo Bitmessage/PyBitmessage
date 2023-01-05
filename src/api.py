@@ -71,7 +71,6 @@ from struct import pack
 import six
 from six.moves import configparser, http_client, xmlrpc_server
 
-import defaults
 import helper_inbox
 import helper_sent
 import protocol
@@ -89,6 +88,9 @@ from addresses import (
 )
 from bmconfigparser import config
 from debug import logger
+from defaults import (
+    networkDefaultProofOfWorkNonceTrialsPerByte,
+    networkDefaultPayloadLengthExtraBytes)
 from helper_sql import (
     SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready)
 from highlevelcrypto import calculateInventoryHash
@@ -657,13 +659,11 @@ class BMRPCDispatcher(object):
         nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-            * totalDifficulty)
+            networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
         payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
-            defaults.networkDefaultPayloadLengthExtraBytes
-            * smallMessageDifficulty)
+            networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
 
         if not isinstance(eighteenByteRipe, bool):
             raise APIError(
@@ -705,13 +705,11 @@ class BMRPCDispatcher(object):
         nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-            * totalDifficulty)
+            networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
         payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
-            defaults.networkDefaultPayloadLengthExtraBytes
-            * smallMessageDifficulty)
+            networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
 
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
@@ -1286,15 +1284,21 @@ class BMRPCDispatcher(object):
 
     @command('disseminatePreEncryptedMsg')
     def HandleDisseminatePreEncryptedMsg(
-        self, encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte,
-            requiredPayloadLengthExtraBytes):
-        """Handle a request to disseminate an encrypted message"""
+        self, encryptedPayload,
+        nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
+        payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
+    ):
+        """
+        Handle a request to disseminate an encrypted message.
 
-        # The device issuing this command to PyBitmessage supplies a msg
-        # object that has already been encrypted but which still needs the POW
-        # to be done. PyBitmessage accepts this msg object and sends it out
-        # to the rest of the Bitmessage network as if it had generated
-        # the message itself. Please do not yet add this to the api doc.
+        The device issuing this command to PyBitmessage supplies a msg object
+        that has already been encrypted but which still needs the PoW
+        to be done. PyBitmessage accepts this msg object and sends it out
+        to the rest of the Bitmessage network as if it had generated
+        the message itself.
+
+        *encryptedPayload* is a hex encoded string
+        """
         encryptedPayload = b'\x00' * 8 + self._decode(encryptedPayload, "hex")
         # compatibility stub ^, since disseminatePreEncryptedMsg
         # still expects the encryptedPayload without a nonce
@@ -1304,12 +1308,10 @@ class BMRPCDispatcher(object):
         TTL = expiresTime - time.time() + 300  # a bit of extra padding
         # Let us do the POW and attach it to the front
         target = 2**64 / (
-            requiredAverageProofOfWorkNonceTrialsPerByte * (
-                len(encryptedPayload) + 8
-                + requiredPayloadLengthExtraBytes + ((
+            nonceTrialsPerByte * (
+                len(encryptedPayload) + 8 + payloadLengthExtraBytes + ((
                     TTL * (
-                        len(encryptedPayload) + 8
-                        + requiredPayloadLengthExtraBytes
+                        len(encryptedPayload) + 8 + payloadLengthExtraBytes
                     )) / (2 ** 16))
             ))
         logger.debug("expiresTime: %s", expiresTime)
@@ -1318,10 +1320,10 @@ class BMRPCDispatcher(object):
         logger.info(
             '(For msg message via API) Doing proof of work. Total  required'
             ' difficulty: %s\nRequired small message difficulty: %s',
-            float(requiredAverageProofOfWorkNonceTrialsPerByte)
-            / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-            float(requiredPayloadLengthExtraBytes)
-            / defaults.networkDefaultPayloadLengthExtraBytes,
+            float(nonceTrialsPerByte)
+            / networkDefaultProofOfWorkNonceTrialsPerByte,
+            float(payloadLengthExtraBytes)
+            / networkDefaultPayloadLengthExtraBytes,
         )
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
@@ -1365,8 +1367,8 @@ class BMRPCDispatcher(object):
 
         # Let us do the POW
         target = 2 ** 64 / ((
-            len(payload) + defaults.networkDefaultPayloadLengthExtraBytes + 8
-        ) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
+            len(payload) + networkDefaultPayloadLengthExtraBytes + 8
+        ) * networkDefaultProofOfWorkNonceTrialsPerByte)
         logger.info('(For pubkey message via API) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
