@@ -66,7 +66,7 @@ import socket
 import subprocess  # nosec B404
 import time
 from binascii import hexlify, unhexlify
-from struct import pack
+from struct import pack, unpack
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
@@ -1292,49 +1292,53 @@ class BMRPCDispatcher(object):
         Handle a request to disseminate an encrypted message.
 
         The device issuing this command to PyBitmessage supplies a msg object
-        that has already been encrypted but which still needs the PoW
+        that has already been encrypted but which may still need the PoW
         to be done. PyBitmessage accepts this msg object and sends it out
         to the rest of the Bitmessage network as if it had generated
         the message itself.
 
-        *encryptedPayload* is a hex encoded string
+        *encryptedPayload* is a hex encoded string starting with the nonce,
+        8 zero bytes in case of no PoW done.
         """
-        encryptedPayload = b'\x00' * 8 + self._decode(encryptedPayload, "hex")
-        # compatibility stub ^, since disseminatePreEncryptedMsg
-        # still expects the encryptedPayload without a nonce
+        encryptedPayload = self._decode(encryptedPayload, "hex")
+
+        nonce, = unpack('>Q', encryptedPayload[:8])
         objectType, toStreamNumber, expiresTime = \
             protocol.decodeObjectParameters(encryptedPayload)
-        encryptedPayload = encryptedPayload[8:]
-        TTL = expiresTime - time.time() + 300  # a bit of extra padding
-        # Let us do the POW and attach it to the front
-        target = 2**64 / (
-            nonceTrialsPerByte * (
-                len(encryptedPayload) + 8 + payloadLengthExtraBytes + ((
-                    TTL * (
-                        len(encryptedPayload) + 8 + payloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        logger.debug("expiresTime: %s", expiresTime)
-        logger.debug("TTL: %s", TTL)
-        logger.debug("objectType: %s", objectType)
-        logger.info(
-            '(For msg message via API) Doing proof of work. Total  required'
-            ' difficulty: %s\nRequired small message difficulty: %s',
-            float(nonceTrialsPerByte)
-            / networkDefaultProofOfWorkNonceTrialsPerByte,
-            float(payloadLengthExtraBytes)
-            / networkDefaultPayloadLengthExtraBytes,
-        )
-        powStartTime = time.time()
-        initialHash = hashlib.sha512(encryptedPayload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            '(For msg message via API) Found proof of work %s\nNonce: %s\n'
-            'POW took %s seconds. %s nonce trials per second.',
-            trialValue, nonce, int(time.time() - powStartTime),
-            nonce / (time.time() - powStartTime)
-        )
-        encryptedPayload = pack('>Q', nonce) + encryptedPayload
+
+        if nonce == 0:  # Let us do the POW and attach it to the front
+            encryptedPayload = encryptedPayload[8:]
+            TTL = expiresTime - time.time() + 300  # a bit of extra padding
+            # Let us do the POW and attach it to the front
+            logger.debug("expiresTime: %s", expiresTime)
+            logger.debug("TTL: %s", TTL)
+            logger.debug("objectType: %s", objectType)
+            logger.info(
+                '(For msg message via API) Doing proof of work. Total required'
+                ' difficulty: %s\nRequired small message difficulty: %s',
+                float(nonceTrialsPerByte)
+                / networkDefaultProofOfWorkNonceTrialsPerByte,
+                float(payloadLengthExtraBytes)
+                / networkDefaultPayloadLengthExtraBytes,
+            )
+            powStartTime = time.time()
+            target = 2**64 / (
+                nonceTrialsPerByte * (
+                    len(encryptedPayload) + 8 + payloadLengthExtraBytes + ((
+                        TTL * (
+                            len(encryptedPayload) + 8 + payloadLengthExtraBytes
+                        )) / (2 ** 16))
+                ))
+            initialHash = hashlib.sha512(encryptedPayload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            logger.info(
+                '(For msg message via API) Found proof of work %s\nNonce: %s\n'
+                'POW took %s seconds. %s nonce trials per second.',
+                trialValue, nonce, int(time.time() - powStartTime),
+                nonce / (time.time() - powStartTime)
+            )
+            encryptedPayload = pack('>Q', nonce) + encryptedPayload
+
         inventoryHash = calculateInventoryHash(encryptedPayload)
         Inventory()[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload,
