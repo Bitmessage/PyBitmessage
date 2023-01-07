@@ -1,5 +1,5 @@
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2022 The Bitmessage developers
+# Copyright (c) 2012-2023 The Bitmessage developers
 
 """
 This is not what you run to start the Bitmessage API.
