@@ -1282,8 +1282,8 @@ class BMRPCDispatcher(object):
             })
         return {'subscriptions': data}
 
-    @command('disseminatePreEncryptedMsg')
-    def HandleDisseminatePreEncryptedMsg(
+    @command('disseminatePreEncryptedMsg', 'disseminatePreparedObject')
+    def HandleDisseminatePreparedObject(
         self, encryptedPayload,
         nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
         payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
@@ -1291,9 +1291,9 @@ class BMRPCDispatcher(object):
         """
         Handle a request to disseminate an encrypted message.
 
-        The device issuing this command to PyBitmessage supplies a msg object
+        The device issuing this command to PyBitmessage supplies an object
         that has already been encrypted but which may still need the PoW
-        to be done. PyBitmessage accepts this msg object and sends it out
+        to be done. PyBitmessage accepts this object and sends it out
         to the rest of the Bitmessage network as if it had generated
         the message itself.
 
