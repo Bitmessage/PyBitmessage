@@ -517,7 +517,6 @@ Allows a node to advertise its knowledge of one or more objects. Payload
 | 32x?       | inventory   | inv_vect[] | Inventory vectors           |
 +------------+-------------+------------+-----------------------------+
 
-
 getdata
 ^^^^^^^
 
@@ -533,6 +532,50 @@ Payload (maximum payload length: 50000 entries):
 +------------+-------------+------------+-----------------------------+
 | 32x?       | inventory   | inv_vect[] | Inventory vectors           |
 +------------+-------------+------------+-----------------------------+
+
+error
+^^^^^
+.. note:: New in version 3
+
+This message may be silently ignored (and therefor handled like any other
+"unknown" message).
+
+The message is intended to inform the other node about protocol errors and
+can be used for debugging and improving code.
+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Field Size
+     - Description
+     - Data type
+     - Comments
+   * - 1+
+     - fatal
+     - |var_int|
+     - This qualifies the error. If set to 0, than its just a "warning".
+       You can expect, everything still worked fine. If set to 1, than
+       it's an error, so you may expect, something was going wrong
+       (e.g. an object got lost). If set to 2, it's a fatal error. The node
+       will drop the line for that error and maybe ban you for some time.
+   * - 1+
+     - ban time
+     - var_int
+     - If the error is fatal, you can specify the ban time in seconds, here.
+       You inform the other node, that you will not accept further connections
+       for this number of seconds. For non fatal errors this field has
+       no meaning and should be zero.
+   * - 1+
+     - inventory vector
+     - var_str
+     - If the error is related to an object, this Variable length string
+       contains the inventory vector of that object. If the error is not
+       related to an object, this string is empty.
+   * - 1+
+     - error text
+     - var_str
+     - A human readable string in English, which describes the error.
 
 
 object
@@ -586,6 +629,19 @@ type, like 'msg', or 'broadcast'. To be a valid object, the
      - objectPayload
      - uchar[]
      - This field varies depending on the object type; see below.
+
+
+Unsupported messages
+^^^^^^^^^^^^^^^^^^^^
+
+If a node receives an unknown message it **must** silently ignore it. This is
+for further extensions of the protocol with other messages. Nodes that don't
+understand such a new message type shall be able to work correct with the
+message types they understand.
+
+Maybe some version 2 nodes did already implement it that way, but in version 3
+it is **part of the protocol specification**, that a node **must**
+silently ignore unsupported messages.
 
 
 Object types
