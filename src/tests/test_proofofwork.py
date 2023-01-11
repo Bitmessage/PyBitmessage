@@ -1,13 +1,17 @@
 """
 Tests for proofofwork module
 """
+# pylint: disable=protected-access
 
 import hashlib
+import os
+import time
 import unittest
-from binascii import unhexlify
 from struct import pack, unpack
 
-from pybitmessage import proofofwork
+from pybitmessage import proofofwork, protocol
+
+from .samples import sample_pow_target, sample_pow_initial_hash
 
 
 class TestProofofwork(unittest.TestCase):
@@ -17,20 +21,26 @@ class TestProofofwork(unittest.TestCase):
     def setUpClass(cls):
         proofofwork.init()
 
-    def test_empty(self):
-        """just reproducing the empty test from proofofwork.init()"""
-        self.assertEqual(
-            proofofwork._doCPoW(2**63, ""), [6485065370652060397, 4])
+    def test_calculate(self):
+        """Ensure a calculated nonce has sufficient work for the protocol"""
+        TTL = 24 * 60 * 60
+        payload = pack('>Q', int(time.time() + TTL)) + os.urandom(166)
+        nonce = proofofwork.calculate(payload, TTL)[1]
+        self.assertTrue(
+            protocol.isProofOfWorkSufficient(pack('>Q', nonce) + payload))
+        # raise difficulty
+        nonce = proofofwork.calculate(payload, TTL, 2000, 2000)[1]
+        self.assertTrue(
+            protocol.isProofOfWorkSufficient(
+                pack('>Q', nonce) + payload, 2000, 2000,
+                int(time.time()) + TTL - 3600))
 
     def test_with_target(self):
         """Do PoW with parameters from test_openclpow and check the result"""
-        target = 54227212183
-        initialHash = unhexlify(
-            '3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590'
-            'b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3'
-        )
-        nonce = proofofwork._doCPoW(target, initialHash)[0]
-        trialValue, = unpack(
+        nonce = proofofwork._doCPoW(
+            sample_pow_target, sample_pow_initial_hash)[0]
+        trial_value, = unpack(
             '>Q', hashlib.sha512(hashlib.sha512(
-                pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
-        self.assertLess((nonce - trialValue), target)
+                pack('>Q', nonce) + sample_pow_initial_hash
+            ).digest()).digest()[0:8])
+        self.assertLess((nonce - trial_value), sample_pow_target)

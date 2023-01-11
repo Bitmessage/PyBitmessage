@@ -19,6 +19,10 @@ import state
 import tr
 from bmconfigparser import config
 from debug import logger
+from defaults import (
+    networkDefaultProofOfWorkNonceTrialsPerByte,
+    networkDefaultPayloadLengthExtraBytes)
+
 
 bitmsglib = 'bitmsghash.so'
 bmpow = None
@@ -339,6 +343,28 @@ def run(target, initialHash):
         raise
     except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
         pass  # fallback
+
+
+def getTarget(payloadLength, ttl, nonceTrialsPerByte, payloadLengthExtraBytes):
+    """Get PoW target for given length, ttl and difficulty params"""
+    return 2 ** 64 / (
+        nonceTrialsPerByte * (
+            payloadLength + 8 + payloadLengthExtraBytes + ((
+                ttl * (
+                    payloadLength + 8 + payloadLengthExtraBytes
+                )) / (2 ** 16))
+        ))
+
+
+def calculate(
+    payload, ttl,
+    nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
+    payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
+):
+    """Do the PoW for the payload and TTL with optional difficulty params"""
+    return run(getTarget(
+        len(payload), ttl, nonceTrialsPerByte, payloadLengthExtraBytes),
+        hashlib.sha512(payload).digest())
 
 
 def resetPoW():

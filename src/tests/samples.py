@@ -91,3 +91,12 @@ sample_privsigningkey_wif = \
     b'5K42shDERM5g7Kbi3JT5vsAWpXMqRhWZpX835M2pdSoqQQpJMYm'
 sample_privencryptionkey_wif = \
     b'5HwugVWm31gnxtoYcvcK7oywH2ezYTh6Y4tzRxsndAeMi6NHqpA'
+
+
+# PoW
+
+sample_pow_target = 54227212183
+sample_pow_initial_hash = unhexlify(
+    '3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590'
+    'b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3'
+)
