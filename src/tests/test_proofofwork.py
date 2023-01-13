@@ -14,21 +14,35 @@ from pybitmessage import proofofwork, protocol
 from .samples import sample_pow_target, sample_pow_initial_hash
 
 
-class TestProofofwork(unittest.TestCase):
-    """The main test case for proofofwork"""
+class TestProofofworkBase(unittest.TestCase):
+    """Basic test case for proofofwork"""
 
     @classmethod
     def setUpClass(cls):
         proofofwork.init()
 
+    @staticmethod
+    def _make_sample_payload(TTL=7200):
+        return pack('>Q', int(time.time() + TTL)) + os.urandom(166)
+
     def test_calculate(self):
         """Ensure a calculated nonce has sufficient work for the protocol"""
-        TTL = 24 * 60 * 60
-        payload = pack('>Q', int(time.time() + TTL)) + os.urandom(166)
-        nonce = proofofwork.calculate(payload, TTL)[1]
+        payload = self._make_sample_payload()
+        nonce = proofofwork.calculate(payload, 7200)[1]
         self.assertTrue(
             protocol.isProofOfWorkSufficient(pack('>Q', nonce) + payload))
-        # raise difficulty
+
+
+@unittest.skipUnless(
+    os.getenv('BITMESSAGE_TEST_POW'), "BITMESSAGE_TEST_POW is not set")
+class TestProofofwork(TestProofofworkBase):
+    """The main test case for proofofwork"""
+
+    def test_calculate(self):
+        """Extended test for the main proofofwork call"""
+        # raise difficulty and TTL
+        TTL = 24 * 60 * 60
+        payload = self._make_sample_payload(TTL)
         nonce = proofofwork.calculate(payload, TTL, 2000, 2000)[1]
         self.assertTrue(
             protocol.isProofOfWorkSufficient(
