@@ -1410,15 +1410,10 @@ class BMRPCDispatcher(object):
                 / networkDefaultPayloadLengthExtraBytes,
             )
             powStartTime = time.time()
-            target = 2**64 / (
-                nonceTrialsPerByte * (
-                    len(encryptedPayload) + 8 + payloadLengthExtraBytes + ((
-                        TTL * (
-                            len(encryptedPayload) + 8 + payloadLengthExtraBytes
-                        )) / (2 ** 16))
-                ))
-            initialHash = hashlib.sha512(encryptedPayload).digest()
-            trialValue, nonce = proofofwork.run(target, initialHash)
+            trialValue, nonce = proofofwork.calculate(
+                encryptedPayload, TTL,
+                nonceTrialsPerByte, payloadLengthExtraBytes
+            )
             logger.info(
                 '(For msg message via API) Found proof of work %s\nNonce: %s\n'
                 'POW took %s seconds. %s nonce trials per second.',
@@ -1429,9 +1424,7 @@ class BMRPCDispatcher(object):
 
         inventoryHash = calculateInventoryHash(encryptedPayload)
         state.Inventory[inventoryHash] = (
-            objectType, toStreamNumber, encryptedPayload,
-            expiresTime, b''
-        )
+            objectType, toStreamNumber, encryptedPayload, expiresTime, b'')
         logger.info(
             'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
             ' command): %s', hexlify(inventoryHash))

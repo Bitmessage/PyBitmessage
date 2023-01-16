@@ -217,24 +217,23 @@ class singleWorker(StoppableThread):
         return privSigningKeyHex, privEncryptionKeyHex, \
             pubSigningKey, pubEncryptionKey
 
-    def _doPOWDefaults(self, payload, TTL,
-                       log_prefix='',
-                       log_time=False):
-        target = 2 ** 64 / (
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8
-                + defaults.networkDefaultPayloadLengthExtraBytes + ((
-                    TTL * (
-                        len(payload) + 8
-                        + defaults.networkDefaultPayloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        initialHash = hashlib.sha512(payload).digest()
+    def _doPOWDefaults(
+        self, payload, TTL,
+        nonceTrialsPerByte=None, payloadLengthExtraBytes=None,
+        log_prefix='', log_time=False
+    ):
+        if not nonceTrialsPerByte:
+            nonceTrialsPerByte = \
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+        if not payloadLengthExtraBytes:
+            payloadLengthExtraBytes = \
+                defaults.networkDefaultPayloadLengthExtraBytes
         self.logger.info(
             '%s Doing proof of work... TTL set to %s', log_prefix, TTL)
         if log_time:
             start_time = time.time()
-        trialValue, nonce = proofofwork.run(target, initialHash)
+        trialValue, nonce = proofofwork.calculate(
+            payload, TTL, nonceTrialsPerByte, payloadLengthExtraBytes)
         self.logger.info(
             '%s Found proof of work %s Nonce: %s',
             log_prefix, trialValue, nonce
@@ -245,8 +244,8 @@ class singleWorker(StoppableThread):
                 'PoW took %.1f seconds, speed %s.',
                 delta, sizeof_fmt(nonce / delta)
             )
-        except:  # noqa:E722  # NameError
-            self.logger.warning("Proof of Work exception")
+        except NameError:  # no start_time - no logging
+            pass
         payload = pack('>Q', nonce) + payload
         return payload
 
@@ -1250,41 +1249,13 @@ class singleWorker(StoppableThread):
             encryptedPayload += '\x00\x00\x00\x02'  # object type: msg
             encryptedPayload += encodeVarint(1)  # msg version
             encryptedPayload += encodeVarint(toStreamNumber) + encrypted
-            target = 2 ** 64 / (
-                requiredAverageProofOfWorkNonceTrialsPerByte * (
-                    len(encryptedPayload) + 8
-                    + requiredPayloadLengthExtraBytes + ((
-                        TTL * (
-                            len(encryptedPayload) + 8
-                            + requiredPayloadLengthExtraBytes
-                        )) / (2 ** 16))
-                ))
-            self.logger.info(
-                '(For msg message) Doing proof of work. Total required'
-                ' difficulty: %f. Required small message difficulty: %f.',
-                float(requiredAverageProofOfWorkNonceTrialsPerByte)
-                / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-                float(requiredPayloadLengthExtraBytes)
-                / defaults.networkDefaultPayloadLengthExtraBytes
-            )
 
-            powStartTime = time.time()
-            initialHash = hashlib.sha512(encryptedPayload).digest()
-            trialValue, nonce = proofofwork.run(target, initialHash)
-            self.logger.info(
-                '(For msg message) Found proof of work %s Nonce: %s',
-                trialValue, nonce
+            encryptedPayload = self._doPOWDefaults(
+                encryptedPayload, TTL,
+                requiredAverageProofOfWorkNonceTrialsPerByte,
+                requiredPayloadLengthExtraBytes,
+                log_prefix='(For msg message)', log_time=True
             )
-            try:
-                self.logger.info(
-                    'PoW took %.1f seconds, speed %s.',
-                    time.time() - powStartTime,
-                    sizeof_fmt(nonce / (time.time() - powStartTime))
-                )
-            except:  # noqa:E722
-                self.logger.warning("Proof of Work exception")
-
-            encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
             # Sanity check. The encryptedPayload size should never be
             # larger than 256 KiB. There should be checks elsewhere
