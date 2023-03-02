@@ -7,17 +7,18 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     build-essential libcap-dev libssl-dev \
     python-all-dev python-setuptools wget \
     git gtk-update-icon-cache \
-    binutils-multiarch crossbuild-essential-armhf
+    binutils-multiarch crossbuild-essential-armhf crossbuild-essential-arm64
 
 RUN dpkg --add-architecture armhf
+RUN dpkg --add-architecture arm64
 
 RUN sed -iE "s|deb |deb [arch=amd64] |g" /etc/apt/sources.list \
-    && echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ bionic main universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ bionic-updates main universe" >> /etc/apt/sources.list
+    && echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ bionic main universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ bionic-updates main universe" >> /etc/apt/sources.list
 
 RUN apt-get update | true
 
-RUN apt-get install -yq libssl-dev:armhf
+RUN apt-get install -yq libssl-dev:armhf libssl-dev:arm64
 
 RUN wget -qO appimage-builder-x86_64.AppImage \
     https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.1.0/appimage-builder-1.1.0-x86_64.AppImage

@@ -27,8 +27,18 @@ set_sourceline
 ./${BUILDER} --recipe ${RECIPE} || exit 1
 
 export ARCH=armhf
+export APPIMAGE_ARCH=${ARCH}
 export RUNTIME=gnueabihf
 export CC=arm-linux-gnueabihf-gcc
+export CXX=${CC}
+set_sourceline
+
+./${BUILDER} --recipe ${RECIPE} || exit 1
+
+export ARCH=arm64
+export APPIMAGE_ARCH=aarch64
+export RUNTIME=${APPIMAGE_ARCH}
+export CC=aarch64-linux-gnu-gcc
 export CXX=${CC}
 set_sourceline
 
