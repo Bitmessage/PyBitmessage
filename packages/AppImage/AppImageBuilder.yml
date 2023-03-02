@@ -2,7 +2,7 @@ version: 1
 script:
   # Remove any previous build
   - rm -rf AppDir  | true
-  - CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-gcc python setup.py install --prefix=/usr --root=AppDir
+  - python setup.py install --prefix=/usr --root=AppDir
 
 AppDir:
   path: ./AppDir
@@ -11,7 +11,7 @@ AppDir:
     id: pybitmessage
     name: PyBitmessage
     icon: pybitmessage
-    version: 0.6.3.2
+    version: !ENV ${APP_VERSION}
     # Set the python executable as entry point
     exec: usr/bin/python
     # Set the application main script path as argument.
@@ -22,9 +22,9 @@ AppDir:
     - sed -i "s|GTK_.*||g" AppDir/AppRun.env
 
   apt:
-    arch: armhf
+    arch: !ENV '${ARCH}'
     sources:
-      - sourceline: 'deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ bionic main universe'
+      - sourceline: !ENV '${SOURCELINE}'
         key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3b4fe6acc0b21f32'
 
     include:
@@ -67,7 +67,7 @@ AppDir:
       - usr/share/doc
 
   runtime:
-    arch: [ gnueabihf ]
+    arch: [ !ENV '${RUNTIME}' ]
     env:
       # Set python home
       # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
@@ -77,4 +77,4 @@ AppDir:
       PYTHONPATH: '${APPDIR}/usr/lib/python2.7/site-packages'
 
 AppImage:
-  arch: armhf
+  arch: !ENV '${APPIMAGE_ARCH}'

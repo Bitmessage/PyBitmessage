@@ -19,4 +19,7 @@ RUN apt-get update | true
 
 RUN apt-get install -yq libssl-dev:armhf
 
+RUN wget -qO appimage-builder-x86_64.AppImage \
+    https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.1.0/appimage-builder-1.1.0-x86_64.AppImage
+
 ADD . .
