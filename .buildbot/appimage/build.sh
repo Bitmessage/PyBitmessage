@@ -4,7 +4,7 @@ export APPIMAGE_EXTRACT_AND_RUN=1
 BUILDER=appimage-builder-x86_64.AppImage
 RECIPE=packages/AppImage/AppImageBuilder.yml
 
-export APP_VERSION=$(python setup.py --version)
+export APP_VERSION=$(git describe --tags | cut -d- -f1,3 | tr -d v)
 
 function set_sourceline {
     if [ ${ARCH} == amd64 ]; then
