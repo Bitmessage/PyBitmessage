@@ -334,7 +334,7 @@ class BMConnectionPool(object):
 
                     self._lastSpawned = time.time()
         else:
-            for i in self.connections():
+            for i in self.outboundConnections.values():
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
 
