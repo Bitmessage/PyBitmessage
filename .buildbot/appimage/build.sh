@@ -45,4 +45,4 @@ set_sourceline
 ./${BUILDER} --recipe ${RECIPE}
 
 mkdir -p ../out
-mv PyBitmessage*.AppImage ../out
+cp PyBitmessage*.AppImage ../out
