@@ -2,7 +2,6 @@
 Module for using filesystem (directory with files) for inventory storage
 """
 import logging
-import string
 import time
 from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
@@ -71,7 +70,7 @@ class FilesystemInventory(InventoryStorage):
                 makedirs(path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashval)))
+                    hexlify(hashval).decode()))
             except OSError:
                 pass
             try:
@@ -79,7 +78,7 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval),
+                        hexlify(hashval).decode(),
                         FilesystemInventory.metadataFilename,
                     ),
                     "w",
@@ -88,15 +87,15 @@ class FilesystemInventory(InventoryStorage):
                         value.type,
                         value.stream,
                         value.expires,
-                        hexlify(value.tag)))
+                        hexlify(value.tag).decode()))
                 with open(
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval),
+                        hexlify(hashval).decode(),
                         FilesystemInventory.dataFilename,
                     ),
-                    "w",
+                    "wb",
                 ) as f:
                     f.write(value.payload)
             except IOError:
@@ -120,7 +119,7 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval),
+                        hexlify(hashval).decode(),
                         FilesystemInventory.metadataFilename))
             except IOError:
                 pass
@@ -129,7 +128,7 @@ class FilesystemInventory(InventoryStorage):
                     path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval),
+                        hexlify(hashval).decode(),
                         FilesystemInventory.dataFilename))
             except IOError:
                 pass
@@ -137,7 +136,7 @@ class FilesystemInventory(InventoryStorage):
                 rmdir(path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashval)))
+                    hexlify(hashval).decode()))
             except IOError:
                 pass
 
@@ -189,7 +188,7 @@ class FilesystemInventory(InventoryStorage):
                 path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashId),
+                    hexlify(hashId).decode(),
                     FilesystemInventory.dataFilename,
                 ),
                 "r",
@@ -205,13 +204,13 @@ class FilesystemInventory(InventoryStorage):
                 path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashId),
+                    hexlify(hashId).decode(),
                     FilesystemInventory.metadataFilename,
                 ),
                 "r",
             ) as f:
-                objectType, streamNumber, expiresTime, tag = string.split(
-                    f.read(), ",", 4)[:4]
+                objectType, streamNumber, expiresTime, tag = f.read().split(
+                    ",", 4)[:4]
                 return [
                     int(objectType),
                     int(streamNumber),
