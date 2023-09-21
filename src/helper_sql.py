@@ -33,6 +33,8 @@ sql_available = False
 sql_ready = threading.Event()
 """set by `.threads.sqlThread` when ready for processing (after
    initialization is done)"""
+sql_timeout = 60
+"""timeout for waiting for sql_ready in seconds"""
 
 
 def sqlQuery(sql_statement, *args):

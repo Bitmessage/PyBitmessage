@@ -6,6 +6,7 @@ processes the network objects
 # pylint: disable=too-many-branches,too-many-statements
 import hashlib
 import logging
+import os
 import random
 import subprocess  # nosec B404
 import threading
@@ -28,7 +29,8 @@ from addresses import (
 )
 from bmconfigparser import config
 from fallback import RIPEMD160Hash
-from helper_sql import sql_ready, SqlBulkExecute, sqlExecute, sqlQuery
+from helper_sql import (
+    sql_ready, sql_timeout, SqlBulkExecute, sqlExecute, sqlQuery)
 from network import bmproto, knownnodes
 from network.node import Peer
 from tr import _translate
@@ -44,7 +46,9 @@ class objectProcessor(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")
         random.seed()
-        sql_ready.wait()
+        if sql_ready.wait(sql_timeout) is False:
+            logger.fatal('SQL thread is not started in %s sec', sql_timeout)
+            os._exit(1)
         shared.reloadMyAddressHashes()
         shared.reloadBroadcastSendersForWhichImWatching()
         # It may be the case that the last time Bitmessage was running,
