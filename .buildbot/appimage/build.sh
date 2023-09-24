@@ -45,4 +45,5 @@ set_sourceline
 ./${BUILDER} --recipe ${RECIPE}
 
 mkdir -p ../out
+sha256sum PyBitmessage*.AppImage > ../out/SHA256SUMS
 cp PyBitmessage*.AppImage ../out
