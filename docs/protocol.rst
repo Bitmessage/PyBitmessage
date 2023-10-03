@@ -92,7 +92,7 @@ Variable length integer
 
 Integer can be encoded depending on the represented value to save space.
 Variable length integers always precede an array/vector of a type of data that
-may vary in length. Varints MUST use the minimum possible number of bytes to
+may vary in length. Varints **must** use the minimum possible number of bytes to
 encode a value. For example, the value 6 can be encoded with one byte therefore
 a varint that uses three bytes to encode the value 6 is malformed and the
 decoding task must be aborted.
@@ -480,12 +480,13 @@ only a :ref:`message header <Message structure>` with the command string
 "verack". The TCP timeout starts out at 20 seconds; after verack messages are
 exchanged, the timeout is raised to 10 minutes.
 
-If both sides announce that they support SSL, they MUST perform a SSL handshake
-immediately after they both send and receive verack. During this SSL handshake,
-the TCP client acts as a SSL client, and the TCP server acts as a SSL server.
-The current implementation (v0.5.4 or later) requires the AECDH-AES256-SHA
-cipher over TLSv1 protocol, and prefers the secp256k1 curve (but other curves
-may be accepted, depending on the version of python and OpenSSL used).
+If both sides announce that they support SSL, they **must** perform an SSL
+handshake immediately after they both send and receive verack. During this SSL
+handshake, the TCP client acts as an SSL client, and the TCP server acts as an
+SSL server. The current implementation (v0.5.4 or later) requires the
+AECDH-AES256-SHA cipher over TLSv1 protocol, and prefers the secp256k1 curve
+(but other curves may be accepted, depending on the version of python and
+OpenSSL used).
 
 addr
 ^^^^
