@@ -5,7 +5,8 @@ from struct import pack
 
 from pybitmessage import addresses, protocol
 
-from .samples import sample_addr_data
+from .samples import (
+    sample_addr_data, sample_object_data, sample_object_expires)
 from .test_protocol import TestSocketInet
 
 
@@ -48,6 +49,14 @@ class TestSerialize(TestSocketInet):
         head = unhexlify(b'%x' % protocol.magic)
         self.assertEqual(
             protocol.CreatePacket(b'ping')[:len(head)], head)
+
+    def test_decode_obj_parameters(self):
+        """Check parameters decoded from a sample object"""
+        objectType, toStreamNumber, expiresTime = \
+            protocol.decodeObjectParameters(sample_object_data)
+        self.assertEqual(objectType, 42)
+        self.assertEqual(toStreamNumber, 2)
+        self.assertEqual(expiresTime, sample_object_expires)
 
     def test_encodehost(self):
         """Check the result of protocol.encodeHost()"""

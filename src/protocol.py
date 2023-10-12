@@ -436,6 +436,17 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
 # Packet decoding
 
 
+def decodeObjectParameters(data):
+    """Decode the parameters of a raw object needed to put it in inventory"""
+    # BMProto.decode_payload_content("QQIvv")
+    expiresTime = unpack('>Q', data[8:16])[0]
+    objectType = unpack('>I', data[16:20])[0]
+    parserPos = 20 + decodeVarint(data[20:30])[1]
+    toStreamNumber = decodeVarint(data[parserPos:parserPos + 10])[0]
+
+    return objectType, toStreamNumber, expiresTime
+
+
 def decryptAndCheckPubkeyPayload(data, address):
     """
     Version 4 pubkeys are encrypted. This function is run when we

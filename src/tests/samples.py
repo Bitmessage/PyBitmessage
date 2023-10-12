@@ -54,3 +54,12 @@ sample_subscription_addresses = [
     'BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq',
     'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw']
 sample_subscription_name = 'test sub'
+
+
+sample_object_expires = 1712271487
+# from minode import structure
+# obj = structure.Object(
+#     b'\x00' * 8, sample_object_expires, 42, 1, 2, b'HELLO')
+# .. do pow and obj.to_bytes()
+sample_object_data = unhexlify(
+    '00000000001be7fc00000000660f307f0000002a010248454c4c4f')
