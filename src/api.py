@@ -66,7 +66,7 @@ import socket
 import subprocess  # nosec B404
 import time
 from binascii import hexlify, unhexlify
-from struct import pack, unpack
+from struct import pack
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
@@ -74,6 +74,7 @@ from six.moves import configparser, http_client, xmlrpc_server
 import defaults
 import helper_inbox
 import helper_sent
+import protocol
 import proofofwork
 import queues
 import shared
@@ -1284,7 +1285,7 @@ class BMRPCDispatcher(object):
         return {'subscriptions': data}
 
     @command('disseminatePreEncryptedMsg')
-    def HandleDisseminatePreEncryptedMsg(  # pylint: disable=too-many-locals
+    def HandleDisseminatePreEncryptedMsg(
         self, encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte,
             requiredPayloadLengthExtraBytes):
         """Handle a request to disseminate an encrypted message"""
@@ -1294,9 +1295,12 @@ class BMRPCDispatcher(object):
         # to be done. PyBitmessage accepts this msg object and sends it out
         # to the rest of the Bitmessage network as if it had generated
         # the message itself. Please do not yet add this to the api doc.
-        encryptedPayload = self._decode(encryptedPayload, "hex")
-        expiresTime = unpack('>Q', encryptedPayload[0:8])[0]
-        objectType = unpack('>I', encryptedPayload[8:12])[0]
+        encryptedPayload = b'\x00' * 8 + self._decode(encryptedPayload, "hex")
+        # compatibility stub ^, since disseminatePreEncryptedMsg
+        # still expects the encryptedPayload without a nonce
+        objectType, toStreamNumber, expiresTime = \
+            protocol.decodeObjectParameters(encryptedPayload)
+        encryptedPayload = encryptedPayload[8:]
         TTL = expiresTime - time.time() + 300  # a bit of extra padding
         # Let us do the POW and attach it to the front
         target = 2**64 / (
@@ -1329,12 +1333,6 @@ class BMRPCDispatcher(object):
             nonce / (time.time() - powStartTime)
         )
         encryptedPayload = pack('>Q', nonce) + encryptedPayload
-        parserPos = 20
-        _, objectVersionLength = decodeVarint(
-            encryptedPayload[parserPos:parserPos + 10])
-        parserPos += objectVersionLength
-        toStreamNumber, _ = decodeVarint(
-            encryptedPayload[parserPos:parserPos + 10])
         inventoryHash = calculateInventoryHash(encryptedPayload)
         Inventory()[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload,
