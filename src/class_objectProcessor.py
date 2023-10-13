@@ -31,7 +31,8 @@ from bmconfigparser import config
 from fallback import RIPEMD160Hash
 from helper_sql import (
     sql_ready, sql_timeout, SqlBulkExecute, sqlExecute, sqlQuery)
-from network import bmproto, knownnodes
+from inventory import Inventory
+from network import knownnodes
 from network.node import Peer
 from tr import _translate
 
@@ -64,7 +65,6 @@ class objectProcessor(threading.Thread):
         logger.debug(
             'Loaded %s objects from disk into the objectProcessorQueue.',
             len(queryreturn))
-        self._ack_obj = bmproto.BMStringParser()
         self.successfullyDecryptMessageTimings = []
 
     def run(self):
@@ -733,7 +733,13 @@ class objectProcessor(threading.Thread):
             and not config.safeGetBoolean(toAddress, 'dontsendack')
             and not config.safeGetBoolean(toAddress, 'chan')
         ):
-            self._ack_obj.send_data(ackData[24:])
+            ackPayload = ackData[24:]
+            objectType, toStreamNumber, expiresTime = \
+                protocol.decodeObjectParameters(ackPayload)
+            inventoryHash = calculateInventoryHash(ackPayload)
+            Inventory()[inventoryHash] = (
+                objectType, toStreamNumber, ackPayload, expiresTime, b'')
+            queues.invQueue.put((toStreamNumber, inventoryHash))
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(

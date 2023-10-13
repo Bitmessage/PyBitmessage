@@ -9,7 +9,6 @@ import re
 import socket
 import struct
 import time
-from binascii import hexlify
 
 # magic imports!
 import addresses
@@ -678,32 +677,3 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except AttributeError:
                 logger.debug('Disconnected socket closing')
         AdvancedDispatcher.handle_close(self)
-
-
-class BMStringParser(BMProto):
-    """
-    A special case of BMProto used by objectProcessor to send ACK
-    """
-    def __init__(self):
-        super(BMStringParser, self).__init__()
-        self.destination = Peer('127.0.0.1', 8444)
-        self.payload = None
-        ObjectTracker.__init__(self)
-
-    def send_data(self, data):
-        """Send object given by the data string"""
-        # This class is introduced specially for ACK sending, please
-        # change log strings if you are going to use it for something else
-        self.bm_proto_reset()
-        self.payload = data
-        try:
-            self.bm_command_object()
-        except BMObjectAlreadyHaveError:
-            pass  # maybe the same msg received on different nodes
-        except BMObjectExpiredError:
-            logger.debug(
-                'Sending ACK failure (expired): %s', hexlify(data))
-        except Exception as e:
-            logger.debug(
-                'Exception of type %s while sending ACK',
-                type(e), exc_info=True)
