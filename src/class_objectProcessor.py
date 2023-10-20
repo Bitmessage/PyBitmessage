@@ -48,7 +48,7 @@ class objectProcessor(threading.Thread):
         random.seed()
         if sql_ready.wait(sql_timeout) is False:
             logger.fatal('SQL thread is not started in %s sec', sql_timeout)
-            os._exit(1)
+            os._exit(1)  # pylint: disable=protected-access
         shared.reloadMyAddressHashes()
         shared.reloadBroadcastSendersForWhichImWatching()
         # It may be the case that the last time Bitmessage was running,
