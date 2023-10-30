@@ -20,6 +20,7 @@ AppDir:
 
   after_runtime:
     - sed -i "s|GTK_.*||g" AppDir/AppRun.env
+    - cp packages/AppImage/qt.conf AppDir/usr/bin/
 
   apt:
     arch: !ENV '${ARCH}'
