@@ -22,7 +22,6 @@ import depends
 
 depends.check_dependencies()
 
-import helper_sql
 import getopt
 import multiprocessing
 # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
