@@ -2,14 +2,12 @@
 Storing inventory items
 """
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from collections import namedtuple
 try:
     from collections import MutableMapping  # pylint: disable=deprecated-class
 except ImportError:
     from collections.abc import MutableMapping
-
-import six
 
 
 InventoryItem = namedtuple('InventoryItem', 'type stream payload expires tag')
@@ -47,9 +45,3 @@ class InventoryStorage(MutableMapping):
     def clean(self):
         """Free memory / perform garbage collection"""
         pass
-
-
-@six.add_metaclass(ABCMeta)
-class MailboxStorage(MutableMapping):
-    """An abstract class for storing mails. TODO"""
-    pass
