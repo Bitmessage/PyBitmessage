@@ -1,7 +1,7 @@
 # pylint: disable=too-few-public-methods
 
 """
-    Mock Network
+Mock Network
 """
 
 
@@ -12,11 +12,14 @@ class objectracker(object):
 
 
 class stats(object):
-    """Mock network statics"""
+    """Mock network statistics"""
 
     @staticmethod
     def connectedHostsList():
-        """List of all the mock connected hosts"""
-        return [
-            "conn1", "conn2", "conn3", "conn4"
-        ]
+        """Mock list of all the connected hosts"""
+        return ["conn1", "conn2", "conn3", "conn4"]
+
+    @staticmethod
+    def pendingDownload():
+        """Mock pending download count"""
+        return 0

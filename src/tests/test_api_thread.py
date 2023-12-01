@@ -1,5 +1,6 @@
 """TestAPIThread class definition"""
 
+import sys
 import time
 
 from six.moves import queue, xmlrpc_client
@@ -58,3 +59,9 @@ class TestAPIThread(TestPartialRun):
 
         self.assertEqual(cmd, 'updateStatusBar')
         self.assertEqual(data, sample_statusbar_msg)
+
+    def test_client_status(self):
+        status = self.api.clientStatus()
+        if sys.hexversion >= 0x3000000:
+            self.assertEqual(status["networkConnections"], 4)
+            self.assertEqual(status["pendingDownload"], 0)

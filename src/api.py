@@ -94,12 +94,11 @@ from helper_sql import (
 from inventory import Inventory
 
 try:
-    import network.stats as network_stats
     from network import BMConnectionPool
 except ImportError:
-    network_stats = None
+    BMConnectionPool = None
 
-from network import StoppableThread
+from network import stats, StoppableThread
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -1448,10 +1447,8 @@ class BMRPCDispatcher(object):
         or "connectedAndReceivingIncomingConnections".
         """
 
-        try:
-            connections_num = len(network_stats.connectedHostsList())
-        except AttributeError:
-            raise APIError(21, 'Could not import network_stats.')
+        connections_num = len(stats.connectedHostsList())
+
         if connections_num == 0:
             networkStatus = 'notConnected'
         elif state.clientHasReceivedIncomingConnections:
@@ -1463,7 +1460,7 @@ class BMRPCDispatcher(object):
             'numberOfMessagesProcessed': state.numberOfMessagesProcessed,
             'numberOfBroadcastsProcessed': state.numberOfBroadcastsProcessed,
             'numberOfPubkeysProcessed': state.numberOfPubkeysProcessed,
-            'pendingDownload': network_stats.pendingDownload(),
+            'pendingDownload': stats.pendingDownload(),
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
@@ -1475,8 +1472,8 @@ class BMRPCDispatcher(object):
         Returns bitmessage connection information as dict with keys *inbound*,
         *outbound*.
         """
-        if network_stats is None:
-            raise APIError(21, 'Could not import network_stats.')
+        if BMConnectionPool is None:
+            raise APIError(21, 'Could not import BMConnectionPool.')
         inboundConnections = []
         outboundConnections = []
         for i in BMConnectionPool().inboundConnections.values():
