@@ -61,6 +61,7 @@ class TestAPIThread(TestPartialRun):
         self.assertEqual(data, sample_statusbar_msg)
 
     def test_client_status(self):
+        """Ensure the reply of clientStatus corresponds to mock"""
         status = self.api.clientStatus()
         if sys.hexversion >= 0x3000000:
             self.assertEqual(status["networkConnections"], 4)
