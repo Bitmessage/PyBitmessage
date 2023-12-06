@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 import unittest
 
 from pybitmessage import pathmagic
@@ -39,3 +40,5 @@ class TestPartialRun(unittest.TestCase):
         # deactivate pathmagic
         os.chdir(cls.dirs[0])
         sys.path.remove(cls.dirs[1])
+        time.sleep(5)
+        cls.state.shutdown = 0

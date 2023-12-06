@@ -14,17 +14,22 @@ from pybitmessage.defaults import (
     networkDefaultProofOfWorkNonceTrialsPerByte,
     networkDefaultPayloadLengthExtraBytes)
 
+from .partial import TestPartialRun
 from .samples import sample_pow_target, sample_pow_initial_hash
 
 default_ttl = 7200
 
 
-class TestProofofworkBase(unittest.TestCase):
+class TestProofofworkBase(TestPartialRun):
     """Basic test case for proofofwork"""
 
     @classmethod
     def setUpClass(cls):
         proofofwork.init()
+        super(TestProofofworkBase, cls).setUpClass()
+
+    def setUp(self):
+        self.state.shutdown = 0
 
     @staticmethod
     def _make_sample_payload(TTL=default_ttl):
@@ -42,14 +47,6 @@ class TestProofofworkBase(unittest.TestCase):
     os.getenv('BITMESSAGE_TEST_POW'), "BITMESSAGE_TEST_POW is not set")
 class TestProofofwork(TestProofofworkBase):
     """The main test case for proofofwork"""
-
-    @classmethod
-    def tearDownClass(cls):
-        import state
-        state.shutdown = 0
-
-    def setUp(self):
-        self.tearDownClass()
 
     def _make_sample_data(self):
         payload = self._make_sample_payload()
@@ -70,10 +67,8 @@ class TestProofofwork(TestProofofworkBase):
                 pack('>Q', nonce) + payload, 2000, 2000,
                 int(time.time()) + TTL - 3600))
 
-        import state
-
         with self.assertRaises(StopIteration):
-            state.shutdown = 1
+            self.state.shutdown = 1
             proofofwork.calculate(payload, TTL)
 
     def test_CPoW(self):
