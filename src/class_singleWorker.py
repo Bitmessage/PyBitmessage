@@ -217,8 +217,9 @@ class singleWorker(StoppableThread):
         return privSigningKeyHex, privEncryptionKeyHex, \
             pubSigningKey, pubEncryptionKey
 
+    @classmethod
     def _doPOWDefaults(
-        self, payload, TTL,
+        cls, payload, TTL,
         nonceTrialsPerByte=None, payloadLengthExtraBytes=None,
         log_prefix='', log_time=False
     ):
@@ -228,19 +229,19 @@ class singleWorker(StoppableThread):
         if not payloadLengthExtraBytes:
             payloadLengthExtraBytes = \
                 defaults.networkDefaultPayloadLengthExtraBytes
-        self.logger.info(
+        cls.logger.info(
             '%s Doing proof of work... TTL set to %s', log_prefix, TTL)
         if log_time:
             start_time = time.time()
         trialValue, nonce = proofofwork.calculate(
             payload, TTL, nonceTrialsPerByte, payloadLengthExtraBytes)
-        self.logger.info(
+        cls.logger.info(
             '%s Found proof of work %s Nonce: %s',
             log_prefix, trialValue, nonce
         )
         try:
             delta = time.time() - start_time
-            self.logger.info(
+            cls.logger.info(
                 'PoW took %.1f seconds, speed %s.',
                 delta, sizeof_fmt(nonce / delta)
             )

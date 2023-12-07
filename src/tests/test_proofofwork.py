@@ -42,6 +42,12 @@ class TestProofofworkBase(TestPartialRun):
         self.assertTrue(
             protocol.isProofOfWorkSufficient(pack('>Q', nonce) + payload))
 
+        # pylint: disable=import-outside-toplevel
+        from class_singleWorker import singleWorker
+
+        self.assertTrue(protocol.isProofOfWorkSufficient(
+            singleWorker._doPOWDefaults(payload, default_ttl)))
+
 
 @unittest.skipUnless(
     os.getenv('BITMESSAGE_TEST_POW'), "BITMESSAGE_TEST_POW is not set")
@@ -66,6 +72,23 @@ class TestProofofwork(TestProofofworkBase):
             protocol.isProofOfWorkSufficient(
                 pack('>Q', nonce) + payload, 2000, 2000,
                 int(time.time()) + TTL - 3600))
+
+        # pylint: disable=import-outside-toplevel
+        from class_singleWorker import singleWorker
+
+        with self.assertLogs('default') as cm:
+            self.assertTrue(protocol.isProofOfWorkSufficient(
+                singleWorker._doPOWDefaults(payload, TTL, log_prefix='+')))
+        self.assertEqual(
+            cm.output[0],
+            'INFO:default:+ Doing proof of work... TTL set to %s' % TTL)
+        self.assertEqual(
+            cm.output[1][:34], 'INFO:default:+ Found proof of work')
+
+        with self.assertLogs('default') as cm:
+            self.assertTrue(protocol.isProofOfWorkSufficient(
+                singleWorker._doPOWDefaults(payload, TTL, log_time=True)))
+        self.assertEqual(cm.output[2][:22], 'INFO:default:PoW took ')
 
         with self.assertRaises(StopIteration):
             self.state.shutdown = 1
