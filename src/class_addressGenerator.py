@@ -5,19 +5,20 @@ import hashlib
 import time
 from binascii import hexlify
 
+from six.moves import configparser, queue
+
 import defaults
 import highlevelcrypto
 import queues
 import shared
 import state
-import tr
 from addresses import decodeAddress, encodeAddress, encodeVarint
 from bmconfigparser import config
 from fallback import RIPEMD160Hash
 from network import StoppableThread
 from pyelliptic import arithmetic
 from pyelliptic.openssl import OpenSSL
-from six.moves import configparser, queue
+from tr import _translate
 
 
 class AddressGeneratorException(Exception):
@@ -31,6 +32,7 @@ class addressGenerator(StoppableThread):
     name = "addressGenerator"
 
     def stopThread(self):
+        """Tell the thread to stop putting a special command to it's queue"""
         try:
             queues.addressGeneratorQueue.put(("stopThread", "data"))
         except queue.Full:
@@ -43,8 +45,7 @@ class addressGenerator(StoppableThread):
         Process the requests for addresses generation
         from `.queues.addressGeneratorQueue`
         """
-        # pylint: disable=too-many-locals, too-many-branches
-        # pylint: disable=protected-access, too-many-statements
+        # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         # pylint: disable=too-many-nested-blocks
 
         while state.shutdown == 0:
@@ -119,7 +120,7 @@ class addressGenerator(StoppableThread):
             if command == 'createRandomAddress':
                 queues.UISignalQueue.put((
                     'updateStatusBar',
-                    tr._translate(
+                    _translate(
                         "MainWindow", "Generating one new address")
                 ))
                 # This next section is a little bit strange. We're going
@@ -199,7 +200,7 @@ class addressGenerator(StoppableThread):
 
                 queues.UISignalQueue.put((
                     'updateStatusBar',
-                    tr._translate(
+                    _translate(
                         "MainWindow",
                         "Done generating address. Doing work necessary"
                         " to broadcast it...")
@@ -214,9 +215,10 @@ class addressGenerator(StoppableThread):
                     queues.workerQueue.put((
                         'sendOutOrStoreMyV4Pubkey', address))
 
-            elif command == 'createDeterministicAddresses' \
-                    or command == 'getDeterministicAddress' \
-                    or command == 'createChan' or command == 'joinChan':
+            elif command in (
+                'createDeterministicAddresses', 'createChan',
+                'getDeterministicAddress', 'joinChan'
+            ):
                 if not deterministicPassphrase:
                     self.logger.warning(
                         'You are creating deterministic'
@@ -225,7 +227,7 @@ class addressGenerator(StoppableThread):
                 if command == 'createDeterministicAddresses':
                     queues.UISignalQueue.put((
                         'updateStatusBar',
-                        tr._translate(
+                        _translate(
                             "MainWindow",
                             "Generating %1 new addresses."
                         ).arg(str(numberOfAddressesToMake))
@@ -330,7 +332,7 @@ class addressGenerator(StoppableThread):
                             )
                             queues.UISignalQueue.put((
                                 'updateStatusBar',
-                                tr._translate(
+                                _translate(
                                     "MainWindow",
                                     "%1 is already in 'Your Identities'."
                                     " Not adding it again."
@@ -341,8 +343,7 @@ class addressGenerator(StoppableThread):
                             config.set(address, 'label', label)
                             config.set(address, 'enabled', 'true')
                             config.set(address, 'decoy', 'false')
-                            if command == 'joinChan' \
-                                    or command == 'createChan':
+                            if command in ('createChan', 'joinChan'):
                                 config.set(address, 'chan', 'true')
                             config.set(
                                 address, 'noncetrialsperbyte',
@@ -384,7 +385,7 @@ class addressGenerator(StoppableThread):
                                     'sendOutOrStoreMyV4Pubkey', address))
                             queues.UISignalQueue.put((
                                 'updateStatusBar',
-                                tr._translate(
+                                _translate(
                                     "MainWindow", "Done generating address")
                             ))
                     elif saveAddressToDisk and not live \
@@ -393,8 +394,9 @@ class addressGenerator(StoppableThread):
                             address)
 
                 # Done generating addresses.
-                if command == 'createDeterministicAddresses' \
-                        or command == 'joinChan' or command == 'createChan':
+                if command in (
+                    'createDeterministicAddresses', 'createChan', 'joinChan'
+                ):
                     queues.apiAddressGeneratorReturnQueue.put(
                         listOfNewAddressesToSendOutThroughTheAPI)
                 elif command == 'getDeterministicAddress':
