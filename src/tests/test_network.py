@@ -19,6 +19,7 @@ class TestNetwork(TestPartialRun):
         cls.state.maximumNumberOfHalfOpenConnections = 4
 
         cls.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
+        cls.config.set('bitmessagesettings', 'udp', 'True')
 
         # config variable is still used inside of the network ):
         import network
@@ -34,18 +35,14 @@ class TestNetwork(TestPartialRun):
     def test_threads(self):
         """Ensure all the network threads started"""
         threads = {
-            "AddrBroadcaster", "Asyncore", "Downloader", "InvBroadcaster",
-            "Uploader"}
-        extra = (
-            self.config.getint('threads', 'receive')
-            + self.config.safeGetBoolean('bitmessagesettings', 'udp'))
+            "AddrBroadcaster", "Announcer", "Asyncore", "Downloader",
+            "InvBroadcaster", "Uploader"}
+        extra = self.config.getint('threads', 'receive')
         for thread in threading.enumerate():
             try:
                 threads.remove(thread.name)
             except KeyError:
-                extra -= (
-                    thread.name == "Announcer"
-                    or thread.name.startswith("ReceiveQueue_"))
+                extra -= thread.name.startswith("ReceiveQueue_")
 
         self.assertEqual(len(threads), 0)
         self.assertEqual(extra, 0)
