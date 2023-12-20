@@ -310,26 +310,6 @@ class TestCore(unittest.TestCase):
         else:
             return self.fail('No Announcer thread found')
 
-        for _ in range(20):  # wait for UDP socket
-            for sock in BMConnectionPool().udpSockets.values():
-                thread.announceSelf()
-                break
-            else:
-                time.sleep(1)
-                continue
-            break
-        else:
-            self.fail('UDP socket is not started')
-
-        for _ in range(20):
-            if state.discoveredPeers:
-                peer = state.discoveredPeers.keys()[0]
-                self.assertEqual(peer.port, 8444)
-                break
-            time.sleep(1)
-        else:
-            self.fail('No self in discovered peers')
-
     @staticmethod
     def _decode_msg(data, pattern):
         proto = BMProto()

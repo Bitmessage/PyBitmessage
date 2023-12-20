@@ -63,6 +63,31 @@ class TestNetwork(TestPartialRun):
         else:
             self.fail('Have not started any connection in 30 sec')
 
+    def test_udp(self):
+        """Invoke AnnounceThread.announceSelf() and check discovered peers"""
+        for _ in range(20):
+            if self.pool.udpSockets:
+                break
+            time.sleep(1)
+        else:
+            self.fail('No UDP sockets found in 20 sec')
+
+        for _ in range(10):
+            try:
+                self.state.announceThread.announceSelf()
+            except AttributeError:
+                self.fail('state.announceThread is not set properly')
+            time.sleep(1)
+            try:
+                peer = self.state.discoveredPeers.popitem()[0]
+            except KeyError:
+                continue
+            else:
+                self.assertEqual(peer.port, 8444)
+                break
+        else:
+            self.fail('No self in discovered peers')
+
     @classmethod
     def tearDownClass(cls):
         super(TestNetwork, cls).tearDownClass()
