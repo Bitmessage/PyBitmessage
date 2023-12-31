@@ -369,7 +369,7 @@ class TestAPI(TestAPIProto):
                 'doingbroadcastpow', 'broadcastqueued', 'broadcastsent'))
 
             start = time.time()
-            while status == 'doingbroadcastpow':
+            while status != 'broadcastsent':
                 spent = int(time.time() - start)
                 if spent > 30:
                     self.fail('PoW is taking too much time: %ss' % spent)
