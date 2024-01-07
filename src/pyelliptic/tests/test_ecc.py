@@ -1,5 +1,6 @@
 """Tests for ECC object"""
 
+import os
 import unittest
 from hashlib import sha512
 
@@ -29,6 +30,22 @@ class TestECC(unittest.TestCase):
         self.assertEqual(len(eccobj.privkey), 32)
         pubkey = eccobj.get_pubkey()
         self.assertEqual(pubkey[:4], b'\x02\xca\x00\x20')
+
+    def test_short_keys(self):
+        """Check formatting of the keys with leading zeroes"""
+        def sample_key(_):
+            return os.urandom(32), os.urandom(31), os.urandom(30)
+
+        try:
+            gen_orig = pyelliptic.ECC._generate
+            pyelliptic.ECC._generate = sample_key
+            eccobj = pyelliptic.ECC(curve='secp256k1')
+            pubkey = eccobj.get_pubkey()
+            self.assertEqual(pubkey[:4], b'\x02\xca\x00\x20')
+            self.assertEqual(pubkey[36:38], b'\x00\x20')
+            self.assertEqual(len(pubkey[38:]), 32)
+        finally:
+            pyelliptic.ECC._generate = gen_orig
 
     def test_decode_keys(self):
         """Check keys decoding"""
