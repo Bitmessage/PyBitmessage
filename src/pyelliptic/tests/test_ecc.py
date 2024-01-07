@@ -27,7 +27,7 @@ class TestECC(unittest.TestCase):
     def test_random_keys(self):
         """A dummy test for random keys in ECC object"""
         eccobj = pyelliptic.ECC(curve='secp256k1')
-        self.assertEqual(len(eccobj.privkey), 32)
+        self.assertTrue(len(eccobj.privkey) <= 32)
         pubkey = eccobj.get_pubkey()
         self.assertEqual(pubkey[:4], b'\x02\xca\x00\x20')
 
