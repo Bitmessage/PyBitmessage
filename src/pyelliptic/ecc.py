@@ -107,12 +107,19 @@ class ECC(object):
         High level function which returns :
         curve(2) + len_of_pubkeyX(2) + pubkeyX + len_of_pubkeyY + pubkeyY
         """
+        ctx = OpenSSL.BN_CTX_new()
+        n = OpenSSL.BN_new()
+        group = OpenSSL.EC_GROUP_new_by_curve_name(self.curve)
+        OpenSSL.EC_GROUP_get_order(group, n, ctx)
+        key_len = OpenSSL.BN_num_bytes(n)
+        pubkey_x = self.pubkey_x.rjust(key_len, b'\x00')
+        pubkey_y = self.pubkey_y.rjust(key_len, b'\x00')
         return b''.join((
             pack('!H', self.curve),
-            pack('!H', len(self.pubkey_x)),
-            self.pubkey_x,
-            pack('!H', len(self.pubkey_y)),
-            self.pubkey_y,
+            pack('!H', len(pubkey_x)),
+            pubkey_x,
+            pack('!H', len(pubkey_y)),
+            pubkey_y,
         ))
 
     def get_privkey(self):
