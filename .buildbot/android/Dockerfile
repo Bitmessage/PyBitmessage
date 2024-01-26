@@ -18,7 +18,7 @@ RUN apt -y update -qq \
 
 
 ENV ANDROID_NDK_HOME="${ANDROID_HOME}/android-ndk"
-ENV ANDROID_NDK_VERSION="23b"
+ENV ANDROID_NDK_VERSION="25b"
 ENV ANDROID_NDK_HOME_V="${ANDROID_NDK_HOME}-r${ANDROID_NDK_VERSION}"
 
 # get the latest version from https://developer.android.com/ndk/downloads/index.html
@@ -35,8 +35,8 @@ RUN curl "${ANDROID_NDK_DL_URL}" \
 ENV ANDROID_SDK_HOME="${ANDROID_HOME}/android-sdk"
 
 # get the latest version from https://developer.android.com/studio/index.html
-ENV ANDROID_SDK_TOOLS_VERSION="8092744"
-ENV ANDROID_SDK_BUILD_TOOLS_VERSION="30.0.3"
+ENV ANDROID_SDK_TOOLS_VERSION="11076708"
+ENV ANDROID_SDK_BUILD_TOOLS_VERSION="34.0.0"
 ENV ANDROID_SDK_TOOLS_ARCHIVE="commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip"
 ENV ANDROID_SDK_TOOLS_DL_URL="https://dl.google.com/android/repository/${ANDROID_SDK_TOOLS_ARCHIVE}"
 ENV ANDROID_SDK_MANAGER="${ANDROID_SDK_HOME}/tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_HOME}"
