@@ -1,7 +1,6 @@
 
 # A container for buildbot
-FROM ubuntu:bionic AS android
-# FROM ubuntu:20.04 AS buildbot-bionic
+FROM ubuntu:focal AS android
 
 ENV ANDROID_HOME="/opt/android"
 
@@ -57,7 +56,7 @@ RUN mkdir --parents "${ANDROID_SDK_HOME}/.android/" \
 # accept Android licenses (JDK necessary!)
 RUN apt -y update -qq \
     && apt -y install -qq --no-install-recommends \
-        openjdk-11-jdk-headless \
+        openjdk-17-jdk-headless \
     && apt -y autoremove
 RUN yes | ${ANDROID_SDK_MANAGER} --licenses > /dev/null
 
