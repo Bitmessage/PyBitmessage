@@ -1,8 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
-cd packages/android
+pushd packages/android
 buildozer android debug || exit $?
-cd ../..
+popd
+
 mkdir -p ../out
-mv packages/android/bin/*.apk ../out
+cp packages/android/bin/*.apk ../out
