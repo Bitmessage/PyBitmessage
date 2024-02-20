@@ -33,7 +33,9 @@ class TestECC(unittest.TestCase):
 
     def test_short_keys(self):
         """Check formatting of the keys with leading zeroes"""
+        # pylint: disable=protected-access
         def sample_key(_):
+            """Fake ECC keypair"""
             return os.urandom(32), os.urandom(31), os.urandom(30)
 
         try:
