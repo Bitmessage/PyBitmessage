@@ -94,8 +94,8 @@ RUN useradd -m -U builder && mkdir /android
 
 WORKDIR /android
 
-RUN chown -R builder.builder /android "${ANDROID_SDK_HOME}/.android" \
-    && chmod -R go+w "${ANDROID_SDK_HOME}/.android"
+RUN chown -R builder.builder /android "${ANDROID_SDK_HOME}" \
+    && chmod -R go+w "${ANDROID_SDK_HOME}"
 
 USER builder
 
