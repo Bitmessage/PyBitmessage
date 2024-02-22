@@ -405,13 +405,10 @@ class NavigateApp(MDApp):
         img_path = os.path.join(
             self.image_dir, 'default_identicon', '{}.png'.format(self.kivy_state_obj.selected_address)
         )
-        try:
-            if os.path.exists(img_path):
-                os.remove(img_path)
-                self.root.ids.content_drawer.ids.reset_image.opacity = 0
-                self.root.ids.content_drawer.ids.reset_image.disabled = True
-        except Exception as e:
-            pass
+        if os.path.exists(img_path):
+            os.remove(img_path)
+        self.root.ids.content_drawer.ids.reset_image.opacity = 0
+        self.root.ids.content_drawer.ids.reset_image.disabled = True
         toast('Avatar reset')
 
     def get_default_logo(self, instance):

@@ -116,10 +116,8 @@ class MyAddress(Screen, HelperMyAddress):
             text=item['text'], secondary_text=item['secondary_text'],
             theme_text_color='Custom' if is_enable else 'Primary',
             text_color=ThemeClsColor,)
-        try:
-            meny.canvas.children[3].rgba = self.canvas_color_black if is_enable else self.canvas_color
-        except Exception:
-            pass
+        meny.canvas.children[3].rgba = \
+            self.canvas_color_black if is_enable else self.canvas_color
         meny.add_widget(AvatarSampleWidget(
             source=os.path.join(
                 self.image_dir, "text_images", "{}.png".format(avatar_image_first_letter(

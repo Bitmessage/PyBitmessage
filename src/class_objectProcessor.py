@@ -479,7 +479,7 @@ class objectProcessor(threading.Thread):
                     logger.info(
                         'EC decryption successful using key associated'
                         ' with ripe hash: %s.', hexlify(key))
-            except Exception:
+            except Exception:  # nosec B110
                 pass
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
