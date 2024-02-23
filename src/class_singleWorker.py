@@ -1370,7 +1370,9 @@ class singleWorker(StoppableThread):
                         'bitmessagesettings', 'apinotifypath')
 
                     if apiNotifyPath:
-                        call([apiNotifyPath, "newMessage"])
+                        # There is no additional risk of remote exploitation or
+                        # privilege escalation
+                        call([apiNotifyPath, "newMessage"])  # nosec:B603
 
     def requestPubKey(self, toAddress):
         """Send a getpubkey object"""
