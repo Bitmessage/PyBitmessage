@@ -45,7 +45,7 @@ def sqlQuery(sql_statement, *args):
     :param list args: SQL query parameters
     :rtype: list
     """
-    assert sql_available  # nosec:B101
+    assert sql_available
     sql_lock.acquire()
     sqlSubmitQueue.put(sql_statement)
 
@@ -65,7 +65,7 @@ def sqlExecuteChunked(sql_statement, idCount, *args):
     """Execute chunked SQL statement to avoid argument limit"""
     # SQLITE_MAX_VARIABLE_NUMBER,
     # unfortunately getting/setting isn't exposed to python
-    assert sql_available  # nosec:B101
+    assert sql_available
     sqlExecuteChunked.chunkSize = 999
 
     if idCount == 0 or idCount > len(args):
@@ -95,7 +95,7 @@ def sqlExecuteChunked(sql_statement, idCount, *args):
 
 def sqlExecute(sql_statement, *args):
     """Execute SQL statement (optionally with arguments)"""
-    assert sql_available  # nosec:B101
+    assert sql_available
     sql_lock.acquire()
     sqlSubmitQueue.put(sql_statement)
 
@@ -120,7 +120,7 @@ def sqlExecuteScript(sql_statement):
 
 def sqlStoredProcedure(procName):
     """Schedule procName to be run"""
-    assert sql_available  # nosec:B101
+    assert sql_available
     sql_lock.acquire()
     sqlSubmitQueue.put(procName)
     if procName == "exit":
@@ -143,7 +143,7 @@ class SqlBulkExecute(object):
     @staticmethod
     def execute(sql_statement, *args):
         """Used for statements that do not return results."""
-        assert sql_available  # nosec:B101
+        assert sql_available
         sqlSubmitQueue.put(sql_statement)
 
         if args == ():
