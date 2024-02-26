@@ -287,7 +287,7 @@ def check_openssl():
             path = ctypes.util.find_library('ssl')
             if path not in paths:
                 paths.append(path)
-        except:  # noqa:E722
+        except:  # nosec:B110 pylint:disable=bare-except
             pass
 
     openssl_version = None

@@ -22,11 +22,8 @@ class smtpDeliver(StoppableThread):
     _instance = None
 
     def stopThread(self):
-        # pylint: disable=no-member
-        try:
-            queues.UISignallerQueue.put(("stopThread", "data"))
-        except:  # noqa:E722
-            pass
+        """Relay shutdown instruction"""
+        queues.UISignalQueue.put(("stopThread", "data"))
         super(smtpDeliver, self).stopThread()
 
     @classmethod
