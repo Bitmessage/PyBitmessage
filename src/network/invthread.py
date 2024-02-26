@@ -78,7 +78,7 @@ class InvThread(StoppableThread):
                             if connection == Dandelion().objectChildStem(inv[1]):
                                 # Fluff trigger by RNG
                                 # auto-ignore if config set to 0, i.e. dandelion is off
-                                if random.randint(1, 100) >= state.dandelion:
+                                if random.randint(1, 100) >= state.dandelion:  # nosec:B311
                                     fluffs.append(inv[1])
                                 # send a dinv only if the stem node supports dandelion
                                 elif connection.services & protocol.NODE_DANDELION > 0:

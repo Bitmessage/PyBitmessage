@@ -819,7 +819,7 @@ def loadOpenSSL():
         try:
             OpenSSL = _OpenSSL(library)
             return
-        except Exception:
+        except Exception:  # nosec:B110
             pass
     raise Exception(
         "Couldn't find and load the OpenSSL library. You must install it.")
