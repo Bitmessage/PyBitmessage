@@ -12,6 +12,7 @@ import sys
 import time
 from distutils.version import StrictVersion
 from struct import pack
+from six.moves import configparser
 
 try:
     import defaults
@@ -218,7 +219,8 @@ def updateConfig():
                 config.set(
                     addressInKeysFile, 'payloadlengthextrabytes',
                     str(int(previousSmallMessageDifficulty * 1000)))
-            except Exception:
+            except (ValueError, TypeError, configparser.NoSectionError,
+                    configparser.NoSectionError):
                 continue
         config.set('bitmessagesettings', 'maxdownloadrate', '0')
         config.set('bitmessagesettings', 'maxuploadrate', '0')

@@ -1,4 +1,4 @@
-﻿# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
+# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
 """
 Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
@@ -239,7 +239,7 @@ class uPnPThread(StoppableThread):
             if time.time() - lastSent > self.sendSleep and not self.routers:
                 try:
                     self.sendSearchRouter()
-                except:  # noqa:E722
+                except:  # nosec:B110 noqa:E722 pylint:disable=bare-except
                     pass
                 lastSent = time.time()
             try:
@@ -279,11 +279,11 @@ class uPnPThread(StoppableThread):
                     self.createPortMapping(router)
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
-        except:  # noqa:E722
+        except (IOError, OSError):  # noqa:E722
             pass
         try:
             self.sock.close()
-        except:  # noqa:E722
+        except (IOError, OSError):  # noqa:E722
             pass
         deleted = False
         for router in self.routers:

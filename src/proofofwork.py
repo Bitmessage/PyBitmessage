@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 from struct import pack, unpack
-from subprocess import call
+from subprocess import call  # nosec:B404
 
 import openclpow
 import paths
@@ -135,7 +135,7 @@ def _doFastPoW(target, initialHash):
             try:
                 pool.terminate()
                 pool.join()
-            except:  # noqa:E722
+            except:  # nosec:B110 noqa:E722 pylint:disable=bare-except
                 pass
             raise StopIteration("Interrupted")
         for i in range(pool_size):
@@ -272,10 +272,11 @@ def buildCPoW():
     try:
         if "bsd" in sys.platform:
             # BSD make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"), '-f', 'Makefile.bsd'])
+            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"), 
+                  '-f', 'Makefile.bsd'])  # nosec:B607, B603
         else:
             # GNU make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
+            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash")])  # nosec:B607, B603
         if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
             init()
             notifyBuild(True)
