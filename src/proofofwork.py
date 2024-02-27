@@ -272,7 +272,7 @@ def buildCPoW():
     try:
         if "bsd" in sys.platform:
             # BSD make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"), 
+            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"),
                   '-f', 'Makefile.bsd'])  # nosec:B607, B603
         else:
             # GNU make

@@ -220,7 +220,7 @@ def updateConfig():
                     addressInKeysFile, 'payloadlengthextrabytes',
                     str(int(previousSmallMessageDifficulty * 1000)))
             except (ValueError, TypeError, configparser.NoSectionError,
-                    configparser.NoSectionError):
+                    configparser.NoOptionError):
                 continue
         config.set('bitmessagesettings', 'maxdownloadrate', '0')
         config.set('bitmessagesettings', 'maxuploadrate', '0')

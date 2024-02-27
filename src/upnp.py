@@ -1,16 +1,18 @@
-# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
+﻿# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
 """
 Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
 
 import httplib
+import re
 import socket
 import time
 import urllib2
 from random import randint
 from urlparse import urlparse
-from xml.dom.minidom import Document, parseString
+from xml.dom.minidom import Document  # nosec:B408
+from defusedxml.minidom import parseString
 
 import queues
 import state
@@ -119,7 +121,7 @@ class Router:  # pylint: disable=old-style-class
             if service.childNodes[0].data.find('WANIPConnection') > 0 or \
                     service.childNodes[0].data.find('WANPPPConnection') > 0:
                 self.path = service.parentNode.getElementsByTagName('controlURL')[0].childNodes[0].data
-                self.upnp_schema = service.childNodes[0].data.split(':')[-2]
+                self.upnp_schema = re.sub(r'[^A-Za-z0-9:-]', '', service.childNodes[0].data.split(':')[-2])
 
     def AddPortMapping(
             self,
