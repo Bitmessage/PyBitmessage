@@ -8,7 +8,6 @@ if [ ! -e .env ]; then
     PASSWORD=$(tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo)
     cat > .env << EOF
 THREADS=$THREADS
-USER=pybitmessage
 PASSWORD=$PASSWORD
 EOF
 else
@@ -38,7 +37,7 @@ for i in `seq 1 $THREADS`; do
   <URL "http://$IP:8442/">
     Plugin "pybitmessagestatus"
     Instance "$INSTANCE"
-    User "pybitmessage"
+    User "api"
     Password "$PASSWORD"
     Post "{\"jsonrpc\":\"2.0\",\"id\":\"id\",\"method\":\"clientStatus\",\"params\":[]}"
     <Key "result/networkConnections">
