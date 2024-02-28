@@ -413,7 +413,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                self.object.objectType, buffer(self.object.data)))
+                self.object.objectType, buffer(self.object.data)))  # noqa: F821
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -429,8 +429,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         Inventory()[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            buffer(self.payload[objectOffset:]), self.object.expiresTime,
-            buffer(self.object.tag)
+            buffer(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
+            buffer(self.object.tag)  # noqa: F821
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)

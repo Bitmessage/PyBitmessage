@@ -521,8 +521,8 @@ class singleWorker(StoppableThread):
 
         inventoryHash = calculateInventoryHash(payload)
         Inventory()[inventoryHash] = (
-            objectType, streamNumber, buffer(payload),
-            embeddedTime, buffer(tag)
+            objectType, streamNumber, buffer(payload),  # noqa: F821
+            embeddedTime, buffer(tag)  # noqa: F821
         )
         self.logger.info(
             'sending inv (within sendOnionPeerObj function) for object: %s',
