@@ -20,7 +20,8 @@ ipvsadm -A -t ${EXTIP}:8080 -s rr
 
 docker compose up -d
 
-CF=/etc/collectd/collectd.conf.d/curl_json.conf
+CF=/etc/collectd/collectd.conf.d/curl_json.conf.new
+CF_LIVE=/etc/collectd/collectd.conf.d/curl_json.conf
 
 echo "LoadPlugin curl_json" > $CF
 echo "<Plugin curl_json>" >> $CF
@@ -60,6 +61,10 @@ for i in `seq 1 $THREADS`; do
 EOF
 done
 echo "</Plugin>" >> $CF
-systemctl restart collectd
+
+if ! cmp -s $CF $CF_LIVE; then
+	mv $CF $CF_LIVE
+	systemctl restart collectd
+fi
 
 ipvsadm -l -n
