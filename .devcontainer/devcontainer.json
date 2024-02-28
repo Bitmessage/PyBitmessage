@@ -16,6 +16,7 @@
     ],
     "dockerFile": "Dockerfile",
     "postCreateCommand": "pip3 install -r requirements.txt",
+    "updateContentCommand": "python2.7 setup.py install --user",
     "remoteEnv": {
         "PATH": "${containerEnv:PATH}:/home/user/.local/bin"
     },

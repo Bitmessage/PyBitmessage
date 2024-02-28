@@ -15,6 +15,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libcap-dev \
     libssl-dev \
     pylint \
+    python-setuptools \
+    python2.7 \
+    python2.7-dev \
     python3 \
     python3-dev \
     python3-flake8 \
@@ -25,9 +28,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     zsh
 
 RUN apt-add-repository ppa:deadsnakes/ppa
-
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    python2.7 python2.7-dev
 
 RUN pip install 'tox<4' 'virtualenv<20.22.0'
 
