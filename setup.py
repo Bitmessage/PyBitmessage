@@ -13,7 +13,7 @@ from src.version import softwareVersion
 
 
 EXTRAS_REQUIRE = {
-    'docs': ['sphinx', 'sphinx_rtd_theme'],
+    'docs': ['sphinx'],
     'gir': ['pygobject'],
     'json': ['jsonrpclib'],
     'notify2': ['notify2'],

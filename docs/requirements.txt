@@ -1,6 +1,5 @@
 mistune<=0.8.4
 m2r<=0.2.1
+sphinx_rtd_theme
 sphinxcontrib-apidoc
 docutils<=0.17.1
-
-
