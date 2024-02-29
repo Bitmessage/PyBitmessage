@@ -47,7 +47,7 @@ def initCL():
                         device_type=cl.device_type.GPU))
                 if platform.vendor not in vendors:
                     vendors.append(platform.vendor)
-        except:  # nosec:B110 noqa:E722 pylint:disable=bare-except
+        except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
             pass
         if enabledGpus:
             ctx = cl.Context(devices=enabledGpus)

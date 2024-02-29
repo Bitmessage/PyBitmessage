@@ -241,7 +241,7 @@ class uPnPThread(StoppableThread):
             if time.time() - lastSent > self.sendSleep and not self.routers:
                 try:
                     self.sendSearchRouter()
-                except:  # nosec:B110 noqa:E722 pylint:disable=bare-except
+                except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
                     pass
                 lastSent = time.time()
             try:

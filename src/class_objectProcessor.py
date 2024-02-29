@@ -686,8 +686,7 @@ class objectProcessor(threading.Thread):
                 apiNotifyPath = config.safeGet(
                     'bitmessagesettings', 'apinotifypath')
                 if apiNotifyPath:
-                    subprocess.call(  # nosec B603
-                        [apiNotifyPath, "newMessage"])
+                    subprocess.call([apiNotifyPath, "newMessage"])  # nosec B603
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list

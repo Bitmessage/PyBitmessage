@@ -40,7 +40,7 @@ def generate_hash(string):
     try:
         # make input case insensitive
         string = str.lower(string)
-        hash_object = hashlib.md5(str.encode(string))  # nosec B303, B324
+        hash_object = hashlib.md5(str.encode(string))  # nosec B324, B303
         print(hash_object.hexdigest())
         # returned object is a hex string
         return hash_object.hexdigest()
