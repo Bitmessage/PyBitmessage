@@ -273,10 +273,11 @@ def buildCPoW():
         if "bsd" in sys.platform:
             # BSD make
             call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"),
-                  '-f', 'Makefile.bsd'])  # nosec:B607, B603
+                  '-f', 'Makefile.bsd'])  # nosec B607, B603
         else:
             # GNU make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash")])  # nosec:B607, B603
+            call(["make", "-C", os.path.join(paths.codePath(),
+                  "bitmsghash")])  # nosec B607, B603
         if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
             init()
             notifyBuild(True)
