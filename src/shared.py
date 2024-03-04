@@ -11,7 +11,7 @@ from __future__ import division
 import hashlib
 import os
 import stat
-import subprocess  # nosec:B404
+import subprocess  # nosec B404
 import sys
 from binascii import hexlify
 

@@ -287,7 +287,7 @@ def check_openssl():
             path = ctypes.util.find_library('ssl')
             if path not in paths:
                 paths.append(path)
-        except:  # nosec:B110 # pylint:disable=bare-except
+        except:  # nosec B110 # pylint:disable=bare-except
             pass
 
     openssl_version = None
@@ -361,7 +361,7 @@ def check_curses():
         return False
 
     try:
-        subprocess.check_call(['which', 'dialog'])  # nosec:B603, B607
+        subprocess.check_call(['which', 'dialog'])  # nosec B603, B607
     except subprocess.CalledProcessError:
         logger.error(
             'Curses requires the `dialog` command to be installed as well as'

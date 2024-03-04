@@ -11,14 +11,14 @@ try:
         winsound.PlaySound(sound_file, winsound.SND_FILENAME)
 except ImportError:
     import os
-    import subprocess  # nosec:B404
+    import subprocess  # nosec B404
 
     play_cmd = {}
 
     def _subprocess(*args):
         FNULL = open(os.devnull, 'wb')
         subprocess.call(
-            args, stdout=FNULL, stderr=subprocess.STDOUT, close_fds=True)  # nosec:B603
+            args, stdout=FNULL, stderr=subprocess.STDOUT, close_fds=True)  # nosec B603
 
     def connect_plugin(sound_file):
         """This function implements the entry point."""

@@ -610,7 +610,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         'Closed connection to %s because we are already'
                         ' connected to that IP.', self.destination)
                     return False
-            except Exception:  # nosec:B110 # pylint:disable=broad-exception-caught
+            except Exception:  # nosec B110 # pylint:disable=broad-exception-caught
                 pass
         if not self.isOutbound:
             # incoming from a peer we're connected to as outbound,

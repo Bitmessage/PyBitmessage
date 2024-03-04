@@ -11,7 +11,7 @@ import time
 import urllib2
 from random import randint
 from urlparse import urlparse
-from xml.dom.minidom import Document  # nosec:B408
+from xml.dom.minidom import Document  # nosec B408
 from defusedxml.minidom import parseString
 
 import queues
@@ -241,7 +241,7 @@ class uPnPThread(StoppableThread):
             if time.time() - lastSent > self.sendSleep and not self.routers:
                 try:
                     self.sendSearchRouter()
-                except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
+                except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
                     pass
                 lastSent = time.time()
             try:

@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 from struct import pack, unpack
-from subprocess import call  # nosec:B404
+from subprocess import call  # nosec B404
 
 import openclpow
 import paths
@@ -82,7 +82,7 @@ def _set_idle():
             pid = win32api.GetCurrentProcessId()
             handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
             win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
-        except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             # Windows 64-bit
             pass
 
@@ -135,7 +135,7 @@ def _doFastPoW(target, initialHash):
             try:
                 pool.terminate()
                 pool.join()
-            except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
+            except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
                 pass
             raise StopIteration("Interrupted")
         for i in range(pool_size):
@@ -298,14 +298,14 @@ def run(target, initialHash):
             return _doGPUPoW(target, initialHash)
         except StopIteration:
             raise
-        except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             pass  # fallback
     if bmpow:
         try:
             return _doCPoW(target, initialHash)
         except StopIteration:
             raise
-        except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             pass  # fallback
     if paths.frozen == "macosx_app" or not paths.frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
@@ -323,7 +323,7 @@ def run(target, initialHash):
         return _doSafePoW(target, initialHash)
     except StopIteration:
         raise
-    except:  # nosec:B110 # noqa:E722 # pylint:disable=bare-except
+    except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
         pass  # fallback
 
 

@@ -25,17 +25,17 @@ class BMNetworkThread(StoppableThread):
         for i in BMConnectionPool().listeningSockets.values():
             try:
                 i.close()
-            except:  # nosec:B110 # pylint:disable=bare-except
+            except:  # nosec B110 # pylint:disable=bare-except
                 pass
         for i in BMConnectionPool().outboundConnections.values():
             try:
                 i.close()
-            except:  # nosec:B110 # pylint:disable=bare-except
+            except:  # nosec B110 # pylint:disable=bare-except
                 pass
         for i in BMConnectionPool().inboundConnections.values():
             try:
                 i.close()
-            except:  # nosec:B110 # pylint:disable=bare-except
+            except:  # nosec B110 # pylint:disable=bare-except
                 pass
 
         # just in case
