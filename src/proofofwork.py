@@ -276,8 +276,8 @@ def buildCPoW():
                   '-f', 'Makefile.bsd'])  # nosec B607, B603
         else:
             # GNU make
-            call(["make", "-C", os.path.join(paths.codePath(),
-                  "bitmsghash")])  # nosec B607, B603
+            call([  # nosec B607, B603
+                "make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
         if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
             init()
             notifyBuild(True)

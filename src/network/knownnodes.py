@@ -85,7 +85,7 @@ def pickle_deserialize_old_knownnodes(source):
     the new format is {Peer:{"lastseen":i, "rating":f}}
     """
     global knownNodes
-    knownNodes = pickle.load(source)
+    knownNodes = pickle.load(source)  # nosec B301
     for stream in knownNodes.keys():
         for node, params in knownNodes[stream].iteritems():
             if isinstance(params, (float, int)):
