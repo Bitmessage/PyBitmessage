@@ -209,8 +209,8 @@ class TestCore(unittest.TestCase):
                 ):
                     if c < 60:
                         self.fail(
-                            'Still connected to bootstrap node %s after % seconds' %
-                            (peer, time.time() - _started))
+                            'Still connected to bootstrap node %s after %.2f'
+                            ' seconds' % (peer, time.time() - _started))
                     c += 1
                     break
                 else:
@@ -220,7 +220,7 @@ class TestCore(unittest.TestCase):
                         continue
                     return
         self.fail(
-            'Failed to connect during %s sec' % (time.time() - _started))
+            'Failed to connect during %.2f sec' % (time.time() - _started))
 
     def _check_knownnodes(self):
         for stream in knownnodes.knownNodes.itervalues():
@@ -372,14 +372,17 @@ class TestCore(unittest.TestCase):
 
     def test_add_same_address_twice_in_addressbook(self):
         """checking same address is added twice in addressbook"""
-        self.assertTrue(helper_addressbook.insert(label='test1', address=self.addr))
-        self.assertFalse(helper_addressbook.insert(label='test1', address=self.addr))
+        self.assertTrue(
+            helper_addressbook.insert(label='test1', address=self.addr))
+        self.assertFalse(
+            helper_addressbook.insert(label='test1', address=self.addr))
         self.delete_address_from_addressbook(self.addr)
 
     def test_is_address_present_in_addressbook(self):
         """checking is address added in addressbook or not"""
         helper_addressbook.insert(label='test1', address=self.addr)
-        queryreturn = sqlQuery('''select count(*) from addressbook where address=?''', self.addr)
+        queryreturn = sqlQuery(
+            'select count(*) from addressbook where address=?', self.addr)
         self.assertEqual(queryreturn[0][0], 1)
         self.delete_address_from_addressbook(self.addr)
 
@@ -387,8 +390,10 @@ class TestCore(unittest.TestCase):
         """Testing same case sensitive address store in addressbook"""
         address1 = 'BM-2cVWtdUzPwF7UNGDrZftWuHWiJ6xxBpiSP'
         address2 = 'BM-2CvwTDuZpWf7ungdRzFTwUhwIj6XXbPIsp'
-        self.assertTrue(helper_addressbook.insert(label='test1', address=address1))
-        self.assertTrue(helper_addressbook.insert(label='test2', address=address2))
+        self.assertTrue(
+            helper_addressbook.insert(label='test1', address=address1))
+        self.assertTrue(
+            helper_addressbook.insert(label='test2', address=address2))
         self.delete_address_from_addressbook(address1)
         self.delete_address_from_addressbook(address2)
 
