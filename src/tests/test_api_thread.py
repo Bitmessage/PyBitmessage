@@ -2,11 +2,18 @@
 
 import sys
 import time
+from binascii import hexlify, unhexlify
+from struct import pack
 
 from six.moves import queue, xmlrpc_client
 
+from pybitmessage import protocol
+from pybitmessage.defaults import (
+    networkDefaultProofOfWorkNonceTrialsPerByte,
+    networkDefaultPayloadLengthExtraBytes)
+
 from .partial import TestPartialRun
-from .samples import sample_statusbar_msg  # any
+from .samples import sample_statusbar_msg, sample_object_data
 
 
 class TestAPIThread(TestPartialRun):
@@ -66,3 +73,22 @@ class TestAPIThread(TestPartialRun):
         if sys.hexversion >= 0x3000000:
             self.assertEqual(status["networkConnections"], 4)
             self.assertEqual(status["pendingDownload"], 0)
+
+    def test_disseminate_preencrypted(self):
+        """Call disseminatePreEncryptedMsg API command and check inventory"""
+        import proofofwork
+        from inventory import Inventory
+
+        proofofwork.init()
+        update_object = pack(
+            '>Q', int(time.time() + 7200)) + sample_object_data[16:]
+        invhash = unhexlify(self.api.disseminatePreEncryptedMsg(
+            hexlify(update_object).decode(),
+            networkDefaultProofOfWorkNonceTrialsPerByte,
+            networkDefaultPayloadLengthExtraBytes
+        ))
+        obj_type, obj_stream, obj_data = Inventory()[invhash][:3]
+        self.assertEqual(obj_type, 42)
+        self.assertEqual(obj_stream, 2)
+        self.assertEqual(sample_object_data[16:], obj_data[16:])
+        self.assertTrue(protocol.isProofOfWorkSufficient(obj_data))
