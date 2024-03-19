@@ -26,15 +26,12 @@
 /// Warning: This version of SWAP64(n) is slow and avoid bugs on AMD GPUs(7970)
 // #define SWAP64(n)       as_ulong(as_uchar8(n).s76543210)
 
-#define SWAP64(n) \
-  (((n) << 56)					\
-   | (((n) & 0xff00) << 40)			\
-   | (((n) & 0xff0000) << 24)			\
-   | (((n) & 0xff000000) << 8)			\
-   | (((n) >> 8) & 0xff000000)			\
-   | (((n) >> 24) & 0xff0000)			\
-   | (((n) >> 40) & 0xff00)			\
-   | ((n) >> 56))
+static inline uint64_t SWAP64(uint64_t n)
+{
+    n = n << 32 | n >> 32;
+    n = (n & 0x0000ffff0000ffffUL) << 16 | (n & 0xffff0000ffff0000UL) >> 16;
+    return (n & 0x00ff00ff00ff00ffUL) << 8 | (n & 0xff00ff00ff00ff00UL) >> 8;
+}
 
 
 
