@@ -1336,13 +1336,13 @@ class BMRPCDispatcher(object):
         inventoryHash = calculateInventoryHash(encryptedPayload)
         Inventory()[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload,
-            expiresTime, ''
+            expiresTime, b''
         )
         logger.info(
             'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
             ' command): %s', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
-        return hexlify(inventoryHash)
+        return hexlify(inventoryHash).decode()
 
     @command('trashSentMessageByAckData')
     def HandleTrashSentMessageByAckDAta(self, ackdata):
