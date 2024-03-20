@@ -2,6 +2,7 @@ coverage
 psutil
 pycryptodome
 PyQt5;python_version>="3.7"
+mock;python_version<="2.7"
 python_prctl;platform_system=="Linux"
 six
 xvfbwrapper;platform_system=="Linux"
