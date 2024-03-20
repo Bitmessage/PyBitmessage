@@ -14,7 +14,7 @@ from kivy.uix.screenmanager import Screen
 from pybitmessage import state
 
 if os.environ.get('INSTALL_TESTS', False) and not state.backend_py3_compatible:
-    from pybitmessage.mock import kivy_main
+    from pybitmessage.mockpb import kivy_main
     stats = kivy_main.network.stats
     objectracker = kivy_main.network.objectracker
 else:

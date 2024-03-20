@@ -32,7 +32,7 @@ def cleanup(files=_files):
 
 class TeleniumTestProcess(TeleniumTestCase):
     """Setting Screen Functionality Testing"""
-    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'mock', 'kivy_main.py')]
+    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'mockpb', 'kivy_main.py')]
 
     @classmethod
     def setUpClass(cls):

@@ -5,7 +5,7 @@
 
 import os
 from kivy.config import Config
-from pybitmessage.mock import multiqueue
+from pybitmessage.mockpb import multiqueue
 from pybitmessage import state
 
 if os.environ.get("INSTALL_TESTS", False):
@@ -16,9 +16,9 @@ if os.environ.get("INSTALL_TESTS", False):
     Config.set("graphics", "left", 0)
 
 
-from pybitmessage.mock.class_addressGenerator import FakeAddressGenerator  # noqa:E402
+from pybitmessage.mockpb.class_addressGenerator import FakeAddressGenerator  # noqa:E402
 from pybitmessage.bitmessagekivy.mpybit import NavigateApp  # noqa:E402
-from pybitmessage.mock import network  # noqa:E402
+from pybitmessage.mockpb import network  # noqa:E402
 
 stats = network.stats
 objectracker = network.objectracker

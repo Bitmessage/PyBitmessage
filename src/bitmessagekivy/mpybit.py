@@ -45,7 +45,7 @@ from pybitmessage.bitmessagekivy.baseclass.popup import (
 from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
 from pybitmessage.bitmessagekivy.uikivysignaler import UIkivySignaler
 
-from pybitmessage.mock.helper_startup import loadConfig, total_encrypted_messages_per_month
+from pybitmessage.mockpb.helper_startup import loadConfig, total_encrypted_messages_per_month
 
 logger = logging.getLogger('default')
 
