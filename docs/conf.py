@@ -203,7 +203,7 @@ autodoc_mock_imports = [
     'pybitmessage.bitmessagekivy',
     'pybitmessage.bitmessageqt.foldertree',
     'pybitmessage.helper_startup',
-    'pybitmessage.mockpb',
+    'pybitmessage.mockbm',
     'pybitmessage.network.httpd',
     'pybitmessage.network.https',
     'ctypes',
@@ -232,7 +232,7 @@ apidoc_excluded_paths = [
     'bitmessageqt/addressvalidator.py', 'bitmessageqt/foldertree.py',
     'bitmessageqt/migrationwizard.py', 'bitmessageqt/newaddresswizard.py',
     'helper_startup.py',
-    'kivymd', 'mockpb', 'main.py', 'navigationdrawer', 'network/http*',
+    'kivymd', 'mockbm', 'main.py', 'navigationdrawer', 'network/http*',
     'src', 'tests', 'version.py'
 ]
 apidoc_module_first = True
