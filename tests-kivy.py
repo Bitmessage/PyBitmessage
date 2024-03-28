@@ -17,8 +17,7 @@ def unittest_discover():
 
 
 if __name__ == "__main__":
-    with open("/proc/self/cgroup", "rt", encoding='ascii', errors='replace') as f:
-        in_docker = "docker" in f.read()
+    in_docker = os.path.exists("/.dockerenv")
 
     if in_docker:
         try:

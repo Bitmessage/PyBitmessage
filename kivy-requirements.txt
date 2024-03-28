@@ -1,6 +1,11 @@
 kivy-garden.qrcode
 kivymd==1.0.2
+kivy==2.1.0
 opencv-python
 pyzbar
 git+https://github.com/tito/telenium@9b54ff1#egg=telenium
-Pillow
+Pillow==9.4.0
+jaraco.collections==3.8.0
+jaraco.classes==3.2.3
+pytz==2022.7.1
+pydantic==1.10.6
