@@ -1,6 +1,18 @@
 #!/bin/bash
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
+
+# buildozer OOM workaround
+mkdir -p ~/.gradle
+echo "org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" \
+    > ~/.gradle/gradle.properties
+
+# workaround for symlink
+rm -rf src/pybitmessage
+mkdir -p src/pybitmessage
+cp src/*.py src/pybitmessage
+cp -r src/bitmessagekivy src/backend src/mockbm src/pybitmessage
+
 pushd packages/android
 
 BUILDMODE=debug

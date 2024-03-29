@@ -805,6 +805,10 @@ def loadOpenSSL():
             'libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         libdir.append('libeay32.dll')
+    # kivy
+    elif 'ANDROID_ARGUMENT' in environ:
+        libdir.append('libcrypto1.1.so')
+        libdir.append('libssl1.1.so')
     else:
         libdir.append('libcrypto.so')
         libdir.append('libssl.so')
