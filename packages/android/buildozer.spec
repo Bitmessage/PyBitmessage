@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = mockone
+title = PyBitmessage Mock
 
 # (str) Package name
-package.name = mock
+package.name = pybitmessagemock
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.mock
+package.domain = at.bitmessage
 
 # (str) Source code where the main.py live
 source.dir = ../../src
@@ -28,7 +28,7 @@ source.include_exts = py,png,jpg,kv,atlas,tflite,sql
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 0.1.1
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -92,7 +92,7 @@ fullscreen = 0
 
 # (int) Android API to use  (targetSdkVersion AND compileSdkVersion)
 # note: when changing, Dockerfile also needs to be changed to install corresponding build tools
-android.api = 28
+android.api = 33
 
 # (int) Minimum API required. You will need to set the android.ndk_api to be as low as this value.
 android.minapi = 21
@@ -242,6 +242,8 @@ android.allow_backup = True
 # This property takes a map of key-value pairs. (via a string)
 # Usage example : android.manifest_placeholders = [myCustomUrl:\"org.kivy.customurl\"]
 # android.manifest_placeholders = [:]
+
+android.release_artifact = apk
 
 #
 # Python for android (p4a) specific
