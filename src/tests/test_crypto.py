@@ -113,3 +113,39 @@ class TestHighlevelcrypto(unittest.TestCase):
             highlevelcrypto.privToPub(sample_privencryptionkey),
             hexlify(sample_pubencryptionkey)
         )
+
+    def test_make_cryptor(self):
+        """Test returning a private `.pyelliptic.ECC` instance"""
+        result = highlevelcrypto.makeCryptor(privkey=sample_privencryptionkey)
+        self.assertEqual(type(result), highlevelcrypto.pyelliptic.ECC)
+
+    def test_hextopubkey(self):
+        """Test converting a pubkey from hex to binary"""
+        result = highlevelcrypto.hexToPubkey(pubkey=hexlify(sample_pubencryptionkey))
+        self.assertEqual(type(result), bytes)
+
+    def test_makepubcryptor(self):
+        """Test returning a public `.pyelliptic.ECC` instance"""
+        result = highlevelcrypto.makePubCryptor(pubkey=hexlify(sample_pubencryptionkey))
+        self.assertEqual(type(result), highlevelcrypto.pyelliptic.ECC)
+
+    def test_encrypt_decrypt(self):
+        """Test Encrypting message with hex public key & Decrypting message with hex private key"""
+        # encrypt
+        ENCRYPTED_MSG = highlevelcrypto.encrypt(
+            msg=sample_msg, hexPubkey=hexlify(sample_pubencryptionkey)
+        )
+        self.assertEqual(type(ENCRYPTED_MSG), bytes)
+
+        # decrypt
+        result = highlevelcrypto.decrypt(
+            msg=ENCRYPTED_MSG, hexPrivkey=sample_privencryptionkey
+        )
+        self.assertEqual(sample_msg, result)
+        self.assertEqual(type(result), bytes)
+
+        # make `.pyelliptic.ECC` object & decryptfast
+        cryptor_ = highlevelcrypto.makeCryptor(privkey=sample_privencryptionkey)
+
+        result1 = highlevelcrypto.decryptFast(msg=ENCRYPTED_MSG, cryptor=cryptor_)
+        self.assertEqual(sample_msg, result1)
