@@ -8,9 +8,7 @@ from struct import pack
 from six.moves import queue, xmlrpc_client
 
 from pybitmessage import protocol
-from pybitmessage.defaults import (
-    networkDefaultProofOfWorkNonceTrialsPerByte,
-    networkDefaultPayloadLengthExtraBytes)
+from pybitmessage.highlevelcrypto import calculateInventoryHash
 
 from .partial import TestPartialRun
 from .samples import sample_statusbar_msg, sample_object_data
@@ -80,12 +78,14 @@ class TestAPIThread(TestPartialRun):
         from inventory import Inventory
 
         proofofwork.init()
-        update_object = pack(
+        self.assertEqual(
+            unhexlify(self.api.disseminatePreparedObject(
+                hexlify(sample_object_data).decode())),
+            calculateInventoryHash(sample_object_data))
+        update_object = b'\x00' * 8 + pack(
             '>Q', int(time.time() + 7200)) + sample_object_data[16:]
         invhash = unhexlify(self.api.disseminatePreEncryptedMsg(
-            hexlify(update_object).decode(),
-            networkDefaultProofOfWorkNonceTrialsPerByte,
-            networkDefaultPayloadLengthExtraBytes
+            hexlify(update_object).decode()
         ))
         obj_type, obj_stream, obj_data = Inventory()[invhash][:3]
         self.assertEqual(obj_type, 42)
