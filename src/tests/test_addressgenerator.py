@@ -85,3 +85,17 @@ class TestAddressGenerator(TestPartialRun):
             self.config.getboolean(sample_deterministic_addr4, 'chan'))
         self.assertTrue(
             self.config.getboolean(sample_deterministic_addr4, 'enabled'))
+
+    def test_random(self):
+        """Test random address"""
+        self.command_queue.put((
+            'createRandomAddress', 4, 1, 'test_random', 1, '', False, 0, 0))
+        addr = self.return_queue.get()
+        self.assertRegexpMatches(addr, r'^BM-')
+        self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
+        self.assertLessEqual(len(addr[3:]), 40)
+
+        self.assertEqual(
+            self.worker_queue.get(), ('sendOutOrStoreMyV4Pubkey', addr))
+        self.assertEqual(self.config.get(addr, 'label'), 'test_random')
+        self.assertTrue(self.config.getboolean(addr, 'enabled'))
