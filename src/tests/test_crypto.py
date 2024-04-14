@@ -8,7 +8,7 @@ import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify
 
-from pybitmessage import highlevelcrypto
+from pybitmessage import highlevelcrypto, fallback
 
 
 try:
@@ -94,8 +94,8 @@ class TestHighlevelcrypto(unittest.TestCase):
         enkey = highlevelcrypto.deterministic_keys(sample_seed, b'+')[1]
         self.assertEqual(
             sample_deterministic_ripe,
-            hexlify(TestHashlib._hashdigest(
-                hashlib.sha512(sigkey + enkey).digest())))
+            hexlify(fallback.RIPEMD160Hash(
+                hashlib.sha512(sigkey + enkey).digest()).digest()))
 
     def test_signatures(self):
         """Verify sample signatures and newly generated ones"""
