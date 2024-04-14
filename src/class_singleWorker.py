@@ -553,8 +553,7 @@ class singleWorker(StoppableThread):
                 # , privEncryptionKeyHex
                 privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                     self._getKeysForAddress(fromaddress)
-            except (configparser.NoSectionError, configparser.NoOptionError) as err:
-                self.logger.warning("Section or Option did not found: %s", err)
+            except ValueError:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata,
@@ -563,6 +562,7 @@ class singleWorker(StoppableThread):
                             "Error! Could not find sender address"
                             " (your address) in the keys.dat file."))
                 ))
+                continue
             except Exception as err:
                 self.logger.error(
                     'Error within sendBroadcast. Could not read'
@@ -1142,8 +1142,7 @@ class singleWorker(StoppableThread):
                 privSigningKeyHex, privEncryptionKeyHex, \
                     pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
                         fromaddress)
-            except (configparser.NoSectionError, configparser.NoOptionError) as err:
-                self.logger.warning("Section or Option did not found: %s", err)
+            except ValueError:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata,
@@ -1152,6 +1151,7 @@ class singleWorker(StoppableThread):
                             "Error! Could not find sender address"
                             " (your address) in the keys.dat file."))
                 ))
+                continue
             except Exception as err:
                 self.logger.error(
                     'Error within sendMsg. Could not read'
