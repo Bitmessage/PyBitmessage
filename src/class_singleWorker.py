@@ -201,10 +201,11 @@ class singleWorker(StoppableThread):
                 'Could not read or decode privkey for address %s', address)
             raise ValueError
 
-        privSigningKeyHex = hexlify(
-            highlevelcrypto.decodeWalletImportFormat(privSigningKeyBase58))
+        privSigningKeyHex = hexlify(highlevelcrypto.decodeWalletImportFormat(
+            privSigningKeyBase58.encode()))
         privEncryptionKeyHex = hexlify(
-            highlevelcrypto.decodeWalletImportFormat(privEncryptionKeyBase58))
+            highlevelcrypto.decodeWalletImportFormat(
+                privEncryptionKeyBase58.encode()))
 
         # The \x04 on the beginning of the public keys are not sent.
         # This way there is only one acceptable way to encode
@@ -1113,7 +1114,7 @@ class singleWorker(StoppableThread):
                     continue
                 privEncryptionKeyHex = hexlify(
                     highlevelcrypto.decodeWalletImportFormat(
-                        privEncryptionKeyBase58))
+                        privEncryptionKeyBase58.encode()))
                 pubEncryptionKeyBase256 = unhexlify(highlevelcrypto.privToPub(
                     privEncryptionKeyHex))[1:]
                 requiredAverageProofOfWorkNonceTrialsPerByte = \

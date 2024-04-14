@@ -102,8 +102,8 @@ def reloadMyAddressHashes():
         # Returns a simple 32 bytes of information encoded in 64 Hex characters
         try:
             privEncryptionKey = hexlify(
-                highlevelcrypto.decodeWalletImportFormat(
-                    config.get(addressInKeysFile, 'privencryptionkey')
+                highlevelcrypto.decodeWalletImportFormat(config.get(
+                    addressInKeysFile, 'privencryptionkey').encode()
                 ))
         except ValueError:
             logger.error(
