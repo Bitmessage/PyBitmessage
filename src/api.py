@@ -94,7 +94,6 @@ from defaults import (
 from helper_sql import (
     SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready)
 from highlevelcrypto import calculateInventoryHash
-from inventory import Inventory
 
 try:
     from network import BMConnectionPool
@@ -1340,7 +1339,7 @@ class BMRPCDispatcher(object):
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
         inventoryHash = calculateInventoryHash(encryptedPayload)
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload,
             expiresTime, b''
         )
@@ -1396,7 +1395,7 @@ class BMRPCDispatcher(object):
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1  # .. todo::: support v4 pubkeys
         TTL = 28 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
         logger.info(

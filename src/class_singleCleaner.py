@@ -27,7 +27,6 @@ import queues
 import state
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from inventory import Inventory
 from network import BMConnectionPool, knownnodes, StoppableThread
 from tr import _translate
 
@@ -69,7 +68,7 @@ class singleCleaner(StoppableThread):
                 'updateStatusBar',
                 'Doing housekeeping (Flushing inventory in memory to disk...)'
             ))
-            Inventory().flush()
+            state.Inventory.flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
 
             # If we are running as a daemon then we are going to fill up the UI
@@ -82,7 +81,7 @@ class singleCleaner(StoppableThread):
             tick = int(time.time())
             if timeWeLastClearedInventoryAndPubkeysTables < tick - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = tick
-                Inventory().clean()
+                state.Inventory.clean()
                 queues.workerQueue.put(('sendOnionPeerObj', ''))
                 # pubkeys
                 sqlExecute(

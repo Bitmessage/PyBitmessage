@@ -17,7 +17,6 @@ import knownnodes
 import protocol
 import state
 from bmconfigparser import config
-from inventory import Inventory
 from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
 from network.advanceddispatcher import AdvancedDispatcher
@@ -356,7 +355,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return True
 
         for i in map(str, items):
-            if i in Inventory() and not Dandelion().hasHash(i):
+            if i in state.Inventory and not Dandelion().hasHash(i):
                 continue
             if dandelion and not Dandelion().hasHash(i):
                 Dandelion().addHash(i, self)
@@ -421,12 +420,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except KeyError:
                 pass
 
-        if self.object.inventoryHash in Inventory() and Dandelion().hasHash(
+        if self.object.inventoryHash in state.Inventory and Dandelion().hasHash(
                 self.object.inventoryHash):
             Dandelion().removeHash(
                 self.object.inventoryHash, "cycle detection")
 
-        Inventory()[self.object.inventoryHash] = (
+        state.Inventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
             buffer(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
             buffer(self.object.tag)  # noqa: F821

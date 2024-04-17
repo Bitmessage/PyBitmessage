@@ -1,10 +1,9 @@
-"""The Inventory singleton"""
+"""The Inventory"""
 
 # TODO make this dynamic, and watch out for frozen, like with messagetypes
 import storage.filesystem
 import storage.sqlite
 from bmconfigparser import config
-from singleton import Singleton
 
 
 def create_inventory_instance(backend="sqlite"):
@@ -17,10 +16,9 @@ def create_inventory_instance(backend="sqlite"):
         "{}Inventory".format(backend.title()))()
 
 
-@Singleton
-class Inventory():
+class Inventory:
     """
-    Inventory singleton class which uses storage backends
+    Inventory class which uses storage backends
     to manage the inventory.
     """
     def __init__(self):

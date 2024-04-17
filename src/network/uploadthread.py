@@ -5,7 +5,7 @@ import time
 
 import helper_random
 import protocol
-from inventory import Inventory
+import state
 from network.connectionpool import BMConnectionPool
 from network.dandelion import Dandelion
 from randomtrackingdict import RandomTrackingDict
@@ -50,7 +50,7 @@ class UploadThread(StoppableThread):
                         break
                     try:
                         payload.extend(protocol.CreatePacket(
-                            'object', Inventory()[chunk].payload))
+                            'object', state.Inventory[chunk].payload))
                         chunk_count += 1
                     except KeyError:
                         i.antiIntersectionDelay()

@@ -17,7 +17,6 @@ import protocol
 import state
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
-from inventory import Inventory
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 
@@ -230,7 +229,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             # may lock for a long time, but I think it's better than
             # thousands of small locks
             with self.objectsNewToThemLock:
-                for objHash in Inventory().unexpired_hashes_by_stream(stream):
+                for objHash in state.Inventory.unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
                     if Dandelion().hasHash(objHash):
                         continue

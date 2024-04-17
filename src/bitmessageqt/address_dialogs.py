@@ -9,10 +9,10 @@ from PyQt4 import QtCore, QtGui
 
 import queues
 import widgets
+import state
 from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
 from bmconfigparser import config as global_config
-from inventory import Inventory
 from tr import _translate
 
 
@@ -190,13 +190,13 @@ class NewSubscriptionDialog(AddressDataDialog):
                 " broadcasts."
             ))
         else:
-            Inventory().flush()
+            state.Inventory.flush()
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
                 encodeVarint(addressVersion)
                 + encodeVarint(streamNumber) + ripe
             ).digest()).digest()
             tag = doubleHashOfAddressData[32:]
-            self.recent = Inventory().by_type_and_tag(3, tag)
+            self.recent = state.Inventory.by_type_and_tag(3, tag)
             count = len(self.recent)
             if count == 0:
                 self.checkBoxDisplayMessagesAlreadyInInventory.setText(

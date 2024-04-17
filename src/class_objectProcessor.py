@@ -31,7 +31,6 @@ from bmconfigparser import config
 from fallback import RIPEMD160Hash
 from helper_sql import (
     sql_ready, sql_timeout, SqlBulkExecute, sqlExecute, sqlQuery)
-from inventory import Inventory
 from network import knownnodes
 from network.node import Peer
 from tr import _translate
@@ -736,7 +735,7 @@ class objectProcessor(threading.Thread):
             objectType, toStreamNumber, expiresTime = \
                 protocol.decodeObjectParameters(ackPayload)
             inventoryHash = highlevelcrypto.calculateInventoryHash(ackPayload)
-            Inventory()[inventoryHash] = (
+            state.Inventory[inventoryHash] = (
                 objectType, toStreamNumber, ackPayload, expiresTime, b'')
             queues.invQueue.put((toStreamNumber, inventoryHash))
 

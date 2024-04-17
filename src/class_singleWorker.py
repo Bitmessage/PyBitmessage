@@ -28,7 +28,6 @@ import tr
 from addresses import decodeAddress, decodeVarint, encodeVarint
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from inventory import Inventory
 from network import knownnodes, StoppableThread
 from six.moves import configparser, queue
 
@@ -117,7 +116,7 @@ class singleWorker(StoppableThread):
         # For the case if user deleted knownnodes
         # but is still having onionpeer objects in inventory
         if not knownnodes.knownNodesActual:
-            for item in Inventory().by_type_and_tag(protocol.OBJECT_ONIONPEER):
+            for item in state.Inventory.by_type_and_tag(protocol.OBJECT_ONIONPEER):
                 queues.objectProcessorQueue.put((
                     protocol.OBJECT_ONIONPEER, item.payload
                 ))
@@ -288,7 +287,7 @@ class singleWorker(StoppableThread):
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
 
         self.logger.info(
@@ -376,7 +375,7 @@ class singleWorker(StoppableThread):
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
 
         self.logger.info(
@@ -467,7 +466,7 @@ class singleWorker(StoppableThread):
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,
             doubleHashOfAddressData[32:]
         )
@@ -503,7 +502,7 @@ class singleWorker(StoppableThread):
         objectPayload = encodeVarint(peer.port) + protocol.encodeHost(peer.host)
         tag = highlevelcrypto.calculateInventoryHash(objectPayload)
 
-        if Inventory().by_type_and_tag(objectType, tag):
+        if state.Inventory.by_type_and_tag(objectType, tag):
             return  # not expired
 
         payload = pack('>Q', embeddedTime)
@@ -516,7 +515,7 @@ class singleWorker(StoppableThread):
             payload, TTL, log_prefix='(For onionpeer object)')
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, buffer(payload),  # noqa: F821
             embeddedTime, buffer(tag)  # noqa: F821
         )
@@ -684,7 +683,7 @@ class singleWorker(StoppableThread):
 
             inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
             objectType = 3
-            Inventory()[inventoryHash] = (
+            state.Inventory[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
             self.logger.info(
                 'sending inv (within sendBroadcast function)'
@@ -843,7 +842,7 @@ class singleWorker(StoppableThread):
                                     hexlify(privEncryptionKey))
                             )
 
-                            for value in Inventory().by_type_and_tag(1, toTag):
+                            for value in state.Inventory.by_type_and_tag(1, toTag):
                                 # if valid, this function also puts it
                                 # in the pubkeys table.
                                 if protocol.decryptAndCheckPubkeyPayload(
@@ -1301,7 +1300,7 @@ class singleWorker(StoppableThread):
 
             inventoryHash = highlevelcrypto.calculateInventoryHash(encryptedPayload)
             objectType = 2
-            Inventory()[inventoryHash] = (
+            state.Inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             if config.has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
@@ -1457,7 +1456,7 @@ class singleWorker(StoppableThread):
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
         self.logger.info('sending inv (for the getpubkey message)')
         queues.invQueue.put((streamNumber, inventoryHash))

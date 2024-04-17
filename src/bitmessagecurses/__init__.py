@@ -30,7 +30,6 @@ import state
 from addresses import addBMIfNotPresent, decodeAddress
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from inventory import Inventory
 
 # pylint: disable=global-statement
 
@@ -145,8 +144,8 @@ def scrollbox(d, text, height=None, width=None):
 def resetlookups():
     """Reset the Inventory Lookups"""
     global inventorydata
-    inventorydata = Inventory().numberOfInventoryLookupsPerformed
-    Inventory().numberOfInventoryLookupsPerformed = 0
+    inventorydata = state.Inventory.numberOfInventoryLookupsPerformed
+    state.Inventory.numberOfInventoryLookupsPerformed = 0
     Timer(1, resetlookups, ()).start()
 
 

@@ -7,7 +7,6 @@ import time
 import protocol
 import state
 from highlevelcrypto import calculateInventoryHash
-from inventory import Inventory
 from network.dandelion import Dandelion
 
 logger = logging.getLogger('default')
@@ -115,7 +114,7 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
         # if it's a stem duplicate, pretend we don't have it
         if Dandelion().hasHash(self.inventoryHash):
             return
-        if self.inventoryHash in Inventory():
+        if self.inventoryHash in state.Inventory:
             raise BMObjectAlreadyHaveError()
 
     def checkObjectByType(self):

@@ -9,7 +9,6 @@ from six.moves import queue
 import state
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
-from inventory import Inventory
 from network import StoppableThread
 from network.knownnodes import saveKnownNodes
 from queues import (
@@ -41,7 +40,7 @@ def doCleanShutdown():
         'updateStatusBar',
         'Flushing inventory in memory out to disk.'
         ' This should normally only take a second...'))
-    Inventory().flush()
+    state.Inventory.flush()
 
     # Verify that the objectProcessor has finished exiting. It should have
     # incremented the shutdown variable from 1 to 2. This must finish before

@@ -76,6 +76,8 @@ class TestAPIThread(TestPartialRun):
         """Call disseminatePreEncryptedMsg API command and check inventory"""
         import proofofwork
         from inventory import Inventory
+        import state
+        state.Inventory = Inventory()
 
         proofofwork.init()
         self.assertEqual(
@@ -87,7 +89,7 @@ class TestAPIThread(TestPartialRun):
         invhash = unhexlify(self.api.disseminatePreEncryptedMsg(
             hexlify(update_object).decode()
         ))
-        obj_type, obj_stream, obj_data = Inventory()[invhash][:3]
+        obj_type, obj_stream, obj_data = state.Inventory[invhash][:3]
         self.assertEqual(obj_type, 42)
         self.assertEqual(obj_stream, 2)
         self.assertEqual(sample_object_data[16:], obj_data[16:])

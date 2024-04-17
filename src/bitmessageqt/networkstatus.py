@@ -10,7 +10,6 @@ import l10n
 import network.stats
 import state
 import widgets
-from inventory import Inventory
 from network import BMConnectionPool, knownnodes
 from retranslateui import RetranslateMixin
 from tr import _translate
@@ -50,7 +49,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
 
     def startUpdate(self):
         """Start a timer to update counters every 2 seconds"""
-        Inventory().numberOfInventoryLookupsPerformed = 0
+        state.Inventory.numberOfInventoryLookupsPerformed = 0
         self.runEveryTwoSeconds()
         self.timer.start(2000)  # milliseconds
 
@@ -229,8 +228,8 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def runEveryTwoSeconds(self):
         """Updates counters, runs every 2 seconds if the timer is running"""
         self.labelLookupsPerSecond.setText(_translate("networkstatus", "Inventory lookups per second: %1").arg(
-            str(Inventory().numberOfInventoryLookupsPerformed / 2)))
-        Inventory().numberOfInventoryLookupsPerformed = 0
+            str(state.Inventory.numberOfInventoryLookupsPerformed / 2)))
+        state.Inventory.numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
 

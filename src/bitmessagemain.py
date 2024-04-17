@@ -176,8 +176,7 @@ class Main(object):
         # The closeEvent should command this thread to exit gracefully.
         sqlLookup.daemon = False
         sqlLookup.start()
-
-        Inventory()  # init
+        state.Inventory = Inventory()  # init
 
         if state.enableObjProc:  # Not needed if objproc is disabled
             # Start the address generation thread
