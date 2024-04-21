@@ -97,3 +97,6 @@ class Placeholder(object):  # pylint:disable=too-few-public-methods
 
 
 Inventory = Placeholder("Inventory")
+
+
+Dandelion = Placeholder("Dandelion")

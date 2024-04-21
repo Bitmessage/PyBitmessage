@@ -10,7 +10,6 @@ from time import time
 import connectionpool
 import state
 from queues import invQueue
-from singleton import Singleton
 
 # randomise routes after 600 seconds
 REASSIGN_INTERVAL = 600
@@ -26,7 +25,6 @@ Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
 logger = logging.getLogger('default')
 
 
-@Singleton
 class Dandelion:  # pylint: disable=old-style-class
     """Dandelion class for tracking stem/fluff stages."""
     def __init__(self):

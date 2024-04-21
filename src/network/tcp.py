@@ -25,7 +25,6 @@ import connectionpool
 import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
-from network.dandelion import Dandelion
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
@@ -169,7 +168,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.increaseRating(self.destination)
             knownnodes.addKnownNode(
                 self.streams, self.destination, time.time())
-            Dandelion().maybeAddStem(self)
+            state.Dandelion.maybeAddStem(self)
         self.sendAddr()
         self.sendBigInv()
 
@@ -231,7 +230,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with self.objectsNewToThemLock:
                 for objHash in state.Inventory.unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
-                    if Dandelion().hasHash(objHash):
+                    if state.Dandelion.hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
         objectCount = 0
@@ -293,7 +292,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             if host_is_global:
                 knownnodes.addKnownNode(
                     self.streams, self.destination, time.time())
-                Dandelion().maybeRemoveStem(self)
+                state.Dandelion.maybeRemoveStem(self)
         else:
             self.checkTimeOffsetNotification()
             if host_is_global:
