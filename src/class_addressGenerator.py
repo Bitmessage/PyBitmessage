@@ -37,6 +37,54 @@ class addressGenerator(StoppableThread):
 
         super(addressGenerator, self).stopThread()
 
+    def save_address(
+        self, version, stream, ripe, label, signing_key, encryption_key
+    ):
+        """Write essential address config values and reload cryptors"""
+        address = encodeAddress(version, stream, ripe)
+        try:
+            config.add_section(address)
+        except configparser.DuplicateSectionError:
+            self.logger.info(
+                '%s already exists. Not adding it again.', address)
+            queues.UISignalQueue.put((
+                'updateStatusBar',
+                _translate(
+                    "MainWindow", "%1 is already in 'Your Identities'."
+                    " Not adding it again.").arg(address)
+            ))
+            return False
+
+        self.logger.debug('label: %s', label)
+        signingKeyWIF = highlevelcrypto.encodeWalletImportFormat(signing_key)
+        encryptionKeyWIF = highlevelcrypto.encodeWalletImportFormat(
+            encryption_key)
+        config.set(address, 'label', label)
+        config.set(address, 'enabled', 'true')
+        config.set(address, 'decoy', 'false')
+        config.set(address, 'privsigningkey', signingKeyWIF.decode())
+        config.set(address, 'privencryptionkey', encryptionKeyWIF.decode())
+        config.save()
+
+        queues.UISignalQueue.put((
+            'writeNewAddressToTable', (label, address, stream)))
+
+        shared.myECCryptorObjects[ripe] = highlevelcrypto.makeCryptor(
+            hexlify(encryption_key))
+        shared.myAddressesByHash[ripe] = address
+        tag = highlevelcrypto.double_sha512(
+            encodeVarint(version) + encodeVarint(stream) + ripe)[32:]
+        shared.myAddressesByTag[tag] = address
+
+        if version == 3:
+            # If this is a chan address, the worker thread won't send out
+            # the pubkey over the network.
+            queues.workerQueue.put(('sendOutOrStoreMyV3Pubkey', ripe))
+        elif version == 4:
+            queues.workerQueue.put(('sendOutOrStoreMyV4Pubkey', address))
+
+        return address
+
     def run(self):
         """
         Process the requests for addresses generation
@@ -155,27 +203,14 @@ class addressGenerator(StoppableThread):
                     # The user must have a pretty fast computer.
                     # time.time() - startTime equaled zero.
                     pass
-                address = encodeAddress(
-                    addressVersionNumber, streamNumber, ripe)
 
-                privSigningKeyWIF = highlevelcrypto.encodeWalletImportFormat(
-                    privSigningKey)
-                privEncryptionKeyWIF = highlevelcrypto.encodeWalletImportFormat(
-                    potentialPrivEncryptionKey)
-
-                config.add_section(address)
-                config.set(address, 'label', label)
-                config.set(address, 'enabled', 'true')
-                config.set(address, 'decoy', 'false')
+                address = self.save_address(
+                    addressVersionNumber, streamNumber, ripe, label,
+                    privSigningKey, potentialPrivEncryptionKey)
                 config.set(address, 'noncetrialsperbyte', str(
                     nonceTrialsPerByte))
                 config.set(address, 'payloadlengthextrabytes', str(
                     payloadLengthExtraBytes))
-                config.set(
-                    address, 'privsigningkey', privSigningKeyWIF.decode())
-                config.set(
-                    address, 'privencryptionkey',
-                    privEncryptionKeyWIF.decode())
                 config.save()
 
                 # The API and the join and create Chan functionality
@@ -189,15 +224,6 @@ class addressGenerator(StoppableThread):
                         "Done generating address. Doing work necessary"
                         " to broadcast it...")
                 ))
-                queues.UISignalQueue.put(('writeNewAddressToTable', (
-                    label, address, streamNumber)))
-                shared.reloadMyAddressHashes()
-                if addressVersionNumber == 3:
-                    queues.workerQueue.put((
-                        'sendOutOrStoreMyV3Pubkey', ripe))
-                elif addressVersionNumber == 4:
-                    queues.workerQueue.put((
-                        'sendOutOrStoreMyV4Pubkey', address))
 
             elif command in (
                 'createDeterministicAddresses', 'createChan',
@@ -281,83 +307,28 @@ class addressGenerator(StoppableThread):
                     if command == 'getDeterministicAddress':
                         saveAddressToDisk = False
 
-                    if saveAddressToDisk and live:
-                        privSigningKeyWIF = \
-                            highlevelcrypto.encodeWalletImportFormat(
-                                potentialPrivSigningKey)
-                        privEncryptionKeyWIF = \
-                            highlevelcrypto.encodeWalletImportFormat(
-                                potentialPrivEncryptionKey)
+                    if saveAddressToDisk and live and self.save_address(
+                        addressVersionNumber, streamNumber, ripe, label,
+                        potentialPrivSigningKey, potentialPrivEncryptionKey
+                    ):
+                        if command in ('createChan', 'joinChan'):
+                            config.set(address, 'chan', 'true')
+                        config.set(
+                            address, 'noncetrialsperbyte',
+                            str(nonceTrialsPerByte))
+                        config.set(
+                            address, 'payloadlengthextrabytes',
+                            str(payloadLengthExtraBytes))
+                        config.save()
 
-                        try:
-                            config.add_section(address)
-                            addressAlreadyExists = False
-                        except configparser.DuplicateSectionError:
-                            addressAlreadyExists = True
+                        listOfNewAddressesToSendOutThroughTheAPI.append(
+                            address)
 
-                        if addressAlreadyExists:
-                            self.logger.info(
-                                '%s already exists. Not adding it again.',
-                                address
-                            )
-                            queues.UISignalQueue.put((
-                                'updateStatusBar',
-                                _translate(
-                                    "MainWindow",
-                                    "%1 is already in 'Your Identities'."
-                                    " Not adding it again."
-                                ).arg(address)
-                            ))
-                        else:
-                            self.logger.debug('label: %s', label)
-                            config.set(address, 'label', label)
-                            config.set(address, 'enabled', 'true')
-                            config.set(address, 'decoy', 'false')
-                            if command in ('createChan', 'joinChan'):
-                                config.set(address, 'chan', 'true')
-                            config.set(
-                                address, 'noncetrialsperbyte',
-                                str(nonceTrialsPerByte))
-                            config.set(
-                                address, 'payloadlengthextrabytes',
-                                str(payloadLengthExtraBytes))
-                            config.set(
-                                address, 'privsigningkey',
-                                privSigningKeyWIF.decode())
-                            config.set(
-                                address, 'privencryptionkey',
-                                privEncryptionKeyWIF.decode())
-                            config.save()
-
-                            queues.UISignalQueue.put((
-                                'writeNewAddressToTable',
-                                (label, address, str(streamNumber))
-                            ))
-                            listOfNewAddressesToSendOutThroughTheAPI.append(
-                                address)
-                            shared.myECCryptorObjects[ripe] = \
-                                highlevelcrypto.makeCryptor(
-                                    hexlify(potentialPrivEncryptionKey))
-                            shared.myAddressesByHash[ripe] = address
-                            tag = highlevelcrypto.double_sha512(
-                                encodeVarint(addressVersionNumber)
-                                + encodeVarint(streamNumber) + ripe
-                            )[32:]
-                            shared.myAddressesByTag[tag] = address
-                            if addressVersionNumber == 3:
-                                # If this is a chan address,
-                                # the worker thread won't send out
-                                # the pubkey over the network.
-                                queues.workerQueue.put((
-                                    'sendOutOrStoreMyV3Pubkey', ripe))
-                            elif addressVersionNumber == 4:
-                                queues.workerQueue.put((
-                                    'sendOutOrStoreMyV4Pubkey', address))
-                            queues.UISignalQueue.put((
-                                'updateStatusBar',
-                                _translate(
-                                    "MainWindow", "Done generating address")
-                            ))
+                        queues.UISignalQueue.put((
+                            'updateStatusBar',
+                            _translate(
+                                "MainWindow", "Done generating address")
+                        ))
                     elif saveAddressToDisk and not live \
                             and not config.has_section(address):
                         listOfNewAddressesToSendOutThroughTheAPI.append(
