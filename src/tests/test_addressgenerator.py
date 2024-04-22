@@ -10,8 +10,8 @@ from six.moves import queue
 
 from .partial import TestPartialRun
 from .samples import (
-    sample_seed, sample_deterministic_addr3, sample_deterministic_addr4,
-    sample_deterministic_ripe)
+    sample_deterministic_addr3, sample_deterministic_addr4,
+    sample_deterministic_ripe, sample_subscription_addresses, sample_seed)
 
 TEST_LABEL = 'test'
 
@@ -77,7 +77,7 @@ class TestAddressGenerator(TestPartialRun):
             sample_deterministic_addr3,
             self._execute(
                 'createDeterministicAddresses', 3, 1, TEST_LABEL, 2,
-                sample_seed, False, 0, 0))
+                sample_seed, False))
 
         try:
             self.assertEqual(
@@ -88,6 +88,8 @@ class TestAddressGenerator(TestPartialRun):
             self.worker_queue.get(timeout=30)  # get the next addr's task
         except queue.Empty:
             self.fail('No commands in the worker queue')
+
+        self.config.remove_section(sample_deterministic_addr3)
 
         self.assertEqual(
             sample_deterministic_addr4,
@@ -104,6 +106,16 @@ class TestAddressGenerator(TestPartialRun):
             self.config.getboolean(sample_deterministic_addr4, 'chan'))
         self.assertTrue(
             self.config.getboolean(sample_deterministic_addr4, 'enabled'))
+
+        self.assertEqual(
+            self._execute(
+                'joinChan', sample_subscription_addresses[0], TEST_LABEL,
+                sample_seed, False),
+            'chan name does not match address')
+        self.assertEqual(
+            self._execute(
+                'joinChan', sample_deterministic_addr3, TEST_LABEL,
+                sample_seed, False), sample_deterministic_addr3)
 
     def test_random(self):
         """Test random address"""
