@@ -41,7 +41,7 @@ class InvThread(StoppableThread):
         """Locally generated inventory items require special handling"""
         state.Dandelion.addHash(hashId, stream=stream)
         for connection in BMConnectionPool().connections():
-            if state.dandelion and connection != \
+            if state.dandelion_enabled and connection != \
                     state.Dandelion.objectChildStem(hashId):
                 continue
             connection.objectsNewToThem[hashId] = time()
@@ -77,7 +77,7 @@ class InvThread(StoppableThread):
                             if connection == state.Dandelion.objectChildStem(inv[1]):
                                 # Fluff trigger by RNG
                                 # auto-ignore if config set to 0, i.e. dandelion is off
-                                if random.randint(1, 100) >= state.dandelion:  # nosec B311
+                                if random.randint(1, 100) >= state.dandelion_enabled:  # nosec B311
                                     fluffs.append(inv[1])
                                 # send a dinv only if the stem node supports dandelion
                                 elif connection.services & protocol.NODE_DANDELION > 0:

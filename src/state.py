@@ -44,7 +44,7 @@ ownAddresses = {}
 
 discoveredPeers = {}
 
-dandelion = 0
+dandelion_enabled = 0
 
 kivy = False
 

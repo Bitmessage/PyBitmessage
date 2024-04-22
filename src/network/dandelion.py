@@ -49,7 +49,7 @@ class Dandelion:  # pylint: disable=old-style-class
 
     def addHash(self, hashId, source=None, stream=1):
         """Add inventory vector to dandelion stem"""
-        if not state.dandelion:
+        if not state.dandelion_enabled:
             return
         with self.lock:
             self.hashMap[hashId] = Stem(

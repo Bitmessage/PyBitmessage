@@ -350,7 +350,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             raise BMProtoExcessiveDataError()
 
         # ignore dinv if dandelion turned off
-        if dandelion and not state.dandelion:
+        if dandelion and not state.dandelion_enabled:
             return True
 
         for i in map(str, items):

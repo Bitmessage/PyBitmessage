@@ -351,7 +351,7 @@ def assembleVersionMessage(
         '>q',
         NODE_NETWORK
         | (NODE_SSL if haveSSL(server) else 0)
-        | (NODE_DANDELION if state.dandelion else 0)
+        | (NODE_DANDELION if state.dandelion_enabled else 0)
     )
     payload += pack('>q', int(time.time()))
 
@@ -375,7 +375,7 @@ def assembleVersionMessage(
         '>q',
         NODE_NETWORK
         | (NODE_SSL if haveSSL(server) else 0)
-        | (NODE_DANDELION if state.dandelion else 0)
+        | (NODE_DANDELION if state.dandelion_enabled else 0)
     )
     # = 127.0.0.1. This will be ignored by the remote host.
     # The actual remote connected IP will be used.
