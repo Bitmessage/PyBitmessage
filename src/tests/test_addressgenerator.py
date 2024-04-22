@@ -1,5 +1,8 @@
 """Tests for AddressGenerator (with thread or not)"""
 
+import sys
+import time
+import unittest
 from binascii import unhexlify
 
 import six
@@ -47,6 +50,21 @@ class TestAddressGenerator(TestPartialRun):
             return self.return_queue.get(timeout=30)[0]
         except (IndexError, queue.Empty):
             self.fail('Failed to execute command %s' % command)
+
+    @unittest.skipIf(
+        sys.hexversion < 0x3000000, 'assertLogs is new in version 3.4')
+    def test_invalid_command(self):
+        """Test handling invalid commands"""
+        with self.assertLogs('default') as cm:  # pylint: disable=no-member
+            self.command_queue.put(('wrong', 'command'))
+            self.command_queue.put((
+                'createRandomAddress', 2, 1, 'old_addr', 1, '', False, 0, 0))
+            self.command_queue.put((
+                'createRandomAddress', 8, 1, 'new_addr', 1, '', False, 0, 0))
+            time.sleep(2)
+        self.assertRegex(cm.output[0], r'Programming error:')
+        self.assertRegex(cm.output[1], r'Program error:.*version 2')
+        self.assertRegex(cm.output[2], r'Program error:.*version 8')
 
     def test_deterministic(self):
         """Test deterministic commands"""
