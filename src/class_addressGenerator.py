@@ -94,12 +94,14 @@ class addressGenerator(StoppableThread):
                     'Programming error: A structure with the wrong number'
                     ' of values was passed into the addressGeneratorQueue.'
                     ' Here is the queueValue: %r\n', queueValue)
+                continue
             if addressVersionNumber < 3 or addressVersionNumber > 4:
                 self.logger.error(
                     'Program error: For some reason the address generator'
                     ' queue has been given a request to create at least'
                     ' one version %s address which it cannot do.\n',
                     addressVersionNumber)
+                continue
             if nonceTrialsPerByte == 0:
                 nonceTrialsPerByte = config.getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
