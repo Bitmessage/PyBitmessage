@@ -1477,16 +1477,17 @@ class BMRPCDispatcher(object):
         """
         if BMConnectionPool is None:
             raise APIError(21, 'Could not import BMConnectionPool.')
+
         inboundConnections = []
         outboundConnections = []
-        for i in BMConnectionPool().inboundConnections.values():
+        for i in state.BMConnectionPool.inboundConnections.values():
             inboundConnections.append({
                 'host': i.destination.host,
                 'port': i.destination.port,
                 'fullyEstablished': i.fullyEstablished,
                 'userAgent': str(i.userAgent)
             })
-        for i in BMConnectionPool().outboundConnections.values():
+        for i in state.BMConnectionPool.outboundConnections.values():
             outboundConnections.append({
                 'host': i.destination.host,
                 'port': i.destination.port,

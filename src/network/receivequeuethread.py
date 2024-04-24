@@ -7,7 +7,6 @@ import socket
 
 import state
 from network.advanceddispatcher import UnknownStateError
-from network.connectionpool import BMConnectionPool
 from queues import receiveDataQueue
 from threads import StoppableThread
 
@@ -36,7 +35,7 @@ class ReceiveQueueThread(StoppableThread):
             # enough data, or the connection is to be aborted
 
             try:
-                connection = BMConnectionPool().getConnectionByAddr(dest)
+                connection = state.BMConnectionPool.getConnectionByAddr(dest)
             # connection object not found
             except KeyError:
                 receiveDataQueue.task_done()

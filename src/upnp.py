@@ -19,7 +19,7 @@ import state
 import tr
 from bmconfigparser import config
 from debug import logger
-from network import BMConnectionPool, knownnodes, StoppableThread
+from network import knownnodes, StoppableThread
 from network.node import Peer
 
 
@@ -228,7 +228,7 @@ class uPnPThread(StoppableThread):
         # wait until asyncore binds so that we know the listening port
         bound = False
         while state.shutdown == 0 and not self._stopped and not bound:
-            for s in BMConnectionPool().listeningSockets.values():
+            for s in state.BMConnectionPool.listeningSockets.values():
                 if s.is_bound():
                     bound = True
             if not bound:

@@ -100,3 +100,5 @@ Inventory = Placeholder("Inventory")
 
 
 Dandelion = Placeholder("Dandelion")
+
+BMConnectionPool = Placeholder("BMConnectionPool")

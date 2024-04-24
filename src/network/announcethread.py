@@ -7,7 +7,6 @@ import time
 import state
 from bmconfigparser import config
 from protocol import assembleAddrMessage
-from network.connectionpool import BMConnectionPool
 
 from node import Peer
 from threads import StoppableThread
@@ -31,7 +30,7 @@ class AnnounceThread(StoppableThread):
     @staticmethod
     def announceSelf():
         """Announce our presence"""
-        for connection in BMConnectionPool().udpSockets.values():
+        for connection in state.BMConnectionPool.udpSockets.values():
             if not connection.announcing:
                 continue
             for stream in state.streamsInWhichIAmParticipating:

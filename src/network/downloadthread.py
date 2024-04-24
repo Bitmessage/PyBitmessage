@@ -6,7 +6,6 @@ import state
 import addresses
 import helper_random
 import protocol
-from network.connectionpool import BMConnectionPool
 from objectracker import missingObjects
 from threads import StoppableThread
 
@@ -41,7 +40,7 @@ class DownloadThread(StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = BMConnectionPool().establishedConnections()
+            connections = state.BMConnectionPool.establishedConnections()
             helper_random.randomshuffle(connections)
             requestChunk = max(int(
                 min(self.maxRequestChunk, len(missingObjects))

@@ -17,7 +17,6 @@ from bmconfigparser import config
 from connectionchooser import chooseConnection
 from node import Peer
 from proxy import Proxy
-from singleton import Singleton
 from tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)
@@ -26,7 +25,6 @@ from udp import UDPSocket
 logger = logging.getLogger('default')
 
 
-@Singleton
 class BMConnectionPool(object):
     """Pool of all existing connections"""
     # pylint: disable=too-many-instance-attributes

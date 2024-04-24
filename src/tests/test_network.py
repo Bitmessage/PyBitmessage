@@ -23,14 +23,14 @@ class TestNetwork(TestPartialRun):
 
         # config variable is still used inside of the network ):
         import network
+        import state
         from network import connectionpool, stats
 
-        # beware of singleton
         connectionpool.config = cls.config
-        cls.pool = network.BMConnectionPool()
         cls.stats = stats
 
         network.start(cls.config, cls.state)
+        cls.pool = state.BMConnectionPool
 
     def test_threads(self):
         """Ensure all the network threads started"""

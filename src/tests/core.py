@@ -26,7 +26,6 @@ from helper_msgcoding import MsgEncode, MsgDecode
 from helper_sql import sqlQuery
 from network import asyncore_pollchoose as asyncore, knownnodes
 from network.bmproto import BMProto
-from network.connectionpool import BMConnectionPool
 from network.node import Node, Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
@@ -202,7 +201,7 @@ class TestCore(unittest.TestCase):
         while c > 0:
             time.sleep(1)
             c -= 2
-            for peer, con in BMConnectionPool().outboundConnections.iteritems():
+            for peer, con in state.BMConnectionPool.outboundConnections.iteritems():
                 if (
                     peer.host.startswith('bootstrap')
                     or peer.host == 'quzwelsuziwqgpt2.onion'
@@ -232,7 +231,7 @@ class TestCore(unittest.TestCase):
     def test_dontconnect(self):
         """all connections are closed 5 seconds after setting dontconnect"""
         self._initiate_bootstrap()
-        self.assertEqual(len(BMConnectionPool().connections()), 0)
+        self.assertEqual(len(state.BMConnectionPool.connections()), 0)
 
     def test_connection(self):
         """test connection to bootstrap servers"""
@@ -287,7 +286,7 @@ class TestCore(unittest.TestCase):
         tried_hosts = set()
         for _ in range(360):
             time.sleep(1)
-            for peer in BMConnectionPool().outboundConnections:
+            for peer in state.BMConnectionPool.outboundConnections:
                 if peer.host.endswith('.onion'):
                     tried_hosts.add(peer.host)
                 else:
@@ -308,7 +307,7 @@ class TestCore(unittest.TestCase):
             if thread.name == 'Announcer':  # find Announcer thread
                 break
         else:
-            return self.fail('No Announcer thread found')
+            return self.fail("No Announcer thread found")
 
     @staticmethod
     def _decode_msg(data, pattern):

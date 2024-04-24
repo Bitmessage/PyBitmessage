@@ -23,6 +23,11 @@ class TestAPIThread(TestPartialRun):
 
         import helper_sql
         import queues
+        if sys.hexversion < 0x3000000:
+            from network.connectionpool import BMConnectionPool
+            import state
+
+            state.BMConnectionPool = BMConnectionPool()
 
         #  pylint: disable=too-few-public-methods
         class SqlReadyMock(object):

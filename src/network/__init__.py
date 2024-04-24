@@ -29,7 +29,8 @@ def start(config, state):
     readKnownNodes()
     # init, needs to be early because other thread may access it early
     state.Dandelion = Dandelion()
-    BMConnectionPool().connectToStream(1)
+    state.BMConnectionPool = BMConnectionPool()
+    state.BMConnectionPool.connectToStream(1)
     for thread in (
         BMNetworkThread(), InvThread(), AddrThread(),
         DownloadThread(), UploadThread()
