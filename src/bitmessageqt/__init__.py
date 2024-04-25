@@ -4241,6 +4241,15 @@ class BitmessageQtApplication(QtGui.QApplication):
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
         QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
 
+        self.setStyle(
+            config.safeGet('bitmessagesettings', 'windowstyle', 'GTK+'))
+
+        font = config.safeGet('bitmessagesettings', 'font')
+        if font:
+            # family, size, weight = font.split(',')
+            family, size = font.split(',')
+            self.setFont(QtGui.QFont(family, int(size)))
+
         self.server = None
         self.is_running = False
 
