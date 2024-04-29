@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:jammy
 
 ARG USERNAME=user
 ARG USER_UID=1000
