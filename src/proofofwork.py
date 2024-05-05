@@ -5,11 +5,11 @@ Proof of work calculation
 
 import ctypes
 import os
+import subprocess  # nosec B404
 import sys
 import tempfile
 import time
 from struct import pack, unpack
-from subprocess import call  # nosec B404
 
 import highlevelcrypto
 import openclpow
@@ -278,18 +278,26 @@ def buildCPoW():
     try:
         if "bsd" in sys.platform:
             # BSD make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"),
-                  '-f', 'Makefile.bsd'])  # nosec B607, B603
+            subprocess.check_call([  # nosec B607, B603
+                "make", "-C", os.path.join(paths.codePath(), "bitmsghash"),
+                '-f', 'Makefile.bsd'])
         else:
             # GNU make
-            call([  # nosec B607, B603
+            subprocess.check_call([  # nosec B607, B603
                 "make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
-        if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
+        if os.path.exists(
+            os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")
+        ):
             init()
             notifyBuild(True)
         else:
             notifyBuild(True)
+    except (OSError, subprocess.CalledProcessError):
+        notifyBuild(True)
     except:  # noqa:E722
+        logger.warning(
+            'Unexpected exception rised when tried to build bitmsghash lib',
+            exc_info=True)
         notifyBuild(True)
 
 
