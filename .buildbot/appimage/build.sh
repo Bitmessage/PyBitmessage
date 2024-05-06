@@ -14,36 +14,45 @@ function set_sourceline {
     fi
 }
 
+function build_appimage {
+    set_sourceline
+    ./${BUILDER} --recipe ${RECIPE} || exit 1
+    rm -rf build
+}
+
 [ -f ${BUILDER} ] || wget -qO ${BUILDER} \
     https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.1.0/appimage-builder-1.1.0-x86_64.AppImage \
     && chmod +x ${BUILDER}
 
+chmod 1777 /tmp
 
 export ARCH=amd64
 export APPIMAGE_ARCH=x86_64
 export RUNTIME=${APPIMAGE_ARCH}
-set_sourceline
 
-./${BUILDER} --recipe ${RECIPE} || exit 1
+build_appimage
 
 export ARCH=armhf
 export APPIMAGE_ARCH=${ARCH}
 export RUNTIME=gnueabihf
 export CC=arm-linux-gnueabihf-gcc
 export CXX=${CC}
-set_sourceline
 
-./${BUILDER} --recipe ${RECIPE} || exit 1
+build_appimage
 
 export ARCH=arm64
 export APPIMAGE_ARCH=aarch64
 export RUNTIME=${APPIMAGE_ARCH}
 export CC=aarch64-linux-gnu-gcc
 export CXX=${CC}
-set_sourceline
 
-./${BUILDER} --recipe ${RECIPE}
+build_appimage
 
-mkdir -p ../out
-sha256sum PyBitmessage*.AppImage > ../out/SHA256SUMS
+EXISTING_OWNER=$(stat -c %u ../out) || mkdir -p ../out
+
+sha256sum PyBitmessage*.AppImage >> ../out/SHA256SUMS
 cp PyBitmessage*.AppImage ../out
+
+if [ ${EXISTING_OWNER} ]; then
+    chown ${EXISTING_OWNER} ../out/PyBitmessage*.AppImage ../out/SHA256SUMS
+fi
