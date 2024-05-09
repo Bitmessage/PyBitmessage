@@ -20,7 +20,8 @@ import widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
-from network import knownnodes, AnnounceThread
+from network import knownnodes
+from network.announcethread import AnnounceThread
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
 

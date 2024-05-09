@@ -5,7 +5,7 @@ import time
 from threading import RLock
 
 import state
-import network.connectionpool
+import connectionpool
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False
@@ -100,7 +100,7 @@ class ObjectTracker(object):
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
-        for i in network.connectionpool.BMConnectionPool().connections():
+        for i in connectionpool.pool.connections():
             if not i.fullyEstablished:
                 continue
             try:

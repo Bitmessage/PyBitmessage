@@ -27,7 +27,7 @@ class TestNetwork(TestPartialRun):
 
         # beware of singleton
         connectionpool.config = cls.config
-        cls.pool = network.BMConnectionPool()
+        cls.pool = connectionpool.pool
         cls.stats = stats
 
         network.start(cls.config, cls.state)

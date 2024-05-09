@@ -2,21 +2,17 @@
 Network subsystem package
 """
 
-try:
-    from .announcethread import AnnounceThread
-    from .connectionpool import BMConnectionPool
-except ImportError:
-    AnnounceThread = None
-    BMConnectionPool = None
 from .threads import StoppableThread
 
 
-__all__ = ["AnnounceThread", "BMConnectionPool", "StoppableThread"]
+__all__ = ["StoppableThread"]
 
 
 def start(config, state):
     """Start network threads"""
     import state
+    from .announcethread import AnnounceThread
+    import connectionpool  # pylint: disable=relative-import
     from .addrthread import AddrThread
     from .dandelion import Dandelion
     from .downloadthread import DownloadThread
@@ -29,7 +25,7 @@ def start(config, state):
     readKnownNodes()
     # init, needs to be early because other thread may access it early
     state.Dandelion = Dandelion()
-    BMConnectionPool().connectToStream(1)
+    connectionpool.pool.connectToStream(1)
     for thread in (
         BMNetworkThread(), InvThread(), AddrThread(),
         DownloadThread(), UploadThread()

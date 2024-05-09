@@ -6,7 +6,7 @@ import time
 import helper_random
 import protocol
 import state
-from network.connectionpool import BMConnectionPool
+import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from threads import StoppableThread
 
@@ -22,7 +22,7 @@ class UploadThread(StoppableThread):
         while not self._stopped:
             uploaded = 0
             # Choose uploading peers randomly
-            connections = BMConnectionPool().establishedConnections()
+            connections = connectionpool.pool.establishedConnections()
             helper_random.randomshuffle(connections)
             for i in connections:
                 now = time.time()

@@ -27,7 +27,7 @@ import queues
 import state
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from network import BMConnectionPool, knownnodes, StoppableThread
+from network import connectionpool, knownnodes, StoppableThread
 from tr import _translate
 
 
@@ -129,7 +129,7 @@ class singleCleaner(StoppableThread):
                         os._exit(1)  # pylint: disable=protected-access
 
             # inv/object tracking
-            for connection in BMConnectionPool().connections():
+            for connection in connectionpool.pool.connections():
                 connection.clean()
 
             # discovery tracking

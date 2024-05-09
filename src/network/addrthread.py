@@ -5,10 +5,10 @@ from six.moves import queue
 
 # magic imports!
 import state
+import connectionpool
 from helper_random import randomshuffle
 from protocol import assembleAddrMessage
 from queues import addrQueue  # FIXME: init with queue
-from network.connectionpool import BMConnectionPool
 
 from threads import StoppableThread
 
@@ -29,7 +29,7 @@ class AddrThread(StoppableThread):
 
             if chunk:
                 # Choose peers randomly
-                connections = BMConnectionPool().establishedConnections()
+                connections = connectionpool.pool.establishedConnections()
                 randomshuffle(connections)
                 for i in connections:
                     randomshuffle(chunk)

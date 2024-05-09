@@ -8,7 +8,7 @@ from time import time
 import addresses
 import protocol
 import state
-from network.connectionpool import BMConnectionPool
+import connectionpool
 from queues import invQueue
 from threads import StoppableThread
 
@@ -18,7 +18,7 @@ def handleExpiredDandelion(expired):
        the object"""
     if not expired:
         return
-    for i in BMConnectionPool().connections():
+    for i in connectionpool.pool.connections():
         if not i.fullyEstablished:
             continue
         for x in expired:
@@ -40,7 +40,7 @@ class InvThread(StoppableThread):
     def handleLocallyGenerated(stream, hashId):
         """Locally generated inventory items require special handling"""
         state.Dandelion.addHash(hashId, stream=stream)
-        for connection in BMConnectionPool().connections():
+        for connection in connectionpool.pool.connections():
             if state.dandelion_enabled and connection != \
                     state.Dandelion.objectChildStem(hashId):
                 continue
@@ -62,7 +62,7 @@ class InvThread(StoppableThread):
                     break
 
             if chunk:
-                for connection in BMConnectionPool().connections():
+                for connection in connectionpool.pool.connections():
                     fluffs = []
                     stems = []
                     for inv in chunk:
