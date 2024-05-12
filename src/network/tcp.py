@@ -15,21 +15,21 @@ import helper_random
 import l10n
 import protocol
 import state
-import connectionpool
+import network.connectionpool
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 
-import asyncore_pollchoose as asyncore
-import knownnodes
+import network.asyncore_pollchoose as asyncore
+import network.knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
-from node import Peer
+from .node import Peer
 
 
 logger = logging.getLogger('default')
@@ -191,7 +191,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
                     filtered = [
-                        (k, v) for k, v in nodes.iteritems()
+                        (k, v) for k, v in nodes.items()
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
                         and v["rating"] >= 0 and not k.host.endswith('.onion')

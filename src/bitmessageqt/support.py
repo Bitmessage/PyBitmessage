@@ -6,9 +6,9 @@ import ssl
 import sys
 import time
 
-from PyQt4 import QtCore
+from PyQt6 import QtCore
 
-import account
+import bitmessageqt.account
 import defaults
 import network.stats
 import paths
@@ -16,12 +16,12 @@ import proofofwork
 import queues
 import state
 from bmconfigparser import config
-from foldertree import AccountMixin
+from .foldertree import AccountMixin
 from helper_sql import sqlExecute, sqlQuery
 from l10n import getTranslationLanguage
 from openclpow import openclEnabled
 from pyelliptic.openssl import OpenSSL
-from settings import getSOCKSProxyType
+from .settings import getSOCKSProxyType
 from version import softwareVersion
 from tr import _translate
 

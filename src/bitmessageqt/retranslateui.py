@@ -1,7 +1,7 @@
 from os import path
-from PyQt4 import QtGui
+from PyQt6 import QtGui
 from debug import logger
-import widgets
+import bitmessageqt.widgets
 
 class RetranslateMixin(object):
     def retranslateUi(self):

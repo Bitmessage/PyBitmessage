@@ -5,7 +5,7 @@ src/settingsmixin.py
 
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class SettingsMixin(object):
@@ -56,7 +56,7 @@ class SettingsMixin(object):
             pass
 
 
-class SMainWindow(QtGui.QMainWindow, SettingsMixin):
+class SMainWindow(QtWidgets.QMainWindow, SettingsMixin):
     """Main window with Settings functionality."""
     def loadSettings(self):
         """Load main window settings."""
@@ -69,7 +69,7 @@ class SMainWindow(QtGui.QMainWindow, SettingsMixin):
         self.writeGeometry(self)
 
 
-class STableWidget(QtGui.QTableWidget, SettingsMixin):
+class STableWidget(QtWidgets.QTableWidget, SettingsMixin):
     """Table widget with Settings functionality"""
     # pylint: disable=too-many-ancestors
     def loadSettings(self):
@@ -81,7 +81,7 @@ class STableWidget(QtGui.QTableWidget, SettingsMixin):
         self.writeState(self.horizontalHeader())
 
 
-class SSplitter(QtGui.QSplitter, SettingsMixin):
+class SSplitter(QtWidgets.QSplitter, SettingsMixin):
     """Splitter with Settings functionality."""
     def loadSettings(self):
         """Load splitter settings"""
@@ -92,7 +92,7 @@ class SSplitter(QtGui.QSplitter, SettingsMixin):
         self.writeState(self)
 
 
-class STreeWidget(QtGui.QTreeWidget, SettingsMixin):
+class STreeWidget(QtWidgets.QTreeWidget, SettingsMixin):
     """Tree widget with settings functionality."""
     # pylint: disable=too-many-ancestors
     def loadSettings(self):

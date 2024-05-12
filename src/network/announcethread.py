@@ -5,12 +5,12 @@ import time
 
 # magic imports!
 import state
-import connectionpool
+import network.connectionpool as connectionpool
 from bmconfigparser import config
 from protocol import assembleAddrMessage
 
-from node import Peer
-from threads import StoppableThread
+from .node import Peer
+from .threads import StoppableThread
 
 
 class AnnounceThread(StoppableThread):

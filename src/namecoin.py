@@ -4,7 +4,7 @@ Namecoin queries
 # pylint: disable=too-many-branches,protected-access
 
 import base64
-import httplib
+import http.client
 import json
 import os
 import socket
@@ -71,7 +71,7 @@ class namecoinConnection(object):
 
         assert self.nmctype == "namecoind" or self.nmctype == "nmcontrol"
         if self.nmctype == "namecoind":
-            self.con = httplib.HTTPConnection(self.host, self.port, timeout=3)
+            self.con = http.client.HTTPConnection(self.host, self.port, timeout=3)
 
     def query(self, identity):
         """

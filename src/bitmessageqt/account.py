@@ -14,7 +14,7 @@ import re
 import sys
 import time
 
-from PyQt4 import QtGui
+from PyQt6 import QtGui
 
 import queues
 from addresses import decodeAddress

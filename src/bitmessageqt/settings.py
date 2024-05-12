@@ -1,13 +1,13 @@
 """
 This module setting file is for settings
 """
-import ConfigParser
+from configparser import ConfigParser
 import os
 import sys
 import tempfile
 
 import six
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 import debug
 import defaults
@@ -16,7 +16,7 @@ import openclpow
 import paths
 import queues
 import state
-import widgets
+import bitmessageqt.widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
@@ -39,7 +39,7 @@ def getSOCKSProxyType(config):
     return result
 
 
-class SettingsDialog(QtGui.QDialog):
+class SettingsDialog(QtWidgets.QDialog):
     """The "Settings" dialog"""
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)

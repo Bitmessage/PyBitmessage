@@ -7,8 +7,7 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-from bmconfigparser import config
-from .foldertree import AddressBookCompleter
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -140,11 +139,6 @@ class Ui_MainWindow(object):
         self.tableWidgetAddressBook.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetAddressBook.verticalHeader().setVisible(False)
         self.verticalLayout_2.addWidget(self.tableWidgetAddressBook)
-        self.addressBookCompleter = AddressBookCompleter()
-        self.addressBookCompleter.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
-        self.addressBookCompleter.setCaseSensitivity(QtCore.Qt.CaseSensitivity.CaseInsensitive)
-        self.addressBookCompleterModel = QtCore.QStringListModel()
-        self.addressBookCompleter.setModel(self.addressBookCompleterModel)
         self.pushButtonAddAddressBook = QtWidgets.QPushButton(parent=self.send)
         self.pushButtonAddAddressBook.setMaximumSize(QtCore.QSize(200, 16777215))
         self.pushButtonAddAddressBook.setObjectName("pushButtonAddAddressBook")
@@ -189,7 +183,6 @@ class Ui_MainWindow(object):
         self.lineEditTo = QtWidgets.QLineEdit(parent=self.tab)
         self.lineEditTo.setObjectName("lineEditTo")
         self.gridLayout_2.addWidget(self.lineEditTo, 1, 1, 1, 1)
-        self.lineEditTo.setCompleter(self.addressBookCompleter)
         self.verticalLayout_5.addLayout(self.gridLayout_2)
         self.textEditMessage = QtWidgets.QTextEdit(parent=self.tab)
         self.textEditMessage.setObjectName("textEditMessage")
@@ -269,9 +262,6 @@ class Ui_MainWindow(object):
         self.labelHumanFriendlyTTLDescription.setMaximumSize(QtCore.QSize(45, 16777215))
         self.labelHumanFriendlyTTLDescription.setObjectName("labelHumanFriendlyTTLDescription")
         self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription)
-        self.pushButtonClear = QtWidgets.QPushButton(parent=self.send)
-        self.pushButtonClear.setObjectName("pushButtonClear")
-        self.horizontalLayout_5.addWidget(self.pushButtonClear, 0, QtCore.Qt.AlignmentFlag.AlignRight)
         self.pushButtonSend = QtWidgets.QPushButton(parent=self.send)
         self.pushButtonSend.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.pushButtonSend.setObjectName("pushButtonSend")
@@ -539,8 +529,7 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.networkstatus, icon11, "")
         self.gridLayout_10.addWidget(self.tabWidget, 0, 0, 1, 1)
         self.MainDock.setWidget(self.centralwidget)
-        # XXX unresolved
-        #MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(None), self.MainDock)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(None), self.MainDock)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 27))
         self.menubar.setObjectName("menubar")
@@ -560,8 +549,6 @@ class Ui_MainWindow(object):
         self.actionManageKeys = QtGui.QAction(parent=MainWindow)
         self.actionManageKeys.setCheckable(False)
         self.actionManageKeys.setEnabled(True)
-        self.actionNetworkSwitch = QtGui.QAction(parent=MainWindow)
-        self.actionNetworkSwitch.setObjectName("actionNetworkSwitch")
         icon = QtGui.QIcon.fromTheme("dialog-password")
         self.actionManageKeys.setIcon(icon)
         self.actionManageKeys.setObjectName("actionManageKeys")
@@ -573,10 +560,6 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon.fromTheme("help-contents")
         self.actionHelp.setIcon(icon)
         self.actionHelp.setObjectName("actionHelp")
-        self.actionSupport = QtGui.QAction(MainWindow)
-        icon = QtGui.QIcon.fromTheme("help-support")
-        self.actionSupport.setIcon(icon)
-        self.actionSupport.setObjectName("actionSupport")
         self.actionAbout = QtGui.QAction(parent=MainWindow)
         icon = QtGui.QIcon.fromTheme("help-about")
         self.actionAbout.setIcon(icon)
@@ -600,11 +583,9 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionManageKeys)
         self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
-        self.menuFile.addAction(self.actionNetworkSwitch)
         self.menuFile.addAction(self.actionExit)
         self.menuSettings.addAction(self.actionSettings)
         self.menuHelp.addAction(self.actionHelp)
-        self.menuHelp.addAction(self.actionSupport)
         self.menuHelp.addAction(self.actionAbout)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuSettings.menuAction())
@@ -627,25 +608,6 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.pushButtonAddBlacklist, self.tableWidgetBlacklist)
         MainWindow.setTabOrder(self.tableWidgetBlacklist, self.tableWidgetConnectionCount)
         MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
-
-        # Popup menu actions container for the Sent page
-        # pylint: disable=attribute-defined-outside-init
-        self.sentContextMenuToolbar = QtWidgets.QToolBar()
-        # Popup menu actions container for chans tree
-        self.addressContextMenuToolbar = QtWidgets.QToolBar()
-        # Popup menu actions container for subscriptions tree
-        self.subscriptionsContextMenuToolbar = QtWidgets.QToolBar()
-
-    def updateNetworkSwitchMenuLabel(self, dontconnect=None):
-        if dontconnect is None:
-            _translate = QtCore.QCoreApplication.translate
-            dontconnect = config.safeGetBoolean(
-                'bitmessagesettings', 'dontconnect')
-        self.actionNetworkSwitch.setText(
-            _translate("MainWindow", "Go online", None)
-            if dontconnect else
-            _translate("MainWindow", "Go offline", None)
-        )
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -694,7 +656,6 @@ class Ui_MainWindow(object):
         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.tab_2), _translate("MainWindow", "Send Message to your Subscribers"))
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:"))
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "X days"))
-        self.pushButtonClear.setText(_translate("MainWindow", "Clear"))
         self.pushButtonSend.setText(_translate("MainWindow", "Send"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send"))
         self.treeWidgetSubscriptions.headerItem().setText(0, _translate("MainWindow", "Subscriptions"))
@@ -764,10 +725,8 @@ class Ui_MainWindow(object):
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+Q"))
         self.actionHelp.setText(_translate("MainWindow", "Help"))
         self.actionHelp.setShortcut(_translate("MainWindow", "F1"))
-        self.actionSupport.setText(_translate("MainWindow", "Contact support"))
         self.actionAbout.setText(_translate("MainWindow", "About"))
         self.actionSettings.setText(_translate("MainWindow", "Settings"))
         self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses"))
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages"))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan"))
-        self.updateNetworkSwitchMenuLabel()

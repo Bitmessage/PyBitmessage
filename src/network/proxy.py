@@ -6,10 +6,10 @@ import logging
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
-from advanceddispatcher import AdvancedDispatcher
+import network.asyncore_pollchoose as asyncore
+from .advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import config
-from node import Peer
+from .node import Peer
 
 logger = logging.getLogger('default')
 

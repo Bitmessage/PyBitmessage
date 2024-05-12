@@ -41,7 +41,7 @@ def translateText(context, text, n=None):
         enableGUI = True
     if enableGUI:
         try:
-            from PyQt4 import QtCore, QtGui
+            from PyQt6 import QtCore, QtGui, QtWidgets
         except Exception as err:
             print('PyBitmessage requires PyQt unless you want to run it as a daemon'
                   ' and interact with it using the API.'
@@ -51,7 +51,7 @@ def translateText(context, text, n=None):
             print('Error message:', err)
             os._exit(0)  # pylint: disable=protected-access
         if n is None:
-            return QtGui.QApplication.translate(context, text)
+            return QtWidgets.QApplication.translate(context, text)
         return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, n)
     else:
         if '%' in text:

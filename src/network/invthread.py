@@ -1,16 +1,16 @@
 """
 Thread to send inv annoucements
 """
-import Queue
+import queue
 import random
 from time import time
 
 import addresses
 import protocol
 import state
-import connectionpool
+import network.connectionpool
 from queues import invQueue
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 def handleExpiredDandelion(expired):
@@ -58,7 +58,7 @@ class InvThread(StoppableThread):
                     # locally generated
                     if len(data) == 2 or data[2] is None:
                         self.handleLocallyGenerated(data[0], data[1])
-                except Queue.Empty:
+                except queue.Empty:
                     break
 
             if chunk:

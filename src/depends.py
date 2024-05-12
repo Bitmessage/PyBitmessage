@@ -380,11 +380,11 @@ def check_curses():
 def check_pyqt():
     """Do pyqt dependency check.
 
-    Here we are checking for PyQt4 with its version, as for it require
-    PyQt 4.8 or later.
+    Here we are checking for PyQt6 with its version, as for it require
+    PyQt 6.4 or later.
     """
     QtCore = try_import(
-        'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
+        'PyQt6.QtCore', 'PyBitmessage requires PyQt 6.4 or later and Qt 6.4 or later.')
 
     if not QtCore:
         return False
@@ -433,15 +433,10 @@ def check_dependencies(verbose=False, optional=False):
     # Python 3+ is not supported, but it is still useful to provide
     # information about our other requirements.
     logger.info('Python version: %s', sys.version)
-    if sys.hexversion < 0x20704F0:
+    if sys.hexversion < 0x3000000:
         logger.error(
-            'PyBitmessage requires Python 2.7.4 or greater'
-            ' (but not Python 3+)')
-        has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required. Python 2.7.18 is recommended.')
+            'PyBitmessage requires Python 3 or greater')
+        #has_all_dependencies = False
         sys.exit()
 
     # FIXME: This needs to be uncommented when more of the code is python3 compatible

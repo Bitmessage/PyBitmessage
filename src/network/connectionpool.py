@@ -8,19 +8,19 @@ import socket
 import sys
 import time
 
-import asyncore_pollchoose as asyncore
+import network.asyncore_pollchoose as asyncore
 import helper_random
-import knownnodes
+import network.knownnodes
 import protocol
 import state
 from bmconfigparser import config
-from connectionchooser import chooseConnection
-from node import Peer
-from proxy import Proxy
-from tcp import (
+from .connectionchooser import chooseConnection
+from .node import Peer
+from .proxy import Proxy
+from .tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)
-from udp import UDPSocket
+from .udp import UDPSocket
 
 logger = logging.getLogger('default')
 
@@ -78,7 +78,7 @@ class BMConnectionPool(object):
         Shortcut for combined list of connections from
         `inboundConnections` and `outboundConnections` dicts
         """
-        return self.inboundConnections.values() + self.outboundConnections.values()
+        return list(self.inboundConnections.values()) + list(self.outboundConnections.values())
 
     def establishedConnections(self):
         """Shortcut for list of connections having fullyEstablished == True"""

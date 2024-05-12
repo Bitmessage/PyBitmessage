@@ -4,18 +4,18 @@ src/bitmessageqt/newchandialog.py
 
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
-import widgets
+import bitmessageqt.widgets
 from addresses import addBMIfNotPresent
-from addressvalidator import AddressValidator, PassPhraseValidator
+from .addressvalidator import AddressValidator, PassPhraseValidator
 from queues import (
     addressGeneratorQueue, apiAddressGeneratorReturnQueue, UISignalQueue)
 from tr import _translate
-from utils import str_chan
+from .utils import str_chan
 
 
-class NewChanDialog(QtGui.QDialog):
+class NewChanDialog(QtWidgets.QDialog):
     """The `New Chan` dialog"""
     def __init__(self, parent=None):
         super(NewChanDialog, self).__init__(parent)

@@ -5,13 +5,13 @@ zoom and URL click warning popup
 
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
-from safehtmlparser import SafeHTMLParser
+from .safehtmlparser import SafeHTMLParser
 from tr import _translate
 
 
-class MessageView(QtGui.QTextBrowser):
+class MessageView(QtWidgets.QTextBrowser):
     """Message content viewer class, can switch between plaintext and HTML"""
     MODE_PLAIN = 0
     MODE_HTML = 1
@@ -60,7 +60,7 @@ class MessageView(QtGui.QTextBrowser):
 
     def setWrappingWidth(self, width=None):
         """Set word-wrapping width"""
-        self.setLineWrapMode(QtGui.QTextEdit.FixedPixelWidth)
+        self.setLineWrapMode(QtWidgets.QTextEdit.LineWrapMode.FixedPixelWidth)
         if width is None:
             width = self.width()
         self.setLineWrapColumnOrWidth(width)

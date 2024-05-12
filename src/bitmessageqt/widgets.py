@@ -1,4 +1,4 @@
-from PyQt4 import uic
+from PyQt6 import uic
 import os.path
 import paths
 import sys

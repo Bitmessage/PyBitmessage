@@ -5,7 +5,7 @@ import time
 from threading import RLock
 
 import state
-import connectionpool
+import network.connectionpool
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False
@@ -75,7 +75,7 @@ class ObjectTracker(object):
                 with self.objectsNewToThemLock:
                     self.objectsNewToThem = {
                         k: v
-                        for k, v in self.objectsNewToThem.iteritems()
+                        for k, v in self.objectsNewToThem.items()
                         if v >= deadline}
             self.lastCleaned = time.time()
 

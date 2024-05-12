@@ -2,17 +2,17 @@
 Custom dialog classes
 """
 # pylint: disable=too-few-public-methods
-from PyQt4 import QtGui
+from PyQt6 import QtGui, QtWidgets
 
 import paths
-import widgets
-from address_dialogs import (
+import bitmessageqt.widgets as widgets
+from .address_dialogs import (
     AddAddressDialog, EmailGatewayDialog, NewAddressDialog,
     NewSubscriptionDialog, RegenerateAddressesDialog,
     SpecialAddressBehaviorDialog
 )
-from newchandialog import NewChanDialog
-from settings import SettingsDialog
+from .newchandialog import NewChanDialog
+from .settings import SettingsDialog
 from tr import _translate
 from version import softwareVersion
 
@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-class AboutDialog(QtGui.QDialog):
+class AboutDialog(QtWidgets.QDialog):
     """The `About` dialog"""
     def __init__(self, parent=None):
         super(AboutDialog, self).__init__(parent)
@@ -50,10 +50,10 @@ class AboutDialog(QtGui.QDialog):
         except AttributeError:
             pass
 
-        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+        self.setFixedSize(QtWidgets.QWidget.sizeHint(self))
 
 
-class IconGlossaryDialog(QtGui.QDialog):
+class IconGlossaryDialog(QtWidgets.QDialog):
     """The `Icon Glossary` dialog, explaining the status icon colors"""
     def __init__(self, parent=None, config=None):
         super(IconGlossaryDialog, self).__init__(parent)
@@ -66,20 +66,20 @@ class IconGlossaryDialog(QtGui.QDialog):
             "iconGlossaryDialog",
             "You are using TCP port %1. (This can be changed in the settings)."
         ).arg(config.getint('bitmessagesettings', 'port')))
-        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+        self.setFixedSize(QtWidgets.QWidget.sizeHint(self))
 
 
-class HelpDialog(QtGui.QDialog):
+class HelpDialog(QtWidgets.QDialog):
     """The `Help` dialog"""
     def __init__(self, parent=None):
         super(HelpDialog, self).__init__(parent)
         widgets.load('help.ui', self)
-        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+        self.setFixedSize(QtWidgets.QWidget.sizeHint(self))
 
 
-class ConnectDialog(QtGui.QDialog):
+class ConnectDialog(QtWidgets.QDialog):
     """The `Connect` dialog"""
     def __init__(self, parent=None):
         super(ConnectDialog, self).__init__(parent)
         widgets.load('connect.ui', self)
-        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+        self.setFixedSize(QtWidgets.QWidget.sizeHint(self))

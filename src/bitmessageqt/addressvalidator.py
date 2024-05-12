@@ -3,15 +3,15 @@ Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
 
-from Queue import Empty
+from queue import Empty
 
-from PyQt4 import QtGui
+from PyQt6 import QtGui
 
 from addresses import decodeAddress, addBMIfNotPresent
 from bmconfigparser import config
 from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
-from utils import str_chan
+from .utils import str_chan
 
 
 class AddressPassPhraseValidatorMixin(object):

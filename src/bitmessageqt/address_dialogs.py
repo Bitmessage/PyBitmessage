@@ -5,12 +5,12 @@ Dialogs that work with BM address.
 
 import hashlib
 
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 import queues
-import widgets
+import bitmessageqt.widgets
 import state
-from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
+from .account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
 from bmconfigparser import config as global_config
 from tr import _translate
@@ -79,7 +79,7 @@ class AddressCheckMixin(object):
             ))
 
 
-class AddressDataDialog(QtGui.QDialog, AddressCheckMixin):
+class AddressDataDialog(QtWidgets.QDialog, AddressCheckMixin):
     """QDialog with Bitmessage address validation"""
 
     def __init__(self, parent):
@@ -112,7 +112,7 @@ class AddAddressDialog(AddressDataDialog):
             self.lineEditAddress.setText(address)
 
 
-class NewAddressDialog(QtGui.QDialog):
+class NewAddressDialog(QtWidgets.QDialog):
     """QDialog for generating a new address"""
 
     def __init__(self, parent=None):
@@ -212,12 +212,11 @@ class NewSubscriptionDialog(AddressDataDialog):
                         "MainWindow",
                         "Display the %n recent broadcast(s) from this address.",
                         None,
-                        QtCore.QCoreApplication.CodecForTr,
                         count
                     ))
 
 
-class RegenerateAddressesDialog(QtGui.QDialog):
+class RegenerateAddressesDialog(QtWidgets.QDialog):
     """QDialog for regenerating deterministic addresses"""
     def __init__(self, parent=None):
         super(RegenerateAddressesDialog, self).__init__(parent)
@@ -226,7 +225,7 @@ class RegenerateAddressesDialog(QtGui.QDialog):
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
-class SpecialAddressBehaviorDialog(QtGui.QDialog):
+class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
     """
     QDialog for special address behaviour (e.g. mailing list functionality)
     """
@@ -291,7 +290,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
         self.parent.rerenderMessagelistToLabels()
 
 
-class EmailGatewayDialog(QtGui.QDialog):
+class EmailGatewayDialog(QtWidgets.QDialog):
     """QDialog for email gateway control"""
     def __init__(self, parent, config=global_config, account=None):
         super(EmailGatewayDialog, self).__init__(parent)

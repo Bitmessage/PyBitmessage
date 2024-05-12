@@ -1,42 +1,37 @@
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
-import widgets
+import bitmessageqt.widgets as widgets
 from addresses import addBMIfNotPresent
 from bmconfigparser import config
-from dialogs import AddAddressDialog
+from .dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
 from queues import UISignalQueue
-from retranslateui import RetranslateMixin
+from .retranslateui import RetranslateMixin
 from tr import _translate
-from uisignaler import UISignaler
-from utils import avatarize
+from .uisignaler import UISignaler
+from .utils import avatarize
 
 
-class Blacklist(QtGui.QWidget, RetranslateMixin):
+class Blacklist(QtWidgets.QWidget, RetranslateMixin):
     def __init__(self, parent=None):
         super(Blacklist, self).__init__(parent)
         widgets.load('blacklist.ui', self)
 
-        QtCore.QObject.connect(self.radioButtonBlacklist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonBlacklist)
-        QtCore.QObject.connect(self.radioButtonWhitelist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonWhitelist)
-        QtCore.QObject.connect(self.pushButtonAddBlacklist, QtCore.SIGNAL(
-        "clicked()"), self.click_pushButtonAddBlacklist)
+        self.radioButtonBlacklist.clicked.connect(self.click_radioButtonBlacklist)
+        self.radioButtonWhitelist.clicked.connect(self.click_radioButtonWhitelist)
+        self.pushButtonAddBlacklist.clicked.connect(self.click_pushButtonAddBlacklist)
 
         self.init_blacklist_popup_menu()
 
         # Initialize blacklist
-        QtCore.QObject.connect(self.tableWidgetBlacklist, QtCore.SIGNAL(
-            "itemChanged(QTableWidgetItem *)"), self.tableWidgetBlacklistItemChanged)
+        self.tableWidgetBlacklist.itemChanged.connect(self.tableWidgetBlacklistItemChanged)
 
         # Set the icon sizes for the identicons
         identicon_size = 3*7
         self.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
 
         self.UISignalThread = UISignaler.get()
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderBlackWhiteList()"), self.rerenderBlackWhiteList)
+        self.UISignalThread.rerenderBlackWhiteList.connect(self.rerenderBlackWhiteList)
 
     def click_radioButtonBlacklist(self):
         if config.get('bitmessagesettings', 'blackwhitelist') == 'white':
@@ -118,7 +113,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
 
     def init_blacklist_popup_menu(self, connectSignal=True):
         # Popup menu for the Blacklist page
-        self.blacklistContextMenuToolbar = QtGui.QToolBar()
+        self.blacklistContextMenuToolbar = QtWidgets.QToolBar()
         # Actions
         self.actionBlacklistNew = self.blacklistContextMenuToolbar.addAction(
             _translate(
@@ -141,12 +136,10 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                 "MainWindow", "Set avatar..."),
             self.on_action_BlacklistSetAvatar)
         self.tableWidgetBlacklist.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.tableWidgetBlacklist, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                        self.on_context_menuBlacklist)
-        self.popMenuBlacklist = QtGui.QMenu(self)
+            self.tableWidgetBlacklist.customContextMenuRequested.connect(self.on_context_menuBlacklist)
+        self.popMenuBlacklist = QtWidgets.QMenu(self)
         # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
         self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
         self.popMenuBlacklist.addSeparator()
@@ -172,12 +165,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         for row in queryreturn:
             label, address, enabled = row
             self.tableWidgetBlacklist.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            newItem = QtWidgets.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             newItem.setIcon(avatarize(address))
             self.tableWidgetBlacklist.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(address)
+            newItem = QtWidgets.QTableWidgetItem(address)
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not enabled:

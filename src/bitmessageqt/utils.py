@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from PyQt4 import QtGui
+from PyQt6 import QtGui
 
 import state
 from addresses import addBMIfNotPresent
@@ -85,11 +85,11 @@ def avatarize(address):
     if address == str_broadcast_subscribers:
         # don't hash [Broadcast subscribers]
         icon_hash = address
-    # https://www.riverbankcomputing.com/static/Docs/PyQt4/qimagereader.html#supportedImageFormats
+    # https://doc.qt.io/qt-6/qimagereader.html#supportedImageFormats
     # QImageReader.supportedImageFormats ()
     extensions = [
-        'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM',
-        'TIFF', 'XBM', 'XPM', 'TGA']
+        'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'PBM', 'PGM', 'PPM',
+        'XBM', 'XPM' ]
     # try to find a specific avatar
     for ext in extensions:
         lower_hash = state.appdata + 'avatars/' + icon_hash + '.' + ext.lower()

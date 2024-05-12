@@ -4,47 +4,43 @@ Network status tab widget definition.
 
 import time
 
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 import l10n
 import network.stats
 import state
-import widgets
+import bitmessageqt.widgets as widgets
 from network import connectionpool, knownnodes
-from retranslateui import RetranslateMixin
+from .retranslateui import RetranslateMixin
 from tr import _translate
-from uisignaler import UISignaler
+from .uisignaler import UISignaler
 
 
-class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
     """Network status tab"""
     def __init__(self, parent=None):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)
 
         header = self.tableWidgetConnectionCount.horizontalHeader()
-        header.setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
 
         # Somehow this value was 5 when I tested
         if header.sortIndicatorSection() > 4:
-            header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
+            header.setSortIndicator(0, QtCore.Qt.SortOrder.AscendingOrder)
 
         self.startup = time.localtime()
 
         self.UISignalThread = UISignaler.get()
         # pylint: disable=no-member
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfPubkeysProcessed()"), self.updateNumberOfPubkeysProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
+        self.UISignalThread.updateNumberOfMessagesProcessed.connect(self.updateNumberOfMessagesProcessed)
+        self.UISignalThread.updateNumberOfPubkeysProcessed.connect(self.updateNumberOfPubkeysProcessed)
+        self.UISignalThread.updateNumberOfBroadcastsProcessed.connect(self.updateNumberOfBroadcastsProcessed)
+        self.UISignalThread.updateNetworkStatusTab.connect(self.updateNetworkStatusTab)
 
         self.timer = QtCore.QTimer()
 
-        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
+        self.timer.timeout.connect(self.runEveryTwoSeconds)
         # pylint: enable=no-member
 
     def startUpdate(self):
@@ -65,7 +61,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                     "networkstatus",
                     "byte(s)",
                     None,
-                    QtCore.QCoreApplication.CodecForTr,
                     num),
                 "kB",
                 "MB",
@@ -89,7 +84,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "networkstatus",
                 "Object(s) to be synced: %n",
                 None,
-                QtCore.QCoreApplication.CodecForTr,
                 network.stats.pendingDownload()
                 + network.stats.pendingUpload()))
 
@@ -101,7 +95,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "networkstatus",
                 "Processed %n person-to-person message(s).",
                 None,
-                QtCore.QCoreApplication.CodecForTr,
                 state.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
@@ -112,7 +105,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "networkstatus",
                 "Processed %n broadcast message(s).",
                 None,
-                QtCore.QCoreApplication.CodecForTr,
                 state.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
@@ -123,7 +115,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 "networkstatus",
                 "Processed %n public key(s).",
                 None,
-                QtCore.QCoreApplication.CodecForTr,
                 state.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):

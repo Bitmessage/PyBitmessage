@@ -1,5 +1,5 @@
 
-from PyQt4.QtCore import QThread, SIGNAL
+from PyQt6.QtCore import QThread, pyqtSignal
 import sys
 
 import queues
@@ -10,6 +10,27 @@ class UISignaler(QThread):
 
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
+
+    rerenderBlackWhiteList = pyqtSignal()
+    updateNumberOfMessagesProcessed = pyqtSignal()
+    updateNumberOfPubkeysProcessed = pyqtSignal()
+    updateNumberOfBroadcastsProcessed = pyqtSignal()
+    updateNetworkStatusTab = pyqtSignal(object, object, object)
+    writeNewAddressToTable = pyqtSignal(object, object, object)
+    updateStatusBar = pyqtSignal(object)
+    updateSentItemStatusByToAddress = pyqtSignal(object, object)
+    updateSentItemStatusByAckdata = pyqtSignal(object, object)
+    displayNewInboxMessage = pyqtSignal(object, object, object, object, object)
+    displayNewSentMessage = pyqtSignal(object, object, object, object, object, object)
+    setStatusIcon = pyqtSignal(object)
+    changedInboxUnread = pyqtSignal(object)
+    rerenderMessagelistFromLabels = pyqtSignal()
+    rerenderMessagelistToLabels = pyqtSignal()
+    rerenderAddressBook = pyqtSignal()
+    rerenderSubscriptions = pyqtSignal()
+    removeInboxRowByMsgid = pyqtSignal(object)
+    newVersionAvailable = pyqtSignal(object)
+    displayAlert = pyqtSignal(object, object, object)
 
     @classmethod
     def get(cls):
@@ -28,7 +49,7 @@ class UISignaler(QThread):
                     address,
                     str(streamNumber))
             elif command == 'updateStatusBar':
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
+                self.updateStatusBar.emit(data)
             elif command == 'updateSentItemStatusByToAddress':
                 toAddress, message = data
                 self.emit(SIGNAL(

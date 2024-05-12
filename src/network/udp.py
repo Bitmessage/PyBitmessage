@@ -10,9 +10,9 @@ import protocol
 import state
 from queues import receiveDataQueue
 
-from bmproto import BMProto
-from node import Peer
-from objectracker import ObjectTracker
+from .bmproto import BMProto
+from .node import Peer
+from .objectracker import ObjectTracker
 
 
 logger = logging.getLogger('default')

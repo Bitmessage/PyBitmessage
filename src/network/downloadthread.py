@@ -6,9 +6,9 @@ import state
 import addresses
 import helper_random
 import protocol
-import connectionpool
-from objectracker import missingObjects
-from threads import StoppableThread
+import network.connectionpool
+from .objectracker import missingObjects
+from .threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):
@@ -28,7 +28,7 @@ class DownloadThread(StoppableThread):
         deadline = time.time() - self.requestExpires
         try:
             toDelete = [
-                k for k, v in missingObjects.iteritems()
+                k for k, v in missingObjects.items()
                 if v < deadline]
         except RuntimeError:
             pass

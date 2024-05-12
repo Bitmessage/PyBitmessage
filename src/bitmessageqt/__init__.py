@@ -15,45 +15,45 @@ import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtNetwork import QLocalSocket, QLocalServer
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtNetwork import QLocalSocket, QLocalServer
 
 import shared
 import state
 from debug import logger
 from tr import _translate
-from account import (
+from .account import (
     accountClass, getSortedSubscriptions,
     BMAccount, GatewayAccount, MailchuckAccount, AccountColor)
 from addresses import decodeAddress, addBMIfNotPresent
-from bitmessageui import Ui_MainWindow
+from .bitmessageui import Ui_MainWindow
 from bmconfigparser import config
 import namecoin
-from messageview import MessageView
-from migrationwizard import Ui_MigrationWizard
-from foldertree import (
+from .messageview import MessageView
+from .migrationwizard import Ui_MigrationWizard
+from .foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress,
     MessageList_TimeWidget)
-import settingsmixin
-import support
+import bitmessageqt.settingsmixin
+import bitmessageqt.support
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_addressbook
 import helper_search
 import l10n
-from utils import str_broadcast_subscribers, avatarize
-import dialogs
+from .utils import str_broadcast_subscribers, avatarize
+import bitmessageqt.dialogs
 from network.stats import pendingDownload, pendingUpload
-from uisignaler import UISignaler
+from .uisignaler import UISignaler
 import paths
 from proofofwork import getPowType
 import queues
 import shutdown
-from statusbar import BMStatusBar
-import sound
+from .statusbar import BMStatusBar
+import bitmessageqt.sound
 # This is needed for tray icon
-import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
+import bitmessageqt.bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
 import helper_sent
 
 try:
@@ -112,7 +112,7 @@ class MyForm(settingsmixin.SMainWindow):
         translationpath = os.path.join(
             paths.codePath(), 'translations', 'bitmessage_' + newlocale)
         self.qmytranslator.load(translationpath)
-        QtGui.QApplication.installTranslator(self.qmytranslator)
+        QtWidgets.QApplication.installTranslator(self.qmytranslator)
 
         self.qsystranslator = QtCore.QTranslator()
         if paths.frozen:
@@ -120,10 +120,10 @@ class MyForm(settingsmixin.SMainWindow):
                 paths.codePath(), 'translations', 'qt_' + newlocale)
         else:
             translationpath = os.path.join(
-                str(QtCore.QLibraryInfo.location(
-                    QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
+                str(QtCore.QLibraryInfo.path(
+                    QtCore.QLibraryInfo.LibraryPath.TranslationsPath)), 'qt_' + newlocale)
         self.qsystranslator.load(translationpath)
-        QtGui.QApplication.installTranslator(self.qsystranslator)
+        QtWidgets.QApplication.installTranslator(self.qsystranslator)
 
         # TODO: move this block into l10n
         # FIXME: shouldn't newlocale be used here?
@@ -148,50 +148,27 @@ class MyForm(settingsmixin.SMainWindow):
                 logger.error("Failed to set locale to %s", lang, exc_info=True)
 
     def init_file_menu(self):
-        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
-            "triggered()"), self.quit)
-        QtCore.QObject.connect(self.ui.actionNetworkSwitch, QtCore.SIGNAL(
-            "triggered()"), self.network_switch)
-        QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL(
-            "triggered()"), self.click_actionManageKeys)
-        QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages,
-                               QtCore.SIGNAL(
-                                   "triggered()"),
-                               self.click_actionDeleteAllTrashedMessages)
-        QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses,
-                               QtCore.SIGNAL(
-                                   "triggered()"),
-                               self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(
-            self.ui.pushButtonAddChan,
-            QtCore.SIGNAL("clicked()"),
-            self.click_actionJoinChan) # also used for creating chans.
-        QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
-            "clicked()"), self.click_NewAddressDialog)
-        QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddAddressBook)
-        QtCore.QObject.connect(self.ui.pushButtonAddSubscription, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddSubscription)
-        QtCore.QObject.connect(self.ui.pushButtonTTL, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonTTL)
-        QtCore.QObject.connect(self.ui.pushButtonClear, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonClear)
-        QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonSend)
-        QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonFetchNamecoinID)
-        QtCore.QObject.connect(self.ui.actionSettings, QtCore.SIGNAL(
-            "triggered()"), self.click_actionSettings)
-        QtCore.QObject.connect(self.ui.actionAbout, QtCore.SIGNAL(
-            "triggered()"), self.click_actionAbout)
-        QtCore.QObject.connect(self.ui.actionSupport, QtCore.SIGNAL(
-            "triggered()"), self.click_actionSupport)
-        QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
-            "triggered()"), self.click_actionHelp)
+        self.ui.actionExit.triggered.connect(self.quit)
+        self.ui.actionNetworkSwitch.triggered.connect(self.network_switch)
+        self.ui.actionManageKeys.triggered.connect(self.click_actionManageKeys)
+        self.ui.actionDeleteAllTrashedMessages.triggered.connect(self.click_actionDeleteAllTrashedMessages)
+        self.ui.actionRegenerateDeterministicAddresses.triggered.connect(self.click_actionRegenerateDeterministicAddresses)
+        self.ui.pushButtonAddChan.clicked.connect(self.click_actionJoinChan) # also used for creating chans.
+        self.ui.pushButtonNewAddress.clicked.connect(self.click_NewAddressDialog)
+        self.ui.pushButtonAddAddressBook.clicked.connect(self.click_pushButtonAddAddressBook)
+        self.ui.pushButtonAddSubscription.clicked.connect(self.click_pushButtonAddSubscription)
+        self.ui.pushButtonTTL.clicked.connect(self.click_pushButtonTTL)
+        self.ui.pushButtonClear.clicked.connect(self.click_pushButtonClear)
+        self.ui.pushButtonSend.clicked.connect(self.click_pushButtonSend)
+        self.ui.pushButtonFetchNamecoinID.clicked.connect(self.click_pushButtonFetchNamecoinID)
+        self.ui.actionSettings.triggered.connect(self.click_actionSettings)
+        self.ui.actionAbout.triggered.connect(self.click_actionAbout)
+        self.ui.actionSupport.triggered.connect(self.click_actionSupport)
+        self.ui.actionHelp.triggered.connect(self.click_actionHelp)
 
     def init_inbox_popup_menu(self, connectSignal=True):
         # Popup menu for the Inbox tab
-        self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
+        self.ui.inboxContextMenuToolbar = QtWidgets.QToolBar()
         # Actions
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Reply to sender"), self.on_action_InboxReply)
@@ -225,27 +202,21 @@ class MyForm(settingsmixin.SMainWindow):
 
         # contextmenu messagelists
         self.ui.tableWidgetInbox.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+            self.ui.tableWidgetInbox.customContextMenuRequested.connect(self.on_context_menuInbox)
         self.ui.tableWidgetInboxSubscriptions.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.tableWidgetInboxSubscriptions, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+            self.ui.tableWidgetInboxSubscriptions.customContextMenuRequested.connect(self.on_context_menuInbox)
         self.ui.tableWidgetInboxChans.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.tableWidgetInboxChans, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+            self.ui.tableWidgetInboxChans.customContextMenuRequested.connect(self.on_context_menuInbox)
 
     def init_identities_popup_menu(self, connectSignal=True):
         # Popup menu for the Your Identities tab
-        self.ui.addressContextMenuToolbarYourIdentities = QtGui.QToolBar()
+        self.ui.addressContextMenuToolbarYourIdentities = QtWidgets.QToolBar()
         # Actions
         self.actionNewYourIdentities = self.ui.addressContextMenuToolbarYourIdentities.addAction(_translate(
             "MainWindow", "New"), self.on_action_YourIdentitiesNew)
@@ -277,11 +248,9 @@ class MyForm(settingsmixin.SMainWindow):
             self.on_action_MarkAllRead)
 
         self.ui.treeWidgetYourIdentities.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuYourIdentities)
+            self.ui.treeWidgetYourIdentities.customContextMenuRequested.connect(self.on_context_menuYourIdentities)
 
         # load all gui.menu plugins with prefix 'address'
         self.menu_plugins = {'address': []}
@@ -327,15 +296,13 @@ class MyForm(settingsmixin.SMainWindow):
             self.on_action_SpecialAddressBehaviorDialog)
 
         self.ui.treeWidgetChans.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuChan)
+            self.ui.treeWidgetChans.customContextMenuRequested.connect(self.on_context_menuChan)
 
     def init_addressbook_popup_menu(self, connectSignal=True):
         # Popup menu for the Address Book page
-        self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
+        self.ui.addressBookContextMenuToolbar = QtWidgets.QToolBar()
         # Actions
         self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(
             _translate(
@@ -364,11 +331,9 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Delete"), self.on_action_AddressBookDelete)
         self.ui.tableWidgetAddressBook.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuAddressBook)
+            self.ui.tableWidgetAddressBook.customContextMenuRequested.connect(self.on_context_menuAddressBook)
 
     def init_subscriptions_popup_menu(self, connectSignal=True):
         # Actions
@@ -393,11 +358,9 @@ class MyForm(settingsmixin.SMainWindow):
             _translate("MainWindow", "Send message to this address"),
             self.on_action_Send)
         self.ui.treeWidgetSubscriptions.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         if connectSignal:
-            self.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuSubscriptions)
+            self.ui.treeWidgetSubscriptions.customContextMenuRequested.connect(self.on_context_menuSubscriptions)
 
     def init_sent_popup_menu(self, connectSignal=True):
         # Actions
@@ -421,12 +384,12 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
         folders = Ui_FolderWidget.folderWeight.keys()
-        folders.remove("new")
+        Ui_FolderWidget.folderWeight.pop("new", None)
 
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
             treeWidget.header().setSortIndicator(
-                0, QtCore.Qt.AscendingOrder)
+                0, QtCore.Qt.SortOrder.AscendingOrder)
         # init dictionary
 
         db = getSortedSubscriptions(True)
@@ -468,7 +431,7 @@ class MyForm(settingsmixin.SMainWindow):
             # add missing folders
             if len(db[toAddress]) > 0:
                 j = 0
-                for f, c in db[toAddress].iteritems():
+                for f, c in db[toAddress].items():
                     try:
                         subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
                     except KeyError:
@@ -517,7 +480,7 @@ class MyForm(settingsmixin.SMainWindow):
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
             treeWidget.header().setSortIndicator(
-                0, QtCore.Qt.AscendingOrder)
+                0, QtCore.Qt.SortOrder.AscendingOrder)
         # init dictionary
         db = {}
         enabled = {}
@@ -598,7 +561,7 @@ class MyForm(settingsmixin.SMainWindow):
             # add missing folders
             if len(db[toAddress]) > 0:
                 j = 0
-                for f, c in db[toAddress].iteritems():
+                for f, c in db[toAddress].items():
                     if toAddress is not None and tab == 'messages' and folder == "new":
                         continue
                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
@@ -627,7 +590,7 @@ class MyForm(settingsmixin.SMainWindow):
         treeWidget.setSortingEnabled(True)
 
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -695,65 +658,44 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderSubscriptions()
 
         # Initialize the inbox search
-        QtCore.QObject.connect(self.ui.inboxSearchLineEdit, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
-        QtCore.QObject.connect(self.ui.inboxSearchLineEditSubscriptions, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
-        QtCore.QObject.connect(self.ui.inboxSearchLineEditChans, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
-        QtCore.QObject.connect(self.ui.inboxSearchLineEdit, QtCore.SIGNAL(
-            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
-        QtCore.QObject.connect(self.ui.inboxSearchLineEditSubscriptions, QtCore.SIGNAL(
-            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
-        QtCore.QObject.connect(self.ui.inboxSearchLineEditChans, QtCore.SIGNAL(
-            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
+        self.ui.inboxSearchLineEdit.returnPressed.connect(self.inboxSearchLineEditReturnPressed)
+        self.ui.inboxSearchLineEditSubscriptions.returnPressed.connect(self.inboxSearchLineEditReturnPressed)
+        self.ui.inboxSearchLineEditChans.returnPressed.connect(self.inboxSearchLineEditReturnPressed)
+        self.ui.inboxSearchLineEdit.textChanged.connect(self.inboxSearchLineEditUpdated)
+        self.ui.inboxSearchLineEditSubscriptions.textChanged.connect(self.inboxSearchLineEditUpdated)
+        self.ui.inboxSearchLineEditChans.textChanged.connect(self.inboxSearchLineEditUpdated)
 
         # Initialize addressbook
-        QtCore.QObject.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
-            "itemChanged(QTableWidgetItem *)"), self.tableWidgetAddressBookItemChanged)
+        self.ui.tableWidgetAddressBook.itemChanged.connect(self.tableWidgetAddressBookItemChanged)
         # This is necessary for the completer to work if multiple recipients
-        QtCore.QObject.connect(self.ui.lineEditTo, QtCore.SIGNAL(
-            "cursorPositionChanged(int, int)"), self.ui.lineEditTo.completer().onCursorPositionChanged)
+        self.ui.lineEditTo.cursorPositionChanged.connect(self.ui.lineEditTo.completer().onCursorPositionChanged)
 
         # show messages from message list
-        QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
-        QtCore.QObject.connect(self.ui.tableWidgetInboxSubscriptions, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
-        QtCore.QObject.connect(self.ui.tableWidgetInboxChans, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
+        self.ui.tableWidgetInbox.itemSelectionChanged.connect(self.tableWidgetInboxItemClicked)
+        self.ui.tableWidgetInboxSubscriptions.itemSelectionChanged.connect(self.tableWidgetInboxItemClicked)
+        self.ui.tableWidgetInboxChans.itemSelectionChanged.connect(self.tableWidgetInboxItemClicked)
 
         # tree address lists
-        QtCore.QObject.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.treeWidgetItemClicked)
-        QtCore.QObject.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
-            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
-        QtCore.QObject.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.treeWidgetItemClicked)
-        QtCore.QObject.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
-            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
-        QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.treeWidgetItemClicked)
-        QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
-            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
-        QtCore.QObject.connect(
-            self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"),
-            self.tabWidgetCurrentChanged
-        )
+        self.ui.treeWidgetYourIdentities.itemSelectionChanged.connect(self.treeWidgetItemClicked)
+        self.ui.treeWidgetYourIdentities.itemChanged.connect(self.treeWidgetItemChanged)
+        self.ui.treeWidgetSubscriptions.itemSelectionChanged.connect(self.treeWidgetItemClicked)
+        self.ui.treeWidgetSubscriptions.itemChanged.connect(self.treeWidgetItemChanged)
+        self.ui.treeWidgetChans.itemSelectionChanged.connect(self.treeWidgetItemClicked)
+        self.ui.treeWidgetChans.itemChanged.connect(self.treeWidgetItemChanged)
+        self.ui.tabWidget.currentChanged.connect(self.tabWidgetCurrentChanged)
 
         # Put the colored icon on the status bar
         # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.setStatusBar(BMStatusBar())
         self.statusbar = self.statusBar()
 
-        self.pushButtonStatusIcon = QtGui.QPushButton(self)
+        self.pushButtonStatusIcon = QtWidgets.QPushButton(self)
         self.pushButtonStatusIcon.setText('')
         self.pushButtonStatusIcon.setIcon(
             QtGui.QIcon(':/newPrefix/images/redicon.png'))
         self.pushButtonStatusIcon.setFlat(True)
         self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
-        QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonStatusIcon)
+        self.pushButtonStatusIcon.clicked.connect(self.click_pushButtonStatusIcon)
 
         self.unreadCount = 0
 
@@ -767,39 +709,21 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.UISignalThread = UISignaler.get()
 
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-            self.displayNewInboxMessage)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,"
-            "PyQt_PyObject,PyQt_PyObject)"),
-            self.displayNewSentMessage)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "changedInboxUnread(PyQt_PyObject)"), self.changedInboxUnread)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderMessagelistFromLabels()"), self.rerenderMessagelistFromLabels)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderMessgelistToLabels()"), self.rerenderMessagelistToLabels)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderAddressBook()"), self.rerenderAddressBook)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderSubscriptions()"), self.rerenderSubscriptions)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "newVersionAvailable(PyQt_PyObject)"), self.newVersionAvailable)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
+        self.UISignalThread.writeNewAddressToTable.connect(self.writeNewAddressToTable)
+        self.UISignalThread.updateStatusBar.connect(self.updateStatusBar)
+        self.UISignalThread.updateSentItemStatusByToAddress.connect(self.updateSentItemStatusByToAddress)
+        self.UISignalThread.updateSentItemStatusByAckdata.connect(self.updateSentItemStatusByAckdata)
+        self.UISignalThread.displayNewInboxMessage.connect(self.displayNewInboxMessage)
+        self.UISignalThread.displayNewSentMessage.connect(self.displayNewSentMessage)
+        self.UISignalThread.setStatusIcon.connect(self.setStatusIcon)
+        self.UISignalThread.changedInboxUnread.connect(self.changedInboxUnread)
+        self.UISignalThread.rerenderMessagelistFromLabels.connect(self.rerenderMessagelistFromLabels)
+        self.UISignalThread.rerenderMessagelistToLabels.connect(self.rerenderMessagelistToLabels)
+        self.UISignalThread.rerenderAddressBook.connect(self.rerenderAddressBook)
+        self.UISignalThread.rerenderSubscriptions.connect(self.rerenderSubscriptions)
+        self.UISignalThread.removeInboxRowByMsgid.connect(self.removeInboxRowByMsgid)
+        self.UISignalThread.newVersionAvailable.connect(self.newVersionAvailable)
+        self.UISignalThread.displayAlert.connect(self.displayAlert)
         self.UISignalThread.start()
 
         # Key press in tree view
@@ -832,11 +756,10 @@ class MyForm(settingsmixin.SMainWindow):
             TTL = 3600
         elif TTL > 28*24*60*60: # 28 days
             TTL = 28*24*60*60
-        self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
+        self.ui.horizontalSliderTTL.setSliderPosition(int((TTL - 3600) ** (1/3.199)))
         self.updateHumanFriendlyTTLDescription(TTL)
 
-        QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
-            "valueChanged(int)"), self.updateTTL)
+        self.ui.horizontalSliderTTL.valueChanged.connect(self.updateTTL)
 
         self.initSettings()
         self.resetNamecoinConnection()
@@ -898,9 +821,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         if numberOfHours < 48:
             self.ui.labelHumanFriendlyTTLDescription.setText(
-                _translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfHours) +
+                _translate("MainWindow", "%n hour(s)", None, numberOfHours) +
                 ", " +
-                _translate("MainWindow", "not recommended for chans", None, QtCore.QCoreApplication.CodecForTr)
+                _translate("MainWindow", "not recommended for chans", None)
                 )
             stylesheet = "QLabel { color : red; }"
             font.setBold(True)
@@ -911,7 +834,6 @@ class MyForm(settingsmixin.SMainWindow):
                     "MainWindow",
                     "%n day(s)",
                     None,
-                    QtCore.QCoreApplication.CodecForTr,
                     numberOfDays))
             font.setBold(False)
         self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
@@ -1186,11 +1108,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         items = [
             MessageList_AddressWidget(
-                toAddress, unicode(acct.toLabel, 'utf-8')),
+                toAddress, str(acct.toLabel, 'utf-8')),
             MessageList_AddressWidget(
-                fromAddress, unicode(acct.fromLabel, 'utf-8')),
+                fromAddress, str(acct.fromLabel, 'utf-8')),
             MessageList_SubjectWidget(
-                str(subject), unicode(acct.subject, 'utf-8', 'replace')),
+                str(subject), str(acct.subject, 'utf-8', 'replace')),
             MessageList_TimeWidget(
                 statusText, False, lastactiontime, ackdata)]
         self.addMessageListItem(tableWidget, items)
@@ -1211,11 +1133,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         items = [
             MessageList_AddressWidget(
-                toAddress, unicode(acct.toLabel, 'utf-8'), not read),
+                toAddress, str(acct.toLabel, 'utf-8'), not read),
             MessageList_AddressWidget(
-                fromAddress, unicode(acct.fromLabel, 'utf-8'), not read),
+                fromAddress, str(acct.fromLabel, 'utf-8'), not read),
             MessageList_SubjectWidget(
-                str(subject), unicode(acct.subject, 'utf-8', 'replace'),
+                str(subject), str(acct.subject, 'utf-8', 'replace'),
                 not read),
             MessageList_TimeWidget(
                 l10n.formatTimestamp(received), not read, received, msgid)
@@ -1299,11 +1221,9 @@ class MyForm(settingsmixin.SMainWindow):
     # create application indicator
     def appIndicatorInit(self, app):
         self.initTrayIcon("can-icon-24px-red.png", app)
-        traySignal = "activated(QSystemTrayIcon::ActivationReason)"
-        QtCore.QObject.connect(self.tray, QtCore.SIGNAL(
-            traySignal), self.__icon_activated)
+        self.tray.activated.connect(self.__icon_activated);
 
-        m = QtGui.QMenu()
+        m = QtWidgets.QMenu()
 
         self.actionStatus = QtGui.QAction(_translate(
             "MainWindow", "Not Connected"), m, checkable=False)
@@ -1471,7 +1391,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         self._notifier = _simple_notify
         # does nothing if isAvailable returns false
-        self._player = QtGui.QSound.play
+        # XXX unresolved
+        #self._player = QtGui.QSound.play
 
         if not get_plugins:
             return
@@ -1484,7 +1405,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         self._theme_player = get_plugin('notification.sound', 'theme')
 
-        if not QtGui.QSound.isAvailable():
+        # XXX unresolved
+        #if not QtGui.QSound.isAvailable():
+        if not False:
             _plugin = get_plugin(
                 'notification.sound', 'file', fallback='file.fallback')
             if _plugin:
@@ -1496,7 +1419,7 @@ class MyForm(settingsmixin.SMainWindow):
             self, title, subtitle, category, label=None, icon=None):
         self.playSound(category, label)
         self._notifier(
-            unicode(title), unicode(subtitle), category, label, icon)
+            str(title), str(subtitle), category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -1712,7 +1635,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def showConnectDialog(self):
         dialog = dialogs.ConnectDialog(self)
-        if dialog.exec_():
+        if dialog.exec():
             if dialog.radioButtonConnectNow.isChecked():
                 self.ui.updateNetworkSwitchMenuLabel(False)
                 config.remove_option(
@@ -1820,7 +1743,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def initTrayIcon(self, iconFileName, app):
         self.currentTrayIconFileName = iconFileName
-        self.tray = QtGui.QSystemTrayIcon(
+        self.tray = QtWidgets.QSystemTrayIcon(
             self.calcTrayIcon(iconFileName, self.findInboxUnreadCount()), app)
 
     def setTrayIconFile(self, iconFileName):
@@ -1995,9 +1918,9 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderAddressBook(self):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemLabel(address, label, type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemAddress(address, label, type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
 
         oldRows = {}
@@ -2006,7 +1929,7 @@ class MyForm(settingsmixin.SMainWindow):
             oldRows[item.address] = [item.label, item.type, i]
 
         if self.ui.tableWidgetAddressBook.rowCount() == 0:
-            self.ui.tableWidgetAddressBook.horizontalHeader().setSortIndicator(0, QtCore.Qt.AscendingOrder)
+            self.ui.tableWidgetAddressBook.horizontalHeader().setSortIndicator(0, QtCore.Qt.SortOrder.AscendingOrder)
         if self.ui.tableWidgetAddressBook.isSortingEnabled():
             self.ui.tableWidgetAddressBook.setSortingEnabled(False)
 
@@ -2038,11 +1961,11 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
-            completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
+            completerList.append(newRows[address][0] + " <" + address + ">")
 
         # sort
         self.ui.tableWidgetAddressBook.sortByColumn(
-            0, QtCore.Qt.AscendingOrder)
+            0, QtCore.Qt.SortOrder.AscendingOrder)
         self.ui.tableWidgetAddressBook.setSortingEnabled(True)
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
@@ -2164,7 +2087,7 @@ class MyForm(settingsmixin.SMainWindow):
                     status, addressVersionNumber, streamNumber = decodeAddress(toAddress)[:3]
                     if status != 'success':
                         try:
-                            toAddress = unicode(toAddress, 'utf-8', 'ignore')
+                            toAddress = str(toAddress, 'utf-8', 'ignore')
                         except:
                             pass
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
@@ -2368,11 +2291,11 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')
             isMaillinglist = config.safeGetBoolean(addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
-                label = unicode(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = str(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
-#        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
+#        self.ui.comboBoxSendFrom.model().sort(1, QtCore.Qt.SortOrder.AscendingOrder)
         for i in range(self.ui.comboBoxSendFrom.count()):
             address = str(self.ui.comboBoxSendFrom.itemData(
                 i, QtCore.Qt.UserRole).toString())
@@ -2392,7 +2315,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')
             isChan = config.safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                label = unicode(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = str(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
@@ -2498,7 +2421,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.notifierShow(
                 _translate("MainWindow", "New Message"),
                 _translate("MainWindow", "From %1").arg(
-                    unicode(acct.fromLabel, 'utf-8')),
+                    str(acct.fromLabel, 'utf-8')),
                 sound.SOUND_UNKNOWN
             )
         if self.getCurrentAccount() is not None and (
@@ -2732,12 +2655,12 @@ class MyForm(settingsmixin.SMainWindow):
                 _translate(
                     "MainWindow",
                     "%n object(s) pending proof of work", None,
-                    QtCore.QCoreApplication.CodecForTr, powQueueSize()
+                    powQueueSize()
                 ) + ", " +
                 _translate(
                     "MainWindow",
                     "%n object(s) waiting to be distributed", None,
-                    QtCore.QCoreApplication.CodecForTr, pendingUpload()
+                    pendingUpload()
                 ) + "\n\n" +
                 _translate(
                     "MainWindow", "Wait until these tasks finish?"),
@@ -2871,7 +2794,7 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.QEventLoop.AllEvents, 1000
         )
         self.saveSettings()
-        for attr, obj in self.ui.__dict__.iteritems():
+        for attr, obj in self.ui.__dict__.items():
             if hasattr(obj, "__class__") \
                     and isinstance(obj, settingsmixin.SettingsMixin):
                 saveMethod = getattr(obj, "saveSettings", None)
@@ -2934,7 +2857,7 @@ class MyForm(settingsmixin.SMainWindow):
                 lines[i] = '<br><br>'
         content = ' '.join(lines) # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
-        content = unicode(content, 'utf-8)')
+        content = str(content, 'utf-8)')
         textEdit.setHtml(QtCore.QString(content))
 
     def on_action_InboxMarkUnread(self):
@@ -3117,7 +3040,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
 
         quotedText = self.quoted_text(
-            unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
+            str(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ('Re:', 'RE:'):
             widget['subject'].setText(
@@ -3368,7 +3291,7 @@ class MyForm(settingsmixin.SMainWindow):
             return self.updateStatusBar(_translate(
                 "MainWindow", "No addresses selected."))
 
-        addresses_string = unicode(
+        addresses_string = str(
             self.ui.lineEditTo.text().toUtf8(), 'utf-8')
         for item in selected_items:
             address_string = item.accountString()
@@ -3861,11 +3784,11 @@ class MyForm(settingsmixin.SMainWindow):
         self.setAddressSound(widget.item(widget.currentRow(), 0).text())
 
     def setAddressSound(self, addr):
-        filters = [unicode(_translate(
+        filters = [str(_translate(
             "MainWindow", "Sound files (%s)" %
             ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
         ))]
-        sourcefile = unicode(QtGui.QFileDialog.getOpenFileName(
+        sourcefile = str(QtGui.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set notification sound..."),
             filter=';;'.join(filters)
         ))
@@ -3874,7 +3797,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
 
         destdir = os.path.join(state.appdata, 'sounds')
-        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
+        destfile = str(addr) + os.path.splitext(sourcefile)[-1]
         destination = os.path.join(destdir, destfile)
 
         if sourcefile == destination:
@@ -4084,7 +4007,7 @@ class MyForm(settingsmixin.SMainWindow):
         if item.type == AccountMixin.ALL:
             return
 
-        newLabel = unicode(item.text(0), 'utf-8', 'ignore')
+        newLabel = str(item.text(0), 'utf-8', 'ignore')
         oldLabel = item.defaultLabel()
 
         # unchanged, do not do anything either
@@ -4155,7 +4078,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
         for i in range(len(completerList)):
-            if unicode(completerList[i]).endswith(" <" + item.address + ">"):
+            if str(completerList[i]).endswith(" <" + item.address + ">"):
                 completerList[i] = item.label + " <" + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
@@ -4209,7 +4132,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def initSettings(self):
         self.loadSettings()
-        for attr, obj in self.ui.__dict__.iteritems():
+        for attr, obj in self.ui.__dict__.items():
             if hasattr(obj, "__class__") and \
                     isinstance(obj, settingsmixin.SettingsMixin):
                 loadMethod = getattr(obj, "loadSettings", None)
@@ -4221,7 +4144,7 @@ app = None
 myapp = None
 
 
-class BitmessageQtApplication(QtGui.QApplication):
+class BitmessageQtApplication(QtWidgets.QApplication):
     """
     Listener to allow our Qt form to get focus when another instance of the
     application is open.
@@ -4250,7 +4173,7 @@ class BitmessageQtApplication(QtGui.QApplication):
 
         # Cleanup past crashed servers
         if not self.is_running:
-            if socket.error() == QLocalSocket.ConnectionRefusedError:
+            if socket.error() == QLocalSocket.LocalSocketError.ConnectionRefusedError:
                 socket.disconnectFromServer()
                 QLocalServer.removeServer(id)
 
@@ -4307,4 +4230,4 @@ def run():
         QtCore.QTimer.singleShot(
             30000, lambda: myapp.setStatusIcon(state.statusIconColor))
 
-    app.exec_()
+    app.exec()

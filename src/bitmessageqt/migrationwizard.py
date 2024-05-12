@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
-from PyQt4 import QtCore, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 
-class MigrationWizardIntroPage(QtGui.QWizardPage):
+class MigrationWizardIntroPage(QtWidgets.QWizardPage):
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Migrating configuration")
@@ -18,7 +18,7 @@ class MigrationWizardIntroPage(QtGui.QWizardPage):
         return 1
     
 
-class MigrationWizardAddressesPage(QtGui.QWizardPage):
+class MigrationWizardAddressesPage(QtWidgets.QWizardPage):
     def __init__(self, addresses):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Addresses")
@@ -34,7 +34,7 @@ class MigrationWizardAddressesPage(QtGui.QWizardPage):
         return 10
     
 
-class MigrationWizardGPUPage(QtGui.QWizardPage):
+class MigrationWizardGPUPage(QtWidgets.QWizardPage):
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("GPU")
@@ -50,7 +50,7 @@ class MigrationWizardGPUPage(QtGui.QWizardPage):
         return 10
     
 
-class MigrationWizardConclusionPage(QtGui.QWizardPage):
+class MigrationWizardConclusionPage(QtWidgets.QWizardPage):
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("All done!")
@@ -63,7 +63,7 @@ class MigrationWizardConclusionPage(QtGui.QWizardPage):
         self.setLayout(layout)
 
 
-class Ui_MigrationWizard(QtGui.QWizard):
+class Ui_MigrationWizard(QtWidgets.QWizard):
     def __init__(self, addresses):
         super(QtGui.QWizard, self).__init__()
 

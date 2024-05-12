@@ -2,10 +2,9 @@
 
 import inspect
 import re
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 
-from urllib import quote_plus
-from urlparse import urlparse
+from urllib.parse import quote_plus, urlparse
 
 
 class SafeHTMLParser(HTMLParser):

@@ -3,9 +3,9 @@ A thread to handle network concerns
 """
 import network.asyncore_pollchoose as asyncore
 import state
-import connectionpool
+import network.connectionpool
 from queues import excQueue
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 class BMNetworkThread(StoppableThread):

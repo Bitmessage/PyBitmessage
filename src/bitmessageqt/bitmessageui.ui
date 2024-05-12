@@ -2,6 +2,7 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+ <widget class="QDockWidget" name="MainDock">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -17,13 +18,13 @@
    <iconset resource="bitmessage_icons.qrc">
     <normaloff>:/newPrefix/images/can-icon-24px.png</normaloff>:/newPrefix/images/can-icon-24px.png</iconset>
   </property>
-  <property name="tabShape">
-   <enum>QTabWidget::Rounded</enum>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_10">
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -1290,6 +1291,7 @@ p, li { white-space: pre-wrap; }
     </item>
    </layout>
   </widget>
+ </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>

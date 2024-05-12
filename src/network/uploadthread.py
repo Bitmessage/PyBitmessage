@@ -6,9 +6,9 @@ import time
 import helper_random
 import protocol
 import state
-import connectionpool
+import network.connectionpool as connectionpool
 from randomtrackingdict import RandomTrackingDict
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 class UploadThread(StoppableThread):

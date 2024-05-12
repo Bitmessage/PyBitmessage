@@ -2,10 +2,10 @@
 """Status bar Module"""
 
 from time import time
-from PyQt4 import QtGui
+from PyQt6 import QtGui, QtWidgets
 
 
-class BMStatusBar(QtGui.QStatusBar):
+class BMStatusBar(QtWidgets.QStatusBar):
     """Status bar with queue and priorities"""
     duration = 10000
     deleteAfter = 60
