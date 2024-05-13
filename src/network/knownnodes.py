@@ -108,6 +108,8 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     Returns True if added a new node.
     """
     # pylint: disable=too-many-branches
+    if not isinstance(peer.host, str):
+        peer = Peer(peer.host.decode(), peer.port)
     if isinstance(stream, Iterable):
         with knownNodesLock:
             for s in stream:

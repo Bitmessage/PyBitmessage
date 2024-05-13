@@ -5,7 +5,7 @@ src/network/httpd.py
 import asyncore
 import socket
 
-from tls import TLSHandshake
+from .tls import TLSHandshake
 
 
 class HTTPRequestHandler(asyncore.dispatcher):

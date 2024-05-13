@@ -1386,7 +1386,7 @@ class MyForm(settingsmixin.SMainWindow):
     # initialise the message notifier
     def notifierInit(self):
         def _simple_notify(
-                title, subtitle, category, label=None, icon=None):
+                title, subtitle, category, label=None, icon=QtWidgets.QSystemTrayIcon.MessageIcon.Information):
             self.tray.showMessage(title, subtitle, icon, 2000)
 
         self._notifier = _simple_notify
@@ -1416,7 +1416,7 @@ class MyForm(settingsmixin.SMainWindow):
                 logger.warning("No notification.sound plugin found")
 
     def notifierShow(
-            self, title, subtitle, category, label=None, icon=None):
+            self, title, subtitle, category, label=None, icon=QtWidgets.QSystemTrayIcon.MessageIcon.Information):
         self.playSound(category, label)
         self._notifier(
             str(title), str(subtitle), category, label, icon)
