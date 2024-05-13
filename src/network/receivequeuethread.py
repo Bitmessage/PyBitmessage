@@ -5,7 +5,6 @@ import errno
 import Queue
 import socket
 
-import state
 import connectionpool
 from network.advanceddispatcher import UnknownStateError
 from queues import receiveDataQueue
@@ -19,13 +18,13 @@ class ReceiveQueueThread(StoppableThread):
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
 
     def run(self):
-        while not self._stopped and state.shutdown == 0:
+        while not self._stopped:
             try:
                 dest = receiveDataQueue.get(block=True, timeout=1)
             except Queue.Empty:
                 continue
 
-            if self._stopped or state.shutdown:
+            if self._stopped:
                 break
 
             # cycle as long as there is data

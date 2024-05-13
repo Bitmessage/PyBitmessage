@@ -2,7 +2,6 @@
 A thread to handle network concerns
 """
 import network.asyncore_pollchoose as asyncore
-import state
 import connectionpool
 from queues import excQueue
 from threads import StoppableThread
@@ -14,7 +13,7 @@ class BMNetworkThread(StoppableThread):
 
     def run(self):
         try:
-            while not self._stopped and state.shutdown == 0:
+            while not self._stopped:
                 connectionpool.pool.loop()
         except Exception as e:
             excQueue.put((self.name, e))

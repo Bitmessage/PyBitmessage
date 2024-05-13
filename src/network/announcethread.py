@@ -20,7 +20,7 @@ class AnnounceThread(StoppableThread):
 
     def run(self):
         lastSelfAnnounced = 0
-        while not self._stopped and state.shutdown == 0:
+        while not self._stopped:
             processed = 0
             if lastSelfAnnounced < time.time() - self.announceInterval:
                 self.announceSelf()

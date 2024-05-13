@@ -4,7 +4,6 @@ Announce addresses as they are received from other hosts
 from six.moves import queue
 
 # magic imports!
-import state
 import connectionpool
 from helper_random import randomshuffle
 from protocol import assembleAddrMessage
@@ -18,7 +17,7 @@ class AddrThread(StoppableThread):
     name = "AddrBroadcaster"
 
     def run(self):
-        while not state.shutdown:
+        while not self._stopped:
             chunk = []
             while True:
                 try:
