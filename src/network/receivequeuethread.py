@@ -6,7 +6,7 @@ import queue
 import socket
 
 import state
-import network.connectionpool
+import network.connectionpool as connectionpool
 from network.advanceddispatcher import UnknownStateError
 from queues import receiveDataQueue
 from .threads import StoppableThread

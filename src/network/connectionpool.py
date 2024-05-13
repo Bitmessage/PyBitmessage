@@ -10,7 +10,7 @@ import time
 
 import network.asyncore_pollchoose as asyncore
 import helper_random
-import network.knownnodes
+import network.knownnodes as knownnodes
 import protocol
 import state
 from bmconfigparser import config
@@ -382,14 +382,14 @@ class BMConnectionPool(object):
                 minTx -= 300 - 20
             if i.lastTx < minTx:
                 if i.fullyEstablished:
-                    i.append_write_buf(protocol.CreatePacket('ping'))
+                    i.append_write_buf(protocol.CreatePacket(b'ping'))
                 else:
                     i.close_reason = "Timeout (%is)" % (
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
             self.connections()
-            + self.listeningSockets.values() + self.udpSockets.values()
+            + list(self.listeningSockets.values()) + list(self.udpSockets.values())
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

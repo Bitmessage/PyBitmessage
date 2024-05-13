@@ -15,14 +15,14 @@ import helper_random
 import l10n
 import protocol
 import state
-import network.connectionpool
+import network.connectionpool as connectionpool
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 
 import network.asyncore_pollchoose as asyncore
-import network.knownnodes
+import network.knownnodes as knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
 from network.objectracker import ObjectTracker
@@ -180,6 +180,15 @@ class TCPConnection(BMProto, TLSDispatcher):
         maxAddrCount = config.safeGetInt(
             "bitmessagesettings", "maxaddrperstreamsend", 500)
 
+        def endsWith(s, tail):
+            try:
+                return s.endswith(tail)
+            except:
+                try:
+                    return s.decode().endswith(tail)
+                except UnicodeDecodeError:
+                    return False
+
         templist = []
         addrs = {}
         for stream in self.streams:
@@ -194,7 +203,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         (k, v) for k, v in nodes.items()
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
-                        and v["rating"] >= 0 and not k.host.endswith('.onion')
+                        and v["rating"] >= 0 and not endsWith(k.host, '.onion')
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
@@ -220,7 +229,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                 'Sending huge inv message with %i objects to just this'
                 ' one peer', objectCount)
             self.append_write_buf(protocol.CreatePacket(
-                'inv', addresses.encodeVarint(objectCount) + payload))
+                b'inv', addresses.encodeVarint(objectCount) + payload))
 
         # Select all hashes for objects in this stream.
         bigInvList = {}

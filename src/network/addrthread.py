@@ -5,7 +5,7 @@ from six.moves import queue
 
 # magic imports!
 import state
-import network.connectionpool
+import network.connectionpool as connectionpool
 from helper_random import randomshuffle
 from protocol import assembleAddrMessage
 from queues import addrQueue  # FIXME: init with queue

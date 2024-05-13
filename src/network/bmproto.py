@@ -12,10 +12,10 @@ import time
 
 # magic imports!
 import addresses
-import network.knownnodes
+import network.knownnodes as knownnodes
 import protocol
 import state
-import network.connectionpool
+import network.connectionpool as connectionpool
 from bmconfigparser import config
 from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
@@ -82,7 +82,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Process incoming header"""
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-        self.command = self.command.rstrip('\x00')
+        self.command = self.command.rstrip(b'\x00')
         if self.magic != protocol.magic:
             # skip 1 byte in order to sync
             self.set_state("bm_header", length=1)
@@ -107,18 +107,18 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.invalid = True
         retval = True
         if not self.fullyEstablished and self.command not in (
-                "error", "version", "verack"):
+                b"error", b"version", b"verack"):
             logger.error(
                 'Received command %s before connection was fully'
-                ' established, ignoring', self.command)
+                ' established, ignoring', self.command.decode())
             self.invalid = True
         if not self.invalid:
             try:
                 retval = getattr(
-                    self, "bm_command_" + str(self.command).lower())()
+                    self, "bm_command_" + self.command.decode().lower())()
             except AttributeError:
                 # unimplemented command
-                logger.debug('unimplemented command %s', self.command)
+                logger.debug('unimplemented command %s', self.command.decode())
             except BMProtoInsufficientDataError:
                 logger.debug('packet length too short, skipping')
             except BMProtoExcessiveDataError:
@@ -141,8 +141,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # broken read, ignore
             pass
         else:
-            logger.debug('Closing due to invalid command %s', self.command)
-            self.close_reason = "Invalid command %s" % self.command
+            logger.debug('Closing due to invalid command %s', self.command.decode())
+            self.close_reason = "Invalid command %s" % self.command.decode()
             self.set_state("close")
             return False
         if retval:
@@ -168,17 +168,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Decode node details from the payload"""
         # protocol.checkIPAddress()
         services, host, port = self.decode_payload_content("Q16sH")
-        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
-        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+        if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+            host = socket.inet_ntop(socket.AF_INET, host[12:16])
+        elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
-            host = base64.b32encode(host[6:]).lower() + ".onion"
+            host = base64.b32encode(host[6:]).lower() + b".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, str(host))
-        if host == "":
+            host = socket.inet_ntop(socket.AF_INET6, host)
+        if host == b"":
             # This can happen on Windows systems which are not 64-bit
             # compatible so let us drop the IPv6 address.
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, host[12:16])
 
         return Node(services, host, port)
 
@@ -443,13 +443,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Incoming addresses, process them"""
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
-            ip = str(ip)
-            if (
-                stream not in state.streamsInWhichIAmParticipating
-                # FIXME: should check against complete list
-                or ip.startswith('bootstrap')
-            ):
+            if (stream not in state.streamsInWhichIAmParticipating):
                 continue
+            try:
+                if (
+                    # FIXME: should check against complete list
+                    ip.decode().startswith('bootstrap')
+                ):
+                    continue
+            except UnicodeDecodeError:
+                pass
             decodedIP = protocol.checkIPAddress(ip)
             if (
                 decodedIP and time.time() - seenTime > 0
@@ -477,7 +480,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_ping(self):
         """Incoming ping, respond to it."""
-        self.append_write_buf(protocol.CreatePacket('pong'))
+        self.append_write_buf(protocol.CreatePacket(b'pong'))
         return True
 
     @staticmethod
@@ -531,12 +534,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.peerValidityChecks():
             # ABORT afterwards
             return True
-        self.append_write_buf(protocol.CreatePacket('verack'))
+        self.append_write_buf(protocol.CreatePacket(b'verack'))
         self.verackSent = True
         ua_valid = re.match(
-            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent)
+            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent.decode())
         if not ua_valid:
-            self.userAgent = '/INVALID:0/'
+            self.userAgent = b'/INVALID:0/'
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,

@@ -6,7 +6,7 @@ import state
 import addresses
 import helper_random
 import protocol
-import network.connectionpool
+import network.connectionpool as connectionpool
 from .objectracker import missingObjects
 from .threads import StoppableThread
 
@@ -71,7 +71,7 @@ class DownloadThread(StoppableThread):
                 if not chunkCount:
                     continue
                 payload[0:0] = addresses.encodeVarint(chunkCount)
-                i.append_write_buf(protocol.CreatePacket('getdata', payload))
+                i.append_write_buf(protocol.CreatePacket(b'getdata', payload))
                 self.logger.debug(
                     '%s:%i Requesting %i objects',
                     i.destination.host, i.destination.port, chunkCount)

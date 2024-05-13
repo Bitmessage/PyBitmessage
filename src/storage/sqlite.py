@@ -33,7 +33,7 @@ class SqliteInventory(InventoryStorage):
                 return True
             rows = sqlQuery(
                 'SELECT streamnumber FROM inventory WHERE hash=?',
-                sqlite3.Binary(hash_))
+                sqlite3.Binary(hash_.encode()))
             if not rows:
                 return False
             self._objects[hash_] = rows[0][0]
@@ -44,8 +44,8 @@ class SqliteInventory(InventoryStorage):
             if hash_ in self._inventory:
                 return self._inventory[hash_]
             rows = sqlQuery(
-                'SELECT objecttype, streamnumber, payload, expirestime, tag'
-                ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
+                b'SELECT objecttype, streamnumber, payload, expirestime, tag'
+                b' FROM inventory WHERE hash=?', sqlite3.Binary(hash_.encode()))
             if not rows:
                 raise KeyError(hash_)
             return InventoryItem(*rows[0])

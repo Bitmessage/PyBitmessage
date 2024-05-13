@@ -5,7 +5,7 @@ Select which node to connect to
 import logging
 import random
 
-import network.knownnodes
+import network.knownnodes as knownnodes
 import protocol
 import state
 from bmconfigparser import config
@@ -45,7 +45,7 @@ def chooseConnection(stream):
         return getDiscoveredPeer()
     for _ in range(50):
         peer = random.choice(  # nosec B311
-            knownnodes.knownNodes[stream].keys())
+            list(knownnodes.knownNodes[stream].keys()))
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):

@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>885</width>
+    <height>580</height>
+   </rect>
+  </property>
  <widget class="QDockWidget" name="MainDock">
   <property name="geometry">
    <rect>

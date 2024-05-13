@@ -41,12 +41,7 @@ Returns an instance of :class:`QPixmap` which have generated identicon image.
 """
 
 from six.moves import range
-
-try:
-    from PyQt5 import QtCore, QtGui
-except (ImportError, RuntimeError):
-    from PyQt4 import QtCore, QtGui
-
+from PyQt6 import QtCore, QtGui
 
 class IdenticonRendererBase(object):
     """Encapsulate methods around rendering identicons"""
@@ -129,11 +124,13 @@ class IdenticonRendererBase(object):
             QtCore.QPointF(size, size), QtCore.QPointF(0., size)]
         rotation = [0, 90, 180, 270]
 
-        nopen = QtGui.QPen(foreColor, QtCore.Qt.NoPen)
-        foreBrush = QtGui.QBrush(foreColor, QtCore.Qt.SolidPattern)
+        nopen = QtGui.QPen(foreColor)
+        nopen.setStyle(QtCore.Qt.PenStyle.NoPen)
+        foreBrush = QtGui.QBrush(foreColor, QtCore.Qt.BrushStyle.SolidPattern)
         if penwidth > 0:
             pen_color = QtGui.QColor(255, 255, 255)
-            pen = QtGui.QPen(pen_color, QtCore.Qt.SolidPattern)
+            pen = QtGui.QPen(pen_color)
+            pen.setBrush(QtCore.Qt.BrushStyle.SolidPattern)
             pen.setWidth(penwidth)
 
         painter = QtGui.QPainter()
@@ -153,10 +150,10 @@ class IdenticonRendererBase(object):
         if penwidth > 0:
             # draw the borders
             painter.setPen(pen)
-            painter.drawPolygon(polygon, QtCore.Qt.WindingFill)
+            painter.drawPolygon(polygon, QtCore.Qt.FillRule.WindingFill)
         # draw the fill
         painter.setPen(nopen)
-        painter.drawPolygon(polygon, QtCore.Qt.WindingFill)
+        painter.drawPolygon(polygon, QtCore.Qt.FillRule.WindingFill)
 
         painter.end()
 

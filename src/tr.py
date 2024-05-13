@@ -28,7 +28,7 @@ class translateClass:
         return self.text
 
 
-def _translate(context, text, disambiguation=None, encoding=None, n=None):
+def _translate(context, text, disambiguation=None, n=None):
     # pylint: disable=unused-argument
     return translateText(context, text, n)
 
@@ -52,7 +52,7 @@ def translateText(context, text, n=None):
             os._exit(0)  # pylint: disable=protected-access
         if n is None:
             return QtWidgets.QApplication.translate(context, text)
-        return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, n)
+        return QtWidgets.QApplication.translate(context, text, None, n)
     else:
         if '%' in text:
             return translateClass(context, text.replace('%', '', 1))

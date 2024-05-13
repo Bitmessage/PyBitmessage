@@ -9,10 +9,13 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 from bmconfigparser import config
 from .foldertree import AddressBookCompleter
+from .blacklist import Blacklist
+from .networkstatus import NetworkStatus
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(885, 580)
         self.MainDock = QtWidgets.QDockWidget(parent=MainWindow)
         self.MainDock.setGeometry(QtCore.QRect(0, 0, 885, 580))
         icon = QtGui.QIcon()
@@ -434,8 +437,14 @@ class Ui_MainWindow(object):
         icon8 = QtGui.QIcon()
         icon8.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.tabWidget.addTab(self.tab_3, icon8, "")
-        self.blackwhitelist = QtWidgets.QWidget()
+        self.blackwhitelist = Blacklist()
         self.blackwhitelist.setObjectName("blackwhitelist")
+        self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
+        # Initialize the Blacklist or Whitelist
+        if config.get('bitmessagesettings', 'blackwhitelist') == 'white':
+            self.blackwhitelist.radioButtonWhitelist.click()
+        self.blackwhitelist.rerenderBlackWhiteList()
+
         self.gridLayout_6 = QtWidgets.QGridLayout(self.blackwhitelist)
         self.gridLayout_6.setObjectName("gridLayout_6")
         self.radioButtonBlacklist = QtWidgets.QRadioButton(parent=self.blackwhitelist)
@@ -471,7 +480,8 @@ class Ui_MainWindow(object):
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(":/newPrefix/images/blacklist.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.tabWidget.addTab(self.blackwhitelist, icon9, "")
-        self.networkstatus = QtWidgets.QWidget()
+        self.networkstatus = NetworkStatus()
+        self.tabWidget.addTab(self.networkstatus, QtGui.QIcon(":/newPrefix/images/networkstatus.png"), "")
         self.networkstatus.setObjectName("networkstatus")
         self.pushButtonStatusIcon = QtWidgets.QPushButton(parent=self.networkstatus)
         self.pushButtonStatusIcon.setGeometry(QtCore.QRect(680, 440, 21, 23))
@@ -539,8 +549,7 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.networkstatus, icon11, "")
         self.gridLayout_10.addWidget(self.tabWidget, 0, 0, 1, 1)
         self.MainDock.setWidget(self.centralwidget)
-        # XXX unresolved
-        #MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(None), self.MainDock)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea.AllDockWidgetAreas, self.MainDock)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 27))
         self.menubar.setObjectName("menubar")
@@ -637,6 +646,7 @@ class Ui_MainWindow(object):
         self.subscriptionsContextMenuToolbar = QtWidgets.QToolBar()
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
+        _translate = QtCore.QCoreApplication.translate
         if dontconnect is None:
             _translate = QtCore.QCoreApplication.translate
             dontconnect = config.safeGetBoolean(
@@ -741,7 +751,10 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Name or Label"))
         item = self.tableWidgetBlacklist.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Address"))
+        self.blackwhitelist.retranslateUi()
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), _translate("MainWindow", "Blacklist"))
+        self.networkstatus.retranslateUi()
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status"))
         item = self.tableWidgetConnectionCount.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Stream #"))
         item = self.tableWidgetConnectionCount.horizontalHeaderItem(1)

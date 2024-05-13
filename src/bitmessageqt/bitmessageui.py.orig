@@ -12,6 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(885, 580)
         self.MainDock = QtWidgets.QDockWidget(parent=MainWindow)
         self.MainDock.setGeometry(QtCore.QRect(0, 0, 885, 580))
         icon = QtGui.QIcon()

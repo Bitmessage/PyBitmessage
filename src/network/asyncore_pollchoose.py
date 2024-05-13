@@ -723,20 +723,21 @@ class dispatcher(object):
             if why.args[0] not in (ENOTCONN, EBADF):
                 raise
 
+    # XXX unresolved
     # cheap inheritance, used to pass all other attribute
     # references to the underlying socket object.
-    def __getattr__(self, attr):
-        try:
-            retattr = getattr(self.socket, attr)
-        except AttributeError:
-            raise AttributeError(
-                "%s instance has no attribute '%s'"
-                % (self.__class__.__name__, attr))
-        else:
-            msg = "%(me)s.%(attr)s is deprecated; use %(me)s.socket.%(attr)s"\
-                  " instead" % {'me': self.__class__.__name__, 'attr': attr}
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            return retattr
+    #def __getattr__(self, attr):
+    #    try:
+    #        retattr = getattr(self.socket, attr)
+    #    except AttributeError:
+    #        raise AttributeError(
+    #            "%s instance has no attribute '%s'"
+    #            % (self.__class__.__name__, attr))
+    #    else:
+    #        msg = "%(me)s.%(attr)s is deprecated; use %(me)s.socket.%(attr)s"\
+    #              " instead" % {'me': self.__class__.__name__, 'attr': attr}
+    #        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    #        return retattr
 
     # log and log_info may be overridden to provide more sophisticated
     # logging and warning methods. In general, log is for 'hit' logging

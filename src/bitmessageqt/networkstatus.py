@@ -125,12 +125,12 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         self.labelBytesRecvCount.setText(
             _translate(
                 "networkstatus",
-                "Down: %1/s  Total: %2").arg(
+                "Down: {0}/s  Total: {1}").format(
                     self.formatByteRate(network.stats.downloadSpeed()),
                     self.formatBytes(network.stats.receivedBytes())))
         self.labelBytesSentCount.setText(
             _translate(
-                "networkstatus", "Up: %1/s  Total: %2").arg(
+                "networkstatus", "Up: {0}/s  Total: {1}").format(
                     self.formatByteRate(network.stats.uploadSpeed()),
                     self.formatBytes(network.stats.sentBytes())))
 
@@ -160,19 +160,19 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.insertRow(0)
             self.tableWidgetConnectionCount.setItem(
                 0, 0,
-                QtGui.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
+                QtWidgets.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
             )
             self.tableWidgetConnectionCount.setItem(
                 0, 2,
-                QtGui.QTableWidgetItem("%s" % (c.userAgent))
+                QtWidgets.QTableWidgetItem("%s" % (c.userAgent))
             )
             self.tableWidgetConnectionCount.setItem(
                 0, 3,
-                QtGui.QTableWidgetItem("%s" % (c.tlsVersion))
+                QtWidgets.QTableWidgetItem("%s" % (c.tlsVersion))
             )
             self.tableWidgetConnectionCount.setItem(
                 0, 4,
-                QtGui.QTableWidgetItem("%s" % (",".join(map(str, c.streams))))
+                QtWidgets.QTableWidgetItem("%s" % (",".join(map(str, c.streams))))
             )
             try:
                 # .. todo:: FIXME: hard coded stream no
@@ -181,23 +181,23 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
                 rating = "-"
             self.tableWidgetConnectionCount.setItem(
                 0, 1,
-                QtGui.QTableWidgetItem("%s" % (rating))
+                QtWidgets.QTableWidgetItem("%s" % (rating))
             )
             if outbound:
-                brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)
+                brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.BrushStyle.SolidPattern)
             else:
-                brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.SolidPattern)
+                brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.BrushStyle.SolidPattern)
             for j in range(1):
                 self.tableWidgetConnectionCount.item(0, j).setBackground(brush)
-            self.tableWidgetConnectionCount.item(0, 0).setData(QtCore.Qt.UserRole, destination)
-            self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.UserRole, outbound)
+            self.tableWidgetConnectionCount.item(0, 0).setData(QtCore.Qt.ItemDataRole.UserRole, destination)
+            self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.ItemDataRole.UserRole, outbound)
         else:
             if not connectionpool.pool.inboundConnections:
                 self.window().setStatusIcon('yellow')
             for i in range(self.tableWidgetConnectionCount.rowCount()):
-                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
+                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.ItemDataRole.UserRole).toPyObject() != destination:
                     continue
-                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.UserRole).toPyObject() == outbound:
+                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.ItemDataRole.UserRole).toPyObject() == outbound:
                     self.tableWidgetConnectionCount.removeRow(i)
                     break
 
@@ -205,7 +205,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         self.tableWidgetConnectionCount.setSortingEnabled(True)
         self.labelTotalConnections.setText(
             _translate(
-                "networkstatus", "Total Connections: %1").arg(
+                "networkstatus", "Total Connections: {0}").format(
                     str(self.tableWidgetConnectionCount.rowCount())))
         # FYI: The 'singlelistener' thread sets the icon color to green when it
         # receives an incoming connection, meaning that the user's firewall is
@@ -218,7 +218,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
     # timer driven
     def runEveryTwoSeconds(self):
         """Updates counters, runs every 2 seconds if the timer is running"""
-        self.labelLookupsPerSecond.setText(_translate("networkstatus", "Inventory lookups per second: %1").arg(
+        self.labelLookupsPerSecond.setText(_translate("networkstatus", "Inventory lookups per second: {0}").format(
             str(state.Inventory.numberOfInventoryLookupsPerformed / 2)))
         state.Inventory.numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
@@ -229,11 +229,11 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         super(NetworkStatus, self).retranslateUi()
         self.labelTotalConnections.setText(
             _translate(
-                "networkstatus", "Total Connections: %1").arg(
+                "networkstatus", "Total Connections: {0}").format(
                     str(self.tableWidgetConnectionCount.rowCount())))
         self.labelStartupTime.setText(_translate(
-            "networkstatus", "Since startup on %1"
-        ).arg(l10n.formatTimestamp(self.startup)))
+            "networkstatus", "Since startup on {0}"
+        ).format(l10n.formatTimestamp(self.startup)))
         self.updateNumberOfMessagesProcessed()
         self.updateNumberOfBroadcastsProcessed()
         self.updateNumberOfPubkeysProcessed()

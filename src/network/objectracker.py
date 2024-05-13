@@ -5,7 +5,7 @@ import time
 from threading import RLock
 
 import state
-import network.connectionpool
+import network.connectionpool as connectionpool
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False

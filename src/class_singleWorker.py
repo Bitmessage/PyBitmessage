@@ -1511,4 +1511,4 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For ack message)', log_time=True)
 
-        return protocol.CreatePacket('object', payload)
+        return protocol.CreatePacket(b'object', payload)

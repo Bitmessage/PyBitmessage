@@ -163,7 +163,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
 
         if self._proxy_type:
-            for node, info in six.iteritems(
+            for node, info in six.items(
                 knownnodes.knownNodes.get(
                     min(state.streamsInWhichIAmParticipating), [])
             ):

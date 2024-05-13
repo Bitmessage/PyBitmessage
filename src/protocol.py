@@ -173,7 +173,7 @@ def checkIPAddress(host, private=False):
         return checkIPv4Address(host[12:], hostStandardFormat, private)
     elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
         # Onion, based on BMD/bitcoind
-        hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+        hostStandardFormat = base64.b32encode(host[6:]).lower() + b".onion"
         if private:
             return False
         return hostStandardFormat
@@ -250,6 +250,8 @@ def haveSSL(server=False):
     python < 2.7.9's ssl library does not support ECDSA server due to
     missing initialisation of available curves, but client works ok
     """
+    # XXX debug - disable TLS
+    return False
     if not server:
         return True
     elif sys.version_info >= (2, 7, 9):

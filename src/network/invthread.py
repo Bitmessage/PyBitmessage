@@ -8,7 +8,7 @@ from time import time
 import addresses
 import protocol
 import state
-import network.connectionpool
+import network.connectionpool as connectionpool
 from queues import invQueue
 from .threads import StoppableThread
 
@@ -90,13 +90,13 @@ class InvThread(StoppableThread):
                     if fluffs:
                         random.shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket(
-                            'inv',
+                            b'inv',
                             addresses.encodeVarint(
                                 len(fluffs)) + ''.join(fluffs)))
                     if stems:
                         random.shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket(
-                            'dinv',
+                            b'dinv',
                             addresses.encodeVarint(
                                 len(stems)) + ''.join(stems)))
 
