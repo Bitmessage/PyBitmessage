@@ -237,8 +237,7 @@ class Main(object):
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
         else:
-            # Populate with hardcoded value (same as connectToStream above)
-            state.streamsInWhichIAmParticipating.append(1)
+            network.connectionpool.pool.connectToStream(1)
 
         if not daemon and state.enableGUI:
             if state.curses:

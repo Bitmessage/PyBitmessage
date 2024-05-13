@@ -445,7 +445,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for seenTime, stream, _, ip, port in self._decode_addr():
             ip = str(ip)
             if (
-                stream not in state.streamsInWhichIAmParticipating
+                stream not in connectionpool.pool.streams
                 # FIXME: should check against complete list
                 or ip.startswith('bootstrap')
             ):

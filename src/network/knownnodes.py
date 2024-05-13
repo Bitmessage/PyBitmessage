@@ -226,7 +226,7 @@ def dns():
             1, Peer('bootstrap%s.bitmessage.org' % port, port))
 
 
-def cleanupKnownNodes():
+def cleanupKnownNodes(pool):
     """
     Cleanup knownnodes: remove old nodes and nodes with low rating
     """
@@ -236,7 +236,7 @@ def cleanupKnownNodes():
 
     with knownNodesLock:
         for stream in knownNodes:
-            if stream not in state.streamsInWhichIAmParticipating:
+            if stream not in pool.streams:
                 continue
             keys = knownNodes[stream].keys()
             for node in keys:

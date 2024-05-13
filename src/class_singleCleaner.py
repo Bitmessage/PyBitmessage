@@ -108,7 +108,7 @@ class singleCleaner(StoppableThread):
                 # Cleanup knownnodes and handle possible severe exception
                 # while writing it to disk
                 if state.enableNetwork:
-                    knownnodes.cleanupKnownNodes()
+                    knownnodes.cleanupKnownNodes(connectionpool.pool)
             except Exception as err:
                 if "Errno 28" in str(err):
                     self.logger.fatal(

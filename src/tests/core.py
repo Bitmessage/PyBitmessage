@@ -165,7 +165,7 @@ class TestCore(unittest.TestCase):
         """test knownnodes starvation leading to IndexError in Asyncore"""
         self._outdate_knownnodes()
         # time.sleep(303)  # singleCleaner wakes up every 5 min
-        knownnodes.cleanupKnownNodes()
+        knownnodes.cleanupKnownNodes(connectionpool.pool)
         self.assertTrue(knownnodes.knownNodes[1])
         while True:
             try:
@@ -179,7 +179,7 @@ class TestCore(unittest.TestCase):
         config.set('bitmessagesettings', 'dontconnect', 'true')
         self._wipe_knownnodes()
         knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
-        knownnodes.cleanupKnownNodes()
+        knownnodes.cleanupKnownNodes(connectionpool.pool)
         time.sleep(5)
 
     def _check_connection(self, full=False):
