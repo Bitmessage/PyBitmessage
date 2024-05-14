@@ -5,7 +5,7 @@ Address validator module.
 
 from queue import Empty
 
-from PyQt6 import QtGui
+from PyQt6 import QtGui, QtWidgets
 
 from addresses import decodeAddress, addBMIfNotPresent
 from bmconfigparser import config
@@ -32,7 +32,7 @@ class AddressPassPhraseValidatorMixin(object):
         self.addressMandatory = addressMandatory
         self.isValid = False
         # save default text
-        self.okButtonLabel = self.buttonBox.button(QtGui.QDialogButtonBox.Ok).text()
+        self.okButtonLabel = self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).text()
 
     def setError(self, string):
         """Indicate that the validation is pending or failed"""
@@ -44,12 +44,12 @@ class AddressPassPhraseValidatorMixin(object):
             self.feedBackObject.setText(string)
         self.isValid = False
         if self.buttonBox:
-            self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setEnabled(False)
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setEnabled(False)
             if string is not None and self.feedBackObject is not None:
-                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(
+                self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText(
                     _translate("AddressValidator", "Invalid"))
             else:
-                self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(
+                self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText(
                     _translate("AddressValidator", "Validating..."))
 
     def setOK(self, string):
@@ -62,8 +62,8 @@ class AddressPassPhraseValidatorMixin(object):
             self.feedBackObject.setText(string)
         self.isValid = True
         if self.buttonBox:
-            self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setEnabled(True)
-            self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setText(self.okButtonLabel)
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setEnabled(True)
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText(self.okButtonLabel)
 
     def checkQueue(self):
         """Validator queue loop"""
@@ -87,47 +87,47 @@ class AddressPassPhraseValidatorMixin(object):
 
         if not addressGeneratorReturnValue:
             self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
-            return (QtGui.QValidator.Intermediate, 0)
+            return (QtGui.QValidator.State.Intermediate, 0)
         if addressGeneratorReturnValue[0] == 'chan name does not match address':
             self.setError(
                 _translate(
                     "AddressValidator",
                     "Although the Bitmessage address you "
                     "entered was valid, it doesn't match the chan name."))
-            return (QtGui.QValidator.Intermediate, 0)
+            return (QtGui.QValidator.State.Intermediate, 0)
         self.setOK(_translate("MainWindow", "Passphrase and address appear to be valid."))
 
     def returnValid(self):
         """Return the value of whether the validation was successful"""
         if self.isValid:
-            return QtGui.QValidator.Acceptable
-        return QtGui.QValidator.Intermediate
+            return QtGui.QValidator.State.Acceptable
+        return QtGui.QValidator.State.Intermediate
 
     def validate(self, s, pos):
         """Top level validator method"""
         if self.addressObject is None:
             address = None
         else:
-            address = str(self.addressObject.text().toUtf8())
+            address = self.addressObject.text()
             if address == "":
                 address = None
         if self.passPhraseObject is None:
             passPhrase = ""
         else:
-            passPhrase = str(self.passPhraseObject.text().toUtf8())
+            passPhrase = self.passPhraseObject.text()
             if passPhrase == "":
                 passPhrase = None
 
         # no chan name
         if passPhrase is None:
             self.setError(_translate("AddressValidator", "Chan name/passphrase needed. You didn't enter a chan name."))
-            return (QtGui.QValidator.Intermediate, pos)
+            return (QtGui.QValidator.State.Intermediate, pos)
 
         if self.addressMandatory or address is not None:
             # check if address already exists:
             if address in config.addresses():
                 self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.State.Intermediate, pos)
 
             # version too high
             if decodeAddress(address)[0] == 'versiontoohigh':
@@ -138,29 +138,29 @@ class AddressPassPhraseValidatorMixin(object):
                         " address might be valid, its version number"
                         " is too new for us to handle. Perhaps you need"
                         " to upgrade Bitmessage."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.State.Intermediate, pos)
 
             # invalid
             if decodeAddress(address)[0] != 'success':
                 self.setError(_translate("AddressValidator", "The Bitmessage address is not valid."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.State.Intermediate, pos)
 
         # this just disables the OK button without changing the feedback text
         # but only if triggered by textEdited, not by clicking the Ok button
-        if not self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
+        if not self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).hasFocus():
             self.setError(None)
 
         # check through generator
         if address is None:
-            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + str(passPhrase), passPhrase, False))
+            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + passPhrase, passPhrase, False))
         else:
             addressGeneratorQueue.put(
                 ('joinChan', addBMIfNotPresent(address),
                  "{} {}".format(str_chan, passPhrase), passPhrase, False))
 
-        if self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
+        if self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).hasFocus():
             return (self.returnValid(), pos)
-        return (QtGui.QValidator.Intermediate, pos)
+        return (QtGui.QValidator.State.Intermediate, pos)
 
     def checkData(self):
         """Validator Qt signal interface"""

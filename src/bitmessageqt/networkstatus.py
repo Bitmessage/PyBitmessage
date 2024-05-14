@@ -164,7 +164,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
             )
             self.tableWidgetConnectionCount.setItem(
                 0, 2,
-                QtWidgets.QTableWidgetItem("%s" % (c.userAgent))
+                QtWidgets.QTableWidgetItem("%s" % (c.userAgent.decode()))
             )
             self.tableWidgetConnectionCount.setItem(
                 0, 3,

@@ -1,7 +1,7 @@
 """
 This module setting file is for settings
 """
-from configparser import ConfigParser
+import configparser
 import os
 import sys
 import tempfile
@@ -16,7 +16,7 @@ import openclpow
 import paths
 import queues
 import state
-import bitmessageqt.widgets
+import bitmessageqt.widgets as widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
@@ -29,9 +29,9 @@ from tr import _translate
 def getSOCKSProxyType(config):
     """Get user socksproxytype setting from *config*"""
     try:
-        result = ConfigParser.SafeConfigParser.get(
+        result = configparser.ConfigParser.get(
             config, 'bitmessagesettings', 'socksproxytype')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         return None
     else:
         if result.lower() in ('', 'none', 'false'):
@@ -80,7 +80,7 @@ class SettingsDialog(QtWidgets.QDialog):
             self.tabWidgetSettings.setCurrentIndex(
                 self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
             )
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
 
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
@@ -163,7 +163,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
 
         if self._proxy_type:
-            for node, info in six.items(
+            for node, info in six.iteritems(
                 knownnodes.knownNodes.get(
                     min(state.streamsInWhichIAmParticipating), [])
             ):
@@ -348,8 +348,8 @@ class SettingsDialog(QtWidgets.QDialog):
         self.config.set('bitmessagesettings', 'replybelow', str(
             self.checkBoxReplyBelow.isChecked()))
 
-        lang = str(self.languageComboBox.itemData(
-            self.languageComboBox.currentIndex()).toString())
+        lang = self.languageComboBox.itemData(
+            self.languageComboBox.currentIndex())
         self.config.set('bitmessagesettings', 'userlocale', lang)
         self.parent.change_translation()
 
@@ -431,7 +431,7 @@ class SettingsDialog(QtWidgets.QDialog):
             self.config.set('bitmessagesettings', 'maxuploadrate', str(
                 int(float(self.lineEditMaxUploadRate.text()))))
         except ValueError:
-            QtGui.QMessageBox.about(
+            QtWidgets.QMessageBox.about(
                 self, _translate("MainWindow", "Number needed"),
                 _translate(
                     "MainWindow",
@@ -472,7 +472,7 @@ class SettingsDialog(QtWidgets.QDialog):
                     float(self.lineEditSmallMessageDifficulty.text())
                     * defaults.networkDefaultPayloadLengthExtraBytes)))
 
-        if self.comboBoxOpenCL.currentText().toUtf8() != self.config.safeGet(
+        if self.comboBoxOpenCL.currentText() != self.config.safeGet(
                 'bitmessagesettings', 'opencl'):
             self.config.set(
                 'bitmessagesettings', 'opencl',
@@ -555,7 +555,7 @@ class SettingsDialog(QtWidgets.QDialog):
             if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
-                QtGui.QMessageBox.about(
+                QtWidgets.QMessageBox.about(
                     self,
                     _translate("MainWindow", "Will not resend ever"),
                     _translate(

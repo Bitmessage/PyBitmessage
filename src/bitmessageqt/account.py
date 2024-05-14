@@ -150,10 +150,7 @@ class BMAccount(object):
 
         self.toAddress = toAddress
         self.fromAddress = fromAddress
-        if isinstance(subject, unicode):
-            self.subject = str(subject)
-        else:
-            self.subject = subject
+        self.subject = subject
         self.message = message
         self.fromLabel = self.getLabel(fromAddress)
         self.toLabel = self.getLabel(toAddress)

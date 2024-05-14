@@ -51,7 +51,7 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
 
     def click_pushButtonAddBlacklist(self):
         self.NewBlacklistDialogInstance = AddAddressDialog(self)
-        if self.NewBlacklistDialogInstance.exec_():
+        if self.NewBlacklistDialogInstance.exec():
             if self.NewBlacklistDialogInstance.labelAddressCheck.text() == \
                     _translate("MainWindow", "Address is valid."):
                 address = addBMIfNotPresent(str(
@@ -68,16 +68,16 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
                 if queryreturn == []:
                     self.tableWidgetBlacklist.setSortingEnabled(False)
                     self.tableWidgetBlacklist.insertRow(0)
-                    newItem = QtGui.QTableWidgetItem(unicode(
-                        self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8(), 'utf-8'))
+                    newItem = QtWidgets.QTableWidgetItem(
+                        self.NewBlacklistDialogInstance.lineEditLabel.text())
                     newItem.setIcon(avatarize(address))
                     self.tableWidgetBlacklist.setItem(0, 0, newItem)
-                    newItem = QtGui.QTableWidgetItem(address)
+                    newItem = QtWidgets.QTableWidgetItem(address)
                     newItem.setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                        QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEnabled)
                     self.tableWidgetBlacklist.setItem(0, 1, newItem)
                     self.tableWidgetBlacklist.setSortingEnabled(True)
-                    t = (str(self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8()), address, True)
+                    t = (self.NewBlacklistDialogInstance.lineEditLabel.text(), address, True)
                     if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                         sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
                     else:
@@ -103,7 +103,7 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
     def tableWidgetBlacklistItemChanged(self, item):
         if item.column() == 0:
             addressitem = self.tableWidgetBlacklist.item(item.row(), 1)
-            if isinstance(addressitem, QtGui.QTableWidgetItem):
+            if isinstance(addressitem, QtWidgets.QTableWidgetItem):
                 if self.radioButtonBlacklist.isChecked():
                     sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
                             str(item.text()), str(addressitem.text()))
@@ -165,14 +165,14 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
         for row in queryreturn:
             label, address, enabled = row
             self.tableWidgetBlacklist.insertRow(0)
-            newItem = QtWidgets.QTableWidgetItem(unicode(label, 'utf-8'))
+            newItem = QtWidgets.QTableWidgetItem(label)
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             newItem.setIcon(avatarize(address))
             self.tableWidgetBlacklist.setItem(0, 0, newItem)
             newItem = QtWidgets.QTableWidgetItem(address)
             newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEnabled)
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.tableWidgetBlacklist.setItem(0, 1, newItem)
@@ -185,7 +185,7 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
     def on_action_BlacklistDelete(self):
         currentRow = self.tableWidgetBlacklist.currentRow()
         labelAtCurrentRow = self.tableWidgetBlacklist.item(
-            currentRow, 0).text().toUtf8()
+            currentRow, 0).text()
         addressAtCurrentRow = self.tableWidgetBlacklist.item(
             currentRow, 1).text()
         if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
@@ -202,11 +202,11 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
         currentRow = self.tableWidgetBlacklist.currentRow()
         addressAtCurrentRow = self.tableWidgetBlacklist.item(
             currentRow, 1).text()
-        clipboard = QtGui.QApplication.clipboard()
+        clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
 
     def on_context_menuBlacklist(self, point):
-        self.popMenuBlacklist.exec_(
+        self.popMenuBlacklist.exec(
             self.tableWidgetBlacklist.mapToGlobal(point))
 
     def on_action_BlacklistEnable(self):
@@ -214,9 +214,9 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
         addressAtCurrentRow = self.tableWidgetBlacklist.item(
             currentRow, 1).text()
         self.tableWidgetBlacklist.item(
-            currentRow, 0).setTextColor(QtGui.QApplication.palette().text().color())
+            currentRow, 0).setTextColor(QtWidgets.QApplication.palette().text().color())
         self.tableWidgetBlacklist.item(
-            currentRow, 1).setTextColor(QtGui.QApplication.palette().text().color())
+            currentRow, 1).setTextColor(QtWidgets.QApplication.palette().text().color())
         if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             sqlExecute(
                 '''UPDATE blacklist SET enabled=1 WHERE address=?''',

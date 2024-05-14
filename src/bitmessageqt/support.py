@@ -8,7 +8,7 @@ import time
 
 from PyQt6 import QtCore
 
-import bitmessageqt.account
+import bitmessageqt.account as account
 import defaults
 import network.stats
 import paths
@@ -72,7 +72,7 @@ def checkAddressBook(myapp):
     if queryreturn == []:
         sqlExecute(
             'INSERT INTO addressbook VALUES (?,?)',
-            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
+            SUPPORT_LABEL, SUPPORT_ADDRESS)
         myapp.rerenderAddressBook()
 
 
@@ -88,7 +88,7 @@ def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
         queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, 1,
-            str(SUPPORT_MY_LABEL.toUtf8()),
+            SUPPORT_MY_LABEL,
             1, "", False,
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes
@@ -107,8 +107,8 @@ def createSupportMessage(myapp):
 
     myapp.ui.lineEditSubject.setText(SUPPORT_SUBJECT)
     addrIndex = myapp.ui.comboBoxSendFrom.findData(
-        address, QtCore.Qt.UserRole,
-        QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
+        address, QtCore.Qt.ItemDataRole.UserRole,
+        QtCore.Qt.MatchFlag.MatchFixedString | QtCore.Qt.MatchFlag.MatchCaseSensitive)
     if addrIndex == -1:  # something is very wrong
         return
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
@@ -149,7 +149,7 @@ def createSupportMessage(myapp):
     upnp = config.safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
-    myapp.ui.textEditMessage.setText(unicode(SUPPORT_MESSAGE, 'utf-8').format(
+    myapp.ui.textEditMessage.setText(SUPPORT_MESSAGE.format(
         version, os, architecture, pythonversion, opensslversion, frozen,
         portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 

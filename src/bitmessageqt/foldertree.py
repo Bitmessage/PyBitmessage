@@ -124,8 +124,7 @@ class AccountMixin(object):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                retval = str(
-                    config.get(self.address, 'label'), 'utf-8')
+                retval = config.get(self.address, 'label')
             except Exception:
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -136,12 +135,11 @@ class AccountMixin(object):
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
-                    retval = str(retval, 'utf-8')
+                    retval = retval
         elif self.address is None or self.type == AccountMixin.ALL:
-            return str(
-                str(_translate("MainWindow", "All accounts")), 'utf-8')
+            return _translate("MainWindow", "All accounts")
 
-        return retval or str(self.address, 'utf-8')
+        return retval or self.address
 
 
 class BMTreeWidgetItem(QtWidgets.QTreeWidgetItem, AccountMixin):
@@ -236,11 +234,9 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
                 "MainWindow", "All accounts")
         else:
             try:
-                return str(
-                    config.get(self.address, 'label'),
-                    'utf-8', 'ignore')
+                return config.get(self.address, 'label')
             except:
-                return str(self.address, 'utf-8')
+                return self.address
 
     def _getAddressBracket(self, unreadCount=False):
         ret = "" if self.isExpanded() \
@@ -264,8 +260,8 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         if role == QtCore.Qt.ItemDataRole.EditRole \
                 and self.type != AccountMixin.SUBSCRIPTION:
             config.set(
-                str(self.address), 'label',
-                str(value.toString().toUtf8())
+                self.address, 'label',
+                value.toString()
                 if isinstance(value, QtCore.QVariant)
                 else value.encode('utf-8')
             )
@@ -311,8 +307,8 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
-            return str(retval, 'utf-8', 'ignore')
-        return str(self.address, 'utf-8')
+            return retval
+        return self.address
 
     def setType(self):
         """Set account type"""
@@ -323,10 +319,9 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         """Save subscription label to database"""
         if role == QtCore.Qt.ItemDataRole.EditRole:
             if isinstance(value, QtCore.QVariant):
-                label = str(
-                    value.toString().toUtf8()).decode('utf-8', 'ignore')
+                label = value.toString()
             else:
-                label = str(value, 'utf-8', 'ignore')
+                label = value
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
                 label, self.address)
@@ -407,9 +402,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                newLabel = str(
-                    config.get(self.address, 'label'),
-                    'utf-8', 'ignore')
+                newLabel = config.get(self.address, 'label')
             except:
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -418,7 +411,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 '''select label from subscriptions where address=?''', self.address)
         if queryreturn:
             for row in queryreturn:
-                newLabel = str(row[0], 'utf-8', 'ignore')
+                newLabel = row[0]
 
         self.label = newLabel
 
@@ -456,7 +449,7 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         if role == QtCore.Qt.ItemDataRole.UserRole:
             return self.subject
         if role == QtCore.Qt.ItemDataRole.ToolTipRole:
-            return escape(str(self.subject, 'utf-8'))
+            return escape(self.subject)
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
@@ -513,10 +506,7 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
     def setData(self, role, value):
         """Set data"""
         if role == QtCore.Qt.ItemDataRole.EditRole:
-            self.label = str(
-                value.toString().toUtf8()
-                if isinstance(value, QtCore.QVariant) else value
-            )
+            self.label = value.toString() if isinstance(value, QtCore.QVariant) else value
             if self.type in (
                     AccountMixin.NORMAL,
                     AccountMixin.MAILINGLIST, AccountMixin.CHAN):
@@ -584,14 +574,13 @@ class AddressBookCompleter(QtWidgets.QCompleter):
 
     def splitPath(self, path):
         """Split on semicolon"""
-        text = str(path.toUtf8(), 'utf-8')
+        text = path
         return [text[:self.widget().cursorPosition()].split(';')[-1].strip()]
 
     def pathFromIndex(self, index):
         """Perform autocompletion (reimplemented QCompleter method)"""
-        autoString = str(
-            index.data(QtCore.Qt.ItemDataRole.EditRole).toString().toUtf8(), 'utf-8')
-        text = str(self.widget().text().toUtf8(), 'utf-8')
+        autoString = index.data(QtCore.Qt.ItemDataRole.EditRole).toString()
+        text = self.widget().text()
 
         # If cursor position was saved, restore it, else save it
         if self.cursorPos != -1:

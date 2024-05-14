@@ -8,7 +8,7 @@ import hashlib
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 import queues
-import bitmessageqt.widgets
+import bitmessageqt.widgets as widgets
 import state
 from .account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
@@ -21,10 +21,6 @@ class AddressCheckMixin(object):
 
     def __init__(self):
         self.valid = False
-        QtCore.QObject.connect(  # pylint: disable=no-member
-            self.lineEditAddress,
-            QtCore.SIGNAL("textChanged(QString)"),
-            self.addressChanged)
 
     def _onSuccess(self, addressVersion, streamNumber, ripe):
         pass
@@ -90,8 +86,8 @@ class AddressDataDialog(QtWidgets.QDialog, AddressCheckMixin):
         """Callback for QDIalog accepting value"""
         if self.valid:
             self.data = (
-                addBMIfNotPresent(str(self.lineEditAddress.text())),
-                str(self.lineEditLabel.text().toUtf8())
+                addBMIfNotPresent(self.lineEditAddress.text()),
+                self.lineEditLabel.text()
             )
         else:
             queues.UISignalQueue.put(('updateStatusBar', _translate(
@@ -110,6 +106,7 @@ class AddAddressDialog(AddressDataDialog):
         AddressCheckMixin.__init__(self)
         if address:
             self.lineEditAddress.setText(address)
+        self.lineEditAddress.textChanged.connect(self.addressChanged)
 
 
 class NewAddressDialog(QtWidgets.QDialog):
@@ -125,7 +122,7 @@ class NewAddressDialog(QtWidgets.QDialog):
             self.radioButtonExisting.click()
             self.comboBoxExisting.addItem(address)
         self.groupBoxDeterministic.setHidden(True)
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
         self.show()
 
     def accept(self):
@@ -142,7 +139,7 @@ class NewAddressDialog(QtWidgets.QDialog):
                     self.comboBoxExisting.currentText())[2]
             queues.addressGeneratorQueue.put((
                 'createRandomAddress', 4, streamNumberForAddress,
-                str(self.newaddresslabel.text().toUtf8()), 1, "",
+                self.newaddresslabel.text(), 1, "",
                 self.checkBoxEighteenByteRipe.isChecked()
             ))
         else:
@@ -169,7 +166,7 @@ class NewAddressDialog(QtWidgets.QDialog):
                     'createDeterministicAddresses', 4, streamNumberForAddress,
                     "unused deterministic address",
                     self.spinBoxNumberOfAddressesToMake.value(),
-                    self.lineEditPassphrase.text().toUtf8(),
+                    self.lineEditPassphrase.text(),
                     self.checkBoxEighteenByteRipe.isChecked()
                 ))
 
@@ -181,6 +178,7 @@ class NewSubscriptionDialog(AddressDataDialog):
         super(NewSubscriptionDialog, self).__init__(parent)
         widgets.load('newsubscriptiondialog.ui', self)
         AddressCheckMixin.__init__(self)
+        self.lineEditAddress.textChanged.connect(self.addressChanged)
 
     def _onSuccess(self, addressVersion, streamNumber, ripe):
         if addressVersion <= 3:
@@ -222,7 +220,7 @@ class RegenerateAddressesDialog(QtWidgets.QDialog):
         super(RegenerateAddressesDialog, self).__init__(parent)
         widgets.load('regenerateaddresses.ui', self)
         self.groupBox.setTitle('')
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
 
 
 class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
@@ -257,11 +255,9 @@ class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
                 else:
                     self.radioButtonBehaveNormalAddress.click()
                 mailingListName = config.safeGet(self.address, 'mailinglistname', '')
-                self.lineEditMailingListName.setText(
-                    unicode(mailingListName, 'utf-8')
-                )
+                self.lineEditMailingListName.setText(mailingListName)
 
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
         self.show()
 
     def accept(self):
@@ -281,7 +277,7 @@ class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
         else:
             self.config.set(str(self.address), 'mailinglist', 'true')
             self.config.set(str(self.address), 'mailinglistname', str(
-                self.lineEditMailingListName.text().toUtf8()))
+                self.lineEditMailingListName.text()))
             self.parent.setCurrentItemColor(
                 QtGui.QColor(137, 4, 177))  # magenta
         self.parent.rerenderComboBoxSendFrom()
@@ -329,7 +325,7 @@ class EmailGatewayDialog(QtWidgets.QDialog):
             else:
                 self.acct = MailchuckAccount(address)
         self.lineEditEmail.setFocus()
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
 
     def accept(self):
         """Accept callback"""
@@ -343,7 +339,7 @@ class EmailGatewayDialog(QtWidgets.QDialog):
 
         if self.radioButtonRegister.isChecked() \
                 or self.radioButtonRegister.isHidden():
-            email = str(self.lineEditEmail.text().toUtf8())
+            email = self.lineEditEmail.text()
             self.acct.register(email)
             self.config.set(self.acct.fromAddress, 'label', email)
             self.config.set(self.acct.fromAddress, 'gateway', 'mailchuck')
