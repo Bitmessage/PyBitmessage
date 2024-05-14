@@ -185,7 +185,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                 return s.endswith(tail)
             except:
                 try:
-                    return s.decode().endswith(tail)
+                    return s.decode('ascii').endswith(tail)
                 except UnicodeDecodeError:
                     return False
 

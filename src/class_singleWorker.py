@@ -87,7 +87,8 @@ class singleWorker(StoppableThread):
                 tag = doubleHashOfAddressData[32:]
                 # We'll need this for when we receive a pubkey reply:
                 # it will be encrypted and we'll need to decrypt it.
-                state.neededPubkeys[tag] = (
+                hex_tag = 'tag-' + hexlify(tag).decode('ascii')
+                state.neededPubkeys[hex_tag] = (
                     toAddress,
                     highlevelcrypto.makeCryptor(
                         hexlify(privEncryptionKey))
@@ -99,19 +100,22 @@ class singleWorker(StoppableThread):
         for row in queryreturn:
             ackdata, = row
             self.logger.info('Watching for ackdata %s', hexlify(ackdata))
-            state.ackdataForWhichImWatching[ackdata] = 0
+            hex_ackdata = hexlify(ackdata).decode('ascii')
+            state.ackdataForWhichImWatching[hex_ackdata] = 0
 
         # Fix legacy (headerless) watched ackdata to include header
-        for oldack in state.ackdataForWhichImWatching:
+        for hex_oldack in state.ackdataForWhichImWatching:
+            oldack = unhexlify(hex_oldack)
             if len(oldack) == 32:
                 # attach legacy header, always constant (msg/1/1)
-                newack = '\x00\x00\x00\x02\x01\x01' + oldack
-                state.ackdataForWhichImWatching[newack] = 0
+                newack = b'\x00\x00\x00\x02\x01\x01' + oldack
+                hex_newack = hexlify(newack).decode('ascii')
+                state.ackdataForWhichImWatching[hex_newack] = 0
                 sqlExecute(
                     '''UPDATE sent SET ackdata=? WHERE ackdata=? AND folder = 'sent' ''',
                     newack, oldack
                 )
-                del state.ackdataForWhichImWatching[oldack]
+                del state.ackdataForWhichImWatching[hex_oldack]
 
         # For the case if user deleted knownnodes
         # but is still having onionpeer objects in inventory
@@ -516,8 +520,8 @@ class singleWorker(StoppableThread):
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         state.Inventory[inventoryHash] = (
-            objectType, streamNumber, buffer(payload),  # noqa: F821
-            embeddedTime, buffer(tag)  # noqa: F821
+            objectType, streamNumber, memoryview(payload),  # noqa: F821
+            embeddedTime, memoryview(tag)  # noqa: F821
         )
         self.logger.info(
             'sending inv (within sendOnionPeerObj function) for object: %s',
@@ -794,8 +798,9 @@ class singleWorker(StoppableThread):
                             encodeVarint(toAddressVersionNumber)
                             + encodeVarint(toStreamNumber) + toRipe
                         )[32:]
+                    hex_tag = 'tag-' + hexlify(toTag).decode('ascii')
                     if toaddress in state.neededPubkeys or \
-                            toTag in state.neededPubkeys:
+                            hex_tag in state.neededPubkeys:
                         # We already sent a request for the pubkey
                         sqlExecute(
                             '''UPDATE sent SET status='awaitingpubkey', '''
@@ -836,7 +841,8 @@ class singleWorker(StoppableThread):
                             privEncryptionKey = doubleHashOfToAddressData[:32]
                             # The second half of the sha512 hash.
                             tag = doubleHashOfToAddressData[32:]
-                            state.neededPubkeys[tag] = (
+                            hex_tag = 'tag-' + hexlify(tag).decode('ascii')
+                            state.neededPubkeys[hex_tag] = (
                                 toaddress,
                                 highlevelcrypto.makeCryptor(
                                     hexlify(privEncryptionKey))
@@ -859,7 +865,7 @@ class singleWorker(StoppableThread):
                                         ''' status='doingpubkeypow') AND '''
                                         ''' folder='sent' ''',
                                         toaddress)
-                                    del state.neededPubkeys[tag]
+                                    del state.neededPubkeys[hex_tag]
                                     break
                                 # else:
                                 # There was something wrong with this
@@ -901,7 +907,8 @@ class singleWorker(StoppableThread):
 
             # if we aren't sending this to ourselves or a chan
             if not config.has_section(toaddress):
-                state.ackdataForWhichImWatching[ackdata] = 0
+                hex_ackdata = hexlify(ackdata).decode('ascii')
+                state.ackdataForWhichImWatching[hex_ackdata] = 0
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata,
@@ -1412,10 +1419,11 @@ class singleWorker(StoppableThread):
             privEncryptionKey = doubleHashOfAddressData[:32]
             # Note that this is the second half of the sha512 hash.
             tag = doubleHashOfAddressData[32:]
-            if tag not in state.neededPubkeys:
+            hex_tag = 'tag-' + hexlify(tag).decode('ascii')
+            if hex_tag not in state.neededPubkeys:
                 # We'll need this for when we receive a pubkey reply:
                 # it will be encrypted and we'll need to decrypt it.
-                state.neededPubkeys[tag] = (
+                state.neededPubkeys[hex_tag] = (
                     toAddress,
                     highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
                 )

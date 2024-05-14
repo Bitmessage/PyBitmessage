@@ -70,7 +70,7 @@ class FilesystemInventory(InventoryStorage):
                 os.makedirs(os.path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashval).decode()))
+                    hexlify(hashval).decode('ascii')))
             except OSError:
                 pass
             try:
@@ -78,7 +78,7 @@ class FilesystemInventory(InventoryStorage):
                     os.path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval).decode(),
+                        hexlify(hashval).decode('ascii'),
                         FilesystemInventory.metadataFilename,
                     ),
                     "w",
@@ -87,12 +87,12 @@ class FilesystemInventory(InventoryStorage):
                         value.type,
                         value.stream,
                         value.expires,
-                        hexlify(value.tag).decode()))
+                        hexlify(value.tag).decode('ascii')))
                 with open(
                     os.path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval).decode(),
+                        hexlify(hashval).decode('ascii'),
                         FilesystemInventory.dataFilename,
                     ),
                     "wb",
@@ -119,7 +119,7 @@ class FilesystemInventory(InventoryStorage):
                     os.path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval).decode(),
+                        hexlify(hashval).decode('ascii'),
                         FilesystemInventory.metadataFilename))
             except IOError:
                 pass
@@ -128,7 +128,7 @@ class FilesystemInventory(InventoryStorage):
                     os.path.join(
                         self.baseDir,
                         FilesystemInventory.objectDir,
-                        hexlify(hashval).decode(),
+                        hexlify(hashval).decode('ascii'),
                         FilesystemInventory.dataFilename))
             except IOError:
                 pass
@@ -136,7 +136,7 @@ class FilesystemInventory(InventoryStorage):
                 os.rmdir(os.path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashval).decode()))
+                    hexlify(hashval).decode('ascii')))
             except IOError:
                 pass
 
@@ -186,7 +186,7 @@ class FilesystemInventory(InventoryStorage):
                 os.path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashId).decode(),
+                    hexlify(hashId).decode('ascii'),
                     FilesystemInventory.dataFilename,
                 ),
                 "r",
@@ -202,7 +202,7 @@ class FilesystemInventory(InventoryStorage):
                 os.path.join(
                     self.baseDir,
                     FilesystemInventory.objectDir,
-                    hexlify(hashId).decode(),
+                    hexlify(hashId).decode('ascii'),
                     FilesystemInventory.metadataFilename,
                 ),
                 "r",

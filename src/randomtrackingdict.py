@@ -3,6 +3,7 @@ Track randomize ordered dict
 """
 from threading import RLock
 from time import time
+from binascii import hexlify
 
 try:
     import helper_random
@@ -38,10 +39,12 @@ class RandomTrackingDict(object):
         return self.len
 
     def __contains__(self, key):
-        return key in self.dictionary
+        hex_key = hexlify(key).decode('ascii')
+        return hex_key in self.dictionary
 
     def __getitem__(self, key):
-        return self.dictionary[key][1]
+        hex_key = hexlify(key).decode('ascii')
+        return self.dictionary[hex_key][1]
 
     def _swap(self, i1, i2):
         with self.lock:
@@ -49,26 +52,30 @@ class RandomTrackingDict(object):
             key2 = self.indexDict[i2]
             self.indexDict[i1] = key2
             self.indexDict[i2] = key1
-            self.dictionary[key1][0] = i2
-            self.dictionary[key2][0] = i1
+            hex_key1 = hexlify(key1).decode('ascii')
+            hex_key2 = hexlify(key2).decode('ascii')
+            self.dictionary[hex_key1][0] = i2
+            self.dictionary[hex_key2][0] = i1
         # for quick reassignment
         return i2
 
     def __setitem__(self, key, value):
         with self.lock:
-            if key in self.dictionary:
-                self.dictionary[key][1] = value
+            hex_key = hexlify(key).decode('ascii')
+            if hex_key in self.dictionary:
+                self.dictionary[hex_key][1] = value
             else:
                 self.indexDict.append(key)
-                self.dictionary[key] = [self.len, value]
+                self.dictionary[hex_key] = [self.len, value]
                 self._swap(self.len, self.len - self.pendingLen)
                 self.len += 1
 
     def __delitem__(self, key):
-        if key not in self.dictionary:
+        hex_key = hexlify(key).decode('ascii')
+        if hex_key not in self.dictionary:
             raise KeyError
         with self.lock:
-            index = self.dictionary[key][0]
+            index = self.dictionary[hex_key][0]
             # not pending
             if index < self.len - self.pendingLen:
                 # left of pending part
@@ -82,7 +89,7 @@ class RandomTrackingDict(object):
             # operation can improve 4x, but it's already very fast so we'll
             # ignore it for the time being
             del self.indexDict[-1]
-            del self.dictionary[key]
+            del self.dictionary[hex_key]
             self.len -= 1
 
     def setMaxPending(self, maxPending):

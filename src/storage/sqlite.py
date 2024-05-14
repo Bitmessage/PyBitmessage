@@ -4,6 +4,7 @@ Sqlite Inventory
 import sqlite3
 import time
 from threading import RLock
+from binascii import hexlify, unhexlify
 
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
 from .storage import InventoryItem, InventoryStorage
@@ -29,23 +30,24 @@ class SqliteInventory(InventoryStorage):
 
     def __contains__(self, hash_):
         with self.lock:
-            if hash_ in self._objects:
+            hex_hash = hexlify(hash_).decode('ascii')
+            if hex_hash in self._objects:
                 return True
             rows = sqlQuery(
-                'SELECT streamnumber FROM inventory WHERE hash=?',
-                sqlite3.Binary(hash_.encode()))
+                'SELECT streamnumber FROM inventory WHERE hash=?', hash_)
             if not rows:
                 return False
-            self._objects[hash_] = rows[0][0]
+            self._objects[hex_hash] = rows[0][0]
             return True
 
     def __getitem__(self, hash_):
         with self.lock:
-            if hash_ in self._inventory:
-                return self._inventory[hash_]
+            hex_hash = hexlify(hash_).decode('ascii')
+            if hex_hash in self._inventory:
+                return self._inventory[hex_hash]
             rows = sqlQuery(
-                b'SELECT objecttype, streamnumber, payload, expirestime, tag'
-                b' FROM inventory WHERE hash=?', sqlite3.Binary(hash_.encode()))
+                'SELECT objecttype, streamnumber, payload, expirestime, tag'
+                ' FROM inventory WHERE hash=?', hash_)
             if not rows:
                 raise KeyError(hash_)
             return InventoryItem(*rows[0])
@@ -53,16 +55,17 @@ class SqliteInventory(InventoryStorage):
     def __setitem__(self, hash_, value):
         with self.lock:
             value = InventoryItem(*value)
-            self._inventory[hash_] = value
-            self._objects[hash_] = value.stream
+            hex_hash = hexlify(hash_).decode('ascii')
+            self._inventory[hex_hash] = value
+            self._objects[hex_hash] = value.stream
 
     def __delitem__(self, hash_):
         raise NotImplementedError
 
     def __iter__(self):
         with self.lock:
-            hashes = self._inventory.keys()[:]
-            hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
+            hashes = map(unhexlify, self._inventory.keys()[:])
+            hashes += (unhexlify(x) for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
     def __len__(self):
@@ -80,7 +83,7 @@ class SqliteInventory(InventoryStorage):
             ' FROM inventory WHERE objecttype=?', objectType]
         if tag:
             query[0] += ' AND tag=?'
-            query.append(sqlite3.Binary(tag))
+            query.append(tag)
         with self.lock:
             values = [
                 value for value in self._inventory.values()
@@ -93,9 +96,9 @@ class SqliteInventory(InventoryStorage):
         """Return unexpired inventory vectors filtered by stream"""
         with self.lock:
             t = int(time.time())
-            hashes = [x for x, value in self._inventory.items()
+            hashes = [unhexlify(x) for x, value in self._inventory.items()
                       if value.stream == stream and value.expires > t]
-            hashes += (str(payload) for payload, in sqlQuery(
+            hashes += (payload for payload, in sqlQuery(
                 'SELECT hash FROM inventory WHERE streamnumber=?'
                 ' AND expirestime>?', stream, t))
             return hashes
@@ -109,7 +112,7 @@ class SqliteInventory(InventoryStorage):
                 for objectHash, value in self._inventory.items():
                     sql.execute(
                         'INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)',
-                        sqlite3.Binary(objectHash), *value)
+                        unhexlify(objectHash), *value)
                 self._inventory.clear()
 
     def clean(self):

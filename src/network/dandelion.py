@@ -6,6 +6,7 @@ from collections import namedtuple
 from random import choice, expovariate, sample
 from threading import RLock
 from time import time
+from binascii import hexlify
 
 import network.connectionpool as connectionpool
 import state
@@ -52,7 +53,8 @@ class Dandelion:  # pylint: disable=old-style-class
         if not state.dandelion_enabled:
             return
         with self.lock:
-            self.hashMap[hashId] = Stem(
+            hex_hash = hexlify(hashId).decode('ascii')
+            self.hashMap[hex_hash] = Stem(
                 self.getNodeStem(source),
                 stream,
                 self.poissonTimeout())
@@ -63,9 +65,10 @@ class Dandelion:  # pylint: disable=old-style-class
         include streams, we only learn this after receiving the object)
         """
         with self.lock:
-            if hashId in self.hashMap:
-                self.hashMap[hashId] = Stem(
-                    self.hashMap[hashId].child,
+            hex_hash = hexlify(hashId).decode('ascii')
+            if hex_hash in self.hashMap:
+                self.hashMap[hex_hash] = Stem(
+                    self.hashMap[hex_hash].child,
                     stream,
                     self.poissonTimeout())
 
@@ -77,17 +80,20 @@ class Dandelion:  # pylint: disable=old-style-class
                 ''.join('%02x' % ord(i) for i in hashId), reason)
         with self.lock:
             try:
-                del self.hashMap[hashId]
+                hex_hash = hexlify(hashId).decode('ascii')
+                del self.hashMap[hex_hash]
             except KeyError:
                 pass
 
     def hasHash(self, hashId):
         """Is inventory vector in stem mode?"""
-        return hashId in self.hashMap
+        hex_hash = hexlify(hashId).decode('ascii')
+        return hex_hash in self.hashMap
 
     def objectChildStem(self, hashId):
         """Child (i.e. next) node for an inventory vector during stem mode"""
-        return self.hashMap[hashId].child
+        hex_hash = hexlify(hashId).decode('ascii')
+        return self.hashMap[hex_hash].child
 
     def maybeAddStem(self, connection):
         """

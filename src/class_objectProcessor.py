@@ -141,9 +141,10 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in state.ackdataForWhichImWatching:
+        hex_data = hexlify(data[readPosition:]).decode('ascii')
+        if hex_data in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del state.ackdataForWhichImWatching[data[readPosition:]]
+            del state.ackdataForWhichImWatching[hex_data]
             sqlExecute(
                 "UPDATE sent SET status='ackreceived', lastactiontime=?"
                 " WHERE ackdata=?", int(time.time()), data[readPosition:])
@@ -217,19 +218,20 @@ class objectProcessor(threading.Thread):
                 'the hash requested in this getpubkey request is: %s',
                 hexlify(requestedHash))
             # if this address hash is one of mine
-            if requestedHash in shared.myAddressesByHash:
-                myAddress = shared.myAddressesByHash[requestedHash]
+            hex_hash = hexlify(requestedHash).decode('ascii')
+            if hex_hash in shared.myAddressesByHash:
+                myAddress = shared.myAddressesByHash[hex_hash]
         elif requestedAddressVersionNumber >= 4:
             requestedTag = data[readPosition:readPosition + 32]
             if len(requestedTag) != 32:
                 return logger.debug(
                     'The length of the requested tag is not 32 bytes.'
                     ' Something is wrong. Ignoring.')
+            hex_tag = hexlify(requestedTag).decode('ascii')
             logger.debug(
-                'the tag requested in this getpubkey request is: %s',
-                hexlify(requestedTag))
-            if requestedTag in shared.myAddressesByTag:
-                myAddress = shared.myAddressesByTag[requestedTag]
+                'the tag requested in this getpubkey request is: %s', hex_tag)
+            if hex_tag in shared.myAddressesByTag:
+                myAddress = shared.myAddressesByTag[hex_tag]
 
         if myAddress == '':
             logger.info('This getpubkey request is not for any of my keys.')
@@ -419,12 +421,13 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in state.neededPubkeys:
+            hex_tag = 'tag-' + hexlify(tag).decode('ascii')
+            if hex_tag not in state.neededPubkeys:
                 return logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
 
             # Let us try to decrypt the pubkey
-            toAddress = state.neededPubkeys[tag][0]
+            toAddress = state.neededPubkeys[hex_tag][0]
             if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
@@ -489,7 +492,8 @@ class objectProcessor(threading.Thread):
 
         # This is a message bound for me.
         # Look up my address based on the RIPE hash.
-        toAddress = shared.myAddressesByHash[toRipe]
+        hex_ripe = hexlify(toRipe).decode('ascii')
+        toAddress = shared.myAddressesByHash[hex_ripe]
         readPosition = 0
         sendersAddressVersionNumber, sendersAddressVersionNumberLength = \
             decodeVarint(decryptedData[readPosition:readPosition + 10])
@@ -1006,8 +1010,9 @@ class objectProcessor(threading.Thread):
                 encodeVarint(addressVersion) + encodeVarint(streamNumber)
                 + ripe
             )[32:]
-            if tag in state.neededPubkeys:
-                del state.neededPubkeys[tag]
+            hex_tag = 'tag-' + hexlify(tag).decode('ascii')
+            if hex_tag in state.neededPubkeys:
+                del state.neededPubkeys[hex_tag]
                 self.sendMessages(address)
 
     @staticmethod

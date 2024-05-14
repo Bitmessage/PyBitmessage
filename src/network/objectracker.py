@@ -3,6 +3,7 @@ Module for tracking objects
 """
 import time
 from threading import RLock
+from binascii import hexlify
 
 import state
 import network.connectionpool as connectionpool
@@ -87,19 +88,21 @@ class ObjectTracker(object):
 
     def handleReceivedInventory(self, hashId):
         """Handling received inventory"""
+        hex_hash = hexlify(hashId).decode('ascii')
         if haveBloom:
-            self.invBloom.add(hashId)
+            self.invBloom.add(hex_hash)
         try:
             with self.objectsNewToThemLock:
-                del self.objectsNewToThem[hashId]
+                del self.objectsNewToThem[hex_hash]
         except KeyError:
             pass
-        if hashId not in missingObjects:
-            missingObjects[hashId] = time.time()
+        if hex_hash not in missingObjects:
+            missingObjects[hex_hash] = time.time()
         self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
+        hex_hash = hexlify(hashid).decode('ascii')
         for i in connectionpool.pool.connections():
             if not i.fullyEstablished:
                 continue
@@ -110,7 +113,7 @@ class ObjectTracker(object):
                         not state.Dandelion.hasHash(hashid)
                         or state.Dandelion.objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
-                        i.objectsNewToThem[hashid] = time.time()
+                        i.objectsNewToThem[hex_hash] = time.time()
                     # update stream number,
                     # which we didn't have when we just received the dinv
                     # also resets expiration of the stem mode
@@ -119,7 +122,7 @@ class ObjectTracker(object):
             if i == self:
                 try:
                     with i.objectsNewToThemLock:
-                        del i.objectsNewToThem[hashid]
+                        del i.objectsNewToThem[hex_hash]
                 except KeyError:
                     pass
         self.objectsNewToMe.setLastObject()

@@ -2683,7 +2683,7 @@ class MyForm(settingsmixin.SMainWindow):
                     " %n object(s) to be downloaded. If you quit now,"
                     " it may cause delivery delays. Wait until the"
                     " synchronisation finishes?", None,
-                    QtCore.QCoreApplication.CodecForTr, pendingDownload()
+                    pendingDownload()
                 ),
                 QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
                 | QtWidgets.QMessageBox.StandardButton.Cancel, QtWidgets.QMessageBox.StandardButton.Cancel)

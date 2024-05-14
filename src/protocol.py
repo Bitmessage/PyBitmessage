@@ -487,7 +487,8 @@ def decryptAndCheckPubkeyPayload(data, address):
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = state.neededPubkeys[tag]
+        hex_tag = 'tag-' + hexlify(tag).decode('ascii')
+        toAddress, cryptorObject = state.neededPubkeys[hex_tag]
         if toAddress != address:
             logger.critical(
                 'decryptAndCheckPubkeyPayload failed due to toAddress'

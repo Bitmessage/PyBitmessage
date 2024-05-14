@@ -109,7 +109,11 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     """
     # pylint: disable=too-many-branches
     if not isinstance(peer.host, str):
-        peer = Peer(peer.host.decode(), peer.port)
+        try:
+            peer = Peer(peer.host.decode('ascii'), peer.port)
+        except UnicodeDecodeError as err:
+            logger.warning("Invalid host: {}".format(peer.host.decode('ascii', 'backslashreplace')))
+            return
     if isinstance(stream, Iterable):
         with knownNodesLock:
             for s in stream:

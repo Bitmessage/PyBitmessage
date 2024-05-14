@@ -114,11 +114,13 @@ def reloadMyAddressHashes():
         if len(privEncryptionKey) == 64:
             myECCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(privEncryptionKey)
-            myAddressesByHash[hashobj] = addressInKeysFile
+            hex_hash = hexlify(hashobj).decode('ascii')
+            myAddressesByHash[hex_hash] = addressInKeysFile
             tag = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj)[32:]
-            myAddressesByTag[tag] = addressInKeysFile
+            hex_tag = hexlify(tag).decode('ascii')
+            myAddressesByTag[hex_tag] = addressInKeysFile
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(os.path.join(

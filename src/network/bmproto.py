@@ -9,6 +9,7 @@ import re
 import socket
 import struct
 import time
+from binascii import hexlify
 
 # magic imports!
 import addresses
@@ -110,15 +111,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 b"error", b"version", b"verack"):
             logger.error(
                 'Received command %s before connection was fully'
-                ' established, ignoring', self.command.decode())
+                ' established, ignoring', self.command.decode('ascii', 'backslashreplace'))
             self.invalid = True
         if not self.invalid:
             try:
                 retval = getattr(
-                    self, "bm_command_" + self.command.decode().lower())()
-            except AttributeError:
+                    self, "bm_command_" + self.command.decode('ascii', 'backslashreplace').lower())()
+            except AttributeError as err:
+                logger.debug('command = {}, err = {}'.format(self.command, err))
                 # unimplemented command
-                logger.debug('unimplemented command %s', self.command.decode())
+                logger.debug('unimplemented command %s', self.command.decode('ascii', 'backslashreplace'))
             except BMProtoInsufficientDataError:
                 logger.debug('packet length too short, skipping')
             except BMProtoExcessiveDataError:
@@ -141,8 +143,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # broken read, ignore
             pass
         else:
-            logger.debug('Closing due to invalid command %s', self.command.decode())
-            self.close_reason = "Invalid command %s" % self.command.decode()
+            logger.debug('Closing due to invalid command %s', self.command.decode('ascii', 'backslashreplace'))
+            self.close_reason = "Invalid command %s" % self.command.decode('ascii', 'backslashreplace')
             self.set_state("close")
             return False
         if retval:
@@ -353,7 +355,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if dandelion and not state.dandelion_enabled:
             return True
 
-        for i in map(str, items):
+        for i in items:
             if i in state.Inventory and not state.Dandelion.hasHash(i):
                 continue
             if dandelion and not state.Dandelion.hasHash(i):
@@ -410,12 +412,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                self.object.objectType, buffer(self.object.data)))  # noqa: F821
+                self.object.objectType, memoryview(self.object.data)))  # noqa: F821
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
             try:
-                del missingObjects[self.object.inventoryHash]
+                hex_hash = hexlify(self.object.inventoryHash).decode('ascii')
+                del missingObjects[hex_hash]
             except KeyError:
                 pass
 
@@ -426,8 +429,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         state.Inventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            buffer(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
-            buffer(self.object.tag)  # noqa: F821
+            memoryview(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
+            memoryview(self.object.tag)  # noqa: F821
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
@@ -448,7 +451,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             try:
                 if (
                     # FIXME: should check against complete list
-                    ip.decode().startswith('bootstrap')
+                    ip.decode('ascii', 'backslashreplace').startswith('bootstrap')
                 ):
                     continue
             except UnicodeDecodeError:
@@ -529,7 +532,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         logger.debug(
             'remote node incoming address: %s:%i',
             self.destination.host, self.peerNode.port)
-        logger.debug('user agent: %s', self.userAgent)
+        logger.debug('user agent: %s', self.userAgent.decode('utf-8', 'backslashreplace'))
         logger.debug('streams: [%s]', ','.join(map(str, self.streams)))
         if not self.peerValidityChecks():
             # ABORT afterwards
@@ -537,7 +540,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.append_write_buf(protocol.CreatePacket(b'verack'))
         self.verackSent = True
         ua_valid = re.match(
-            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent.decode())
+            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent.decode('utf-8', 'backslashreplace'))
         if not ua_valid:
             self.userAgent = b'/INVALID:0/'
         if not self.isOutbound:
@@ -656,7 +659,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 except KeyError:
                     pass
         try:
-            del missingObjects[hashId]
+            hex_hash = hexlify(hashId).decode('ascii')
+            del missingObjects[hex_hash]
         except KeyError:
             pass
 
