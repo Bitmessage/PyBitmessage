@@ -6,7 +6,7 @@ from collections import namedtuple
 from random import choice, expovariate, sample
 from threading import RLock
 from time import time
-from binascii import hexlify
+from binascii import hexlify, unhexlify
 
 import network.connectionpool as connectionpool
 import state
@@ -113,7 +113,7 @@ class Dandelion:  # pylint: disable=old-style-class
                 }.items():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
-                    invQueue.put((v.stream, k, v.child))
+                    invQueue.put((v.stream, unhexlify(k), v.child))
 
     def maybeRemoveStem(self, connection):
         """
@@ -174,7 +174,7 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             deadline = time()
             toDelete = [
-                [v.stream, k, v.child] for k, v in self.hashMap.items()
+                [v.stream, unhexlify(k), v.child] for k, v in self.hashMap.items()
                 if v.timeout < deadline
             ]
 

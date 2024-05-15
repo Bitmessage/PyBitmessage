@@ -150,38 +150,38 @@ class singleWorker(StoppableThread):
             if command == 'sendmessage':
                 try:
                     self.sendMsg()
-                except:  # noqa:E722
-                    self.logger.warning("sendMsg didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("sendMsg didn't work: {}".format(ex))
             elif command == 'sendbroadcast':
                 try:
                     self.sendBroadcast()
-                except:  # noqa:E722
-                    self.logger.warning("sendBroadcast didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("sendBroadcast didn't work: {}".format(ex))
             elif command == 'doPOWForMyV2Pubkey':
                 try:
                     self.doPOWForMyV2Pubkey(data)
-                except:  # noqa:E722
-                    self.logger.warning("doPOWForMyV2Pubkey didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("doPOWForMyV2Pubkey didn't work: {}".format(ex))
             elif command == 'sendOutOrStoreMyV3Pubkey':
                 try:
                     self.sendOutOrStoreMyV3Pubkey(data)
-                except:  # noqa:E722
-                    self.logger.warning("sendOutOrStoreMyV3Pubkey didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("sendOutOrStoreMyV3Pubkey didn't work: {}".format(ex))
             elif command == 'sendOutOrStoreMyV4Pubkey':
                 try:
                     self.sendOutOrStoreMyV4Pubkey(data)
-                except:  # noqa:E722
-                    self.logger.warning("sendOutOrStoreMyV4Pubkey didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("sendOutOrStoreMyV4Pubkey didn't work: {}".format(ex))
             elif command == 'sendOnionPeerObj':
                 try:
                     self.sendOnionPeerObj(data)
-                except:  # noqa:E722
-                    self.logger.warning("sendOnionPeerObj didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("sendOnionPeerObj didn't work: {}".format(ex))
             elif command == 'resetPoW':
                 try:
                     proofofwork.resetPoW()
-                except:  # noqa:E722
-                    self.logger.warning("proofofwork.resetPoW didn't work")
+                except Exception as ex:  # noqa:E722
+                    self.logger.warning("proofofwork.resetPoW didn't work: {}".format(ex))
             elif command == 'stopThread':
                 self.busy = 0
                 return
@@ -603,7 +603,7 @@ class singleWorker(StoppableThread):
             TTL = int(TTL + helper_random.randomrandrange(-300, 300))
             embeddedTime = int(time.time() + TTL)
             payload = pack('>Q', embeddedTime)
-            payload += '\x00\x00\x00\x03'  # object type: broadcast
+            payload += b'\x00\x00\x00\x03'  # object type: broadcast
 
             if addressVersionNumber <= 3:
                 payload += encodeVarint(4)  # broadcast version
@@ -619,7 +619,7 @@ class singleWorker(StoppableThread):
                 tag = doubleHashOfAddressData[32:]
                 payload += tag
             else:
-                tag = ''
+                tag = b''
 
             dataToEncrypt = encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
@@ -702,7 +702,7 @@ class singleWorker(StoppableThread):
                     tr._translate(
                         "MainWindow",
                         "Broadcast sent on %1"
-                    ).arg(l10n.formatTimestamp()))
+                    ).format(l10n.formatTimestamp()))
             ))
 
             # Update the status of the message in the 'sent' table to have
@@ -792,7 +792,7 @@ class singleWorker(StoppableThread):
                 # We don't have the needed pubkey in the pubkeys table already.
                 else:
                     if toAddressVersionNumber <= 3:
-                        toTag = ''
+                        toTag = b''
                     else:
                         toTag = highlevelcrypto.double_sha512(
                             encodeVarint(toAddressVersionNumber)
@@ -977,7 +977,7 @@ class singleWorker(StoppableThread):
                                     " destination be included in the"
                                     " message but this is disallowed in"
                                     " your settings.  %1"
-                                ).arg(l10n.formatTimestamp()))
+                                ).format(l10n.formatTimestamp()))
                         ))
                         # if the human changes their setting and then
                         # sends another message or restarts their client,
@@ -1042,14 +1042,13 @@ class singleWorker(StoppableThread):
                                 tr._translate(
                                     "MainWindow",
                                     "Doing work necessary to send message.\n"
-                                    "Receiver\'s required difficulty: %1"
-                                    " and %2"
-                                ).arg(
+                                    "Receiver\'s required difficulty: {0}"
+                                    " and {1}"
+                                ).format(
                                     str(
                                         float(requiredAverageProofOfWorkNonceTrialsPerByte)
                                         / defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-                                    )
-                                ).arg(
+                                    ),
                                     str(
                                         float(requiredPayloadLengthExtraBytes)
                                         / defaults.networkDefaultPayloadLengthExtraBytes
@@ -1082,14 +1081,14 @@ class singleWorker(StoppableThread):
                                     tr._translate(
                                         "MainWindow",
                                         "Problem: The work demanded by"
-                                        " the recipient (%1 and %2) is"
+                                        " the recipient ({0} and {1}) is"
                                         " more difficult than you are"
-                                        " willing to do. %3"
-                                    ).arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte)
-                                          / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-                                          ).arg(str(float(requiredPayloadLengthExtraBytes)
-                                                / defaults.networkDefaultPayloadLengthExtraBytes)
-                                                ).arg(l10n.formatTimestamp()))))
+                                        " willing to do. {2}"
+                                    ).format(str(float(requiredAverageProofOfWorkNonceTrialsPerByte)
+                                          / defaults.networkDefaultProofOfWorkNonceTrialsPerByte),
+                                          str(float(requiredPayloadLengthExtraBytes)
+                                                / defaults.networkDefaultPayloadLengthExtraBytes),
+                                                l10n.formatTimestamp()))))
                             continue
             else:  # if we are sending a message to ourselves or a chan..
                 self.logger.info('Sending a message.')
@@ -1110,8 +1109,8 @@ class singleWorker(StoppableThread):
                                 " message to yourself or a chan but your"
                                 " encryption key could not be found in"
                                 " the keys.dat file. Could not encrypt"
-                                " message. %1"
-                            ).arg(l10n.formatTimestamp()))
+                                " message. {0}"
+                            ).format(l10n.formatTimestamp()))
                     ))
                     self.logger.error(
                         'Error within sendMsg. Could not read the keys'
@@ -1208,14 +1207,14 @@ class singleWorker(StoppableThread):
                     'Not bothering to include ackdata because we are'
                     ' sending to ourselves or a chan.'
                 )
-                fullAckPayload = ''
+                fullAckPayload = b''
             elif not protocol.checkBitfield(
                     behaviorBitfield, protocol.BITFIELD_DOESACK):
                 self.logger.info(
                     'Not bothering to include ackdata because'
                     ' the receiver said that they won\'t relay it anyway.'
                 )
-                fullAckPayload = ''
+                fullAckPayload = b''
             else:
                 # The fullAckPayload is a normal msg protocol message
                 # with the proof of work already completed that the
@@ -1224,7 +1223,7 @@ class singleWorker(StoppableThread):
                     ackdata, toStreamNumber, TTL)
             payload += encodeVarint(len(fullAckPayload))
             payload += fullAckPayload
-            dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
+            dataToSign = pack('>Q', embeddedTime) + b'\x00\x00\x00\x02' + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
             signature = highlevelcrypto.sign(
                 dataToSign, privSigningKeyHex, self.digestAlg)
@@ -1234,10 +1233,10 @@ class singleWorker(StoppableThread):
             # We have assembled the data that will be encrypted.
             try:
                 encrypted = highlevelcrypto.encrypt(
-                    payload, "04" + hexlify(pubEncryptionKeyBase256)
+                    payload, b"04" + hexlify(pubEncryptionKeyBase256)
                 )
-            except:  # noqa:E722
-                self.logger.warning("highlevelcrypto.encrypt didn't work")
+            except Exception as ex:  # noqa:E722
+                self.logger.warning("highlevelcrypto.encrypt didn't work: {}".format(ex))
                 sqlExecute(
                     '''UPDATE sent SET status='badkey' WHERE ackdata=? AND folder='sent' ''',
                     ackdata
@@ -1248,13 +1247,13 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Problem: The recipient\'s encryption key is"
-                            " no good. Could not encrypt message. %1"
-                        ).arg(l10n.formatTimestamp()))
+                            " no good. Could not encrypt message. {0}"
+                        ).format(l10n.formatTimestamp()))
                 ))
                 continue
 
             encryptedPayload = pack('>Q', embeddedTime)
-            encryptedPayload += '\x00\x00\x00\x02'  # object type: msg
+            encryptedPayload += b'\x00\x00\x00\x02'  # object type: msg
             encryptedPayload += encodeVarint(1)  # msg version
             encryptedPayload += encodeVarint(toStreamNumber) + encrypted
             target = 2 ** 64 / (
@@ -1288,8 +1287,8 @@ class singleWorker(StoppableThread):
                     time.time() - powStartTime,
                     sizeof_fmt(nonce / (time.time() - powStartTime))
                 )
-            except:  # noqa:E722
-                self.logger.warning("Proof of Work exception")
+            except Exception as ex:  # noqa:E722
+                self.logger.warning("Proof of Work exception: {}".format(ex))
 
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
@@ -1317,7 +1316,7 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Message sent. Sent at %1"
-                        ).arg(l10n.formatTimestamp()))))
+                        ).format(l10n.formatTimestamp()))))
             else:
                 # not sending to a chan or one of my addresses
                 queues.UISignalQueue.put((
@@ -1326,8 +1325,8 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Message sent. Waiting for acknowledgement."
-                            " Sent on %1"
-                        ).arg(l10n.formatTimestamp()))
+                            " Sent on {0}"
+                        ).format(l10n.formatTimestamp()))
                 ))
             self.logger.info(
                 'Broadcasting inv for my msg(within sendmsg function): %s',
@@ -1437,7 +1436,7 @@ class singleWorker(StoppableThread):
         TTL = TTL + helper_random.randomrandrange(-300, 300)
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', embeddedTime)
-        payload += '\x00\x00\x00\x00'  # object type: getpubkey
+        payload += b'\x00\x00\x00\x00'  # object type: getpubkey
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         if addressVersionNumber <= 3:
@@ -1492,7 +1491,7 @@ class singleWorker(StoppableThread):
                     "MainWindow",
                     "Sending public key request. Waiting for reply."
                     " Requested at %1"
-                ).arg(l10n.formatTimestamp()))
+                ).format(l10n.formatTimestamp()))
         ))
 
     def generateFullAckMessage(self, ackdata, _, TTL):
