@@ -483,7 +483,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += 32
         # the time through the tag. More data is appended onto
         # signedData below after the decryption.
-        signedData = data[8:readPosition]
+        signedData = bytes(data[8:readPosition])
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey

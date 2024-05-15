@@ -153,8 +153,8 @@ class objectProcessor(threading.Thread):
                     data[readPosition:],
                     _translate(
                         "MainWindow",
-                        "Acknowledgement of the message received %1"
-                    ).arg(l10n.formatTimestamp()))
+                        "Acknowledgement of the message received {}"
+                    ).format(l10n.formatTimestamp()))
             ))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
@@ -214,11 +214,11 @@ class objectProcessor(threading.Thread):
                 return logger.debug(
                     'The length of the requested hash is not 20 bytes.'
                     ' Something is wrong. Ignoring.')
+            hex_hash = hexlify(requestedHash).decode('ascii')
             logger.info(
                 'the hash requested in this getpubkey request is: %s',
-                hexlify(requestedHash))
+                hex_hash)
             # if this address hash is one of mine
-            hex_hash = hexlify(requestedHash).decode('ascii')
             if hex_hash in shared.myAddressesByHash:
                 myAddress = shared.myAddressesByHash[hex_hash]
         elif requestedAddressVersionNumber >= 4:
@@ -317,7 +317,7 @@ class objectProcessor(threading.Thread):
             dataToStore = data[20:readPosition]
             sha = hashlib.new('sha512')
             sha.update(
-                '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
+                b'\x04' + publicSigningKey + b'\x04' + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
             if logger.isEnabledFor(logging.DEBUG):
@@ -808,9 +808,9 @@ class objectProcessor(threading.Thread):
                         logger.info(
                             'EC decryption successful using key associated'
                             ' with ripe hash: %s', key)
-                except Exception:
+                except Exception as ex:
                     logger.debug(
-                        'cryptorObject.decrypt Exception:', exc_info=True)
+                        'cryptorObject.decrypt Exception: {}'.format(ex))
             if not initialDecryptionSuccessful:
                 # This is not a broadcast I am interested in.
                 return logger.debug(
@@ -1062,8 +1062,8 @@ class objectProcessor(threading.Thread):
         if checksum != hashlib.sha512(payload).digest()[0:4]:
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
-        command = command.rstrip('\x00')
-        if command != 'object':
+        command = command.rstrip(b'\x00')
+        if command != b'object':
             return False
         return True
 

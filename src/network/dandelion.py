@@ -74,13 +74,12 @@ class Dandelion:  # pylint: disable=old-style-class
 
     def removeHash(self, hashId, reason="no reason specified"):
         """Switch inventory vector from stem to fluff mode"""
+        hex_hash = hexlify(hashId).decode('ascii')
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                '%s entering fluff mode due to %s.',
-                ''.join('%02x' % ord(i) for i in hashId), reason)
+                '%s entering fluff mode due to %s.', hex_hash, reason)
         with self.lock:
             try:
-                hex_hash = hexlify(hashId).decode('ascii')
                 del self.hashMap[hex_hash]
             except KeyError:
                 pass

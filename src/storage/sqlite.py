@@ -65,7 +65,7 @@ class SqliteInventory(InventoryStorage):
     def __iter__(self):
         with self.lock:
             hashes = map(unhexlify, self._inventory.keys()[:])
-            hashes += (unhexlify(x) for x, in sqlQuery('SELECT hash FROM inventory'))
+            hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
     def __len__(self):
