@@ -847,7 +847,7 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             self.show()
             self.setWindowState(
-                self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                self.windowState() & ~QtCore.Qt.WindowState.WindowMinimized | QtCore.Qt.WindowState.WindowActive)
             self.raise_()
             self.activateWindow()
 
@@ -1664,16 +1664,16 @@ class MyForm(settingsmixin.SMainWindow):
             self.init_sent_popup_menu(False)
             self.ui.blackwhitelist.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.Type.WindowStateChange:
-            if self.windowState() & QtCore.Qt.WindowMinimized:
+            if self.windowState() & QtCore.Qt.WindowState.WindowMinimized:
                 if config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
                     QtCore.QTimer.singleShot(0, self.appIndicatorHide)
-            elif event.oldState() & QtCore.Qt.WindowMinimized:
+            elif event.oldState() & QtCore.Qt.WindowState.WindowMinimized:
                 # The window state has just been changed to
                 # Normal/Maximised/FullScreen
                 pass
 
     def __icon_activated(self, reason):
-        if reason == QtWidgets.QSystemTrayIcon.Trigger:
+        if reason == QtWidgets.QSystemTrayIcon.ActivationReason.Trigger:
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
@@ -1756,7 +1756,7 @@ class MyForm(settingsmixin.SMainWindow):
             # choose font and calculate font parameters
             fontName = "Lucida"
             fontSize = 10
-            font = QtGui.QFont(fontName, fontSize, QtGui.QFont.Bold)
+            font = QtGui.QFont(fontName, fontSize, QtGui.QFont.Weight.Bold)
             fontMetrics = QtGui.QFontMetrics(font)
             # text
             txt = str(inboxUnreadCount)
@@ -4071,7 +4071,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
-        messageTextedit.setContent(message)
+        messageTextedit.setPlainText(message)
 
     def tableWidgetAddressBookItemChanged(self, item):
         if item.type == AccountMixin.CHAN:

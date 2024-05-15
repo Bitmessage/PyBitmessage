@@ -356,9 +356,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            publicSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            publicSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            publicEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            publicEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])[1]
@@ -517,9 +517,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -568,7 +568,7 @@ class objectProcessor(threading.Thread):
         readPosition += signatureLengthLength
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
-        signedData = data[8:20] + encodeVarint(1) + encodeVarint(
+        signedData = bytes(data[8:20]) + encodeVarint(1) + encodeVarint(
             streamNumberAsClaimedByMsg
         ) + decryptedData[:positionOfBottomOfAckData]
 
@@ -803,11 +803,11 @@ class objectProcessor(threading.Thread):
                         # of the sender's address to verify that it was
                         # encrypted by with their key rather than some
                         # other key.
-                        toRipe = key
+                        toRipe = unhexlify(key)
                         initialDecryptionSuccessful = True
                         logger.info(
                             'EC decryption successful using key associated'
-                            ' with ripe hash: %s', hexlify(key))
+                            ' with ripe hash: %s', key)
                 except Exception:
                     logger.debug(
                         'cryptorObject.decrypt Exception:', exc_info=True)
@@ -820,13 +820,14 @@ class objectProcessor(threading.Thread):
         elif broadcastVersion == 5:
             embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
-            if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
+            hex_tag = hexlify(embeddedTag).decode('ascii')
+            if hex_tag not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.
             # We're going to add some more data which is signed further down.
-            signedData = data[8:readPosition]
-            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag]
+            signedData = bytes(data[8:readPosition])
+            cryptorObject = shared.MyECSubscriptionCryptorObjects[hex_tag]
             try:
                 decryptedData = cryptorObject.decrypt(data[readPosition:])
                 logger.debug('EC decryption successful')
@@ -866,10 +867,10 @@ class objectProcessor(threading.Thread):
             )
         readPosition += sendersStreamLength
         readPosition += 4
-        sendersPubSigningKey = '\x04' + \
+        sendersPubSigningKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        sendersPubEncryptionKey = '\x04' + \
+        sendersPubEncryptionKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersion >= 3:

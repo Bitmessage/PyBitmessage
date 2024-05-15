@@ -151,7 +151,8 @@ def reloadBroadcastSendersForWhichImWatching():
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj
             ).digest()[:32]
-            MyECSubscriptionCryptorObjects[hashobj] = \
+            hex_hash = hexlify(hashobj).decode('ascii')
+            MyECSubscriptionCryptorObjects[hex_hash] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = highlevelcrypto.double_sha512(
@@ -160,7 +161,8 @@ def reloadBroadcastSendersForWhichImWatching():
             )
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
-            MyECSubscriptionCryptorObjects[tag] = \
+            hex_tag = hexlify(tag).decode('ascii')
+            MyECSubscriptionCryptorObjects[hex_tag] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 

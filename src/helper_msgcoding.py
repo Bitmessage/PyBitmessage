@@ -142,7 +142,8 @@ class MsgDecode(object):
 
     def decodeSimple(self, data):
         """Handle simple encoding"""
-        bodyPositionIndex = string.find(data, '\nBody:')
+        data = data.decode('utf-8', 'backslashreplace')
+        bodyPositionIndex = data.find('\nBody:')
         if bodyPositionIndex > 1:
             subject = data[8:bodyPositionIndex]
             # Only save and show the first 500 characters of the subject.

@@ -484,9 +484,9 @@ class MessageList_TimeWidget(BMTableWidgetItem):
         """
         data = super(MessageList_TimeWidget, self).data(role)
         if role == TimestampRole:
-            return int(data.toPyObject())
+            return int(data)
         if role == QtCore.Qt.ItemDataRole.UserRole:
-            return str(data.toPyObject())
+            return data.data()
         return data
 
 
