@@ -466,7 +466,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += varintLength
         # We'll store the address version and stream number
         # (and some more) in the pubkeys table.
-        storedData = data[20:readPosition]
+        storedData = bytes(data[20:readPosition])
 
         if addressVersion != embeddedAddressVersion:
             logger.info(
@@ -513,9 +513,9 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        publicSigningKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        publicEncryptionKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         specifiedNonceTrialsPerByteLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])[1]
