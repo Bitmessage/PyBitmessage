@@ -21,6 +21,7 @@ class singleinstance(object):
     Implements a single instance application by creating a lock file
     at appdata.
     """
+
     def __init__(self, flavor_id="", daemon=False):
         self.initialized = False
         self.counter = 0

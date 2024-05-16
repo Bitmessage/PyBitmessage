@@ -11,6 +11,7 @@ from .storage import InventoryItem, InventoryStorage
 
 class SqliteInventory(InventoryStorage):
     """Inventory using SQLite"""
+
     def __init__(self):
         super(SqliteInventory, self).__init__()
         # of objects (like msg payloads and pubkey payloads)

@@ -37,12 +37,14 @@ class MsgDecodeException(Exception):
 class DecompressionSizeException(MsgDecodeException):
     # pylint: disable=super-init-not-called
     """Decompression resulted in too much data (attack protection)"""
+
     def __init__(self, size):
         self.size = size
 
 
 class MsgEncode(object):
     """Message encoder class"""
+
     def __init__(self, message, encoding=BITMESSAGE_ENCODING_SIMPLE):
         self.data = None
         self.encoding = encoding
@@ -86,6 +88,7 @@ class MsgEncode(object):
 
 class MsgDecode(object):
     """Message decoder class"""
+
     def __init__(self, encoding, data):
         self.encoding = encoding
         if self.encoding == BITMESSAGE_ENCODING_EXTENDED:

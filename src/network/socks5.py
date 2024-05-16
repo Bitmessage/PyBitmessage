@@ -42,6 +42,7 @@ class Socks5Error(ProxyError):
 
 class Socks5(Proxy):
     """A socks5 proxy base class"""
+
     def __init__(self, address=None):
         Proxy.__init__(self, address)
         self.ipaddr = None
@@ -163,6 +164,7 @@ class Socks5(Proxy):
 
 class Socks5Connection(Socks5):
     """Child socks5 class used for making outbound connections."""
+
     def state_auth_done(self):
         """Request connection to be made"""
         # Now we can request the actual connection
@@ -199,6 +201,7 @@ class Socks5Connection(Socks5):
 
 class Socks5Resolver(Socks5):
     """DNS resolver class using socks5"""
+
     def __init__(self, host):
         self.host = host
         self.port = 8444

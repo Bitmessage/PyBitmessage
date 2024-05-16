@@ -35,6 +35,7 @@ class SmtpServerChannelException(Exception):
 
 class smtpServerChannel(smtpd.SMTPChannel):
     """Asyncore channel for SMTP protocol (server)"""
+
     def smtp_EHLO(self, arg):
         """Process an EHLO"""
         if not arg:
@@ -73,6 +74,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
 
 class smtpServerPyBitmessage(smtpd.SMTPServer):
     """Asyncore SMTP server class"""
+
     def handle_accept(self):
         """Accept a connection"""
         pair = self.accept()
@@ -180,6 +182,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
 
 class smtpServer(StoppableThread):
     """SMTP server thread"""
+
     def __init__(self, _=None):
         super(smtpServer, self).__init__(name="smtpServerThread")
         self.server = smtpServerPyBitmessage(('127.0.0.1', LISTENPORT), None)

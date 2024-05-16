@@ -9,6 +9,27 @@ The PyBitmessage startup script
 
 # Right now, PyBitmessage only support connecting to stream 1. It doesn't
 # yet contain logic to expand into further streams.
+from threads import (
+    set_thread_name, printLock,
+    addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
+from singleinstance import singleinstance
+from inventory import Inventory
+from helper_startup import (
+    adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
+from debug import logger  # this should go before any threads
+from bmconfigparser import config
+from testmode_init import populate_api_test_data
+import state
+import shutdown
+import network
+import defaults
+import traceback
+import time
+import threading
+import signal
+import multiprocessing
+import getopt
+import depends
 import os
 import sys
 
@@ -18,34 +39,13 @@ except ImportError:
     from pybitmessage import pathmagic
 app_dir = pathmagic.setup()
 
-import depends
 depends.check_dependencies()
 
-import getopt
-import multiprocessing
 # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
-import signal
-import threading
-import time
-import traceback
 
-import defaults
 # Network subsystem
-import network
-import shutdown
-import state
 
-from testmode_init import populate_api_test_data
-from bmconfigparser import config
-from debug import logger  # this should go before any threads
-from helper_startup import (
-    adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
-from inventory import Inventory
-from singleinstance import singleinstance
 # Synchronous threads
-from threads import (
-    set_thread_name, printLock,
-    addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
 
 
 def signal_handler(signum, frame):
@@ -81,6 +81,7 @@ def signal_handler(signum, frame):
 
 class Main(object):
     """Main PyBitmessage class"""
+
     def start(self):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals

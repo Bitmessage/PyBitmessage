@@ -102,7 +102,7 @@ class ObjectTracker(object):
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
-        hashid_bytes = bytes(hashid);
+        hashid_bytes = bytes(hashid)
         for i in connectionpool.pool.connections():
             if not i.fullyEstablished:
                 continue

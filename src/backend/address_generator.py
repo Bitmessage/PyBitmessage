@@ -12,6 +12,7 @@ from pybitmessage.defaults import (
 
 class AddressGenerator(object):
     """"Base class for address generation and validation"""
+
     def __init__(self):
         pass
 

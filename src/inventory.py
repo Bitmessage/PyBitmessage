@@ -21,6 +21,7 @@ class Inventory:
     Inventory class which uses storage backends
     to manage the inventory.
     """
+
     def __init__(self):
         self._moduleName = config.safeGet("inventory", "storage")
         self._realInventory = create_inventory_instance(self._moduleName)
