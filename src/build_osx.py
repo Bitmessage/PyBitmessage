@@ -1,7 +1,7 @@
 """Building osx."""
 import os
 from glob import glob
-from PyQt4 import QtCore
+from PyQt6 import QtCore
 from setuptools import setup
 
 name = "Bitmessage"
@@ -32,7 +32,7 @@ setup(
     setup_requires=["py2app"],
     options=dict(
         py2app=dict(
-            includes=['sip', 'PyQt4._qt'],
+            includes=['sip', 'PyQt6._qt'],
             iconfile="images/bitmessage.icns"
         )
     )

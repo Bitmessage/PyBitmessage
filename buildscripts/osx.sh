@@ -16,7 +16,7 @@ echo "Creating OS X packages for Bitmessage."
 
 export PYBITMESSAGEVERSION=$1
 
-cd src && python2.7 build_osx.py py2app
+cd src && python3 build_osx.py py2app
 
 if [[ $? = "0" ]]; then
   hdiutil create -fs HFS+ -volname "Bitmessage" -srcfolder dist/Bitmessage.app dist/bitmessage-v$1.dmg

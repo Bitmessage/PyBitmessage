@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines,global-statement,too-many-branches,too-many-statements,inconsistent-return-statements
 # pylint: disable=too-many-nested-blocks,too-many-locals,protected-access,too-many-arguments,too-many-function-args
