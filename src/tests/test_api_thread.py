@@ -82,12 +82,12 @@ class TestAPIThread(TestPartialRun):
         proofofwork.init()
         self.assertEqual(
             unhexlify(self.api.disseminatePreparedObject(
-                hexlify(sample_object_data).decode('ascii'))),
+                hexlify(sample_object_data).decode())),
             calculateInventoryHash(sample_object_data))
         update_object = b'\x00' * 8 + pack(
             '>Q', int(time.time() + 7200)) + sample_object_data[16:]
         invhash = unhexlify(self.api.disseminatePreEncryptedMsg(
-            hexlify(update_object).decode('ascii')
+            hexlify(update_object).decode()
         ))
         obj_type, obj_stream, obj_data = state.Inventory[invhash][:3]
         self.assertEqual(obj_type, 42)

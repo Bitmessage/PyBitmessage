@@ -1347,7 +1347,7 @@ class BMRPCDispatcher(object):
             'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
             ' command): %s', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
-        return hexlify(inventoryHash).decode('ascii')
+        return hexlify(inventoryHash).decode()
 
     @command('trashSentMessageByAckData')
     def HandleTrashSentMessageByAckDAta(self, ackdata):

@@ -172,10 +172,10 @@ class addressGenerator(StoppableThread):
                 config.set(address, 'payloadlengthextrabytes', str(
                     payloadLengthExtraBytes))
                 config.set(
-                    address, 'privsigningkey', privSigningKeyWIF.decode('ascii'))
+                    address, 'privsigningkey', privSigningKeyWIF.decode())
                 config.set(
                     address, 'privencryptionkey',
-                    privEncryptionKeyWIF.decode('ascii'))
+                    privEncryptionKeyWIF.decode())
                 config.save()
 
                 # The API and the join and create Chan functionality
@@ -325,10 +325,10 @@ class addressGenerator(StoppableThread):
                                 str(payloadLengthExtraBytes))
                             config.set(
                                 address, 'privsigningkey',
-                                privSigningKeyWIF.decode('ascii'))
+                                privSigningKeyWIF.decode())
                             config.set(
                                 address, 'privencryptionkey',
-                                privEncryptionKeyWIF.decode('ascii'))
+                                privEncryptionKeyWIF.decode())
                             config.save()
 
                             queues.UISignalQueue.put((
@@ -340,14 +340,12 @@ class addressGenerator(StoppableThread):
                             shared.myECCryptorObjects[ripe] = \
                                 highlevelcrypto.makeCryptor(
                                     hexlify(potentialPrivEncryptionKey))
-                            hex_ripe = hexlify(ripe).decode('ascii')
-                            shared.myAddressesByHash[hex_ripe] = address
+                            shared.myAddressesByHash[bytes(ripe)] = address
                             tag = highlevelcrypto.double_sha512(
                                 encodeVarint(addressVersionNumber)
                                 + encodeVarint(streamNumber) + ripe
                             )[32:]
-                            hex_tag = hexlify(tag).decode('ascii')
-                            shared.myAddressesByTag[hex_tag] = address
+                            shared.myAddressesByTag[bytes(tag)] = address
                             if addressVersionNumber == 3:
                                 # If this is a chan address,
                                 # the worker thread won't send out

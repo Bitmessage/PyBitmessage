@@ -3,7 +3,6 @@ Module for tracking objects
 """
 import time
 from threading import RLock
-from binascii import hexlify
 
 import state
 import network.connectionpool as connectionpool
@@ -82,27 +81,28 @@ class ObjectTracker(object):
 
     def hasObj(self, hashid):
         """Do we already have object?"""
+        hashid_bytes = bytes(hashid)
         if haveBloom:
-            return hashid in self.invBloom
-        return hashid in self.objectsNewToMe
+            return hashid_bytes in self.invBloom
+        return hashid_bytes in self.objectsNewToMe
 
     def handleReceivedInventory(self, hashId):
         """Handling received inventory"""
-        hex_hash = hexlify(hashId).decode('ascii')
+        hashId_bytes = bytes(hashId)
         if haveBloom:
-            self.invBloom.add(hex_hash)
+            self.invBloom.add(hashId_bytes)
         try:
             with self.objectsNewToThemLock:
-                del self.objectsNewToThem[hex_hash]
+                del self.objectsNewToThem[hashId_bytes]
         except KeyError:
             pass
-        if hex_hash not in missingObjects:
-            missingObjects[hex_hash] = time.time()
+        if hashId_bytes not in missingObjects:
+            missingObjects[hashId_bytes] = time.time()
         self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
-        hex_hash = hexlify(hashid).decode('ascii')
+        hashid_bytes = bytes(hashid);
         for i in connectionpool.pool.connections():
             if not i.fullyEstablished:
                 continue
@@ -113,7 +113,7 @@ class ObjectTracker(object):
                         not state.Dandelion.hasHash(hashid)
                         or state.Dandelion.objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
-                        i.objectsNewToThem[hex_hash] = time.time()
+                        i.objectsNewToThem[hashid_bytes] = time.time()
                     # update stream number,
                     # which we didn't have when we just received the dinv
                     # also resets expiration of the stem mode
@@ -122,7 +122,7 @@ class ObjectTracker(object):
             if i == self:
                 try:
                     with i.objectsNewToThemLock:
-                        del i.objectsNewToThem[hex_hash]
+                        del i.objectsNewToThem[hashid_bytes]
                 except KeyError:
                     pass
         self.objectsNewToMe.setLastObject()
@@ -136,4 +136,4 @@ class ObjectTracker(object):
     def addAddr(self, hashid):
         """WIP, should be moved to addrthread.py or removed"""
         if haveBloom:
-            self.addrBloom.add(hashid)
+            self.addrBloom.add(bytes(hashid))

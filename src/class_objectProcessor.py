@@ -141,10 +141,10 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        hex_data = hexlify(data[readPosition:]).decode('ascii')
-        if hex_data in state.ackdataForWhichImWatching:
+        data_bytes = bytes(data[readPosition:])
+        if data_bytes in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del state.ackdataForWhichImWatching[hex_data]
+            del state.ackdataForWhichImWatching[data_bytes]
             sqlExecute(
                 "UPDATE sent SET status='ackreceived', lastactiontime=?"
                 " WHERE ackdata=?", int(time.time()), data[readPosition:])
@@ -214,24 +214,25 @@ class objectProcessor(threading.Thread):
                 return logger.debug(
                     'The length of the requested hash is not 20 bytes.'
                     ' Something is wrong. Ignoring.')
-            hex_hash = hexlify(requestedHash).decode('ascii')
             logger.info(
                 'the hash requested in this getpubkey request is: %s',
-                hex_hash)
+                hexlify(requestedHash).decode())
+            requestedHash_bytes = bytes(requestedHash)
             # if this address hash is one of mine
-            if hex_hash in shared.myAddressesByHash:
-                myAddress = shared.myAddressesByHash[hex_hash]
+            if requestedHash_bytes in shared.myAddressesByHash:
+                myAddress = shared.myAddressesByHash[requestedHash_bytes]
         elif requestedAddressVersionNumber >= 4:
             requestedTag = data[readPosition:readPosition + 32]
             if len(requestedTag) != 32:
                 return logger.debug(
                     'The length of the requested tag is not 32 bytes.'
                     ' Something is wrong. Ignoring.')
-            hex_tag = hexlify(requestedTag).decode('ascii')
             logger.debug(
-                'the tag requested in this getpubkey request is: %s', hex_tag)
-            if hex_tag in shared.myAddressesByTag:
-                myAddress = shared.myAddressesByTag[hex_tag]
+                'the tag requested in this getpubkey request is: %s',
+                hexlify(requestedTag).decode())
+            requestedTag_bytes = bytes(requestedTag)
+            if requestedTag_bytes in shared.myAddressesByTag:
+                myAddress = shared.myAddressesByTag[requestedTag_bytes]
 
         if myAddress == '':
             logger.info('This getpubkey request is not for any of my keys.')
@@ -421,13 +422,13 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
 
             tag = data[readPosition:readPosition + 32]
-            hex_tag = 'tag-' + hexlify(tag).decode('ascii')
-            if hex_tag not in state.neededPubkeys:
+            tag_bytes = bytes(tag)
+            if tag_bytes not in state.neededPubkeys:
                 return logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
 
             # Let us try to decrypt the pubkey
-            toAddress = state.neededPubkeys[hex_tag][0]
+            toAddress = state.neededPubkeys[tag_bytes][0]
             if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
@@ -492,8 +493,7 @@ class objectProcessor(threading.Thread):
 
         # This is a message bound for me.
         # Look up my address based on the RIPE hash.
-        hex_ripe = hexlify(toRipe).decode('ascii')
-        toAddress = shared.myAddressesByHash[hex_ripe]
+        toAddress = shared.myAddressesByHash[bytes(toRipe)]
         readPosition = 0
         sendersAddressVersionNumber, sendersAddressVersionNumberLength = \
             decodeVarint(decryptedData[readPosition:readPosition + 10])
@@ -803,11 +803,11 @@ class objectProcessor(threading.Thread):
                         # of the sender's address to verify that it was
                         # encrypted by with their key rather than some
                         # other key.
-                        toRipe = unhexlify(key)
+                        toRipe = key
                         initialDecryptionSuccessful = True
                         logger.info(
                             'EC decryption successful using key associated'
-                            ' with ripe hash: %s', key)
+                            ' with ripe hash: %s', hexlify(key).decode())
                 except Exception as ex:
                     logger.debug(
                         'cryptorObject.decrypt Exception: {}'.format(ex))
@@ -820,14 +820,14 @@ class objectProcessor(threading.Thread):
         elif broadcastVersion == 5:
             embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
-            hex_tag = hexlify(embeddedTag).decode('ascii')
-            if hex_tag not in shared.MyECSubscriptionCryptorObjects:
+            embeddedTag_bytes = bytes(embeddedTag)
+            if embeddedTag_bytes not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.
             # We're going to add some more data which is signed further down.
             signedData = bytes(data[8:readPosition])
-            cryptorObject = shared.MyECSubscriptionCryptorObjects[hex_tag]
+            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag_bytes]
             try:
                 decryptedData = cryptorObject.decrypt(data[readPosition:])
                 logger.debug('EC decryption successful')
@@ -1011,9 +1011,9 @@ class objectProcessor(threading.Thread):
                 encodeVarint(addressVersion) + encodeVarint(streamNumber)
                 + ripe
             )[32:]
-            hex_tag = 'tag-' + hexlify(tag).decode('ascii')
-            if hex_tag in state.neededPubkeys:
-                del state.neededPubkeys[hex_tag]
+            tag_bytes = bytes(tag)
+            if tag_bytes in state.neededPubkeys:
+                del state.neededPubkeys[tag_bytes]
                 self.sendMessages(address)
 
     @staticmethod

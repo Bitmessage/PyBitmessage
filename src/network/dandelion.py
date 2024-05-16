@@ -6,7 +6,7 @@ from collections import namedtuple
 from random import choice, expovariate, sample
 from threading import RLock
 from time import time
-from binascii import hexlify, unhexlify
+from binascii import hexlify
 
 import network.connectionpool as connectionpool
 import state
@@ -53,8 +53,7 @@ class Dandelion:  # pylint: disable=old-style-class
         if not state.dandelion_enabled:
             return
         with self.lock:
-            hex_hash = hexlify(hashId).decode('ascii')
-            self.hashMap[hex_hash] = Stem(
+            self.hashMap[bytes(hashId)] = Stem(
                 self.getNodeStem(source),
                 stream,
                 self.poissonTimeout())
@@ -65,34 +64,31 @@ class Dandelion:  # pylint: disable=old-style-class
         include streams, we only learn this after receiving the object)
         """
         with self.lock:
-            hex_hash = hexlify(hashId).decode('ascii')
-            if hex_hash in self.hashMap:
-                self.hashMap[hex_hash] = Stem(
-                    self.hashMap[hex_hash].child,
+            hashId_bytes = bytes(hashId)
+            if hashId_bytes in self.hashMap:
+                self.hashMap[hashId_bytes] = Stem(
+                    self.hashMap[hashId_bytes].child,
                     stream,
                     self.poissonTimeout())
 
     def removeHash(self, hashId, reason="no reason specified"):
         """Switch inventory vector from stem to fluff mode"""
-        hex_hash = hexlify(hashId).decode('ascii')
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                '%s entering fluff mode due to %s.', hex_hash, reason)
+                '%s entering fluff mode due to %s.', hexlify(hashId).decode(), reason)
         with self.lock:
             try:
-                del self.hashMap[hex_hash]
+                del self.hashMap[bytes(hashId)]
             except KeyError:
                 pass
 
     def hasHash(self, hashId):
         """Is inventory vector in stem mode?"""
-        hex_hash = hexlify(hashId).decode('ascii')
-        return hex_hash in self.hashMap
+        return bytes(hashId) in self.hashMap
 
     def objectChildStem(self, hashId):
         """Child (i.e. next) node for an inventory vector during stem mode"""
-        hex_hash = hexlify(hashId).decode('ascii')
-        return self.hashMap[hex_hash].child
+        return self.hashMap[bytes(hashId)].child
 
     def maybeAddStem(self, connection):
         """
@@ -112,7 +108,7 @@ class Dandelion:  # pylint: disable=old-style-class
                 }.items():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
-                    invQueue.put((v.stream, unhexlify(k), v.child))
+                    invQueue.put((v.stream, k, v.child))
 
     def maybeRemoveStem(self, connection):
         """
@@ -173,7 +169,7 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             deadline = time()
             toDelete = [
-                [v.stream, unhexlify(k), v.child] for k, v in self.hashMap.items()
+                [v.stream, k, v.child] for k, v in self.hashMap.items()
                 if v.timeout < deadline
             ]
 

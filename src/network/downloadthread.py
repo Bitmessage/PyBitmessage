@@ -9,7 +9,6 @@ import protocol
 import network.connectionpool as connectionpool
 from .objectracker import missingObjects
 from .threads import StoppableThread
-from binascii import hexlify
 
 
 class DownloadThread(StoppableThread):
@@ -68,8 +67,7 @@ class DownloadThread(StoppableThread):
                         continue
                     payload.extend(chunk)
                     chunkCount += 1
-                    hex_chunk = hexlify(chunk).decode('ascii')
-                    missingObjects[hex_chunk] = now
+                    missingObjects[bytes(chunk)] = now
                 if not chunkCount:
                     continue
                 payload[0:0] = addresses.encodeVarint(chunkCount)

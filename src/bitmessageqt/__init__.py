@@ -1769,7 +1769,7 @@ class MyForm(settingsmixin.SMainWindow):
             if rect.width() > 20:
                 txt = "+"
                 fontSize = 15
-                font = QtGui.QFont(fontName, fontSize, QtGui.QFont.Bold)
+                font = QtGui.QFont(fontName, fontSize, QtGui.QFont.Weight.Bold)
                 fontMetrics = QtGui.QFontMetrics(font)
                 rect = fontMetrics.boundingRect(txt)
             # draw text
