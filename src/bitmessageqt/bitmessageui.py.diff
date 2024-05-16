@@ -1,19 +1,30 @@
---- bitmessageui.py.orig	2024-05-13 08:32:22.376971328 +0900
-+++ bitmessageui.py	2024-05-14 15:56:24.921713575 +0900
-@@ -7,7 +7,11 @@
+--- bitmessageui.py.orig	2024-05-16 08:36:50.513403227 +0900
++++ bitmessageui.py	2024-05-16 11:17:05.028916782 +0900
+@@ -7,7 +7,13 @@
  
  
  from PyQt6 import QtCore, QtGui, QtWidgets
 -
 +from bmconfigparser import config
 +from .foldertree import AddressBookCompleter
-+from .blacklist import Blacklist
++from .messageview import MessageView
++from .messagecompose import MessageCompose
 +import bitmessageqt.settingsmixin as settingsmixin
 +from .networkstatus import NetworkStatus
++from .blacklist import Blacklist
  
  class Ui_MainWindow(object):
      def setupUi(self, MainWindow):
-@@ -140,6 +144,11 @@
+@@ -101,7 +107,7 @@
+         self.tableWidgetInbox.verticalHeader().setVisible(False)
+         self.tableWidgetInbox.verticalHeader().setDefaultSectionSize(26)
+         self.verticalLayout_7.addWidget(self.tableWidgetInbox)
+-        self.textEditInboxMessage = QtWidgets.QTextEdit(parent=self.inbox)
++        self.textEditInboxMessage = MessageView(parent=self.inbox)
+         self.textEditInboxMessage.setBaseSize(QtCore.QSize(0, 500))
+         self.textEditInboxMessage.setReadOnly(True)
+         self.textEditInboxMessage.setObjectName("textEditInboxMessage")
+@@ -140,6 +146,11 @@
          self.tableWidgetAddressBook.horizontalHeader().setStretchLastSection(True)
          self.tableWidgetAddressBook.verticalHeader().setVisible(False)
          self.verticalLayout_2.addWidget(self.tableWidgetAddressBook)
@@ -25,7 +36,7 @@
          self.pushButtonAddAddressBook = QtWidgets.QPushButton(parent=self.send)
          self.pushButtonAddAddressBook.setMaximumSize(QtCore.QSize(200, 16777215))
          self.pushButtonAddAddressBook.setObjectName("pushButtonAddAddressBook")
-@@ -156,40 +165,41 @@
+@@ -156,68 +167,77 @@
          self.verticalLayout.setObjectName("verticalLayout")
          self.tabWidgetSend = QtWidgets.QTabWidget(parent=self.send)
          self.tabWidgetSend.setObjectName("tabWidgetSend")
@@ -74,11 +85,61 @@
          self.verticalLayout_5.addWidget(self.textEditMessage)
          self.gridLayout_8.addLayout(self.verticalLayout_5, 0, 0, 1, 1)
 -        self.tabWidgetSend.addTab(self.tab, "")
+-        self.tab_2 = QtWidgets.QWidget()
+-        self.tab_2.setObjectName("tab_2")
+-        self.gridLayout_9 = QtWidgets.QGridLayout(self.tab_2)
 +        self.tabWidgetSend.addTab(self.sendDirect, "")
-         self.tab_2 = QtWidgets.QWidget()
-         self.tab_2.setObjectName("tab_2")
-         self.gridLayout_9 = QtWidgets.QGridLayout(self.tab_2)
-@@ -263,6 +273,9 @@
++        self.sendBroadcast = QtWidgets.QWidget()
++        self.sendBroadcast.setObjectName("sendBroadcast")
++        self.gridLayout_9 = QtWidgets.QGridLayout(self.sendBroadcast)
+         self.gridLayout_9.setObjectName("gridLayout_9")
+-        self.verticalLayout_6 = QtWidgets.QVBoxLayout()
+-        self.verticalLayout_6.setObjectName("verticalLayout_6")
++        self.verticalSplitter_6 = settingsmixin.SSplitter()
++        self.verticalSplitter_6.setObjectName("verticalSplitter_6")
++        self.verticalSplitter_6.setOrientation(QtCore.Qt.Orientation.Vertical)
+         self.gridLayout_5 = QtWidgets.QGridLayout()
+         self.gridLayout_5.setObjectName("gridLayout_5")
+-        self.label_8 = QtWidgets.QLabel(parent=self.tab_2)
++        self.label_8 = QtWidgets.QLabel(self.sendBroadcast)
+         self.label_8.setObjectName("label_8")
+         self.gridLayout_5.addWidget(self.label_8, 0, 0, 1, 1)
+-        self.lineEditSubjectBroadcast = QtWidgets.QLineEdit(parent=self.tab_2)
++        self.lineEditSubjectBroadcast = QtWidgets.QLineEdit(self.sendBroadcast)
+         self.lineEditSubjectBroadcast.setText("")
+         self.lineEditSubjectBroadcast.setObjectName("lineEditSubjectBroadcast")
+         self.gridLayout_5.addWidget(self.lineEditSubjectBroadcast, 1, 1, 1, 1)
+-        self.label_7 = QtWidgets.QLabel(parent=self.tab_2)
++        self.label_7 = QtWidgets.QLabel(self.sendBroadcast)
+         self.label_7.setObjectName("label_7")
+         self.gridLayout_5.addWidget(self.label_7, 1, 0, 1, 1)
+-        self.comboBoxSendFromBroadcast = QtWidgets.QComboBox(parent=self.tab_2)
++        self.comboBoxSendFromBroadcast = QtWidgets.QComboBox(self.sendBroadcast)
+         self.comboBoxSendFromBroadcast.setMinimumSize(QtCore.QSize(300, 0))
+         self.comboBoxSendFromBroadcast.setObjectName("comboBoxSendFromBroadcast")
+         self.gridLayout_5.addWidget(self.comboBoxSendFromBroadcast, 0, 1, 1, 1)
+-        self.verticalLayout_6.addLayout(self.gridLayout_5)
+-        self.textEditMessageBroadcast = QtWidgets.QTextEdit(parent=self.tab_2)
++        self.gridLayout_5_Widget = QtWidgets.QWidget()
++        self.gridLayout_5_Widget.setLayout(self.gridLayout_5)
++        self.verticalSplitter_6.addWidget(self.gridLayout_5_Widget)
++        self.textEditMessageBroadcast = MessageCompose(self.sendBroadcast)
+         self.textEditMessageBroadcast.setObjectName("textEditMessageBroadcast")
+-        self.verticalLayout_6.addWidget(self.textEditMessageBroadcast)
+-        self.gridLayout_9.addLayout(self.verticalLayout_6, 0, 0, 1, 1)
+-        self.tabWidgetSend.addTab(self.tab_2, "")
++        self.verticalSplitter_6.addWidget(self.textEditMessageBroadcast)
++        self.verticalSplitter_6.setStretchFactor(0, 0)
++        self.verticalSplitter_6.setStretchFactor(1, 1)
++        self.verticalSplitter_6.setCollapsible(0, False)
++        self.verticalSplitter_6.setCollapsible(1, False)
++        self.verticalSplitter_6.handle(1).setEnabled(False)
++        self.gridLayout_9.addWidget(self.verticalSplitter_6, 0, 0, 1, 1)
++        self.tabWidgetSend.addTab(self.sendBroadcast, "")
+         self.verticalLayout.addWidget(self.tabWidgetSend)
+         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
+         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+@@ -263,6 +283,9 @@
          self.labelHumanFriendlyTTLDescription.setMaximumSize(QtCore.QSize(45, 16777215))
          self.labelHumanFriendlyTTLDescription.setObjectName("labelHumanFriendlyTTLDescription")
          self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription)
@@ -88,7 +149,16 @@
          self.pushButtonSend = QtWidgets.QPushButton(parent=self.send)
          self.pushButtonSend.setMaximumSize(QtCore.QSize(16777215, 16777215))
          self.pushButtonSend.setObjectName("pushButtonSend")
-@@ -348,15 +361,15 @@
+@@ -338,7 +361,7 @@
+         self.tableWidgetInboxSubscriptions.verticalHeader().setVisible(False)
+         self.tableWidgetInboxSubscriptions.verticalHeader().setDefaultSectionSize(26)
+         self.verticalLayout_4.addWidget(self.tableWidgetInboxSubscriptions)
+-        self.textEditInboxMessageSubscriptions = QtWidgets.QTextEdit(parent=self.subscriptions)
++        self.textEditInboxMessageSubscriptions = MessageView(parent=self.subscriptions)
+         self.textEditInboxMessageSubscriptions.setBaseSize(QtCore.QSize(0, 500))
+         self.textEditInboxMessageSubscriptions.setReadOnly(True)
+         self.textEditInboxMessageSubscriptions.setObjectName("textEditInboxMessageSubscriptions")
+@@ -348,15 +371,15 @@
          icon6 = QtGui.QIcon()
          icon6.addPixmap(QtGui.QPixmap(":/newPrefix/images/subscriptions.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
          self.tabWidget.addTab(self.subscriptions, icon6, "")
@@ -108,7 +178,7 @@
          self.treeWidgetChans.setMaximumSize(QtCore.QSize(200, 16777215))
          self.treeWidgetChans.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
          self.treeWidgetChans.setLineWidth(1)
-@@ -368,7 +381,7 @@
+@@ -368,7 +391,7 @@
          icon7.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"), QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
          self.treeWidgetChans.headerItem().setIcon(0, icon7)
          self.verticalLayout_17.addWidget(self.treeWidgetChans)
@@ -117,7 +187,7 @@
          self.pushButtonAddChan.setMaximumSize(QtCore.QSize(200, 16777215))
          self.pushButtonAddChan.setObjectName("pushButtonAddChan")
          self.verticalLayout_17.addWidget(self.pushButtonAddChan)
-@@ -377,10 +390,10 @@
+@@ -377,10 +400,10 @@
          self.verticalLayout_8.setObjectName("verticalLayout_8")
          self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
          self.horizontalLayout_6.setObjectName("horizontalLayout_6")
@@ -130,7 +200,7 @@
          self.inboxSearchOptionChans.setObjectName("inboxSearchOptionChans")
          self.inboxSearchOptionChans.addItem("")
          self.inboxSearchOptionChans.addItem("")
-@@ -389,7 +402,7 @@
+@@ -389,7 +412,7 @@
          self.inboxSearchOptionChans.addItem("")
          self.horizontalLayout_6.addWidget(self.inboxSearchOptionChans)
          self.verticalLayout_8.addLayout(self.horizontalLayout_6)
@@ -139,16 +209,16 @@
          self.tableWidgetInboxChans.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
          self.tableWidgetInboxChans.setAlternatingRowColors(True)
          self.tableWidgetInboxChans.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
-@@ -415,7 +428,7 @@
+@@ -415,7 +438,7 @@
          self.tableWidgetInboxChans.verticalHeader().setVisible(False)
          self.tableWidgetInboxChans.verticalHeader().setDefaultSectionSize(26)
          self.verticalLayout_8.addWidget(self.tableWidgetInboxChans)
 -        self.textEditInboxMessageChans = QtWidgets.QTextEdit(parent=self.tab_3)
-+        self.textEditInboxMessageChans = QtWidgets.QTextEdit(parent=self.chans)
++        self.textEditInboxMessageChans = MessageView(parent=self.chans)
          self.textEditInboxMessageChans.setBaseSize(QtCore.QSize(0, 500))
          self.textEditInboxMessageChans.setReadOnly(True)
          self.textEditInboxMessageChans.setObjectName("textEditInboxMessageChans")
-@@ -424,113 +437,20 @@
+@@ -424,113 +447,20 @@
          self.gridLayout_4.addLayout(self.horizontalLayout_7, 0, 0, 1, 1)
          icon8 = QtGui.QIcon()
          icon8.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -273,7 +343,7 @@
          self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
          self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 27))
          self.menubar.setObjectName("menubar")
-@@ -550,6 +470,8 @@
+@@ -550,6 +480,8 @@
          self.actionManageKeys = QtGui.QAction(parent=MainWindow)
          self.actionManageKeys.setCheckable(False)
          self.actionManageKeys.setEnabled(True)
@@ -282,7 +352,7 @@
          icon = QtGui.QIcon.fromTheme("dialog-password")
          self.actionManageKeys.setIcon(icon)
          self.actionManageKeys.setObjectName("actionManageKeys")
-@@ -561,6 +483,10 @@
+@@ -561,6 +493,10 @@
          icon = QtGui.QIcon.fromTheme("help-contents")
          self.actionHelp.setIcon(icon)
          self.actionHelp.setObjectName("actionHelp")
@@ -293,7 +363,7 @@
          self.actionAbout = QtGui.QAction(parent=MainWindow)
          icon = QtGui.QIcon.fromTheme("help-about")
          self.actionAbout.setIcon(icon)
-@@ -584,17 +510,23 @@
+@@ -584,17 +520,23 @@
          self.menuFile.addAction(self.actionManageKeys)
          self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
          self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
@@ -319,7 +389,7 @@
          QtCore.QMetaObject.connectSlotsByName(MainWindow)
          MainWindow.setTabOrder(self.tableWidgetInbox, self.textEditInboxMessage)
          MainWindow.setTabOrder(self.textEditInboxMessage, self.comboBoxSendFrom)
-@@ -603,12 +535,26 @@
+@@ -603,12 +545,26 @@
          MainWindow.setTabOrder(self.lineEditSubject, self.textEditMessage)
          MainWindow.setTabOrder(self.textEditMessage, self.pushButtonSend)
          MainWindow.setTabOrder(self.pushButtonSend, self.pushButtonAddSubscription)
@@ -352,7 +422,7 @@
  
      def retranslateUi(self, MainWindow):
          _translate = QtCore.QCoreApplication.translate
-@@ -646,7 +592,7 @@
+@@ -646,7 +602,7 @@
  "p, li { white-space: pre-wrap; }\n"
  "</style></head><body style=\" font-family:\'Droid Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
  "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>"))
@@ -361,16 +431,19 @@
          self.label_8.setText(_translate("MainWindow", "From:"))
          self.label_7.setText(_translate("MainWindow", "Subject:"))
          self.textEditMessageBroadcast.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-@@ -656,7 +602,7 @@
+@@ -654,9 +610,9 @@
+ "p, li { white-space: pre-wrap; }\n"
+ "</style></head><body style=\" font-family:\'Droid Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
  "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>"))
-         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.tab_2), _translate("MainWindow", "Send Message to your Subscribers"))
+-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.tab_2), _translate("MainWindow", "Send Message to your Subscribers"))
++        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers"))
          self.pushButtonTTL.setText(_translate("MainWindow", "TTL:"))
 -        self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "X days"))
 +        self.pushButtonClear.setText(_translate("MainWindow", "Clear"))
          self.pushButtonSend.setText(_translate("MainWindow", "Send"))
          self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send"))
          self.treeWidgetSubscriptions.headerItem().setText(0, _translate("MainWindow", "Subscriptions"))
-@@ -694,28 +640,8 @@
+@@ -694,28 +650,8 @@
          item.setText(_translate("MainWindow", "Subject"))
          item = self.tableWidgetInboxChans.horizontalHeaderItem(3)
          item.setText(_translate("MainWindow", "Received"))
@@ -401,7 +474,7 @@
          self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status"))
          self.menuFile.setTitle(_translate("MainWindow", "File"))
          self.menuSettings.setTitle(_translate("MainWindow", "Settings"))
-@@ -726,8 +652,10 @@
+@@ -726,8 +662,10 @@
          self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+Q"))
          self.actionHelp.setText(_translate("MainWindow", "Help"))
          self.actionHelp.setShortcut(_translate("MainWindow", "F1"))

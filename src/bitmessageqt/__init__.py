@@ -1428,7 +1428,7 @@ class MyForm(settingsmixin.SMainWindow):
     # addressbook
     def addressbookKeyPressEvent(self, event):
         """Handle keypress event in addressbook widget"""
-        if event.key() == QtCore.Qt.Key_Delete:
+        if event.key() == QtCore.Qt.Key.Key_Delete:
             self.on_action_AddressBookDelete()
         else:
             return QtWidgets.QTableWidget.keyPressEvent(
@@ -1445,7 +1445,7 @@ class MyForm(settingsmixin.SMainWindow):
     def handleKeyPress(self, event, focus=None):
         """This method handles keypress events for all widgets on MyForm"""
         messagelist = self.getCurrentMessagelist()
-        if event.key() == QtCore.Qt.Key_Delete:
+        if event.key() == QtCore.Qt.Key.Key_Delete:
             if isinstance(focus, (MessageView, QtWidgets.QTableWidget)):
                 folder = self.getCurrentFolder()
                 if folder == "sent":
@@ -1453,24 +1453,24 @@ class MyForm(settingsmixin.SMainWindow):
                 else:
                     self.on_action_InboxTrash()
             event.ignore()
-        elif QtWidgets.QApplication.queryKeyboardModifiers() == QtCore.Qt.NoModifier:
-            if event.key() == QtCore.Qt.Key_N:
+        elif QtWidgets.QApplication.queryKeyboardModifiers() == QtCore.Qt.KeyboardModifier.NoModifier:
+            if event.key() == QtCore.Qt.Key.Key_N:
                 currentRow = messagelist.currentRow()
                 if currentRow < messagelist.rowCount() - 1:
                     messagelist.selectRow(currentRow + 1)
                 event.ignore()
-            elif event.key() == QtCore.Qt.Key_P:
+            elif event.key() == QtCore.Qt.Key.Key_P:
                 currentRow = messagelist.currentRow()
                 if currentRow > 0:
                     messagelist.selectRow(currentRow - 1)
                 event.ignore()
-            elif event.key() == QtCore.Qt.Key_R:
+            elif event.key() == QtCore.Qt.Key.Key_R:
                 if messagelist == self.ui.tableWidgetInboxChans:
                     self.on_action_InboxReplyChan()
                 else:
                     self.on_action_InboxReply()
                 event.ignore()
-            elif event.key() == QtCore.Qt.Key_C:
+            elif event.key() == QtCore.Qt.Key.Key_C:
                 currentAddress = self.getCurrentAccount()
                 if currentAddress:
                     self.setSendFromComboBox(currentAddress)
@@ -1482,7 +1482,7 @@ class MyForm(settingsmixin.SMainWindow):
                 )
                 self.ui.lineEditTo.setFocus()
                 event.ignore()
-            elif event.key() == QtCore.Qt.Key_F:
+            elif event.key() == QtCore.Qt.Key.Key_F:
                 try:
                     self.getCurrentSearchLine(retObj=True).setFocus()
                 except AttributeError:
@@ -2861,7 +2861,7 @@ class MyForm(settingsmixin.SMainWindow):
         content = ' '.join(lines) # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
         content = content
-        textEdit.setHtml(QtCore.QString(content))
+        textEdit.setHtml(content)
 
     def on_action_InboxMarkUnread(self):
         tableWidget = self.getCurrentMessagelist()
@@ -2928,7 +2928,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.comboBoxSendFrom, self.ui.comboBoxSendFromBroadcast
         ):
             for i in range(box.count()):
-                if str(box.itemData(i).toPyObject()) == address:
+                if box.itemData(i) == address:
                     box.setCurrentIndex(i)
                     break
             else:
@@ -4071,7 +4071,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
-        messageTextedit.setPlainText(message)
+        messageTextedit.setContent(message)
 
     def tableWidgetAddressBookItemChanged(self, item):
         if item.type == AccountMixin.CHAN:

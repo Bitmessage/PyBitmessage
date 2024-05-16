@@ -38,7 +38,7 @@ class MessageView(QtWidgets.QTextBrowser):
 
     def mousePressEvent(self, event):
         """Mouse press button event handler"""
-        if event.button() == QtCore.Qt.LeftButton and self.html and self.html.has_html and self.cursorForPosition(
+        if event.button() == QtCore.Qt.MouseButton.LeftButton and self.html and self.html.has_html and self.cursorForPosition(
                 event.pos()).block().blockNumber() == 0:
             if self.mode == MessageView.MODE_PLAIN:
                 self.showHTML()
@@ -52,11 +52,11 @@ class MessageView(QtWidgets.QTextBrowser):
         # super will actually automatically take care of zooming
         super(MessageView, self).wheelEvent(event)
         if (
-            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
-        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
+            QtWidgets.QApplication.queryKeyboardModifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        ) == QtCore.Qt.KeyboardModifier.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
-            QtGui.QApplication.activeWindow().statusBar().showMessage(_translate(
-                "MainWindow", "Zoom level %1%").arg(str(zoom)))
+            QtWidgets.QApplication.activeWindow().statusBar().showMessage(_translate(
+                "MainWindow", "Zoom level {0}%").format(str(zoom)))
 
     def setWrappingWidth(self, width=None):
         """Set word-wrapping width"""
@@ -68,14 +68,15 @@ class MessageView(QtWidgets.QTextBrowser):
     def confirmURL(self, link):
         """Show a dialog requesting URL opening confirmation"""
         if link.scheme() == "mailto":
-            window = QtGui.QApplication.activeWindow()
+            window = QtWidgets.QApplication.activeWindow()
             window.ui.lineEditTo.setText(link.path())
-            if link.hasQueryItem("subject"):
+            query = QtCore.QUrlQuery(link)
+            if query.hasQueryItem("subject"):
                 window.ui.lineEditSubject.setText(
-                    link.queryItemValue("subject"))
-            if link.hasQueryItem("body"):
+                    query.queryItemValue("subject"))
+            if query.hasQueryItem("body"):
                 window.ui.textEditMessage.setText(
-                    link.queryItemValue("body"))
+                    query.queryItemValue("body"))
             window.setSendFromComboBox()
             window.ui.tabWidgetSend.setCurrentIndex(0)
             window.ui.tabWidget.setCurrentIndex(
@@ -83,18 +84,18 @@ class MessageView(QtWidgets.QTextBrowser):
             )
             window.ui.textEditMessage.setFocus()
             return
-        reply = QtGui.QMessageBox.warning(
+        reply = QtWidgets.QMessageBox.warning(
             self,
-            QtGui.QApplication.translate(
+            QtWidgets.QApplication.translate(
                 "MessageView",
                 "Follow external link"),
-            QtGui.QApplication.translate(
+            QtWidgets.QApplication.translate(
                 "MessageView",
-                "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you"
-                " or download malicious data. Are you sure?").arg(unicode(link.toString())),
-            QtGui.QMessageBox.Yes,
-            QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                "The link \"{0}\" will open in a browser. It may be a security risk, it could de-anonymise you"
+                " or download malicious data. Are you sure?").format(link.toString()),
+            QtWidgets.QMessageBox.StandardButton.Yes,
+            QtWidgets.QMessageBox.StandardButton.No)
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
     def loadResource(self, restype, name):
@@ -123,8 +124,8 @@ class MessageView(QtWidgets.QTextBrowser):
                 pos = self.out.find(">", self.outpos)
                 if pos > self.outpos:
                     self.outpos = pos + 1
-            cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
-            cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
+            cursor.movePosition(QtGui.QTextCursor.MoveOperation.End, QtGui.QTextCursor.MoveMode.MoveAnchor)
+            cursor.insertHtml(str(self.out[startpos:self.outpos]))
         self.verticalScrollBar().setValue(position)
         self.rendering = False
 
@@ -133,9 +134,8 @@ class MessageView(QtWidgets.QTextBrowser):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw
         if self.html.has_html:
-            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(
-                QtGui.QApplication.translate(
-                    "MessageView", "HTML detected, click here to display")) + "</b></div><br/>" + out
+            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + QtWidgets.QApplication.translate(
+                    "MessageView", "HTML detected, click here to display") + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
@@ -145,8 +145,7 @@ class MessageView(QtWidgets.QTextBrowser):
         """Render message as HTML"""
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(
-            QtGui.QApplication.translate("MessageView", "Click here to disable HTML")) + "</b></div><br/>" + out
+        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + QtWidgets.QApplication.translate("MessageView", "Click here to disable HTML") + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
