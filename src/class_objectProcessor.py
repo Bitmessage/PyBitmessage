@@ -315,7 +315,7 @@ class objectProcessor(threading.Thread):
             dataToStore = data[20:readPosition]
             sha = hashlib.new('sha512')
             sha.update(
-                '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
+                b'\x04' + publicSigningKey + b'\x04' + publicEncryptionKey)
             ripe = RIPEMD160Hash(sha.digest()).digest()
 
             if logger.isEnabledFor(logging.DEBUG):
@@ -354,9 +354,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            publicSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            publicSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            publicEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            publicEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])[1]
@@ -513,9 +513,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -862,10 +862,10 @@ class objectProcessor(threading.Thread):
             )
         readPosition += sendersStreamLength
         readPosition += 4
-        sendersPubSigningKey = '\x04' + \
+        sendersPubSigningKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        sendersPubEncryptionKey = '\x04' + \
+        sendersPubEncryptionKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersion >= 3:
