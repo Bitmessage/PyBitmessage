@@ -1,7 +1,6 @@
 from PyQt6 import uic
 import os.path
 import paths
-import sys
 
 
 def resource_path(resFile):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtGui, QtWidgets
 
 
 class MigrationWizardIntroPage(QtWidgets.QWizardPage):
@@ -8,7 +8,8 @@ class MigrationWizardIntroPage(QtWidgets.QWizardPage):
         self.setTitle("Migrating configuration")
 
         label = QtGui.QLabel("This wizard will help you to migrate your configuration. "
-                             "You can still keep using PyBitMessage once you migrate, the changes are backwards compatible.")
+                             "You can still keep using PyBitMessage"
+                             " once you migrate, the changes are backwards compatible.")
         label.setWordWrap(True)
 
         layout = QtGui.QVBoxLayout()

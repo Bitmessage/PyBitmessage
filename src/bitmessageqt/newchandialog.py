@@ -4,11 +4,12 @@ src/bitmessageqt/newchandialog.py
 
 """
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 import bitmessageqt.widgets as widgets
 from addresses import addBMIfNotPresent
-from .addressvalidator import AddressValidator, PassPhraseValidator
+# XXX unresolved
+# from .addressvalidator import AddressValidator, PassPhraseValidator
 from queues import (
     addressGeneratorQueue, apiAddressGeneratorReturnQueue, UISignalQueue)
 from tr import _translate

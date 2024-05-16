@@ -38,7 +38,9 @@ class MessageView(QtWidgets.QTextBrowser):
 
     def mousePressEvent(self, event):
         """Mouse press button event handler"""
-        if event.button() == QtCore.Qt.MouseButton.LeftButton and self.html and self.html.has_html and self.cursorForPosition(
+        b = event.button()
+        lb = QtCore.Qt.MouseButton.LeftButton
+        if b == lb and self.html and self.html.has_html and self.cursorForPosition(
                 event.pos()).block().blockNumber() == 0:
             if self.mode == MessageView.MODE_PLAIN:
                 self.showHTML()

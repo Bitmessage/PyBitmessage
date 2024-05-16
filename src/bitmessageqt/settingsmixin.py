@@ -5,7 +5,7 @@ src/settingsmixin.py
 
 """
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 
 class SettingsMixin(object):
