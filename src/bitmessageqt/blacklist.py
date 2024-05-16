@@ -27,7 +27,7 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
         self.tableWidgetBlacklist.itemChanged.connect(self.tableWidgetBlacklistItemChanged)
 
         # Set the icon sizes for the identicons
-        identicon_size = 3*7
+        identicon_size = 3 * 7
         self.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
 
         self.UISignalThread = UISignaler.get()
@@ -64,7 +64,7 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
                     sql = '''select * from blacklist where address=?'''
                 else:
                     sql = '''select * from whitelist where address=?'''
-                queryreturn = sqlQuery(sql,*t)
+                queryreturn = sqlQuery(sql, *t)
                 if queryreturn == []:
                     self.tableWidgetBlacklist.setSortingEnabled(False)
                     self.tableWidgetBlacklist.insertRow(0)
@@ -106,10 +106,10 @@ class Blacklist(QtWidgets.QWidget, RetranslateMixin):
             if isinstance(addressitem, QtWidgets.QTableWidgetItem):
                 if self.radioButtonBlacklist.isChecked():
                     sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
+                               str(item.text()), str(addressitem.text()))
                 else:
                     sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
+                               str(item.text()), str(addressitem.text()))
 
     def init_blacklist_popup_menu(self, connectSignal=True):
         # Popup menu for the Blacklist page

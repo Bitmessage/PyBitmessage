@@ -10,6 +10,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 class SettingsMixin(object):
     """Mixin for adding geometry and state saving between restarts."""
+
     def warnIfNoObjectName(self):
         """
         Handle objects which don't have a name. Currently it ignores them. Objects without a name can't have their
@@ -58,6 +59,7 @@ class SettingsMixin(object):
 
 class SMainWindow(QtWidgets.QMainWindow, SettingsMixin):
     """Main window with Settings functionality."""
+
     def loadSettings(self):
         """Load main window settings."""
         self.readGeometry(self)
@@ -72,6 +74,7 @@ class SMainWindow(QtWidgets.QMainWindow, SettingsMixin):
 class STableWidget(QtWidgets.QTableWidget, SettingsMixin):
     """Table widget with Settings functionality"""
     # pylint: disable=too-many-ancestors
+
     def loadSettings(self):
         """Load table settings."""
         self.readState(self.horizontalHeader())
@@ -83,6 +86,7 @@ class STableWidget(QtWidgets.QTableWidget, SettingsMixin):
 
 class SSplitter(QtWidgets.QSplitter, SettingsMixin):
     """Splitter with Settings functionality."""
+
     def loadSettings(self):
         """Load splitter settings"""
         self.readState(self)
@@ -95,6 +99,7 @@ class SSplitter(QtWidgets.QSplitter, SettingsMixin):
 class STreeWidget(QtWidgets.QTreeWidget, SettingsMixin):
     """Tree widget with settings functionality."""
     # pylint: disable=too-many-ancestors
+
     def loadSettings(self):
         """Load tree settings."""
         # recurse children

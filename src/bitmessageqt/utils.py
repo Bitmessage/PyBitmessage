@@ -89,7 +89,7 @@ def avatarize(address):
     # QImageReader.supportedImageFormats ()
     extensions = [
         'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'PBM', 'PGM', 'PPM',
-        'XBM', 'XPM' ]
+        'XBM', 'XPM']
     # try to find a specific avatar
     for ext in extensions:
         lower_hash = state.appdata + 'avatars/' + icon_hash + '.' + ext.lower()

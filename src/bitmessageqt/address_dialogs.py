@@ -216,6 +216,7 @@ class NewSubscriptionDialog(AddressDataDialog):
 
 class RegenerateAddressesDialog(QtWidgets.QDialog):
     """QDialog for regenerating deterministic addresses"""
+
     def __init__(self, parent=None):
         super(RegenerateAddressesDialog, self).__init__(parent)
         widgets.load('regenerateaddresses.ui', self)
@@ -288,6 +289,7 @@ class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
 
 class EmailGatewayDialog(QtWidgets.QDialog):
     """QDialog for email gateway control"""
+
     def __init__(self, parent, config=global_config, account=None):
         super(EmailGatewayDialog, self).__init__(parent)
         widgets.load('emailgateway.ui', self)

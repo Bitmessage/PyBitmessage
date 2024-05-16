@@ -1,22 +1,23 @@
 #!/usr/bin/env python2.7
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+
 class MigrationWizardIntroPage(QtWidgets.QWizardPage):
     def __init__(self):
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Migrating configuration")
 
         label = QtGui.QLabel("This wizard will help you to migrate your configuration. "
-            "You can still keep using PyBitMessage once you migrate, the changes are backwards compatible.")
+                             "You can still keep using PyBitMessage once you migrate, the changes are backwards compatible.")
         label.setWordWrap(True)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
-        
+
     def nextId(self):
         return 1
-    
+
 
 class MigrationWizardAddressesPage(QtWidgets.QWizardPage):
     def __init__(self, addresses):
@@ -29,10 +30,10 @@ class MigrationWizardAddressesPage(QtWidgets.QWizardPage):
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
-        
+
     def nextId(self):
         return 10
-    
+
 
 class MigrationWizardGPUPage(QtWidgets.QWizardPage):
     def __init__(self):
@@ -45,10 +46,10 @@ class MigrationWizardGPUPage(QtWidgets.QWizardPage):
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
-        
+
     def nextId(self):
         return 10
-    
+
 
 class MigrationWizardConclusionPage(QtWidgets.QWizardPage):
     def __init__(self):
@@ -68,7 +69,7 @@ class Ui_MigrationWizard(QtWidgets.QWizard):
         super(QtGui.QWizard, self).__init__()
 
         self.pages = {}
-        
+
         page = MigrationWizardIntroPage()
         self.setPage(0, page)
         self.setStartId(0)

@@ -15,6 +15,7 @@ import bitmessageqt.settingsmixin as settingsmixin
 from .networkstatus import NetworkStatus
 from .blacklist import Blacklist
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -22,7 +23,8 @@ class Ui_MainWindow(object):
         self.MainDock = QtWidgets.QDockWidget(parent=MainWindow)
         self.MainDock.setGeometry(QtCore.QRect(0, 0, 885, 580))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-24px.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-24px.png"),
+                       QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.MainDock.setWindowIcon(icon)
         self.MainDock.setObjectName("MainDock")
         self.centralwidget = QtWidgets.QWidget()
@@ -31,7 +33,8 @@ class Ui_MainWindow(object):
         self.gridLayout_10.setObjectName("gridLayout_10")
         self.tabWidget = QtWidgets.QTabWidget(parent=self.centralwidget)
         self.tabWidget.setTabShape(QtWidgets.QTabWidget.TabShape.Rounded)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                           QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
@@ -56,7 +59,8 @@ class Ui_MainWindow(object):
         self.treeWidgetYourIdentities.setMaximumSize(QtCore.QSize(200, 16777215))
         self.treeWidgetYourIdentities.setObjectName("treeWidgetYourIdentities")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/newPrefix/images/identities.png"), QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
+        icon1.addPixmap(QtGui.QPixmap(":/newPrefix/images/identities.png"),
+                        QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
         self.treeWidgetYourIdentities.headerItem().setIcon(0, icon1)
         self.verticalLayout_12.addWidget(self.treeWidgetYourIdentities)
         self.pushButtonNewAddress = QtWidgets.QPushButton(parent=self.inbox)
@@ -135,7 +139,8 @@ class Ui_MainWindow(object):
         self.tableWidgetAddressBook.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/newPrefix/images/addressbook.png"), QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
+        icon3.addPixmap(QtGui.QPixmap(":/newPrefix/images/addressbook.png"),
+                        QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
         item.setIcon(icon3)
         self.tableWidgetAddressBook.setHorizontalHeaderItem(0, item)
         item = QtWidgets.QTableWidgetItem()
@@ -311,7 +316,8 @@ class Ui_MainWindow(object):
         self.treeWidgetSubscriptions.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.treeWidgetSubscriptions.setObjectName("treeWidgetSubscriptions")
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(":/newPrefix/images/subscriptions.png"), QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
+        icon5.addPixmap(QtGui.QPixmap(":/newPrefix/images/subscriptions.png"),
+                        QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
         self.treeWidgetSubscriptions.headerItem().setIcon(0, icon5)
         self.verticalLayout_3.addWidget(self.treeWidgetSubscriptions)
         self.pushButtonAddSubscription = QtWidgets.QPushButton(parent=self.subscriptions)
@@ -338,8 +344,10 @@ class Ui_MainWindow(object):
         self.tableWidgetInboxSubscriptions = QtWidgets.QTableWidget(parent=self.subscriptions)
         self.tableWidgetInboxSubscriptions.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tableWidgetInboxSubscriptions.setAlternatingRowColors(True)
-        self.tableWidgetInboxSubscriptions.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.tableWidgetInboxSubscriptions.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.tableWidgetInboxSubscriptions.setSelectionMode(
+            QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.tableWidgetInboxSubscriptions.setSelectionBehavior(
+            QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.tableWidgetInboxSubscriptions.setWordWrap(False)
         self.tableWidgetInboxSubscriptions.setObjectName("tableWidgetInboxSubscriptions")
         self.tableWidgetInboxSubscriptions.setColumnCount(4)
@@ -369,7 +377,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addLayout(self.verticalLayout_4)
         self.gridLayout_3.addLayout(self.horizontalLayout_4, 0, 0, 1, 1)
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap(":/newPrefix/images/subscriptions.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon6.addPixmap(QtGui.QPixmap(":/newPrefix/images/subscriptions.png"),
+                        QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.tabWidget.addTab(self.subscriptions, icon6, "")
         self.chans = QtWidgets.QWidget()
         self.chans.setObjectName("chans")
@@ -388,7 +397,8 @@ class Ui_MainWindow(object):
         self.treeWidgetChans.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.treeWidgetChans.setObjectName("treeWidgetChans")
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"), QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
+        icon7.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"),
+                        QtGui.QIcon.Mode.Selected, QtGui.QIcon.State.Off)
         self.treeWidgetChans.headerItem().setIcon(0, icon7)
         self.verticalLayout_17.addWidget(self.treeWidgetChans)
         self.pushButtonAddChan = QtWidgets.QPushButton(parent=self.chans)
@@ -446,7 +456,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_7.addLayout(self.verticalLayout_8)
         self.gridLayout_4.addLayout(self.horizontalLayout_7, 0, 0, 1, 1)
         icon8 = QtGui.QIcon()
-        icon8.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon8.addPixmap(QtGui.QPixmap(":/newPrefix/images/can-icon-16px.png"),
+                        QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.tabWidget.addTab(self.chans, icon8, "")
         self.blackwhitelist = Blacklist()
         self.blackwhitelist.setObjectName("blackwhitelist")
@@ -598,19 +609,21 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "From:"))
         self.label.setText(_translate("MainWindow", "To:"))
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Droid Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>"))
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message"))
+                                                "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                                "p, li { white-space: pre-wrap; }\n"
+                                                "</style></head><body style=\" font-family:\'Droid Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+                                                "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>"))
+        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect),
+                                      _translate("MainWindow", "Send ordinary Message"))
         self.label_8.setText(_translate("MainWindow", "From:"))
         self.label_7.setText(_translate("MainWindow", "Subject:"))
         self.textEditMessageBroadcast.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Droid Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>"))
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers"))
+                                                         "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                                         "p, li { white-space: pre-wrap; }\n"
+                                                         "</style></head><body style=\" font-family:\'Droid Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+                                                         "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>"))
+        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast),
+                                      _translate("MainWindow", "Send Message to your Subscribers"))
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:"))
         self.pushButtonClear.setText(_translate("MainWindow", "Clear"))
         self.pushButtonSend.setText(_translate("MainWindow", "Send"))
@@ -632,7 +645,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject"))
         item = self.tableWidgetInboxSubscriptions.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), _translate("MainWindow", "Subscriptions"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions),
+                                  _translate("MainWindow", "Subscriptions"))
         self.treeWidgetChans.headerItem().setText(0, _translate("MainWindow", "Chans"))
         self.pushButtonAddChan.setText(_translate("MainWindow", "Add Chan"))
         self.inboxSearchLineEditChans.setPlaceholderText(_translate("MainWindow", "Search"))
@@ -652,7 +666,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Received"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans"))
         self.networkstatus.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus),
+                                  _translate("MainWindow", "Network Status"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
@@ -665,7 +680,8 @@ class Ui_MainWindow(object):
         self.actionSupport.setText(_translate("MainWindow", "Contact support"))
         self.actionAbout.setText(_translate("MainWindow", "About"))
         self.actionSettings.setText(_translate("MainWindow", "Settings"))
-        self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses"))
+        self.actionRegenerateDeterministicAddresses.setText(
+            _translate("MainWindow", "Regenerate deterministic addresses"))
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages"))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan"))
         self.updateNetworkSwitchMenuLabel()
