@@ -3,7 +3,7 @@ Description=Bitmessage Daemon
 After=network.target auditd.service
 
 [Service]
-ExecStart=/usr/bin/python3 /usr/src/PyBitmessage/src/bitmessagemain.py
+ExecStart=/usr/bin/python2 /usr/src/PyBitmessage/src/bitmessagemain.py
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure

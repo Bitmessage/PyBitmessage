@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 """
 src/settingsmixin.py
 ====================
