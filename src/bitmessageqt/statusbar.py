@@ -2,7 +2,7 @@
 """Status bar Module"""
 
 from time import time
-from PyQt6 import QtWidgets
+from PyQt6 import QtGui, QtWidgets
 
 
 class BMStatusBar(QtWidgets.QStatusBar):

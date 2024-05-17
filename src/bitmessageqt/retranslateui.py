@@ -1,4 +1,6 @@
-from PyQt6 import QtWidgets
+from os import path
+from PyQt6 import QtGui, QtWidgets
+from debug import logger
 import bitmessageqt.widgets as widgets
 
 

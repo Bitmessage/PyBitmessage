@@ -5,7 +5,7 @@ Dialogs that work with BM address.
 
 import hashlib
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 import queues
 import bitmessageqt.widgets as widgets

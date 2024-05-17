@@ -2,7 +2,7 @@
 Custom dialog classes
 """
 # pylint: disable=too-few-public-methods
-from PyQt6 import QtWidgets
+from PyQt6 import QtGui, QtWidgets
 
 import paths
 import bitmessageqt.widgets as widgets
