@@ -11,6 +11,7 @@ import select
 import socket
 import sys
 import time
+import warnings
 from errno import (
     EADDRINUSE, EAGAIN, EALREADY, EBADF, ECONNABORTED, ECONNREFUSED,
     ECONNRESET, EHOSTUNREACH, EINPROGRESS, EINTR, EINVAL, EISCONN, ENETUNREACH,

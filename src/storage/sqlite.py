@@ -1,6 +1,7 @@
 """
 Sqlite Inventory
 """
+import sqlite3
 import time
 from threading import RLock
 

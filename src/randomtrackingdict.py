@@ -3,6 +3,7 @@ Track randomize ordered dict
 """
 from threading import RLock
 from time import time
+from binascii import hexlify
 
 try:
     import helper_random

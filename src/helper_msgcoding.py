@@ -2,6 +2,7 @@
 Message encoding end decoding functions
 """
 
+import string
 import zlib
 
 import messagetypes
