@@ -12,7 +12,7 @@ def start(config, state):
     """Start network threads"""
     import state
     from .announcethread import AnnounceThread
-    import network.connectionpool as connectionpool  # pylint: disable=relative-import
+    import network.connectionpool as connectionpool # pylint: disable=relative-import
     from .addrthread import AddrThread
     from .dandelion import Dandelion
     from .downloadthread import DownloadThread

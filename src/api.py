@@ -328,7 +328,6 @@ class testmode(object):  # pylint: disable=too-few-public-methods
 
 class command(object):  # pylint: disable=too-few-public-methods
     """Decorator for API command method"""
-
     def __init__(self, *aliases):
         self.aliases = aliases
 

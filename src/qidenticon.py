@@ -43,7 +43,6 @@ Returns an instance of :class:`QPixmap` which have generated identicon image.
 from six.moves import range
 from PyQt6 import QtCore, QtGui
 
-
 class IdenticonRendererBase(object):
     """Encapsulate methods around rendering identicons"""
 

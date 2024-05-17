@@ -28,7 +28,6 @@ logger = logging.getLogger('default')
 
 class Dandelion:  # pylint: disable=old-style-class
     """Dandelion class for tracking stem/fluff stages."""
-
     def __init__(self):
         # currently assignable child stems
         self.stem = []

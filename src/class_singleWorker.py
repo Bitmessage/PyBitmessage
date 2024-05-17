@@ -1080,10 +1080,10 @@ class singleWorker(StoppableThread):
                                         " more difficult than you are"
                                         " willing to do. {2}"
                                     ).format(str(float(requiredAverageProofOfWorkNonceTrialsPerByte)
-                                                 / defaults.networkDefaultProofOfWorkNonceTrialsPerByte),
-                                             str(float(requiredPayloadLengthExtraBytes)
-                                                 / defaults.networkDefaultPayloadLengthExtraBytes),
-                                             l10n.formatTimestamp()))))
+                                          / defaults.networkDefaultProofOfWorkNonceTrialsPerByte),
+                                          str(float(requiredPayloadLengthExtraBytes)
+                                                / defaults.networkDefaultPayloadLengthExtraBytes),
+                                                l10n.formatTimestamp()))))
                             continue
             else:  # if we are sending a message to ourselves or a chan..
                 self.logger.info('Sending a message.')

@@ -26,7 +26,6 @@ class Socks4aError(ProxyError):
 
 class Socks4a(Proxy):
     """SOCKS4a proxy class"""
-
     def __init__(self, address=None):
         Proxy.__init__(self, address)
         self.ipaddr = None
@@ -74,7 +73,6 @@ class Socks4a(Proxy):
 
 class Socks4aConnection(Socks4a):
     """Child SOCKS4a class used for making outbound connections."""
-
     def __init__(self, address):
         Socks4a.__init__(self, address=address)
 
@@ -121,7 +119,6 @@ class Socks4aConnection(Socks4a):
 
 class Socks4aResolver(Socks4a):
     """DNS resolver class using SOCKS4a"""
-
     def __init__(self, host):
         self.host = host
         self.port = 8444

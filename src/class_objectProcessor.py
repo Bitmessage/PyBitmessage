@@ -43,7 +43,6 @@ class objectProcessor(threading.Thread):
     The objectProcessor thread, of which there is only one, receives network
     objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
-
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")
         random.seed()

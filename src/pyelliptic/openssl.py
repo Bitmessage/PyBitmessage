@@ -100,7 +100,6 @@ class _OpenSSL(object):
     Wrapper for OpenSSL using ctypes
     """
     # pylint: disable=too-many-statements, too-many-instance-attributes
-
     def __init__(self, library):
         """
         Build the wrapper

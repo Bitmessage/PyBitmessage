@@ -15,7 +15,6 @@ class translateClass:
     when we are in daemon mode and not using any QT functions.
     """
     # pylint: disable=old-style-class,too-few-public-methods
-
     def __init__(self, context, text):
         self.context = context
         self.text = text

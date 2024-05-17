@@ -15,7 +15,6 @@ from .threads import StoppableThread
 class ReceiveQueueThread(StoppableThread):
     """This thread processes data received from the network
     (which is done by the asyncore thread)"""
-
     def __init__(self, num=0):
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
 
