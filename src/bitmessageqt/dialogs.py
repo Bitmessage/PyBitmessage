@@ -27,7 +27,6 @@ __all__ = [
 
 class AboutDialog(QtWidgets.QDialog):
     """The `About` dialog"""
-
     def __init__(self, parent=None):
         super(AboutDialog, self).__init__(parent)
         widgets.load('about.ui', self)
@@ -56,7 +55,6 @@ class AboutDialog(QtWidgets.QDialog):
 
 class IconGlossaryDialog(QtWidgets.QDialog):
     """The `Icon Glossary` dialog, explaining the status icon colors"""
-
     def __init__(self, parent=None, config=None):
         super(IconGlossaryDialog, self).__init__(parent)
         widgets.load('iconglossary.ui', self)
@@ -73,7 +71,6 @@ class IconGlossaryDialog(QtWidgets.QDialog):
 
 class HelpDialog(QtWidgets.QDialog):
     """The `Help` dialog"""
-
     def __init__(self, parent=None):
         super(HelpDialog, self).__init__(parent)
         widgets.load('help.ui', self)
@@ -82,7 +79,6 @@ class HelpDialog(QtWidgets.QDialog):
 
 class ConnectDialog(QtWidgets.QDialog):
     """The `Connect` dialog"""
-
     def __init__(self, parent=None):
         super(ConnectDialog, self).__init__(parent)
         widgets.load('connect.ui', self)

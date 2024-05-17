@@ -8,7 +8,6 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 class MessageCompose(QtWidgets.QTextEdit):
     """Editor class with wheel zoom functionality"""
-
     def __init__(self, parent=0):
         super(MessageCompose, self).__init__(parent)
         self.setAcceptRichText(False)

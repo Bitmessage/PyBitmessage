@@ -18,7 +18,6 @@ from .uisignaler import UISignaler
 
 class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
     """Network status tab"""
-
     def __init__(self, parent=None):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)

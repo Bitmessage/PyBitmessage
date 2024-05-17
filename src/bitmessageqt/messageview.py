@@ -135,7 +135,7 @@ class MessageView(QtWidgets.QTextBrowser):
         out = self.html.raw
         if self.html.has_html:
             out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + QtWidgets.QApplication.translate(
-                "MessageView", "HTML detected, click here to display") + "</b></div><br/>" + out
+                    "MessageView", "HTML detected, click here to display") + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
@@ -145,8 +145,7 @@ class MessageView(QtWidgets.QTextBrowser):
         """Render message as HTML"""
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + \
-            QtWidgets.QApplication.translate("MessageView", "Click here to disable HTML") + "</b></div><br/>" + out
+        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + QtWidgets.QApplication.translate("MessageView", "Click here to disable HTML") + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")

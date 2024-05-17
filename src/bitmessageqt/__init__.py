@@ -53,7 +53,7 @@ import shutdown
 from .statusbar import BMStatusBar
 import bitmessageqt.sound as sound
 # This is needed for tray icon
-import bitmessageqt.bitmessage_icons_rc as bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
+import bitmessageqt.bitmessage_icons_rc as bitmessage_icons_rc # noqa:F401 pylint: disable=unused-import
 import helper_sent
 
 try:
@@ -152,9 +152,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.actionNetworkSwitch.triggered.connect(self.network_switch)
         self.ui.actionManageKeys.triggered.connect(self.click_actionManageKeys)
         self.ui.actionDeleteAllTrashedMessages.triggered.connect(self.click_actionDeleteAllTrashedMessages)
-        self.ui.actionRegenerateDeterministicAddresses.triggered.connect(
-            self.click_actionRegenerateDeterministicAddresses)
-        self.ui.pushButtonAddChan.clicked.connect(self.click_actionJoinChan)  # also used for creating chans.
+        self.ui.actionRegenerateDeterministicAddresses.triggered.connect(self.click_actionRegenerateDeterministicAddresses)
+        self.ui.pushButtonAddChan.clicked.connect(self.click_actionJoinChan) # also used for creating chans.
         self.ui.pushButtonNewAddress.clicked.connect(self.click_NewAddressDialog)
         self.ui.pushButtonAddAddressBook.clicked.connect(self.click_pushButtonAddAddressBook)
         self.ui.pushButtonAddSubscription.clicked.connect(self.click_pushButtonAddSubscription)
@@ -753,11 +752,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         # Put the TTL slider in the correct spot
         TTL = config.getint('bitmessagesettings', 'ttl')
-        if TTL < 3600:  # an hour
+        if TTL < 3600: # an hour
             TTL = 3600
-        elif TTL > 28 * 24 * 60 * 60:  # 28 days
-            TTL = 28 * 24 * 60 * 60
-        self.ui.horizontalSliderTTL.setSliderPosition(int((TTL - 3600) ** (1 / 3.199)))
+        elif TTL > 28*24*60*60: # 28 days
+            TTL = 28*24*60*60
+        self.ui.horizontalSliderTTL.setSliderPosition(int((TTL - 3600) ** (1/3.199)))
         self.updateHumanFriendlyTTLDescription(TTL)
 
         self.ui.horizontalSliderTTL.valueChanged.connect(self.updateTTL)
@@ -816,20 +815,20 @@ class MyForm(settingsmixin.SMainWindow):
         config.save()
 
     def updateHumanFriendlyTTLDescription(self, TTL):
-        numberOfHours = int(round(TTL / (60 * 60)))
+        numberOfHours = int(round(TTL / (60*60)))
         font = QtGui.QFont()
         stylesheet = ""
 
         if numberOfHours < 48:
             self.ui.labelHumanFriendlyTTLDescription.setText(
-                _translate("MainWindow", "%n hour(s)", None, numberOfHours)
-                + ", "
-                + _translate("MainWindow", "not recommended for chans", None)
-            )
+                _translate("MainWindow", "%n hour(s)", None, numberOfHours) +
+                ", " +
+                _translate("MainWindow", "not recommended for chans", None)
+                )
             stylesheet = "QLabel { color : red; }"
             font.setBold(True)
         else:
-            numberOfDays = int(round(TTL / (24 * 60 * 60)))
+            numberOfDays = int(round(TTL / (24*60*60)))
             self.ui.labelHumanFriendlyTTLDescription.setText(
                 _translate(
                     "MainWindow",
@@ -1105,7 +1104,7 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             statusText = _translate(
                 "MainWindow", "Unknown status: {0} {1}").format(status,
-                                                                l10n.formatTimestamp(lastactiontime))
+                l10n.formatTimestamp(lastactiontime))
 
         items = [
             MessageList_AddressWidget(
@@ -1222,7 +1221,7 @@ class MyForm(settingsmixin.SMainWindow):
     # create application indicator
     def appIndicatorInit(self, app):
         self.initTrayIcon("can-icon-24px-red.png", app)
-        self.tray.activated.connect(self.__icon_activated)
+        self.tray.activated.connect(self.__icon_activated);
 
         m = QtWidgets.QMenu()
 
@@ -1393,7 +1392,7 @@ class MyForm(settingsmixin.SMainWindow):
         self._notifier = _simple_notify
         # does nothing if isAvailable returns false
         # XXX unresolved
-        # self._player = QtGui.QSound.play
+        #self._player = QtGui.QSound.play
 
         if not get_plugins:
             return
@@ -1407,7 +1406,7 @@ class MyForm(settingsmixin.SMainWindow):
         self._theme_player = get_plugin('notification.sound', 'theme')
 
         # XXX unresolved
-        # if not QtGui.QSound.isAvailable():
+        #if not QtGui.QSound.isAvailable():
         if not False:
             _plugin = get_plugin(
                 'notification.sound', 'file', fallback='file.fallback')
@@ -1780,7 +1779,7 @@ class MyForm(settingsmixin.SMainWindow):
             pen.setBrush(QtGui.QBrush(QtCore.Qt.BrushStyle.SolidPattern))
             painter.setPen(pen)
             painter.setFont(font)
-            painter.drawText(24 - rect.right() - marginX, -rect.top() + marginY, txt)
+            painter.drawText(24-rect.right()-marginX, -rect.top()+marginY, txt)
             painter.end()
         return QtGui.QIcon(pixmap)
 
@@ -1857,7 +1856,7 @@ class MyForm(settingsmixin.SMainWindow):
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
                     except:
-                        # If someone misses adding a "_translate" to a string before passing it to this function,
+                        # If someone misses adding a "_translate" to a string before passing it to this function, 
                         # this function won't receive a qstring which will cause an exception.
                         newlinePosition = 0
                     if newlinePosition > 1:
@@ -1894,7 +1893,7 @@ class MyForm(settingsmixin.SMainWindow):
             "MainWindow",
             "New version of PyBitmessage is available: {0}. Download it"
             " from https://github.com/Bitmessage/PyBitmessage/releases/latest"
-        ).format(self.notifiedNewVersion)
+            ).format(self.notifiedNewVersion)
         )
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
@@ -1918,7 +1917,7 @@ class MyForm(settingsmixin.SMainWindow):
                 messagelist.item(i, 0).setLabel()
 
     def rerenderAddressBook(self):
-        def addRow(address, label, type):
+        def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = Ui_AddressBookWidgetItemLabel(address, label, type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
@@ -2066,14 +2065,14 @@ class MyForm(settingsmixin.SMainWindow):
                                         "MainWindow",
                                         "You are trying to send an email instead of a bitmessage. "
                                         "This requires registering with a gateway. Attempt to register?"),
-                                    QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No) != QtWidgets.QMessageBox.StandardButton.Yes:
+                                    QtWidgets.QMessageBox.StandardButton.Yes|QtWidgets.QMessageBox.StandardButton.No) != QtWidgets.QMessageBox.StandardButton.Yes:
                                 continue
                             email = acct.getLabel()
-                            if email[-14:] != "@mailchuck.com":  # attempt register
+                            if email[-14:] != "@mailchuck.com": # attempt register
                                 # 12 character random email address
                                 email = ''.join(
                                         random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
-                                ) + "@mailchuck.com"
+                                        ) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
                             config.set(fromAddress, 'label', email)
@@ -2085,7 +2084,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " an email gateway. Sending registration"
                                 " now as {0}, please wait for the registration"
                                 " to be processed before retrying sending."
-                            ).format(email)
+                                ).format(email)
                             )
                             return
                     status, addressVersionNumber, streamNumber = decodeAddress(toAddress)[:3]
@@ -2101,19 +2100,19 @@ class MyForm(settingsmixin.SMainWindow):
                                 "MainWindow",
                                 "Error: Bitmessage addresses start with"
                                 " BM-   Please check the recipient address {0}"
-                            ).format(toAddress))
+                                ).format(toAddress))
                         elif status == 'checksumfailed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address {0} is not"
                                 " typed or copied correctly. Please check it."
-                            ).format(toAddress))
+                                ).format(toAddress))
                         elif status == 'invalidcharacters':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address {0} contains"
                                 " invalid characters. Please check it."
-                            ).format(toAddress))
+                                ).format(toAddress))
                         elif status == 'versiontoohigh':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2121,7 +2120,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " {0} is too high. Either you need to upgrade"
                                 " your Bitmessage software or your"
                                 " acquaintance is being clever."
-                            ).format(toAddress))
+                                ).format(toAddress))
                         elif status == 'ripetooshort':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2129,7 +2128,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address {0} is too short. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                            ).format(toAddress))
+                                ).format(toAddress))
                         elif status == 'ripetoolong':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2137,7 +2136,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address {0} is too long. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                            ).format(toAddress))
+                                ).format(toAddress))
                         elif status == 'varintmalformed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2145,13 +2144,13 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address {0} is malformed. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                            ).format(toAddress))
+                                ).format(toAddress))
                         else:
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Something is wrong with the"
                                 " recipient address {0}."
-                            ).format(toAddress))
+                                ).format(toAddress))
                     elif fromAddress == '':
                         self.updateStatusBar(_translate(
                             "MainWindow",
@@ -2307,7 +2306,7 @@ class MyForm(settingsmixin.SMainWindow):
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ItemDataRole.ForegroundRole)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
-        if (self.ui.comboBoxSendFrom.count() == 2):
+        if(self.ui.comboBoxSendFrom.count() == 2):
             self.ui.comboBoxSendFrom.setCurrentIndex(1)
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
@@ -2330,7 +2329,7 @@ class MyForm(settingsmixin.SMainWindow):
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ItemDataRole.ForegroundRole)
         self.ui.comboBoxSendFromBroadcast.insertItem(0, '', '')
-        if (self.ui.comboBoxSendFromBroadcast.count() == 2):
+        if(self.ui.comboBoxSendFromBroadcast.count() == 2):
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(1)
         else:
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
@@ -2660,13 +2659,13 @@ class MyForm(settingsmixin.SMainWindow):
                     "MainWindow",
                     "%n object(s) pending proof of work", None,
                     powQueueSize()
-                ) + ", "
-                + _translate(
+                ) + ", " +
+                _translate(
                     "MainWindow",
                     "%n object(s) waiting to be distributed", None,
                     pendingUpload()
-                ) + "\n\n"
-                + _translate(
+                ) + "\n\n" +
+                _translate(
                     "MainWindow", "Wait until these tasks finish?"),
                 QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
                 | QtWidgets.QMessageBox.StandardButton.Cancel, QtWidgets.QMessageBox.StandardButton.Cancel)
@@ -2749,8 +2748,8 @@ class MyForm(settingsmixin.SMainWindow):
                 if curWorkerQueue > 0:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Waiting for PoW to finish... {0}%"
-                    ).format(50 * (maxWorkerQueue - curWorkerQueue)
-                             / maxWorkerQueue))
+                    ).format(50 * (maxWorkerQueue - curWorkerQueue) /
+                          maxWorkerQueue))
                     time.sleep(0.5)
                     QtCore.QCoreApplication.processEvents(
                         QtCore.QEventLoop.ProcessEventsFlag.AllEvents, 1000
@@ -2856,10 +2855,10 @@ class MyForm(settingsmixin.SMainWindow):
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
-            elif lines[i] == '' and (i + 1) < totalLines and \
-                    lines[i + 1] != '------------------------------------------------------':
+            elif lines[i] == '' and (i+1) < totalLines and \
+                 lines[i+1] != '------------------------------------------------------':
                 lines[i] = '<br><br>'
-        content = ' '.join(lines)  # To keep the whitespace between lines
+        content = ' '.join(lines) # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
         content = content
         textEdit.setHtml(content)
@@ -3018,8 +3017,8 @@ class MyForm(settingsmixin.SMainWindow):
                 toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         if fromAddressAtCurrentInboxRow == \
             tableWidget.item(currentInboxRow, column_from).label or (
-                isinstance(acct, GatewayAccount)
-                and fromAddressAtCurrentInboxRow == acct.relayAddress):
+                isinstance(acct, GatewayAccount) and
+                fromAddressAtCurrentInboxRow == acct.relayAddress):
             self.ui.lineEditTo.setText(str(acct.fromAddress))
         else:
             self.ui.lineEditTo.setText(
@@ -3205,7 +3204,7 @@ class MyForm(settingsmixin.SMainWindow):
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self,
-            _translate("MainWindow", "Save As..."),
+            _translate("MainWindow","Save As..."),
             defaultFilename,
             "Text files (*.txt);;All files (*.*)")
         if filename == '':
@@ -3663,8 +3662,8 @@ class MyForm(settingsmixin.SMainWindow):
             otherAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.ItemDataRole.UserRole)
         account = accountClass(myAddress)
         if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
-                (currentColumn in [0, 2] and self.getCurrentFolder() == "sent")
-                or (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
+                (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
+                (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
             text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.ItemDataRole.UserRole)

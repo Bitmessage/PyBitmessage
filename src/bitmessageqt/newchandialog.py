@@ -17,13 +17,12 @@ from .utils import str_chan
 
 class NewChanDialog(QtWidgets.QDialog):
     """The `New Chan` dialog"""
-
     def __init__(self, parent=None):
         super(NewChanDialog, self).__init__(parent)
         widgets.load('newchandialog.ui', self)
         self.parent = parent
         # XXX unresolved
-        # self.chanAddress.setValidator(
+        #self.chanAddress.setValidator(
         #    AddressValidator(
         #        self.chanAddress,
         #        self.chanPassPhrase,
@@ -31,7 +30,7 @@ class NewChanDialog(QtWidgets.QDialog):
         #        self.buttonBox,
         #        False))
         # XXX unresolved
-        # self.chanPassPhrase.setValidator(
+        #self.chanPassPhrase.setValidator(
         #    PassPhraseValidator(
         #        self.chanPassPhrase,
         #        self.chanAddress,

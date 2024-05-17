@@ -16,7 +16,6 @@ from .utils import str_chan
 
 class AddressPassPhraseValidatorMixin(object):
     """Bitmessage address or passphrase validator class for Qt UI"""
-
     def setParams(
             self,
             passPhraseObject=None,
@@ -170,7 +169,6 @@ class AddressPassPhraseValidatorMixin(object):
 
 class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
     """AddressValidator class for Qt UI"""
-
     def __init__(self, parent=None, passPhraseObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):
         super(AddressValidator, self).__init__(parent)
         self.setParams(passPhraseObject, parent, feedBackObject, buttonBox, addressMandatory)
@@ -178,7 +176,6 @@ class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
 
 class PassPhraseValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
     """PassPhraseValidator class for Qt UI"""
-
     def __init__(self, parent=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=False):
         super(PassPhraseValidator, self).__init__(parent)
         self.setParams(parent, addressObject, feedBackObject, buttonBox, addressMandatory)

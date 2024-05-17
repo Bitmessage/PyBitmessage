@@ -41,7 +41,6 @@ def getSOCKSProxyType(config):
 
 class SettingsDialog(QtWidgets.QDialog):
     """The "Settings" dialog"""
-
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)
         widgets.load('settings.ui', self)

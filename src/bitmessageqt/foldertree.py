@@ -219,7 +219,6 @@ class Ui_FolderWidget(BMTreeWidgetItem):
 
 class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
     """Item in the account/folder tree representing an account"""
-
     def __init__(self, parent, pos=0, address=None, unreadCount=0, enabled=True):
         super(Ui_AddressWidget, self).__init__(
             parent, pos, address, unreadCount)
@@ -298,7 +297,6 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
 class Ui_SubscriptionWidget(Ui_AddressWidget):
     """Special treating of subscription addresses"""
     # pylint: disable=unused-argument
-
     def __init__(self, parent, pos=0, address="", unreadCount=0, label="", enabled=True):
         super(Ui_SubscriptionWidget, self).__init__(
             parent, pos, address, unreadCount, enabled)
@@ -389,7 +387,6 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
 
 class MessageList_AddressWidget(BMAddressWidget):
     """Address item in a messagelist"""
-
     def __init__(self, address=None, label=None, unread=False):
         self.setAddress(address)
         super(MessageList_AddressWidget, self).__init__(label, unread)
@@ -439,7 +436,6 @@ class MessageList_AddressWidget(BMAddressWidget):
 
 class MessageList_SubjectWidget(BMTableWidgetItem):
     """Message list subject item"""
-
     def __init__(self, subject=None, label=None, unread=False):
         self.setSubject(subject)
         super(MessageList_SubjectWidget, self).__init__(label, unread)
@@ -497,7 +493,6 @@ class MessageList_TimeWidget(BMTableWidgetItem):
 class Ui_AddressBookWidgetItem(BMAddressWidget):
     """Addressbook item"""
     # pylint: disable=unused-argument
-
     def __init__(self, label=None, acc_type=AccountMixin.NORMAL):
         self.type = acc_type
         super(Ui_AddressBookWidgetItem, self).__init__(label=label)
@@ -540,7 +535,6 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
 
 class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
     """Addressbook label item"""
-
     def __init__(self, address, label, acc_type):
         self.address = address
         super(Ui_AddressBookWidgetItemLabel, self).__init__(label, acc_type)
@@ -553,7 +547,6 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
 
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
     """Addressbook address item"""
-
     def __init__(self, address, label, acc_type):
         self.address = address
         super(Ui_AddressBookWidgetItemAddress, self).__init__(address, acc_type)
