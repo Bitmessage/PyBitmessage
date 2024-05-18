@@ -187,7 +187,7 @@ def decodeAddress(address):
         integer = decodeBase58(address)
     if integer == 0:
         status = 'invalidcharacters'
-        return status, 0, 0, ''
+        return status, 0, 0, b''
     # after converting to hex, the string will be prepended
     # with a 0x and appended with a L in python2
     hexdata = hex(integer)[2:].rstrip('L')
@@ -200,23 +200,23 @@ def decodeAddress(address):
 
     if checksum != double_sha512(data[:-4])[0:4]:
         status = 'checksumfailed'
-        return status, 0, 0, ''
+        return status, 0, 0, b''
 
     try:
         addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
     except varintDecodeError as e:
         logger.error(str(e))
         status = 'varintmalformed'
-        return status, 0, 0, ''
+        return status, 0, 0, b''
 
     if addressVersionNumber > 4:
         logger.error('cannot decode address version numbers this high')
         status = 'versiontoohigh'
-        return status, 0, 0, ''
+        return status, 0, 0, b''
     elif addressVersionNumber == 0:
         logger.error('cannot decode address version numbers of zero.')
         status = 'versiontoohigh'
-        return status, 0, 0, ''
+        return status, 0, 0, b''
 
     try:
         streamNumber, bytesUsedByStreamNumber = \
@@ -224,7 +224,7 @@ def decodeAddress(address):
     except varintDecodeError as e:
         logger.error(str(e))
         status = 'varintmalformed'
-        return status, 0, 0, ''
+        return status, 0, 0, b''
 
     status = 'success'
     if addressVersionNumber == 1:
@@ -242,21 +242,21 @@ def decodeAddress(address):
             return status, addressVersionNumber, streamNumber, \
                 b'\x00\x00' + embeddedRipeData
         elif len(embeddedRipeData) < 18:
-            return 'ripetooshort', 0, 0, ''
+            return 'ripetooshort', 0, 0, b''
         elif len(embeddedRipeData) > 20:
-            return 'ripetoolong', 0, 0, ''
-        return 'otherproblem', 0, 0, ''
+            return 'ripetoolong', 0, 0, b''
+        return 'otherproblem', 0, 0, b''
     elif addressVersionNumber == 4:
         embeddedRipeData = \
             data[bytesUsedByVersionNumber + bytesUsedByStreamNumber:-4]
         if embeddedRipeData[0:1] == b'\x00':
             # In order to enforce address non-malleability, encoded
             # RIPE data must have NULL bytes removed from the front
-            return 'encodingproblem', 0, 0, ''
+            return 'encodingproblem', 0, 0, b''
         elif len(embeddedRipeData) > 20:
-            return 'ripetoolong', 0, 0, ''
+            return 'ripetoolong', 0, 0, b''
         elif len(embeddedRipeData) < 4:
-            return 'ripetooshort', 0, 0, ''
+            return 'ripetooshort', 0, 0, b''
         x00string = b'\x00' * (20 - len(embeddedRipeData))
         return status, addressVersionNumber, streamNumber, \
             x00string + embeddedRipeData

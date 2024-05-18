@@ -135,6 +135,7 @@ class AccountMixin(object):
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
+                    retval = retval.decode('utf-8', 'replace')
         elif self.address is None or self.type == AccountMixin.ALL:
             return _translate("MainWindow", "All accounts")
 
@@ -306,6 +307,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
+                retval = retval.decode('utf-8', 'replace')
             return retval
         return self.address
 
@@ -411,6 +413,7 @@ class MessageList_AddressWidget(BMAddressWidget):
         if queryreturn:
             for row in queryreturn:
                 newLabel = row[0]
+                newLabel = newLabel.decode('utf-8', 'replace')
 
         self.label = newLabel
 

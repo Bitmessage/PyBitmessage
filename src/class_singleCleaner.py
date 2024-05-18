@@ -99,6 +99,8 @@ class singleCleaner(StoppableThread):
                     tick - state.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for toAddress, ackData, status in queryreturn:
+                    toAddress = toAddress.decode('utf-8', 'replace')
+                    status = status.decode('utf-8', 'replace')
                     if status == 'awaitingpubkey':
                         self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':

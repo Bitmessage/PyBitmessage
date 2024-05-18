@@ -26,3 +26,4 @@ coverage.xml
 .buildozer
 .tox
 *.swp
+typescript

@@ -47,7 +47,7 @@ def isAddressInMySubscriptionsList(address):
     """Am I subscribed to this address?"""
     queryreturn = sqlQuery(
         '''select * from subscriptions where address=?''',
-        str(address))
+        address)
     return queryreturn != []
 
 
@@ -136,6 +136,7 @@ def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
+        address = address.decode('utf-8', 'replace')
         # status
         addressVersionNumber, streamNumber, hashobj = decodeAddress(address)[1:]
         if addressVersionNumber == 2:

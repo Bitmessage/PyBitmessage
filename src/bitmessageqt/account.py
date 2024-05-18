@@ -38,6 +38,8 @@ def getSortedSubscriptions(count=False):
     ret = {}
     for row in queryreturn:
         label, address, enabled = row
+        label = label.decode('utf-8', 'replace')
+        address = address.decode('utf-8', 'replace')
         ret[address] = {}
         ret[address]["inbox"] = {}
         ret[address]["inbox"]['label'] = label
@@ -50,6 +52,8 @@ def getSortedSubscriptions(count=False):
             GROUP BY inbox.fromaddress, folder''', str_broadcast_subscribers)
         for row in queryreturn:
             address, folder, cnt = row
+            address = address.decode('utf-8', 'replace')
+            folder = folder.decode('utf-8', 'replace')
             if folder not in ret[address]:
                 ret[address][folder] = {
                     'label': ret[address]['inbox']['label'],
@@ -137,12 +141,14 @@ class BMAccount(object):
         if queryreturn != []:
             for row in queryreturn:
                 label, = row
+                label = label.decode('utf-8', 'replace')
         else:
             queryreturn = sqlQuery(
                 '''select label from subscriptions where address=?''', address)
             if queryreturn != []:
                 for row in queryreturn:
                     label, = row
+                    label = label.decode('utf-8', 'replace')
         return label
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
@@ -199,11 +205,11 @@ class GatewayAccount(BMAccount):
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
             '',
-            self.toAddress,
+            self.toAddress.encode(),
             ripe,
-            self.fromAddress,
-            self.subject,
-            self.message,
+            self.fromAddress.encode(),
+            self.subject.encode(),
+            self.message.encode(),
             ackdata,
             int(time.time()),  # sentTime (this will never change)
             int(time.time()),  # lastActionTime

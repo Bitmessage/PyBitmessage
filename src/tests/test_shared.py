@@ -46,7 +46,7 @@ class TestShared(unittest.TestCase):
         address = sample_address
 
         # if address is in MyAddressbook
-        mock_sql_query.return_value = [address]
+        mock_sql_query.return_value = [address.encode()]
         return_val = isAddressInMyAddressBook(address)
         mock_sql_query.assert_called_once()
         self.assertTrue(return_val)
@@ -64,7 +64,7 @@ class TestShared(unittest.TestCase):
         address = sample_address
 
         # if address is in MySubscriptionsList
-        mock_sql_query.return_value = [address]
+        mock_sql_query.return_value = [address.encode()]
         return_val = isAddressInMySubscriptionsList(address)
         self.assertTrue(return_val)
 
@@ -78,7 +78,7 @@ class TestShared(unittest.TestCase):
     def test_reloadBroadcastSendersForWhichImWatching(self, mock_sql_query):
         """Test for reload Broadcast Senders For Which Im Watching"""
         mock_sql_query.return_value = [
-            (sample_address,),
+            (sample_address.encode(),),
         ]
         # before reload
         self.assertEqual(len(MyECSubscriptionCryptorObjects), 0)
