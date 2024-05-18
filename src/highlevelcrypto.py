@@ -85,7 +85,12 @@ def random_keys():
 
 def deterministic_keys(passphrase, nonce):
     """Generate keys from *passphrase* and *nonce* (encoded as varint)"""
-    priv = hashlib.sha512(passphrase.encode() + nonce).digest()[:32]
+    if isinstance(passphrase, str):
+        ph = passphrase.encode()
+    else:
+        ph = passphrase
+    priv = hashlib.sha512(ph + nonce).digest()[:32]
+
     pub = pointMult(priv)
     return priv, pub
 
