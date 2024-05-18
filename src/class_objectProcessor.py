@@ -153,7 +153,7 @@ class objectProcessor(threading.Thread):
                     data[readPosition:],
                     _translate(
                         "MainWindow",
-                        "Acknowledgement of the message received {}"
+                        "Acknowledgement of the message received {0}"
                     ).format(l10n.formatTimestamp()))
             ))
         else:
@@ -326,8 +326,8 @@ class objectProcessor(threading.Thread):
                     'within recpubkey, addressVersion: %s, streamNumber: %s'
                     '\nripe %s\npublicSigningKey in hex: %s'
                     '\npublicEncryptionKey in hex: %s',
-                    addressVersion, streamNumber, hexlify(ripe),
-                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                    addressVersion, streamNumber, hexlify(ripe).decode(),
+                    hexlify(publicSigningKey).decode(), hexlify(publicEncryptionKey).decode()
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
@@ -391,8 +391,8 @@ class objectProcessor(threading.Thread):
                     'within recpubkey, addressVersion: %s, streamNumber: %s'
                     '\nripe %s\npublicSigningKey in hex: %s'
                     '\npublicEncryptionKey in hex: %s',
-                    addressVersion, streamNumber, hexlify(ripe),
-                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                    addressVersion, streamNumber, hexlify(ripe).decode(),
+                    hexlify(publicSigningKey).decode(), hexlify(publicEncryptionKey).decode()
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
@@ -481,7 +481,7 @@ class objectProcessor(threading.Thread):
                     initialDecryptionSuccessful = True
                     logger.info(
                         'EC decryption successful using key associated'
-                        ' with ripe hash: %s.', hexlify(key))
+                        ' with ripe hash: %s.', hexlify(key).decode())
             except Exception:  # nosec B110
                 pass
         if not initialDecryptionSuccessful:
@@ -544,8 +544,8 @@ class objectProcessor(threading.Thread):
                 ' Attack.\nSee: '
                 'http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html'
                 '\nyour toRipe: %s\nembedded destination toRipe: %s',
-                hexlify(toRipe),
-                hexlify(decryptedData[readPosition:readPosition + 20])
+                hexlify(toRipe).decode(),
+                hexlify(decryptedData[readPosition:readPosition + 20]).decode()
             )
         readPosition += 20
         messageEncodingType, messageEncodingTypeLength = decodeVarint(
@@ -808,9 +808,9 @@ class objectProcessor(threading.Thread):
                         logger.info(
                             'EC decryption successful using key associated'
                             ' with ripe hash: %s', hexlify(key).decode())
-                except Exception as ex:
+                except Exception:
                     logger.debug(
-                        'cryptorObject.decrypt Exception: {}'.format(ex))
+                        'cryptorObject.decrypt Exception:', exc_info=True)
             if not initialDecryptionSuccessful:
                 # This is not a broadcast I am interested in.
                 return logger.debug(

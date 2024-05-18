@@ -110,16 +110,15 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 b"error", b"version", b"verack"):
             logger.error(
                 'Received command %s before connection was fully'
-                ' established, ignoring', self.command.decode('utf-8', 'replace'))
+                ' established, ignoring', self.command)
             self.invalid = True
         if not self.invalid:
             try:
                 retval = getattr(
                     self, "bm_command_" + self.command.decode('utf-8', 'replace').lower())()
-            except AttributeError as err:
-                logger.debug('command = {}, err = {}'.format(self.command.decode('utf-8', 'replace'), err))
+            except AttributeError:
                 # unimplemented command
-                logger.debug('unimplemented command %s', self.command.decode('utf-8', 'replace'))
+                logger.debug('unimplemented command %s', self.command)
             except BMProtoInsufficientDataError:
                 logger.debug('packet length too short, skipping')
             except BMProtoExcessiveDataError:
@@ -142,8 +141,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # broken read, ignore
             pass
         else:
-            logger.debug('Closing due to invalid command %s', self.command.decode('utf-8', 'replace'))
-            self.close_reason = "Invalid command %s" % self.command.decode('utf-8', 'replace')
+            logger.debug('Closing due to invalid command %s', self.command)
+            self.close_reason = "Invalid command %s" % self.command
             self.set_state("close")
             return False
         if retval:

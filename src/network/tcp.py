@@ -184,10 +184,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             try:
                 return s.endswith(tail)
             except:
-                try:
-                    return s.decode('ascii').endswith(tail)
-                except UnicodeDecodeError:
-                    return False
+                return s.decode('utf-8', 'replace').endswith(tail)
 
         templist = []
         addrs = {}

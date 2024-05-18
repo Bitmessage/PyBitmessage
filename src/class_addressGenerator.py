@@ -142,7 +142,7 @@ class addressGenerator(StoppableThread):
                     ):
                         break
                 self.logger.info(
-                    'Generated address with ripe digest: %s', hexlify(ripe))
+                    'Generated address with ripe digest: %s', hexlify(ripe).decode())
                 try:
                     self.logger.info(
                         'Address generator calculated %s addresses at %s'
@@ -255,7 +255,7 @@ class addressGenerator(StoppableThread):
                             break
 
                     self.logger.info(
-                        'Generated address with ripe digest: %s', hexlify(ripe))
+                        'Generated address with ripe digest: %s', hexlify(ripe).decode())
                     try:
                         self.logger.info(
                             'Address generator calculated %s addresses'

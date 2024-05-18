@@ -146,38 +146,38 @@ class singleWorker(StoppableThread):
             if command == 'sendmessage':
                 try:
                     self.sendMsg()
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("sendMsg didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("sendMsg didn't work")
             elif command == 'sendbroadcast':
                 try:
                     self.sendBroadcast()
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("sendBroadcast didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("sendBroadcast didn't work")
             elif command == 'doPOWForMyV2Pubkey':
                 try:
                     self.doPOWForMyV2Pubkey(data)
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("doPOWForMyV2Pubkey didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("doPOWForMyV2Pubkey didn't work")
             elif command == 'sendOutOrStoreMyV3Pubkey':
                 try:
                     self.sendOutOrStoreMyV3Pubkey(data)
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("sendOutOrStoreMyV3Pubkey didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("sendOutOrStoreMyV3Pubkey didn't work")
             elif command == 'sendOutOrStoreMyV4Pubkey':
                 try:
                     self.sendOutOrStoreMyV4Pubkey(data)
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("sendOutOrStoreMyV4Pubkey didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("sendOutOrStoreMyV4Pubkey didn't work")
             elif command == 'sendOnionPeerObj':
                 try:
                     self.sendOnionPeerObj(data)
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("sendOnionPeerObj didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("sendOnionPeerObj didn't work")
             elif command == 'resetPoW':
                 try:
                     proofofwork.resetPoW()
-                except Exception as ex:  # noqa:E722
-                    self.logger.warning("proofofwork.resetPoW didn't work: {}".format(ex))
+                except:  # noqa:E722
+                    self.logger.warning("proofofwork.resetPoW didn't work")
             elif command == 'stopThread':
                 self.busy = 0
                 return
@@ -1230,8 +1230,8 @@ class singleWorker(StoppableThread):
                 encrypted = highlevelcrypto.encrypt(
                     payload, b"04" + hexlify(pubEncryptionKeyBase256)
                 )
-            except Exception as ex:  # noqa:E722
-                self.logger.warning("highlevelcrypto.encrypt didn't work: {}".format(ex))
+            except:  # noqa:E722
+                self.logger.warning("highlevelcrypto.encrypt didn't work")
                 sqlExecute(
                     '''UPDATE sent SET status='badkey' WHERE ackdata=? AND folder='sent' ''',
                     ackdata
@@ -1282,8 +1282,8 @@ class singleWorker(StoppableThread):
                     time.time() - powStartTime,
                     sizeof_fmt(nonce / (time.time() - powStartTime))
                 )
-            except Exception as ex:  # noqa:E722
-                self.logger.warning("Proof of Work exception: {}".format(ex))
+            except:  # noqa:E722
+                self.logger.warning("Proof of Work exception")
 
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
@@ -1485,7 +1485,7 @@ class singleWorker(StoppableThread):
                 tr._translate(
                     "MainWindow",
                     "Sending public key request. Waiting for reply."
-                    " Requested at %1"
+                    " Requested at {0}"
                 ).format(l10n.formatTimestamp()))
         ))
 

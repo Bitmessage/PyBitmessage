@@ -53,7 +53,7 @@ import shutdown
 from .statusbar import BMStatusBar
 import bitmessageqt.sound as sound
 # This is needed for tray icon
-import bitmessageqt.bitmessage_icons_rc as bitmessage_icons_rc # noqa:F401 pylint: disable=unused-import
+import bitmessageqt.bitmessage_icons_rc as bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
 import helper_sent
 
 try:
@@ -1419,7 +1419,7 @@ class MyForm(settingsmixin.SMainWindow):
             self, title, subtitle, category, label=None, icon=QtWidgets.QSystemTrayIcon.MessageIcon.Information):
         self.playSound(category, label)
         self._notifier(
-            str(title), str(subtitle), category, label, icon)
+            title, subtitle, category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -2860,7 +2860,6 @@ class MyForm(settingsmixin.SMainWindow):
                 lines[i] = '<br><br>'
         content = ' '.join(lines) # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
-        content = content
         textEdit.setHtml(content)
 
     def on_action_InboxMarkUnread(self):
@@ -3786,20 +3785,20 @@ class MyForm(settingsmixin.SMainWindow):
         self.setAddressSound(widget.item(widget.currentRow(), 0).text())
 
     def setAddressSound(self, addr):
-        filters = [str(_translate(
+        filters = [_translate(
             "MainWindow", "Sound files (%s)" %
             ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
-        ))]
-        sourcefile = str(QtWidgets.QFileDialog.getOpenFileName(
+        )]
+        sourcefile = QtWidgets.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set notification sound..."),
             filter=';;'.join(filters)
-        ))
+        )
 
         if not sourcefile:
             return
 
         destdir = os.path.join(state.appdata, 'sounds')
-        destfile = str(addr) + os.path.splitext(sourcefile)[-1]
+        destfile = addr + os.path.splitext(sourcefile)[-1]
         destination = os.path.join(destdir, destfile)
 
         if sourcefile == destination:
@@ -3952,7 +3951,6 @@ class MyForm(settingsmixin.SMainWindow):
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
-        text = text
         if 0 < len(text) < 3:
             return
         messagelist = self.getCurrentMessagelist()
@@ -4080,7 +4078,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
         for i in range(len(completerList)):
-            if str(completerList[i]).endswith(" <" + item.address + ">"):
+            if completerList[i].endswith(" <" + item.address + ">"):
                 completerList[i] = item.label + " <" + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 

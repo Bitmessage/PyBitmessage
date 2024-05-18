@@ -135,7 +135,6 @@ class AccountMixin(object):
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
-                    retval = retval
         elif self.address is None or self.type == AccountMixin.ALL:
             return _translate("MainWindow", "All accounts")
 

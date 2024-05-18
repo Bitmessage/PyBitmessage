@@ -71,16 +71,12 @@ class MsgEncode(object):
 
     def encodeSimple(self, message):
         """Handle simple encoding"""
-        data = 'Subject:%(subject)s\nBody:%(body)s' % message
-        self.data = data.encode('utf-8', 'backslashreplace')
+        self.data = ('Subject:%(subject)s\nBody:%(body)s' % message).encode()
         self.length = len(self.data)
 
     def encodeTrivial(self, message):
         """Handle trivial encoding"""
-        data = message['body']
-        if isinstance(data, str):
-            data = data.encode('utf-8', 'backslashreplace')
-        self.data = data
+        self.data = message['body'].encode()
         self.length = len(self.data)
 
 
@@ -146,7 +142,7 @@ class MsgDecode(object):
 
     def decodeSimple(self, data):
         """Handle simple encoding"""
-        data = data.decode('utf-8', 'backslashreplace')
+        data = data.decode('utf-8', 'replace')
         bodyPositionIndex = data.find('\nBody:')
         if bodyPositionIndex > 1:
             subject = data[8:bodyPositionIndex]

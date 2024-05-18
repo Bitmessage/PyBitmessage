@@ -92,6 +92,7 @@ class TLSDispatcher(AdvancedDispatcher):
                 ciphers=self.ciphers, do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
+        self.tlsPrepared = True
         return False
 
     @staticmethod
@@ -139,7 +140,6 @@ class TLSDispatcher(AdvancedDispatcher):
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 if not self.tlsPrepared:
                     self.do_tls_init()
-                    self.tlsPrepared = True
                 else:
                     self.tls_handshake()
             else:
@@ -165,7 +165,6 @@ class TLSDispatcher(AdvancedDispatcher):
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 if not self.tlsPrepared:
                     self.do_tls_init()
-                    self.tlsPrepared = True
                 else:
                     self.tls_handshake()
             else:

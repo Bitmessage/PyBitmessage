@@ -723,9 +723,9 @@ class dispatcher(object):
             if why.args[0] not in (ENOTCONN, EBADF):
                 raise
 
-    # XXX unresolved
     # cheap inheritance, used to pass all other attribute
     # references to the underlying socket object.
+    # XXX unresolved: is this can be removed safely or not?
     #def __getattr__(self, attr):
     #    try:
     #        retattr = getattr(self.socket, attr)
