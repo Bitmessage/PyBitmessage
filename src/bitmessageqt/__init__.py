@@ -1221,7 +1221,7 @@ class MyForm(settingsmixin.SMainWindow):
     # create application indicator
     def appIndicatorInit(self, app):
         self.initTrayIcon("can-icon-24px-red.png", app)
-        self.tray.activated.connect(self.__icon_activated);
+        self.tray.activated.connect(self.__icon_activated)
 
         m = QtWidgets.QMenu()
 

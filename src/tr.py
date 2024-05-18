@@ -41,7 +41,7 @@ def translateText(context, text, n=None):
         enableGUI = True
     if enableGUI:
         try:
-            from PyQt6 import QtCore, QtGui, QtWidgets
+            from PyQt6 import QtWidgets
         except Exception as err:
             print('PyBitmessage requires PyQt unless you want to run it as a daemon'
                   ' and interact with it using the API.'
