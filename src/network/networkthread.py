@@ -14,7 +14,7 @@ class BMNetworkThread(StoppableThread):
 
     def run(self):
         try:
-            while not self._stopped and state.shutdown == 0:
+            while not self._stopped:
                 connectionpool.pool.loop()
         except Exception as e:
             excQueue.put((self.name, e))

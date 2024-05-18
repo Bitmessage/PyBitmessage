@@ -18,7 +18,7 @@ class AddrThread(StoppableThread):
     name = "AddrBroadcaster"
 
     def run(self):
-        while not state.shutdown:
+        while not self._stopped:
             chunk = []
             while True:
                 try:

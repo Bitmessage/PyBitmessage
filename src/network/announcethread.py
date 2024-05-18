@@ -20,7 +20,7 @@ class AnnounceThread(StoppableThread):
 
     def run(self):
         lastSelfAnnounced = 0
-        while not self._stopped and state.shutdown == 0:
+        while not self._stopped:
             processed = 0
             if lastSelfAnnounced < time.time() - self.announceInterval:
                 self.announceSelf()
@@ -34,7 +34,7 @@ class AnnounceThread(StoppableThread):
         for connection in connectionpool.pool.udpSockets.values():
             if not connection.announcing:
                 continue
-            for stream in state.streamsInWhichIAmParticipating:
+            for stream in connectionpool.pool.streams:
                 addr = (
                     stream,
                     Peer(

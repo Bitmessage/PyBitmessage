@@ -6,6 +6,7 @@ import time
 
 import protocol
 import state
+import network.connectionpool as connectionpool
 from highlevelcrypto import calculateInventoryHash
 
 logger = logging.getLogger('default')
@@ -98,7 +99,7 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
             logger.warning(
                 'The object has invalid stream: %s', self.streamNumber)
             raise BMObjectInvalidError()
-        if self.streamNumber not in state.streamsInWhichIAmParticipating:
+        if self.streamNumber not in connectionpool.pool.streams:
             logger.debug(
                 'The streamNumber %i isn\'t one we are interested in.',
                 self.streamNumber)

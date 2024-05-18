@@ -19,13 +19,13 @@ class ReceiveQueueThread(StoppableThread):
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
 
     def run(self):
-        while not self._stopped and state.shutdown == 0:
+        while not self._stopped:
             try:
                 dest = receiveDataQueue.get(block=True, timeout=1)
             except queue.Empty:
                 continue
 
-            if self._stopped or state.shutdown:
+            if self._stopped:
                 break
 
             # cycle as long as there is data

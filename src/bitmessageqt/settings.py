@@ -20,7 +20,7 @@ import bitmessageqt.widgets as widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
-from network import knownnodes
+from network import connectionpool, knownnodes
 from network.announcethread import AnnounceThread
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
@@ -165,7 +165,7 @@ class SettingsDialog(QtWidgets.QDialog):
         if self._proxy_type:
             for node, info in six.iteritems(
                 knownnodes.knownNodes.get(
-                    min(state.streamsInWhichIAmParticipating), [])
+                    min(connectionpool.pool.streams), [])
             ):
                 if (
                     node.host.endswith('.onion') and len(node.host) > 22

@@ -444,7 +444,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
             if (
-                stream not in state.streamsInWhichIAmParticipating
+                stream not in connectionpool.pool.streams
                 # FIXME: should check against complete list
                 or ip.decode('utf-8', 'replace').startswith('bootstrap')
             ):
