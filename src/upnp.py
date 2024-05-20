@@ -4,13 +4,13 @@ Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
 
-import httplib
+import http.client
 import re
 import socket
 import time
-import urllib2
+from urllib.request import urlopen
 from random import randint
-from urlparse import urlparse
+import urllib.parse
 from xml.dom.minidom import Document  # nosec B408
 from defusedxml.minidom import parseString
 
@@ -101,14 +101,14 @@ class Router:  # pylint: disable=old-style-class
                 header[part[0].lower()] = part[1]
 
         try:
-            self.routerPath = urlparse(header['location'])
+            self.routerPath = urllib.parse(header['location'])
             if not self.routerPath or not hasattr(self.routerPath, "hostname"):
                 logger.error("UPnP: no hostname: %s", header['location'])
         except KeyError:
             logger.error("UPnP: missing location header")
 
         # get the profile xml file and read it into a variable
-        directory = urllib2.urlopen(header['location']).read()
+        directory = urlopen(header['location']).read()
 
         # create a DOM object that represents the `directory` document
         dom = parseString(directory)
@@ -173,7 +173,7 @@ class Router:  # pylint: disable=old-style-class
     def soapRequest(self, service, action, arguments=None):
         """Make a request to a router"""
 
-        conn = httplib.HTTPConnection(self.routerPath.hostname, self.routerPath.port)
+        conn = http.client.HTTPConnection(self.routerPath.hostname, self.routerPath.port)
         conn.request(
             'POST',
             self.path,
@@ -315,7 +315,7 @@ class uPnPThread(StoppableThread):
 
         try:
             logger.debug("Sending UPnP query")
-            self.sock.sendto(ssdpRequest, (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
+            self.sock.sendto(ssdpRequest.encode(), (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
         except:  # noqa:E722
             logger.exception("UPnP send query failed")
 
