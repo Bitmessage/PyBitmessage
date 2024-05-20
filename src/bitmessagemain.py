@@ -325,7 +325,7 @@ class Main(object):
         if not sys.platform.startswith('win'):
             si = open(os.devnull, 'r')
             so = open(os.devnull, 'a+')
-            se = open(os.devnull, 'a+', 0)
+            se = open(os.devnull, 'ab+', 0)
             os.dup2(si.fileno(), sys.stdin.fileno())
             os.dup2(so.fileno(), sys.stdout.fileno())
             os.dup2(se.fileno(), sys.stderr.fileno())
