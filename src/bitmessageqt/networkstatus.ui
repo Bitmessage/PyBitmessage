@@ -16,6 +16,13 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
+  <property name="styleSheet">
+   <string notr="true">
+STableWidget {
+    background: palette(Button);
+}
+</string>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout_3">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,0">
@@ -42,42 +49,6 @@
        </item>
        <item>
         <widget class="STableWidget" name="tableWidgetConnectionCount">
-         <property name="palette">
-          <palette>
-           <active>
-            <colorrole role="Base">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>212</red>
-               <green>208</green>
-               <blue>200</blue>
-              </color>
-             </brush>
-            </colorrole>
-           </active>
-           <inactive>
-            <colorrole role="Base">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>212</red>
-               <green>208</green>
-               <blue>200</blue>
-              </color>
-             </brush>
-            </colorrole>
-           </inactive>
-           <disabled>
-            <colorrole role="Base">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>212</red>
-               <green>208</green>
-               <blue>200</blue>
-              </color>
-             </brush>
-            </colorrole>
-           </disabled>
-          </palette>
          <property name="focusPolicy">
           <enum>Qt::NoFocus</enum>
          </property>
