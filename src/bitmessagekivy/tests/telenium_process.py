@@ -32,7 +32,7 @@ def cleanup(files=_files):
 
 class TeleniumTestProcess(TeleniumTestCase):
     """Setting Screen Functionality Testing"""
-    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'mock', 'kivy_main.py')]
+    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'mockbm', 'kivy_main.py')]
 
     @classmethod
     def setUpClass(cls):
@@ -54,15 +54,7 @@ class TeleniumTestProcess(TeleniumTestCase):
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
         # pylint: disable=no-member
-        try:
-            cls.cli.app_quit()
-        except:
-            pass
-
-        try:
-            cls.process.kill()
-        except:
-            pass
+        super(TeleniumTestProcess, cls).tearDownClass()
         cleanup()
 
     def assert_wait_no_except(self, selector, timeout=-1, value='inbox'):
@@ -73,19 +65,20 @@ class TeleniumTestProcess(TeleniumTestCase):
             try:
                 if self.cli.getattr(selector, 'current') == value:
                     self.assertTrue(selector, value)
-                    break
+                    return
             except TeleniumHttpException:
                 sleep(0.1)
                 continue
             finally:
-                # Finally Sleep is used to make the menu button funcationlly available for the click process.
-                # (because Transition is little bit slow)
+                # Finally Sleep is used to make the menu button functionally available for the click process.
+                # (because screen transition is little bit slow)
                 sleep(0.2)
+        raise AssertionError("Timeout")
 
     def drag(self, xpath1, xpath2):
         """this method is for dragging"""
         self.cli.drag(xpath1, xpath2, 1)
-        self.cli.sleep(0.3)
+        self.cli.sleep(1)
 
     def assertCheckScrollDown(self, selector, timeout=-1):
         """this method is for checking scroll"""
@@ -99,7 +92,7 @@ class TeleniumTestProcess(TeleniumTestCase):
                 return False
             if timeout > 0 and time() - start > timeout:
                 raise Exception("Timeout")
-            sleep(0.1)
+            sleep(0.5)
 
     def assertCheckScrollUp(self, selector, timeout=-1):
         """this method is for checking scroll UP"""
@@ -113,15 +106,16 @@ class TeleniumTestProcess(TeleniumTestCase):
                 return False
             if timeout > 0 and time() - start > timeout:
                 raise Exception("Timeout")
-            sleep(0.1)
+            sleep(0.5)
 
     def open_side_navbar(self):
         """Common method for opening Side navbar (Side Drawer)"""
         # Checking the drawer is in 'closed' state
+        self.cli.execute('app.ContentNavigationDrawer.MDNavigationDrawer.opening_time=0')
         self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
         # This is for checking the menu button is appeared
-        self.assertExists('//MDActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
+        self.assertExists('//ActionTopAppBarButton[@icon~=\"menu\"]', timeout=5)
         # this is for opening Nav drawer
-        self.cli.wait_click('//MDActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
+        self.cli.wait_click('//ActionTopAppBarButton[@icon=\"menu\"]', timeout=5)
         # checking state of Nav drawer
         self.assertExists("//MDNavigationDrawer[@state~=\"open\"]", timeout=5)

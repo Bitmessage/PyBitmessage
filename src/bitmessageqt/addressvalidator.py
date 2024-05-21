@@ -8,9 +8,9 @@ from Queue import Empty
 
 from PyQt5 import QtGui
 
-from account import getSortedAccounts
 from addresses import decodeAddress, addBMIfNotPresent
-from queues import addressGeneratorQueue, apiAddressGeneratorReturnQueue
+from bmconfigparser import config
+from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
 from utils import str_chan
 
@@ -126,7 +126,7 @@ class AddressPassPhraseValidatorMixin(object):
 
         if self.addressMandatory or address:
             # check if address already exists:
-            if address in getSortedAccounts():
+            if address in config.addresses(True):
                 self.setError(_translate(
                     "AddressValidator",
                     "Address already present as one of your identities."

@@ -17,8 +17,9 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     )
 
 import logging  # noqa:E402
-import subprocess
 from distutils import version
+import subprocess  # nosec B404
+
 from importlib import import_module
 
 # We can now use logging so set up a simple configuration
@@ -287,7 +288,7 @@ def check_openssl():
             path = ctypes.util.find_library('ssl')
             if path not in paths:
                 paths.append(path)
-        except:  # noqa:E722
+        except:  # nosec B110 # pylint:disable=bare-except
             pass
 
     openssl_version = None
@@ -361,7 +362,7 @@ def check_curses():
         return False
 
     try:
-        subprocess.check_call(['which', 'dialog'])
+        subprocess.check_call(['which', 'dialog'])  # nosec B603, B607
     except subprocess.CalledProcessError:
         logger.error(
             'Curses requires the `dialog` command to be installed as well as'

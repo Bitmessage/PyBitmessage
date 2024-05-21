@@ -6,10 +6,10 @@ import time
 from threading import RLock
 
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery
-from storage import InventoryItem, InventoryStorage
+from .storage import InventoryItem, InventoryStorage
 
 
-class SqliteInventory(InventoryStorage):  # pylint: disable=too-many-ancestors
+class SqliteInventory(InventoryStorage):
     """Inventory using SQLite"""
     def __init__(self):
         super(SqliteInventory, self).__init__()

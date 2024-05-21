@@ -19,7 +19,7 @@ import version  # noqa:E402
 # -- Project information -----------------------------------------------------
 
 project = u'PyBitmessage'
-copyright = u'2019, The Bitmessage Team'  # pylint: disable=redefined-builtin
+copyright = u'2019-2022, The Bitmessage Team'  # pylint: disable=redefined-builtin
 author = u'The Bitmessage Team'
 
 # The short X.Y version
@@ -203,7 +203,7 @@ autodoc_mock_imports = [
     'pybitmessage.bitmessagekivy',
     'pybitmessage.bitmessageqt.foldertree',
     'pybitmessage.helper_startup',
-    'pybitmessage.mock',
+    'pybitmessage.mockbm',
     'pybitmessage.network.httpd',
     'pybitmessage.network.https',
     'ctypes',
@@ -232,7 +232,7 @@ apidoc_excluded_paths = [
     'bitmessageqt/addressvalidator.py', 'bitmessageqt/foldertree.py',
     'bitmessageqt/migrationwizard.py', 'bitmessageqt/newaddresswizard.py',
     'helper_startup.py',
-    'kivymd', 'mock', 'main.py', 'navigationdrawer', 'network/http*',
+    'kivymd', 'mockbm', 'main.py', 'navigationdrawer', 'network/http*',
     'src', 'tests', 'version.py'
 ]
 apidoc_module_first = True

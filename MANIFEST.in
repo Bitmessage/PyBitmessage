@@ -2,3 +2,4 @@ include COPYING
 include README.md
 include requirements.txt
 recursive-include desktop *
+recursive-include packages/apparmor *

@@ -1,14 +1,16 @@
+"""Test packets creation and parsing"""
 
-import unittest
 from binascii import unhexlify
 from struct import pack
 
 from pybitmessage import addresses, protocol
 
-from .samples import magic
+from .samples import (
+    sample_addr_data, sample_object_data, sample_object_expires)
+from .test_protocol import TestSocketInet
 
 
-class TestSerialize(unittest.TestCase):
+class TestSerialize(TestSocketInet):
     """Test serializing and deserializing packet data"""
 
     def test_varint(self):
@@ -44,9 +46,17 @@ class TestSerialize(unittest.TestCase):
 
     def test_packet(self):
         """Check the packet created by protocol.CreatePacket()"""
-        head = unhexlify(b'%x' % magic)
+        head = unhexlify(b'%x' % protocol.magic)
         self.assertEqual(
             protocol.CreatePacket(b'ping')[:len(head)], head)
+
+    def test_decode_obj_parameters(self):
+        """Check parameters decoded from a sample object"""
+        objectType, toStreamNumber, expiresTime = \
+            protocol.decodeObjectParameters(sample_object_data)
+        self.assertEqual(objectType, 42)
+        self.assertEqual(toStreamNumber, 2)
+        self.assertEqual(expiresTime, sample_object_expires)
 
     def test_encodehost(self):
         """Check the result of protocol.encodeHost()"""
@@ -66,3 +76,12 @@ class TestSerialize(unittest.TestCase):
         self.assertEqual(
             protocol.encodeHost('quzwelsuziwqgpt2.onion'),
             unhexlify('fd87d87eeb438533622e54ca2d033e7a'))
+
+    def test_assemble_addr(self):
+        """Assemble addr packet and compare it to pregenerated sample"""
+        self.assertEqual(
+            sample_addr_data,
+            protocol.assembleAddrMessage([
+                (1, protocol.Peer('127.0.0.1', 8444), 1626611891)
+                for _ in range(500)
+            ])[protocol.Header.size:])

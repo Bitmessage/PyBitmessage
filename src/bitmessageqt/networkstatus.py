@@ -10,8 +10,7 @@ import l10n
 import network.stats
 import state
 import widgets
-from inventory import Inventory
-from network import BMConnectionPool, knownnodes
+from network import connectionpool, knownnodes
 from retranslateui import RetranslateMixin
 from tr import _translate
 from uisignaler import UISignaler
@@ -49,7 +48,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
 
     def startUpdate(self):
         """Start a timer to update counters every 2 seconds"""
-        Inventory().numberOfInventoryLookupsPerformed = 0
+        state.Inventory.numberOfInventoryLookupsPerformed = 0
         self.runEveryTwoSeconds()
         self.timer.start(2000)  # milliseconds
 
@@ -123,16 +122,16 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         # pylint: disable=too-many-branches,undefined-variable
         if outbound:
             try:
-                c = BMConnectionPool().outboundConnections[destination]
+                c = connectionpool.pool.outboundConnections[destination]
             except KeyError:
                 if add:
                     return
         else:
             try:
-                c = BMConnectionPool().inboundConnections[destination]
+                c = connectionpool.pool.inboundConnections[destination]
             except KeyError:
                 try:
-                    c = BMConnectionPool().inboundConnections[destination.host]
+                    c = connectionpool.pool.inboundConnections[destination.host]
                 except KeyError:
                     if add:
                         return
@@ -172,7 +171,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.item(0, 1).setData(
                 QtCore.Qt.UserRole, outbound)
         else:
-            if not BMConnectionPool().inboundConnections:
+            if not connectionpool.pool.inboundConnections:
                 self.window().setStatusIcon('yellow')
             for i in range(self.tableWidgetConnectionCount.rowCount()):
                 if self.tableWidgetConnectionCount.item(i, 0).data(
@@ -203,8 +202,8 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         """Updates counters, runs every 2 seconds if the timer is running"""
         self.labelLookupsPerSecond.setText(_translate(
             "networkstatus", "Inventory lookups per second: {0}"
-        ).format(Inventory().numberOfInventoryLookupsPerformed / 2))
-        Inventory().numberOfInventoryLookupsPerformed = 0
+        ).format(state.Inventory.numberOfInventoryLookupsPerformed / 2))
+        state.Inventory.numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
 

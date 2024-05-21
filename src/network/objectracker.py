@@ -4,8 +4,8 @@ Module for tracking objects
 import time
 from threading import RLock
 
-import network.connectionpool
-from network.dandelion import Dandelion
+import state
+import connectionpool
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False
@@ -100,21 +100,21 @@ class ObjectTracker(object):
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
-        for i in network.connectionpool.BMConnectionPool().connections():
+        for i in connectionpool.pool.connections():
             if not i.fullyEstablished:
                 continue
             try:
                 del i.objectsNewToMe[hashid]
             except KeyError:
                 if streamNumber in i.streams and (
-                        not Dandelion().hasHash(hashid)
-                        or Dandelion().objectChildStem(hashid) == i):
+                        not state.Dandelion.hasHash(hashid)
+                        or state.Dandelion.objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
                         i.objectsNewToThem[hashid] = time.time()
                     # update stream number,
                     # which we didn't have when we just received the dinv
                     # also resets expiration of the stem mode
-                    Dandelion().setHashStream(hashid, streamNumber)
+                    state.Dandelion.setHashStream(hashid, streamNumber)
 
             if i == self:
                 try:

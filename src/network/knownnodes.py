@@ -7,7 +7,7 @@ Manipulations with knownNodes dictionary.
 import json
 import logging
 import os
-import pickle
+import pickle  # nosec B403
 import threading
 import time
 try:
@@ -16,7 +16,7 @@ except ImportError:
     from collections import Iterable
 
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from network.node import Peer
 
 state.Peer = Peer
@@ -85,7 +85,7 @@ def pickle_deserialize_old_knownnodes(source):
     the new format is {Peer:{"lastseen":i, "rating":f}}
     """
     global knownNodes
-    knownNodes = pickle.load(source)
+    knownNodes = pickle.load(source)  # nosec B301
     for stream in knownNodes.keys():
         for node, params in knownNodes[stream].iteritems():
             if isinstance(params, (float, int)):
@@ -130,7 +130,7 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
             return
 
     if not is_self:
-        if len(knownNodes[stream]) > BMConfigParser().safeGetInt(
+        if len(knownNodes[stream]) > config.safeGetInt(
                 "knownnodes", "maxnodes"):
             return
 
@@ -164,8 +164,6 @@ def readKnownNodes():
         logger.debug(
             'Failed to read nodes from knownnodes.dat', exc_info=True)
         createDefaultKnownNodes()
-
-    config = BMConfigParser()
 
     # your own onion address, if setup
     onionhostname = config.safeGet('bitmessagesettings', 'onionhostname')
@@ -210,7 +208,7 @@ def decreaseRating(peer):
 def trimKnownNodes(recAddrStream=1):
     """Triming Knownnodes"""
     if len(knownNodes[recAddrStream]) < \
-            BMConfigParser().safeGetInt("knownnodes", "maxnodes"):
+            config.safeGetInt("knownnodes", "maxnodes"):
         return
     with knownNodesLock:
         oldestList = sorted(
@@ -228,7 +226,7 @@ def dns():
             1, Peer('bootstrap%s.bitmessage.org' % port, port))
 
 
-def cleanupKnownNodes():
+def cleanupKnownNodes(pool):
     """
     Cleanup knownnodes: remove old nodes and nodes with low rating
     """
@@ -238,7 +236,7 @@ def cleanupKnownNodes():
 
     with knownNodesLock:
         for stream in knownNodes:
-            if stream not in state.streamsInWhichIAmParticipating:
+            if stream not in pool.streams:
                 continue
             keys = knownNodes[stream].keys()
             for node in keys:

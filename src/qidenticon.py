@@ -135,6 +135,7 @@ class IdenticonRendererBase(object):
         if penwidth > 0:
             pen_color = QtGui.QColor(255, 255, 255)
             pen = QtGui.QPen(pen_color)
+            pen.setBrush(QtCore.Qt.SolidPattern)
             pen.setWidth(penwidth)
 
         painter = QtGui.QPainter()

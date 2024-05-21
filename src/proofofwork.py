@@ -4,20 +4,20 @@ Proof of work calculation
 """
 
 import ctypes
-import hashlib
 import os
+import subprocess  # nosec B404
 import sys
 import tempfile
 import time
 from struct import pack, unpack
-from subprocess import call
 
+import highlevelcrypto
 import openclpow
 import paths
 import queues
 import state
 import tr
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
 
 bitmsglib = 'bitmsghash.so'
@@ -82,9 +82,17 @@ def _set_idle():
             pid = win32api.GetCurrentProcessId()
             handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
             win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
-        except:  # noqa:E722
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             # Windows 64-bit
             pass
+
+
+def trial_value(nonce, initialHash):
+    """Calculate PoW trial value"""
+    trialValue, = unpack(
+        '>Q', highlevelcrypto.double_sha512(
+            pack('>Q', nonce) + initialHash)[0:8])
+    return trialValue
 
 
 def _pool_worker(nonce, initialHash, target, pool_size):
@@ -92,8 +100,7 @@ def _pool_worker(nonce, initialHash, target, pool_size):
     trialValue = float('inf')
     while trialValue > target:
         nonce += pool_size
-        trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-            pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+        trialValue = trial_value(nonce, initialHash)
     return [trialValue, nonce]
 
 
@@ -103,10 +110,9 @@ def _doSafePoW(target, initialHash):
     trialValue = float('inf')
     while trialValue > target and state.shutdown == 0:
         nonce += 1
-        trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-            pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+        trialValue = trial_value(nonce, initialHash)
     if state.shutdown != 0:
-        raise StopIteration("Interrupted")  # pylint: misplaced-bare-raise
+        raise StopIteration("Interrupted")
     logger.debug("Safe PoW done")
     return [trialValue, nonce]
 
@@ -119,7 +125,7 @@ def _doFastPoW(target, initialHash):
     except:  # noqa:E722
         pool_size = 4
     try:
-        maxCores = BMConfigParser().getint('bitmessagesettings', 'maxcores')
+        maxCores = config.getint('bitmessagesettings', 'maxcores')
     except:  # noqa:E722
         maxCores = 99999
     if pool_size > maxCores:
@@ -135,7 +141,7 @@ def _doFastPoW(target, initialHash):
             try:
                 pool.terminate()
                 pool.join()
-            except:  # noqa:E722
+            except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
                 pass
             raise StopIteration("Interrupted")
         for i in range(pool_size):
@@ -163,7 +169,7 @@ def _doCPoW(target, initialHash):
         logger.debug("C PoW start")
         nonce = bmpow(out_h, out_m)
 
-    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+    trialValue = trial_value(nonce, initialHash)
     if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("C PoW done")
@@ -173,7 +179,7 @@ def _doCPoW(target, initialHash):
 def _doGPUPoW(target, initialHash):
     logger.debug("GPU PoW start")
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
-    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+    trialValue = trial_value(nonce, initialHash)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
         queues.UISignalQueue.put((
@@ -272,16 +278,26 @@ def buildCPoW():
     try:
         if "bsd" in sys.platform:
             # BSD make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash"), '-f', 'Makefile.bsd'])
+            subprocess.check_call([  # nosec B607, B603
+                "make", "-C", os.path.join(paths.codePath(), "bitmsghash"),
+                '-f', 'Makefile.bsd'])
         else:
             # GNU make
-            call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
-        if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
+            subprocess.check_call([  # nosec B607, B603
+                "make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
+        if os.path.exists(
+            os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")
+        ):
             init()
             notifyBuild(True)
         else:
             notifyBuild(True)
+    except (OSError, subprocess.CalledProcessError):
+        notifyBuild(True)
     except:  # noqa:E722
+        logger.warning(
+            'Unexpected exception rised when tried to build bitmsghash lib',
+            exc_info=True)
         notifyBuild(True)
 
 
@@ -296,14 +312,14 @@ def run(target, initialHash):
             return _doGPUPoW(target, initialHash)
         except StopIteration:
             raise
-        except:  # noqa:E722
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             pass  # fallback
     if bmpow:
         try:
             return _doCPoW(target, initialHash)
         except StopIteration:
             raise
-        except:  # noqa:E722
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             pass  # fallback
     if paths.frozen == "macosx_app" or not paths.frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
@@ -315,13 +331,13 @@ def run(target, initialHash):
         except StopIteration:
             logger.error("Fast PoW got StopIteration")
             raise
-        except:  # noqa:E722
+        except:  # noqa:E722 # pylint:disable=bare-except
             logger.error("Fast PoW got exception:", exc_info=True)
     try:
         return _doSafePoW(target, initialHash)
     except StopIteration:
         raise
-    except:  # noqa:E722
+    except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
         pass  # fallback
 
 

@@ -10,25 +10,13 @@ try:
 except ImportError:
     from pybitmessage.pyelliptic import arithmetic
 
-
-# These keys are from addresses test script
-sample_pubsigningkey = (
-    b'044a367f049ec16cb6b6118eb734a9962d10b8db59c890cd08f210c43ff08bdf09d'
-    b'16f502ca26cd0713f38988a1237f1fc8fa07b15653c996dc4013af6d15505ce')
-sample_pubencryptionkey = (
-    b'044597d59177fc1d89555d38915f581b5ff2286b39d022ca0283d2bdd5c36be5d3c'
-    b'e7b9b97792327851a562752e4b79475d1f51f5a71352482b241227f45ed36a9')
-sample_privsigningkey = \
-    b'93d0b61371a54b53df143b954035d612f8efa8a3ed1cf842c2186bfd8f876665'
-sample_privencryptionkey = \
-    b'4b0b73a54e19b059dc274ab69df095fe699f43b17397bca26fdf40f4d7400a3a'
-
-sample_factor = \
-    66858749573256452658262553961707680376751171096153613379801854825275240965733
-# G * sample_factor
-sample_point = (
-    33567437183004486938355437500683826356288335339807546987348409590129959362313,
-    94730058721143827257669456336351159718085716196507891067256111928318063085006
+from .samples import (
+    sample_deterministic_addr3, sample_deterministic_addr4,
+    sample_daddr3_512, sample_daddr4_512,
+    sample_factor, sample_point, sample_pubsigningkey, sample_pubencryptionkey,
+    sample_privsigningkey, sample_privencryptionkey,
+    sample_privsigningkey_wif, sample_privencryptionkey_wif,
+    sample_wif_privsigningkey, sample_wif_privencryptionkey
 )
 
 
@@ -39,6 +27,34 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(
             sample_point,
             arithmetic.base10_multiply(arithmetic.G, sample_factor))
+
+    def test_base58(self):
+        """Test encoding/decoding base58 using arithmetic functions"""
+        self.assertEqual(
+            arithmetic.decode(arithmetic.changebase(
+                sample_deterministic_addr4, 58, 256), 256), sample_daddr4_512)
+        self.assertEqual(
+            arithmetic.decode(arithmetic.changebase(
+                sample_deterministic_addr3, 58, 256), 256), sample_daddr3_512)
+        self.assertEqual(
+            arithmetic.changebase(
+                arithmetic.encode(sample_daddr4_512, 256), 256, 58),
+            sample_deterministic_addr4)
+        self.assertEqual(
+            arithmetic.changebase(
+                arithmetic.encode(sample_daddr3_512, 256), 256, 58),
+            sample_deterministic_addr3)
+
+    def test_wif(self):
+        """Decode WIFs of [chan] bitmessage and check the keys"""
+        self.assertEqual(
+            sample_wif_privsigningkey,
+            arithmetic.changebase(arithmetic.changebase(
+                sample_privsigningkey_wif, 58, 256)[1:-4], 256, 16))
+        self.assertEqual(
+            sample_wif_privencryptionkey,
+            arithmetic.changebase(arithmetic.changebase(
+                sample_privencryptionkey_wif, 58, 256)[1:-4], 256, 16))
 
     def test_decode(self):
         """Decode sample privsigningkey from hex to int and compare to factor"""

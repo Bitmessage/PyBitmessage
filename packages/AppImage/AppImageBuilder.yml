@@ -1,0 +1,81 @@
+version: 1
+script:
+  # Remove any previous build
+  - rm -rf AppDir  | true
+  - python setup.py install --prefix=/usr --root=AppDir
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: pybitmessage
+    name: PyBitmessage
+    icon: pybitmessage
+    version: !ENV ${APP_VERSION}
+    # Set the python executable as entry point
+    exec: usr/bin/python
+    # Set the application main script path as argument.
+    # Use '$@' to forward CLI parameters
+    exec_args: "$APPDIR/usr/bin/pybitmessage $@"
+
+  after_runtime:
+    - sed -i "s|GTK_.*||g" AppDir/AppRun.env
+    - cp packages/AppImage/qt.conf AppDir/usr/bin/
+
+  apt:
+    arch: !ENV '${ARCH}'
+    sources:
+      - sourceline: !ENV '${SOURCELINE}'
+        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3b4fe6acc0b21f32'
+
+    include:
+      - python-defusedxml
+      - python-jsonrpclib
+      - python-msgpack
+      - python-qrcode
+      - python-qt4
+      - python-setuptools
+      - python-sip
+      - python-six
+      - python-xdg
+      - sni-qt
+    exclude:
+      - libdb5.3
+      - libdbus-1-3
+      - libfontconfig1
+      - libfreetype6
+      - libglib2.0-0
+      - libice6
+      - libmng2
+      - libncursesw5
+      - libqt4-declarative
+      - libqt4-designer
+      - libqt4-help
+      - libqt4-script
+      - libqt4-scripttools
+      - libqt4-sql
+      - libqt4-test
+      - libqt4-xmlpatterns
+      - libqtassistantclient4
+      - libsm6
+      - libsystemd0
+      - libreadline7
+
+  files:
+    exclude:
+      - usr/lib/x86_64-linux-gnu/gconv
+      - usr/share/man
+      - usr/share/doc
+
+  runtime:
+    arch: [ !ENV '${RUNTIME}' ]
+    env:
+      # Set python home
+      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
+      PYTHONHOME: '${APPDIR}/usr'
+      # Path to the site-packages dir or other modules dirs
+      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
+      PYTHONPATH: '${APPDIR}/usr/lib/python2.7/site-packages'
+
+AppImage:
+  arch: !ENV '${APPIMAGE_ARCH}'

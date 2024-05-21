@@ -9,7 +9,8 @@ version = os.getenv("PYBITMESSAGEVERSION", "custom")
 mainscript = ["bitmessagemain.py"]
 
 DATA_FILES = [
-    ('', ['sslkeys', 'images']),
+    ('', ['sslkeys', 'images', 'default.ini']),
+    ('sql', glob('sql/*.sql')),
     ('bitmsghash', ['bitmsghash/bitmsghash.cl', 'bitmsghash/bitmsghash.so']),
     ('translations', glob('translations/*.qm')),
     ('ui', glob('bitmessageqt/*.ui')),

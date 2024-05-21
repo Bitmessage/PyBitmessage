@@ -12,8 +12,6 @@ from binascii import hexlify, unhexlify
 from struct import pack
 from subprocess import call  # nosec
 
-from six.moves import configparser, queue
-
 import defaults
 import helper_inbox
 import helper_msgcoding
@@ -26,12 +24,11 @@ import protocol
 import queues
 import shared
 import state
-from addresses import (
-    calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint)
-from bmconfigparser import BMConfigParser
+from addresses import decodeAddress, decodeVarint, encodeVarint
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from inventory import Inventory
 from network import knownnodes, StoppableThread
+from six.moves import configparser, queue
 from tr import _translate
 
 
@@ -50,6 +47,8 @@ class singleWorker(StoppableThread):
 
     def __init__(self):
         super(singleWorker, self).__init__(name="singleWorker")
+        self.digestAlg = config.safeGet(
+            'bitmessagesettings', 'digestalg', 'sha256')
         proofofwork.init()
 
     def stopThread(self):
@@ -73,18 +72,16 @@ class singleWorker(StoppableThread):
         queryreturn = sqlQuery(
             '''SELECT DISTINCT toaddress FROM sent'''
             ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
-        for row in queryreturn:
-            toAddress, = row
-            # toStatus
-            _, toAddressVersionNumber, toStreamNumber, toRipe = \
-                decodeAddress(toAddress)
+        for toAddress, in queryreturn:
+            toAddressVersionNumber, toStreamNumber, toRipe = \
+                decodeAddress(toAddress)[1:]
             if toAddressVersionNumber <= 3:
                 state.neededPubkeys[toAddress] = 0
             elif toAddressVersionNumber >= 4:
-                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+                doubleHashOfAddressData = highlevelcrypto.double_sha512(
                     encodeVarint(toAddressVersionNumber)
                     + encodeVarint(toStreamNumber) + toRipe
-                ).digest()).digest()
+                )
                 # Note that this is the first half of the sha512 hash.
                 privEncryptionKey = doubleHashOfAddressData[:32]
                 tag = doubleHashOfAddressData[32:]
@@ -119,7 +116,7 @@ class singleWorker(StoppableThread):
         # For the case if user deleted knownnodes
         # but is still having onionpeer objects in inventory
         if not knownnodes.knownNodesActual:
-            for item in Inventory().by_type_and_tag(protocol.OBJECT_ONIONPEER):
+            for item in state.Inventory.by_type_and_tag(protocol.OBJECT_ONIONPEER):
                 queues.objectProcessorQueue.put((
                     protocol.OBJECT_ONIONPEER, item.payload
                 ))
@@ -195,15 +192,19 @@ class singleWorker(StoppableThread):
         self.logger.info("Quitting...")
 
     def _getKeysForAddress(self, address):
-        privSigningKeyBase58 = BMConfigParser().get(
-            address, 'privsigningkey')
-        privEncryptionKeyBase58 = BMConfigParser().get(
-            address, 'privencryptionkey')
+        try:
+            privSigningKeyBase58 = config.get(address, 'privsigningkey')
+            privEncryptionKeyBase58 = config.get(address, 'privencryptionkey')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            self.logger.error(
+                'Could not read or decode privkey for address %s', address)
+            raise ValueError
 
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
+        privSigningKeyHex = hexlify(highlevelcrypto.decodeWalletImportFormat(
+            privSigningKeyBase58.encode()))
+        privEncryptionKeyHex = hexlify(
+            highlevelcrypto.decodeWalletImportFormat(
+                privEncryptionKeyBase58.encode()))
 
         # The \x04 on the beginning of the public keys are not sent.
         # This way there is only one acceptable way to encode
@@ -255,9 +256,7 @@ class singleWorker(StoppableThread):
         """
         # Look up my stream number based on my address hash
         myAddress = shared.myAddressesByHash[adressHash]
-        # status
-        _, addressVersionNumber, streamNumber, adressHash = (
-            decodeAddress(myAddress))
+        addressVersionNumber, streamNumber = decodeAddress(myAddress)[1:3]
 
         # 28 days from now plus or minus five minutes
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
@@ -270,17 +269,15 @@ class singleWorker(StoppableThread):
         payload += protocol.getBitfield(myAddress)
 
         try:
-            # privSigningKeyHex, privEncryptionKeyHex
-            _, _, pubSigningKey, pubEncryptionKey = \
-                self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
+            pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                myAddress)[2:]
+        except ValueError:
+            return
+        except Exception:  # pylint:disable=broad-exception-caught
             self.logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
+                ' address. %s\n', exc_info=True)
             return
 
         payload += pubSigningKey + pubEncryptionKey
@@ -289,9 +286,9 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For pubkey message)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
 
         self.logger.info(
@@ -300,15 +297,15 @@ class singleWorker(StoppableThread):
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
-            BMConfigParser().set(
+            config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            BMConfigParser().save()
+            config.save()
         except configparser.NoSectionError:
             # The user deleted the address out of the keys.dat file
             # before this finished.
             pass
         except:  # noqa:E722
-            self.logger.warning("BMConfigParser().set didn't work")
+            self.logger.warning("config.set didn't work")
 
     def sendOutOrStoreMyV3Pubkey(self, adressHash):
         """
@@ -320,10 +317,10 @@ class singleWorker(StoppableThread):
         try:
             myAddress = shared.myAddressesByHash[adressHash]
         except KeyError:
-            # The address has been deleted.
-            self.logger.warning("Can't find %s in myAddressByHash", hexlify(adressHash))
+            self.logger.warning(  # The address has been deleted.
+                "Can't find %s in myAddressByHash", hexlify(adressHash))
             return
-        if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
+        if config.safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
             return
         _, addressVersionNumber, streamNumber, adressHash = decodeAddress(
@@ -353,24 +350,24 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
+        except ValueError:
+            return
+        except Exception:  # pylint:disable=broad-exception-caught
             self.logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
+                ' address. %s\n', exc_info=True)
             return
 
         payload += pubSigningKey + pubEncryptionKey
 
-        payload += encodeVarint(BMConfigParser().getint(
+        payload += encodeVarint(config.getint(
             myAddress, 'noncetrialsperbyte'))
-        payload += encodeVarint(BMConfigParser().getint(
+        payload += encodeVarint(config.getint(
             myAddress, 'payloadlengthextrabytes'))
 
-        signature = highlevelcrypto.sign(payload, privSigningKeyHex)
+        signature = highlevelcrypto.sign(
+            payload, privSigningKeyHex, self.digestAlg)
         payload += encodeVarint(len(signature))
         payload += signature
 
@@ -378,9 +375,9 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For pubkey message)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
 
         self.logger.info(
@@ -389,9 +386,9 @@ class singleWorker(StoppableThread):
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
-            BMConfigParser().set(
+            config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            BMConfigParser().save()
+            config.save()
         except configparser.NoSectionError:
             # The user deleted the address out of the keys.dat file
             # before this finished.
@@ -406,10 +403,10 @@ class singleWorker(StoppableThread):
         past it directly appended it to the outgoing buffer, I think.
         Same with all the other methods in this class.
         """
-        if not BMConfigParser().has_section(myAddress):
+        if not config.has_section(myAddress):
             # The address has been deleted.
             return
-        if shared.BMConfigParser().safeGetBoolean(myAddress, 'chan'):
+        if config.safeGetBoolean(myAddress, 'chan'):
             self.logger.info('This is a chan address. Not sending pubkey.')
             return
         _, addressVersionNumber, streamNumber, addressHash = decodeAddress(
@@ -428,21 +425,20 @@ class singleWorker(StoppableThread):
             # , privEncryptionKeyHex
             privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                 self._getKeysForAddress(myAddress)
-        except (configparser.NoSectionError, configparser.NoOptionError) as err:
-            self.logger.warning("Section or Option did not found: %s", err)
-        except Exception as err:
+        except ValueError:
+            return
+        except Exception:  # pylint:disable=broad-exception-caught
             self.logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
                 ' the keys from the keys.dat file for a requested'
-                ' address. %s\n', err
-            )
+                ' address. %s\n', exc_info=True)
             return
 
         dataToEncrypt += pubSigningKey + pubEncryptionKey
 
-        dataToEncrypt += encodeVarint(BMConfigParser().getint(
+        dataToEncrypt += encodeVarint(config.getint(
             myAddress, 'noncetrialsperbyte'))
-        dataToEncrypt += encodeVarint(BMConfigParser().getint(
+        dataToEncrypt += encodeVarint(config.getint(
             myAddress, 'payloadlengthextrabytes'))
 
         # When we encrypt, we'll use a hash of the data
@@ -452,14 +448,13 @@ class singleWorker(StoppableThread):
         # unencrypted, the pubkey with part of the hash so that nodes
         # know which pubkey object to try to decrypt
         # when they want to send a message.
-        doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+        doubleHashOfAddressData = highlevelcrypto.double_sha512(
             encodeVarint(addressVersionNumber)
             + encodeVarint(streamNumber) + addressHash
-        ).digest()).digest()
+        )
         payload += doubleHashOfAddressData[32:]  # the tag
         signature = highlevelcrypto.sign(
-            payload + dataToEncrypt, privSigningKeyHex
-        )
+            payload + dataToEncrypt, privSigningKeyHex, self.digestAlg)
         dataToEncrypt += encodeVarint(len(signature))
         dataToEncrypt += signature
 
@@ -472,9 +467,9 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For pubkey message)')
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,
             doubleHashOfAddressData[32:]
         )
@@ -485,9 +480,9 @@ class singleWorker(StoppableThread):
         queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
-            BMConfigParser().set(
+            config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            BMConfigParser().save()
+            config.save()
         except Exception as err:
             self.logger.error(
                 'Error: Couldn\'t add the lastpubkeysendtime'
@@ -508,9 +503,9 @@ class singleWorker(StoppableThread):
         objectType = protocol.OBJECT_ONIONPEER
         # FIXME: ideally the objectPayload should be signed
         objectPayload = encodeVarint(peer.port) + protocol.encodeHost(peer.host)
-        tag = calculateInventoryHash(objectPayload)
+        tag = highlevelcrypto.calculateInventoryHash(objectPayload)
 
-        if Inventory().by_type_and_tag(objectType, tag):
+        if state.Inventory.by_type_and_tag(objectType, tag):
             return  # not expired
 
         payload = pack('>Q', embeddedTime)
@@ -522,10 +517,10 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For onionpeer object)')
 
-        inventoryHash = calculateInventoryHash(payload)
-        Inventory()[inventoryHash] = (
-            objectType, streamNumber, buffer(payload),
-            embeddedTime, buffer(tag)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
+        state.Inventory[inventoryHash] = (
+            objectType, streamNumber, buffer(payload),  # noqa: F821
+            embeddedTime, buffer(tag)  # noqa: F821
         )
         self.logger.info(
             'sending inv (within sendOnionPeerObj function) for object: %s',
@@ -564,8 +559,7 @@ class singleWorker(StoppableThread):
                 # , privEncryptionKeyHex
                 privSigningKeyHex, _, pubSigningKey, pubEncryptionKey = \
                     self._getKeysForAddress(fromaddress)
-            except (configparser.NoSectionError, configparser.NoOptionError) as err:
-                self.logger.warning("Section or Option did not found: %s", err)
+            except ValueError:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata, _translate(
@@ -573,6 +567,7 @@ class singleWorker(StoppableThread):
                             "Error! Could not find sender address"
                             " (your address) in the keys.dat file."))
                 ))
+                continue
             except Exception as err:
                 self.logger.error(
                     'Error within sendBroadcast. Could not read'
@@ -618,10 +613,10 @@ class singleWorker(StoppableThread):
 
             payload += encodeVarint(streamNumber)
             if addressVersionNumber >= 4:
-                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
+                doubleHashOfAddressData = highlevelcrypto.double_sha512(
                     encodeVarint(addressVersionNumber)
                     + encodeVarint(streamNumber) + ripe
-                ).digest()).digest()
+                )
                 tag = doubleHashOfAddressData[32:]
                 payload += tag
             else:
@@ -633,9 +628,9 @@ class singleWorker(StoppableThread):
             dataToEncrypt += protocol.getBitfield(fromaddress)
             dataToEncrypt += pubSigningKey + pubEncryptionKey
             if addressVersionNumber >= 3:
-                dataToEncrypt += encodeVarint(BMConfigParser().getint(
+                dataToEncrypt += encodeVarint(config.getint(
                     fromaddress, 'noncetrialsperbyte'))
-                dataToEncrypt += encodeVarint(BMConfigParser().getint(
+                dataToEncrypt += encodeVarint(config.getint(
                     fromaddress, 'payloadlengthextrabytes'))
             # message encoding type
             dataToEncrypt += encodeVarint(encoding)
@@ -646,7 +641,7 @@ class singleWorker(StoppableThread):
             dataToSign = payload + dataToEncrypt
 
             signature = highlevelcrypto.sign(
-                dataToSign, privSigningKeyHex)
+                dataToSign, privSigningKeyHex, self.digestAlg)
             dataToEncrypt += encodeVarint(len(signature))
             dataToEncrypt += signature
 
@@ -690,9 +685,9 @@ class singleWorker(StoppableThread):
                 )
                 continue
 
-            inventoryHash = calculateInventoryHash(payload)
+            inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
             objectType = 3
-            Inventory()[inventoryHash] = (
+            state.Inventory[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
             self.logger.info(
                 'sending inv (within sendBroadcast function)'
@@ -761,7 +756,7 @@ class singleWorker(StoppableThread):
             # then we won't need an entry in the pubkeys table;
             # we can calculate the needed pubkey using the private keys
             # in our keys.dat file.
-            elif BMConfigParser().has_section(toaddress):
+            elif config.has_section(toaddress):
                 if not sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' '''
                     ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
@@ -800,10 +795,10 @@ class singleWorker(StoppableThread):
                     if toAddressVersionNumber <= 3:
                         toTag = ''
                     else:
-                        toTag = hashlib.sha512(hashlib.sha512(
+                        toTag = highlevelcrypto.double_sha512(
                             encodeVarint(toAddressVersionNumber)
                             + encodeVarint(toStreamNumber) + toRipe
-                        ).digest()).digest()[32:]
+                        )[32:]
                     if toaddress in state.neededPubkeys or \
                             toTag in state.neededPubkeys:
                         # We already sent a request for the pubkey
@@ -836,11 +831,11 @@ class singleWorker(StoppableThread):
                         # already contains the toAddress and cryptor
                         # object associated with the tag for this toAddress.
                         if toAddressVersionNumber >= 4:
-                            doubleHashOfToAddressData = hashlib.sha512(
-                                hashlib.sha512(
-                                    encodeVarint(toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe
-                                ).digest()
-                            ).digest()
+                            doubleHashOfToAddressData = \
+                                highlevelcrypto.double_sha512(
+                                    encodeVarint(toAddressVersionNumber)
+                                    + encodeVarint(toStreamNumber) + toRipe
+                                )
                             # The first half of the sha512 hash.
                             privEncryptionKey = doubleHashOfToAddressData[:32]
                             # The second half of the sha512 hash.
@@ -851,7 +846,7 @@ class singleWorker(StoppableThread):
                                     hexlify(privEncryptionKey))
                             )
 
-                            for value in Inventory().by_type_and_tag(1, toTag):
+                            for value in state.Inventory.by_type_and_tag(1, toTag):
                                 # if valid, this function also puts it
                                 # in the pubkeys table.
                                 if protocol.decryptAndCheckPubkeyPayload(
@@ -908,7 +903,7 @@ class singleWorker(StoppableThread):
             embeddedTime = int(time.time() + TTL)
 
             # if we aren't sending this to ourselves or a chan
-            if not BMConfigParser().has_section(toaddress):
+            if not config.has_section(toaddress):
                 state.ackdataForWhichImWatching[ackdata] = 0
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -958,7 +953,7 @@ class singleWorker(StoppableThread):
                 if protocol.isBitSetWithinBitfield(behaviorBitfield, 30):
                     # if we are Not willing to include the receiver's
                     # RIPE hash on the message..
-                    if not shared.BMConfigParser().safeGetBoolean(
+                    if not config.safeGetBoolean(
                             'bitmessagesettings', 'willinglysendtomobile'
                     ):
                         self.logger.info(
@@ -1045,9 +1040,9 @@ class singleWorker(StoppableThread):
                             ))
                     ))
                     if status != 'forcepow':
-                        maxacceptablenoncetrialsperbyte = BMConfigParser().getint(
+                        maxacceptablenoncetrialsperbyte = config.getint(
                             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')
-                        maxacceptablepayloadlengthextrabytes = BMConfigParser().getint(
+                        maxacceptablepayloadlengthextrabytes = config.getint(
                             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')
                         cond1 = maxacceptablenoncetrialsperbyte and \
                             requiredAverageProofOfWorkNonceTrialsPerByte > maxacceptablenoncetrialsperbyte
@@ -1084,7 +1079,7 @@ class singleWorker(StoppableThread):
                 behaviorBitfield = protocol.getBitfield(fromaddress)
 
                 try:
-                    privEncryptionKeyBase58 = BMConfigParser().get(
+                    privEncryptionKeyBase58 = config.get(
                         toaddress, 'privencryptionkey')
                 except (configparser.NoSectionError, configparser.NoOptionError) as err:
                     queues.UISignalQueue.put((
@@ -1103,8 +1098,9 @@ class singleWorker(StoppableThread):
                         ' from the keys.dat file for our own address. %s\n',
                         err)
                     continue
-                privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58))
+                privEncryptionKeyHex = hexlify(
+                    highlevelcrypto.decodeWalletImportFormat(
+                        privEncryptionKeyBase58.encode()))
                 pubEncryptionKeyBase256 = unhexlify(highlevelcrypto.privToPub(
                     privEncryptionKeyHex))[1:]
                 requiredAverageProofOfWorkNonceTrialsPerByte = \
@@ -1132,8 +1128,7 @@ class singleWorker(StoppableThread):
                 privSigningKeyHex, privEncryptionKeyHex, \
                     pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
                         fromaddress)
-            except (configparser.NoSectionError, configparser.NoOptionError) as err:
-                self.logger.warning("Section or Option did not found: %s", err)
+            except ValueError:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata, _translate(
@@ -1141,6 +1136,7 @@ class singleWorker(StoppableThread):
                             "Error! Could not find sender address"
                             " (your address) in the keys.dat file."))
                 ))
+                continue
             except Exception as err:
                 self.logger.error(
                     'Error within sendMsg. Could not read'
@@ -1170,9 +1166,9 @@ class singleWorker(StoppableThread):
                     payload += encodeVarint(
                         defaults.networkDefaultPayloadLengthExtraBytes)
                 else:
-                    payload += encodeVarint(BMConfigParser().getint(
+                    payload += encodeVarint(config.getint(
                         fromaddress, 'noncetrialsperbyte'))
-                    payload += encodeVarint(BMConfigParser().getint(
+                    payload += encodeVarint(config.getint(
                         fromaddress, 'payloadlengthextrabytes'))
 
             # This hash will be checked by the receiver of the message
@@ -1185,7 +1181,7 @@ class singleWorker(StoppableThread):
             )
             payload += encodeVarint(encodedMessage.length)
             payload += encodedMessage.data
-            if BMConfigParser().has_section(toaddress):
+            if config.has_section(toaddress):
                 self.logger.info(
                     'Not bothering to include ackdata because we are'
                     ' sending to ourselves or a chan.'
@@ -1207,7 +1203,8 @@ class singleWorker(StoppableThread):
             payload += fullAckPayload
             dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
-            signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
+            signature = highlevelcrypto.sign(
+                dataToSign, privSigningKeyHex, self.digestAlg)
             payload += encodeVarint(len(signature))
             payload += signature
 
@@ -1284,11 +1281,11 @@ class singleWorker(StoppableThread):
                 )
                 continue
 
-            inventoryHash = calculateInventoryHash(encryptedPayload)
+            inventoryHash = highlevelcrypto.calculateInventoryHash(encryptedPayload)
             objectType = 2
-            Inventory()[inventoryHash] = (
+            state.Inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
-            if BMConfigParser().has_section(toaddress) or \
+            if config.has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -1314,7 +1311,7 @@ class singleWorker(StoppableThread):
 
             # Update the sent message in the sent table with the
             # necessary information.
-            if BMConfigParser().has_section(toaddress) or \
+            if config.has_section(toaddress) or \
                not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
                 newStatus = 'msgsentnoackexpected'
             else:
@@ -1330,10 +1327,9 @@ class singleWorker(StoppableThread):
 
             # If we are sending to ourselves or a chan, let's put
             # the message in our own inbox.
-            if BMConfigParser().has_section(toaddress):
+            if config.has_section(toaddress):
                 # Used to detect and ignore duplicate messages in our inbox
-                sigHash = hashlib.sha512(hashlib.sha512(
-                    signature).digest()).digest()[32:]
+                sigHash = highlevelcrypto.double_sha512(signature)[32:]
                 t = (inventoryHash, toaddress, fromaddress, subject, int(
                     time.time()), message, 'inbox', encoding, 0, sigHash)
                 helper_inbox.insert(t)
@@ -1344,14 +1340,16 @@ class singleWorker(StoppableThread):
                 # If we are behaving as an API then we might need to run an
                 # outside command to let some program know that a new message
                 # has arrived.
-                if BMConfigParser().safeGetBoolean(
+                if config.safeGetBoolean(
                         'bitmessagesettings', 'apienabled'):
 
-                    apiNotifyPath = BMConfigParser().safeGet(
+                    apiNotifyPath = config.safeGet(
                         'bitmessagesettings', 'apinotifypath')
 
                     if apiNotifyPath:
-                        call([apiNotifyPath, "newMessage"])
+                        # There is no additional risk of remote exploitation or
+                        # privilege escalation
+                        call([apiNotifyPath, "newMessage"])  # nosec B603
 
     def requestPubKey(self, toAddress):
         """Send a getpubkey object"""
@@ -1388,16 +1386,13 @@ class singleWorker(StoppableThread):
             # neededPubkeys dictionary. But if we are recovering
             # from a restart of the client then we have to put it in now.
 
-            # Note that this is the first half of the sha512 hash.
-            privEncryptionKey = hashlib.sha512(hashlib.sha512(
+            doubleHashOfAddressData = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + ripe
-            ).digest()).digest()[:32]
+            )
+            privEncryptionKey = doubleHashOfAddressData[:32]
             # Note that this is the second half of the sha512 hash.
-            tag = hashlib.sha512(hashlib.sha512(
-                encodeVarint(addressVersionNumber)
-                + encodeVarint(streamNumber) + ripe
-            ).digest()).digest()[32:]
+            tag = doubleHashOfAddressData[32:]
             if tag not in state.neededPubkeys:
                 # We'll need this for when we receive a pubkey reply:
                 # it will be encrypted and we'll need to decrypt it.
@@ -1439,9 +1434,9 @@ class singleWorker(StoppableThread):
 
         payload = self._doPOWDefaults(payload, TTL)
 
-        inventoryHash = calculateInventoryHash(payload)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
         objectType = 1
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
         self.logger.info('sending inv (for the getpubkey message)')
         queues.invQueue.put((streamNumber, inventoryHash))

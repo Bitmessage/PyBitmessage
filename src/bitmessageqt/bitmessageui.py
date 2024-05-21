@@ -3,7 +3,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from tr import _translate
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from foldertree import AddressBookCompleter
 from messageview import MessageView
 from messagecompose import MessageCompose
@@ -540,7 +540,7 @@ class Ui_MainWindow(object):
         self.blackwhitelist = Blacklist()
         self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
         # Initialize the Blacklist or Whitelist
-        if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
+        if config.get('bitmessagesettings', 'blackwhitelist') == 'white':
             self.blackwhitelist.radioButtonWhitelist.click()
         self.blackwhitelist.rerenderBlackWhiteList()
 
@@ -642,7 +642,7 @@ class Ui_MainWindow(object):
 
     def updateNetworkSwitchMenuLabel(self, dontconnect=None):
         if dontconnect is None:
-            dontconnect = BMConfigParser().safeGetBoolean(
+            dontconnect = config.safeGetBoolean(
                 'bitmessagesettings', 'dontconnect')
         self.actionNetworkSwitch.setText(
             _translate("MainWindow", "Go online", None)
@@ -680,16 +680,19 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label.setText(_translate("MainWindow", "To:", None))
-        #self.textEditMessage.setHtml("")
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None))
+        self.tabWidgetSend.setTabText(
+            self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None)
+        )
         self.label_8.setText(_translate("MainWindow", "From:", None))
         self.label_7.setText(_translate("MainWindow", "Subject:", None))
-        #self.textEditMessageBroadcast.setHtml("")
-        self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers", None))
+        self.tabWidgetSend.setTabText(
+            self.tabWidgetSend.indexOf(self.sendBroadcast),
+            _translate("MainWindow", "Send Message to your Subscribers", None)
+        )
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
         try:
-            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl')/60/60)
+            hours = int(config.getint('bitmessagesettings', 'ttl') / 60 / 60)
         except:
             pass
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, hours))
@@ -712,7 +715,10 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInboxSubscriptions.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), _translate("MainWindow", "Subscriptions", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.subscriptions),
+            _translate("MainWindow", "Subscriptions", None)
+        )
         self.treeWidgetChans.headerItem().setText(0, _translate("MainWindow", "Chans", None))
         self.pushButtonAddChan.setText(_translate("MainWindow", "Add Chan", None))
         self.inboxSearchLineEditChans.setPlaceholderText(_translate("MainWindow", "Search", None))
@@ -732,9 +738,15 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Received", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans", None))
         self.blackwhitelist.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), _translate("blacklist", "Blacklist", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.blackwhitelist),
+            _translate("blacklist", "Blacklist", None)
+        )
         self.networkstatus.retranslateUi()
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("networkstatus", "Network Status", None))
+        self.tabWidget.setTabText(
+            self.tabWidget.indexOf(self.networkstatus),
+            _translate("networkstatus", "Network Status", None)
+        )
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
@@ -747,7 +759,9 @@ class Ui_MainWindow(object):
         self.actionSupport.setText(_translate("MainWindow", "Contact support", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
         self.actionSettings.setText(_translate("MainWindow", "Settings", None))
-        self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
+        self.actionRegenerateDeterministicAddresses.setText(
+            _translate("MainWindow", "Regenerate deterministic addresses", None)
+        )
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
         self.updateNetworkSwitchMenuLabel()

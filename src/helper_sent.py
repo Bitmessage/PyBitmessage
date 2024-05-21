@@ -5,9 +5,9 @@ Insert values into sent table
 import time
 import uuid
 from addresses import decodeAddress
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_ackPayload import genAckPayload
-from helper_sql import sqlExecute
+from helper_sql import sqlExecute, sqlQuery
 
 
 # pylint: disable=too-many-arguments
@@ -27,7 +27,7 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
             ripe = new_ripe
 
         if not ackdata:
-            stealthLevel = BMConfigParser().safeGetInt(
+            stealthLevel = config.safeGetInt(
                 'bitmessagesettings', 'ackstealthlevel')
             new_ackdata = genAckPayload(streamNumber, stealthLevel)
             ackdata = new_ackdata
@@ -36,7 +36,7 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
         sentTime = sentTime if sentTime else int(time.time())  # sentTime (this doesn't change)
         lastActionTime = lastActionTime if lastActionTime else int(time.time())
 
-        ttl = ttl if ttl else BMConfigParser().getint('bitmessagesettings', 'ttl')
+        ttl = ttl if ttl else config.getint('bitmessagesettings', 'ttl')
 
         t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
              sentTime, lastActionTime, sleeptill, status, retryNumber, folder,
@@ -46,3 +46,24 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
         return ackdata
     else:
         return None
+
+
+def delete(ack_data):
+    """Perform Delete query"""
+    sqlExecute("DELETE FROM sent WHERE ackdata = ?", ack_data)
+
+
+def retrieve_message_details(ack_data):
+    """Retrieving Message details"""
+    data = sqlQuery(
+        "select toaddress, fromaddress, subject, message, received from inbox where msgid = ?", ack_data
+    )
+    return data
+
+
+def trash(ackdata):
+    """Mark a message in the `sent` as `trash`"""
+    rowcount = sqlExecute(
+        '''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdata
+    )
+    return rowcount

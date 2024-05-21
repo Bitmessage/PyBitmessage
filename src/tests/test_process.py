@@ -205,6 +205,8 @@ class TestProcess(TestProcessProto):
         self.assertEqual(
             self.process.environ().get('BITMESSAGE_HOME'), self.home)
 
+    @unittest.skipIf(
+        os.getenv('WINEPREFIX'), "process.connections() doesn't work on wine")
     def test_listening(self):
         """Check that pybitmessage listens on port 8444"""
         for c in self.process.connections():

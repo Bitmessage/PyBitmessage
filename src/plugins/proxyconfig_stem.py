@@ -13,7 +13,7 @@ Configure tor proxy and hidden service with
 """
 import logging
 import os
-import random  # noseq
+import random
 import sys
 import tempfile
 
@@ -79,7 +79,7 @@ def connect_plugin(config):
     port = config.safeGetInt('bitmessagesettings', 'socksport', 9050)
     for attempt in range(50):
         if attempt > 0:
-            port = random.randint(32767, 65535)
+            port = random.randint(32767, 65535)  # nosec B311
             tor_config['SocksPort'] = str(port)
         if tor_config.get('DataDirectory'):
             control_port = port + 1

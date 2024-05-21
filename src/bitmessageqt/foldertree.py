@@ -8,7 +8,7 @@ from cgi import escape
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from settingsmixin import SettingsMixin
 from tr import _translate
@@ -107,9 +107,9 @@ class AccountMixin(object):
         if self.address is None:
             self.type = self.ALL
             self.setFlags(self.flags() & ~QtCore.Qt.ItemIsEditable)
-        elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
+        elif config.safeGetBoolean(self.address, 'chan'):
             self.type = self.CHAN
-        elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+        elif config.safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
             'SELECT label FROM subscriptions WHERE address=?',
@@ -126,7 +126,7 @@ class AccountMixin(object):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                retval = BMConfigParser().get(self.address, 'label')
+                retval = config.get(self.address, 'label')
             except Exception:
                 queryreturn = sqlQuery(
                     'SELECT label FROM addressbook WHERE address=?',
@@ -238,8 +238,7 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
             return _translate("MainWindow", "All accounts")
 
         try:
-            return BMConfigParser().get(
-                self.address, 'label').decode('utf-8', 'ignore')
+            return config.get(self.address, 'label').decode('utf-8', 'ignore')
         except:
             return self.address.decode('utf-8')
 
@@ -267,9 +266,8 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         """
         if role == QtCore.Qt.EditRole \
                 and self.type != AccountMixin.SUBSCRIPTION:
-            BMConfigParser().set(
-                str(self.address), 'label', value.encode('utf-8'))
-            BMConfigParser().save()
+            config.set(str(self.address), 'label', value.encode('utf-8'))
+            config.save()
         return super(Ui_AddressWidget, self).setData(column, role, value)
 
     def setAddress(self, address):
@@ -379,7 +377,7 @@ class BMAddressWidget(BMTableWidgetItem, AccountMixin):
         if role == QtCore.Qt.ToolTipRole:
             return self.label + " (" + self.address + ")"
         elif role == QtCore.Qt.DecorationRole:
-            if BMConfigParser().safeGetBoolean(
+            if config.safeGetBoolean(
                     'bitmessagesettings', 'useidenticons'):
                 return avatarize(self.address or self.label)
         elif role == QtCore.Qt.ForegroundRole:
@@ -404,7 +402,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                newLabel = BMConfigParser().get(self.address, 'label')
+                newLabel = config.get(self.address, 'label')
             except:
                 queryreturn = sqlQuery(
                     'SELECT label FROM addressbook WHERE address=?',
@@ -513,9 +511,9 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                     AccountMixin.NORMAL,
                     AccountMixin.MAILINGLIST, AccountMixin.CHAN):
                 try:
-                    BMConfigParser().get(self.address, 'label')
-                    BMConfigParser().set(self.address, 'label', self.label)
-                    BMConfigParser().save()
+                    config.get(self.address, 'label')
+                    config.set(self.address, 'label', self.label)
+                    config.save()
                 except:
                     sqlExecute(
                         'UPDATE addressbook SET label=? WHERE address=?',

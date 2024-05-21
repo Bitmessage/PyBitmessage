@@ -1,25 +1,29 @@
-"""The Inventory singleton"""
+"""The Inventory"""
 
 # TODO make this dynamic, and watch out for frozen, like with messagetypes
 import storage.filesystem
 import storage.sqlite
-from bmconfigparser import BMConfigParser
-from singleton import Singleton
+from bmconfigparser import config
 
 
-@Singleton
-class Inventory():
+def create_inventory_instance(backend="sqlite"):
     """
-    Inventory singleton class which uses storage backends
+    Create an instance of the inventory class
+    defined in `storage.<backend>`.
+    """
+    return getattr(
+        getattr(storage, backend),
+        "{}Inventory".format(backend.title()))()
+
+
+class Inventory:
+    """
+    Inventory class which uses storage backends
     to manage the inventory.
     """
     def __init__(self):
-        self._moduleName = BMConfigParser().safeGet("inventory", "storage")
-        self._inventoryClass = getattr(
-            getattr(storage, self._moduleName),
-            "{}Inventory".format(self._moduleName.title())
-        )
-        self._realInventory = self._inventoryClass()
+        self._moduleName = config.safeGet("inventory", "storage")
+        self._realInventory = create_inventory_instance(self._moduleName)
         self.numberOfInventoryLookupsPerformed = 0
 
     # cheap inheritance copied from asyncore
@@ -39,3 +43,6 @@ class Inventory():
     # hint for pylint: this is dictionary like object
     def __getitem__(self, key):
         return self._realInventory[key]
+
+    def __setitem__(self, key, value):
+        self._realInventory[key] = value

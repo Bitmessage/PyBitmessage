@@ -8,7 +8,7 @@ import time
 
 from six.moves import range
 
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 
 logger = logging.getLogger('default')
 
@@ -53,7 +53,7 @@ windowsLanguageMap = {
 }
 
 
-time_format = BMConfigParser().safeGet(
+time_format = config.safeGet(
     'bitmessagesettings', 'timeformat', DEFAULT_TIME_FORMAT)
 
 if not re.search(r'\d', time.strftime(time_format)):
@@ -125,7 +125,7 @@ def formatTimestamp(timestamp=None):
 
 def getTranslationLanguage():
     """Return the user's language choice"""
-    userlocale = BMConfigParser().safeGet(
+    userlocale = config.safeGet(
         'bitmessagesettings', 'userlocale', 'system')
     return userlocale if userlocale and userlocale != 'system' else language
 

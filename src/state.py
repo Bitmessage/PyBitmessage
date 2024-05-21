@@ -3,7 +3,6 @@ Global runtime variables.
 """
 
 neededPubkeys = {}
-streamsInWhichIAmParticipating = []
 
 extPort = None
 """For UPnP"""
@@ -11,7 +10,7 @@ extPort = None
 socksIP = None
 """for Tor hidden service"""
 
-appdata = ''
+appdata = ""
 """holds the location of the application data storage directory"""
 
 shutdown = 0
@@ -40,16 +39,15 @@ maximumNumberOfHalfOpenConnections = 0
 
 maximumLengthOfTimeToBotherResendingMessages = 0
 
-invThread = None
-addrThread = None
-downloadThread = None
-uploadThread = None
-
 ownAddresses = {}
 
 discoveredPeers = {}
 
-dandelion = 0
+dandelion_enabled = 0
+
+kivy = False
+
+kivyapp = None
 
 testmode = False
 
@@ -60,7 +58,7 @@ numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
 
-statusIconColor = 'red'
+statusIconColor = "red"
 """
 GUI status icon color
 .. note:: bad style, refactor it
@@ -70,3 +68,34 @@ ackdataForWhichImWatching = {}
 
 thisapp = None
 """Singleton instance"""
+
+backend_py3_compatible = False
+
+
+class Placeholder(object):  # pylint:disable=too-few-public-methods
+    """Placeholder class"""
+
+    def __init__(self, className):
+        self.className = className
+
+    def __getattr__(self, name):
+        self._raise()
+
+    def __setitem__(self, key, value):
+        self._raise()
+
+    def __getitem__(self, key):
+        self._raise()
+
+    def _raise(self):
+        raise NotImplementedError(
+            "Probabaly you forgot to initialize state variable for {}".format(
+                self.className
+            )
+        )
+
+
+Inventory = Placeholder("Inventory")
+
+
+Dandelion = Placeholder("Dandelion")

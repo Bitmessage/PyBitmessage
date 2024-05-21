@@ -16,13 +16,13 @@ try:
     import queues
     import state
     from addresses import encodeAddress
-    from bmconfigparser import BMConfigParser
+    from bmconfigparser import config, config_ready
     from debug import logger
     from tr import _translate
 except ImportError:
     from . import helper_sql, helper_startup, paths, queues, state
     from .addresses import encodeAddress
-    from .bmconfigparser import BMConfigParser
+    from .bmconfigparser import config, config_ready
     from .debug import logger
     from .tr import _translate
 
@@ -36,6 +36,7 @@ class sqlThread(threading.Thread):
     def run(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         helper_sql.sql_available = True
+        config_ready.wait()
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
@@ -93,7 +94,7 @@ class sqlThread(threading.Thread):
         # If the settings version is equal to 2 or 3 then the
         # sqlThread will modify the pubkeys table and change
         # the settings version to 4.
-        settingsversion = BMConfigParser().getint(
+        settingsversion = config.getint(
             'bitmessagesettings', 'settingsversion')
 
         # People running earlier versions of PyBitmessage do not have the
@@ -125,9 +126,9 @@ class sqlThread(threading.Thread):
 
             settingsversion = 4
 
-        BMConfigParser().set(
+        config.set(
             'bitmessagesettings', 'settingsversion', str(settingsversion))
-        BMConfigParser().save()
+        config.save()
 
         helper_startup.updateConfig()
 

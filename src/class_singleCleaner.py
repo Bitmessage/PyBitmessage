@@ -25,10 +25,9 @@ import time
 
 import queues
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from inventory import Inventory
-from network import BMConnectionPool, knownnodes, StoppableThread
+from network import connectionpool, knownnodes, StoppableThread
 from tr import _translate
 
 
@@ -50,11 +49,11 @@ class singleCleaner(StoppableThread):
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
             state.maximumLengthOfTimeToBotherResendingMessages = (
-                BMConfigParser().getfloat(
+                config.getfloat(
                     'bitmessagesettings', 'stopresendingafterxdays')
                 * 24 * 60 * 60
             ) + (
-                BMConfigParser().getfloat(
+                config.getfloat(
                     'bitmessagesettings', 'stopresendingafterxmonths')
                 * (60 * 60 * 24 * 365) / 12)
         except:  # noqa:E722
@@ -69,7 +68,7 @@ class singleCleaner(StoppableThread):
                 'updateStatusBar',
                 'Doing housekeeping (Flushing inventory in memory to disk...)'
             ))
-            Inventory().flush()
+            state.Inventory.flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
 
             # If we are running as a daemon then we are going to fill up the UI
@@ -82,7 +81,7 @@ class singleCleaner(StoppableThread):
             tick = int(time.time())
             if timeWeLastClearedInventoryAndPubkeysTables < tick - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = tick
-                Inventory().clean()
+                state.Inventory.clean()
                 queues.workerQueue.put(('sendOnionPeerObj', ''))
                 # pubkeys
                 sqlExecute(
@@ -108,7 +107,8 @@ class singleCleaner(StoppableThread):
             try:
                 # Cleanup knownnodes and handle possible severe exception
                 # while writing it to disk
-                knownnodes.cleanupKnownNodes()
+                if state.enableNetwork:
+                    knownnodes.cleanupKnownNodes(connectionpool.pool)
             except Exception as err:
                 if "Errno 28" in str(err):
                     self.logger.fatal(
@@ -129,7 +129,7 @@ class singleCleaner(StoppableThread):
                         os._exit(1)  # pylint: disable=protected-access
 
             # inv/object tracking
-            for connection in BMConnectionPool().connections():
+            for connection in connectionpool.pool.connections():
                 connection.clean()
 
             # discovery tracking

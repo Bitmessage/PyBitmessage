@@ -5,19 +5,21 @@ Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-por
 """
 
 import httplib
+import re
 import socket
 import time
 import urllib2
 from random import randint
 from urlparse import urlparse
-from xml.dom.minidom import Document, parseString
+from xml.dom.minidom import Document  # nosec B408
+from defusedxml.minidom import parseString
 
 import queues
 import state
 import tr
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
-from network import BMConnectionPool, knownnodes, StoppableThread
+from network import connectionpool, knownnodes, StoppableThread
 from network.node import Peer
 
 
@@ -119,7 +121,7 @@ class Router:  # pylint: disable=old-style-class
             if service.childNodes[0].data.find('WANIPConnection') > 0 or \
                     service.childNodes[0].data.find('WANPPPConnection') > 0:
                 self.path = service.parentNode.getElementsByTagName('controlURL')[0].childNodes[0].data
-                self.upnp_schema = service.childNodes[0].data.split(':')[-2]
+                self.upnp_schema = re.sub(r'[^A-Za-z0-9:-]', '', service.childNodes[0].data.split(':')[-2])
 
     def AddPortMapping(
             self,
@@ -207,7 +209,7 @@ class uPnPThread(StoppableThread):
 
     def __init__(self):
         super(uPnPThread, self).__init__(name="uPnPThread")
-        self.extPort = BMConfigParser().safeGetInt('bitmessagesettings', 'extport', default=None)
+        self.extPort = config.safeGetInt('bitmessagesettings', 'extport', default=None)
         self.localIP = self.getLocalIP()
         self.routers = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -226,24 +228,24 @@ class uPnPThread(StoppableThread):
         # wait until asyncore binds so that we know the listening port
         bound = False
         while state.shutdown == 0 and not self._stopped and not bound:
-            for s in BMConnectionPool().listeningSockets.values():
+            for s in connectionpool.pool.listeningSockets.values():
                 if s.is_bound():
                     bound = True
             if not bound:
                 time.sleep(1)
 
         # pylint: disable=attribute-defined-outside-init
-        self.localPort = BMConfigParser().getint('bitmessagesettings', 'port')
+        self.localPort = config.getint('bitmessagesettings', 'port')
 
-        while state.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
+        while state.shutdown == 0 and config.safeGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and not self.routers:
                 try:
                     self.sendSearchRouter()
-                except:  # noqa:E722
+                except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
                     pass
                 lastSent = time.time()
             try:
-                while state.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
+                while state.shutdown == 0 and config.safeGetBoolean('bitmessagesettings', 'upnp'):
                     resp, (ip, _) = self.sock.recvfrom(1000)
                     if resp is None:
                         continue
@@ -282,11 +284,11 @@ class uPnPThread(StoppableThread):
                     self.createPortMapping(router)
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
-        except:  # noqa:E722
+        except (IOError, OSError):  # noqa:E722
             pass
         try:
             self.sock.close()
-        except:  # noqa:E722
+        except (IOError, OSError):  # noqa:E722
             pass
         deleted = False
         for router in self.routers:
@@ -331,7 +333,7 @@ class uPnPThread(StoppableThread):
                 elif i == 1 and self.extPort:
                     extPort = self.extPort  # try external port from last time next
                 else:
-                    extPort = randint(32767, 65535)
+                    extPort = randint(32767, 65535)  # nosec B311
                 logger.debug(
                     "Attempt %i, requesting UPnP mapping for %s:%i on external port %i",
                     i,
@@ -340,8 +342,8 @@ class uPnPThread(StoppableThread):
                     extPort)
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
                 self.extPort = extPort
-                BMConfigParser().set('bitmessagesettings', 'extport', str(extPort))
-                BMConfigParser().save()
+                config.set('bitmessagesettings', 'extport', str(extPort))
+                config.save()
                 break
             except UPnPError:
                 logger.debug("UPnP error: ", exc_info=True)

@@ -93,7 +93,7 @@ class singleinstance(object):
                         os.close(self.fd)
                 else:
                     fcntl.lockf(self.fp, fcntl.LOCK_UN)
-            except Exception:
+            except (IOError, OSError):
                 pass
 
             return
@@ -107,5 +107,5 @@ class singleinstance(object):
                 fcntl.lockf(self.fp, fcntl.LOCK_UN)
                 if os.path.isfile(self.lockfile):
                     os.unlink(self.lockfile)
-        except Exception:
+        except (IOError, OSError):
             pass

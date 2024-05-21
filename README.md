@@ -22,7 +22,7 @@ Feel welcome to join chan "bitmessage", BM-2cWy7cvHoq3f1rYMerRJp8PT653jjSuEdY
 References
 ----------
 * [Project Website](https://bitmessage.org)
-* [Protocol Specification](https://bitmessage.org/wiki/Protocol_specification)
+* [Protocol Specification](https://pybitmessage.rtfd.io/en/v0.6/protocol.html)
 * [Whitepaper](https://bitmessage.org/bitmessage.pdf)
 * [Installation](https://bitmessage.org/wiki/Compiling_instructions)
 * [Discuss on Reddit](https://www.reddit.com/r/bitmessage)

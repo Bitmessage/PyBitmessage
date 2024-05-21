@@ -2,35 +2,35 @@
 TCP protocol handler
 """
 # pylint: disable=too-many-ancestors
-import l10n
+
 import logging
 import math
 import random
 import socket
 import time
 
+# magic imports!
 import addresses
-import asyncore_pollchoose as asyncore
-import connectionpool
 import helper_random
-import knownnodes
+import l10n
 import protocol
 import state
-from bmconfigparser import BMConfigParser
-from helper_random import randomBytes
-from inventory import Inventory
+import connectionpool
+from bmconfigparser import config
+from highlevelcrypto import randomBytes
+from queues import invQueue, receiveDataQueue, UISignalQueue
+from tr import _translate
+
+import asyncore_pollchoose as asyncore
+import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
-from network.assemble import assemble_addr
 from network.bmproto import BMProto
-from network.constants import MAX_OBJECT_COUNT
-from network.dandelion import Dandelion
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
 from node import Peer
-from queues import invQueue, receiveDataQueue, UISignalQueue
-from tr import _translate
+
 
 logger = logging.getLogger('default')
 
@@ -169,7 +169,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.increaseRating(self.destination)
             knownnodes.addKnownNode(
                 self.streams, self.destination, time.time())
-            Dandelion().maybeAddStem(self)
+            state.Dandelion.maybeAddStem(self)
         self.sendAddr()
         self.sendBigInv()
 
@@ -178,7 +178,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         # We are going to share a maximum number of 1000 addrs (per overlapping
         # stream) with our peer. 500 from overlapping streams, 250 from the
         # left child stream, and 250 from the right child stream.
-        maxAddrCount = BMConfigParser().safeGetInt(
+        maxAddrCount = config.safeGetInt(
             "bitmessagesettings", "maxaddrperstreamsend", 500)
 
         templist = []
@@ -195,7 +195,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         (k, v) for k, v in nodes.iteritems()
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
-                        and v["rating"] >= 0 and len(k.host) <= 22
+                        and v["rating"] >= 0 and not k.host.endswith('.onion')
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
@@ -206,7 +206,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
         if templist:
-            self.append_write_buf(assemble_addr(templist))
+            self.append_write_buf(protocol.assembleAddrMessage(templist))
 
     def sendBigInv(self):
         """
@@ -229,9 +229,9 @@ class TCPConnection(BMProto, TLSDispatcher):
             # may lock for a long time, but I think it's better than
             # thousands of small locks
             with self.objectsNewToThemLock:
-                for objHash in Inventory().unexpired_hashes_by_stream(stream):
+                for objHash in state.Inventory.unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
-                    if Dandelion().hasHash(objHash):
+                    if state.Dandelion.hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
         objectCount = 0
@@ -245,7 +245,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             # Remove -1 below when sufficient time has passed for users to
             # upgrade to versions of PyBitmessage that accept inv with 50,000
             # items
-            if objectCount >= MAX_OBJECT_COUNT - 1:
+            if objectCount >= protocol.MAX_OBJECT_COUNT - 1:
                 sendChunk()
                 payload = b''
                 objectCount = 0
@@ -268,7 +268,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams,
+                connectionpool.pool.streams,
                 False, nodeid=self.nodeid))
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
@@ -293,7 +293,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             if host_is_global:
                 knownnodes.addKnownNode(
                     self.streams, self.destination, time.time())
-                Dandelion().maybeRemoveStem(self)
+                state.Dandelion.maybeRemoveStem(self)
         else:
             self.checkTimeOffsetNotification()
             if host_is_global:
@@ -319,7 +319,7 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams,
+                connectionpool.pool.streams,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -343,7 +343,7 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams,
+                connectionpool.pool.streams,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -399,7 +399,7 @@ class TCPServer(AdvancedDispatcher):
             try:
                 if attempt > 0:
                     logger.warning('Failed to bind on port %s', port)
-                    port = random.randint(32767, 65535)
+                    port = random.randint(32767, 65535)  # nosec B311
                 self.bind((host, port))
             except socket.error as e:
                 if e.errno in (asyncore.EADDRINUSE, asyncore.WSAEADDRINUSE):
@@ -407,9 +407,9 @@ class TCPServer(AdvancedDispatcher):
             else:
                 if attempt > 0:
                     logger.warning('Setting port to %s', port)
-                    BMConfigParser().set(
+                    config.set(
                         'bitmessagesettings', 'port', str(port))
-                    BMConfigParser().save()
+                    config.save()
                 break
         self.destination = Peer(host, port)
         self.bound = True
@@ -431,10 +431,10 @@ class TCPServer(AdvancedDispatcher):
 
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
-            len(connectionpool.BMConnectionPool())
-            > BMConfigParser().safeGetInt(
+            len(connectionpool.pool)
+            > config.safeGetInt(
                 'bitmessagesettings', 'maxtotalconnections')
-                + BMConfigParser().safeGetInt(
+                + config.safeGetInt(
                     'bitmessagesettings', 'maxbootstrapconnections') + 10
         ):
             # 10 is a sort of buffer, in between it will go through
@@ -443,7 +443,7 @@ class TCPServer(AdvancedDispatcher):
             sock.close()
             return
         try:
-            connectionpool.BMConnectionPool().addConnection(
+            connectionpool.pool.addConnection(
                 TCPConnection(sock=sock))
         except socket.error:
             pass

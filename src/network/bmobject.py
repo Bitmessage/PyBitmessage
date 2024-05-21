@@ -6,9 +6,8 @@ import time
 
 import protocol
 import state
-from addresses import calculateInventoryHash
-from inventory import Inventory
-from network.dandelion import Dandelion
+import connectionpool
+from highlevelcrypto import calculateInventoryHash
 
 logger = logging.getLogger('default')
 
@@ -17,12 +16,6 @@ class BMObjectInsufficientPOWError(Exception):
     """Exception indicating the object
     doesn't have sufficient proof of work."""
     errorCodes = ("Insufficient proof of work")
-
-
-class BMObjectInvalidDataError(Exception):
-    """Exception indicating the data being parsed
-    does not match the specification."""
-    errorCodes = ("Data invalid")
 
 
 class BMObjectExpiredError(Exception):
@@ -101,7 +94,12 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
 
     def checkStream(self):
         """Check if object's stream matches streams we are interested in"""
-        if self.streamNumber not in state.streamsInWhichIAmParticipating:
+        if self.streamNumber < protocol.MIN_VALID_STREAM \
+           or self.streamNumber > protocol.MAX_VALID_STREAM:
+            logger.warning(
+                'The object has invalid stream: %s', self.streamNumber)
+            raise BMObjectInvalidError()
+        if self.streamNumber not in connectionpool.pool.streams:
             logger.debug(
                 'The streamNumber %i isn\'t one we are interested in.',
                 self.streamNumber)
@@ -114,9 +112,9 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
         or advertise it unnecessarily)
         """
         # if it's a stem duplicate, pretend we don't have it
-        if Dandelion().hasHash(self.inventoryHash):
+        if state.Dandelion.hasHash(self.inventoryHash):
             return
-        if self.inventoryHash in Inventory():
+        if self.inventoryHash in state.Inventory:
             raise BMObjectAlreadyHaveError()
 
     def checkObjectByType(self):

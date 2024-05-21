@@ -5,9 +5,8 @@ import errno
 import Queue
 import socket
 
-import state
+import connectionpool
 from network.advanceddispatcher import UnknownStateError
-from network.connectionpool import BMConnectionPool
 from queues import receiveDataQueue
 from threads import StoppableThread
 
@@ -19,13 +18,13 @@ class ReceiveQueueThread(StoppableThread):
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
 
     def run(self):
-        while not self._stopped and state.shutdown == 0:
+        while not self._stopped:
             try:
                 dest = receiveDataQueue.get(block=True, timeout=1)
             except Queue.Empty:
                 continue
 
-            if self._stopped or state.shutdown:
+            if self._stopped:
                 break
 
             # cycle as long as there is data
@@ -36,7 +35,7 @@ class ReceiveQueueThread(StoppableThread):
             # enough data, or the connection is to be aborted
 
             try:
-                connection = BMConnectionPool().getConnectionByAddr(dest)
+                connection = connectionpool.pool.getConnectionByAddr(dest)
             # connection object not found
             except KeyError:
                 receiveDataQueue.task_done()

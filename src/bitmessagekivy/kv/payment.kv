@@ -1,0 +1,325 @@
+<Payment>:
+    name: "payment"
+    id: id_payment_screen
+    payment_plan_id: ""
+    MDTabs:
+        id: tab_panel
+        tab_display_mode:'text'
+        Tab:
+            title: app.tr._("Payment")
+            id: id_payment plan
+            padding: "12dp"
+            spacing: "12dp"
+            BoxLayout:
+                ScrollView:
+                    bar_width:0
+                    do_scroll_x: False
+                    BoxLayout:
+                        spacing: dp(5)
+                        padding: dp(5)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: "vertical"
+                        ProductCategoryLayout:
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "40dp"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                MDLabel:
+                                    text: f"You have {app.encrypted_messages_per_month} messages left"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "300dp"
+                                md_bg_color: [1, 0.6, 0,0.5]
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                MDLabel:
+                                    text: "Free"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                MDRectangleFlatIconButton:
+                                    text: "[Currently this plan is active.]"
+                                    icon: 'shield-check'
+                                    line_color: 0, 0, 0, 0
+                                    text_color: 'ffffff'
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    font_size: '18sp'
+                                MDSeparator:
+                                    height: "1dp"
+                                MDLabel:
+                                    text: "You can get zero encrypted message per month"
+                                    halign:'center'
+                                    bold: True
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "300dp"
+                                md_bg_color:  [0, 0.6, 0.8,0.8]
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                payment_plan_id: "sub_standard"
+                                MDLabel:
+                                    text: "Standard"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                MDSeparator:
+                                    height: "1dp"
+                                MDLabel:
+                                    text: "You can get 100 encrypted message per month"
+                                    halign:'center'
+                                MDRaisedButton:
+                                    text: "Get it now"
+                                    theme_text_color: 'Primary'
+                                    md_bg_color:  [1, 1, 1,1]
+                                    pos_hint: {'center_x': .5}
+                                    on_release:app.open_payment_layout(root.payment_plan_id)
+                            MDCard:
+                                orientation: "vertical"
+                                padding: "8dp"
+                                spacing: "12dp"
+                                size_hint: None, None
+                                size: "560dp", "300dp"
+                                md_bg_color: [1, 0.6, 0.8,0.5]
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                payment_plan_id: "sub_premium"
+                                MDLabel:
+                                    text: "Premium"
+                                    bold: True
+                                    halign:'center'
+                                    size_hint_y: None
+                                MDSeparator:
+                                    height: "1dp"
+                                MDLabel:
+                                    text: "You can get 1000 encrypted message per month"
+                                    halign:'center'
+                                MDRaisedButton:
+                                    text: "Get it now"
+                                    theme_text_color: 'Primary'
+                                    md_bg_color:  [1, 1, 1,1]
+                                    pos_hint: {'center_x': .5}
+                                    on_release:app.open_payment_layout(root.payment_plan_id)
+        Tab:
+            title: app.tr._("Extra-Messages")
+            id: id_payment_tab
+            BoxLayout:
+                ScrollView:
+                    bar_width:0
+                    do_scroll_x: False
+                    BoxLayout:
+                        spacing: dp(8)
+                        padding: dp(5)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: "vertical"
+                        ProductCategoryLayout:
+                            category_text: "Extra-Messages"
+                            ProductLayout:
+                                heading_text: "100 Encrypted messages "
+                                price_text: "$0.99"
+                                source: app.image_path + "/payment/buynew1.png"
+                                description_text: "Buy extra one hundred encrypted messages!"
+                                product_id: "SKUGASBILLING"
+                            ProductLayout:
+                                heading_text: "1000 Encrypted messages "
+                                price_text: "$1.49"
+                                source: app.image_path + "/payment/buynew1.png"
+                                description_text: "Buy extra one thousand encrypted messages!"
+                                product_id: "SKUUPGRADECAR"
+<ProductCategoryLayout@BoxLayout>:
+    size_hint_y: None
+    height: self.minimum_height
+    category_text:""
+
+    orientation: "vertical"
+    spacing: 2
+
+    #category area
+    Category:
+        text_: root.category_text
+
+<Category>:
+    canvas:
+        Color:
+            rgba: 1,1,1,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    text_: ""
+    size_hint_y: None
+    height: dp(30)
+    Widget:
+        size_hint_x: None
+        width: dp(20)
+    MDLabel:
+        text: root.text_
+        font_size: sp(15) 
+<ProductLayout>:
+    heading_text: ""
+    price_text: ""
+    source: ""
+    description_text: ""
+
+    product_id: ""
+
+    canvas:
+        Color:
+            rgba: 1,1,1,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    size_hint_y: None
+    height: dp(200)
+    orientation: "vertical"
+
+    #heading area
+    BoxLayout:
+        size_hint_y: 0.3
+        #text heading
+        BoxLayout:
+            Widget:
+                size_hint_x: None
+                width: dp(20)
+            MDLabel:
+                text: root.heading_text
+                bold: True
+
+        #price text
+        BoxLayout:
+            size_hint_x:.3
+            MDLabel:
+                text: root.price_text
+                bold: True
+                halign: "right"
+                theme_text_color: "Custom"
+                text_color: 0,0,1,1
+        Widget:
+            size_hint_x: None
+            width: dp(20)
+    
+    #details area
+    BoxLayout:
+        size_hint_y: 0.3
+        Widget:
+            size_hint_x: None
+            width: dp(20)
+
+        #image area
+        AnchorLayout:
+            size_hint_x: None
+            width: self.height
+            BoxLayout:
+                canvas:
+                    Color:
+                        rgba: 1,1,1,1
+                    Ellipse:
+                        size: self.size
+                        pos: self.pos
+                        source: root.source
+        Widget:
+            size_hint_x: None
+            width: dp(10)
+
+        #description text
+        BoxLayout:
+            #size_hint_x: 1
+            MDLabel:
+                text: root.description_text
+                font_size: sp(15)
+    #Button Area
+    BoxLayout:
+        size_hint_y: 0.4
+        Widget:
+
+        AnchorLayout:
+            anchor_x: "right"
+            MDRaisedButton:
+                elevation_normal: 5
+                text: "BUY"
+                on_release:
+                    #print(app)
+                    app.open_payment_layout(root.product_id)
+        
+        Widget:
+            size_hint_x: None
+            width: dp(20)
+
+<ListItemWithLabel>:
+    on_release: app.initiate_purchase(self.method_name)
+    recent: False
+    source: ""
+    method_name: ""
+    right_label_text: "Recent" if self.recent else ""
+
+    ImageLeftWidget:
+        source: root.source
+    
+    RightLabel:
+        text: root.right_label_text
+        theme_text_color: "Custom"
+        text_color: 0,0,0,0.5
+        font_size: sp(12)
+
+<PaymentMethodLayout>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: "200dp"
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(40)
+
+        Widget:
+            size_hint_x: None
+            width: dp(20)
+        MDLabel:
+            text: "Select Payment Method"
+            font_size: sp(14)
+            bold: True
+            theme_text_color: "Custom"
+            text_color: 0,0,0,.5
+
+
+    ScrollView:
+
+        GridLayout:
+            cols: 1
+            size_hint_y:None
+            height:self.minimum_height
+
+            ListItemWithLabel:
+                source: app.image_path + "/payment/gplay.png"
+                text: "Google Play"
+                method_name: "gplay"
+                recent: True
+
+            ListItemWithLabel:
+                source: app.image_path + "/payment/btc.png"
+                text: "BTC (Currently this feature is not available)"
+                method_name: "btc"
+                theme_text_color: 'Secondary'
+                md_bg_color:  [0, 0, 0,1]
+            ListItemWithLabel:
+                source: app.image_path + "/payment/paypal.png"
+                text: "Paypal (Currently this feature is not available)"
+                method_name: "som"
+                theme_text_color: 'Secondary'
+                md_bg_color:  [0, 0, 0,1]
+            ListItemWithLabel:
+                source: app.image_path + "/payment/buy.png"
+                text: "One more method"
+                method_name: "omm"

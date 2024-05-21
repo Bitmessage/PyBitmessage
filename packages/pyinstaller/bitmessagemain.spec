@@ -6,6 +6,8 @@ import time
 
 from PyInstaller.utils.hooks import copy_metadata
 
+
+DEBUG = False
 site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
 arch = 32 if ctypes.sizeof(ctypes.c_voidp) == 4 else 64
@@ -22,13 +24,17 @@ os.chdir(srcPath)
 
 snapshot = False
 
-hookspath=os.path.join(spec_root, 'hooks')
+hookspath = os.path.join(spec_root, 'hooks')
+
+excludes = ['bsddb', 'bz2', 'tcl', 'tk', 'Tkinter', 'tests']
+if not DEBUG:
+    excludes += ['pybitmessage.tests', 'pyelliptic.tests']
 
 a = Analysis(
     [os.path.join(srcPath, 'bitmessagemain.py')],
-    datas = [
+    datas=[
         (os.path.join(spec_root[:-20], 'pybitmessage.egg-info') + '/*',
-          'pybitmessage.egg-info')
+            'pybitmessage.egg-info')
     ] + copy_metadata('msgpack-python') + copy_metadata('qrcode')
     + copy_metadata('six') + copy_metadata('stem'),
     pathex=[outPath],
@@ -38,16 +44,15 @@ a = Analysis(
         'plugins.menu_qrcode', 'plugins.proxyconfig_stem'
     ],
     # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-PyQt4-API-Version
-    runtime_hooks=[
+    runtime_hooks = [
         os.path.join(hookspath, hook) for hook in (
             'pyinstaller_rthook_pyqt4.py',
             'pyinstaller_rthook_plugins.py'
         )],
-    excludes=[
-        'bsddb', 'bz2',
-        'PyQt4.QtOpenGL', 'PyQt4.QtOpenGL', 'PyQt4.QtSql',
+    excludes += [
+        'PyQt4.QtOpenGL','PyQt4.QtSql',
         'PyQt4.QtSvg', 'PyQt4.QtTest', 'PyQt4.QtWebKit', 'PyQt4.QtXml',
-        'tcl', 'tk', 'Tkinter', 'win32ui', 'tests']
+        'win32ui']
 )
 
 
@@ -81,9 +86,16 @@ a.datas += [
     for file_ in os.listdir(dir_append) if file_.endswith('.ui')
 ]
 
+sql_dir = os.path.join(srcPath, 'sql')
+
+a.datas += [
+    (os.path.join('sql', file_), os.path.join(sql_dir, file_), 'DATA')
+    for file_ in os.listdir(sql_dir) if file_.endswith('.sql')
+]
+
 # append the translations directory
 a.datas += addTranslations()
-
+a.datas += [('default.ini', os.path.join(srcPath, 'default.ini'), 'DATA')]
 
 excluded_binaries = [
     'QtOpenGL4.dll', 'QtSql4.dll', 'QtSvg4.dll', 'QtTest4.dll',
@@ -96,15 +108,14 @@ a.binaries += [
     ('libeay32.dll', os.path.join(openSSLPath, 'libeay32.dll'), 'BINARY'),
     (os.path.join('bitmsghash', 'bitmsghash%i.dll' % arch),
         os.path.join(srcPath, 'bitmsghash', 'bitmsghash%i.dll' % arch),
-    'BINARY'),
+        'BINARY'),
     (os.path.join('bitmsghash', 'bitmsghash.cl'),
-         os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
+        os.path.join(srcPath, 'bitmsghash', 'bitmsghash.cl'), 'BINARY'),
     (os.path.join('sslkeys', 'cert.pem'),
-         os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
+        os.path.join(srcPath, 'sslkeys', 'cert.pem'), 'BINARY'),
     (os.path.join('sslkeys', 'key.pem'),
-         os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
+        os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
 ]
-
 
 from version import softwareVersion
 
@@ -123,10 +134,10 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     name=fname,
-    debug=False,
+    debug=DEBUG,
     strip=None,
     upx=False,
-    console=False, icon=os.path.join(srcPath, 'images', 'can-icon.ico')
+    console=DEBUG, icon=os.path.join(srcPath, 'images', 'can-icon.ico')
 )
 
 coll = COLLECT(

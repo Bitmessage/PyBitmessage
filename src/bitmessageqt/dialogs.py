@@ -45,7 +45,7 @@ class AboutDialog(QtWidgets.QDialog):
         try:
             self.label_2.setText(
                 self.label_2.text().replace(
-                    '2020', str(last_commit.get('time').year)
+                    '2022', str(last_commit.get('time').year)
                 ))
         except AttributeError:
             pass

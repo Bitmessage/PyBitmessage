@@ -4,7 +4,7 @@ Network statistics
 import time
 
 import asyncore_pollchoose as asyncore
-from network.connectionpool import BMConnectionPool
+import connectionpool
 from objectracker import missingObjects
 
 
@@ -18,7 +18,7 @@ currentSentSpeed = 0
 
 def connectedHostsList():
     """List of all the connected hosts"""
-    return BMConnectionPool().establishedConnections()
+    return connectionpool.pool.establishedConnections()
 
 
 def sentBytes():
@@ -69,8 +69,8 @@ def pendingDownload():
 def pendingUpload():
     """Getting pending uploads"""
     # tmp = {}
-    # for connection in BMConnectionPool().inboundConnections.values() + \
-    #         BMConnectionPool().outboundConnections.values():
+    # for connection in connectionpool.pool.inboundConnections.values() + \
+    #         connectionpool.pool.outboundConnections.values():
     #     for k in connection.objectsNewToThem.keys():
     #         tmp[k] = True
     # This probably isn't the correct logic so it's disabled

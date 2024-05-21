@@ -6,7 +6,7 @@ import os
 from struct import pack
 
 import paths
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from state import shutdown
 
 try:
@@ -42,12 +42,12 @@ def initCL():
         try:
             for platform in cl.get_platforms():
                 gpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
-                if BMConfigParser().safeGet("bitmessagesettings", "opencl") == platform.vendor:
+                if config.safeGet("bitmessagesettings", "opencl") == platform.vendor:
                     enabledGpus.extend(platform.get_devices(
                         device_type=cl.device_type.GPU))
                 if platform.vendor not in vendors:
                     vendors.append(platform.vendor)
-        except:  # noqa:E722
+        except:  # nosec B110 # noqa:E722 # pylint:disable=bare-except
             pass
         if enabledGpus:
             ctx = cl.Context(devices=enabledGpus)

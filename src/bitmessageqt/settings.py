@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import six
 
 import debug
 import defaults
@@ -17,10 +18,11 @@ import paths
 import queues
 import state
 import widgets
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
-from network import knownnodes, AnnounceThread
+from network import connectionpool, knownnodes
+from network.announcethread import AnnounceThread
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
@@ -46,7 +48,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.parent = parent
         self.firstrun = firstrun
-        self.config = BMConfigParser()
+        self.config = config_obj
         self.net_restart_needed = False
         self.timer = QtCore.QTimer()
 
@@ -160,6 +162,26 @@ class SettingsDialog(QtWidgets.QDialog):
             0 if not self._proxy_type
             else self.comboBoxProxyType.findText(self._proxy_type))
         self.comboBoxProxyTypeChanged(self.comboBoxProxyType.currentIndex())
+
+        if self._proxy_type:
+            for node, info in six.iteritems(
+                knownnodes.knownNodes.get(
+                    min(connectionpool.pool.streams), [])
+            ):
+                if (
+                    node.host.endswith('.onion') and len(node.host) > 22
+                    and not info.get('self')
+                ):
+                    break
+            else:
+                if self.checkBoxOnionOnly.isChecked():
+                    self.checkBoxOnionOnly.setText(
+                        self.checkBoxOnionOnly.text() + ", " + _translate(
+                            "MainWindow", "may cause connection problems!"))
+                    self.checkBoxOnionOnly.setStyleSheet(
+                        "QCheckBox { color : red; }")
+                else:
+                    self.checkBoxOnionOnly.setEnabled(False)
 
         self.lineEditSocksHostname.setText(
             config.get('bitmessagesettings', 'sockshostname'))

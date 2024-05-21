@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Cleanup
 rm -rf PyBitmessage
@@ -18,9 +18,19 @@ fi
 
 ./pkg2appimage packages/AppImage/PyBitmessage.yml
 
-if [ -f "out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage" ]; then
+./pkg2appimage --appimage-extract
+
+. ./squashfs-root/usr/share/pkg2appimage/functions.sh
+
+GLIBC=$(glibc_needed)
+
+VERSION_EXPANDED=${VERSION}.glibc${GLIBC}-${SYSTEM_ARCH}
+
+if [ -f "out/PyBitmessage-${VERSION_EXPANDED}.AppImage" ]; then
     echo "Build Successful";
-    echo "Run out/PyBitmessage-${VERSION}.glibc2.15-x86_64.AppImage"
+    echo "Run out/PyBitmessage-${VERSION_EXPANDED}.AppImage";
+    out/PyBitmessage-${VERSION_EXPANDED}.AppImage -t
 else
-    echo "Build Failed"
+    echo "Build Failed";
+    exit 1
 fi

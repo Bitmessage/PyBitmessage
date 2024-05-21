@@ -18,6 +18,11 @@ def trash(msgid):
     queues.UISignalQueue.put(('removeInboxRowByMsgid', msgid))
 
 
+def delete(ack_data):
+    """Permanent delete message from trash"""
+    sqlExecute("DELETE FROM inbox WHERE msgid = ?", ack_data)
+
+
 def undeleteMessage(msgid):
     """Undelte the message"""
     sqlExecute('''UPDATE inbox SET folder='inbox' WHERE msgid=?''', msgid)

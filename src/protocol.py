@@ -18,11 +18,26 @@ import highlevelcrypto
 import state
 from addresses import (
     encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
-from fallback import RIPEMD160Hash
 from helper_sql import sqlExecute
+from network.node import Peer
 from version import softwareVersion
+
+# Network constants
+magic = 0xE9BEB4D9
+#: protocol specification says max 1000 addresses in one addr command
+MAX_ADDR_COUNT = 1000
+#: address is online if online less than this many seconds ago
+ADDRESS_ALIVE = 10800
+#: ~1.6 MB which is the maximum possible size of an inv message.
+MAX_MESSAGE_SIZE = 1600100
+#: 2**18 = 256kB is the maximum size of an object payload
+MAX_OBJECT_PAYLOAD_SIZE = 2**18
+#: protocol specification says max 50000 objects in one inv command
+MAX_OBJECT_COUNT = 50000
+#: maximum time offset
+MAX_TIME_OFFSET = 3600
 
 # Service flags
 #: This is a normal network node
@@ -56,7 +71,7 @@ OBJECT_I2P = 0x493250
 OBJECT_ADDR = 0x61646472
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
-    '>Q', random.randrange(1, 18446744073709551615))
+    '>Q', random.randrange(1, 18446744073709551615))  # nosec B311
 
 # Compiled struct for packing/unpacking headers
 # New code should use CreatePacket instead of Header.pack
@@ -72,7 +87,7 @@ def getBitfield(address):
     # bitfield of features supported by me (see the wiki).
     bitfield = 0
     # send ack
-    if not BMConfigParser().safeGetBoolean(address, 'dontsendack'):
+    if not config.safeGetBoolean(address, 'dontsendack'):
         bitfield |= BITFIELD_DOESACK
     return pack('>I', bitfield)
 
@@ -90,13 +105,18 @@ def isBitSetWithinBitfield(fourByteString, n):
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
 
+# Streams
+
+
+MIN_VALID_STREAM = 1
+MAX_VALID_STREAM = 2**63 - 1
 
 # IP addresses
 
 
 def encodeHost(host):
     """Encode a given host to be used in low-level socket operations"""
-    if host.find('.onion') > -1:
+    if host.endswith('.onion'):
         return b'\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(
             host.split(".")[0], True)
     elif host.find(':') == -1:
@@ -107,7 +127,7 @@ def encodeHost(host):
 
 def networkType(host):
     """Determine if a host is IPv4, IPv6 or an onion address"""
-    if host.find('.onion') > -1:
+    if host.endswith('.onion'):
         return 'onion'
     elif host.find(':') == -1:
         return 'IPv4'
@@ -238,7 +258,7 @@ def haveSSL(server=False):
 
 def checkSocksIP(host):
     """Predicate to check if we're using a SOCKS proxy"""
-    sockshostname = BMConfigParser().safeGet(
+    sockshostname = config.safeGet(
         'bitmessagesettings', 'sockshostname')
     try:
         if not state.socksIP:
@@ -254,7 +274,7 @@ def isProofOfWorkSufficient(
         data, nonceTrialsPerByte=0, payloadLengthExtraBytes=0, recvTime=0):
     """
     Validate an object's Proof of Work using method described
-    `here <https://bitmessage.org/wiki/Proof_of_work>`_
+    :doc:`here </pow>`
 
     Arguments:
         int nonceTrialsPerByte (default: from `.defaults`)
@@ -269,12 +289,11 @@ def isProofOfWorkSufficient(
     if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
         payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
     endOfLifeTime, = unpack('>Q', data[8:16])
-    TTL = endOfLifeTime - (int(recvTime) if recvTime else int(time.time()))
+    TTL = endOfLifeTime - int(recvTime if recvTime else time.time())
     if TTL < 300:
         TTL = 300
-    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(
-        data[:8] + hashlib.sha512(data[8:]).digest()
-    ).digest()).digest()[0:8])
+    POW, = unpack('>Q', highlevelcrypto.double_sha512(
+        data[:8] + hashlib.sha512(data[8:]).digest())[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
             len(data) + payloadLengthExtraBytes
@@ -290,9 +309,31 @@ def CreatePacket(command, payload=b''):
     checksum = hashlib.sha512(payload).digest()[0:4]
 
     b = bytearray(Header.size + payload_length)
-    Header.pack_into(b, 0, 0xE9BEB4D9, command, payload_length, checksum)
+    Header.pack_into(b, 0, magic, command, payload_length, checksum)
     b[Header.size:] = payload
     return bytes(b)
+
+
+def assembleAddrMessage(peerList):
+    """Create address command"""
+    if isinstance(peerList, Peer):
+        peerList = [peerList]
+    if not peerList:
+        return b''
+    retval = b''
+    for i in range(0, len(peerList), MAX_ADDR_COUNT):
+        payload = encodeVarint(len(peerList[i:i + MAX_ADDR_COUNT]))
+        for stream, peer, timestamp in peerList[i:i + MAX_ADDR_COUNT]:
+            # 64-bit time
+            payload += pack('>Q', timestamp)
+            payload += pack('>I', stream)
+            # service bit flags offered by this node
+            payload += pack('>q', 1)
+            payload += encodeHost(peer.host)
+            # remote port
+            payload += pack('>H', peer.port)
+        retval += CreatePacket(b'addr', payload)
+    return retval
 
 
 def assembleVersionMessage(
@@ -309,7 +350,7 @@ def assembleVersionMessage(
         '>q',
         NODE_NETWORK
         | (NODE_SSL if haveSSL(server) else 0)
-        | (NODE_DANDELION if state.dandelion else 0)
+        | (NODE_DANDELION if state.dandelion_enabled else 0)
     )
     payload += pack('>q', int(time.time()))
 
@@ -333,7 +374,7 @@ def assembleVersionMessage(
         '>q',
         NODE_NETWORK
         | (NODE_SSL if haveSSL(server) else 0)
-        | (NODE_DANDELION if state.dandelion else 0)
+        | (NODE_DANDELION if state.dandelion_enabled else 0)
     )
     # = 127.0.0.1. This will be ignored by the remote host.
     # The actual remote connected IP will be used.
@@ -341,19 +382,19 @@ def assembleVersionMessage(
         '>L', 2130706433)
     # we have a separate extPort and incoming over clearnet
     # or outgoing through clearnet
-    extport = BMConfigParser().safeGetInt('bitmessagesettings', 'extport')
+    extport = config.safeGetInt('bitmessagesettings', 'extport')
     if (
         extport and ((server and not checkSocksIP(remoteHost)) or (
-            BMConfigParser().get('bitmessagesettings', 'socksproxytype')
+            config.get('bitmessagesettings', 'socksproxytype')
             == 'none' and not server))
     ):
         payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor
         payload += pack(
-            '>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
+            '>H', config.getint('bitmessagesettings', 'onionport'))
     else:  # no extport and not incoming over Tor
         payload += pack(
-            '>H', BMConfigParser().getint('bitmessagesettings', 'port'))
+            '>H', config.getint('bitmessagesettings', 'port'))
 
     if nodeid is not None:
         payload += nodeid[0:8]
@@ -391,6 +432,17 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
 
 
 # Packet decoding
+
+
+def decodeObjectParameters(data):
+    """Decode the parameters of a raw object needed to put it in inventory"""
+    # BMProto.decode_payload_content("QQIvv")
+    expiresTime = unpack('>Q', data[8:16])[0]
+    objectType = unpack('>I', data[16:20])[0]
+    parserPos = 20 + decodeVarint(data[20:30])[1]
+    toStreamNumber = decodeVarint(data[parserPos:parserPos + 10])[0]
+
+    return objectType, toStreamNumber, expiresTime
 
 
 def decryptAndCheckPubkeyPayload(data, address):
@@ -459,9 +511,9 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         specifiedNonceTrialsPerByteLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])[1]
@@ -477,7 +529,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         signature = decryptedData[readPosition:readPosition + signatureLength]
 
         if not highlevelcrypto.verify(
-                signedData, signature, hexlify(publicSigningKey)):
+                signedData, signature, hexlify(pubSigningKey)):
             logger.info(
                 'ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
             return 'failed'
@@ -485,9 +537,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         logger.info(
             'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
 
-        sha = hashlib.new('sha512')
-        sha.update(publicSigningKey + publicEncryptionKey)
-        embeddedRipe = RIPEMD160Hash(sha.digest()).digest()
+        embeddedRipe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
 
         if embeddedRipe != ripe:
             # Although this pubkey object had the tag were were looking for
@@ -505,7 +555,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             'addressVersion: %s, streamNumber: %s\nripe %s\n'
             'publicSigningKey in hex: %s\npublicEncryptionKey in hex: %s',
             addressVersion, streamNumber, hexlify(ripe),
-            hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+            hexlify(pubSigningKey), hexlify(pubEncryptionKey)
         )
 
         t = (address, addressVersion, storedData, int(time.time()), 'yes')

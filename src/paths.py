@@ -21,14 +21,15 @@ def lookupExeFolder():
     if frozen:
         exeFolder = (
             # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
-            os.path.dirname(sys.executable).split(os.path.sep)[0] + os.path.sep
-            if frozen == "macosx_app" else
-            os.path.dirname(sys.executable) + os.path.sep)
+            os.path.dirname(sys.executable).split(os.path.sep)[0]
+            if frozen == "macosx_app" else os.path.dirname(sys.executable))
+    elif os.getenv('APPIMAGE'):
+        exeFolder = os.path.dirname(os.getenv('APPIMAGE'))
     elif __file__:
-        exeFolder = os.path.dirname(__file__) + os.path.sep
+        exeFolder = os.path.dirname(__file__)
     else:
-        exeFolder = ''
-    return exeFolder
+        return ''
+    return exeFolder + os.path.sep
 
 
 def lookupAppdataFolder():
@@ -49,11 +50,8 @@ def lookupAppdataFolder():
             sys.exit(
                 'Could not find home folder, please report this message'
                 ' and your OS X version to the BitMessage Github.')
-    elif 'win32' in sys.platform or 'win64' in sys.platform:
-        dataFolder = os.path.join(
-            os.environ['APPDATA'].decode(
-                sys.getfilesystemencoding(), 'ignore'), APPNAME
-        ) + os.path.sep
+    elif sys.platform.startswith('win'):
+        dataFolder = os.path.join(os.environ['APPDATA'], APPNAME) + os.path.sep
     else:
         try:
             dataFolder = os.path.join(os.environ['XDG_CONFIG_HOME'], APPNAME)

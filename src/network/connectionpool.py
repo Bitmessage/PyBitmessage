@@ -13,11 +13,10 @@ import helper_random
 import knownnodes
 import protocol
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from connectionchooser import chooseConnection
 from node import Peer
 from proxy import Proxy
-from singleton import Singleton
 from tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)
@@ -26,7 +25,6 @@ from udp import UDPSocket
 logger = logging.getLogger('default')
 
 
-@Singleton
 class BMConnectionPool(object):
     """Pool of all existing connections"""
     # pylint: disable=too-many-instance-attributes
@@ -46,9 +44,9 @@ class BMConnectionPool(object):
 
     def __init__(self):
         asyncore.set_rates(
-            BMConfigParser().safeGetInt(
+            config.safeGetInt(
                 "bitmessagesettings", "maxdownloadrate"),
-            BMConfigParser().safeGetInt(
+            config.safeGetInt(
                 "bitmessagesettings", "maxuploadrate")
         )
         self.outboundConnections = {}
@@ -60,7 +58,7 @@ class BMConnectionPool(object):
         self._spawnWait = 2
         self._bootstrapped = False
 
-        trustedPeer = BMConfigParser().safeGet(
+        trustedPeer = config.safeGet(
             'bitmessagesettings', 'trustedpeer')
         try:
             if trustedPeer:
@@ -90,7 +88,6 @@ class BMConnectionPool(object):
     def connectToStream(self, streamNumber):
         """Connect to a bitmessage stream"""
         self.streams.append(streamNumber)
-        state.streamsInWhichIAmParticipating.append(streamNumber)
 
     def getConnectionByAddr(self, addr):
         """
@@ -163,27 +160,27 @@ class BMConnectionPool(object):
     @staticmethod
     def getListeningIP():
         """What IP are we supposed to be listening on?"""
-        if BMConfigParser().safeGet(
-                "bitmessagesettings", "onionhostname").endswith(".onion"):
-            host = BMConfigParser().safeGet(
+        if config.safeGet(
+                "bitmessagesettings", "onionhostname", "").endswith(".onion"):
+            host = config.safeGet(
                 "bitmessagesettings", "onionbindip")
         else:
             host = '127.0.0.1'
         if (
-            BMConfigParser().safeGetBoolean("bitmessagesettings", "sockslisten")
-            or BMConfigParser().safeGet("bitmessagesettings", "socksproxytype")
+            config.safeGetBoolean("bitmessagesettings", "sockslisten")
+            or config.safeGet("bitmessagesettings", "socksproxytype")
             == "none"
         ):
             # python doesn't like bind + INADDR_ANY?
             # host = socket.INADDR_ANY
-            host = BMConfigParser().get("network", "bind")
+            host = config.get("network", "bind")
         return host
 
     def startListening(self, bind=None):
         """Open a listening socket and start accepting connections on it"""
         if bind is None:
             bind = self.getListeningIP()
-        port = BMConfigParser().safeGetInt("bitmessagesettings", "port")
+        port = config.safeGetInt("bitmessagesettings", "port")
         # correct port even if it changed
         ls = TCPServer(host=bind, port=port)
         self.listeningSockets[ls.destination] = ls
@@ -205,7 +202,7 @@ class BMConnectionPool(object):
 
     def startBootstrappers(self):
         """Run the process of resolving bootstrap hostnames"""
-        proxy_type = BMConfigParser().safeGet(
+        proxy_type = config.safeGet(
             'bitmessagesettings', 'socksproxytype')
         # A plugins may be added here
         hostname = None
@@ -237,21 +234,21 @@ class BMConnectionPool(object):
         # defaults to empty loop if outbound connections are maxed
         spawnConnections = False
         acceptConnections = True
-        if BMConfigParser().safeGetBoolean(
+        if config.safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
             acceptConnections = False
-        elif BMConfigParser().safeGetBoolean(
+        elif config.safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
             spawnConnections = True
-        socksproxytype = BMConfigParser().safeGet(
+        socksproxytype = config.safeGet(
             'bitmessagesettings', 'socksproxytype', '')
-        onionsocksproxytype = BMConfigParser().safeGet(
+        onionsocksproxytype = config.safeGet(
             'bitmessagesettings', 'onionsocksproxytype', '')
         if (
             socksproxytype[:5] == 'SOCKS'
-            and not BMConfigParser().safeGetBoolean(
+            and not config.safeGetBoolean(
                 'bitmessagesettings', 'sockslisten')
-            and '.onion' not in BMConfigParser().safeGet(
+            and '.onion' not in config.safeGet(
                 'bitmessagesettings', 'onionhostname', '')
         ):
             acceptConnections = False
@@ -264,9 +261,9 @@ class BMConnectionPool(object):
             if not self._bootstrapped:
                 self._bootstrapped = True
                 Proxy.proxy = (
-                    BMConfigParser().safeGet(
+                    config.safeGet(
                         'bitmessagesettings', 'sockshostname'),
-                    BMConfigParser().safeGetInt(
+                    config.safeGetInt(
                         'bitmessagesettings', 'socksport')
                 )
                 # TODO AUTH
@@ -275,9 +272,9 @@ class BMConnectionPool(object):
                     if not onionsocksproxytype.startswith("SOCKS"):
                         raise ValueError
                     Proxy.onion_proxy = (
-                        BMConfigParser().safeGet(
+                        config.safeGet(
                             'network', 'onionsockshostname', None),
-                        BMConfigParser().safeGet(
+                        config.safeGet(
                             'network', 'onionsocksport', None)
                     )
                 except ValueError:
@@ -286,7 +283,7 @@ class BMConnectionPool(object):
                 1 for c in self.outboundConnections.values()
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
-            if established < BMConfigParser().safeGetInt(
+            if established < config.safeGetInt(
                     'bitmessagesettings', 'maxoutboundconnections'):
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
@@ -334,28 +331,28 @@ class BMConnectionPool(object):
 
                     self._lastSpawned = time.time()
         else:
-            for i in self.connections():
+            for i in self.outboundConnections.values():
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
 
         if acceptConnections:
             if not self.listeningSockets:
-                if BMConfigParser().safeGet('network', 'bind') == '':
+                if config.safeGet('network', 'bind') == '':
                     self.startListening()
                 else:
                     for bind in re.sub(
                         r'[^\w.]+', ' ',
-                        BMConfigParser().safeGet('network', 'bind')
+                        config.safeGet('network', 'bind')
                     ).split():
                         self.startListening(bind)
                 logger.info('Listening for incoming connections.')
             if not self.udpSockets:
-                if BMConfigParser().safeGet('network', 'bind') == '':
+                if config.safeGet('network', 'bind') == '':
                     self.startUDPSocket()
                 else:
                     for bind in re.sub(
                         r'[^\w.]+', ' ',
-                        BMConfigParser().safeGet('network', 'bind')
+                        config.safeGet('network', 'bind')
                     ).split():
                         self.startUDPSocket(bind)
                     self.startUDPSocket(False)
@@ -403,3 +400,6 @@ class BMConnectionPool(object):
                     pass
         for i in reaper:
             self.removeConnection(i)
+
+
+pool = BMConnectionPool()

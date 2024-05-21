@@ -1,0 +1,76 @@
+name: pybitmessage
+base: core18
+grade: devel
+confinement: strict
+summary: Reference client for Bitmessage, a P2P communications protocol
+description: |
+  Bitmessage is a P2P communication protocol used to send encrypted messages to
+  another person or to many subscribers. It is decentralized and trustless,
+  meaning that you need-not inherently trust any entities like root certificate
+  authorities. It uses strong authentication, which means that the sender of a
+  message cannot be spoofed. BM aims to hide metadata from passive
+  eavesdroppers like those ongoing warrantless wiretapping programs. Hence
+  the sender and receiver of Bitmessages stay anonymous.
+adopt-info: pybitmessage
+
+apps:
+  pybitmessage:
+    command: desktop-launch pybitmessage
+    plugs: [desktop, home, network-bind, unity7]
+    desktop: share/applications/pybitmessage.desktop
+    passthrough:
+      autostart: pybitmessage.desktop
+
+parts:
+  pybitmessage:
+    # https://wiki.ubuntu.com/snapcraft/parts
+    after: [qt4conf, desktop-qt4, indicator-qt4, tor]
+    source: https://github.com/Bitmessage/PyBitmessage.git
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version $(git describe --tags | cut -d- -f1,3 | tr -d v)
+    plugin: python
+    python-version: python2
+    build-packages:
+      - libssl-dev
+      - python-all-dev
+    python-packages:
+      - jsonrpclib
+      - qrcode
+      - pyxdg
+      - stem
+    stage-packages:
+      - python-qt4
+      - python-sip
+    # parse-info: [setup.py]
+  tor:
+    source: https://dist.torproject.org/tor-0.4.6.9.tar.gz
+    source-checksum: sha256/c7e93380988ce20b82aa19c06cdb2f10302b72cfebec7c15b5b96bcfc94ca9a9
+    source-type: tar
+    plugin: autotools
+    build-packages:
+      - libssl-dev
+      - zlib1g-dev
+    after: [libevent]
+  libevent:
+    source: https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz
+    source-checksum: sha256/92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb
+    source-type: tar
+    plugin: autotools
+  cleanup:
+    after: [pybitmessage]
+    plugin: nil
+    override-prime: |
+      set -eux
+      sed -ie \
+      's|.*Icon=.*|Icon=${SNAP}/share/icons/hicolor/scalable/apps/pybitmessage.svg|g' \
+      $SNAPCRAFT_PRIME/share/applications/pybitmessage.desktop
+      rm -rf $SNAPCRAFT_PRIME/lib/python2.7/site-packages/pip
+      for DIR in doc man icons themes fonts mime; do
+        rm -rf $SNAPCRAFT_PRIME/usr/share/$DIR/*
+      done
+      LIBS="libQtDeclarative libQtDesigner libQtHelp libQtScript libQtSql \
+        libQtXmlPatterns libdb-5 libicu libgdk libgio libglib libcairo"
+      for LIBGLOB in $LIBS; do
+        rm $SNAPCRAFT_PRIME/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/${LIBGLOB}*
+      done

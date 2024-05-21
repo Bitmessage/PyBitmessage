@@ -3,7 +3,7 @@
 The PyBitmessage startup script
 """
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2020 The Bitmessage developers
+# Copyright (c) 2012-2022 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -30,22 +30,17 @@ import time
 import traceback
 
 import defaults
-import shared
+# Network subsystem
+import network
 import shutdown
 import state
 
 from testmode_init import populate_api_test_data
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger  # this should go before any threads
 from helper_startup import (
     adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
 from inventory import Inventory
-# Network objects and threads
-from network import (
-    BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
-    InvThread, ReceiveQueueThread, DownloadThread, UploadThread
-)
-from network.knownnodes import readKnownNodes
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
@@ -92,7 +87,6 @@ class Main(object):
         fixSocket()
         adjustHalfOpenConnectionsLimit()
 
-        config = BMConfigParser()
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
@@ -162,12 +156,12 @@ class Main(object):
 
         set_thread_name("PyBitmessage")
 
-        state.dandelion = config.safeGetInt('network', 'dandelion')
+        state.dandelion_enabled = config.safeGetInt('network', 'dandelion')
         # dandelion requires outbound connections, without them,
         # stem objects will get stuck forever
-        if state.dandelion and not config.safeGetBoolean(
+        if state.dandelion_enabled and not config.safeGetBoolean(
                 'bitmessagesettings', 'sendoutgoingconnections'):
-            state.dandelion = 0
+            state.dandelion_enabled = 0
 
         if state.testmode or config.safeGetBoolean(
                 'bitmessagesettings', 'extralowdifficulty'):
@@ -176,11 +170,15 @@ class Main(object):
             defaults.networkDefaultPayloadLengthExtraBytes = int(
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
-        readKnownNodes()
+        # Start the SQL thread
+        sqlLookup = sqlThread()
+        # DON'T close the main program even if there are threads left.
+        # The closeEvent should command this thread to exit gracefully.
+        sqlLookup.daemon = False
+        sqlLookup.start()
+        state.Inventory = Inventory()  # init
 
-        # Not needed if objproc is disabled
-        if state.enableObjProc:
-
+        if state.enableObjProc:  # Not needed if objproc is disabled
             # Start the address generation thread
             addressGeneratorThread = addressGenerator()
             # close the main program even if there are threads left
@@ -193,19 +191,13 @@ class Main(object):
             singleWorkerThread.daemon = True
             singleWorkerThread.start()
 
-        # Start the SQL thread
-        sqlLookup = sqlThread()
-        # DON'T close the main program even if there are threads left.
-        # The closeEvent should command this thread to exit gracefully.
-        sqlLookup.daemon = False
-        sqlLookup.start()
-
-        Inventory()  # init
-        # init, needs to be early because other thread may access it early
-        Dandelion()
-
-        # Enable object processor and SMTP only if objproc enabled
-        if state.enableObjProc:
+            # Start the object processing thread
+            objectProcessorThread = objectProcessor()
+            # DON'T close the main program even if the thread remains.
+            # This thread checks the shutdown variable after processing
+            # each object.
+            objectProcessorThread.daemon = False
+            objectProcessorThread.start()
 
             # SMTP delivery thread
             if daemon and config.safeGet(
@@ -221,25 +213,6 @@ class Main(object):
                 smtpServerThread = smtpServer()
                 smtpServerThread.start()
 
-            # Start the thread that calculates POWs
-            objectProcessorThread = objectProcessor()
-            # DON'T close the main program even the thread remains.
-            # This thread checks the shutdown variable after processing
-            # each object.
-            objectProcessorThread.daemon = False
-            objectProcessorThread.start()
-
-        # Start the cleanerThread
-        singleCleanerThread = singleCleaner()
-        # close the main program even if there are threads left
-        singleCleanerThread.daemon = True
-        singleCleanerThread.start()
-
-        # Not needed if objproc disabled
-        if state.enableObjProc:
-            shared.reloadMyAddressHashes()
-            shared.reloadBroadcastSendersForWhichImWatching()
-
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
                 import api  # pylint: disable=relative-import
@@ -248,41 +221,23 @@ class Main(object):
                 singleAPIThread.daemon = True
                 singleAPIThread.start()
 
+        # Start the cleanerThread
+        singleCleanerThread = singleCleaner()
+        # close the main program even if there are threads left
+        singleCleanerThread.daemon = True
+        singleCleanerThread.start()
+
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            BMConnectionPool().connectToStream(1)
-            asyncoreThread = BMNetworkThread()
-            asyncoreThread.daemon = True
-            asyncoreThread.start()
-            for i in range(config.getint('threads', 'receive')):
-                receiveQueueThread = ReceiveQueueThread(i)
-                receiveQueueThread.daemon = True
-                receiveQueueThread.start()
-            if config.safeGetBoolean('bitmessagesettings', 'udp'):
-                state.announceThread = AnnounceThread()
-                state.announceThread.daemon = True
-                state.announceThread.start()
-            state.invThread = InvThread()
-            state.invThread.daemon = True
-            state.invThread.start()
-            state.addrThread = AddrThread()
-            state.addrThread.daemon = True
-            state.addrThread.start()
-            state.downloadThread = DownloadThread()
-            state.downloadThread.daemon = True
-            state.downloadThread.start()
-            state.uploadThread = UploadThread()
-            state.uploadThread.daemon = True
-            state.uploadThread.start()
+            network.start(config, state)
 
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
         else:
-            # Populate with hardcoded value (same as connectToStream above)
-            state.streamsInWhichIAmParticipating.append(1)
+            network.connectionpool.pool.connectToStream(1)
 
         if not daemon and state.enableGUI:
             if state.curses:
@@ -314,8 +269,11 @@ class Main(object):
                 # pylint: disable=relative-import
                 from tests import core as test_core
             except ImportError:
-                self.stop()
-                return
+                try:
+                    from pybitmessage.tests import core as test_core
+                except ImportError:
+                    self.stop()
+                    return
 
             test_core_result = test_core.run()
             self.stop()
@@ -408,11 +366,11 @@ All parameters are optional.
     @staticmethod
     def getApiAddress():
         """This function returns API address and port"""
-        if not BMConfigParser().safeGetBoolean(
+        if not config.safeGetBoolean(
                 'bitmessagesettings', 'apienabled'):
             return None
-        address = BMConfigParser().get('bitmessagesettings', 'apiinterface')
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        address = config.get('bitmessagesettings', 'apiinterface')
+        port = config.getint('bitmessagesettings', 'apiport')
         return {'address': address, 'port': port}
 
 

@@ -5,13 +5,16 @@ import logging
 import socket
 import time
 
+# magic imports!
 import protocol
 import state
+import connectionpool
+from queues import receiveDataQueue
+
 from bmproto import BMProto
-from constants import MAX_TIME_OFFSET
 from node import Peer
 from objectracker import ObjectTracker
-from queues import receiveDataQueue
+
 
 logger = logging.getLogger('default')
 
@@ -79,10 +82,10 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         remoteport = False
         for seenTime, stream, _, ip, port in addresses:
             decodedIP = protocol.checkIPAddress(str(ip))
-            if stream not in state.streamsInWhichIAmParticipating:
+            if stream not in connectionpool.pool.streams:
                 continue
-            if (seenTime < time.time() - MAX_TIME_OFFSET
-                    or seenTime > time.time() + MAX_TIME_OFFSET):
+            if (seenTime < time.time() - protocol.MAX_TIME_OFFSET
+                    or seenTime > time.time() + protocol.MAX_TIME_OFFSET):
                 continue
             if decodedIP is False:
                 # if the address isn't local, interpret it as

@@ -6,8 +6,9 @@ processes the network objects
 # pylint: disable=too-many-branches,too-many-statements
 import hashlib
 import logging
+import os
 import random
-import subprocess  # nosec
+import subprocess  # nosec B404
 import threading
 import time
 from binascii import hexlify
@@ -23,13 +24,13 @@ import queues
 import shared
 import state
 from addresses import (
-    calculateInventoryHash, decodeAddress, decodeVarint,
+    decodeAddress, decodeVarint,
     encodeAddress, encodeVarint, varintDecodeError
 )
-from bmconfigparser import BMConfigParser
-from fallback import RIPEMD160Hash
-from helper_sql import sql_ready, SqlBulkExecute, sqlExecute, sqlQuery
-from network import bmproto, knownnodes
+from bmconfigparser import config
+from helper_sql import (
+    sql_ready, sql_timeout, SqlBulkExecute, sqlExecute, sqlQuery)
+from network import knownnodes
 from network.node import Peer
 from tr import _translate
 
@@ -44,12 +45,16 @@ class objectProcessor(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")
         random.seed()
+        if sql_ready.wait(sql_timeout) is False:
+            logger.fatal('SQL thread is not started in %s sec', sql_timeout)
+            os._exit(1)  # pylint: disable=protected-access
+        shared.reloadMyAddressHashes()
+        shared.reloadBroadcastSendersForWhichImWatching()
         # It may be the case that the last time Bitmessage was running,
         # the user closed it before it finished processing everything in the
         # objectProcessorQueue. Assuming that Bitmessage wasn't closed
         # forcefully, it should have saved the data in the queue into the
         # objectprocessorqueue table. Let's pull it out.
-        sql_ready.wait()
         queryreturn = sqlQuery(
             'SELECT objecttype, data FROM objectprocessorqueue')
         for objectType, data in queryreturn:
@@ -58,7 +63,6 @@ class objectProcessor(threading.Thread):
         logger.debug(
             'Loaded %s objects from disk into the objectProcessorQueue.',
             len(queryreturn))
-        self._ack_obj = bmproto.BMStringParser()
         self.successfullyDecryptMessageTimings = []
 
     def run(self):
@@ -98,7 +102,7 @@ class objectProcessor(threading.Thread):
                     'The object is too big after decompression (stopped'
                     ' decompressing at %ib, your configured limit %ib).'
                     ' Ignoring',
-                    e.size, BMConfigParser().safeGetInt('zlib', 'maxsize'))
+                    e.size, config.safeGetInt('zlib', 'maxsize'))
             except varintDecodeError as e:
                 logger.debug(
                     'There was a problem with a varint while processing an'
@@ -241,12 +245,12 @@ class objectProcessor(threading.Thread):
                 ' one of my pubkeys but the stream number on which we'
                 ' heard this getpubkey object doesn\'t match this'
                 ' address\' stream number. Ignoring.')
-        if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
+        if config.safeGetBoolean(myAddress, 'chan'):
             return logger.info(
                 'Ignoring getpubkey request because it is for one of my'
                 ' chan addresses. The other party should already have'
                 ' the pubkey.')
-        lastPubkeySendTime = BMConfigParser().safeGetInt(
+        lastPubkeySendTime = config.safeGetInt(
             myAddress, 'lastpubkeysendtime')
         # If the last time we sent our pubkey was more recent than
         # 28 days ago...
@@ -294,23 +298,20 @@ class objectProcessor(threading.Thread):
                     '(within processpubkey) payloadLength less than 146.'
                     ' Sanity check failed.')
             readPosition += 4
-            publicSigningKey = data[readPosition:readPosition + 64]
+            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
             # Is it possible for a public key to be invalid such that trying to
             # encrypt or sign with it will cause an error? If it is, it would
             # be easiest to test them here.
             readPosition += 64
-            publicEncryptionKey = data[readPosition:readPosition + 64]
-            if len(publicEncryptionKey) < 64:
+            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            if len(pubEncryptionKey) < 65:
                 return logger.debug(
                     'publicEncryptionKey length less than 64. Sanity check'
                     ' failed.')
             readPosition += 64
             # The data we'll store in the pubkeys table.
             dataToStore = data[20:readPosition]
-            sha = hashlib.new('sha512')
-            sha.update(
-                '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
-            ripe = RIPEMD160Hash(sha.digest()).digest()
+            ripe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(
@@ -318,7 +319,7 @@ class objectProcessor(threading.Thread):
                     '\nripe %s\npublicSigningKey in hex: %s'
                     '\npublicEncryptionKey in hex: %s',
                     addressVersion, streamNumber, hexlify(ripe),
-                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                    hexlify(pubSigningKey), hexlify(pubEncryptionKey)
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
@@ -348,9 +349,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            publicSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            publicEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])[1]
@@ -367,15 +368,13 @@ class objectProcessor(threading.Thread):
             signature = data[readPosition:readPosition + signatureLength]
             if highlevelcrypto.verify(
                     data[8:endOfSignedDataPosition],
-                    signature, hexlify(publicSigningKey)):
+                    signature, hexlify(pubSigningKey)):
                 logger.debug('ECDSA verify passed (within processpubkey)')
             else:
                 logger.warning('ECDSA verify failed (within processpubkey)')
                 return
 
-            sha = hashlib.new('sha512')
-            sha.update(publicSigningKey + publicEncryptionKey)
-            ripe = RIPEMD160Hash(sha.digest()).digest()
+            ripe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(
@@ -383,7 +382,7 @@ class objectProcessor(threading.Thread):
                     '\nripe %s\npublicSigningKey in hex: %s'
                     '\npublicEncryptionKey in hex: %s',
                     addressVersion, streamNumber, hexlify(ripe),
-                    hexlify(publicSigningKey), hexlify(publicEncryptionKey)
+                    hexlify(pubSigningKey), hexlify(pubEncryptionKey)
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
@@ -449,7 +448,7 @@ class objectProcessor(threading.Thread):
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = \
             decodeVarint(data[readPosition:readPosition + 9])
         readPosition += streamNumberAsClaimedByMsgLength
-        inventoryHash = calculateInventoryHash(data)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(data)
         initialDecryptionSuccessful = False
 
         # This is not an acknowledgement bound for me. See if it is a message
@@ -457,7 +456,7 @@ class objectProcessor(threading.Thread):
 
         for key, cryptorObject in sorted(
                 shared.myECCryptorObjects.items(),
-                key=lambda x: random.random()):
+                key=lambda x: random.random()):  # nosec B311
             try:
                 # continue decryption attempts to avoid timing attacks
                 if initialDecryptionSuccessful:
@@ -472,7 +471,7 @@ class objectProcessor(threading.Thread):
                     logger.info(
                         'EC decryption successful using key associated'
                         ' with ripe hash: %s.', hexlify(key))
-            except Exception:
+            except Exception:  # nosec B110
                 pass
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
@@ -579,13 +578,10 @@ class objectProcessor(threading.Thread):
                 helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey)
             )
         # Used to detect and ignore duplicate messages in our inbox
-        sigHash = hashlib.sha512(
-            hashlib.sha512(signature).digest()).digest()[32:]
+        sigHash = highlevelcrypto.double_sha512(signature)[32:]
 
         # calculate the fromRipe.
-        sha = hashlib.new('sha512')
-        sha.update(pubSigningKey + pubEncryptionKey)
-        ripe = RIPEMD160Hash(sha.digest()).digest()
+        ripe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
         fromAddress = encodeAddress(
             sendersAddressVersionNumber, sendersStreamNumber, ripe)
 
@@ -612,13 +608,13 @@ class objectProcessor(threading.Thread):
         # If the toAddress version number is 3 or higher and not one of
         # my chan addresses:
         if decodeAddress(toAddress)[1] >= 3 \
-                and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
+                and not config.safeGetBoolean(toAddress, 'chan'):
             # If I'm not friendly with this person:
             if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(
                     fromAddress):
-                requiredNonceTrialsPerByte = BMConfigParser().getint(
+                requiredNonceTrialsPerByte = config.getint(
                     toAddress, 'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = BMConfigParser().getint(
+                requiredPayloadLengthExtraBytes = config.getint(
                     toAddress, 'payloadlengthextrabytes')
                 if not protocol.isProofOfWorkSufficient(
                         data, requiredNonceTrialsPerByte,
@@ -630,7 +626,7 @@ class objectProcessor(threading.Thread):
         # to black or white lists.
         blockMessage = False
         # If we are using a blacklist
-        if BMConfigParser().get(
+        if config.get(
                 'bitmessagesettings', 'blackwhitelist') == 'black':
             queryreturn = sqlQuery(
                 "SELECT label FROM blacklist where address=? and enabled='1'",
@@ -648,7 +644,7 @@ class objectProcessor(threading.Thread):
                     'Message ignored because address not in whitelist.')
                 blockMessage = True
 
-        # toLabel = BMConfigParser().safeGet(toAddress, 'label', toAddress)
+        # toLabel = config.safeGet(toAddress, 'label', toAddress)
         try:
             decodedMessage = helper_msgcoding.MsgDecode(
                 messageEncodingType, message)
@@ -674,18 +670,18 @@ class objectProcessor(threading.Thread):
             # If we are behaving as an API then we might need to run an
             # outside command to let some program know that a new message
             # has arrived.
-            if BMConfigParser().safeGetBoolean(
+            if config.safeGetBoolean(
                     'bitmessagesettings', 'apienabled'):
-                apiNotifyPath = BMConfigParser().safeGet(
+                apiNotifyPath = config.safeGet(
                     'bitmessagesettings', 'apinotifypath')
                 if apiNotifyPath:
-                    subprocess.call([apiNotifyPath, "newMessage"])
+                    subprocess.call([apiNotifyPath, "newMessage"])  # nosec B603
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
-            if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') \
+            if config.safeGetBoolean(toAddress, 'mailinglist') \
                     and messageEncodingType != 0:
-                mailingListName = BMConfigParser().safeGet(
+                mailingListName = config.safeGet(
                     toAddress, 'mailinglistname', '')
                 # Let us send out this message as a broadcast
                 subject = self.addMailingListNameToSubject(
@@ -723,10 +719,16 @@ class objectProcessor(threading.Thread):
         if (
             self.ackDataHasAValidHeader(ackData) and not blockMessage
             and messageEncodingType != 0
-            and not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack')
-            and not BMConfigParser().safeGetBoolean(toAddress, 'chan')
+            and not config.safeGetBoolean(toAddress, 'dontsendack')
+            and not config.safeGetBoolean(toAddress, 'chan')
         ):
-            self._ack_obj.send_data(ackData[24:])
+            ackPayload = ackData[24:]
+            objectType, toStreamNumber, expiresTime = \
+                protocol.decodeObjectParameters(ackPayload)
+            inventoryHash = highlevelcrypto.calculateInventoryHash(ackPayload)
+            state.Inventory[inventoryHash] = (
+                objectType, toStreamNumber, ackPayload, expiresTime, b'')
+            queues.invQueue.put((toStreamNumber, inventoryHash))
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(
@@ -750,7 +752,7 @@ class objectProcessor(threading.Thread):
         state.numberOfBroadcastsProcessed += 1
         queues.UISignalQueue.put((
             'updateNumberOfBroadcastsProcessed', 'no data'))
-        inventoryHash = calculateInventoryHash(data)
+        inventoryHash = highlevelcrypto.calculateInventoryHash(data)
         readPosition = 20  # bypass the nonce, time, and object type
         broadcastVersion, broadcastVersionLength = decodeVarint(
             data[readPosition:readPosition + 9])
@@ -775,7 +777,7 @@ class objectProcessor(threading.Thread):
             initialDecryptionSuccessful = False
             for key, cryptorObject in sorted(
                     shared.MyECSubscriptionCryptorObjects.items(),
-                    key=lambda x: random.random()):
+                    key=lambda x: random.random()):  # nosec B311
                 try:
                     # continue decryption attempts to avoid timing attacks
                     if initialDecryptionSuccessful:
@@ -872,9 +874,8 @@ class objectProcessor(threading.Thread):
                 requiredPayloadLengthExtraBytes)
         endOfPubkeyPosition = readPosition
 
-        sha = hashlib.new('sha512')
-        sha.update(sendersPubSigningKey + sendersPubEncryptionKey)
-        calculatedRipe = RIPEMD160Hash(sha.digest()).digest()
+        calculatedRipe = highlevelcrypto.to_ripe(
+            sendersPubSigningKey, sendersPubEncryptionKey)
 
         if broadcastVersion == 4:
             if toRipe != calculatedRipe:
@@ -884,10 +885,10 @@ class objectProcessor(threading.Thread):
                     ' itself. Ignoring message.'
                 )
         elif broadcastVersion == 5:
-            calculatedTag = hashlib.sha512(hashlib.sha512(
+            calculatedTag = highlevelcrypto.double_sha512(
                 encodeVarint(sendersAddressVersion)
                 + encodeVarint(sendersStream) + calculatedRipe
-            ).digest()).digest()[32:]
+            )[32:]
             if calculatedTag != embeddedTag:
                 return logger.debug(
                     'The tag and encryption key used to encrypt this'
@@ -917,8 +918,7 @@ class objectProcessor(threading.Thread):
             return
         logger.debug('ECDSA verify passed')
         # Used to detect and ignore duplicate messages in our inbox
-        sigHash = hashlib.sha512(
-            hashlib.sha512(signature).digest()).digest()[32:]
+        sigHash = highlevelcrypto.double_sha512(signature)[32:]
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
@@ -959,11 +959,11 @@ class objectProcessor(threading.Thread):
         # If we are behaving as an API then we might need to run an
         # outside command to let some program know that a new message
         # has arrived.
-        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
-            apiNotifyPath = BMConfigParser().safeGet(
+        if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
+            apiNotifyPath = config.safeGet(
                 'bitmessagesettings', 'apinotifypath')
             if apiNotifyPath:
-                subprocess.call([apiNotifyPath, "newBroadcast"])
+                subprocess.call([apiNotifyPath, "newBroadcast"])  # nosec B603
 
         # Display timing data
         logger.info(
@@ -992,10 +992,10 @@ class objectProcessor(threading.Thread):
         # Let us create the tag from the address and see if we were waiting
         # for it.
         elif addressVersion >= 4:
-            tag = hashlib.sha512(hashlib.sha512(
+            tag = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersion) + encodeVarint(streamNumber)
                 + ripe
-            ).digest()).digest()[32:]
+            )[32:]
             if tag in state.neededPubkeys:
                 del state.neededPubkeys[tag]
                 self.sendMessages(address)
@@ -1025,7 +1025,7 @@ class objectProcessor(threading.Thread):
 
         magic, command, payloadLength, checksum = protocol.Header.unpack(
             ackData[:protocol.Header.size])
-        if magic != 0xE9BEB4D9:
+        if magic != protocol.magic:
             logger.info('Ackdata magic bytes were wrong. Not sending ackData.')
             return False
         payload = ackData[protocol.Header.size:]

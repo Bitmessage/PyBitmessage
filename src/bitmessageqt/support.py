@@ -13,15 +13,15 @@ import paths
 import proofofwork
 import queues
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from foldertree import AccountMixin
 from helper_sql import sqlExecute, sqlQuery
 from l10n import getTranslationLanguage
 from openclpow import openclEnabled
 from pyelliptic.openssl import OpenSSL
 from settings import getSOCKSProxyType
-from tr import _translate
 from version import softwareVersion
+from tr import _translate
 
 
 # this is BM support address going to Peter Surda
@@ -81,9 +81,9 @@ def checkAddressBook(myapp):
 
 def checkHasNormalAddress():
     """Returns first enabled normal address or False if not found."""
-    for address in account.getSortedAccounts():
+    for address in config.addresses(True):
         acct = account.accountClass(address)
-        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(
+        if acct.type == AccountMixin.NORMAL and config.safeGetBoolean(
                 address, 'enabled'):
             return address
     return False
@@ -153,11 +153,11 @@ def createSupportMessage(myapp):
     portablemode = str(state.appdata == paths.lookupExeFolder())
     cpow = "True" if proofofwork.bmpow else "False"
     openclpow = str(
-        BMConfigParser().safeGet('bitmessagesettings', 'opencl')
+        config.safeGet('bitmessagesettings', 'opencl')
     ) if openclEnabled() else "None"
     locale = getTranslationLanguage()
-    socks = getSOCKSProxyType(BMConfigParser()) or 'N/A'
-    upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', 'N/A')
+    socks = getSOCKSProxyType(config) or 'N/A'
+    upnp = config.safeGet('bitmessagesettings', 'upnp', 'N/A')
     connectedhosts = len(network.stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(SUPPORT_MESSAGE.format(

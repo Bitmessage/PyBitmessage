@@ -2,13 +2,11 @@
 `DownloadThread` class definition
 """
 import time
-
+import state
 import addresses
 import helper_random
 import protocol
-from dandelion import Dandelion
-from inventory import Inventory
-from network.connectionpool import BMConnectionPool
+import connectionpool
 from objectracker import missingObjects
 from threads import StoppableThread
 
@@ -43,7 +41,7 @@ class DownloadThread(StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = BMConnectionPool().establishedConnections()
+            connections = connectionpool.pool.establishedConnections()
             helper_random.randomshuffle(connections)
             requestChunk = max(int(
                 min(self.maxRequestChunk, len(missingObjects))
@@ -61,7 +59,7 @@ class DownloadThread(StoppableThread):
                 payload = bytearray()
                 chunkCount = 0
                 for chunk in request:
-                    if chunk in Inventory() and not Dandelion().hasHash(chunk):
+                    if chunk in state.Inventory and not state.Dandelion.hasHash(chunk):
                         try:
                             del i.objectsNewToMe[chunk]
                         except KeyError:

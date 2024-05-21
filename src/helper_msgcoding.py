@@ -6,7 +6,7 @@ import string
 import zlib
 
 import messagetypes
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
 from tr import _translate
 
@@ -100,10 +100,10 @@ class MsgDecode(object):
         """Handle extended encoding"""
         dc = zlib.decompressobj()
         tmp = ""
-        while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
+        while len(tmp) <= config.safeGetInt("zlib", "maxsize"):
             try:
                 got = dc.decompress(
-                    data, BMConfigParser().safeGetInt("zlib", "maxsize")
+                    data, config.safeGetInt("zlib", "maxsize")
                     + 1 - len(tmp))
                 # EOF
                 if got == "":

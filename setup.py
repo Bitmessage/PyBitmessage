@@ -13,7 +13,7 @@ from src.version import softwareVersion
 
 
 EXTRAS_REQUIRE = {
-    'docs': ['sphinx', 'sphinx_rtd_theme'],
+    'docs': ['sphinx'],
     'gir': ['pygobject'],
     'json': ['jsonrpclib'],
     'notify2': ['notify2'],
@@ -72,11 +72,28 @@ if __name__ == "__main__":
         'pybitmessage.network',
         'pybitmessage.plugins',
         'pybitmessage.pyelliptic',
-        'pybitmessage.storage',
+        'pybitmessage.storage'
     ]
+    package_data = {'': [
+        'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
+        'translations/*.ts', 'translations/*.qm', 'default.ini', 'sql/*.sql',
+        'images/*.png', 'images/*.ico', 'images/*.icns',
+        'bitmessagekivy/main.kv', 'bitmessagekivy/screens_data.json',
+        'bitmessagekivy/kv/*.kv', 'images/kivy/payment/*.png', 'images/kivy/*.gif',
+        'images/kivy/text_images*.png'
+    ]}
 
     if sys.version_info[0] == 3:
-        packages.append('pybitmessage.bitmessagekivy')
+        packages.extend(
+            [
+                'pybitmessage.bitmessagekivy',
+                'pybitmessage.bitmessagekivy.baseclass'
+            ]
+        )
+
+    if os.environ.get('INSTALL_TESTS', False):
+        packages.extend(['pybitmessage.mockbm', 'pybitmessage.backend', 'pybitmessage.bitmessagekivy.tests'])
+        package_data[''].extend(['bitmessagekivy/tests/sampleData/*.dat'])
 
     # this will silently accept alternative providers of msgpack
     # if they are already installed
@@ -134,11 +151,7 @@ if __name__ == "__main__":
         ],
         package_dir={'pybitmessage': 'src'},
         packages=packages,
-        package_data={'': [
-            'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
-            'translations/*.ts', 'translations/*.qm',
-            'images/*.png', 'images/*.ico', 'images/*.icns'
-        ]},
+        package_data=package_data,
         data_files=data_files,
         ext_modules=[bitmsghash],
         zip_safe=False,

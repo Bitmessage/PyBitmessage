@@ -12,16 +12,17 @@ import sys
 import time
 from distutils.version import StrictVersion
 from struct import pack
+from six.moves import configparser
 
 try:
     import defaults
     import helper_random
     import paths
     import state
-    from bmconfigparser import BMConfigParser
+    from bmconfigparser import config, config_ready
 except ImportError:
     from . import defaults, helper_random, paths, state
-    from .bmconfigparser import BMConfigParser
+    from .bmconfigparser import config, config_ready
 
 try:
     from plugins.plugin import get_plugin
@@ -38,7 +39,6 @@ StoreConfigFilesInSameDirectoryAsProgramByDefault = False
 
 def loadConfig():
     """Load the config"""
-    config = BMConfigParser()
     if state.appdata:
         config.read(state.appdata + 'keys.dat')
         # state.appdata must have been specified as a startup option.
@@ -70,12 +70,9 @@ def loadConfig():
 
         # This appears to be the first time running the program; there is
         # no config file (or it cannot be accessed). Create config file.
-        config.add_section('bitmessagesettings')
+        # config.add_section('bitmessagesettings')
+        config.read()
         config.set('bitmessagesettings', 'settingsversion', '10')
-        config.set('bitmessagesettings', 'port', '8444')
-        config.set('bitmessagesettings', 'timeformat', '%%c')
-        config.set('bitmessagesettings', 'blackwhitelist', 'black')
-        config.set('bitmessagesettings', 'startonlogon', 'false')
         if 'linux' in sys.platform:
             config.set('bitmessagesettings', 'minimizetotray', 'false')
         # This isn't implimented yet and when True on
@@ -83,31 +80,16 @@ def loadConfig():
         # running when minimized.
         else:
             config.set('bitmessagesettings', 'minimizetotray', 'true')
-        config.set('bitmessagesettings', 'showtraynotifications', 'true')
-        config.set('bitmessagesettings', 'startintray', 'false')
-        config.set('bitmessagesettings', 'socksproxytype', 'none')
-        config.set('bitmessagesettings', 'sockshostname', 'localhost')
-        config.set('bitmessagesettings', 'socksport', '9050')
-        config.set('bitmessagesettings', 'socksauthentication', 'false')
-        config.set('bitmessagesettings', 'socksusername', '')
-        config.set('bitmessagesettings', 'sockspassword', '')
-        config.set('bitmessagesettings', 'keysencrypted', 'false')
-        config.set('bitmessagesettings', 'messagesencrypted', 'false')
         config.set(
             'bitmessagesettings', 'defaultnoncetrialsperbyte',
             str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
         config.set(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes',
             str(defaults.networkDefaultPayloadLengthExtraBytes))
-        config.set('bitmessagesettings', 'minimizeonclose', 'false')
         config.set('bitmessagesettings', 'dontconnect', 'true')
-        config.set('bitmessagesettings', 'replybelow', 'False')
-        config.set('bitmessagesettings', 'maxdownloadrate', '0')
-        config.set('bitmessagesettings', 'maxuploadrate', '0')
-
         # UI setting to stop trying to send messages after X days/months
-        config.set('bitmessagesettings', 'stopresendingafterxdays', '')
-        config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
+        # config.set('bitmessagesettings', 'stopresendingafterxdays', '')
+        # config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
 
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
@@ -130,11 +112,11 @@ def loadConfig():
         config.save()
     else:
         updateConfig()
+    config_ready.set()
 
 
 def updateConfig():
     """Save the config"""
-    config = BMConfigParser()
     settingsversion = config.getint('bitmessagesettings', 'settingsversion')
     if settingsversion == 1:
         config.set('bitmessagesettings', 'socksproxytype', 'none')
@@ -237,7 +219,8 @@ def updateConfig():
                 config.set(
                     addressInKeysFile, 'payloadlengthextrabytes',
                     str(int(previousSmallMessageDifficulty * 1000)))
-            except Exception:
+            except (ValueError, TypeError, configparser.NoSectionError,
+                    configparser.NoOptionError):
                 continue
         config.set('bitmessagesettings', 'maxdownloadrate', '0')
         config.set('bitmessagesettings', 'maxuploadrate', '0')
@@ -259,8 +242,6 @@ def updateConfig():
                 * defaults.networkDefaultPayloadLengthExtraBytes)
         )
 
-    if not config.has_option('bitmessagesettings', 'onionhostname'):
-        config.set('bitmessagesettings', 'onionhostname', '')
     if not config.has_option('bitmessagesettings', 'onionport'):
         config.set('bitmessagesettings', 'onionport', '8444')
     if not config.has_option('bitmessagesettings', 'onionbindip'):
@@ -286,7 +267,7 @@ def updateConfig():
 
 def adjustHalfOpenConnectionsLimit():
     """Check and satisfy half-open connections limit (mainly XP and Vista)"""
-    if BMConfigParser().safeGet(
+    if config.safeGet(
             'bitmessagesettings', 'socksproxytype', 'none') != 'none':
         state.maximumNumberOfHalfOpenConnections = 4
         return
@@ -373,7 +354,7 @@ def start_proxyconfig():
     """Check socksproxytype and start any proxy configuration plugin"""
     if not get_plugin:
         return
-    config = BMConfigParser()
+    config_ready.wait()
     proxy_type = config.safeGet('bitmessagesettings', 'socksproxytype')
     if proxy_type and proxy_type not in ('none', 'SOCKS4a', 'SOCKS5'):
         try:

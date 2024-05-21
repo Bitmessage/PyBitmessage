@@ -3,12 +3,12 @@ Select which node to connect to
 """
 # pylint: disable=too-many-branches
 import logging
-import random  # nosec
+import random
 
 import knownnodes
 import protocol
 import state
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from queues import queue, portCheckerQueue
 
 logger = logging.getLogger('default')
@@ -17,7 +17,7 @@ logger = logging.getLogger('default')
 def getDiscoveredPeer():
     """Get a peer from the local peer discovery list"""
     try:
-        peer = random.choice(state.discoveredPeers.keys())
+        peer = random.choice(state.discoveredPeers.keys())  # nosec B311
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -29,9 +29,9 @@ def getDiscoveredPeer():
 
 def chooseConnection(stream):
     """Returns an appropriate connection"""
-    haveOnion = BMConfigParser().safeGet(
+    haveOnion = config.safeGet(
         "bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
-    onionOnly = BMConfigParser().safeGetBoolean(
+    onionOnly = config.safeGetBoolean(
         "bitmessagesettings", "onionservicesonly")
     try:
         retval = portCheckerQueue.get(False)
@@ -40,11 +40,12 @@ def chooseConnection(stream):
     except queue.Empty:
         pass
     # with a probability of 0.5, connect to a discovered peer
-    if random.choice((False, True)) and not haveOnion:
+    if random.choice((False, True)) and not haveOnion:  # nosec B311
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = random.choice(knownnodes.knownNodes[stream].keys())
+        peer = random.choice(  # nosec B311
+            knownnodes.knownNodes[stream].keys())
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):
@@ -70,7 +71,7 @@ def chooseConnection(stream):
         if rating > 1:
             rating = 1
         try:
-            if 0.05 / (1.0 - rating) > random.random():
+            if 0.05 / (1.0 - rating) > random.random():  # nosec B311
                 return peer
         except ZeroDivisionError:
             return peer

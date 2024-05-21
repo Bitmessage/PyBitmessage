@@ -12,6 +12,7 @@ src/**/*.so
 src/**/a.out
 build/lib.*
 build/temp.*
+bin
 dist
 *.egg-info
 docs/_*/*
@@ -19,6 +20,8 @@ docs/autodoc/
 build
 pyan/
 **.coverage
+coverage.xml
 **htmlcov*
 **coverage.json
-
+.buildozer
+.tox

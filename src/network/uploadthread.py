@@ -5,9 +5,8 @@ import time
 
 import helper_random
 import protocol
-from inventory import Inventory
-from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
+import state
+import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from threads import StoppableThread
 
@@ -23,7 +22,7 @@ class UploadThread(StoppableThread):
         while not self._stopped:
             uploaded = 0
             # Choose uploading peers randomly
-            connections = BMConnectionPool().establishedConnections()
+            connections = connectionpool.pool.establishedConnections()
             helper_random.randomshuffle(connections)
             for i in connections:
                 now = time.time()
@@ -41,8 +40,8 @@ class UploadThread(StoppableThread):
                 chunk_count = 0
                 for chunk in request:
                     del i.pendingUpload[chunk]
-                    if Dandelion().hasHash(chunk) and \
-                       i != Dandelion().objectChildStem(chunk):
+                    if state.Dandelion.hasHash(chunk) and \
+                       i != state.Dandelion.objectChildStem(chunk):
                         i.antiIntersectionDelay()
                         self.logger.info(
                             '%s asked for a stem object we didn\'t offer to it.',
@@ -50,7 +49,7 @@ class UploadThread(StoppableThread):
                         break
                     try:
                         payload.extend(protocol.CreatePacket(
-                            'object', Inventory()[chunk].payload))
+                            'object', state.Inventory[chunk].payload))
                         chunk_count += 1
                     except KeyError:
                         i.antiIntersectionDelay()

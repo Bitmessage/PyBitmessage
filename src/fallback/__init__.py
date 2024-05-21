@@ -18,11 +18,11 @@ try:
     hashlib.new('ripemd160')
 except ValueError:
     try:
-        from Crypto.Hash import RIPEMD
+        from Crypto.Hash import RIPEMD160
     except ImportError:
         RIPEMD160Hash = None
     else:
-        RIPEMD160Hash = RIPEMD.RIPEMD160Hash
+        RIPEMD160Hash = RIPEMD160.new
 else:
     def RIPEMD160Hash(data=None):
         """hashlib based RIPEMD160Hash"""

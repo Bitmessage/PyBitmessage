@@ -23,7 +23,7 @@ import sys
 import time
 import xmlrpclib
 
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 
 
 api = ''
@@ -86,15 +86,15 @@ def lookupAppdataFolder():
 def configInit():
     """Initialised the configuration"""
 
-    BMConfigParser().add_section('bitmessagesettings')
+    config.add_section('bitmessagesettings')
     # Sets the bitmessage port to stop the warning about the api not properly
     # being setup. This is in the event that the keys.dat is in a different
     # directory or is created locally to connect to a machine remotely.
-    BMConfigParser().set('bitmessagesettings', 'port', '8444')
-    BMConfigParser().set('bitmessagesettings', 'apienabled', 'true')  # Sets apienabled to true in keys.dat
+    config.set('bitmessagesettings', 'port', '8444')
+    config.set('bitmessagesettings', 'apienabled', 'true')  # Sets apienabled to true in keys.dat
 
     with open(keysName, 'wb') as configfile:
-        BMConfigParser().write(configfile)
+        config.write(configfile)
 
     print('\n     ' + str(keysName) + ' Initalized in the same directory as daemon.py')
     print('     You will now need to configure the ' + str(keysName) + ' file.\n')
@@ -104,15 +104,15 @@ def apiInit(apiEnabled):
     """Initialise the API"""
 
     global usrPrompt
-    BMConfigParser().read(keysPath)
+    config.read(keysPath)
 
     if apiEnabled is False:  # API information there but the api is disabled.
         uInput = userInput("The API is not enabled. Would you like to do that now, (Y)es or (N)o?").lower()
 
         if uInput == "y":
-            BMConfigParser().set('bitmessagesettings', 'apienabled', 'true')  # Sets apienabled to true in keys.dat
+            config.set('bitmessagesettings', 'apienabled', 'true')  # Sets apienabled to true in keys.dat
             with open(keysPath, 'wb') as configfile:
-                BMConfigParser().write(configfile)
+                config.write(configfile)
 
             print('Done')
             restartBmNotify()
@@ -158,15 +158,15 @@ def apiInit(apiEnabled):
             # sets the bitmessage port to stop the warning about the api not properly
             # being setup. This is in the event that the keys.dat is in a different
             # directory or is created locally to connect to a machine remotely.
-            BMConfigParser().set('bitmessagesettings', 'port', '8444')
-            BMConfigParser().set('bitmessagesettings', 'apienabled', 'true')
-            BMConfigParser().set('bitmessagesettings', 'apiport', apiPort)
-            BMConfigParser().set('bitmessagesettings', 'apiinterface', '127.0.0.1')
-            BMConfigParser().set('bitmessagesettings', 'apiusername', apiUsr)
-            BMConfigParser().set('bitmessagesettings', 'apipassword', apiPwd)
-            BMConfigParser().set('bitmessagesettings', 'daemon', daemon)
+            config.set('bitmessagesettings', 'port', '8444')
+            config.set('bitmessagesettings', 'apienabled', 'true')
+            config.set('bitmessagesettings', 'apiport', apiPort)
+            config.set('bitmessagesettings', 'apiinterface', '127.0.0.1')
+            config.set('bitmessagesettings', 'apiusername', apiUsr)
+            config.set('bitmessagesettings', 'apipassword', apiPwd)
+            config.set('bitmessagesettings', 'daemon', daemon)
             with open(keysPath, 'wb') as configfile:
-                BMConfigParser().write(configfile)
+                config.write(configfile)
 
             print('\n     Finished configuring the keys.dat file with API information.\n')
             restartBmNotify()
@@ -191,19 +191,19 @@ def apiData():
     global keysPath
     global usrPrompt
 
-    BMConfigParser().read(keysPath)  # First try to load the config file (the keys.dat file) from the program directory
+    config.read(keysPath)  # First try to load the config file (the keys.dat file) from the program directory
 
     try:
-        BMConfigParser().get('bitmessagesettings', 'port')
+        config.get('bitmessagesettings', 'port')
         appDataFolder = ''
     except:  # noqa:E722
         # Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
         appDataFolder = lookupAppdataFolder()
         keysPath = appDataFolder + keysPath
-        BMConfigParser().read(keysPath)
+        config.read(keysPath)
 
         try:
-            BMConfigParser().get('bitmessagesettings', 'port')
+            config.get('bitmessagesettings', 'port')
         except:  # noqa:E722
             # keys.dat was not there either, something is wrong.
             print('\n     ******************************************************************')
@@ -230,24 +230,24 @@ def apiData():
             main()
 
     try:  # checks to make sure that everyting is configured correctly. Excluding apiEnabled, it is checked after
-        BMConfigParser().get('bitmessagesettings', 'apiport')
-        BMConfigParser().get('bitmessagesettings', 'apiinterface')
-        BMConfigParser().get('bitmessagesettings', 'apiusername')
-        BMConfigParser().get('bitmessagesettings', 'apipassword')
+        config.get('bitmessagesettings', 'apiport')
+        config.get('bitmessagesettings', 'apiinterface')
+        config.get('bitmessagesettings', 'apiusername')
+        config.get('bitmessagesettings', 'apipassword')
 
     except:  # noqa:E722
         apiInit("")  # Initalize the keys.dat file with API information
 
     # keys.dat file was found or appropriately configured, allow information retrieval
     # apiEnabled =
-    # apiInit(BMConfigParser().safeGetBoolean('bitmessagesettings','apienabled'))
+    # apiInit(config.safeGetBoolean('bitmessagesettings','apienabled'))
     # #if false it will prompt the user, if true it will return true
 
-    BMConfigParser().read(keysPath)  # read again since changes have been made
-    apiPort = int(BMConfigParser().get('bitmessagesettings', 'apiport'))
-    apiInterface = BMConfigParser().get('bitmessagesettings', 'apiinterface')
-    apiUsername = BMConfigParser().get('bitmessagesettings', 'apiusername')
-    apiPassword = BMConfigParser().get('bitmessagesettings', 'apipassword')
+    config.read(keysPath)  # read again since changes have been made
+    apiPort = int(config.get('bitmessagesettings', 'apiport'))
+    apiInterface = config.get('bitmessagesettings', 'apiinterface')
+    apiUsername = config.get('bitmessagesettings', 'apiusername')
+    apiPassword = config.get('bitmessagesettings', 'apipassword')
 
     print('\n     API data successfully imported.\n')
 
@@ -277,28 +277,28 @@ def bmSettings():
 
     keysPath = 'keys.dat'
 
-    BMConfigParser().read(keysPath)  # Read the keys.dat
+    config.read(keysPath)  # Read the keys.dat
     try:
-        port = BMConfigParser().get('bitmessagesettings', 'port')
+        port = config.get('bitmessagesettings', 'port')
     except:  # noqa:E722
         print('\n     File not found.\n')
         usrPrompt = 0
         main()
 
-    startonlogon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'startonlogon')
-    minimizetotray = BMConfigParser().safeGetBoolean('bitmessagesettings', 'minimizetotray')
-    showtraynotifications = BMConfigParser().safeGetBoolean('bitmessagesettings', 'showtraynotifications')
-    startintray = BMConfigParser().safeGetBoolean('bitmessagesettings', 'startintray')
-    defaultnoncetrialsperbyte = BMConfigParser().get('bitmessagesettings', 'defaultnoncetrialsperbyte')
-    defaultpayloadlengthextrabytes = BMConfigParser().get('bitmessagesettings', 'defaultpayloadlengthextrabytes')
-    daemon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon')
+    startonlogon = config.safeGetBoolean('bitmessagesettings', 'startonlogon')
+    minimizetotray = config.safeGetBoolean('bitmessagesettings', 'minimizetotray')
+    showtraynotifications = config.safeGetBoolean('bitmessagesettings', 'showtraynotifications')
+    startintray = config.safeGetBoolean('bitmessagesettings', 'startintray')
+    defaultnoncetrialsperbyte = config.get('bitmessagesettings', 'defaultnoncetrialsperbyte')
+    defaultpayloadlengthextrabytes = config.get('bitmessagesettings', 'defaultpayloadlengthextrabytes')
+    daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
-    socksproxytype = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
-    sockshostname = BMConfigParser().get('bitmessagesettings', 'sockshostname')
-    socksport = BMConfigParser().get('bitmessagesettings', 'socksport')
-    socksauthentication = BMConfigParser().safeGetBoolean('bitmessagesettings', 'socksauthentication')
-    socksusername = BMConfigParser().get('bitmessagesettings', 'socksusername')
-    sockspassword = BMConfigParser().get('bitmessagesettings', 'sockspassword')
+    socksproxytype = config.get('bitmessagesettings', 'socksproxytype')
+    sockshostname = config.get('bitmessagesettings', 'sockshostname')
+    socksport = config.get('bitmessagesettings', 'socksport')
+    socksauthentication = config.safeGetBoolean('bitmessagesettings', 'socksauthentication')
+    socksusername = config.get('bitmessagesettings', 'socksusername')
+    sockspassword = config.get('bitmessagesettings', 'sockspassword')
 
     print('\n     -----------------------------------')
     print('     |   Current Bitmessage Settings   |')
@@ -333,60 +333,60 @@ def bmSettings():
             if uInput == "port":
                 print('     Current port number: ' + port)
                 uInput = userInput("Enter the new port number.")
-                BMConfigParser().set('bitmessagesettings', 'port', str(uInput))
+                config.set('bitmessagesettings', 'port', str(uInput))
             elif uInput == "startonlogon":
                 print('     Current status: ' + str(startonlogon))
                 uInput = userInput("Enter the new status.")
-                BMConfigParser().set('bitmessagesettings', 'startonlogon', str(uInput))
+                config.set('bitmessagesettings', 'startonlogon', str(uInput))
             elif uInput == "minimizetotray":
                 print('     Current status: ' + str(minimizetotray))
                 uInput = userInput("Enter the new status.")
-                BMConfigParser().set('bitmessagesettings', 'minimizetotray', str(uInput))
+                config.set('bitmessagesettings', 'minimizetotray', str(uInput))
             elif uInput == "showtraynotifications":
                 print('     Current status: ' + str(showtraynotifications))
                 uInput = userInput("Enter the new status.")
-                BMConfigParser().set('bitmessagesettings', 'showtraynotifications', str(uInput))
+                config.set('bitmessagesettings', 'showtraynotifications', str(uInput))
             elif uInput == "startintray":
                 print('     Current status: ' + str(startintray))
                 uInput = userInput("Enter the new status.")
-                BMConfigParser().set('bitmessagesettings', 'startintray', str(uInput))
+                config.set('bitmessagesettings', 'startintray', str(uInput))
             elif uInput == "defaultnoncetrialsperbyte":
                 print('     Current default nonce trials per byte: ' + defaultnoncetrialsperbyte)
                 uInput = userInput("Enter the new defaultnoncetrialsperbyte.")
-                BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(uInput))
+                config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(uInput))
             elif uInput == "defaultpayloadlengthextrabytes":
                 print('     Current default payload length extra bytes: ' + defaultpayloadlengthextrabytes)
                 uInput = userInput("Enter the new defaultpayloadlengthextrabytes.")
-                BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(uInput))
+                config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(uInput))
             elif uInput == "daemon":
                 print('     Current status: ' + str(daemon))
                 uInput = userInput("Enter the new status.").lower()
-                BMConfigParser().set('bitmessagesettings', 'daemon', str(uInput))
+                config.set('bitmessagesettings', 'daemon', str(uInput))
             elif uInput == "socksproxytype":
                 print('     Current socks proxy type: ' + socksproxytype)
                 print("Possibilities: 'none', 'SOCKS4a', 'SOCKS5'.")
                 uInput = userInput("Enter the new socksproxytype.")
-                BMConfigParser().set('bitmessagesettings', 'socksproxytype', str(uInput))
+                config.set('bitmessagesettings', 'socksproxytype', str(uInput))
             elif uInput == "sockshostname":
                 print('     Current socks host name: ' + sockshostname)
                 uInput = userInput("Enter the new sockshostname.")
-                BMConfigParser().set('bitmessagesettings', 'sockshostname', str(uInput))
+                config.set('bitmessagesettings', 'sockshostname', str(uInput))
             elif uInput == "socksport":
                 print('     Current socks port number: ' + socksport)
                 uInput = userInput("Enter the new socksport.")
-                BMConfigParser().set('bitmessagesettings', 'socksport', str(uInput))
+                config.set('bitmessagesettings', 'socksport', str(uInput))
             elif uInput == "socksauthentication":
                 print('     Current status: ' + str(socksauthentication))
                 uInput = userInput("Enter the new status.")
-                BMConfigParser().set('bitmessagesettings', 'socksauthentication', str(uInput))
+                config.set('bitmessagesettings', 'socksauthentication', str(uInput))
             elif uInput == "socksusername":
                 print('     Current socks username: ' + socksusername)
                 uInput = userInput("Enter the new socksusername.")
-                BMConfigParser().set('bitmessagesettings', 'socksusername', str(uInput))
+                config.set('bitmessagesettings', 'socksusername', str(uInput))
             elif uInput == "sockspassword":
                 print('     Current socks password: ' + sockspassword)
                 uInput = userInput("Enter the new password.")
-                BMConfigParser().set('bitmessagesettings', 'sockspassword', str(uInput))
+                config.set('bitmessagesettings', 'sockspassword', str(uInput))
             else:
                 print("\n     Invalid input. Please try again.\n")
                 invalidInput = True
@@ -397,7 +397,7 @@ def bmSettings():
                 if uInput != "y":
                     print('\n     Changes Made.\n')
                     with open(keysPath, 'wb') as configfile:
-                        BMConfigParser().write(configfile)
+                        config.write(configfile)
                     restartBmNotify()
                     break
 

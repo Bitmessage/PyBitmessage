@@ -15,9 +15,12 @@ ingredients:
     - python-setuptools
     - python-sip
     - python-six
+    - python-xdg
     - sni-qt
     - xkb-data
   exclude:
+    - libdb5.3
+    - libglib2.0-0
     - libmng2
     - libncursesw5
     - libqt4-declarative
@@ -26,6 +29,7 @@ ingredients:
     - libqt4-script
     - libqt4-scripttools
     - libqt4-sql
+    - libqt4-test
     - libqt4-xmlpatterns
     - libqtassistantclient4
     - libreadline7
@@ -33,5 +37,6 @@ ingredients:
     - ../deb_dist/pybitmessage_*_amd64.deb
 
 script:
+  - rm -rf usr/share/glib-2.0/schemas
   - cp usr/share/icons/hicolor/scalable/apps/pybitmessage.svg .
   - mv usr/bin/python2.7 usr/bin/python2

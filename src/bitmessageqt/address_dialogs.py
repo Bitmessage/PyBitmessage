@@ -10,12 +10,12 @@ from PyQt5 import QtGui, QtWidgets
 
 import queues
 import widgets
+import state
 from account import (
-    GatewayAccount, MailchuckAccount, AccountMixin, accountClass,
-    getSortedAccounts
+    GatewayAccount, MailchuckAccount, AccountMixin, accountClass
 )
-from addresses import decodeAddress, encodeVarint, addBMIfNotPresent
-from inventory import Inventory
+from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
+from bmconfigparser import config as global_config
 from tr import _translate
 
 
@@ -128,7 +128,7 @@ class NewAddressDialog(QtWidgets.QDialog):
 
         # Let's fill out the 'existing address' combo box with addresses
         # from the 'Your Identities' tab.
-        for address in getSortedAccounts():
+        for address in global_config.addresses(True):
             self.radioButtonExisting.click()
             self.comboBoxExisting.addItem(address)
         self.groupBoxDeterministic.setHidden(True)
@@ -198,13 +198,13 @@ class NewSubscriptionDialog(AddressDataDialog):
                 " broadcasts."
             ))
         else:
-            Inventory().flush()
+            state.Inventory.flush()
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(
                 encodeVarint(addressVersion)
                 + encodeVarint(streamNumber) + ripe
             ).digest()).digest()
             tag = doubleHashOfAddressData[32:]
-            self.recent = Inventory().by_type_and_tag(3, tag)
+            self.recent = state.Inventory.by_type_and_tag(3, tag)
             count = len(self.recent)
             if count == 0:
                 self.checkBoxDisplayMessagesAlreadyInInventory.setText(
@@ -238,7 +238,7 @@ class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
     QDialog for special address behaviour (e.g. mailing list functionality)
     """
 
-    def __init__(self, parent=None, config=None):
+    def __init__(self, parent=None, config=global_config):
         super(SpecialAddressBehaviorDialog, self).__init__(parent)
         widgets.load('specialaddressbehavior.ui', self)
         self.address = parent.getCurrentAccount()
@@ -302,7 +302,7 @@ class SpecialAddressBehaviorDialog(QtWidgets.QDialog):
 class EmailGatewayDialog(QtWidgets.QDialog):
     """QDialog for email gateway control"""
 
-    def __init__(self, parent, config=None, account=None):
+    def __init__(self, parent, config=global_config, account=None):
         super(EmailGatewayDialog, self).__init__(parent)
         widgets.load('emailgateway.ui', self)
         self.parent = parent

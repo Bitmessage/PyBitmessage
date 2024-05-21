@@ -10,21 +10,12 @@ import time
 
 import queues
 from addresses import decodeAddress
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute
 from foldertree import AccountMixin
 from utils import str_broadcast_subscribers
 from tr import _translate
-
-
-def getSortedAccounts():
-    """Get a sorted list of address config sections"""
-    configSections = BMConfigParser().addresses()
-    configSections.sort(
-        key=lambda item:
-        BMConfigParser().get(item, 'label').decode('utf-8').lower())
-    return configSections
 
 
 def getSortedSubscriptions(count=False):
@@ -62,7 +53,7 @@ def getSortedSubscriptions(count=False):
 
 def accountClass(address):
     """Return a BMAccount for the address"""
-    if not BMConfigParser().has_section(address):
+    if not config.has_section(address):
         # .. todo:: This BROADCAST section makes no sense
         if address == str_broadcast_subscribers:
             subscription = BroadcastAccount(address)
@@ -75,7 +66,7 @@ def accountClass(address):
                 return NoAccount(address)
         return subscription
     try:
-        gateway = BMConfigParser().get(address, "gateway")
+        gateway = config.get(address, "gateway")
         for _, cls in inspect.getmembers(
                 sys.modules[__name__], inspect.isclass):
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
@@ -97,9 +88,9 @@ class AccountColor(AccountMixin):
         if address_type is None:
             if address is None:
                 self.type = AccountMixin.ALL
-            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+            elif config.safeGetBoolean(self.address, 'mailinglist'):
                 self.type = AccountMixin.MAILINGLIST
-            elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
+            elif config.safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
                 'SELECT label FROM subscriptions WHERE address=?',
@@ -141,10 +132,10 @@ class BMAccount(NoAccount):
 
     def __init__(self, address=None):
         super(BMAccount, self).__init__(address)
-        if BMConfigParser().has_section(address):
-            if BMConfigParser().safeGetBoolean(self.address, 'chan'):
+        if config.has_section(address):
+            if config.safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
-            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
+            elif config.safeGetBoolean(self.address, 'mailinglist'):
                 self.type = AccountMixin.MAILINGLIST
         elif self.address == str_broadcast_subscribers:
             self.type = AccountMixin.BROADCAST
@@ -156,7 +147,7 @@ class BMAccount(NoAccount):
     def getLabel(self, address=None):
         """Get a label for this bitmessage account"""
         address = super(BMAccount, self).getLabel(address)
-        label = BMConfigParser().safeGet(address, 'label', address)
+        label = config.safeGet(address, 'label', address)
         queryreturn = sqlQuery(
             'SELECT label FROM addressbook WHERE address=?', address)
         if queryreturn:
@@ -189,7 +180,7 @@ class GatewayAccount(BMAccount):
     def send(self):
         """The send method for gateway accounts"""
         streamNumber, ripe = decodeAddress(self.toAddress)[2:]
-        stealthLevel = BMConfigParser().safeGetInt(
+        stealthLevel = config.safeGetInt(
             'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
@@ -209,7 +200,7 @@ class GatewayAccount(BMAccount):
             'sent',  # folder
             2,  # encodingtype
             # not necessary to have a TTL higher than 2 days
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)
+            min(config.getint('bitmessagesettings', 'ttl'), 86400 * 2)
         )
 
         queues.workerQueue.put(('sendmessage', self.toAddress))

@@ -10,7 +10,6 @@ from time import time
 import connectionpool
 import state
 from queues import invQueue
-from singleton import Singleton
 
 # randomise routes after 600 seconds
 REASSIGN_INTERVAL = 600
@@ -26,7 +25,6 @@ Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
 logger = logging.getLogger('default')
 
 
-@Singleton
 class Dandelion:  # pylint: disable=old-style-class
     """Dandelion class for tracking stem/fluff stages."""
     def __init__(self):
@@ -51,7 +49,7 @@ class Dandelion:  # pylint: disable=old-style-class
 
     def addHash(self, hashId, source=None, stream=1):
         """Add inventory vector to dandelion stem"""
-        if not state.dandelion:
+        if not state.dandelion_enabled:
             return
         with self.lock:
             self.hashMap[hashId] = Stem(
@@ -140,7 +138,7 @@ class Dandelion:  # pylint: disable=old-style-class
         """
         try:
             # pick a random from available stems
-            stem = choice(range(len(self.stem)))
+            stem = choice(range(len(self.stem)))  # nosec B311
             if self.stem[stem] == parent:
                 # one stem available and it's the parent
                 if len(self.stem) == 1:

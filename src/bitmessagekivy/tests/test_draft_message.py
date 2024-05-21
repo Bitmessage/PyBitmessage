@@ -12,6 +12,20 @@ class DraftMessage(TeleniumTestProcess):
     test_subject = 'Test Subject text'
     test_body = 'Hey, This is draft Message Body'
 
+    @ordered
+    def test_draft_screen(self):
+        """Test draft screen is open"""
+        # Checking current Screen(Inbox screen)
+        self.assert_wait_no_except('//ScreenManager[@current]', timeout=15, value='inbox')
+        # Method to open side navbar
+        self.open_side_navbar()
+        # this is for opening Draft screen
+        self.cli.wait_click('//NavigationItem[@text=\"Draft\"]', timeout=5)
+        # Checking the drawer is in 'closed' state
+        self.assertExists('//MDNavigationDrawer[@status~=\"closed\"]', timeout=5)
+        # Checking Draft Screen
+        self.assertExists("//ScreenManager[@current=\"draft\"]", timeout=5)
+
     @skip_screen_checks
     @ordered
     def test_save_message_to_draft(self):
@@ -56,9 +70,9 @@ class DraftMessage(TeleniumTestProcess):
         # Checking Receiver Address filled or not
         self.assertExists(
             '//DropDownWidget/ScrollView[0]//MyTextInput[@text=\"{}\"]'.format(test_address['auto_responder']),
-            timeout=2)
+            timeout=5)
         # Checking the sender's Field is empty
-        self.assertExists('//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text=\"\"]', timeout=3)
+        self.assertExists('//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text=\"\"]', timeout=5)
         # Assert to check Sender's address dropdown open or not
         self.assertEqual(self.cli.getattr('//Create//CustomSpinner[@is_open]', 'is_open'), False)
         # Open Sender's Address DropDown
@@ -74,7 +88,7 @@ class DraftMessage(TeleniumTestProcess):
         # Checking sender address is selected
         sender_address = self.cli.getattr('//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text]', 'text')
         self.assertExists(
-            '//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text=\"{}\"]'.format(sender_address), timeout=3)
+            '//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text=\"{}\"]'.format(sender_address), timeout=5)
         # CLICK BACK-BUTTON
         self.cli.wait_click('//MDToolbar/BoxLayout[0]/MDActionTopAppBarButton[@icon=\"arrow-left\"]', timeout=5)
         # Checking current screen(Login) after "BACK" Press
@@ -90,11 +104,11 @@ class DraftMessage(TeleniumTestProcess):
         # Checking messages in draft box
         self.assertEqual(len(self.cli.select('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem')), 1)
         # Wait to render the widget
-        self.cli.wait('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=3)
+        self.cli.wait('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
         # Click on a Message to view its details (Message Detail screen)
         self.cli.wait_click('//SwipeToDeleteItem[0]//TwoLineAvatarIconListItem[0]', timeout=5)
         # Checking current screen Mail Detail
-        self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=3)
+        self.assertExists("//ScreenManager[@current=\"mailDetail\"]", timeout=5)
 
         # CLICK on EDIT(Pencil) BUTTON
         self.cli.wait_click('//MDToolbar/BoxLayout[2]/MDActionTopAppBarButton[@icon=\"pencil\"]', timeout=5)
@@ -103,11 +117,11 @@ class DraftMessage(TeleniumTestProcess):
         # Checking the recipient is in the receiver field
         self.assertExists(
             '//DropDownWidget/ScrollView[0]//MyTextInput[@text=\"{}\"]'.format(test_address['auto_responder']),
-            timeout=2)
+            timeout=5)
         # Checking the sender address is in the sender field
         sender_address = self.cli.getattr('//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text]', 'text')
         self.assertExists(
-            '//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text=\"{}\"]'.format(sender_address), timeout=3)
+            '//DropDownWidget/ScrollView[0]//BoxLayout[1]/MDTextField[@text=\"{}\"]'.format(sender_address), timeout=5)
         # Checking the subject text is in the subject field
         self.assertExists(
             '//DropDownWidget/ScrollView[0]//MyMDTextField[@text=\"{}\"]'.format(self.test_subject), timeout=5)

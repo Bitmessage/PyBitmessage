@@ -9,31 +9,27 @@ import re
 import socket
 import struct
 import time
-from binascii import hexlify
 
+# magic imports!
 import addresses
-import connectionpool
 import knownnodes
 import protocol
 import state
-from bmconfigparser import BMConfigParser
-from inventory import Inventory
+import connectionpool
+from bmconfigparser import config
+from queues import invQueue, objectProcessorQueue, portCheckerQueue
+from randomtrackingdict import RandomTrackingDict
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
     BMObject, BMObjectAlreadyHaveError, BMObjectExpiredError,
-    BMObjectInsufficientPOWError, BMObjectInvalidDataError,
-    BMObjectInvalidError, BMObjectUnwantedStreamError
+    BMObjectInsufficientPOWError, BMObjectInvalidError,
+    BMObjectUnwantedStreamError
 )
-from network.constants import (
-    ADDRESS_ALIVE, MAX_MESSAGE_SIZE, MAX_OBJECT_COUNT,
-    MAX_OBJECT_PAYLOAD_SIZE, MAX_TIME_OFFSET
-)
-from network.dandelion import Dandelion
 from network.proxy import ProxyError
+
 from node import Node, Peer
 from objectracker import ObjectTracker, missingObjects
-from queues import invQueue, objectProcessorQueue, portCheckerQueue
-from randomtrackingdict import RandomTrackingDict
+
 
 logger = logging.getLogger('default')
 
@@ -87,7 +83,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
         self.command = self.command.rstrip('\x00')
-        if self.magic != 0xE9BEB4D9:
+        if self.magic != protocol.magic:
             # skip 1 byte in order to sync
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
@@ -96,7 +92,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.close_reason = "Bad magic"
                 self.set_state("close")
             return False
-        if self.payloadLength > MAX_MESSAGE_SIZE:
+        if self.payloadLength > protocol.MAX_MESSAGE_SIZE:
             self.invalid = True
         self.set_state(
             "bm_command",
@@ -129,8 +125,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 logger.debug('too much data, skipping')
             except BMObjectInsufficientPOWError:
                 logger.debug('insufficient PoW, skipping')
-            except BMObjectInvalidDataError:
-                logger.debug('object invalid data, skipping')
             except BMObjectExpiredError:
                 logger.debug('object expired, skipping')
             except BMObjectUnwantedStreamError:
@@ -350,20 +344,20 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """
         items = self.decode_payload_content("l32s")
 
-        if len(items) > MAX_OBJECT_COUNT:
+        if len(items) > protocol.MAX_OBJECT_COUNT:
             logger.error(
                 'Too many items in %sinv message!', 'd' if dandelion else '')
             raise BMProtoExcessiveDataError()
 
         # ignore dinv if dandelion turned off
-        if dandelion and not state.dandelion:
+        if dandelion and not state.dandelion_enabled:
             return True
 
         for i in map(str, items):
-            if i in Inventory() and not Dandelion().hasHash(i):
+            if i in state.Inventory and not state.Dandelion.hasHash(i):
                 continue
-            if dandelion and not Dandelion().hasHash(i):
-                Dandelion().addHash(i, self)
+            if dandelion and not state.Dandelion.hasHash(i):
+                state.Dandelion.addHash(i, self)
             self.handleReceivedInventory(i)
 
         return True
@@ -386,7 +380,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.payload, self.payloadOffset)
 
         payload_len = len(self.payload) - self.payloadOffset
-        if payload_len > MAX_OBJECT_PAYLOAD_SIZE:
+        if payload_len > protocol.MAX_OBJECT_PAYLOAD_SIZE:
             logger.info(
                 'The payload length of this object is too large'
                 ' (%d bytes). Ignoring it.', payload_len)
@@ -403,17 +397,20 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkStream()
         except BMObjectUnwantedStreamError:
-            acceptmismatch = BMConfigParser().get(
+            acceptmismatch = config.getboolean(
                 "inventory", "acceptmismatch")
             BMProto.stopDownloadingObject(
                 self.object.inventoryHash, acceptmismatch)
             if not acceptmismatch:
                 raise
+        except BMObjectInvalidError:
+            BMProto.stopDownloadingObject(self.object.inventoryHash)
+            raise
 
         try:
             self.object.checkObjectByType()
             objectProcessorQueue.put((
-                self.object.objectType, buffer(self.object.data)))
+                self.object.objectType, buffer(self.object.data)))  # noqa: F821
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -422,15 +419,15 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except KeyError:
                 pass
 
-        if self.object.inventoryHash in Inventory() and Dandelion().hasHash(
+        if self.object.inventoryHash in state.Inventory and state.Dandelion.hasHash(
                 self.object.inventoryHash):
-            Dandelion().removeHash(
+            state.Dandelion.removeHash(
                 self.object.inventoryHash, "cycle detection")
 
-        Inventory()[self.object.inventoryHash] = (
+        state.Inventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            buffer(self.payload[objectOffset:]), self.object.expiresTime,
-            buffer(self.object.tag)
+            buffer(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
+            buffer(self.object.tag)  # noqa: F821
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
@@ -448,7 +445,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for seenTime, stream, _, ip, port in self._decode_addr():
             ip = str(ip)
             if (
-                stream not in state.streamsInWhichIAmParticipating
+                stream not in connectionpool.pool.streams
                 # FIXME: should check against complete list
                 or ip.startswith('bootstrap')
             ):
@@ -456,7 +453,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             decodedIP = protocol.checkIPAddress(ip)
             if (
                 decodedIP and time.time() - seenTime > 0
-                and seenTime > time.time() - ADDRESS_ALIVE
+                and seenTime > time.time() - protocol.ADDRESS_ALIVE
                 and port > 0
             ):
                 peer = Peer(decodedIP, port)
@@ -543,7 +540,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams, True,
+                connectionpool.pool.streams, True,
                 nodeid=self.nodeid))
             logger.debug(
                 '%(host)s:%(port)i sending version',
@@ -569,7 +566,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closing connection to old protocol version %s, node: %s',
                 self.remoteProtocolVersion, self.destination)
             return False
-        if self.timeOffset > MAX_TIME_OFFSET:
+        if self.timeOffset > protocol.MAX_TIME_OFFSET:
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="Your time is too far in the future"
                 " compared to mine. Closing connection.", fatal=2))
@@ -579,7 +576,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.destination, self.timeOffset)
             BMProto.timeOffsetWrongCount += 1
             return False
-        elif self.timeOffset < -MAX_TIME_OFFSET:
+        elif self.timeOffset < -protocol.MAX_TIME_OFFSET:
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="Your time is too far in the past compared to mine."
                 " Closing connection.", fatal=2))
@@ -599,7 +596,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closed connection to %s because there is no overlapping'
                 ' interest in streams.', self.destination)
             return False
-        if connectionpool.BMConnectionPool().inboundConnections.get(
+        if connectionpool.pool.inboundConnections.get(
                 self.destination):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
@@ -610,18 +607,18 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         'Closed connection to %s because we are already'
                         ' connected to that IP.', self.destination)
                     return False
-            except Exception:  # TODO: exception types
+            except Exception:  # nosec B110 # pylint:disable=broad-exception-caught
                 pass
         if not self.isOutbound:
             # incoming from a peer we're connected to as outbound,
             # or server full report the same error to counter deanonymisation
             if (
                 Peer(self.destination.host, self.peerNode.port)
-                in connectionpool.BMConnectionPool().inboundConnections
-                or len(connectionpool.BMConnectionPool())
-                > BMConfigParser().safeGetInt(
+                in connectionpool.pool.inboundConnections
+                or len(connectionpool.pool)
+                > config.safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
-                + BMConfigParser().safeGetInt(
+                + config.safeGetInt(
                     'bitmessagesettings', 'maxbootstrapconnections')
             ):
                 self.append_write_buf(protocol.assembleErrorMessage(
@@ -630,7 +627,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     'Closed connection to %s due to server full'
                     ' or duplicate inbound/outbound.', self.destination)
                 return False
-        if connectionpool.BMConnectionPool().isAlreadyConnected(self.nonce):
+        if connectionpool.pool.isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="I'm connected to myself. Closing connection.",
                 fatal=2))
@@ -644,7 +641,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):
         """Stop downloading object *hashId*"""
-        for connection in connectionpool.BMConnectionPool().connections():
+        for connection in connectionpool.pool.connections():
             try:
                 del connection.objectsNewToMe[hashId]
             except KeyError:
@@ -678,32 +675,3 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except AttributeError:
                 logger.debug('Disconnected socket closing')
         AdvancedDispatcher.handle_close(self)
-
-
-class BMStringParser(BMProto):
-    """
-    A special case of BMProto used by objectProcessor to send ACK
-    """
-    def __init__(self):
-        super(BMStringParser, self).__init__()
-        self.destination = Peer('127.0.0.1', 8444)
-        self.payload = None
-        ObjectTracker.__init__(self)
-
-    def send_data(self, data):
-        """Send object given by the data string"""
-        # This class is introduced specially for ACK sending, please
-        # change log strings if you are going to use it for something else
-        self.bm_proto_reset()
-        self.payload = data
-        try:
-            self.bm_command_object()
-        except BMObjectAlreadyHaveError:
-            pass  # maybe the same msg received on different nodes
-        except BMObjectExpiredError:
-            logger.debug(
-                'Sending ACK failure (expired): %s', hexlify(data))
-        except Exception as e:
-            logger.debug(
-                'Exception of type %s while sending ACK',
-                type(e), exc_info=True)

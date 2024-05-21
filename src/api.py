@@ -1,5 +1,5 @@
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2020 The Bitmessage developers
+# Copyright (c) 2012-2023 The Bitmessage developers
 
 """
 This is not what you run to start the Bitmessage API.
@@ -39,17 +39,18 @@ To use the API concider such simple example:
 
 .. code-block:: python
 
-    import jsonrpclib
+    from jsonrpclib import jsonrpc
 
-    from pybitmessage import bmconfigparser, helper_startup
+    from pybitmessage import helper_startup
+    from pybitmessage.bmconfigparser import config
 
     helper_startup.loadConfig()  # find and load local config file
-    conf = bmconfigparser.BMConfigParser()
-    api_uri = "http://%s:%s@127.0.0.1:8442/" % (
-        conf.safeGet('bitmessagesettings', 'apiusername'),
-        conf.safeGet('bitmessagesettings', 'apipassword')
+    api_uri = "http://%s:%s@127.0.0.1:%s/" % (
+        config.safeGet('bitmessagesettings', 'apiusername'),
+        config.safeGet('bitmessagesettings', 'apipassword'),
+        config.safeGet('bitmessagesettings', 'apiport')
     )
-    api = jsonrpclib.ServerProxy(api_uri)
+    api = jsonrpc.ServerProxy(api_uri)
     print(api.clientStatus())
 
 
@@ -57,42 +58,49 @@ For further examples please reference `.tests.test_api`.
 """
 
 import base64
-import ConfigParser
 import errno
 import hashlib
-import httplib
 import json
-import random  # nosec
+import random
 import socket
-import subprocess
+import subprocess  # nosec B404
 import time
-import xmlrpclib
 from binascii import hexlify, unhexlify
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
-from struct import pack
+from struct import pack, unpack
 
-import defaults
+import six
+from six.moves import configparser, http_client, xmlrpc_server
+
 import helper_inbox
 import helper_sent
-import network.stats
+import protocol
 import proofofwork
 import queues
 import shared
+
 import shutdown
 import state
 from addresses import (
     addBMIfNotPresent,
-    calculateInventoryHash,
     decodeAddress,
     decodeVarint,
     varintDecodeError
 )
-from bmconfigparser import BMConfigParser
+from bmconfigparser import config
 from debug import logger
-from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready
-from inventory import Inventory
-from network.threads import StoppableThread
-from six.moves import queue
+from defaults import (
+    networkDefaultProofOfWorkNonceTrialsPerByte,
+    networkDefaultPayloadLengthExtraBytes)
+from helper_sql import (
+    SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready)
+from highlevelcrypto import calculateInventoryHash
+
+try:
+    from network import connectionpool
+except ImportError:
+    connectionpool = None
+
+from network import stats, StoppableThread
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -154,7 +162,7 @@ class ErrorCodes(type):
 
     def __new__(mcs, name, bases, namespace):
         result = super(ErrorCodes, mcs).__new__(mcs, name, bases, namespace)
-        for code in mcs._CODES.iteritems():
+        for code in six.iteritems(mcs._CODES):
             # beware: the formatting is adjusted for list-table
             result.__doc__ += """   * - %04i
          - %s
@@ -162,7 +170,7 @@ class ErrorCodes(type):
         return result
 
 
-class APIError(xmlrpclib.Fault):
+class APIError(xmlrpc_server.Fault):
     """
     APIError exception class
 
@@ -190,8 +198,8 @@ class singleAPI(StoppableThread):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((
-                BMConfigParser().get('bitmessagesettings', 'apiinterface'),
-                BMConfigParser().getint('bitmessagesettings', 'apiport')
+                config.get('bitmessagesettings', 'apiinterface'),
+                config.getint('bitmessagesettings', 'apiport')
             ))
             s.shutdown(socket.SHUT_RDWR)
             s.close()
@@ -204,15 +212,15 @@ class singleAPI(StoppableThread):
         :class:`jsonrpclib.SimpleJSONRPCServer` is created and started here
         with `BMRPCDispatcher` dispatcher.
         """
-        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        port = config.getint('bitmessagesettings', 'apiport')
         try:
             getattr(errno, 'WSAEADDRINUSE')
         except AttributeError:
             errno.WSAEADDRINUSE = errno.EADDRINUSE
 
-        RPCServerBase = SimpleXMLRPCServer
+        RPCServerBase = xmlrpc_server.SimpleXMLRPCServer
         ct = 'text/xml'
-        if BMConfigParser().safeGet(
+        if config.safeGet(
                 'bitmessagesettings', 'apivariant') == 'json':
             try:
                 from jsonrpclib.SimpleJSONRPCServer import (
@@ -240,9 +248,9 @@ class singleAPI(StoppableThread):
                 if attempt > 0:
                     logger.warning(
                         'Failed to start API listener on port %s', port)
-                    port = random.randint(32767, 65535)
+                    port = random.randint(32767, 65535)  # nosec B311
                 se = StoppableRPCServer(
-                    (BMConfigParser().get(
+                    (config.get(
                         'bitmessagesettings', 'apiinterface'),
                      port),
                     BMXMLRPCRequestHandler, True, encoding='UTF-8')
@@ -252,26 +260,26 @@ class singleAPI(StoppableThread):
             else:
                 if attempt > 0:
                     logger.warning('Setting apiport to %s', port)
-                    BMConfigParser().set(
+                    config.set(
                         'bitmessagesettings', 'apiport', str(port))
-                    BMConfigParser().save()
+                    config.save()
                 break
 
         se.register_instance(BMRPCDispatcher())
         se.register_introspection_functions()
 
-        apiNotifyPath = BMConfigParser().safeGet(
+        apiNotifyPath = config.safeGet(
             'bitmessagesettings', 'apinotifypath')
 
         if apiNotifyPath:
             logger.info('Trying to call %s', apiNotifyPath)
             try:
-                subprocess.call([apiNotifyPath, "startingUp"])
+                subprocess.call([apiNotifyPath, "startingUp"])  # nosec B603
             except OSError:
                 logger.warning(
                     'Failed to call %s, removing apinotifypath setting',
                     apiNotifyPath)
-                BMConfigParser().remove_option(
+                config.remove_option(
                     'bitmessagesettings', 'apinotifypath')
 
         se.serve_forever()
@@ -286,7 +294,7 @@ class CommandHandler(type):
         # pylint: disable=protected-access
         result = super(CommandHandler, mcs).__new__(
             mcs, name, bases, namespace)
-        result.config = BMConfigParser()
+        result.config = config
         result._handlers = {}
         apivariant = result.config.safeGet('bitmessagesettings', 'apivariant')
         for func in namespace.values():
@@ -325,7 +333,7 @@ class command(object):  # pylint: disable=too-few-public-methods
 
     def __call__(self, func):
 
-        if BMConfigParser().safeGet(
+        if config.safeGet(
                 'bitmessagesettings', 'apivariant') == 'legacy':
             def wrapper(*args):
                 """
@@ -351,7 +359,7 @@ class command(object):  # pylint: disable=too-few-public-methods
 # Modified by Jonathan Warren (Atheros).
 # Further modified by the Bitmessage developers
 # http://code.activestate.com/recipes/501148
-class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+class BMXMLRPCRequestHandler(xmlrpc_server.SimpleXMLRPCRequestHandler):
     """The main API handler"""
 
     # pylint: disable=protected-access
@@ -382,17 +390,21 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             L = []
             while size_remaining:
                 chunk_size = min(size_remaining, max_chunk_size)
-                L.append(self.rfile.read(chunk_size))
+                chunk = self.rfile.read(chunk_size)
+                if not chunk:
+                    break
+                L.append(chunk)
                 size_remaining -= len(L[-1])
-            data = ''.join(L)
+            data = b''.join(L)
 
+            # data = self.decode_request_content(data)
             # pylint: disable=attribute-defined-outside-init
             self.cookies = []
 
             validuser = self.APIAuthenticateClient()
             if not validuser:
                 time.sleep(2)
-                self.send_response(httplib.UNAUTHORIZED)
+                self.send_response(http_client.UNAUTHORIZED)
                 self.end_headers()
                 return
                 # "RPC Username or password incorrect or HTTP header"
@@ -409,11 +421,11 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 )
         except Exception:  # This should only happen if the module is buggy
             # internal error, report as HTTP server error
-            self.send_response(httplib.INTERNAL_SERVER_ERROR)
+            self.send_response(http_client.INTERNAL_SERVER_ERROR)
             self.end_headers()
         else:
             # got a valid XML RPC response
-            self.send_response(httplib.OK)
+            self.send_response(http_client.OK)
             self.send_header("Content-type", self.server.content_type)
             self.send_header("Content-length", str(len(response)))
 
@@ -442,11 +454,12 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if 'Authorization' in self.headers:
             # handle Basic authentication
             encstr = self.headers.get('Authorization').split()[1]
-            emailid, password = encstr.decode('base64').split(':')
+            emailid, password = base64.b64decode(
+                encstr).decode('utf-8').split(':')
             return (
-                emailid == BMConfigParser().get(
+                emailid == config.get(
                     'bitmessagesettings', 'apiusername'
-                ) and password == BMConfigParser().get(
+                ) and password == config.get(
                     'bitmessagesettings', 'apipassword'))
         else:
             logger.warning(
@@ -458,9 +471,9 @@ class BMXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
 
 # pylint: disable=no-self-use,no-member,too-many-public-methods
+@six.add_metaclass(CommandHandler)
 class BMRPCDispatcher(object):
     """This class is used to dispatch API commands"""
-    __metaclass__ = CommandHandler
 
     @staticmethod
     def _decode(text, decode_type):
@@ -645,13 +658,11 @@ class BMRPCDispatcher(object):
         nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-            * totalDifficulty)
+            networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
         payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
-            defaults.networkDefaultPayloadLengthExtraBytes
-            * smallMessageDifficulty)
+            networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
 
         if not isinstance(eighteenByteRipe, bool):
             raise APIError(
@@ -693,13 +704,11 @@ class BMRPCDispatcher(object):
         nonceTrialsPerByte = self.config.get(
             'bitmessagesettings', 'defaultnoncetrialsperbyte'
         ) if not totalDifficulty else int(
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-            * totalDifficulty)
+            networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
         payloadLengthExtraBytes = self.config.get(
             'bitmessagesettings', 'defaultpayloadlengthextrabytes'
         ) if not smallMessageDifficulty else int(
-            defaults.networkDefaultPayloadLengthExtraBytes
-            * smallMessageDifficulty)
+            networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
 
         if not passphrase:
             raise APIError(1, 'The specified passphrase is blank.')
@@ -858,7 +867,7 @@ class BMRPCDispatcher(object):
                 ' Use deleteAddress API call instead.')
         try:
             self.config.remove_section(address)
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         self.config.save()
@@ -875,11 +884,21 @@ class BMRPCDispatcher(object):
         address = addBMIfNotPresent(address)
         try:
             self.config.remove_section(address)
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         self.config.save()
         queues.UISignalQueue.put(('writeNewAddressToTable', ('', '', '')))
+        shared.reloadMyAddressHashes()
+        return "success"
+
+    @command('enableAddress')
+    def HandleEnableAddress(self, address, enable=True):
+        """Enable or disable the address depending on the *enable* value"""
+        self._verifyAddress(address)
+        address = addBMIfNotPresent(address)
+        config.set(address, 'enabled', str(enable))
+        self.config.save()
         shared.reloadMyAddressHashes()
         return "success"
 
@@ -1118,9 +1137,8 @@ class BMRPCDispatcher(object):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = self.config.getboolean(
-                fromAddress, 'enabled')
-        except BaseException:
+            fromAddressEnabled = self.config.getboolean(fromAddress, 'enabled')
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
         if not fromAddressEnabled:
@@ -1164,10 +1182,13 @@ class BMRPCDispatcher(object):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            self.config.getboolean(fromAddress, 'enabled')
-        except BaseException:
+            fromAddressEnabled = self.config.getboolean(fromAddress, 'enabled')
+        except configparser.NoSectionError:
             raise APIError(
                 13, 'Could not find your fromAddress in the keys.dat file.')
+        if not fromAddressEnabled:
+            raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
+
         toAddress = str_broadcast_subscribers
 
         ackdata = helper_sent.insert(
@@ -1260,55 +1281,73 @@ class BMRPCDispatcher(object):
             })
         return {'subscriptions': data}
 
-    @command('disseminatePreEncryptedMsg')
-    def HandleDisseminatePreEncryptedMsg(
-        self, encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte,
-            requiredPayloadLengthExtraBytes):
-        """Handle a request to disseminate an encrypted message"""
+    @command('disseminatePreEncryptedMsg', 'disseminatePreparedObject')
+    def HandleDisseminatePreparedObject(
+        self, encryptedPayload,
+        nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
+        payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
+    ):
+        """
+        Handle a request to disseminate an encrypted message.
 
-        # The device issuing this command to PyBitmessage supplies a msg
-        # object that has already been encrypted but which still needs the POW
-        # to be done. PyBitmessage accepts this msg object and sends it out
-        # to the rest of the Bitmessage network as if it had generated
-        # the message itself. Please do not yet add this to the api doc.
+        The device issuing this command to PyBitmessage supplies an object
+        that has already been encrypted but which may still need the PoW
+        to be done. PyBitmessage accepts this object and sends it out
+        to the rest of the Bitmessage network as if it had generated
+        the message itself.
+
+        *encryptedPayload* is a hex encoded string starting with the nonce,
+        8 zero bytes in case of no PoW done.
+        """
         encryptedPayload = self._decode(encryptedPayload, "hex")
-        # Let us do the POW and attach it to the front
-        target = 2**64 / (
-            (
-                len(encryptedPayload)
-                + requiredPayloadLengthExtraBytes
-                + 8
-            ) * requiredAverageProofOfWorkNonceTrialsPerByte)
-        logger.info(
-            '(For msg message via API) Doing proof of work. Total  required'
-            ' difficulty: %s\nRequired small message difficulty: %s',
-            float(requiredAverageProofOfWorkNonceTrialsPerByte)
-            / defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
-            float(requiredPayloadLengthExtraBytes)
-            / defaults.networkDefaultPayloadLengthExtraBytes,
-        )
-        powStartTime = time.time()
-        initialHash = hashlib.sha512(encryptedPayload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            '(For msg message via API) Found proof of work %s\nNonce: %s\n'
-            'POW took %s seconds. %s nonce trials per second.',
-            trialValue, nonce, int(time.time() - powStartTime),
-            nonce / (time.time() - powStartTime)
-        )
-        encryptedPayload = pack('>Q', nonce) + encryptedPayload
-        toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
+
+        nonce, = unpack('>Q', encryptedPayload[:8])
+        objectType, toStreamNumber, expiresTime = \
+            protocol.decodeObjectParameters(encryptedPayload)
+
+        if nonce == 0:  # Let us do the POW and attach it to the front
+            encryptedPayload = encryptedPayload[8:]
+            TTL = expiresTime - time.time() + 300  # a bit of extra padding
+            # Let us do the POW and attach it to the front
+            logger.debug("expiresTime: %s", expiresTime)
+            logger.debug("TTL: %s", TTL)
+            logger.debug("objectType: %s", objectType)
+            logger.info(
+                '(For msg message via API) Doing proof of work. Total required'
+                ' difficulty: %s\nRequired small message difficulty: %s',
+                float(nonceTrialsPerByte)
+                / networkDefaultProofOfWorkNonceTrialsPerByte,
+                float(payloadLengthExtraBytes)
+                / networkDefaultPayloadLengthExtraBytes,
+            )
+            powStartTime = time.time()
+            target = 2**64 / (
+                nonceTrialsPerByte * (
+                    len(encryptedPayload) + 8 + payloadLengthExtraBytes + ((
+                        TTL * (
+                            len(encryptedPayload) + 8 + payloadLengthExtraBytes
+                        )) / (2 ** 16))
+                ))
+            initialHash = hashlib.sha512(encryptedPayload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            logger.info(
+                '(For msg message via API) Found proof of work %s\nNonce: %s\n'
+                'POW took %s seconds. %s nonce trials per second.',
+                trialValue, nonce, int(time.time() - powStartTime),
+                nonce / (time.time() - powStartTime)
+            )
+            encryptedPayload = pack('>Q', nonce) + encryptedPayload
+
         inventoryHash = calculateInventoryHash(encryptedPayload)
-        objectType = 2
-        TTL = 2.5 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload,
-            int(time.time()) + TTL, ''
+            expiresTime, b''
         )
         logger.info(
             'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
             ' command): %s', hexlify(inventoryHash))
         queues.invQueue.put((toStreamNumber, inventoryHash))
+        return hexlify(inventoryHash).decode()
 
     @command('trashSentMessageByAckData')
     def HandleTrashSentMessageByAckDAta(self, ackdata):
@@ -1331,8 +1370,8 @@ class BMRPCDispatcher(object):
 
         # Let us do the POW
         target = 2 ** 64 / ((
-            len(payload) + defaults.networkDefaultPayloadLengthExtraBytes + 8
-        ) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
+            len(payload) + networkDefaultPayloadLengthExtraBytes + 8
+        ) * networkDefaultProofOfWorkNonceTrialsPerByte)
         logger.info('(For pubkey message via API) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -1356,7 +1395,7 @@ class BMRPCDispatcher(object):
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1  # .. todo::: support v4 pubkeys
         TTL = 28 * 24 * 60 * 60
-        Inventory()[inventoryHash] = (
+        state.Inventory[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL, ''
         )
         logger.info(
@@ -1411,7 +1450,8 @@ class BMRPCDispatcher(object):
         or "connectedAndReceivingIncomingConnections".
         """
 
-        connections_num = len(network.stats.connectedHostsList())
+        connections_num = len(stats.connectedHostsList())
+
         if connections_num == 0:
             networkStatus = 'notConnected'
         elif state.clientHasReceivedIncomingConnections:
@@ -1423,10 +1463,39 @@ class BMRPCDispatcher(object):
             'numberOfMessagesProcessed': state.numberOfMessagesProcessed,
             'numberOfBroadcastsProcessed': state.numberOfBroadcastsProcessed,
             'numberOfPubkeysProcessed': state.numberOfPubkeysProcessed,
-            'pendingDownload': network.stats.pendingDownload(),
+            'pendingDownload': stats.pendingDownload(),
             'networkStatus': networkStatus,
             'softwareName': 'PyBitmessage',
             'softwareVersion': softwareVersion
+        }
+
+    @command('listConnections')
+    def HandleListConnections(self):
+        """
+        Returns bitmessage connection information as dict with keys *inbound*,
+        *outbound*.
+        """
+        if connectionpool is None:
+            raise APIError(21, 'Could not import BMConnectionPool.')
+        inboundConnections = []
+        outboundConnections = []
+        for i in connectionpool.pool.inboundConnections.values():
+            inboundConnections.append({
+                'host': i.destination.host,
+                'port': i.destination.port,
+                'fullyEstablished': i.fullyEstablished,
+                'userAgent': str(i.userAgent)
+            })
+        for i in connectionpool.pool.outboundConnections.values():
+            outboundConnections.append({
+                'host': i.destination.host,
+                'port': i.destination.port,
+                'fullyEstablished': i.fullyEstablished,
+                'userAgent': str(i.userAgent)
+            })
+        return {
+            'inbound': inboundConnections,
+            'outbound': outboundConnections
         }
 
     @command('helloWorld')
@@ -1439,25 +1508,11 @@ class BMRPCDispatcher(object):
         """Test two numeric params"""
         return a + b
 
-    @testmode('clearUISignalQueue')
-    def HandleclearUISignalQueue(self):
-        """clear UISignalQueue"""
-        queues.UISignalQueue.queue.clear()
-        return "success"
-
     @command('statusBar')
     def HandleStatusBar(self, message):
         """Update GUI statusbar message"""
         queues.UISignalQueue.put(('updateStatusBar', message))
-
-    @testmode('getStatusBar')
-    def HandleGetStatusBar(self):
-        """Get GUI statusbar message"""
-        try:
-            _, data = queues.UISignalQueue.get(block=False)
-        except queue.Empty:
-            return None
-        return data
+        return "success"
 
     @testmode('undeleteMessage')
     def HandleUndeleteMessage(self, msgid):

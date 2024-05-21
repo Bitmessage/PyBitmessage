@@ -4,7 +4,7 @@ Various tests for config
 
 import os
 import tempfile
-from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.bmconfigparser import config
 from .test_process import TestProcessProto
 from .common import skip_python3
 
@@ -17,7 +17,6 @@ class TestProcessConfig(TestProcessProto):
 
     def test_config_defaults(self):
         """Test settings in the generated config"""
-        config = BMConfigParser()
         self._stop_process()
         self._kill_process()
         config.read(os.path.join(self.home, 'keys.dat'))

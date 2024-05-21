@@ -1,0 +1,82 @@
+#:import C kivy.utils.get_color_from_hex
+#:import MDTextField kivymd.uix.textfield.MDTextField
+<Chat>:
+    name: 'chat'
+    BoxLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: 1,1,1,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        ScrollView:
+            Label:
+                id: chat_logs
+                text: ''
+                color: C('#101010')
+                text_size: (self.width, None)
+                halign: 'left'
+                valign: 'top'
+                padding: (0, 0)  # fixed in Kivy 1.8.1
+                size_hint: (1, None)
+                height: self.texture_size[1]
+                markup: True
+                font_size: sp(20)
+        MDBoxLayout:
+            size_hint_y: None
+            spacing:5
+            orientation: 'horizontal'
+            pos_hint: {'center_y': 1, 'center_x': 1}
+            halign: 'right'
+            pos_hint: {'left': 0}
+            pos_hint: {'x':.8}
+            height: dp(50) + self.minimum_height
+            MDFillRoundFlatButton:
+                text: app.tr._("First message")
+                opposite_colors: True
+                pos_hint: {'center_x':0.8,'center_y':0.7}
+                
+
+
+        BoxLayout:
+            height: 50
+            orientation: 'horizontal'
+            padding: 0
+            size_hint: (1, None)
+
+            MDTextField:
+                id:'id_message_body'
+                hint_text: 'Empty field'
+                icon_left: "message"
+                hint_text: "please enter your text"
+                mode: "fill"
+                fill_color: 1/255, 144/255, 254/255, 0.1
+                multiline: True
+                font_color_normal: 0, 0, 0, .4
+                icon_right: 'grease-pencil'
+                icon_right_color: app.theme_cls.primary_light
+                pos_hint: {'center_x':0.2,'center_y':0.7}
+
+            MDIconButton:
+                id: file_manager
+                icon: "attachment"
+                opposite_colors: True
+                on_release: app.file_manager_open()
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+
+            MDIconButton:
+                icon: 'camera'
+                opposite_colors: True
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+            MDIconButton:
+                id: send_message
+                icon: "send"
+                # x: root.parent.x + dp(10)
+                # pos_hint: {"top": 1, 'left': 1}
+                color: [1,0,0,1]
+                on_release: app.rest_default_avatar_img()
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
