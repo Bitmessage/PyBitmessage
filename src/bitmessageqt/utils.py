@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from PyQt5 import QtGui
+from qtpy import QtGui
 
 import state
 from addresses import addBMIfNotPresent

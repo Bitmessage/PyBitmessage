@@ -1,6 +1,6 @@
 """The MessageCompose class definition"""
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 from tr import _translate
 
 

@@ -4,7 +4,7 @@ import Queue
 import sys
 import unittest
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 from six import string_types
 
 import bitmessageqt

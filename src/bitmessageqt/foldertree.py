@@ -6,7 +6,7 @@ Folder tree and messagelist widgets definitions.
 
 from cgi import escape
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery

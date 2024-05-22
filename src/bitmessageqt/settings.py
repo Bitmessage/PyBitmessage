@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 import six
 
 import debug

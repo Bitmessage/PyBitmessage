@@ -2,7 +2,7 @@
 
 from time import time
 
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 
 class BMStatusBar(QtWidgets.QStatusBar):

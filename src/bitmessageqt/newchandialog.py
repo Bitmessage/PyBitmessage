@@ -2,7 +2,7 @@
 NewChanDialog class definition
 """
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import widgets
 from addresses import addBMIfNotPresent

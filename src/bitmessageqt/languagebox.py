@@ -3,7 +3,7 @@
 import glob
 import os
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import paths
 from bmconfigparser import config

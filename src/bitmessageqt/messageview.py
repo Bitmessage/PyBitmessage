@@ -4,7 +4,7 @@ text rendering, HTML sanitization, lazy rendering (as you scroll down),
 zoom and URL click warning popup.
 """
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from safehtmlparser import SafeHTMLParser
 from tr import _translate

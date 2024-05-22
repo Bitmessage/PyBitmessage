@@ -69,8 +69,8 @@ PACKAGES = {
         "description":
         "You only need qtpy if you want to use the GUI."
         " When only running as a daemon, this can be skipped.\n"
-        "Also maybe you need to install PyQt5 if your package manager"
-        " not installs it as qtpy dependency"
+        "Also maybe you need to install PyQt5 or PyQt4"
+        " if your package manager not installs it as qtpy dependency"
     },
     "msgpack": {
         "OpenBSD": "py-msgpack",
@@ -381,34 +381,47 @@ def check_curses():
 def check_pyqt():
     """Do pyqt dependency check.
 
-    Here we are checking for PyQt4 with its version, as for it require
+    Here we are checking for qtpy with its version, as for it require
     PyQt 4.8 or later.
     """
     # pylint: disable=no-member
     try:
-        from fallback import PyQt5
+        import qtpy
     except ImportError:
         logger.error(
-            'PyBitmessage requires PyQt5 or qtpy, PyQt 4.8 or later'
-            ' and Qt 4.7 or later.')
-        PyQt5 = None
-
-    if not PyQt5:
+            'PyBitmessage requires qtpy, and PyQt5 or PyQt4, '
+            ' PyQt 4.8 or later and Qt 4.7 or later.')
         return False
 
-    logger.info('PyQt Version: %s', PyQt5.PYQT_VERSION)
-    logger.info('Qt Version: %s', PyQt5.QT_VERSION)
+    from qtpy import QtCore
+    try:
+        logger.info('PyQt Version: %s', QtCore.PYQT_VERSION_STR)
+    except AttributeError:
+        logger.info('Can be PySide..')
+    try:
+        logger.info('Qt Version: %s', QtCore.__version__)
+    except AttributeError:
+        # Can be PySide..
+        pass
     passed = True
-    if version.LooseVersion(PyQt5.PYQT_VERSION) < '4.8':
-        logger.error(
-            'This version of PyQt is too old. PyBitmessage requries'
-            ' PyQt 4.8 or later.')
-        passed = False
-    if version.LooseVersion(PyQt5.QT_VERSION) < '4.7':
-        logger.error(
-            'This version of Qt is too old. PyBitmessage requries'
-            ' Qt 4.7 or later.')
-        passed = False
+    try:
+        if version.LooseVersion(QtCore.PYQT_VERSION_STR) < '4.8':
+            logger.error(
+                'This version of PyQt is too old. PyBitmessage requries'
+                ' PyQt 4.8 or later.')
+            passed = False
+    except AttributeError:
+        # Can be PySide..
+        pass
+    try:
+        if version.LooseVersion(QtCore.__version__) < '4.7':
+            logger.error(
+                'This version of Qt is too old. PyBitmessage requries'
+                ' Qt 4.7 or later.')
+            passed = False
+    except AttributeError:
+        # Can be PySide..
+        pass
     return passed
 
 

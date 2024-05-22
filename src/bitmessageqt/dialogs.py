@@ -3,7 +3,7 @@ All dialogs are available in this module.
 """
 # pylint: disable=too-few-public-methods
 
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 import paths
 import widgets

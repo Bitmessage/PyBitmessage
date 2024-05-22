@@ -16,7 +16,7 @@ import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
 
-from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork
+from qtpy import QtCore, QtGui, QtWidgets, QtNetwork
 
 import dialogs
 import helper_addressbook
@@ -1442,7 +1442,7 @@ class MyForm(settingsmixin.SMainWindow):
         self._theme_player = get_plugin('notification.sound', 'theme')
 
         try:
-            from PyQt5 import QtMultimedia
+            from qtpy import QtMultimedia
             self._player = QtMultimedia.QSound.play
         except ImportError:
             _plugin = get_plugin(

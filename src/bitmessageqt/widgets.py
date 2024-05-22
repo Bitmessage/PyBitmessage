@@ -1,4 +1,4 @@
-from PyQt5 import uic
+from qtpy import uic
 import os.path
 import paths
 

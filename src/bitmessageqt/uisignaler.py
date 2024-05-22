@@ -1,6 +1,6 @@
 import sys
 
-from PyQt5 import QtCore
+from qtpy import QtCore
 
 import queues
 from network.node import Peer

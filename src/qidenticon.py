@@ -42,10 +42,7 @@ Returns an instance of :class:`QPixmap` which have generated identicon image.
 
 from six.moves import range
 
-try:
-    from PyQt5 import QtCore, QtGui
-except (ImportError, RuntimeError):
-    from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 
 class IdenticonRendererBase(object):

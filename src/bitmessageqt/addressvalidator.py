@@ -6,7 +6,7 @@ used in `.dialogs.NewChanDialog`.
 
 from Queue import Empty
 
-from PyQt5 import QtGui
+from qtpy import QtGui
 
 from addresses import decodeAddress, addBMIfNotPresent
 from bmconfigparser import config

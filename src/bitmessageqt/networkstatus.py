@@ -4,7 +4,7 @@ Network status tab widget definition.
 
 import time
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 import l10n
 import network.stats

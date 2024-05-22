@@ -1,5 +1,4 @@
-#!/usr/bin/env python2.7
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 class MigrationWizardIntroPage(QtWidgets.QWizardPage):
     def __init__(self):
