@@ -28,7 +28,6 @@ from addresses import (
     encodeAddress, encodeVarint, varintDecodeError
 )
 from bmconfigparser import config
-from fallback import RIPEMD160Hash
 from helper_sql import (
     sql_ready, sql_timeout, SqlBulkExecute, sqlExecute, sqlQuery)
 from network import knownnodes
@@ -303,23 +302,20 @@ class objectProcessor(threading.Thread):
                     '(within processpubkey) payloadLength less than 146.'
                     ' Sanity check failed.')
             readPosition += 4
-            publicSigningKey = data[readPosition:readPosition + 64]
+            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
             # Is it possible for a public key to be invalid such that trying to
             # encrypt or sign with it will cause an error? If it is, it would
             # be easiest to test them here.
             readPosition += 64
-            publicEncryptionKey = data[readPosition:readPosition + 64]
-            if len(publicEncryptionKey) < 64:
+            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            if len(pubEncryptionKey) < 65:
                 return logger.debug(
                     'publicEncryptionKey length less than 64. Sanity check'
                     ' failed.')
             readPosition += 64
             # The data we'll store in the pubkeys table.
             dataToStore = data[20:readPosition]
-            sha = hashlib.new('sha512')
-            sha.update(
-                b'\x04' + publicSigningKey + b'\x04' + publicEncryptionKey)
-            ripe = RIPEMD160Hash(sha.digest()).digest()
+            ripe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(
@@ -327,7 +323,7 @@ class objectProcessor(threading.Thread):
                     '\nripe %s\npublicSigningKey in hex: %s'
                     '\npublicEncryptionKey in hex: %s',
                     addressVersion, streamNumber, hexlify(ripe).decode(),
-                    hexlify(publicSigningKey).decode(), hexlify(publicEncryptionKey).decode()
+                    hexlify(pubSigningKey).decode(), hexlify(pubEncryptionKey).decode()
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
@@ -357,9 +353,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            publicSigningKey = b'\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            publicEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])[1]
@@ -376,15 +372,13 @@ class objectProcessor(threading.Thread):
             signature = data[readPosition:readPosition + signatureLength]
             if highlevelcrypto.verify(
                     data[8:endOfSignedDataPosition],
-                    signature, hexlify(publicSigningKey)):
+                    signature, hexlify(pubSigningKey)):
                 logger.debug('ECDSA verify passed (within processpubkey)')
             else:
                 logger.warning('ECDSA verify failed (within processpubkey)')
                 return
 
-            sha = hashlib.new('sha512')
-            sha.update(publicSigningKey + publicEncryptionKey)
-            ripe = RIPEMD160Hash(sha.digest()).digest()
+            ripe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(
@@ -392,7 +386,7 @@ class objectProcessor(threading.Thread):
                     '\nripe %s\npublicSigningKey in hex: %s'
                     '\npublicEncryptionKey in hex: %s',
                     addressVersion, streamNumber, hexlify(ripe).decode(),
-                    hexlify(publicSigningKey).decode(), hexlify(publicEncryptionKey).decode()
+                    hexlify(pubSigningKey).decode(), hexlify(pubEncryptionKey).decode()
                 )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
@@ -592,9 +586,7 @@ class objectProcessor(threading.Thread):
         sigHash = highlevelcrypto.double_sha512(signature)[32:]
 
         # calculate the fromRipe.
-        sha = hashlib.new('sha512')
-        sha.update(pubSigningKey + pubEncryptionKey)
-        ripe = RIPEMD160Hash(sha.digest()).digest()
+        ripe = highlevelcrypto.to_ripe(pubSigningKey, pubEncryptionKey)
         fromAddress = encodeAddress(
             sendersAddressVersionNumber, sendersStreamNumber, ripe)
 
@@ -888,9 +880,8 @@ class objectProcessor(threading.Thread):
                 requiredPayloadLengthExtraBytes)
         endOfPubkeyPosition = readPosition
 
-        sha = hashlib.new('sha512')
-        sha.update(sendersPubSigningKey + sendersPubEncryptionKey)
-        calculatedRipe = RIPEMD160Hash(sha.digest()).digest()
+        calculatedRipe = highlevelcrypto.to_ripe(
+            sendersPubSigningKey, sendersPubEncryptionKey)
 
         if broadcastVersion == 4:
             if toRipe != calculatedRipe:

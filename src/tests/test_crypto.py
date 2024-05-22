@@ -8,7 +8,7 @@ import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify
 
-from pybitmessage import highlevelcrypto, fallback
+from pybitmessage import highlevelcrypto
 
 
 try:
@@ -17,10 +17,10 @@ except ImportError:
     RIPEMD160 = None
 
 from .samples import (
-    sample_deterministic_ripe, sample_double_sha512, sample_hash_data,
-    sample_msg, sample_pubsigningkey, sample_pubencryptionkey,
-    sample_privsigningkey, sample_privencryptionkey, sample_ripe,
-    sample_seed, sample_sig, sample_sig_sha1
+    sample_bm160, sample_deterministic_ripe, sample_double_sha512,
+    sample_hash_data, sample_msg, sample_pubsigningkey,
+    sample_pubencryptionkey, sample_privsigningkey, sample_privencryptionkey,
+    sample_ripe, sample_seed, sample_sig, sample_sig_sha1
 )
 
 
@@ -73,6 +73,19 @@ class TestHighlevelcrypto(unittest.TestCase):
             highlevelcrypto.double_sha512(sample_hash_data),
             sample_double_sha512)
 
+    def test_bm160(self):
+        """Formally check highlevelcrypto._bm160()"""
+        # pylint: disable=protected-access
+        self.assertEqual(
+            highlevelcrypto._bm160(sample_hash_data), sample_bm160)
+
+    def test_to_ripe(self):
+        """Formally check highlevelcrypto.to_ripe()"""
+        self.assertEqual(
+            hexlify(highlevelcrypto.to_ripe(
+                sample_pubsigningkey, sample_pubencryptionkey)),
+            sample_ripe)
+
     def test_randomBytes(self):
         """Dummy checks for random bytes"""
         for n in (8, 32, 64):
@@ -94,8 +107,7 @@ class TestHighlevelcrypto(unittest.TestCase):
         enkey = highlevelcrypto.deterministic_keys(sample_seed, b'+')[1]
         self.assertEqual(
             sample_deterministic_ripe,
-            hexlify(fallback.RIPEMD160Hash(
-                hashlib.sha512(sigkey + enkey).digest()).digest()))
+            hexlify(highlevelcrypto.to_ripe(sigkey, enkey)))
 
     def test_signatures(self):
         """Verify sample signatures and newly generated ones"""

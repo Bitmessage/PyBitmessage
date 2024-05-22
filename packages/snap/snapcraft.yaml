@@ -28,7 +28,7 @@ parts:
     source: https://github.com/Bitmessage/PyBitmessage.git
     override-pull: |
       snapcraftctl pull
-      snapcraftctl set-version $(git describe --tags --abbrev=0 | tr -d v)
+      snapcraftctl set-version $(git describe --tags | cut -d- -f1,3 | tr -d v)
     plugin: python
     python-version: python2
     build-packages:
