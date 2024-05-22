@@ -151,8 +151,8 @@ class objectProcessor(threading.Thread):
                     data[readPosition:],
                     _translate(
                         "MainWindow",
-                        "Acknowledgement of the message received %1"
-                    ).arg(l10n.formatTimestamp()))
+                        "Acknowledgement of the message received {0}"
+                    ).format(l10n.formatTimestamp()))
             ))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')

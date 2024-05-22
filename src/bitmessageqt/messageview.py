@@ -56,7 +56,7 @@ class MessageView(QtGui.QTextBrowser):
         ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtGui.QApplication.activeWindow().statusBar().showMessage(_translate(
-                "MainWindow", "Zoom level %1%").arg(str(zoom)))
+                "MainWindow", "Zoom level {0}%").format(str(zoom)))
 
     def setWrappingWidth(self, width=None):
         """Set word-wrapping width"""
@@ -90,8 +90,8 @@ class MessageView(QtGui.QTextBrowser):
                 "Follow external link"),
             QtGui.QApplication.translate(
                 "MessageView",
-                "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you"
-                " or download malicious data. Are you sure?").arg(unicode(link.toString())),
+                "The link \"{0}\" will open in a browser. It may be a security risk, it could de-anonymise you"
+                " or download malicious data. Are you sure?").format(unicode(link.toString())),
             QtGui.QMessageBox.Yes,
             QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:

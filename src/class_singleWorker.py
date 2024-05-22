@@ -697,8 +697,8 @@ class singleWorker(StoppableThread):
                     ackdata,
                     tr._translate(
                         "MainWindow",
-                        "Broadcast sent on %1"
-                    ).arg(l10n.formatTimestamp()))
+                        "Broadcast sent on {0}"
+                    ).format(l10n.formatTimestamp()))
             ))
 
             # Update the status of the message in the 'sent' table to have
@@ -969,8 +969,8 @@ class singleWorker(StoppableThread):
                                     " device who requests that the"
                                     " destination be included in the"
                                     " message but this is disallowed in"
-                                    " your settings.  %1"
-                                ).arg(l10n.formatTimestamp()))
+                                    " your settings.  {0}"
+                                ).format(l10n.formatTimestamp()))
                         ))
                         # if the human changes their setting and then
                         # sends another message or restarts their client,
@@ -1035,14 +1035,13 @@ class singleWorker(StoppableThread):
                                 tr._translate(
                                     "MainWindow",
                                     "Doing work necessary to send message.\n"
-                                    "Receiver\'s required difficulty: %1"
-                                    " and %2"
-                                ).arg(
+                                    "Receiver\'s required difficulty: {0}"
+                                    " and {1}"
+                                ).format(
                                     str(
                                         float(requiredAverageProofOfWorkNonceTrialsPerByte)
                                         / defaults.networkDefaultProofOfWorkNonceTrialsPerByte
-                                    )
-                                ).arg(
+                                    ),
                                     str(
                                         float(requiredPayloadLengthExtraBytes)
                                         / defaults.networkDefaultPayloadLengthExtraBytes
@@ -1075,14 +1074,14 @@ class singleWorker(StoppableThread):
                                     tr._translate(
                                         "MainWindow",
                                         "Problem: The work demanded by"
-                                        " the recipient (%1 and %2) is"
+                                        " the recipient ({0} and {1}) is"
                                         " more difficult than you are"
-                                        " willing to do. %3"
-                                    ).arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte)
-                                          / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
-                                          ).arg(str(float(requiredPayloadLengthExtraBytes)
-                                                / defaults.networkDefaultPayloadLengthExtraBytes)
-                                                ).arg(l10n.formatTimestamp()))))
+                                        " willing to do. {2}"
+                                    ).format(str(float(requiredAverageProofOfWorkNonceTrialsPerByte)
+                                          / defaults.networkDefaultProofOfWorkNonceTrialsPerByte),
+                                          str(float(requiredPayloadLengthExtraBytes)
+                                                / defaults.networkDefaultPayloadLengthExtraBytes),
+                                                l10n.formatTimestamp()))))
                             continue
             else:  # if we are sending a message to ourselves or a chan..
                 self.logger.info('Sending a message.')
@@ -1103,8 +1102,8 @@ class singleWorker(StoppableThread):
                                 " message to yourself or a chan but your"
                                 " encryption key could not be found in"
                                 " the keys.dat file. Could not encrypt"
-                                " message. %1"
-                            ).arg(l10n.formatTimestamp()))
+                                " message. {0}"
+                            ).format(l10n.formatTimestamp()))
                     ))
                     self.logger.error(
                         'Error within sendMsg. Could not read the keys'
@@ -1241,8 +1240,8 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Problem: The recipient\'s encryption key is"
-                            " no good. Could not encrypt message. %1"
-                        ).arg(l10n.formatTimestamp()))
+                            " no good. Could not encrypt message. {0}"
+                        ).format(l10n.formatTimestamp()))
                 ))
                 continue
 
@@ -1309,8 +1308,8 @@ class singleWorker(StoppableThread):
                         ackdata,
                         tr._translate(
                             "MainWindow",
-                            "Message sent. Sent at %1"
-                        ).arg(l10n.formatTimestamp()))))
+                            "Message sent. Sent at {0}"
+                        ).format(l10n.formatTimestamp()))))
             else:
                 # not sending to a chan or one of my addresses
                 queues.UISignalQueue.put((
@@ -1319,8 +1318,8 @@ class singleWorker(StoppableThread):
                         tr._translate(
                             "MainWindow",
                             "Message sent. Waiting for acknowledgement."
-                            " Sent on %1"
-                        ).arg(l10n.formatTimestamp()))
+                            " Sent on {0}"
+                        ).format(l10n.formatTimestamp()))
                 ))
             self.logger.info(
                 'Broadcasting inv for my msg(within sendmsg function): %s',
@@ -1483,8 +1482,8 @@ class singleWorker(StoppableThread):
                 tr._translate(
                     "MainWindow",
                     "Sending public key request. Waiting for reply."
-                    " Requested at %1"
-                ).arg(l10n.formatTimestamp()))
+                    " Requested at {0}"
+                ).format(l10n.formatTimestamp()))
         ))
 
     def generateFullAckMessage(self, ackdata, _, TTL):

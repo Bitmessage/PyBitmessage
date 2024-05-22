@@ -269,8 +269,8 @@ class uPnPThread(StoppableThread):
                                 knownnodes.addKnownNode(
                                     1, self_peer, is_self=True)
                         queues.UISignalQueue.put(('updateStatusBar', tr._translate(
-                            "MainWindow", 'UPnP port mapping established on port %1'
-                        ).arg(str(self.extPort))))
+                            "MainWindow", 'UPnP port mapping established on port {0}'
+                        ).format(str(self.extPort))))
                         break
             except socket.timeout:
                 pass
