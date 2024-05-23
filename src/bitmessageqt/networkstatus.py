@@ -204,9 +204,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             if not connectionpool.pool.inboundConnections:
                 self.window().setStatusIcon('yellow')
             for i in range(self.tableWidgetConnectionCount.rowCount()):
-                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
+                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole) != destination:
                     continue
-                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.UserRole).toPyObject() == outbound:
+                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.UserRole) == outbound:
                     self.tableWidgetConnectionCount.removeRow(i)
                     break
 

@@ -15,6 +15,7 @@ import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
 
+from ver import ustr, unic
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer
 
@@ -120,7 +121,7 @@ class MyForm(settingsmixin.SMainWindow):
                 paths.codePath(), 'translations', 'qt_' + newlocale)
         else:
             translationpath = os.path.join(
-                str(QtCore.QLibraryInfo.location(
+                ustr(QtCore.QLibraryInfo.location(
                     QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
         self.qsystranslator.load(translationpath)
         QtGui.QApplication.installTranslator(self.qsystranslator)
@@ -1186,11 +1187,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         items = [
             MessageList_AddressWidget(
-                toAddress, unicode(acct.toLabel, 'utf-8')),
+                toAddress, unic(ustr(acct.toLabel))),
             MessageList_AddressWidget(
-                fromAddress, unicode(acct.fromLabel, 'utf-8')),
+                fromAddress, unic(ustr(acct.fromLabel))),
             MessageList_SubjectWidget(
-                str(subject), unicode(acct.subject, 'utf-8', 'replace')),
+                ustr(subject), unic(ustr(acct.subject))),
             MessageList_TimeWidget(
                 statusText, False, lastactiontime, ackdata)]
         self.addMessageListItem(tableWidget, items)
@@ -1211,11 +1212,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         items = [
             MessageList_AddressWidget(
-                toAddress, unicode(acct.toLabel, 'utf-8'), not read),
+                toAddress, unic(ustr(acct.toLabel)), not read),
             MessageList_AddressWidget(
-                fromAddress, unicode(acct.fromLabel, 'utf-8'), not read),
+                fromAddress, unic(ustr(acct.fromLabel)), not read),
             MessageList_SubjectWidget(
-                str(subject), unicode(acct.subject, 'utf-8', 'replace'),
+                ustr(subject), unic(ustr(acct.subject)),
                 not read),
             MessageList_TimeWidget(
                 l10n.formatTimestamp(received), not read, received, msgid)
@@ -1496,7 +1497,7 @@ class MyForm(settingsmixin.SMainWindow):
             self, title, subtitle, category, label=None, icon=None):
         self.playSound(category, label)
         self._notifier(
-            unicode(title), unicode(subtitle), category, label, icon)
+            unic(ustr(title)), unic(ustr(subtitle)), category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -1699,7 +1700,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressVersionNumber, streamNumberForAddress,
                 "regenerated deterministic address",
                 dialog.spinBoxNumberOfAddressesToMake.value(),
-                dialog.lineEditPassphrase.text().toUtf8(),
+                ustr(dialog.lineEditPassphrase.text()),
                 dialog.checkBoxEighteenByteRipe.isChecked()
             ))
             self.ui.tabWidget.setCurrentIndex(
@@ -1995,9 +1996,9 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderAddressBook(self):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemLabel(address, unic(ustr(label)), type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemAddress(address, unic(ustr(label)), type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
 
         oldRows = {}
@@ -2038,7 +2039,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
-            completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
+            completerList.append(unic(ustr(newRows[address][0]) + " <" + ustr(address) + ">"))
 
         # sort
         self.ui.tableWidgetAddressBook.sortByColumn(
@@ -2076,22 +2077,22 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tabWidgetSend.indexOf(self.ui.sendDirect):
             # message to specific people
             sendMessageToPeople = True
-            fromAddress = str(self.ui.comboBoxSendFrom.itemData(
+            fromAddress = ustr(self.ui.comboBoxSendFrom.itemData(
                 self.ui.comboBoxSendFrom.currentIndex(),
-                QtCore.Qt.UserRole).toString())
-            toAddresses = str(self.ui.lineEditTo.text().toUtf8())
-            subject = str(self.ui.lineEditSubject.text().toUtf8())
-            message = str(
-                self.ui.textEditMessage.document().toPlainText().toUtf8())
+                QtCore.Qt.UserRole))
+            toAddresses = ustr(self.ui.lineEditTo.text())
+            subject = ustr(self.ui.lineEditSubject.text())
+            message = ustr(
+                self.ui.textEditMessage.document().toPlainText())
         else:
             # broadcast message
             sendMessageToPeople = False
-            fromAddress = str(self.ui.comboBoxSendFromBroadcast.itemData(
+            fromAddress = ustr(self.ui.comboBoxSendFromBroadcast.itemData(
                 self.ui.comboBoxSendFromBroadcast.currentIndex(),
-                QtCore.Qt.UserRole).toString())
-            subject = str(self.ui.lineEditSubjectBroadcast.text().toUtf8())
-            message = str(
-                self.ui.textEditMessageBroadcast.document().toPlainText().toUtf8())
+                QtCore.Qt.UserRole))
+            subject = ustr(self.ui.lineEditSubjectBroadcast.text())
+            message = ustr(
+                self.ui.textEditMessageBroadcast.document().toPlainText())
         """
         The whole network message must fit in 2^18 bytes.
         Let's assume 500 bytes of overhead. If someone wants to get that
@@ -2164,7 +2165,7 @@ class MyForm(settingsmixin.SMainWindow):
                     status, addressVersionNumber, streamNumber = decodeAddress(toAddress)[:3]
                     if status != 'success':
                         try:
-                            toAddress = unicode(toAddress, 'utf-8', 'ignore')
+                            toAddress = unic(ustr(toAddress))
                         except:
                             pass
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
@@ -2338,7 +2339,7 @@ class MyForm(settingsmixin.SMainWindow):
             ))
 
     def click_pushButtonFetchNamecoinID(self):
-        identities = str(self.ui.lineEditTo.text().toUtf8()).split(";")
+        identities = ustr(self.ui.lineEditTo.text()).split(";")
         err, addr = self.namecoin.query(identities[-1].strip())
         if err is not None:
             self.updateStatusBar(
@@ -2355,7 +2356,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.tabWidgetSend.setCurrentIndex(
             self.ui.tabWidgetSend.indexOf(
                 self.ui.sendBroadcast
-                if config.safeGetBoolean(str(address), 'mailinglist')
+                if config.safeGetBoolean(ustr(address), 'mailinglist')
                 else self.ui.sendDirect
             ))
 
@@ -2368,14 +2369,14 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')
             isMaillinglist = config.safeGetBoolean(addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
-                label = unicode(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = unic(ustr(config.get(addressInKeysFile, 'label')).strip())
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
 #        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
         for i in range(self.ui.comboBoxSendFrom.count()):
-            address = str(self.ui.comboBoxSendFrom.itemData(
-                i, QtCore.Qt.UserRole).toString())
+            address = ustr(self.ui.comboBoxSendFrom.itemData(
+                i, QtCore.Qt.UserRole))
             self.ui.comboBoxSendFrom.setItemData(
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ForegroundRole)
@@ -2392,13 +2393,13 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')
             isChan = config.safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                label = unicode(config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = unic(ustr(config.get(addressInKeysFile, 'label')).strip())
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
         for i in range(self.ui.comboBoxSendFromBroadcast.count()):
-            address = str(self.ui.comboBoxSendFromBroadcast.itemData(
-                i, QtCore.Qt.UserRole).toString())
+            address = ustr(self.ui.comboBoxSendFromBroadcast.itemData(
+                i, QtCore.Qt.UserRole))
             self.ui.comboBoxSendFromBroadcast.setItemData(
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ForegroundRole)
@@ -2498,7 +2499,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.notifierShow(
                 _translate("MainWindow", "New Message"),
                 _translate("MainWindow", "From {0}").format(
-                    unicode(acct.fromLabel, 'utf-8')),
+                    unic(ustr(acct.fromLabel))),
                 sound.SOUND_UNKNOWN
             )
         if self.getCurrentAccount() is not None and (
@@ -2636,7 +2637,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Only settings remain here
         acct.settings()
         for i in range(self.ui.comboBoxSendFrom.count()):
-            if str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) \
+            if ustr(self.ui.comboBoxSendFrom.itemData(i)) \
                     == acct.fromAddress:
                 self.ui.comboBoxSendFrom.setCurrentIndex(i)
                 break
@@ -2703,7 +2704,7 @@ class MyForm(settingsmixin.SMainWindow):
         if reply != QtGui.QMessageBox.Yes:
             return
         config.set(
-            'bitmessagesettings', 'dontconnect', str(dontconnect_option))
+            'bitmessagesettings', 'dontconnect', ustr(dontconnect_option))
         config.save()
         self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
 
@@ -2934,8 +2935,8 @@ class MyForm(settingsmixin.SMainWindow):
                 lines[i] = '<br><br>'
         content = ' '.join(lines) # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
-        content = unicode(content, 'utf-8)')
-        textEdit.setHtml(QtCore.QString(content))
+        content = unic(ustr(content))
+        textEdit.setHtml(content)
 
     def on_action_InboxMarkUnread(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3002,7 +3003,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.comboBoxSendFrom, self.ui.comboBoxSendFromBroadcast
         ):
             for i in range(box.count()):
-                if str(box.itemData(i).toPyObject()) == address:
+                if ustr(box.itemData(i)) == ustr(address):
                     box.setCurrentIndex(i)
                     break
             else:
@@ -3093,7 +3094,7 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.item(currentInboxRow, column_from).label or (
                 isinstance(acct, GatewayAccount) and
                 fromAddressAtCurrentInboxRow == acct.relayAddress):
-            self.ui.lineEditTo.setText(str(acct.fromAddress))
+            self.ui.lineEditTo.setText(ustr(acct.fromAddress))
         else:
             self.ui.lineEditTo.setText(
                 tableWidget.item(currentInboxRow, column_from).accountString()
@@ -3108,7 +3109,7 @@ class MyForm(settingsmixin.SMainWindow):
                 ' reply to the chan address.')
             if toAddressAtCurrentInboxRow == \
                     tableWidget.item(currentInboxRow, column_to).label:
-                self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
+                self.ui.lineEditTo.setText(ustr(toAddressAtCurrentInboxRow))
             else:
                 self.ui.lineEditTo.setText(
                     tableWidget.item(currentInboxRow, column_to).accountString()
@@ -3117,7 +3118,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
 
         quotedText = self.quoted_text(
-            unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
+            unic(ustr(messageAtCurrentInboxRow)))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ('Re:', 'RE:'):
             widget['subject'].setText(
@@ -3262,7 +3263,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         currentInboxRow = tableWidget.currentRow()
         try:
-            subjectAtCurrentInboxRow = str(tableWidget.item(
+            subjectAtCurrentInboxRow = ustr(tableWidget.item(
                 currentInboxRow, 2).data(QtCore.Qt.UserRole))
         except:
             subjectAtCurrentInboxRow = ''
@@ -3334,7 +3335,7 @@ class MyForm(settingsmixin.SMainWindow):
         addressAtCurrentRow = self.ui.tableWidgetInbox.item(
             currentRow, 0).data(QtCore.Qt.UserRole)
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
+        clipboard.setText(ustr(addressAtCurrentRow))
 
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
@@ -3368,8 +3369,8 @@ class MyForm(settingsmixin.SMainWindow):
             return self.updateStatusBar(_translate(
                 "MainWindow", "No addresses selected."))
 
-        addresses_string = unicode(
-            self.ui.lineEditTo.text().toUtf8(), 'utf-8')
+        addresses_string = unic(ustr(
+            self.ui.lineEditTo.text()))
         for item in selected_items:
             address_string = item.accountString()
             if not addresses_string:
@@ -3455,7 +3456,7 @@ class MyForm(settingsmixin.SMainWindow):
     def on_action_SubscriptionsClipboard(self):
         address = self.getCurrentAccount()
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(address))
+        clipboard.setText(ustr(address))
 
     def on_action_SubscriptionsEnable(self):
         address = self.getCurrentAccount()
@@ -3607,9 +3608,9 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.inboxSearchLineEditChans,
         )
         if currentIndex >= 0 and currentIndex < len(messagelistList):
-            return (
+            return ustr(
                 messagelistList[currentIndex] if retObj
-                else messagelistList[currentIndex].text().toUtf8().data())
+                else ustr(messagelistList[currentIndex].text()))
 
     def getCurrentSearchOption(self, currentIndex=None):
         if currentIndex is None:
@@ -3678,7 +3679,7 @@ class MyForm(settingsmixin.SMainWindow):
                         " delete the channel?"
                     ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
             ) == QtGui.QMessageBox.Yes:
-                config.remove_section(str(account.address))
+                config.remove_section(ustr(account.address))
             else:
                 return
         else:
@@ -3711,7 +3712,7 @@ class MyForm(settingsmixin.SMainWindow):
         account.setEnabled(False)
 
     def disableIdentity(self, address):
-        config.set(str(address), 'enabled', 'false')
+        config.set(ustr(address), 'enabled', 'false')
         config.save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
@@ -3719,7 +3720,7 @@ class MyForm(settingsmixin.SMainWindow):
     def on_action_Clipboard(self):
         address = self.getCurrentAccount()
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(address))
+        clipboard.setText(ustr(address))
 
     def on_action_ClipboardMessagelist(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3739,7 +3740,7 @@ class MyForm(settingsmixin.SMainWindow):
         if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
                 (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
                 (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
-            text = str(tableWidget.item(currentRow, currentColumn).label)
+            text = ustr(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)
 
@@ -3756,8 +3757,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_SetAvatar(self, thisTableWidget):
         currentRow = thisTableWidget.currentRow()
-        addressAtCurrentRow = thisTableWidget.item(
-            currentRow, 1).text()
+        addressAtCurrentRow = ustr(thisTableWidget.item(
+            currentRow, 1).text())
         setToIdenticon = not self.setAvatar(addressAtCurrentRow)
         if setToIdenticon:
             thisTableWidget.item(
@@ -3858,23 +3859,23 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_AddressBookSetSound(self):
         widget = self.ui.tableWidgetAddressBook
-        self.setAddressSound(widget.item(widget.currentRow(), 0).text())
+        self.setAddressSound(ustr(widget.item(widget.currentRow(), 0).text()))
 
     def setAddressSound(self, addr):
-        filters = [unicode(_translate(
+        filters = [unic(_translate(
             "MainWindow", "Sound files (%s)" %
             ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
         ))]
-        sourcefile = unicode(QtGui.QFileDialog.getOpenFileName(
+        sourcefile = unic(ustr(QtGui.QFileDialog.getOpenFileName(
             self, _translate("MainWindow", "Set notification sound..."),
             filter=';;'.join(filters)
-        ))
+        )))
 
         if not sourcefile:
             return
 
         destdir = os.path.join(state.appdata, 'sounds')
-        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
+        destfile = unic(ustr(addr) + os.path.splitext(sourcefile)[-1])
         destination = os.path.join(destdir, destfile)
 
         if sourcefile == destination:
@@ -4027,7 +4028,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def inboxSearchLineEditUpdated(self, text):
         # dynamic search for too short text is slow
-        text = text.toUtf8()
+        text = ustr(text)
         if 0 < len(text) < 3:
             return
         messagelist = self.getCurrentMessagelist()
@@ -4042,7 +4043,7 @@ class MyForm(settingsmixin.SMainWindow):
         logger.debug("Search return pressed")
         searchLine = self.getCurrentSearchLine()
         messagelist = self.getCurrentMessagelist()
-        if messagelist and len(str(searchLine)) < 3:
+        if messagelist and len(ustr(searchLine)) < 3:
             searchOption = self.getCurrentSearchOption()
             account = self.getCurrentAccount()
             folder = self.getCurrentFolder()
@@ -4084,7 +4085,7 @@ class MyForm(settingsmixin.SMainWindow):
         if item.type == AccountMixin.ALL:
             return
 
-        newLabel = unicode(item.text(0), 'utf-8', 'ignore')
+        newLabel = unic(ustr(item.text(0)))
         oldLabel = item.defaultLabel()
 
         # unchanged, do not do anything either
@@ -4155,8 +4156,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
         for i in range(len(completerList)):
-            if unicode(completerList[i]).endswith(" <" + item.address + ">"):
-                completerList[i] = item.label + " <" + item.address + ">"
+            if unic(ustr(completerList[i])).endswith(" <" + ustr(item.address) + ">"):
+                completerList[i] = ustr(item.label) + " <" + ustr(item.address) + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def tabWidgetCurrentChanged(self, n):

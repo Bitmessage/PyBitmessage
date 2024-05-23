@@ -2,6 +2,7 @@
 Custom dialog classes
 """
 # pylint: disable=too-few-public-methods
+from ver import ustr
 from PyQt4 import QtGui
 
 import paths
@@ -36,7 +37,7 @@ class AboutDialog(QtGui.QDialog):
         if commit:
             version += '-' + commit[:7]
         self.labelVersion.setText(
-            self.labelVersion.text().replace(
+            ustr(self.labelVersion.text()).replace(
                 ':version:', version
             ).replace(':branch:', commit or 'v%s' % version)
         )
@@ -44,8 +45,8 @@ class AboutDialog(QtGui.QDialog):
 
         try:
             self.label_2.setText(
-                self.label_2.text().replace(
-                    '2022', str(last_commit.get('time').year)
+                ustr(self.label_2.text()).replace(
+                    '2022', ustr(last_commit.get('time').year)
                 ))
         except AttributeError:
             pass

@@ -4,6 +4,7 @@ src/bitmessageqt/newchandialog.py
 
 """
 
+from ver import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 import widgets
@@ -52,21 +53,21 @@ class NewChanDialog(QtGui.QDialog):
         self.timer.stop()
         self.hide()
         apiAddressGeneratorReturnQueue.queue.clear()
-        if self.chanAddress.text().toUtf8() == "":
+        if ustr(self.chanAddress.text()) == "":
             addressGeneratorQueue.put(
-                ('createChan', 4, 1, str_chan + ' ' + str(self.chanPassPhrase.text().toUtf8()),
-                 self.chanPassPhrase.text().toUtf8(),
+                ('createChan', 4, 1, str_chan + ' ' + ustr(self.chanPassPhrase.text()),
+                 ustr(self.chanPassPhrase.text()),
                  True))
         else:
             addressGeneratorQueue.put(
-                ('joinChan', addBMIfNotPresent(self.chanAddress.text().toUtf8()),
-                 str_chan + ' ' + str(self.chanPassPhrase.text().toUtf8()),
-                 self.chanPassPhrase.text().toUtf8(),
+                ('joinChan', addBMIfNotPresent(ustr(self.chanAddress.text())),
+                 str_chan + ' ' + ustr(self.chanPassPhrase.text()),
+                 ustr(self.chanPassPhrase.text()),
                  True))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if addressGeneratorReturnValue and addressGeneratorReturnValue[0] != 'chan name does not match address':
             UISignalQueue.put(('updateStatusBar', _translate(
-                "newchandialog", "Successfully created / joined chan {0}").format(unicode(self.chanPassPhrase.text()))))
+                "newchandialog", "Successfully created / joined chan {0}").format(unic(ustr(self.chanPassPhrase.text())))))
             self.parent.ui.tabWidget.setCurrentIndex(
                 self.parent.ui.tabWidget.indexOf(self.parent.ui.chans)
             )

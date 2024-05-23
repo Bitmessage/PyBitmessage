@@ -6,6 +6,7 @@ Folder tree and messagelist widgets definitions.
 
 from cgi import escape
 
+from ver import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 from bmconfigparser import config
@@ -62,7 +63,7 @@ class AccountMixin(object):
 
     def accountString(self):
         """Account string suitable for use in To: field: label <address>"""
-        label = self._getLabel()
+        label = ustr(self._getLabel())
         return (
             self.address if label == self.address
             else '%s <%s>' % (label, self.address)
@@ -73,7 +74,7 @@ class AccountMixin(object):
         if address is None:
             self.address = None
         else:
-            self.address = str(address)
+            self.address = ustr(address)
 
     def setUnreadCount(self, cnt):
         """Set number of unread messages"""
@@ -124,8 +125,8 @@ class AccountMixin(object):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                retval = unicode(
-                    config.get(self.address, 'label'), 'utf-8')
+                retval = unic(ustr(
+                    config.get(self.address, 'label')))
             except Exception:
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -136,12 +137,11 @@ class AccountMixin(object):
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
-                    retval = unicode(retval, 'utf-8')
+                    retval = unic(ustr(retval))
         elif self.address is None or self.type == AccountMixin.ALL:
-            return unicode(
-                str(_translate("MainWindow", "All accounts")), 'utf-8')
+            return unic(_translate("MainWindow", "All accounts"))
 
-        return retval or unicode(self.address, 'utf-8')
+        return retval or unic(self.address)
 
 
 class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
@@ -154,7 +154,7 @@ class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
         self._setup(parent, pos)
 
     def _getAddressBracket(self, unreadCount=False):
-        return " (" + str(self.unreadCount) + ")" if unreadCount else ""
+        return " (" + ustr(self.unreadCount) + ")" if unreadCount else ""
 
     def data(self, column, role):
         """Override internal QT method for returning object data"""
@@ -191,7 +191,7 @@ class Ui_FolderWidget(BMTreeWidgetItem):
 
     def setFolderName(self, fname):
         """Set folder name (for QT UI)"""
-        self.folderName = str(fname)
+        self.folderName = ustr(fname)
 
     def data(self, column, role):
         """Override internal QT method for returning object data"""
@@ -232,15 +232,14 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
 
     def _getLabel(self):
         if self.address is None:
-            return unicode(_translate(
-                "MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
+            return unic(_translate(
+                "MainWindow", "All accounts"))
         else:
             try:
-                return unicode(
-                    config.get(self.address, 'label'),
-                    'utf-8', 'ignore')
+                return unic(ustr(
+                    config.get(self.address, 'label')))
             except:
-                return unicode(self.address, 'utf-8')
+                return unic(self.address)
 
     def _getAddressBracket(self, unreadCount=False):
         ret = "" if self.isExpanded() \
@@ -264,8 +263,8 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         if role == QtCore.Qt.EditRole \
                 and self.type != AccountMixin.SUBSCRIPTION:
             config.set(
-                str(self.address), 'label',
-                str(value.toString().toUtf8())
+                self.address, 'label',
+                ustr(value)
                 if isinstance(value, QtCore.QVariant)
                 else value.encode('utf-8')
             )
@@ -311,8 +310,8 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
-            return unicode(retval, 'utf-8', 'ignore')
-        return unicode(self.address, 'utf-8')
+            return unic(ustr(retval))
+        return unic(self.address)
 
     def setType(self):
         """Set account type"""
@@ -323,10 +322,10 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         """Save subscription label to database"""
         if role == QtCore.Qt.EditRole:
             if isinstance(value, QtCore.QVariant):
-                label = str(
-                    value.toString().toUtf8()).decode('utf-8', 'ignore')
+                label = ustr(
+                    value)
             else:
-                label = unicode(value, 'utf-8', 'ignore')
+                label = unic(ustr(value))
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
                 label, self.address)
@@ -407,9 +406,8 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                newLabel = unicode(
-                    config.get(self.address, 'label'),
-                    'utf-8', 'ignore')
+                newLabel = unic(ustr(
+                    config.get(self.address, 'label')))
             except:
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -418,7 +416,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 '''select label from subscriptions where address=?''', self.address)
         if queryreturn:
             for row in queryreturn:
-                newLabel = unicode(row[0], 'utf-8', 'ignore')
+                newLabel = unic(ustr(row[0]))
 
         self.label = newLabel
 
@@ -454,9 +452,9 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
     def data(self, role):
         """Return object data (QT UI)"""
         if role == QtCore.Qt.UserRole:
-            return self.subject
+            return ustr(self.subject)
         if role == QtCore.Qt.ToolTipRole:
-            return escape(unicode(self.subject, 'utf-8'))
+            return escape(unic(ustr(self.subject)))
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
@@ -491,9 +489,9 @@ class MessageList_TimeWidget(BMTableWidgetItem):
         """
         data = super(MessageList_TimeWidget, self).data(role)
         if role == TimestampRole:
-            return int(data.toPyObject())
+            return int(data)
         if role == QtCore.Qt.UserRole:
-            return str(data.toPyObject())
+            return ustr(data)
         return data
 
 
@@ -513,8 +511,8 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
     def setData(self, role, value):
         """Set data"""
         if role == QtCore.Qt.EditRole:
-            self.label = str(
-                value.toString().toUtf8()
+            self.label = ustr(
+                value
                 if isinstance(value, QtCore.QVariant) else value
             )
             if self.type in (
@@ -546,7 +544,7 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
 class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
     """Addressbook label item"""
     def __init__(self, address, label, acc_type):
-        self.address = address
+        self.address = ustr(address)
         super(Ui_AddressBookWidgetItemLabel, self).__init__(label, acc_type)
 
     def data(self, role):
@@ -558,7 +556,7 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
     """Addressbook address item"""
     def __init__(self, address, label, acc_type):
-        self.address = address
+        self.address = ustr(address)
         super(Ui_AddressBookWidgetItemAddress, self).__init__(address, acc_type)
 
     def data(self, role):
@@ -584,14 +582,14 @@ class AddressBookCompleter(QtGui.QCompleter):
 
     def splitPath(self, path):
         """Split on semicolon"""
-        text = unicode(path.toUtf8(), 'utf-8')
+        text = unic(ustr(path))
         return [text[:self.widget().cursorPosition()].split(';')[-1].strip()]
 
     def pathFromIndex(self, index):
         """Perform autocompletion (reimplemented QCompleter method)"""
-        autoString = unicode(
-            index.data(QtCore.Qt.EditRole).toString().toUtf8(), 'utf-8')
-        text = unicode(self.widget().text().toUtf8(), 'utf-8')
+        autoString = unic(ustr(
+            index.data(QtCore.Qt.EditRole)))
+        text = unic(ustr(self.widget().text()))
 
         # If cursor position was saved, restore it, else save it
         if self.cursorPos != -1:

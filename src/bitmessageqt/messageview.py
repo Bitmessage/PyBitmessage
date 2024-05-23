@@ -5,6 +5,7 @@ zoom and URL click warning popup
 
 """
 
+from ver import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 from safehtmlparser import SafeHTMLParser
@@ -56,7 +57,7 @@ class MessageView(QtGui.QTextBrowser):
         ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtGui.QApplication.activeWindow().statusBar().showMessage(_translate(
-                "MainWindow", "Zoom level {0}%").format(str(zoom)))
+                "MainWindow", "Zoom level {0}%").format(ustr(zoom)))
 
     def setWrappingWidth(self, width=None):
         """Set word-wrapping width"""
@@ -91,7 +92,7 @@ class MessageView(QtGui.QTextBrowser):
             QtGui.QApplication.translate(
                 "MessageView",
                 "The link \"{0}\" will open in a browser. It may be a security risk, it could de-anonymise you"
-                " or download malicious data. Are you sure?").format(unicode(link.toString())),
+                " or download malicious data. Are you sure?").format(unic(ustr(link))),
             QtGui.QMessageBox.Yes,
             QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
@@ -124,7 +125,7 @@ class MessageView(QtGui.QTextBrowser):
                 if pos > self.outpos:
                     self.outpos = pos + 1
             cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
-            cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
+            cursor.insertHtml(unic(self.out[startpos:self.outpos]))
         self.verticalScrollBar().setValue(position)
         self.rendering = False
 
@@ -133,9 +134,9 @@ class MessageView(QtGui.QTextBrowser):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw
         if self.html.has_html:
-            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(
+            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unic(ustr(
                 QtGui.QApplication.translate(
-                    "MessageView", "HTML detected, click here to display")) + "</b></div><br/>" + out
+                    "MessageView", "HTML detected, click here to display")) + "</b></div><br/>" + out)
         self.out = out
         self.outpos = 0
         self.setHtml("")
@@ -145,8 +146,8 @@ class MessageView(QtGui.QTextBrowser):
         """Render message as HTML"""
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(
-            QtGui.QApplication.translate("MessageView", "Click here to disable HTML")) + "</b></div><br/>" + out
+        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unic(ustr(
+            QtGui.QApplication.translate("MessageView", "Click here to disable HTML")) + "</b></div><br/>" + out)
         self.out = out
         self.outpos = 0
         self.setHtml("")

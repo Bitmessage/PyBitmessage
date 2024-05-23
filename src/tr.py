@@ -3,6 +3,8 @@ Translating text
 """
 import os
 
+from ver import ustr
+
 try:
     import state
 except ImportError:
@@ -30,7 +32,7 @@ class translateClass:
 
 def _translate(context, text, disambiguation=None, encoding=None, n=None):
     # pylint: disable=unused-argument
-    return translateText(context, text, n)
+    return ustr(translateText(context, text, n))
 
 
 def translateText(context, text, n=None):

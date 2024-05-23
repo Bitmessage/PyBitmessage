@@ -14,6 +14,7 @@ import re
 import sys
 import time
 
+from ver import ustr
 from PyQt4 import QtGui
 
 import queues
@@ -131,6 +132,8 @@ class BMAccount(object):
         """Get a label for this bitmessage account"""
         if address is None:
             address = self.address
+        else:
+            address = ustr(address)
         label = config.safeGet(address, 'label', address)
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', address)
@@ -148,15 +151,12 @@ class BMAccount(object):
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """Set metadata and address labels on self"""
 
-        self.toAddress = toAddress
-        self.fromAddress = fromAddress
-        if isinstance(subject, unicode):
-            self.subject = str(subject)
-        else:
-            self.subject = subject
-        self.message = message
-        self.fromLabel = self.getLabel(fromAddress)
-        self.toLabel = self.getLabel(toAddress)
+        self.toAddress = ustr(toAddress)
+        self.fromAddress = ustr(fromAddress)
+        self.subject = ustr(subject)
+        self.message = ustr(message)
+        self.fromLabel = ustr(self.getLabel(fromAddress))
+        self.toLabel = ustr(self.getLabel(toAddress))
 
 
 class NoAccount(BMAccount):

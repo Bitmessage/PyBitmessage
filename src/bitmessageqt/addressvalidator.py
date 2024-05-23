@@ -5,6 +5,7 @@ Address validator module.
 
 from Queue import Empty
 
+from ver import ustr
 from PyQt4 import QtGui
 
 from addresses import decodeAddress, addBMIfNotPresent
@@ -108,13 +109,13 @@ class AddressPassPhraseValidatorMixin(object):
         if self.addressObject is None:
             address = None
         else:
-            address = str(self.addressObject.text().toUtf8())
+            address = ustr(self.addressObject.text())
             if address == "":
                 address = None
         if self.passPhraseObject is None:
             passPhrase = ""
         else:
-            passPhrase = str(self.passPhraseObject.text().toUtf8())
+            passPhrase = ustr(self.passPhraseObject.text())
             if passPhrase == "":
                 passPhrase = None
 
@@ -152,7 +153,7 @@ class AddressPassPhraseValidatorMixin(object):
 
         # check through generator
         if address is None:
-            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + str(passPhrase), passPhrase, False))
+            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + ustr(passPhrase), passPhrase, False))
         else:
             addressGeneratorQueue.put(
                 ('joinChan', addBMIfNotPresent(address),

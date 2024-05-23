@@ -383,6 +383,15 @@ def check_pyqt():
     Here we are checking for PyQt4 with its version, as for it require
     PyQt 4.8 or later.
     """
+    sip_found = False
+    try:
+        import sip
+        sip.setapi("QString", 2)
+        sip.setapi("QVariant", 2)
+        sip_found = True
+    except ImportError:
+        pass
+
     QtCore = try_import(
         'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
 
@@ -402,6 +411,11 @@ def check_pyqt():
             'This version of Qt is too old. PyBitmessage requries'
             ' Qt 4.7 or later.')
         passed = False
+
+    if passed and not sip_found:
+        logger.info("sip is not found although PyQt is found")
+        return False
+
     return passed
 
 

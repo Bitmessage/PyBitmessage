@@ -6,6 +6,8 @@ from shared import isAddressInMyAddressBook
 
 from main import TestBase
 
+from ver import ustr
+
 
 class TestSupport(TestBase):
     """A test case for support module"""
@@ -26,8 +28,8 @@ class TestSupport(TestBase):
         self.assertEqual(
             ui.tabWidget.currentIndex(), ui.tabWidget.indexOf(ui.send))
         self.assertEqual(
-            ui.lineEditTo.text(), self.SUPPORT_ADDRESS)
+            ustr(ui.lineEditTo.text()), ustr(self.SUPPORT_ADDRESS))
         self.assertEqual(
-            ui.lineEditSubject.text(), self.SUPPORT_SUBJECT)
+            ustr(ui.lineEditSubject.text()), ustr(self.SUPPORT_SUBJECT))
         self.assertIn(
             sys.version, ui.textEditMessage.toPlainText())
