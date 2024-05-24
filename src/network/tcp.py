@@ -15,21 +15,21 @@ import helper_random
 import l10n
 import protocol
 import state
-import connectionpool
+import network.connectionpool  # use long name to address recursive import
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 
-import asyncore_pollchoose as asyncore
-import knownnodes
+from network import asyncore_pollchoose as asyncore
+from network import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
-from node import Peer
+from .node import Peer
 
 
 logger = logging.getLogger('default')
@@ -267,7 +267,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams,
+                network.connectionpool.pool.streams,
                 False, nodeid=self.nodeid))
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
@@ -318,7 +318,7 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams,
+                network.connectionpool.pool.streams,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -342,7 +342,7 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams,
+                network.connectionpool.pool.streams,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -430,7 +430,7 @@ class TCPServer(AdvancedDispatcher):
 
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
-            len(connectionpool.pool)
+            len(network.connectionpool.pool)
             > config.safeGetInt(
                 'bitmessagesettings', 'maxtotalconnections')
                 + config.safeGetInt(
@@ -442,7 +442,7 @@ class TCPServer(AdvancedDispatcher):
             sock.close()
             return
         try:
-            connectionpool.pool.addConnection(
+            network.connectionpool.pool.addConnection(
                 TCPConnection(sock=sock))
         except socket.error:
             pass

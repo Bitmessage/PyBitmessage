@@ -17,7 +17,7 @@ import openclpow
 import paths
 import queues
 import state
-import widgets
+from bitmessageqt import widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig

@@ -23,38 +23,38 @@ import shared
 import state
 from debug import logger
 from tr import _translate
-from account import (
+from .account import (
     accountClass, getSortedSubscriptions,
     BMAccount, GatewayAccount, MailchuckAccount, AccountColor)
 from addresses import decodeAddress, addBMIfNotPresent
-from bitmessageui import Ui_MainWindow
+from bitmessageqt.bitmessageui import Ui_MainWindow
 from bmconfigparser import config
 import namecoin
-from messageview import MessageView
-from migrationwizard import Ui_MigrationWizard
-from foldertree import (
+from .messageview import MessageView
+from .migrationwizard import Ui_MigrationWizard
+from .foldertree import (
     AccountMixin, Ui_FolderWidget, Ui_AddressWidget, Ui_SubscriptionWidget,
     MessageList_AddressWidget, MessageList_SubjectWidget,
     Ui_AddressBookWidgetItemLabel, Ui_AddressBookWidgetItemAddress,
     MessageList_TimeWidget)
-import settingsmixin
-import support
+from bitmessageqt import settingsmixin
+from bitmessageqt import support
 from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_addressbook
 import helper_search
 import l10n
-from utils import str_broadcast_subscribers, avatarize
-import dialogs
+from .utils import str_broadcast_subscribers, avatarize
+from bitmessageqt import dialogs
 from network.stats import pendingDownload, pendingUpload
-from uisignaler import UISignaler
+from .uisignaler import UISignaler
 import paths
 from proofofwork import getPowType
 import queues
 import shutdown
-from statusbar import BMStatusBar
-import sound
+from .statusbar import BMStatusBar
+from bitmessageqt import sound
 # This is needed for tray icon
-import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
+from bitmessageqt import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
 import helper_sent
 
 try:

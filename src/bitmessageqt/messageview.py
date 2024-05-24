@@ -8,7 +8,7 @@ zoom and URL click warning popup
 from ver import ustr, unic
 from PyQt4 import QtCore, QtGui
 
-from safehtmlparser import SafeHTMLParser
+from .safehtmlparser import SafeHTMLParser
 from tr import _translate
 
 

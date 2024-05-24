@@ -9,9 +9,9 @@ from ver import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 import queues
-import widgets
+from bitmessageqt import widgets
 import state
-from account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
+from .account import AccountMixin, GatewayAccount, MailchuckAccount, accountClass
 from addresses import addBMIfNotPresent, decodeAddress, encodeVarint
 from bmconfigparser import config as global_config
 from tr import _translate

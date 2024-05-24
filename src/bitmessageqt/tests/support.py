@@ -4,7 +4,7 @@ import sys
 
 from shared import isAddressInMyAddressBook
 
-from main import TestBase
+from .main import TestBase
 
 from ver import ustr
 

@@ -1,7 +1,7 @@
 import threading
 import time
 
-from main import TestBase
+from .main import TestBase
 from bmconfigparser import config
 from bitmessageqt import settings
 

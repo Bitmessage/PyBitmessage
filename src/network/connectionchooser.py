@@ -5,7 +5,7 @@ Select which node to connect to
 import logging
 import random
 
-import knownnodes
+from network import knownnodes
 import protocol
 import state
 from bmconfigparser import config
