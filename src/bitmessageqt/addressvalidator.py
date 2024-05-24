@@ -11,7 +11,7 @@ from addresses import decodeAddress, addBMIfNotPresent
 from bmconfigparser import config
 from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
-from utils import str_chan
+from .utils import str_chan
 
 
 class AddressPassPhraseValidatorMixin(object):

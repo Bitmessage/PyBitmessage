@@ -10,9 +10,9 @@ from PyQt4 import QtCore, QtGui
 
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from settingsmixin import SettingsMixin
+from .settingsmixin import SettingsMixin
 from tr import _translate
-from utils import avatarize
+from .utils import avatarize
 
 # for pylupdate
 _translate("MainWindow", "inbox")

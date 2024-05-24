@@ -8,19 +8,19 @@ import socket
 import sys
 import time
 
-import asyncore_pollchoose as asyncore
+from network import asyncore_pollchoose as asyncore
 import helper_random
-import knownnodes
+from network import knownnodes
 import protocol
 import state
 from bmconfigparser import config
-from connectionchooser import chooseConnection
-from node import Peer
-from proxy import Proxy
-from tcp import (
+from .connectionchooser import chooseConnection
+from .node import Peer
+from .proxy import Proxy
+from .tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)
-from udp import UDPSocket
+from .udp import UDPSocket
 
 logger = logging.getLogger('default')
 

@@ -6,13 +6,13 @@ src/bitmessageqt/newchandialog.py
 
 from PyQt4 import QtCore, QtGui
 
-import widgets
+from bitmessageqt import widgets
 from addresses import addBMIfNotPresent
-from addressvalidator import AddressValidator, PassPhraseValidator
+from .addressvalidator import AddressValidator, PassPhraseValidator
 from queues import (
     addressGeneratorQueue, apiAddressGeneratorReturnQueue, UISignalQueue)
 from tr import _translate
-from utils import str_chan
+from .utils import str_chan
 
 
 class NewChanDialog(QtGui.QDialog):

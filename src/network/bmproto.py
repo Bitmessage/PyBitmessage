@@ -12,10 +12,10 @@ import time
 
 # magic imports!
 import addresses
-import knownnodes
+from network import knownnodes
 import protocol
 import state
-import connectionpool
+import network.connectionpool  # use long name to address recursive import
 from bmconfigparser import config
 from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
@@ -27,8 +27,8 @@ from network.bmobject import (
 )
 from network.proxy import ProxyError
 
-from node import Node, Peer
-from objectracker import ObjectTracker, missingObjects
+from .node import Node, Peer
+from .objectracker import ObjectTracker, missingObjects
 
 
 logger = logging.getLogger('default')
@@ -445,7 +445,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for seenTime, stream, _, ip, port in self._decode_addr():
             ip = str(ip)
             if (
-                stream not in connectionpool.pool.streams
+                stream not in network.connectionpool.pool.streams
                 # FIXME: should check against complete list
                 or ip.startswith('bootstrap')
             ):
@@ -540,7 +540,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, True,
+                network.connectionpool.pool.streams, True,
                 nodeid=self.nodeid))
             logger.debug(
                 '%(host)s:%(port)i sending version',
@@ -596,7 +596,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closed connection to %s because there is no overlapping'
                 ' interest in streams.', self.destination)
             return False
-        if connectionpool.pool.inboundConnections.get(
+        if network.connectionpool.pool.inboundConnections.get(
                 self.destination):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
@@ -614,8 +614,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # or server full report the same error to counter deanonymisation
             if (
                 Peer(self.destination.host, self.peerNode.port)
-                in connectionpool.pool.inboundConnections
-                or len(connectionpool.pool)
+                in network.connectionpool.pool.inboundConnections
+                or len(network.connectionpool.pool)
                 > config.safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
                 + config.safeGetInt(
@@ -627,7 +627,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     'Closed connection to %s due to server full'
                     ' or duplicate inbound/outbound.', self.destination)
                 return False
-        if connectionpool.pool.isAlreadyConnected(self.nonce):
+        if network.connectionpool.pool.isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="I'm connected to myself. Closing connection.",
                 fatal=2))
@@ -641,7 +641,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):
         """Stop downloading object *hashId*"""
-        for connection in connectionpool.pool.connections():
+        for connection in network.connectionpool.pool.connections():
             try:
                 del connection.objectsNewToMe[hashId]
             except KeyError:

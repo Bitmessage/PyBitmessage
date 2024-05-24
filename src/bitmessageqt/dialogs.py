@@ -5,14 +5,14 @@ Custom dialog classes
 from PyQt4 import QtGui
 
 import paths
-import widgets
-from address_dialogs import (
+from bitmessageqt import widgets
+from .address_dialogs import (
     AddAddressDialog, EmailGatewayDialog, NewAddressDialog,
     NewSubscriptionDialog, RegenerateAddressesDialog,
     SpecialAddressBehaviorDialog
 )
-from newchandialog import NewChanDialog
-from settings import SettingsDialog
+from .newchandialog import NewChanDialog
+from .settings import SettingsDialog
 from tr import _translate
 from version import softwareVersion
 
