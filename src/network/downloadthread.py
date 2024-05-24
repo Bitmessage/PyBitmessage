@@ -6,9 +6,9 @@ import state
 import addresses
 import helper_random
 import protocol
-import connectionpool
-from objectracker import missingObjects
-from threads import StoppableThread
+from network import connectionpool
+from .objectracker import missingObjects
+from .threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):

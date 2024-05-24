@@ -8,9 +8,9 @@ from time import time
 import addresses
 import protocol
 import state
-import connectionpool
+from network import connectionpool
 from queues import invQueue
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 def handleExpiredDandelion(expired):
