@@ -14,6 +14,7 @@ try:
     from collections.abc import Iterable
 except ImportError:
     from collections import Iterable
+import six
 
 import state
 from bmconfigparser import config
@@ -54,8 +55,8 @@ def json_serialize_knownnodes(output):
     Reorganize knownnodes dict and write it as JSON to output
     """
     _serialized = []
-    for stream, peers in knownNodes.iteritems():
-        for peer, info in peers.iteritems():
+    for stream, peers in six.iteritems(knownNodes):
+        for peer, info in six.iteritems(peers):
             info.update(rating=round(info.get('rating', 0), 2))
             _serialized.append({
                 'stream': stream, 'peer': peer._asdict(), 'info': info
@@ -87,7 +88,7 @@ def pickle_deserialize_old_knownnodes(source):
     global knownNodes
     knownNodes = pickle.load(source)  # nosec B301
     for stream in knownNodes.keys():
-        for node, params in knownNodes[stream].iteritems():
+        for node, params in six.iteritems(knownNodes[stream]):
             if isinstance(params, (float, int)):
                 addKnownNode(stream, node, params)
 

@@ -14,6 +14,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
+import six
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer
@@ -468,7 +469,7 @@ class MyForm(settingsmixin.SMainWindow):
             # add missing folders
             if len(db[toAddress]) > 0:
                 j = 0
-                for f, c in db[toAddress].iteritems():
+                for f, c in six.iteritems(db[toAddress]):
                     try:
                         subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
                     except KeyError:
@@ -598,7 +599,7 @@ class MyForm(settingsmixin.SMainWindow):
             # add missing folders
             if len(db[toAddress]) > 0:
                 j = 0
-                for f, c in db[toAddress].iteritems():
+                for f, c in six.iteritems(db[toAddress]):
                     if toAddress is not None and tab == 'messages' and folder == "new":
                         continue
                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
@@ -1075,15 +1076,15 @@ class MyForm(settingsmixin.SMainWindow):
             for i in range(root.childCount()):
                 addressItem = root.child(i)
                 if addressItem.type == AccountMixin.ALL:
-                    newCount = sum(totalUnread.itervalues())
+                    newCount = sum(six.itervalues(totalUnread))
                     self.drawTrayIcon(self.currentTrayIconFileName, newCount)
                 else:
                     try:
-                        newCount = sum((
+                        newCount = sum(six.itervalues((
                             broadcastsUnread
                             if addressItem.type == AccountMixin.SUBSCRIPTION
                             else normalUnread
-                        )[addressItem.address].itervalues())
+                        )[addressItem.address]))
                     except KeyError:
                         newCount = 0
                 if newCount != addressItem.unreadCount:
@@ -2871,7 +2872,7 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.QEventLoop.AllEvents, 1000
         )
         self.saveSettings()
-        for attr, obj in self.ui.__dict__.iteritems():
+        for attr, obj in six.iteritems(self.ui.__dict__):
             if hasattr(obj, "__class__") \
                     and isinstance(obj, settingsmixin.SettingsMixin):
                 saveMethod = getattr(obj, "saveSettings", None)
@@ -4209,7 +4210,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def initSettings(self):
         self.loadSettings()
-        for attr, obj in self.ui.__dict__.iteritems():
+        for attr, obj in six.iteritems(self.ui.__dict__):
             if hasattr(obj, "__class__") and \
                     isinstance(obj, settingsmixin.SettingsMixin):
                 loadMethod = getattr(obj, "loadSettings", None)

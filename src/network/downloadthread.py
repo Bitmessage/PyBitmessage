@@ -3,6 +3,7 @@
 """
 import time
 import state
+import six
 import addresses
 import helper_random
 import protocol
@@ -28,7 +29,7 @@ class DownloadThread(StoppableThread):
         deadline = time.time() - self.requestExpires
         try:
             toDelete = [
-                k for k, v in missingObjects.iteritems()
+                k for k, v in six.iteritems(missingObjects)
                 if v < deadline]
         except RuntimeError:
             pass

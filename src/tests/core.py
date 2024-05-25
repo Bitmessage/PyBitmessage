@@ -15,6 +15,7 @@ import sys
 import threading
 import time
 import unittest
+import six
 
 import protocol
 import state
@@ -137,8 +138,8 @@ class TestCore(unittest.TestCase):
     @staticmethod
     def _outdate_knownnodes():
         with knownnodes.knownNodesLock:
-            for nodes in knownnodes.knownNodes.itervalues():
-                for node in nodes.itervalues():
+            for nodes in six.itervalues(knownnodes.knownNodes):
+                for node in six.itervalues(nodes):
                     node['lastseen'] -= 2419205  # older than 28 days
 
     def test_knownnodes_pickle(self):
@@ -146,9 +147,9 @@ class TestCore(unittest.TestCase):
         pickle_knownnodes()
         self._wipe_knownnodes()
         knownnodes.readKnownNodes()
-        for nodes in knownnodes.knownNodes.itervalues():
+        for nodes in six.itervalues(knownnodes.knownNodes):
             self_count = n = 0
-            for n, node in enumerate(nodes.itervalues()):
+            for n, node in enumerate(six.itervalues(nodes)):
                 if node.get('self'):
                     self_count += 1
             self.assertEqual(n - self_count, 2)
@@ -202,7 +203,7 @@ class TestCore(unittest.TestCase):
         while c > 0:
             time.sleep(1)
             c -= 2
-            for peer, con in connectionpool.pool.outboundConnections.iteritems():
+            for peer, con in six.iteritems(connectionpool.pool.outboundConnections):
                 if (
                     peer.host.startswith('bootstrap')
                     or peer.host == 'quzwelsuziwqgpt2.onion'
@@ -223,7 +224,7 @@ class TestCore(unittest.TestCase):
             'Failed to connect during %.2f sec' % (time.time() - _started))
 
     def _check_knownnodes(self):
-        for stream in knownnodes.knownNodes.itervalues():
+        for stream in six.itervalues(knownnodes.knownNodes):
             for peer in stream:
                 if peer.host.startswith('bootstrap'):
                     self.fail(
