@@ -53,6 +53,7 @@ import collections
 import io
 import struct
 import sys
+import six
 
 __version__ = "2.4.1"
 "Module version string"
@@ -99,9 +100,9 @@ class Ext:  # pylint: disable=old-style-class
         if not isinstance(type, int) or not (type >= 0 and type <= 127):
             raise TypeError("ext type out of range")
         # Check data is type bytes
-        elif sys.version_info[0] == 3 and not isinstance(data, bytes):
+        elif six.PY3 and not isinstance(data, bytes):
             raise TypeError("ext data is not type \'bytes\'")
-        elif sys.version_info[0] == 2 and not isinstance(data, str):
+        elif six.PY2 and not isinstance(data, str):
             raise TypeError("ext data is not type \'str\'")
         self.type = type
         self.data = data
@@ -990,7 +991,7 @@ def __init():
         _float_precision = "single"
 
     # Map packb and unpackb to the appropriate version
-    if sys.version_info[0] == 3:
+    if six.PY3:
         pack = _pack3
         packb = _packb3
         dump = _pack3

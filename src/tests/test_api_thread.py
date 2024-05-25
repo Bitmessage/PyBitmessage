@@ -1,9 +1,9 @@
 """TestAPIThread class definition"""
 
-import sys
 import time
 from binascii import hexlify, unhexlify
 from struct import pack
+import six
 
 from six.moves import queue, xmlrpc_client
 
@@ -68,7 +68,7 @@ class TestAPIThread(TestPartialRun):
     def test_client_status(self):
         """Ensure the reply of clientStatus corresponds to mock"""
         status = self.api.clientStatus()
-        if sys.hexversion >= 0x3000000:
+        if six.PY3:
             self.assertEqual(status["networkConnections"], 4)
             self.assertEqual(status["pendingDownload"], 0)
 

@@ -4,6 +4,7 @@ import os
 import platform
 import shutil
 import sys
+import six
 
 from importlib import import_module
 from setuptools import setup, Extension
@@ -83,7 +84,7 @@ if __name__ == "__main__":
         'images/kivy/text_images*.png'
     ]}
 
-    if sys.version_info[0] == 3:
+    if six.PY3:
         packages.extend(
             [
                 'pybitmessage.bitmessagekivy',
