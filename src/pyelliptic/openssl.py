@@ -692,7 +692,7 @@ class _OpenSSL(object):
         length = self.BN_num_bytes(x)
         data = self.malloc(0, length)
         OpenSSL.BN_bn2bin(x, data)
-        return ord(data[length - 1]) & 1
+        return six.byte2int(data[length - 1]) & 1
 
     def get_cipher(self, name):
         """

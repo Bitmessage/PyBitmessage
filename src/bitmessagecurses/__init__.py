@@ -17,6 +17,7 @@ import sys
 import time
 from textwrap import fill
 from threading import Timer
+import six
 
 from dialog import Dialog
 import helper_sent
@@ -105,7 +106,7 @@ def ascii(s):
     """ASCII values"""
     r = ""
     for c in s:
-        if ord(c) in range(128):
+        if six.byte2int(c) in range(128):
             r += c
     return r
 
@@ -326,13 +327,13 @@ def handlech(c, stdscr):
     if c != curses.ERR:
         global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
         if c in range(256):
-            if chr(c) in '12345678':
+            if six.int2byte(c) in '12345678':
                 global menutab
-                menutab = int(chr(c))
-            elif chr(c) == 'q':
+                menutab = int(six.int2byte(c))
+            elif six.int2byte(c) == 'q':
                 global quit_
                 quit_ = True
-            elif chr(c) == '\n':
+            elif six.int2byte(c) == '\n':
                 curses.curs_set(1)
                 d = Dialog(dialog="dialog")
                 if menutab == 1:

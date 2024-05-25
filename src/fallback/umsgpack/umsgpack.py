@@ -50,7 +50,6 @@ License: MIT
 # pylint: disable=unused-argument
 
 import collections
-import io
 import struct
 import sys
 import six
@@ -126,7 +125,7 @@ class Ext:  # pylint: disable=old-style-class
         String representation of this Ext object.
         """
         s = "Ext Object (Type: 0x%02x, Data: " % self.type
-        s += " ".join(["0x%02x" % ord(self.data[i:i + 1])
+        s += " ".join(["0x%02x" % six.byte2int(self.data[i:i + 1])
                        for i in xrange(min(len(self.data), 8))])
         if len(self.data) > 8:
             s += " ..."
@@ -550,7 +549,7 @@ def _packb2(obj, **options):
     '\x82\xa7compact\xc3\xa6schema\x00'
     >>>
     """
-    fp = io.BytesIO()
+    fp = six.BytesIO()
     _pack2(obj, fp, **options)
     return fp.getvalue()
 
@@ -583,7 +582,7 @@ def _packb3(obj, **options):
     b'\x82\xa7compact\xc3\xa6schema\x00'
     >>>
     """
-    fp = io.BytesIO()
+    fp = six.BytesIO()
     _pack3(obj, fp, **options)
     return fp.getvalue()
 
@@ -600,7 +599,7 @@ def _read_except(fp, n):
 
 
 def _unpack_integer(code, fp, options):
-    if (ord(code) & 0xe0) == 0xe0:
+    if (six.byte2int(code) & 0xe0) == 0xe0:
         return struct.unpack("b", code)[0]
     elif code == b'\xd0':
         return struct.unpack("b", _read_except(fp, 1))[0]
@@ -610,7 +609,7 @@ def _unpack_integer(code, fp, options):
         return struct.unpack(">i", _read_except(fp, 4))[0]
     elif code == b'\xd3':
         return struct.unpack(">q", _read_except(fp, 8))[0]
-    elif (ord(code) & 0x80) == 0x00:
+    elif (six.byte2int(code) & 0x80) == 0x00:
         return struct.unpack("B", code)[0]
     elif code == b'\xcc':
         return struct.unpack("B", _read_except(fp, 1))[0]
@@ -620,21 +619,21 @@ def _unpack_integer(code, fp, options):
         return struct.unpack(">I", _read_except(fp, 4))[0]
     elif code == b'\xcf':
         return struct.unpack(">Q", _read_except(fp, 8))[0]
-    raise Exception("logic error, not int: 0x%02x" % ord(code))
+    raise Exception("logic error, not int: 0x%02x" % six.byte2int(code))
 
 
 def _unpack_reserved(code, fp, options):
     if code == b'\xc1':
         raise ReservedCodeException(
-            "encountered reserved code: 0x%02x" % ord(code))
+            "encountered reserved code: 0x%02x" % six.byte2int(code))
     raise Exception(
-        "logic error, not reserved code: 0x%02x" % ord(code))
+        "logic error, not reserved code: 0x%02x" % six.byte2int(code))
 
 
 def _unpack_nil(code, fp, options):
     if code == b'\xc0':
         return None
-    raise Exception("logic error, not nil: 0x%02x" % ord(code))
+    raise Exception("logic error, not nil: 0x%02x" % six.byte2int(code))
 
 
 def _unpack_boolean(code, fp, options):
@@ -642,7 +641,7 @@ def _unpack_boolean(code, fp, options):
         return False
     elif code == b'\xc3':
         return True
-    raise Exception("logic error, not boolean: 0x%02x" % ord(code))
+    raise Exception("logic error, not boolean: 0x%02x" % six.byte2int(code))
 
 
 def _unpack_float(code, fp, options):
@@ -650,12 +649,12 @@ def _unpack_float(code, fp, options):
         return struct.unpack(">f", _read_except(fp, 4))[0]
     elif code == b'\xcb':
         return struct.unpack(">d", _read_except(fp, 8))[0]
-    raise Exception("logic error, not float: 0x%02x" % ord(code))
+    raise Exception("logic error, not float: 0x%02x" % six.byte2int(code))
 
 
 def _unpack_string(code, fp, options):
-    if (ord(code) & 0xe0) == 0xa0:
-        length = ord(code) & ~0xe0
+    if (six.byte2int(code) & 0xe0) == 0xa0:
+        length = six.byte2int(code) & ~0xe0
     elif code == b'\xd9':
         length = struct.unpack("B", _read_except(fp, 1))[0]
     elif code == b'\xda':
@@ -663,7 +662,7 @@ def _unpack_string(code, fp, options):
     elif code == b'\xdb':
         length = struct.unpack(">I", _read_except(fp, 4))[0]
     else:
-        raise Exception("logic error, not string: 0x%02x" % ord(code))
+        raise Exception("logic error, not string: 0x%02x" % six.byte2int(code))
 
     # Always return raw bytes in compatibility mode
     global compatibility
@@ -687,7 +686,7 @@ def _unpack_binary(code, fp, options):
     elif code == b'\xc6':
         length = struct.unpack(">I", _read_except(fp, 4))[0]
     else:
-        raise Exception("logic error, not binary: 0x%02x" % ord(code))
+        raise Exception("logic error, not binary: 0x%02x" % six.byte2int(code))
 
     return _read_except(fp, length)
 
@@ -710,9 +709,9 @@ def _unpack_ext(code, fp, options):
     elif code == b'\xc9':
         length = struct.unpack(">I", _read_except(fp, 4))[0]
     else:
-        raise Exception("logic error, not ext: 0x%02x" % ord(code))
+        raise Exception("logic error, not ext: 0x%02x" % six.byte2int(code))
 
-    ext = Ext(ord(_read_except(fp, 1)), _read_except(fp, length))
+    ext = Ext(six.byte2int(_read_except(fp, 1)), _read_except(fp, length))
 
     # Unpack with ext handler, if we have one
     ext_handlers = options.get("ext_handlers")
@@ -723,14 +722,14 @@ def _unpack_ext(code, fp, options):
 
 
 def _unpack_array(code, fp, options):
-    if (ord(code) & 0xf0) == 0x90:
-        length = (ord(code) & ~0xf0)
+    if (six.byte2int(code) & 0xf0) == 0x90:
+        length = (six.byte2int(code) & ~0xf0)
     elif code == b'\xdc':
         length = struct.unpack(">H", _read_except(fp, 2))[0]
     elif code == b'\xdd':
         length = struct.unpack(">I", _read_except(fp, 4))[0]
     else:
-        raise Exception("logic error, not array: 0x%02x" % ord(code))
+        raise Exception("logic error, not array: 0x%02x" % six.byte2int(code))
 
     return [_unpack(fp, options) for _ in xrange(length)]
 
@@ -742,14 +741,14 @@ def _deep_list_to_tuple(obj):
 
 
 def _unpack_map(code, fp, options):
-    if (ord(code) & 0xf0) == 0x80:
-        length = (ord(code) & ~0xf0)
+    if (six.byte2int(code) & 0xf0) == 0x80:
+        length = (six.byte2int(code) & ~0xf0)
     elif code == b'\xde':
         length = struct.unpack(">H", _read_except(fp, 2))[0]
     elif code == b'\xdf':
         length = struct.unpack(">I", _read_except(fp, 4))[0]
     else:
-        raise Exception("logic error, not map: 0x%02x" % ord(code))
+        raise Exception("logic error, not map: 0x%02x" % six.byte2int(code))
 
     d = {} if not options.get('use_ordered_dict') \
         else collections.OrderedDict()
@@ -912,7 +911,7 @@ def _unpackb2(s, **options):
     """
     if not isinstance(s, (str, bytearray)):
         raise TypeError("packed data must be type 'str' or 'bytearray'")
-    return _unpack(io.BytesIO(s), options)
+    return _unpack(six.BytesIO(s), options)
 
 
 # For Python 3, expects a bytes object
@@ -958,7 +957,7 @@ def _unpackb3(s, **options):
     """
     if not isinstance(s, (bytes, bytearray)):
         raise TypeError("packed data must be type 'bytes' or 'bytearray'")
-    return _unpack(io.BytesIO(s), options)
+    return _unpack(six.BytesIO(s), options)
 
 #############################################################################
 # Module Initialization
