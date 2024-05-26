@@ -67,7 +67,7 @@ class DownloadThread(StoppableThread):
                         continue
                     payload.extend(chunk)
                     chunkCount += 1
-                    missingObjects[chunk] = now
+                    missingObjects[bytes(chunk)] = now
                 if not chunkCount:
                     continue
                 payload[0:0] = addresses.encodeVarint(chunkCount)

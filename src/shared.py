@@ -114,11 +114,11 @@ def reloadMyAddressHashes():
         if len(privEncryptionKey) == 64:
             myECCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(privEncryptionKey)
-            myAddressesByHash[hashobj] = addressInKeysFile
+            myAddressesByHash[bytes(hashobj)] = addressInKeysFile
             tag = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj)[32:]
-            myAddressesByTag[tag] = addressInKeysFile
+            myAddressesByTag[bytes(tag)] = addressInKeysFile
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(os.path.join(
@@ -149,7 +149,7 @@ def reloadBroadcastSendersForWhichImWatching():
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj
             ).digest()[:32]
-            MyECSubscriptionCryptorObjects[hashobj] = \
+            MyECSubscriptionCryptorObjects[bytes(hashobj)] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = highlevelcrypto.double_sha512(
@@ -158,7 +158,7 @@ def reloadBroadcastSendersForWhichImWatching():
             )
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
-            MyECSubscriptionCryptorObjects[tag] = \
+            MyECSubscriptionCryptorObjects[bytes(tag)] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 
