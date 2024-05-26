@@ -49,7 +49,8 @@ License: MIT
 # pylint: disable=too-many-lines,too-many-branches,too-many-statements,global-statement,too-many-return-statements
 # pylint: disable=unused-argument
 
-from six.moves import collections_abc as collections
+from collections import OrderedDict
+from six.moves.collections_abc import Hashable
 from six.moves import range as xrange
 import struct
 import sys
@@ -752,7 +753,7 @@ def _unpack_map(code, fp, options):
         raise Exception("logic error, not map: 0x%02x" % six.byte2int(code))
 
     d = {} if not options.get('use_ordered_dict') \
-        else collections.OrderedDict()
+        else OrderedDict()
     for _ in xrange(length):
         # Unpack key
         k = _unpack(fp, options)
@@ -760,7 +761,7 @@ def _unpack_map(code, fp, options):
         if isinstance(k, list):
             # Attempt to convert list into a hashable tuple
             k = _deep_list_to_tuple(k)
-        elif not isinstance(k, collections.Hashable):
+        elif not isinstance(k, Hashable):
             raise UnhashableKeyException(
                 "encountered unhashable key: %s, %s" % (str(k), str(type(k))))
         elif k in d:
