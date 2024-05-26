@@ -136,7 +136,7 @@ class AccountMixin(object):
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
-                    retval = unicode(retval, 'utf-8')
+                retval = retval.decode("utf-8", "replace")
         elif self.address is None or self.type == AccountMixin.ALL:
             return unicode(
                 str(_translate("MainWindow", "All accounts")), 'utf-8')
@@ -311,8 +311,8 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
-            return unicode(retval, 'utf-8', 'ignore')
-        return unicode(self.address, 'utf-8')
+            return retval.decode("utf-8", "replace")
+        return self.address
 
     def setType(self):
         """Set account type"""
@@ -418,7 +418,8 @@ class MessageList_AddressWidget(BMAddressWidget):
                 '''select label from subscriptions where address=?''', self.address)
         if queryreturn:
             for row in queryreturn:
-                newLabel = unicode(row[0], 'utf-8', 'ignore')
+                newLabel = row[0]
+            newLabel = newLabel.decode("utf-8", "replace")
 
         self.label = newLabel
 
@@ -456,7 +457,7 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         if role == QtCore.Qt.UserRole:
             return self.subject
         if role == QtCore.Qt.ToolTipRole:
-            return escape(unicode(self.subject, 'utf-8'))
+            return escape(self.subject)
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end

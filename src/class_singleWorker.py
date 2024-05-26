@@ -73,6 +73,7 @@ class singleWorker(StoppableThread):
             '''SELECT DISTINCT toaddress FROM sent'''
             ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
         for toAddress, in queryreturn:
+            toAddress = toAddress.decode("utf-8", "replace")
             toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toAddress)[1:]
             if toAddressVersionNumber <= 3:
@@ -538,6 +539,9 @@ class singleWorker(StoppableThread):
 
         for row in queryreturn:
             fromaddress, subject, body, ackdata, TTL, encoding = row
+            fromaddress = fromaddress.decode("utf-8", "replace")
+            subject = subject.decode("utf-8", "replace")
+            body = body.decode("utf-8", "replace")
             # status
             _, addressVersionNumber, streamNumber, ripe = \
                 decodeAddress(fromaddress)
@@ -726,6 +730,11 @@ class singleWorker(StoppableThread):
         for row in queryreturn:
             toaddress, fromaddress, subject, message, \
                 ackdata, status, TTL, retryNumber, encoding = row
+            toaddress = toaddress.decode("utf-8", "replace")
+            fromaddress = fromaddress.decode("utf-8", "replace")
+            subject = subject.decode("utf-8", "replace")
+            message = message.decode("utf-8", "replace")
+            status = status.decode("utf-8", "replace")
             # toStatus
             _, toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toaddress)

@@ -111,10 +111,10 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
             if isinstance(addressitem, QtGui.QTableWidgetItem):
                 if self.radioButtonBlacklist.isChecked():
                     sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
+                            item.text().encode("utf-8", "replace"), addressitem.text().encode("utf-8", "replace"))
                 else:
                     sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
+                            item.text().encode("utf-8", "replace"), addressitem.text().encode("utf-8", "replace"))
 
     def init_blacklist_popup_menu(self, connectSignal=True):
         # Popup menu for the Blacklist page
@@ -171,6 +171,8 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         self.tableWidgetBlacklist.setSortingEnabled(False)
         for row in queryreturn:
             label, address, enabled = row
+            label = label.decode("utf-8", "replace")
+            address = address.decode("utf-8", "replace")
             self.tableWidgetBlacklist.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:
@@ -198,11 +200,11 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             sqlExecute(
                 '''DELETE FROM blacklist WHERE label=? AND address=?''',
-                str(labelAtCurrentRow), str(addressAtCurrentRow))
+                labelAtCurrentRow.encode("utf-8", "replace"), addressAtCurrentRow.encode("utf-8", "replace"))
         else:
             sqlExecute(
                 '''DELETE FROM whitelist WHERE label=? AND address=?''',
-                str(labelAtCurrentRow), str(addressAtCurrentRow))
+                labelAtCurrentRow.encode("utf-8", "replace"), addressAtCurrentRow.encode("utf-8", "replace"))
         self.tableWidgetBlacklist.removeRow(currentRow)
 
     def on_action_BlacklistClipboard(self):
@@ -227,11 +229,11 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             sqlExecute(
                 '''UPDATE blacklist SET enabled=1 WHERE address=?''',
-                str(addressAtCurrentRow))
+                addressAtCurrentRow.encode("utf-8", "replace"))
         else:
             sqlExecute(
                 '''UPDATE whitelist SET enabled=1 WHERE address=?''',
-                str(addressAtCurrentRow))
+                addressAtCurrentRow.encode("utf-8", "replace"))
 
     def on_action_BlacklistDisable(self):
         currentRow = self.tableWidgetBlacklist.currentRow()
@@ -243,10 +245,10 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
             currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
         if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             sqlExecute(
-                '''UPDATE blacklist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
+                '''UPDATE blacklist SET enabled=0 WHERE address=?''', addressAtCurrentRow.encode("utf-8", "replace"))
         else:
             sqlExecute(
-                '''UPDATE whitelist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
+                '''UPDATE whitelist SET enabled=0 WHERE address=?''', addressAtCurrentRow.encode("utf-8", "replace"))
 
     def on_action_BlacklistSetAvatar(self):
         self.window().on_action_SetAvatar(self.tableWidgetBlacklist)

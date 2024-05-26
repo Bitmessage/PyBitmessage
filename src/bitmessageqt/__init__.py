@@ -552,6 +552,8 @@ class MyForm(settingsmixin.SMainWindow):
             "GROUP BY toaddress, folder")
         for row in queryreturn:
             toaddress, folder, cnt = row
+            toaddress = toaddress.decode("utf-8", "replace")
+            folder = folder.decode("utf-8", "replace")
             total += cnt
             if toaddress in db and folder in db[toaddress]:
                 db[toaddress][folder] = cnt
@@ -1044,6 +1046,8 @@ class MyForm(settingsmixin.SMainWindow):
         normalUnread = {}
         broadcastsUnread = {}
         for addr, fld, count in queryReturn:
+            addr = addr.decode("utf-8", "replace")
+            fld = fld.decode("utf-8", "replace")
             try:
                 normalUnread[addr][fld] = count
             except KeyError:
@@ -1211,11 +1215,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         items = [
             MessageList_AddressWidget(
-                toAddress, unicode(acct.toLabel, 'utf-8'), not read),
+                toAddress, acct.toLabel, not read),
             MessageList_AddressWidget(
-                fromAddress, unicode(acct.fromLabel, 'utf-8'), not read),
+                fromAddress, acct.fromLabel, not read),
             MessageList_SubjectWidget(
-                str(subject), unicode(acct.subject, 'utf-8', 'replace'),
+                subject, acct.subject,
                 not read),
             MessageList_TimeWidget(
                 l10n.formatTimestamp(received), not read, received, msgid)
@@ -1243,7 +1247,14 @@ class MyForm(settingsmixin.SMainWindow):
             xAddress, account, "sent", where, what, False)
 
         for row in queryreturn:
-            self.addMessageListItemSent(tableWidget, *row)
+            r = []
+            r.append(row[0].decode("utf-8", "replace"))  # toaddress
+            r.append(row[1].decode("utf-8", "replace"))  # fromaddress
+            r.append(row[2].decode("utf-8", "replace"))  # subject
+            r.append(row[3].decode("utf-8", "replace"))  # status
+            r.append(row[3])  # ackdata
+            r.append(row[4])  # lastactiontime
+            self.addMessageListItemSent(tableWidget, *r)
 
         tableWidget.horizontalHeader().setSortIndicator(
             3, QtCore.Qt.DescendingOrder)
@@ -1284,6 +1295,10 @@ class MyForm(settingsmixin.SMainWindow):
 
         for row in queryreturn:
             toAddress, fromAddress, subject, _, msgid, received, read = row
+            toAddress = toAddress.decode("utf-8", "replace")
+            fromAddress = fromAddress.decode("utf-8", "replace")
+            subject = subject.decode("utf-8", "replace")
+            received = received.decode("utf-8", "replace")
             self.addMessageListItemInbox(
                 tableWidget, toAddress, fromAddress, subject,
                 msgid, received, read)
@@ -1369,6 +1384,7 @@ class MyForm(settingsmixin.SMainWindow):
         SELECT msgid, toaddress, read FROM inbox where folder='inbox'
         ''')
         for msgid, toAddress, read in queryreturn:
+            toAddress = toAddress.decode("utf-8", "replace")
 
             if not read:
                 # increment the unread subscriptions if True (1)
@@ -1447,7 +1463,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     # Adapters and converters for QT <-> sqlite
     def sqlInit(self):
-        register_adapter(QtCore.QByteArray, str)
+        register_adapter(QtCore.QByteArray, bytes)
 
     def indicatorInit(self):
         """
@@ -1995,9 +2011,9 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderAddressBook(self):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemLabel(address, label, type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
+            newItem = Ui_AddressBookWidgetItemAddress(address, label, type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
 
         oldRows = {}
@@ -2015,6 +2031,8 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
         for row in queryreturn:
             label, address = row
+            label = label.decode("utf-8", "replace")
+            address = address.decode("utf-8", "replace")
             newRows[address] = [label, AccountMixin.SUBSCRIPTION]
         # chans
         for address in config.addresses(True):
@@ -2025,6 +2043,8 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('SELECT * FROM addressbook')
         for row in queryreturn:
             label, address = row
+            label = label.decode("utf-8", "replace")
+            address = address.decode("utf-8", "replace")
             newRows[address] = [label, AccountMixin.NORMAL]
 
         completerList = []
@@ -2038,7 +2058,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
-            completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
+            completerList.append(newRows[address][0] + " <" + address + ">")
 
         # sort
         self.ui.tableWidgetAddressBook.sortByColumn(
@@ -2273,6 +2293,7 @@ class MyForm(settingsmixin.SMainWindow):
                         if queryreturn != []:
                             for row in queryreturn:
                                 toLabel, = row
+                            toLabel = toLabel.decode("utf-8", "replace")
 
                         self.displayNewSentMessage(
                             toAddress, toLabel, fromAddress, subject, message, ackdata)
@@ -2920,6 +2941,7 @@ class MyForm(settingsmixin.SMainWindow):
         if queryreturn != []:
             for row in queryreturn:
                 messageText, = row
+            messageText = messageText.decode("utf-8", "replace")
 
         lines = messageText.split('\n')
         totalLines = len(lines)
@@ -3043,6 +3065,7 @@ class MyForm(settingsmixin.SMainWindow):
         if queryreturn != []:
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
+            messageAtCurrentInboxRow = messageAtCurrentInboxRow.decode("utf-8", "replace")
         acct.parseMessage(
             toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow,
             tableWidget.item(currentInboxRow, 2).subject,
@@ -3274,6 +3297,7 @@ class MyForm(settingsmixin.SMainWindow):
         if queryreturn != []:
             for row in queryreturn:
                 message, = row
+            message = message.decode("utf-8", "replace")
 
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
         filename = QtGui.QFileDialog.getSaveFileName(
@@ -3285,7 +3309,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         try:
             f = open(filename, 'w')
-            f.write(message)
+            f.write(message.encode("utf-8", "replace"))
             f.close()
         except Exception:
             logger.exception('Message not saved', exc_info=True)
@@ -4020,6 +4044,7 @@ class MyForm(settingsmixin.SMainWindow):
             queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
             for row in queryreturn:
                 status, = row
+            status = status.decode("utf-8", "replace")
             if status == 'toodifficult':
                 self.popMenuSent.addAction(self.actionForceSend)
 
@@ -4124,6 +4149,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         try:
             message = queryreturn[-1][0]
+            message = message.decode("utf-8", "replace")
         except NameError:
             message = ""
         except IndexError:
