@@ -240,7 +240,7 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="564"/>
-        <source>One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
+        <source>One of your addresses, {0}, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -250,12 +250,12 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="786"/>
-        <source>%1 hours</source>
+        <source>{0} hours</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="789"/>
-        <source>%1 days</source>
+        <source>{0} days</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -275,12 +275,12 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="974"/>
-        <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
+        <source>Message sent. Waiting for acknowledgement. Sent at {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="977"/>
-        <source>Message sent. Sent at %1</source>
+        <source>Message sent. Sent at {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -290,7 +290,7 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="983"/>
-        <source>Acknowledgement of the message received %1</source>
+        <source>Acknowledgement of the message received {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -300,17 +300,17 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="989"/>
-        <source>Broadcast on %1</source>
+        <source>Broadcast on {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="992"/>
-        <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
+        <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="995"/>
-        <source>Problem: The recipient&apos;s encryption key is no good. Could not encrypt message. %1</source>
+        <source>Problem: The recipient&apos;s encryption key is no good. Could not encrypt message. {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -320,7 +320,7 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1001"/>
-        <source>Unknown status: %1 %2</source>
+        <source>Unknown status: {0} {1}</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -361,7 +361,7 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1499"/>
         <source>You may manage your keys by editing the keys.dat file stored in
- %1 
+ {0} 
 It is important that you back up this file.</source>
         <translation type="unfinished"/>
     </message>
@@ -378,7 +378,7 @@ It is important that you back up this file.</source>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1506"/>
         <source>You may manage your keys by editing the keys.dat file stored in
- %1 
+ {0} 
 It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation type="unfinished"/>
     </message>
@@ -444,7 +444,7 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1571"/>
-        <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in &apos;Your Identities&apos;.</source>
+        <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: {0}. This address also appears in &apos;Your Identities&apos;.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -512,52 +512,52 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1951"/>
-        <source>The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.</source>
+        <source>The message that you are trying to send is too long by {0} bytes. (The maximum is 261644 bytes). Please cut it down before sending.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1979"/>
-        <source>Error: Your account wasn&apos;t registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.</source>
+        <source>Error: Your account wasn&apos;t registered at an email gateway. Sending registration now as {0}, please wait for the registration to be processed before retrying sending.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1988"/>
-        <source>Error: Bitmessage addresses start with BM-   Please check %1</source>
+        <source>Error: Bitmessage addresses start with BM-   Please check {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1991"/>
-        <source>Error: The address %1 is not typed or copied correctly. Please check it.</source>
+        <source>Error: The address {0} is not typed or copied correctly. Please check it.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1994"/>
-        <source>Error: The address %1 contains invalid characters. Please check it.</source>
+        <source>Error: The address {0} contains invalid characters. Please check it.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1997"/>
-        <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
+        <source>Error: The address version in {0} is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2000"/>
-        <source>Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
+        <source>Error: Some data encoded in the address {0} is too short. There might be something wrong with the software of your acquaintance.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2003"/>
-        <source>Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
+        <source>Error: Some data encoded in the address {0} is too long. There might be something wrong with the software of your acquaintance.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2006"/>
-        <source>Error: Some data encoded in the address %1 is malformed. There might be something wrong with the software of your acquaintance.</source>
+        <source>Error: Some data encoded in the address {0} is malformed. There might be something wrong with the software of your acquaintance.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2009"/>
-        <source>Error: Something is wrong with the address %1.</source>
+        <source>Error: Something is wrong with the address {0}.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -572,7 +572,7 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2018"/>
-        <source>Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
+        <source>Concerning the address {0}, Bitmessage cannot understand address version numbers of {1}. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -582,7 +582,7 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2022"/>
-        <source>Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
+        <source>Concerning the address {0}, Bitmessage cannot handle stream numbers of {1}. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -722,7 +722,7 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2849"/>
-        <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
+        <source>Bitmessage cannot find your address {0}. Perhaps you removed it?</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -876,7 +876,7 @@ Are you sure you want to delete the channel?</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="4253"/>
-        <source>You are using TCP port %1. (This can be changed in the settings).</source>
+        <source>You are using TCP port {0}. (This can be changed in the settings).</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1081,7 +1081,7 @@ Are you sure you want to delete the channel?</source>
     </message>
     <message>
         <location filename="../bitmessageqt/messageview.py" line="44"/>
-        <source>Zoom level %1%</source>
+        <source>Zoom level {0}%</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1096,7 +1096,7 @@ Are you sure you want to delete the channel?</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="4213"/>
-        <source>Display the %1 recent broadcast(s) from this address.</source>
+        <source>Display the {0} recent broadcast(s) from this address.</source>
         <translation type="unfinished"/>
     </message>
 </context>
@@ -1449,47 +1449,47 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="15"/>
-        <source>Since startup on %1</source>
+        <source>Since startup on {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="57"/>
-        <source>Objects to be synced: %1</source>
+        <source>Objects to be synced: {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="48"/>
-        <source>Processed %1 person-to-person messages.</source>
+        <source>Processed {0} person-to-person messages.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="53"/>
-        <source>Processed %1 broadcast messages.</source>
+        <source>Processed {0} broadcast messages.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="58"/>
-        <source>Processed %1 public keys.</source>
+        <source>Processed {0} public keys.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="66"/>
-        <source>Down: %1/s  Total: %2</source>
+        <source>Down: {0}/s  Total: {1}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="68"/>
-        <source>Up: %1/s  Total: %2</source>
+        <source>Up: {0}/s  Total: {1}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="115"/>
-        <source>Total Connections: %1</source>
+        <source>Total Connections: {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="124"/>
-        <source>Inventory lookups per second: %1</source>
+        <source>Inventory lookups per second: {0}</source>
         <translation type="unfinished"/>
     </message>
 </context>
