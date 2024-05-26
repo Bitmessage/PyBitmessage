@@ -14,6 +14,7 @@ import stat
 import subprocess  # nosec B404
 import sys
 from binascii import hexlify
+from six.moves.reprlib import repr
 
 # Project imports.
 import highlevelcrypto

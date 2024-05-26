@@ -2,7 +2,7 @@
 Process data incoming from network
 """
 import errno
-import Queue
+from six.moves import queue as Queue
 import socket
 
 import connectionpool

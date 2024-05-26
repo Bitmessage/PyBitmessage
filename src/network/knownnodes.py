@@ -10,10 +10,7 @@ import os
 import pickle  # nosec B403
 import threading
 import time
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from six.moves.collections_abc import Iterable
 import six
 
 import state

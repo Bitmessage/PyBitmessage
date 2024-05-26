@@ -70,6 +70,7 @@ from struct import pack, unpack
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
+from six.moves.reprlib import repr
 
 import helper_inbox
 import helper_sent

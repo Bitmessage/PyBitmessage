@@ -3,7 +3,7 @@ Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
 
-from Queue import Empty
+from six.moves.queue import Empty
 
 from PyQt4 import QtGui
 

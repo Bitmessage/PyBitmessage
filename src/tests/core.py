@@ -6,7 +6,7 @@ Tests for core and those that do not work outside
 import atexit
 import os
 import pickle  # nosec
-import Queue
+from six.moves import queue as Queue
 import random  # nosec
 import shutil
 import socket

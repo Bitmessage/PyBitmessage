@@ -15,6 +15,7 @@ import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
 import six
+from six.moves import range as xrange
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer

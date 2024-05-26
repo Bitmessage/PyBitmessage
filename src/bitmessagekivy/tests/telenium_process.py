@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 from time import time, sleep
+from six.moves import getcwdb
 
 from telenium.tests import TeleniumTestCase
 from telenium.client import TeleniumHttpException
@@ -32,7 +33,7 @@ def cleanup(files=_files):
 
 class TeleniumTestProcess(TeleniumTestCase):
     """Setting Screen Functionality Testing"""
-    cmd_entrypoint = [os.path.join(os.path.abspath(os.getcwd()), 'src', 'mockbm', 'kivy_main.py')]
+    cmd_entrypoint = [os.path.join(os.path.abspath(getcwdb()), 'src', 'mockbm', 'kivy_main.py')]
 
     @classmethod
     def setUpClass(cls):

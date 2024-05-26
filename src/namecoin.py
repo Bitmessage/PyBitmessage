@@ -4,7 +4,7 @@ Namecoin queries
 # pylint: disable=too-many-branches,protected-access
 
 import base64
-import httplib
+from six.moves import http_client as httplib
 import json
 import os
 import socket

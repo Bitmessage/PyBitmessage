@@ -10,7 +10,7 @@ Bitmessage commandline interface
 #     * python2-pythondialog
 #  * dialog
 
-import ConfigParser
+from six.moves import configparser
 import curses
 import os
 import sys
@@ -673,7 +673,7 @@ def handlech(c, stdscr):
                                     elif t == "2" and m is False:
                                         try:
                                             mn = config.get(a, "mailinglistname")
-                                        except ConfigParser.NoOptionError:
+                                        except configparser.NoOptionError:
                                             mn = ""
                                         r, t = d.inputbox("Mailing list name", init=mn)
                                         if r == d.DIALOG_OK:

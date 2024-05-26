@@ -49,7 +49,8 @@ License: MIT
 # pylint: disable=too-many-lines,too-many-branches,too-many-statements,global-statement,too-many-return-statements
 # pylint: disable=unused-argument
 
-import collections
+from six.moves import collections_abc as collections
+from six.moves import range as xrange
 import struct
 import sys
 import six

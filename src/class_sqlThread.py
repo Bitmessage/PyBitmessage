@@ -8,6 +8,7 @@ import sqlite3
 import sys
 import threading
 import time
+from six.moves.reprlib import repr
 
 try:
     import helper_sql
