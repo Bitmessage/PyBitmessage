@@ -3,6 +3,7 @@ Module for tracking objects
 """
 import time
 from threading import RLock
+import six
 
 import state
 import network.connectionpool  # use long name to address recursive import
@@ -75,7 +76,7 @@ class ObjectTracker(object):
                 with self.objectsNewToThemLock:
                     self.objectsNewToThem = {
                         k: v
-                        for k, v in self.objectsNewToThem.iteritems()
+                        for k, v in six.iteritems(self.objectsNewToThem)
                         if v >= deadline}
             self.lastCleaned = time.time()
 

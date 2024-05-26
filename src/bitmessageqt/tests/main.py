@@ -1,6 +1,6 @@
 """Common definitions for bitmessageqt tests"""
 
-import Queue
+from six.moves import queue as Queue
 import sys
 import unittest
 

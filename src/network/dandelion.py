@@ -6,6 +6,7 @@ from collections import namedtuple
 from random import choice, expovariate, sample
 from threading import RLock
 from time import time
+import six
 
 from network import connectionpool
 import state
@@ -74,7 +75,7 @@ class Dandelion:  # pylint: disable=old-style-class
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 '%s entering fluff mode due to %s.',
-                ''.join('%02x' % ord(i) for i in hashId), reason)
+                ''.join('%02x' % six.byte2int(i) for i in hashId), reason)
         with self.lock:
             try:
                 del self.hashMap[hashId]
@@ -99,12 +100,12 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             if len(self.stem) < MAX_STEMS:
                 self.stem.append(connection)
-                for k in (k for k, v in self.nodeMap.iteritems() if v is None):
+                for k in (k for k, v in six.iteritems(self.nodeMap) if v is None):
                     self.nodeMap[k] = connection
-                for k, v in {
-                        k: v for k, v in self.hashMap.iteritems()
+                for k, v in six.iteritems({
+                        k: v for k, v in six.iteritems(self.hashMap)
                         if v.child is None
-                }.iteritems():
+                }):
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
@@ -120,14 +121,14 @@ class Dandelion:  # pylint: disable=old-style-class
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
                 for k in (
-                        k for k, v in self.nodeMap.iteritems()
+                        k for k, v in six.iteritems(self.nodeMap)
                         if v == connection
                 ):
                     self.nodeMap[k] = None
-                for k, v in {
-                        k: v for k, v in self.hashMap.iteritems()
+                for k, v in six.iteritems({
+                        k: v for k, v in six.iteritems(self.hashMap)
                         if v.child == connection
-                }.iteritems():
+                }):
                     self.hashMap[k] = Stem(
                         None, v.stream, self.poissonTimeout())
 
@@ -168,7 +169,7 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             deadline = time()
             toDelete = [
-                [v.stream, k, v.child] for k, v in self.hashMap.iteritems()
+                [v.stream, k, v.child] for k, v in six.iteritems(self.hashMap)
                 if v.timeout < deadline
             ]
 

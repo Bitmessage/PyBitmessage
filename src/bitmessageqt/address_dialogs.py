@@ -5,7 +5,7 @@ Dialogs that work with BM address.
 
 import hashlib
 
-from ver import ustr, unic
+from unqstr import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 import queues

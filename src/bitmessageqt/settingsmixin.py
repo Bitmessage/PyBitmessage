@@ -5,7 +5,7 @@ src/settingsmixin.py
 
 """
 
-from ver import ustr
+from unqstr import ustr
 from PyQt4 import QtCore, QtGui
 
 

@@ -1,13 +1,13 @@
 """
 This module setting file is for settings
 """
-import ConfigParser
+from six.moves import configparser
 import os
 import sys
 import tempfile
 
 import six
-from ver import ustr
+from unqstr import ustr
 from PyQt4 import QtCore, QtGui
 
 import debug
@@ -30,9 +30,9 @@ from tr import _translate
 def getSOCKSProxyType(config):
     """Get user socksproxytype setting from *config*"""
     try:
-        result = ConfigParser.SafeConfigParser.get(
+        result = configparser.SafeConfigParser.get(
             config, 'bitmessagesettings', 'socksproxytype')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         return None
     else:
         if result.lower() in ('', 'none', 'false'):

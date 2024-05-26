@@ -14,7 +14,7 @@ import re
 import sys
 import time
 
-from ver import ustr
+from unqstr import ustr
 from PyQt4 import QtGui
 
 import queues

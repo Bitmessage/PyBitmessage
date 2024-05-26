@@ -3,9 +3,9 @@ Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
 
-from Queue import Empty
+from six.moves.queue import Empty
 
-from ver import ustr
+from unqstr import ustr
 from PyQt4 import QtGui
 
 from addresses import decodeAddress, addBMIfNotPresent

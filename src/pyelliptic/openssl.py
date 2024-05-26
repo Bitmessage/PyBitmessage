@@ -8,6 +8,7 @@ needed openssl functionality in class _OpenSSL.
 """
 import ctypes
 import sys
+import six
 
 # pylint: disable=protected-access
 
@@ -691,7 +692,7 @@ class _OpenSSL(object):
         length = self.BN_num_bytes(x)
         data = self.malloc(0, length)
         OpenSSL.BN_bn2bin(x, data)
-        return ord(data[length - 1]) & 1
+        return six.byte2int(data[length - 1]) & 1
 
     def get_cipher(self, name):
         """
@@ -745,7 +746,7 @@ class _OpenSSL(object):
         """
         buffer_ = None
         if data != 0:
-            if sys.version_info.major == 3 and isinstance(data, type('')):
+            if six.PY3 and isinstance(data, type('')):
                 data = data.encode()
             buffer_ = self.create_string_buffer(data, size)
         else:

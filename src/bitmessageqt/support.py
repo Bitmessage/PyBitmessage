@@ -6,7 +6,7 @@ import ssl
 import sys
 import time
 
-from ver import ustr, unic
+from unqstr import ustr, unic
 from PyQt4 import QtCore
 
 from bitmessageqt import account

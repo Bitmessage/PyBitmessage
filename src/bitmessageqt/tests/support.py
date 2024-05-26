@@ -6,7 +6,7 @@ from shared import isAddressInMyAddressBook
 
 from .main import TestBase
 
-from ver import ustr
+from unqstr import ustr
 
 
 class TestSupport(TestBase):

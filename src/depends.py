@@ -6,6 +6,7 @@ and suggest how it may be installed
 import os
 import re
 import sys
+import six
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -452,7 +453,7 @@ def check_dependencies(verbose=False, optional=False):
             'PyBitmessage requires Python 2.7.4 or greater'
             ' (but not Python 3+)')
         has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
+    if six.PY3:
         logger.error(
             'PyBitmessage does not support Python 3+. Python 2.7.4'
             ' or greater is required. Python 2.7.18 is recommended.')

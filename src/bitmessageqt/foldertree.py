@@ -6,7 +6,7 @@ Folder tree and messagelist widgets definitions.
 
 from cgi import escape
 
-from ver import ustr, unic
+from unqstr import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 from bmconfigparser import config

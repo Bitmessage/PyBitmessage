@@ -18,6 +18,7 @@ from errno import (
     ENOTCONN, ENOTSOCK, EPIPE, ESHUTDOWN, ETIMEDOUT, EWOULDBLOCK, errorcode
 )
 from threading import current_thread
+from six.moves.reprlib import repr
 
 import helper_random
 

@@ -6,6 +6,7 @@ SOCKS5 proxy module
 import logging
 import socket
 import struct
+import six
 
 from .node import Peer
 from .proxy import GeneralProxyError, Proxy, ProxyError
@@ -97,20 +98,20 @@ class Socks5(Proxy):
     def state_pre_connect(self):
         """Handle feedback from socks5 while it is connecting on our behalf."""
         # Get the response
-        if self.read_buf[0:1] != chr(0x05).encode():
+        if self.read_buf[0:1] != six.int2byte(0x05).encode():
             self.close()
             raise GeneralProxyError(1)
-        elif self.read_buf[1:2] != chr(0x00).encode():
+        elif self.read_buf[1:2] != six.int2byte(0x00).encode():
             # Connection failed
             self.close()
-            if ord(self.read_buf[1:2]) <= 8:
-                raise Socks5Error(ord(self.read_buf[1:2]))
+            if six.byte2int(self.read_buf[1:2]) <= 8:
+                raise Socks5Error(six.byte2int(self.read_buf[1:2]))
             else:
                 raise Socks5Error(9)
         # Get the bound address/port
-        elif self.read_buf[3:4] == chr(0x01).encode():
+        elif self.read_buf[3:4] == six.int2byte(0x01).encode():
             self.set_state("proxy_addr_1", length=4, expectBytes=4)
-        elif self.read_buf[3:4] == chr(0x03).encode():
+        elif self.read_buf[3:4] == six.int2byte(0x03).encode():
             self.set_state("proxy_addr_2_1", length=4, expectBytes=1)
         else:
             self.close()
@@ -129,7 +130,7 @@ class Socks5(Proxy):
         (e.g. IPv6, onion, ...). This is part 1 which retrieves the
         length of the data.
         """
-        self.address_length = ord(self.read_buf[0:1])
+        self.address_length = six.byte2int(self.read_buf[0:1])
         self.set_state(
             "proxy_addr_2_2", length=1, expectBytes=self.address_length)
         return True
@@ -171,19 +172,19 @@ class Socks5Connection(Socks5):
         # use the IPv4 address request even if remote resolving was specified.
         try:
             self.ipaddr = socket.inet_aton(self.destination[0])
-            self.append_write_buf(chr(0x01).encode() + self.ipaddr)
+            self.append_write_buf(six.int2byte(0x01).encode() + self.ipaddr)
         except socket.error:  # may be IPv6!
             # Well it's not an IP number,  so it's probably a DNS name.
             if self._remote_dns:
                 # Resolve remotely
                 self.ipaddr = None
-                self.append_write_buf(chr(0x03).encode() + chr(
+                self.append_write_buf(six.int2byte(0x03).encode() + six.int2byte(
                     len(self.destination[0])).encode() + self.destination[0])
             else:
                 # Resolve locally
                 self.ipaddr = socket.inet_aton(
                     socket.gethostbyname(self.destination[0]))
-                self.append_write_buf(chr(0x01).encode() + self.ipaddr)
+                self.append_write_buf(six.int2byte(0x01).encode() + self.ipaddr)
         self.append_write_buf(struct.pack(">H", self.destination[1]))
         self.set_state("pre_connect", length=0, expectBytes=4)
         return True
@@ -208,7 +209,7 @@ class Socks5Resolver(Socks5):
         """Perform resolving"""
         # Now we can request the actual connection
         self.append_write_buf(struct.pack('BBB', 0x05, 0xF0, 0x00))
-        self.append_write_buf(chr(0x03).encode() + chr(
+        self.append_write_buf(six.int2byte(0x03).encode() + six.int2byte(
             len(self.host)).encode() + str(self.host))
         self.append_write_buf(struct.pack(">H", self.port))
         self.set_state("pre_connect", length=0, expectBytes=4)

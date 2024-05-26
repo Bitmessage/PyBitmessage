@@ -2,12 +2,11 @@
 
 import inspect
 import re
-from HTMLParser import HTMLParser
+from six.moves.html_parser import HTMLParser
 
-from urllib import quote_plus
-from urlparse import urlparse
+from six.moves.urllib.parse import quote_plus, urlparse
 
-from ver import ustr, unic
+from unqstr import ustr, unic
 
 class SafeHTMLParser(HTMLParser):
     """HTML parser with sanitisation"""

@@ -30,6 +30,7 @@ from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from network import knownnodes, StoppableThread
 from six.moves import configparser, queue
+from six.moves.reprlib import repr
 
 
 def sizeof_fmt(num, suffix='h/s'):

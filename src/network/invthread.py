@@ -1,7 +1,7 @@
 """
 Thread to send inv annoucements
 """
-import Queue
+from six.moves import queue as Queue
 import random
 from time import time
 

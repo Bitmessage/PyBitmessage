@@ -4,7 +4,7 @@ src/bitmessageqt/newchandialog.py
 
 """
 
-from ver import ustr, unic
+from unqstr import ustr, unic
 from PyQt4 import QtCore, QtGui
 
 from bitmessageqt import widgets

@@ -8,6 +8,7 @@ import math
 import random
 import socket
 import time
+import six
 
 # magic imports!
 import addresses
@@ -191,7 +192,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
                     filtered = [
-                        (k, v) for k, v in nodes.iteritems()
+                        (k, v) for k, v in six.iteritems(nodes)
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
                         and v["rating"] >= 0 and not k.host.endswith('.onion')

@@ -4,13 +4,13 @@ Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
 
-import httplib
+from six.moves import http_client as httplib
 import re
 import socket
 import time
-import urllib2
+from six.moves.urllib.request import urlopen
 from random import randint
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from xml.dom.minidom import Document  # nosec B408
 from defusedxml.minidom import parseString
 
@@ -108,7 +108,7 @@ class Router:  # pylint: disable=old-style-class
             logger.error("UPnP: missing location header")
 
         # get the profile xml file and read it into a variable
-        directory = urllib2.urlopen(header['location']).read()
+        directory = urlopen(header['location']).read()
 
         # create a DOM object that represents the `directory` document
         dom = parseString(directory)

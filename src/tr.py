@@ -3,7 +3,7 @@ Translating text
 """
 import os
 
-from ver import ustr
+from unqstr import ustr
 
 try:
     import state

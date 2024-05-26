@@ -21,7 +21,7 @@ config_ready = Event()
 
 class BMConfigParser(SafeConfigParser):
     """
-    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    Singleton class inherited from :class:`configparser.SafeConfigParser`
     with additional methods specific to bitmessage config.
     """
     # pylint: disable=too-many-ancestors
