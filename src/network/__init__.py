@@ -14,7 +14,6 @@ def start(config, state):
     from .announcethread import AnnounceThread
     import connectionpool  # pylint: disable=relative-import
     from .addrthread import AddrThread
-    from .dandelion import Dandelion
     from .downloadthread import DownloadThread
     from .invthread import InvThread
     from .networkthread import BMNetworkThread
@@ -23,8 +22,6 @@ def start(config, state):
     from .uploadthread import UploadThread
 
     readKnownNodes()
-    # init, needs to be early because other thread may access it early
-    state.Dandelion = Dandelion()
     connectionpool.pool.connectToStream(1)
     for thread in (
         BMNetworkThread(), InvThread(), AddrThread(),

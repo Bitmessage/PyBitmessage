@@ -192,3 +192,6 @@ class Dandelion:  # pylint: disable=old-style-class
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time() + REASSIGN_INTERVAL
+
+
+instance = Dandelion()

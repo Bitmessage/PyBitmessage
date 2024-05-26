@@ -6,6 +6,7 @@ import time
 import helper_random
 import protocol
 import state
+import dandelion
 import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from threads import StoppableThread
@@ -40,8 +41,8 @@ class UploadThread(StoppableThread):
                 chunk_count = 0
                 for chunk in request:
                     del i.pendingUpload[chunk]
-                    if state.Dandelion.hasHash(chunk) and \
-                       i != state.Dandelion.objectChildStem(chunk):
+                    if dandelion.instance.hasHash(chunk) and \
+                       i != dandelion.instance.objectChildStem(chunk):
                         i.antiIntersectionDelay()
                         self.logger.info(
                             '%s asked for a stem object we didn\'t offer to it.',
