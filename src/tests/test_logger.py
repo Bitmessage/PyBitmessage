@@ -4,6 +4,7 @@ Testing the logger configuration
 
 import os
 import tempfile
+import six
 
 from .test_process import TestProcessProto
 
@@ -52,5 +53,5 @@ handlers=default
 
         self._stop_process()
         data = open(self.log_file).read()
-        self.assertRegexpMatches(data, self.pattern)
-        self.assertRegexpMatches(data, 'Loaded logger configuration')
+        six.assertRegex(self, data, self.pattern)
+        six.assertRegex(self, data, 'Loaded logger configuration')

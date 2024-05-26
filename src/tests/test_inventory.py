@@ -6,6 +6,7 @@ import struct
 import tempfile
 import time
 import unittest
+import six
 
 from pybitmessage import highlevelcrypto
 from pybitmessage.storage import storage
@@ -50,7 +51,7 @@ class TestStorageAbstract(unittest.TestCase):
 
     def test_inventory_storage(self):
         """Check inherited abstract methods"""
-        with self.assertRaisesRegexp(
+        with six.assertRaisesRegex(self,
             TypeError, "^Can't instantiate abstract class.*"
             "methods __contains__, __delitem__, __getitem__, __iter__,"
             " __len__, __setitem__"

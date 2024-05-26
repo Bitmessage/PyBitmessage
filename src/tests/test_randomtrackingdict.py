@@ -3,6 +3,7 @@ Tests for RandomTrackingDict Class
 """
 import random
 import unittest
+import six
 
 from time import time
 
@@ -17,7 +18,7 @@ class TestRandomTrackingDict(unittest.TestCase):
         """helper function for tests, generates a random string"""
         retval = ''
         for _ in range(32):
-            retval += chr(random.randint(0, 255))
+            retval += six.int2byte(random.randint(0, 255))
         return retval
 
     def test_check_randomtrackingdict(self):

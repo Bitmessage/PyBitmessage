@@ -12,6 +12,7 @@ import sys
 import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
+import six
 
 import defaults
 import highlevelcrypto
@@ -227,7 +228,7 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
             logger.debug('Ignoring loopback address: %s', hostStandardFormat)
         return False
     try:
-        host = [ord(c) for c in host[:2]]
+        host = [six.byte2int(c) for c in host[:2]]
     except TypeError:  # python3 has ints already
         pass
     if host[0] == 0xfe and host[1] & 0xc0 == 0x80:

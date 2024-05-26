@@ -3,11 +3,12 @@
 import random  # noseq
 import sys
 import unittest
+import six
 
 
 def unittest_discover():
     """Explicit test suite creation"""
-    if sys.hexversion >= 0x3000000:
+    if six.PY3:
         from pybitmessage import pathmagic
         pathmagic.setup()
     loader = unittest.defaultTestLoader

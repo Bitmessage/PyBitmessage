@@ -3,6 +3,7 @@
 import os
 import sys
 import unittest
+import six
 
 from pybitmessage import pathmagic
 
@@ -22,7 +23,7 @@ class TestPartialRun(unittest.TestCase):
         import state
 
         from debug import logger  # noqa:F401 pylint: disable=unused-variable
-        if sys.hexversion >= 0x3000000:
+        if six.PY3:
             # pylint: disable=no-name-in-module,relative-import
             from mockbm import network as network_mock
             import network

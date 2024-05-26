@@ -3,8 +3,8 @@
 import logging
 import os
 import re
-import sys
 import time
+import six
 
 from six.moves import range
 
@@ -61,7 +61,7 @@ if not re.search(r'\d', time.strftime(time_format)):
 
 # It seems some systems lie about the encoding they use
 # so we perform comprehensive decoding tests
-elif sys.version_info[0] == 2:
+elif six.PY2:
     try:
         # Check day names
         for i in range(7):
@@ -118,7 +118,7 @@ def formatTimestamp(timestamp=None):
         except ValueError:
             timestring = time.strftime(time_format)
 
-    if sys.version_info[0] == 2:
+    if six.PY2:
         return timestring.decode(encoding)
     return timestring
 
