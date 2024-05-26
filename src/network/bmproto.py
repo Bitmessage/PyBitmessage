@@ -415,7 +415,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
             try:
-                del missingObjects[self.object.inventoryHash]
+                del missingObjects[bytes(self.object.inventoryHash)]
             except KeyError:
                 pass
 
@@ -653,7 +653,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 except KeyError:
                     pass
         try:
-            del missingObjects[hashId]
+            del missingObjects[bytes(hashId)]
         except KeyError:
             pass
 

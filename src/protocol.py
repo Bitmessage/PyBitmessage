@@ -294,7 +294,7 @@ def isProofOfWorkSufficient(
     if TTL < 300:
         TTL = 300
     POW, = unpack('>Q', highlevelcrypto.double_sha512(
-        data[:8] + hashlib.sha512(data[8:]).digest())[0:8])
+        bytes(data[:8]) + hashlib.sha512(data[8:]).digest())[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
             len(data) + payloadLengthExtraBytes
@@ -466,7 +466,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += varintLength
         # We'll store the address version and stream number
         # (and some more) in the pubkeys table.
-        storedData = data[20:readPosition]
+        storedData = bytes(data[20:readPosition])
 
         if addressVersion != embeddedAddressVersion:
             logger.info(
@@ -483,11 +483,11 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += 32
         # the time through the tag. More data is appended onto
         # signedData below after the decryption.
-        signedData = data[8:readPosition]
+        signedData = bytes(data[8:readPosition])
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = state.neededPubkeys[tag]
+        toAddress, cryptorObject = state.neededPubkeys[bytes(tag)]
         if toAddress != address:
             logger.critical(
                 'decryptAndCheckPubkeyPayload failed due to toAddress'
