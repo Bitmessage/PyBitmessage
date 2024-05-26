@@ -122,13 +122,13 @@ class AddressPassPhraseValidatorMixin(object):
         # no chan name
         if passPhrase is None:
             self.setError(_translate("AddressValidator", "Chan name/passphrase needed. You didn't enter a chan name."))
-            return (QtGui.QValidator.Intermediate, pos)
+            return (QtGui.QValidator.Intermediate, s, pos)
 
         if self.addressMandatory or address is not None:
             # check if address already exists:
             if address in config.addresses():
                 self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
             # version too high
             if decodeAddress(address)[0] == 'versiontoohigh':
@@ -139,12 +139,12 @@ class AddressPassPhraseValidatorMixin(object):
                         " address might be valid, its version number"
                         " is too new for us to handle. Perhaps you need"
                         " to upgrade Bitmessage."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
             # invalid
             if decodeAddress(address)[0] != 'success':
                 self.setError(_translate("AddressValidator", "The Bitmessage address is not valid."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
         # this just disables the OK button without changing the feedback text
         # but only if triggered by textEdited, not by clicking the Ok button
@@ -160,8 +160,8 @@ class AddressPassPhraseValidatorMixin(object):
                  "{} {}".format(str_chan, passPhrase), passPhrase, False))
 
         if self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
-            return (self.returnValid(), pos)
-        return (QtGui.QValidator.Intermediate, pos)
+            return (self.returnValid(), s, pos)
+        return (QtGui.QValidator.Intermediate, s, pos)
 
     def checkData(self):
         """Validator Qt signal interface"""
