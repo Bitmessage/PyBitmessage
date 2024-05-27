@@ -1,7 +1,7 @@
 from unqstr import ustr, unic
 from PyQt4 import QtCore, QtGui
 
-import widgets
+from bitmessageqt import widgets
 from addresses import addBMIfNotPresent
 from bmconfigparser import config
 from .dialogs import AddAddressDialog
