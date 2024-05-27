@@ -450,14 +450,9 @@ def check_dependencies(verbose=False, optional=False):
     logger.info('Python version: %s', sys.version)
     if sys.hexversion < 0x20704F0:
         logger.error(
-            'PyBitmessage requires Python 2.7.4 or greater'
-            ' (but not Python 3+)')
+            'PyBitmessage requires Python 2.7.4 or greater.'
+            ' Python 2.7.18 is recommended.')
         has_all_dependencies = False
-    if six.PY3:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required. Python 2.7.18 is recommended.')
-        sys.exit()
 
     # FIXME: This needs to be uncommented when more of the code is python3 compatible
     # if sys.hexversion >= 0x3000000 and sys.hexversion < 0x3060000:
