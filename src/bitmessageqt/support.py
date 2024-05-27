@@ -7,6 +7,7 @@ import sys
 import time
 
 from PyQt4 import QtCore
+from dbcompat import dbstr
 
 import account
 import defaults
@@ -67,12 +68,12 @@ Connected hosts: {}
 
 
 def checkAddressBook(myapp):
-    sqlExecute('DELETE from addressbook WHERE address=?', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
+    sqlExecute('DELETE from addressbook WHERE address=?', dbstr(OLD_SUPPORT_ADDRESS))
+    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', dbstr(SUPPORT_ADDRESS))
     if queryreturn == []:
         sqlExecute(
             'INSERT INTO addressbook VALUES (?,?)',
-            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
+            dbstr(SUPPORT_LABEL.toUtf8()), dbstr(SUPPORT_ADDRESS))
         myapp.rerenderAddressBook()
 
 

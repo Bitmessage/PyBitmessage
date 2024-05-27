@@ -59,7 +59,7 @@ class AddAddressPopup(BoxLayout):
         """Checking address is valid or not"""
         my_addresses = (
             App.get_running_app().root.ids.content_drawer.ids.identity_dropdown.values)
-        add_book = [addr[1] for addr in kivy_helper_search.search_sql(
+        add_book = [addr[1].decode("utf-8", "replace") for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()
         if entered_text in add_book:
@@ -84,7 +84,7 @@ class AddAddressPopup(BoxLayout):
     def checkLabel_valid(self, instance):
         """Checking address label is unique or not"""
         entered_label = instance.text.strip()
-        addr_labels = [labels[0] for labels in kivy_helper_search.search_sql(
+        addr_labels = [labels[0].decode("utf-8", "replace") for labels in kivy_helper_search.search_sql(
             folder="addressbook")]
         if entered_label in addr_labels:
             self.ids.label.error = True
@@ -125,8 +125,13 @@ class SavedAddressDetailPopup(BoxLayout):
         """Checking address label is unique of not"""
         entered_label = str(instance.text.strip())
         address_list = kivy_helper_search.search_sql(folder="addressbook")
-        addr_labels = [labels[0] for labels in address_list]
-        add_dict = dict(address_list)
+        addr_labels = [labels[0].decode("utf-8", "replace") for labels in address_list]
+        add_dict = {}
+        for row in address_list:
+            label, address = row
+            label = label.decode("utf-8", "replace")
+            address = address.decode("utf-8", "replace")
+            add_dict[label] = address
         if self.address and entered_label in addr_labels \
                 and self.address != add_dict[entered_label]:
             self.ids.add_label.error = True

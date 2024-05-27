@@ -17,6 +17,7 @@ from sqlite3 import register_adapter
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer
+from dbcompat import dbstr
 
 import shared
 import state
@@ -1067,8 +1068,10 @@ class MyForm(settingsmixin.SMainWindow):
             queryReturn = sqlQuery(
                 'SELECT fromaddress, folder, COUNT(msgid) AS cnt'
                 ' FROM inbox WHERE read = 0 AND toaddress = ?'
-                ' GROUP BY fromaddress, folder', str_broadcast_subscribers)
+                ' GROUP BY fromaddress, folder', dbstr(str_broadcast_subscribers))
             for addr, fld, count in queryReturn:
+                addr = addr.decode("utf-8", "replace")
+                fld = fld.decode("utf-8", "replace")
                 try:
                     broadcastsUnread[addr][fld] = count
                 except KeyError:
@@ -2289,7 +2292,7 @@ class MyForm(settingsmixin.SMainWindow):
                             subject=subject, message=message, encoding=encoding)
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
-                                               toAddress)
+                                               dbstr(toAddress))
                         if queryreturn != []:
                             for row in queryreturn:
                                 toLabel, = row
@@ -2578,7 +2581,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Add to database (perhaps this should be separated from the MyForm class)
         sqlExecute(
             '''INSERT INTO subscriptions VALUES (?,?,?)''',
-            label, address, True
+            dbstr(label), dbstr(address), True
         )
         self.rerenderMessagelistFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
@@ -3177,13 +3180,13 @@ class MyForm(settingsmixin.SMainWindow):
             currentInboxRow, 0).data(QtCore.Qt.UserRole)
         # Let's make sure that it isn't already in the address book
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
-                               addressAtCurrentInboxRow)
+                               dbstr(addressAtCurrentInboxRow))
         if queryreturn == []:
             label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + config.get(
                 recipientAddress, "label")
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
-                       label,
-                       addressAtCurrentInboxRow, True)
+                       dbstr(label),
+                       dbstr(addressAtCurrentInboxRow), True)
             self.ui.blackwhitelist.rerenderBlackWhiteList()
             self.updateStatusBar(_translate(
                 "MainWindow",
@@ -3370,7 +3373,7 @@ class MyForm(settingsmixin.SMainWindow):
                 0].row()
             item = self.ui.tableWidgetAddressBook.item(currentRow, 0)
             sqlExecute(
-                'DELETE FROM addressbook WHERE address=?', item.address)
+                'DELETE FROM addressbook WHERE address=?', dbstr(item.address))
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
@@ -3470,7 +3473,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         address = self.getCurrentAccount()
         sqlExecute('''DELETE FROM subscriptions WHERE address=?''',
-                   address)
+                   dbstr(address))
         self.rerenderTabTreeSubscriptions()
         self.rerenderMessagelistFromLabels()
         self.rerenderAddressBook()
@@ -3485,7 +3488,7 @@ class MyForm(settingsmixin.SMainWindow):
         address = self.getCurrentAccount()
         sqlExecute(
             '''update subscriptions set enabled=1 WHERE address=?''',
-            address)
+            dbstr(address))
         account = self.getCurrentItem()
         account.setEnabled(True)
         self.rerenderAddressBook()
@@ -3495,7 +3498,7 @@ class MyForm(settingsmixin.SMainWindow):
         address = self.getCurrentAccount()
         sqlExecute(
             '''update subscriptions set enabled=0 WHERE address=?''',
-            address)
+            dbstr(address))
         account = self.getCurrentItem()
         account.setEnabled(False)
         self.rerenderAddressBook()

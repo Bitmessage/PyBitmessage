@@ -5,6 +5,7 @@ Used by :mod:`.bitmessageqt`.
 
 from helper_sql import sqlQuery
 from tr import _translate
+from dbcompat import dbstr
 
 
 def search_sql(
@@ -52,23 +53,23 @@ def search_sql(
     if account is not None:
         if xAddress == 'both':
             sqlStatementParts.append('(fromaddress = ? OR toaddress = ?)')
-            sqlArguments.append(account)
-            sqlArguments.append(account)
+            sqlArguments.append(dbstr(account))
+            sqlArguments.append(dbstr(account))
         else:
             sqlStatementParts.append(xAddress + ' = ? ')
-            sqlArguments.append(account)
+            sqlArguments.append(dbstr(account))
     if folder is not None:
         if folder == 'new':
             folder = 'inbox'
             unreadOnly = True
         sqlStatementParts.append('folder = ? ')
-        sqlArguments.append(folder)
+        sqlArguments.append(dbstr(folder))
     else:
         sqlStatementParts.append('folder != ?')
-        sqlArguments.append('trash')
+        sqlArguments.append(dbstr('trash'))
     if what:
         sqlStatementParts.append('%s LIKE ?' % (where))
-        sqlArguments.append(what)
+        sqlArguments.append(dbstr(what))
     if unreadOnly:
         sqlStatementParts.append('read = 0')
     if sqlStatementParts:
