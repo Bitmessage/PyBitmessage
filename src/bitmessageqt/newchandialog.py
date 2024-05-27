@@ -56,13 +56,13 @@ class NewChanDialog(QtGui.QDialog):
         if ustr(self.chanAddress.text()) == "":
             addressGeneratorQueue.put(
                 ('createChan', 4, 1, str_chan + ' ' + ustr(self.chanPassPhrase.text()),
-                 ustr(self.chanPassPhrase.text()),
+                 ustr(self.chanPassPhrase.text()).encode("utf-8", "replace"),
                  True))
         else:
             addressGeneratorQueue.put(
                 ('joinChan', addBMIfNotPresent(ustr(self.chanAddress.text())),
                  str_chan + ' ' + ustr(self.chanPassPhrase.text()),
-                 ustr(self.chanPassPhrase.text()),
+                 ustr(self.chanPassPhrase.text()).encode("utf-8", "replace"),
                  True))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if addressGeneratorReturnValue and addressGeneratorReturnValue[0] != 'chan name does not match address':

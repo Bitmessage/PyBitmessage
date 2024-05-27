@@ -38,7 +38,7 @@ def identiconize(address):
         # stripped from PIL and uses QT instead (by sendiulo, same license)
         import qidenticon
         icon_hash = hashlib.md5(
-            addBMIfNotPresent(address) + identiconsuffix).hexdigest()
+            (addBMIfNotPresent(address) + identiconsuffix).encode("utf-8", "replace")).hexdigest()
         use_two_colors = identicon_lib[:len('qidenticon_two')] == 'qidenticon_two'
         opacity = int(
             identicon_lib not in (
@@ -81,7 +81,7 @@ def avatarize(address):
     falls back to identiconize(address)
     """
     idcon = QtGui.QIcon()
-    icon_hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
+    icon_hash = hashlib.md5(addBMIfNotPresent(address).encode("utf-8", "replace")).hexdigest()
     if address == str_broadcast_subscribers:
         # don't hash [Broadcast subscribers]
         icon_hash = address

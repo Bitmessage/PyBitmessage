@@ -95,7 +95,7 @@ def saveKnownNodes(dirName=None):
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
-        with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
+        with open(os.path.join(dirName, 'knownnodes.dat'), 'w') as output:
             json_serialize_knownnodes(output)
 
 

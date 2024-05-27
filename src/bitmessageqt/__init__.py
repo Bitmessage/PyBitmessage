@@ -424,7 +424,7 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
         folders = Ui_FolderWidget.folderWeight.keys()
-        folders.remove("new")
+        Ui_FolderWidget.folderWeight.pop("new", None)
 
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
@@ -1702,7 +1702,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressVersionNumber, streamNumberForAddress,
                 "regenerated deterministic address",
                 dialog.spinBoxNumberOfAddressesToMake.value(),
-                ustr(dialog.lineEditPassphrase.text()),
+                ustr(dialog.lineEditPassphrase.text()).encode("utf-8", "replace"),
                 dialog.checkBoxEighteenByteRipe.isChecked()
             ))
             self.ui.tabWidget.setCurrentIndex(
@@ -3770,7 +3770,7 @@ class MyForm(settingsmixin.SMainWindow):
     def setAvatar(self, addressAtCurrentRow):
         if not os.path.exists(state.appdata + 'avatars/'):
             os.makedirs(state.appdata + 'avatars/')
-        hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
+        hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow).encode("utf-8", "replace")).hexdigest()
         extensions = [
             'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM',
             'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']

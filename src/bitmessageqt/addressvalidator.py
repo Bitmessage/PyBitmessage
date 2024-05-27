@@ -153,11 +153,11 @@ class AddressPassPhraseValidatorMixin(object):
 
         # check through generator
         if address is None:
-            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + ustr(passPhrase), passPhrase, False))
+            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + ustr(passPhrase), passPhrase.encode("utf-8", "replace"), False))
         else:
             addressGeneratorQueue.put(
                 ('joinChan', addBMIfNotPresent(address),
-                 "{} {}".format(str_chan, passPhrase), passPhrase, False))
+                 "{} {}".format(str_chan, passPhrase), passPhrase.encode("utf-8", "replace"), False))
 
         if self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
             return (self.returnValid(), s, pos)
