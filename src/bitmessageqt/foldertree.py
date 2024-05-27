@@ -8,6 +8,7 @@ from cgi import escape
 
 from unqstr import ustr, unic
 from PyQt4 import QtCore, QtGui
+from dbcompat import dbstr
 
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
@@ -112,7 +113,7 @@ class AccountMixin(object):
         elif config.safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
-                '''select label from subscriptions where address=?''', self.address):
+                '''select label from subscriptions where address=?''', dbstr(self.address)):
             self.type = AccountMixin.SUBSCRIPTION
         else:
             self.type = self.NORMAL
@@ -129,15 +130,15 @@ class AccountMixin(object):
                     config.get(self.address, 'label')))
             except Exception:
                 queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                    '''select label from addressbook where address=?''', dbstr(self.address))
         elif self.type == AccountMixin.SUBSCRIPTION:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                '''select label from subscriptions where address=?''', dbstr(self.address))
         if queryreturn is not None:
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
-                    retval = unic(ustr(retval))
+                retval = unic(ustr(retval))
         elif self.address is None or self.type == AccountMixin.ALL:
             return unic(_translate("MainWindow", "All accounts"))
 
@@ -306,7 +307,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
 
     def _getLabel(self):
         queryreturn = sqlQuery(
-            '''select label from subscriptions where address=?''', self.address)
+            '''select label from subscriptions where address=?''', dbstr(self.address))
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
@@ -328,7 +329,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
                 label = unic(ustr(value))
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
-                label, self.address)
+                dbstr(label), dbstr(self.address))
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
 
 
@@ -410,13 +411,14 @@ class MessageList_AddressWidget(BMAddressWidget):
                     config.get(self.address, 'label')))
             except:
                 queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                    '''select label from addressbook where address=?''', dbstr(self.address))
         elif self.type == AccountMixin.SUBSCRIPTION:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                '''select label from subscriptions where address=?''', dbstr(self.address))
         if queryreturn:
             for row in queryreturn:
-                newLabel = unic(ustr(row[0]))
+                newLabel = row[0]
+            newLabel = unic(ustr(newLabel))
 
         self.label = newLabel
 
@@ -523,9 +525,9 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                     config.set(self.address, 'label', self.label)
                     config.save()
                 except:
-                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
+                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', dbstr(self.label), dbstr(self.address))
             elif self.type == AccountMixin.SUBSCRIPTION:
-                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
+                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', dbstr(self.label), dbstr(self.address))
             else:
                 pass
         return super(Ui_AddressBookWidgetItem, self).setData(role, value)

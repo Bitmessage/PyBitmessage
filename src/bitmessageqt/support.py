@@ -8,6 +8,7 @@ import time
 
 from unqstr import ustr, unic
 from PyQt4 import QtCore
+from dbcompat import dbstr
 
 from bitmessageqt import account
 import defaults
@@ -68,12 +69,12 @@ Connected hosts: {}
 
 
 def checkAddressBook(myapp):
-    sqlExecute('DELETE from addressbook WHERE address=?', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
+    sqlExecute('DELETE from addressbook WHERE address=?', dbstr(OLD_SUPPORT_ADDRESS))
+    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', dbstr(SUPPORT_ADDRESS))
     if queryreturn == []:
         sqlExecute(
             'INSERT INTO addressbook VALUES (?,?)',
-            ustr(SUPPORT_LABEL), SUPPORT_ADDRESS)
+            dbstr(SUPPORT_LABEL), dbstr(SUPPORT_ADDRESS))
         myapp.rerenderAddressBook()
 
 

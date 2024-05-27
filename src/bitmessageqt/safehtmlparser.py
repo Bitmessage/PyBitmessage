@@ -123,7 +123,10 @@ class SafeHTMLParser(HTMLParser):
         self.sanitised += "&" + name + ";"
 
     def feed(self, data):
-        data = unic(ustr(data))
+        try:
+            data = unic(ustr(data))
+        except TypeError:
+            pass
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.replace_pre(data)
         tmp = self.uriregex1.sub(r'<a href="\1">\1</a>', tmp)

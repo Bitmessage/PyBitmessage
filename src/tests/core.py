@@ -32,6 +32,7 @@ from network.node import Node, Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 from version import softwareVersion
+from dbcompat import dbstr
 
 from common import cleanup
 
@@ -347,11 +348,11 @@ class TestCore(unittest.TestCase):
         )
         queryreturn = sqlQuery(
             '''select msgid from sent where ackdata=?''', result)
-        self.assertNotEqual(queryreturn[0][0] if queryreturn else '', '')
+        self.assertNotEqual(queryreturn[0][0] if queryreturn else b'', b'')
 
         column_type = sqlQuery(
             '''select typeof(msgid) from sent where ackdata=?''', result)
-        self.assertEqual(column_type[0][0] if column_type else '', 'text')
+        self.assertEqual(column_type[0][0] if column_type else '', 'blob')
 
     @unittest.skipIf(frozen, 'not packed test_pattern into the bundle')
     def test_old_knownnodes_pickle(self):
@@ -369,7 +370,7 @@ class TestCore(unittest.TestCase):
     @staticmethod
     def delete_address_from_addressbook(address):
         """Clean up addressbook"""
-        sqlQuery('''delete from addressbook where address=?''', address)
+        sqlQuery('''delete from addressbook where address=?''', dbstr(address))
 
     def test_add_same_address_twice_in_addressbook(self):
         """checking same address is added twice in addressbook"""
@@ -383,7 +384,7 @@ class TestCore(unittest.TestCase):
         """checking is address added in addressbook or not"""
         helper_addressbook.insert(label='test1', address=self.addr)
         queryreturn = sqlQuery(
-            'select count(*) from addressbook where address=?', self.addr)
+            'select count(*) from addressbook where address=?', dbstr(self.addr))
         self.assertEqual(queryreturn[0][0], 1)
         self.delete_address_from_addressbook(self.addr)
 

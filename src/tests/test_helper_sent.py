@@ -19,7 +19,7 @@ class TestHelperSent(unittest.TestCase):
         """Test insert with valid address"""
         VALID_ADDRESS = "BM-2cUGaEcGz9Zft1SPAo8FJtfzyADTpEgU9U"
         ackdata = insert(
-            msgid="123456",
+            msgid=b"123456",
             toAddress="[Broadcast subscribers]",
             fromAddress=VALID_ADDRESS,
             subject="Test Subject",
@@ -45,10 +45,10 @@ class TestHelperSent(unittest.TestCase):
     @patch("pybitmessage.helper_sent.sqlExecute")
     def test_delete(self, mock_sql_execute):
         """Test delete function"""
-        delete("ack_data")
+        delete(b"ack_data")
         self.assertTrue(mock_sql_execute.called)
         mock_sql_execute.assert_called_once_with(
-            "DELETE FROM sent WHERE ackdata = ?", "ack_data"
+            "DELETE FROM sent WHERE ackdata = ?", b"ack_data"
         )
 
     @patch("pybitmessage.helper_sent.sqlQuery")
@@ -56,11 +56,11 @@ class TestHelperSent(unittest.TestCase):
         """Test retrieving valid message details"""
         return_data = [
             (
-                "to@example.com",
-                "from@example.com",
-                "Test Subject",
-                "Test Message",
-                "2022-01-01",
+                b"to@example.com",
+                b"from@example.com",
+                b"Test Subject",
+                b"Test Message",
+                b"2022-01-01",
             )
         ]
         mock_sql_query.return_value = return_data
@@ -70,7 +70,7 @@ class TestHelperSent(unittest.TestCase):
     @patch("pybitmessage.helper_sent.sqlExecute")
     def test_trash(self, mock_sql_execute):
         """Test marking a message as 'trash'"""
-        ackdata = "ack_data"
+        ackdata = b"ack_data"
         mock_sql_execute.return_value = 1
         rowcount = trash(ackdata)
         self.assertEqual(rowcount, 1)

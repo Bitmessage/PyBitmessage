@@ -31,6 +31,7 @@ from helper_sql import sqlExecute, sqlQuery
 from network import knownnodes, StoppableThread
 from six.moves import configparser, queue
 from six.moves.reprlib import repr
+from dbcompat import dbstr
 
 
 def sizeof_fmt(num, suffix='h/s'):
@@ -74,6 +75,7 @@ class singleWorker(StoppableThread):
             '''SELECT DISTINCT toaddress FROM sent'''
             ''' WHERE (status='awaitingpubkey' AND folder='sent')''')
         for toAddress, in queryreturn:
+            toAddress = toAddress.decode("utf-8", "replace")
             toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toAddress)[1:]
             if toAddressVersionNumber <= 3:
@@ -535,10 +537,13 @@ class singleWorker(StoppableThread):
         queryreturn = sqlQuery(
             '''SELECT fromaddress, subject, message, '''
             ''' ackdata, ttl, encodingtype FROM sent '''
-            ''' WHERE status=? and folder='sent' ''', 'broadcastqueued')
+            ''' WHERE status=? and folder='sent' ''', dbstr('broadcastqueued'))
 
         for row in queryreturn:
             fromaddress, subject, body, ackdata, TTL, encoding = row
+            fromaddress = fromaddress.decode("utf-8", "replace")
+            subject = subject.decode("utf-8", "replace")
+            body = body.decode("utf-8", "replace")
             # status
             _, addressVersionNumber, streamNumber, ripe = \
                 decodeAddress(fromaddress)
@@ -707,7 +712,7 @@ class singleWorker(StoppableThread):
             sqlExecute(
                 '''UPDATE sent SET msgid=?, status=?, lastactiontime=? '''
                 ''' WHERE ackdata=? AND folder='sent' ''',
-                inventoryHash, 'broadcastsent', int(time.time()), ackdata
+                inventoryHash, dbstr('broadcastsent'), int(time.time()), ackdata
             )
 
     def sendMsg(self):
@@ -727,6 +732,11 @@ class singleWorker(StoppableThread):
         for row in queryreturn:
             toaddress, fromaddress, subject, message, \
                 ackdata, status, TTL, retryNumber, encoding = row
+            toaddress = toaddress.decode("utf-8", "replace")
+            fromaddress = fromaddress.decode("utf-8", "replace")
+            subject = subject.decode("utf-8", "replace")
+            message = message.decode("utf-8", "replace")
+            status = status.decode("utf-8", "replace")
             # toStatus
             _, toAddressVersionNumber, toStreamNumber, toRipe = \
                 decodeAddress(toaddress)
@@ -756,7 +766,7 @@ class singleWorker(StoppableThread):
                 if not sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' '''
                     ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                    toaddress
+                    dbstr(toaddress)
                 ):
                     continue
                 status = 'doingmsgpow'
@@ -764,7 +774,7 @@ class singleWorker(StoppableThread):
                 # Let's see if we already have the pubkey in our pubkeys table
                 queryreturn = sqlQuery(
                     '''SELECT address FROM pubkeys WHERE address=?''',
-                    toaddress
+                    dbstr(toaddress)
                 )
                 # If we have the needed pubkey in the pubkey table already,
                 if queryreturn != []:
@@ -772,7 +782,7 @@ class singleWorker(StoppableThread):
                     if not sqlExecute(
                         '''UPDATE sent SET status='doingmsgpow' '''
                         ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                        toaddress
+                        dbstr(toaddress)
                     ):
                         continue
                     status = 'doingmsgpow'
@@ -784,7 +794,7 @@ class singleWorker(StoppableThread):
                     sqlExecute(
                         '''UPDATE pubkeys SET usedpersonally='yes' '''
                         ''' WHERE address=?''',
-                        toaddress
+                        dbstr(toaddress)
                     )
                 # We don't have the needed pubkey in the pubkeys table already.
                 else:
@@ -804,7 +814,7 @@ class singleWorker(StoppableThread):
                             ''' sleeptill=? WHERE toaddress=? '''
                             ''' AND status='msgqueued' ''',
                             int(time.time()) + 2.5 * 24 * 60 * 60,
-                            toaddress
+                            dbstr(toaddress)
                         )
                         queues.UISignalQueue.put((
                             'updateSentItemStatusByToAddress', (
@@ -861,7 +871,7 @@ class singleWorker(StoppableThread):
                                         ''' status='awaitingpubkey' or '''
                                         ''' status='doingpubkeypow') AND '''
                                         ''' folder='sent' ''',
-                                        toaddress)
+                                        dbstr(toaddress))
                                     del state.neededPubkeys[tag_bytes]
                                     break
                                 # else:
@@ -878,7 +888,7 @@ class singleWorker(StoppableThread):
                                 '''UPDATE sent SET '''
                                 ''' status='doingpubkeypow' WHERE '''
                                 ''' toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                                toaddress
+                                dbstr(toaddress)
                             )
                             queues.UISignalQueue.put((
                                 'updateSentItemStatusByToAddress', (
@@ -923,7 +933,7 @@ class singleWorker(StoppableThread):
                 # is too hard then we'll abort.
                 queryreturn = sqlQuery(
                     'SELECT transmitdata FROM pubkeys WHERE address=?',
-                    toaddress)
+                    dbstr(toaddress))
                 for row in queryreturn:  # pylint: disable=redefined-outer-name
                     pubkeyPayload, = row
 
@@ -1342,7 +1352,7 @@ class singleWorker(StoppableThread):
             sqlExecute(
                 '''UPDATE sent SET msgid=?, status=?, retrynumber=?, '''
                 ''' sleeptill=?, lastactiontime=? WHERE ackdata=? AND folder='sent' ''',
-                inventoryHash, newStatus, retryNumber + 1,
+                inventoryHash, dbstr(newStatus), retryNumber + 1,
                 sleepTill, int(time.time()), ackdata
             )
 
@@ -1388,7 +1398,7 @@ class singleWorker(StoppableThread):
             '''SELECT retrynumber FROM sent WHERE toaddress=? '''
             ''' AND (status='doingpubkeypow' OR status='awaitingpubkey') '''
             ''' AND folder='sent' LIMIT 1''',
-            toAddress
+            dbstr(toAddress)
         )
         if not queryReturn:
             self.logger.critical(
@@ -1471,7 +1481,7 @@ class singleWorker(StoppableThread):
             ''' status='awaitingpubkey', retrynumber=?, sleeptill=? '''
             ''' WHERE toaddress=? AND (status='doingpubkeypow' OR '''
             ''' status='awaitingpubkey') AND folder='sent' ''',
-            int(time.time()), retryNumber + 1, sleeptill, toAddress)
+            int(time.time()), retryNumber + 1, sleeptill, dbstr(toAddress))
 
         queues.UISignalQueue.put((
             'updateStatusBar',

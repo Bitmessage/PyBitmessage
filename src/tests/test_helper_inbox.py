@@ -26,7 +26,7 @@ class TestHelperInbox(unittest.TestCase):
     def test_insert(self, mock_sql_execute):  # pylint: disable=no-self-use
         """Test to perform an insert into the "inbox" table"""
         mock_message_data = (
-            "ruyv87bv",
+            b"ruyv87bv",
             "BM-2cUGaEcGz9Zft1SPAo8FJtfzyADTpEgU9U",
             "BM-2cUGaEcGz9Zft1SPAo8FJtfzyADTp5g99U",
             "Test subject",
@@ -35,7 +35,7 @@ class TestHelperInbox(unittest.TestCase):
             "inbox",
             2,
             0,
-            "658gvjhtghv",
+            b"658gvjhtghv",
         )
         insert(t=mock_message_data)
         mock_sql_execute.assert_called_once()
@@ -43,7 +43,7 @@ class TestHelperInbox(unittest.TestCase):
     @patch("pybitmessage.helper_inbox.sqlExecute")
     def test_trash(self, mock_sql_execute):  # pylint: disable=no-self-use
         """Test marking a message in the `inbox` as `trash`"""
-        mock_msg_id = "fefkosghsbse92"
+        mock_msg_id = b"fefkosghsbse92"
         trash(msgid=mock_msg_id)
         mock_sql_execute.assert_called_once()
 
@@ -57,7 +57,7 @@ class TestHelperInbox(unittest.TestCase):
     @patch("pybitmessage.helper_inbox.sqlExecute")
     def test_undeleteMessage(self, mock_sql_execute):  # pylint: disable=no-self-use
         """Test for Undelete the message"""
-        mock_msg_id = "fefkosghsbse92"
+        mock_msg_id = b"fefkosghsbse92"
         undeleteMessage(msgid=mock_msg_id)
         mock_sql_execute.assert_called_once()
 

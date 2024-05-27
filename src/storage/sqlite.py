@@ -98,7 +98,7 @@ class SqliteInventory(InventoryStorage):
             t = int(time.time())
             hashes = [x for x, value in self._inventory.items()
                       if value.stream == stream and value.expires > t]
-            hashes += (str(payload) for payload, in sqlQuery(
+            hashes += (bytes(payload) for payload, in sqlQuery(
                 'SELECT hash FROM inventory WHERE streamnumber=?'
                 ' AND expirestime>?', stream, t))
             return hashes
