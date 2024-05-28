@@ -6,6 +6,7 @@ import os
 import socket
 import ssl
 import sys
+import six
 
 import network.asyncore_pollchoose as asyncore
 import paths
@@ -58,7 +59,7 @@ class TLSDispatcher(AdvancedDispatcher):
         self.tlsDone = False
         self.tlsVersion = "N/A"
         self.isSSL = False
-        if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
+        if six.PY3 or ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
             self.tlsPrepared = False
 
     def state_tls_init(self):
@@ -66,7 +67,7 @@ class TLSDispatcher(AdvancedDispatcher):
         self.isSSL = True
         self.tlsStarted = True
 
-        if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
+        if six.PY3 or ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
             self.want_read = self.want_write = True
             self.set_state("tls_handshake")
             return False
@@ -107,7 +108,7 @@ class TLSDispatcher(AdvancedDispatcher):
                 ciphers=self.ciphers, do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
-        if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
+        if six.PY3 or ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
             self.tlsPrepared = True
         else:
             self.set_state("tls_handshake")
@@ -158,7 +159,7 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
+                if six.PY3 or ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
                     if not self.tlsPrepared:
                         self.do_tls_init()
                         return
@@ -184,7 +185,7 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
+                if six.PY3 or ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
                     if not self.tlsPrepared:
                         self.do_tls_init()
                         return
