@@ -81,7 +81,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             return True
         remoteport = False
         for seenTime, stream, _, ip, port in addresses:
-            decodedIP = protocol.checkIPAddress(str(ip))
+            decodedIP = protocol.checkIPAddress(ip)
             if stream not in network.connectionpool.pool.streams:
                 continue
             if (seenTime < time.time() - protocol.MAX_TIME_OFFSET

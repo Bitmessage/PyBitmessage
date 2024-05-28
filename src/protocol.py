@@ -170,7 +170,7 @@ def checkIPAddress(host, private=False):
     otherwise returns False
     """
     if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-        hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
+        hostStandardFormat = socket.inet_ntop(socket.AF_INET, bytes(host[12:]))
         return checkIPv4Address(host[12:], hostStandardFormat, private)
     elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
         # Onion, based on BMD/bitcoind
@@ -419,7 +419,7 @@ def assembleVersionMessage(
     return CreatePacket(b'version', payload)
 
 
-def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
+def assembleErrorMessage(fatal=0, banTime=0, inventoryVector=b'', errorText=''):
     """
     Construct the payload of an error message,
     return the resulting bytes of running `CreatePacket` on it
@@ -428,6 +428,8 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload += encodeVarint(banTime)
     payload += encodeVarint(len(inventoryVector))
     payload += inventoryVector
+    if isinstance(errorText, str):
+        errorText = errorText.encode("utf-8", "replace")
     payload += encodeVarint(len(errorText))
     payload += errorText
     return CreatePacket(b'error', payload)

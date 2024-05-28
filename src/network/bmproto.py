@@ -9,6 +9,7 @@ import re
 import socket
 import struct
 import time
+import six
 
 # magic imports!
 import addresses
@@ -33,6 +34,18 @@ from .objectracker import ObjectTracker, missingObjects
 
 logger = logging.getLogger('default')
 
+
+def _hoststr(v):
+    if six.PY3:
+        return v
+    else:  # assume six.PY2
+        return str(v)
+
+def _restr(v):
+    if six.PY3:
+        return v.decode("utf-8", "replace")
+    else:  # assume six.PY2
+        return v
 
 class BMProtoError(ProxyError):
     """A Bitmessage Protocol Base Error"""
@@ -115,7 +128,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.invalid:
             try:
                 retval = getattr(
-                    self, "bm_command_" + str(self.command).lower())()
+                    self, "bm_command_" + self.command.decode("utf-8", "replace").lower())()
             except AttributeError:
                 # unimplemented command
                 logger.debug('unimplemented command %s', self.command)
@@ -169,16 +182,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # protocol.checkIPAddress()
         services, host, port = self.decode_payload_content("Q16sH")
         if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, _hoststr(host[12:16]))
         elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
             host = base64.b32encode(host[6:]).lower() + b".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, str(host))
+            host = socket.inet_ntop(socket.AF_INET6, _hoststr(host))
         if host == b"":
             # This can happen on Windows systems which are not 64-bit
             # compatible so let us drop the IPv6 address.
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, _hoststr(host[12:16]))
 
         return Node(services, host, port)
 
@@ -534,7 +547,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.append_write_buf(protocol.CreatePacket(b'verack'))
         self.verackSent = True
         ua_valid = re.match(
-            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent)
+            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', _restr(self.userAgent))
         if not ua_valid:
             self.userAgent = b'/INVALID:0/'
         if not self.isOutbound:

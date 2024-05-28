@@ -476,7 +476,7 @@ class MessageList_TimeWidget(BMTableWidgetItem):
     msgid is available by QtCore.Qt.UserRole
     """
 
-    def __init__(self, label=None, unread=False, timestamp=None, msgid=''):
+    def __init__(self, label=None, unread=False, timestamp=None, msgid=b''):
         super(MessageList_TimeWidget, self).__init__(label, unread)
         self.setData(QtCore.Qt.UserRole, QtCore.QByteArray(msgid))
         self.setData(TimestampRole, int(timestamp))

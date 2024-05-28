@@ -185,8 +185,8 @@ class Dandelion:  # pylint: disable=old-style-class
             try:
                 # random two connections
                 self.stem = sample(
-                    connectionpool.BMConnectionPool(
-                    ).outboundConnections.values(), MAX_STEMS)
+                    sorted(connectionpool.BMConnectionPool(
+                    ).outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
                 self.stem = connectionpool.BMConnectionPool(

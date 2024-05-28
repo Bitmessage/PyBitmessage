@@ -40,6 +40,12 @@ maximumAgeOfNodesThatIAdvertiseToOthers = 10800  #: Equals three hours
 maximumTimeOffsetWrongCount = 3  #: Connections with wrong time offset
 
 
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
+
 class TCPConnection(BMProto, TLSDispatcher):
     # pylint: disable=too-many-instance-attributes
     """
@@ -195,7 +201,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         (k, v) for k, v in six.iteritems(nodes)
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
-                        and v["rating"] >= 0 and not k.host.endswith('.onion')
+                        and v["rating"] >= 0 and not _ends_with(k.host, '.onion')
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(

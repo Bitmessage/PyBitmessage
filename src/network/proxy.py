@@ -14,6 +14,12 @@ from .node import Peer
 logger = logging.getLogger('default')
 
 
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
+
 class ProxyError(Exception):
     """Base proxy exception class"""
     errorCodes = ("Unknown error",)
@@ -125,7 +131,7 @@ class Proxy(AdvancedDispatcher):
             self.auth = None
         self.connect(
             self.onion_proxy
-            if address.host.endswith(".onion") and self.onion_proxy else
+            if _ends_with(address.host, ".onion") and self.onion_proxy else
             self.proxy
         )
 

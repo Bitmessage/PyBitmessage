@@ -25,6 +25,12 @@ from .udp import UDPSocket
 logger = logging.getLogger('default')
 
 
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
+
 class BMConnectionPool(object):
     """Pool of all existing connections"""
     # pylint: disable=too-many-instance-attributes
@@ -160,8 +166,8 @@ class BMConnectionPool(object):
     @staticmethod
     def getListeningIP():
         """What IP are we supposed to be listening on?"""
-        if config.safeGet(
-                "bitmessagesettings", "onionhostname", "").endswith(".onion"):
+        if _ends_with(config.safeGet(
+                "bitmessagesettings", "onionhostname", ""), ".onion"):
             host = config.safeGet(
                 "bitmessagesettings", "onionbindip")
         else:
@@ -314,7 +320,7 @@ class BMConnectionPool(object):
                         continue
 
                     try:
-                        if chosen.host.endswith(".onion") and Proxy.onion_proxy:
+                        if _ends_with(chosen.host, ".onion") and Proxy.onion_proxy:
                             if onionsocksproxytype == "SOCKS5":
                                 self.addConnection(Socks5BMConnection(chosen))
                             elif onionsocksproxytype == "SOCKS4a":

@@ -106,6 +106,12 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     Returns True if added a new node.
     """
     # pylint: disable=too-many-branches
+    if not isinstance(peer.host, str):
+        try:
+            peer = Peer(peer.host.decode("ascii"), peer.port)
+        except UnicodeDecodeError as err:
+            logger.warning("Invalid host: {}".format(peer.host.decode("ascii", "backslashreplace")))
+            return
     if isinstance(stream, Iterable):
         with knownNodesLock:
             for s in stream:
@@ -151,7 +157,7 @@ def createDefaultKnownNodes():
 def readKnownNodes():
     """Load knownnodes from filesystem"""
     try:
-        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
+        with open(state.appdata + 'knownnodes.dat', 'r') as source:
             with knownNodesLock:
                 try:
                     json_deserialize_knownnodes(source)
