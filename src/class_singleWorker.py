@@ -31,6 +31,7 @@ from helper_sql import sqlExecute, sqlQuery
 from network import knownnodes, StoppableThread
 from six.moves import configparser, queue
 from six.moves.reprlib import repr
+import six
 from dbcompat import dbstr
 
 
@@ -518,9 +519,15 @@ class singleWorker(StoppableThread):
             payload, TTL, log_prefix='(For onionpeer object)')
 
         inventoryHash = highlevelcrypto.calculateInventoryHash(payload)
+        if six.PY2:
+            payload_buffer = buffer(payload)
+            tag_buffer = buffer(tag)
+        else:  # assume six.PY3
+            payload_buffer = memoryview(payload)
+            tag_buffer = memoryview(tag)
         state.Inventory[inventoryHash] = (
-            objectType, streamNumber, buffer(payload),  # noqa: F821
-            embeddedTime, buffer(tag)  # noqa: F821
+            objectType, streamNumber, payload_buffer,  # noqa: F821
+            embeddedTime, tag_buffer  # noqa: F821
         )
         self.logger.info(
             'sending inv (within sendOnionPeerObj function) for object: %s',

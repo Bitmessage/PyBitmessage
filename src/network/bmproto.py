@@ -422,8 +422,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         try:
             self.object.checkObjectByType()
+            if six.PY2:
+                data_buffer = buffer(self.object.data)
+            else:  # assume six.PY3
+                data_buffer = memoryview(self.object.data)
             objectProcessorQueue.put((
-                self.object.objectType, buffer(self.object.data)))  # noqa: F821
+                self.object.objectType, data_buffer))  # noqa: F821
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
@@ -437,10 +441,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             state.Dandelion.removeHash(
                 self.object.inventoryHash, "cycle detection")
 
+        if six.PY2:
+            object_buffer = buffer(self.payload[objectOffset:])
+            tag_buffer = buffer(self.object.tag)
+        else:  # assume six.PY3
+            object_buffer = memoryview(self.payload[objectOffset:])
+            tag_buffer = memoryview(self.object.tag)
         state.Inventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            buffer(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
-            buffer(self.object.tag)  # noqa: F821
+            object_buffer, self.object.expiresTime,  # noqa: F821
+            tag_buffer  # noqa: F821
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
