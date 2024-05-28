@@ -347,7 +347,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if now < self.skipUntil:
             return True
         for i in items:
-            self.pendingUpload[str(i)] = now
+            self.pendingUpload[i] = now
         return True
 
     def _command_inv(self, dandelion=False):
@@ -366,7 +366,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if dandelion and not state.dandelion_enabled:
             return True
 
-        for i in map(str, items):
+        for i in items:
             if i in state.Inventory and not state.Dandelion.hasHash(i):
                 continue
             if dandelion and not state.Dandelion.hasHash(i):
@@ -456,11 +456,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Incoming addresses, process them"""
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
-            ip = str(ip)
             if (
                 stream not in network.connectionpool.pool.streams
                 # FIXME: should check against complete list
-                or ip.startswith('bootstrap')
+                or ip.decode("utf-8", "replace").startswith('bootstrap')
             ):
                 continue
             decodedIP = protocol.checkIPAddress(ip)
