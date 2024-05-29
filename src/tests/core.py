@@ -319,16 +319,17 @@ class TestCore(unittest.TestCase):
 
     def test_version(self):
         """check encoding/decoding of the version message"""
+        dandelion_enabled = True
         # with single stream
-        msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1])
+        msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1], dandelion_enabled)
         decoded = self._decode_msg(msg, "IQQiiQlsLv")
         peer, _, ua, streams = self._decode_msg(msg, "IQQiiQlsLv")[4:]
         self.assertEqual(
-            peer, Node(11 if state.dandelion_enabled else 3, '127.0.0.1', 8444))
+            peer, Node(11 if dandelion_enabled else 3, '127.0.0.1', 8444))
         self.assertEqual(ua, '/PyBitmessage:' + softwareVersion + '/')
         self.assertEqual(streams, [1])
         # with multiple streams
-        msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1, 2, 3])
+        msg = protocol.assembleVersionMessage('127.0.0.1', 8444, [1, 2, 3], dandelion_enabled)
         decoded = self._decode_msg(msg, "IQQiiQlslv")
         peer, _, ua = decoded[4:7]
         streams = decoded[7:]
