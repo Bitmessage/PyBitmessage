@@ -1055,7 +1055,7 @@ class objectProcessor(threading.Thread):
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
         command = command.rstrip(b'\x00')
-        if command != 'object':
+        if command != b'object':
             return False
         return True
 
