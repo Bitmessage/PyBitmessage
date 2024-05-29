@@ -302,12 +302,12 @@ class objectProcessor(threading.Thread):
                     '(within processpubkey) payloadLength less than 146.'
                     ' Sanity check failed.')
             readPosition += 4
-            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             # Is it possible for a public key to be invalid such that trying to
             # encrypt or sign with it will cause an error? If it is, it would
             # be easiest to test them here.
             readPosition += 64
-            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             if len(pubEncryptionKey) < 65:
                 return logger.debug(
                     'publicEncryptionKey length less than 64. Sanity check'
