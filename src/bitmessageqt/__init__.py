@@ -16,6 +16,10 @@ from datetime import datetime, timedelta
 from sqlite3 import register_adapter
 import six
 from six.moves import range as xrange
+if six.PY3:
+    from codecs import escape_decode
+if six.PY2:
+    import sqlite3
 
 from unqstr import ustr, unic
 from PyQt4 import QtCore, QtGui
@@ -2943,7 +2947,15 @@ class MyForm(settingsmixin.SMainWindow):
         if not msgid:
             return
         queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
+            'SELECT message FROM inbox WHERE msgid=?', msgid)
+        # for compatibility
+        if len(queryreturn) < 1:
+            if six.PY3:
+                queryreturn = sqlQuery(
+                    'SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)', msgid)
+            else:  # assume six.PY2
+                queryreturn = sqlQuery(
+                    'SELECT message FROM inbox WHERE msgid=?', sqlite3.Binary(msgid))
         if queryreturn != []:
             for row in queryreturn:
                 messageText, = row
@@ -3603,7 +3615,11 @@ class MyForm(settingsmixin.SMainWindow):
         if messagelist:
             currentRow = messagelist.currentRow()
             if currentRow >= 0:
-                return messagelist.item(currentRow, 3).data()
+                msgid_str = messagelist.item(currentRow, 3).data()
+                if six.PY3:
+                    return escape_decode(msgid_str)[0][2:-1]
+                else:  # assume six.PY2
+                    return msgid_str
 
     def getCurrentMessageTextedit(self):
         currentIndex = self.ui.tabWidget.currentIndex()
@@ -4147,11 +4163,27 @@ class MyForm(settingsmixin.SMainWindow):
         folder = self.getCurrentFolder()
         if msgid:
             queryreturn = sqlQuery(
-                '''SELECT message FROM %s WHERE %s=?''' % (
+                'SELECT message FROM %s WHERE %s=?' % (
                     ('sent', 'ackdata') if folder == 'sent'
                     else ('inbox', 'msgid')
                 ), msgid
             )
+            # for compatibility
+            if len(queryreturn) < 1:
+                if six.PY3:
+                    queryreturn = sqlQuery(
+                        'SELECT message FROM %s WHERE %s=CAST(? AS TEXT)' % (
+                            ('sent', 'ackdata') if folder == 'sent'
+                            else ('inbox', 'msgid')
+                        ), msgid
+                    )
+                else:  # assume six.PY2
+                    queryreturn = sqlQuery(
+                        'SELECT message FROM %s WHERE %s=?' % (
+                            ('sent', 'ackdata') if folder == 'sent'
+                            else ('inbox', 'msgid')
+                        ), sqlite3.Binary(msgid)
+                    )
 
         try:
             message = queryreturn[-1][0]

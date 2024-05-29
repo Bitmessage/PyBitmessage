@@ -478,7 +478,7 @@ class MessageList_TimeWidget(BMTableWidgetItem):
 
     def __init__(self, label=None, unread=False, timestamp=None, msgid=b''):
         super(MessageList_TimeWidget, self).__init__(label, unread)
-        self.setData(QtCore.Qt.UserRole, QtCore.QByteArray(msgid))
+        self.setData(QtCore.Qt.UserRole, QtCore.QByteArray(bytes(msgid)))
         self.setData(TimestampRole, int(timestamp))
 
     def __lt__(self, other):
