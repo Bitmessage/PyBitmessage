@@ -4179,7 +4179,7 @@ class MyForm(settingsmixin.SMainWindow):
                             ('sent', 'ackdata') if folder == 'sent'
                             else ('inbox', 'msgid')
                         ), sqlite3.Binary(msgid)
-            )
+                    )
 
         try:
             message = queryreturn[-1][0].decode("utf-8", "replace")

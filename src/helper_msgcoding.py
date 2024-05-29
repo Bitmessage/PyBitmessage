@@ -156,5 +156,5 @@ class MsgDecode(object):
         if subject:
             subject = subject.splitlines()[0]
         # Field types should be the same for all message types
-        self.subject = subject.decode('utf-8', 'replace')
-        self.body = body.decode('utf-8', 'replace')
+        self.subject = subject.decode("utf-8", "replace")
+        self.body = body.decode("utf-8", "replace")
