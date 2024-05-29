@@ -19,6 +19,8 @@ import six
 from six.moves import range as xrange
 if six.PY3:
     from codecs import escape_decode
+if six.PY2:
+    import sqlite3
 
 from unqstr import ustr, unic
 from dbcompat import dbstr
@@ -2927,6 +2929,14 @@ class MyForm(settingsmixin.SMainWindow):
             return
         queryreturn = sqlQuery(
             'SELECT message FROM inbox WHERE msgid=?', msgid)
+        # for compatibility
+        if len(queryreturn) < 1:
+            if six.PY3:
+                queryreturn = sqlQuery(
+                    'SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)', msgid)
+            else:  # assume six.PY2
+                queryreturn = sqlQuery(
+                    'SELECT message FROM inbox WHERE msgid=?', sqlite3.Binary(msgid))
         try:
             lines_raw = queryreturn[-1][0].split('\n')
             lines = []
@@ -4153,6 +4163,22 @@ class MyForm(settingsmixin.SMainWindow):
                     ('sent', 'ackdata') if folder == 'sent'
                     else ('inbox', 'msgid')
                 ), msgid
+            )
+            # for compatibility
+            if len(queryreturn) < 1:
+                if six.PY3:
+                    queryreturn = sqlQuery(
+                        'SELECT message FROM %s WHERE %s=CAST(? AS TEXT)' % (
+                            ('sent', 'ackdata') if folder == 'sent'
+                            else ('inbox', 'msgid')
+                        ), msgid
+                    )
+                else:  # assume six.PY2
+                    queryreturn = sqlQuery(
+                        'SELECT message FROM %s WHERE %s=?' % (
+                            ('sent', 'ackdata') if folder == 'sent'
+                            else ('inbox', 'msgid')
+                        ), sqlite3.Binary(msgid)
             )
 
         try:
