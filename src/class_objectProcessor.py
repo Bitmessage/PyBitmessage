@@ -150,8 +150,7 @@ class objectProcessor(threading.Thread):
                 " WHERE ackdata=?", int(time.time()), data[readPosition:])
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata', (
-                    data[readPosition:],
-                    _translate(
+                    data[readPosition:], _translate(
                         "MainWindow",
                         "Acknowledgement of the message received {0}"
                     ).format(l10n.formatTimestamp()))
@@ -1055,7 +1054,7 @@ class objectProcessor(threading.Thread):
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
         command = command.rstrip(b'\x00')
-        if command != 'object':
+        if command != b'object':
             return False
         return True
 

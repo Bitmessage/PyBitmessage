@@ -1,14 +1,14 @@
 """
-This module setting file is for settings
+SettingsDialog class definition
 """
 from six.moves import configparser
 import os
 import sys
 import tempfile
 
+from qtpy import QtCore, QtGui, QtWidgets
 import six
 from unqstr import ustr
-from PyQt4 import QtCore, QtGui
 
 import debug
 import defaults
@@ -40,7 +40,7 @@ def getSOCKSProxyType(config):
     return result
 
 
-class SettingsDialog(QtGui.QDialog):
+class SettingsDialog(QtWidgets.QDialog):
     """The "Settings" dialog"""
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)
@@ -81,7 +81,7 @@ class SettingsDialog(QtGui.QDialog):
             self.tabWidgetSettings.setCurrentIndex(
                 self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
             )
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
 
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
@@ -349,7 +349,7 @@ class SettingsDialog(QtGui.QDialog):
         self.config.set('bitmessagesettings', 'replybelow', str(
             self.checkBoxReplyBelow.isChecked()))
 
-        lang = str(self.languageComboBox.itemData(
+        lang = ustr(self.languageComboBox.itemData(
             self.languageComboBox.currentIndex()))
         self.config.set('bitmessagesettings', 'userlocale', lang)
         self.parent.change_translation()
@@ -432,7 +432,7 @@ class SettingsDialog(QtGui.QDialog):
             self.config.set('bitmessagesettings', 'maxuploadrate', str(
                 int(float(self.lineEditMaxUploadRate.text()))))
         except ValueError:
-            QtGui.QMessageBox.about(
+            QtWidgets.QMessageBox.about(
                 self, _translate("MainWindow", "Number needed"),
                 _translate(
                     "MainWindow",
@@ -487,7 +487,7 @@ class SettingsDialog(QtGui.QDialog):
             or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
         ):
             if self.config.get(
-                    'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
+                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
             ) != str(int(
                 float(self.lineEditMaxAcceptableTotalDifficulty.text())
                     * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)):
@@ -504,7 +504,7 @@ class SettingsDialog(QtGui.QDialog):
             or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
         ):
             if self.config.get(
-                    'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
+                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
             ) != str(int(
                 float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
                     * defaults.networkDefaultPayloadLengthExtraBytes)):
@@ -556,7 +556,7 @@ class SettingsDialog(QtGui.QDialog):
             if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
-                QtGui.QMessageBox.about(
+                QtWidgets.QMessageBox.about(
                     self,
                     _translate("MainWindow", "Will not resend ever"),
                     _translate(

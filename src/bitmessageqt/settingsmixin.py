@@ -1,4 +1,3 @@
-#!/usr/bin/python2.7
 """
 src/settingsmixin.py
 ====================
@@ -6,11 +5,12 @@ src/settingsmixin.py
 """
 
 from unqstr import ustr
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 
 class SettingsMixin(object):
-    """Mixin for adding geometry and state saving between restarts."""
+    """Mixin for adding geometry and state saving between restarts"""
+
     def warnIfNoObjectName(self):
         """
         Handle objects which don't have a name. Currently it ignores them. Objects without a name can't have their
@@ -41,8 +41,9 @@ class SettingsMixin(object):
         self.warnIfNoObjectName()
         settings = QtCore.QSettings()
         try:
-            geom = settings.value("/".join([ustr(self.objectName()), "geometry"]))
-            target.restoreGeometry(geom.toByteArray() if hasattr(geom, 'toByteArray') else geom)
+            geom = settings.value(
+                "/".join([ustr(self.objectName()), "geometry"]))
+            target.restoreGeometry(geom)
         except Exception:
             pass
 
@@ -52,13 +53,14 @@ class SettingsMixin(object):
         settings = QtCore.QSettings()
         try:
             state = settings.value("/".join([ustr(self.objectName()), "state"]))
-            target.restoreState(state.toByteArray() if hasattr(state, 'toByteArray') else state)
+            target.restoreState(state)
         except Exception:
             pass
 
 
-class SMainWindow(QtGui.QMainWindow, SettingsMixin):
-    """Main window with Settings functionality."""
+class SMainWindow(QtWidgets.QMainWindow, SettingsMixin):
+    """Main window with Settings functionality"""
+
     def loadSettings(self):
         """Load main window settings."""
         self.readGeometry(self)
@@ -70,9 +72,9 @@ class SMainWindow(QtGui.QMainWindow, SettingsMixin):
         self.writeGeometry(self)
 
 
-class STableWidget(QtGui.QTableWidget, SettingsMixin):
+class STableWidget(QtWidgets.QTableWidget, SettingsMixin):
     """Table widget with Settings functionality"""
-    # pylint: disable=too-many-ancestors
+
     def loadSettings(self):
         """Load table settings."""
         self.readState(self.horizontalHeader())
@@ -82,8 +84,9 @@ class STableWidget(QtGui.QTableWidget, SettingsMixin):
         self.writeState(self.horizontalHeader())
 
 
-class SSplitter(QtGui.QSplitter, SettingsMixin):
-    """Splitter with Settings functionality."""
+class SSplitter(QtWidgets.QSplitter, SettingsMixin):
+    """Splitter with Settings functionality"""
+
     def loadSettings(self):
         """Load splitter settings"""
         self.readState(self)
@@ -93,17 +96,17 @@ class SSplitter(QtGui.QSplitter, SettingsMixin):
         self.writeState(self)
 
 
-class STreeWidget(QtGui.QTreeWidget, SettingsMixin):
-    """Tree widget with settings functionality."""
-    # pylint: disable=too-many-ancestors
+class STreeWidget(QtWidgets.QTreeWidget, SettingsMixin):
+    """Tree widget with settings functionality"""
+
     def loadSettings(self):
-        """Load tree settings."""
+        """Load tree settings. Unimplemented."""
         # recurse children
         # self.readState(self)
         pass
 
     def saveSettings(self):
-        """Save tree settings"""
+        """Save tree settings. Unimplemented."""
         # recurse children
         # self.writeState(self)
         pass

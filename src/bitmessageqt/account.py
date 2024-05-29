@@ -1,21 +1,14 @@
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 """
-account.py
-==========
-
 Account related functions.
 
 """
-
-from __future__ import absolute_import
 
 import inspect
 import re
 import sys
 import time
 
-from unqstr import ustr
-from PyQt4 import QtGui
+from unqstr import ustr, unic
 from dbcompat import dbstr
 
 import queues
@@ -25,6 +18,7 @@ from helper_ackPayload import genAckPayload
 from helper_sql import sqlQuery, sqlExecute
 from .foldertree import AccountMixin
 from .utils import str_broadcast_subscribers
+from tr import _translate
 
 
 def getSortedSubscriptions(count=False):
@@ -36,24 +30,23 @@ def getSortedSubscriptions(count=False):
     :retuns: dict keys are addresses, values are dicts containing settings
     :rtype: dict, default {}
     """
-    queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions ORDER BY label COLLATE NOCASE ASC')
+    queryreturn = sqlQuery(
+        'SELECT label, address, enabled FROM subscriptions'
+        ' ORDER BY label COLLATE NOCASE ASC')
     ret = {}
-    for row in queryreturn:
-        label, address, enabled = row
+    for label, address, enabled in queryreturn:
         label = label.decode("utf-8", "replace")
         address = address.decode("utf-8", "replace")
-        ret[address] = {}
-        ret[address]["inbox"] = {}
-        ret[address]["inbox"]['label'] = label
-        ret[address]["inbox"]['enabled'] = enabled
-        ret[address]["inbox"]['count'] = 0
+        ret[address] = {'inbox': {}}
+        ret[address]['inbox'].update(label=label, enabled=enabled, count=0)
     if count:
-        queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
-            FROM inbox, subscriptions ON subscriptions.address = inbox.fromaddress
-            WHERE read = 0 AND toaddress = ?
-            GROUP BY inbox.fromaddress, folder''', dbstr(str_broadcast_subscribers))
-        for row in queryreturn:
-            address, folder, cnt = row
+        queryreturn = sqlQuery(
+            'SELECT fromaddress, folder, count(msgid) AS cnt'
+            ' FROM inbox, subscriptions'
+            ' ON subscriptions.address = inbox.fromaddress WHERE read = 0'
+            ' AND toaddress = ? GROUP BY inbox.fromaddress, folder',
+            dbstr(str_broadcast_subscribers))
+        for address, folder, cnt in queryreturn:
             address = address.decode("utf-8", "replace")
             folder = folder.decode("utf-8", "replace")
             if folder not in ret[address]:
@@ -81,7 +74,8 @@ def accountClass(address):
         return subscription
     try:
         gateway = config.get(address, "gateway")
-        for _, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+        for _, cls in inspect.getmembers(
+                sys.modules[__name__], inspect.isclass):
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
         # general gateway
@@ -92,7 +86,7 @@ def accountClass(address):
     return BMAccount(address)
 
 
-class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
+class AccountColor(AccountMixin):
     """Set the type of account"""
 
     def __init__(self, address, address_type=None):
@@ -106,7 +100,9 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
             elif config.safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
-                    '''select label from subscriptions where address=?''', dbstr(self.address)):
+                'SELECT label FROM subscriptions WHERE address=?',
+                dbstr(self.address)
+            ):
                 self.type = AccountMixin.SUBSCRIPTION
             else:
                 self.type = AccountMixin.NORMAL
@@ -114,50 +110,22 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
             self.type = address_type
 
 
-class BMAccount(object):
-    """Encapsulate a Bitmessage account"""
-
+class NoAccount(object):
+    """Minimal account like object (All accounts)"""
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
-        if config.has_section(address):
-            if config.safeGetBoolean(self.address, 'chan'):
-                self.type = AccountMixin.CHAN
-            elif config.safeGetBoolean(self.address, 'mailinglist'):
-                self.type = AccountMixin.MAILINGLIST
-        elif self.address == str_broadcast_subscribers:
-            self.type = AccountMixin.BROADCAST
-        else:
-            queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', dbstr(self.address))
-            if queryreturn:
-                self.type = AccountMixin.SUBSCRIPTION
+        self.toAddress = self.fromAddress = ''
+        self.subject = self.message = ''
+        self.fromLabel = self.toLabel = ''
 
     def getLabel(self, address=None):
         """Get a label for this bitmessage account"""
-        if address is None:
-            address = self.address
-        else:
-            address = ustr(address)
-        label = config.safeGet(address, 'label', address)
-        queryreturn = sqlQuery(
-            '''select label from addressbook where address=?''', dbstr(address))
-        if queryreturn != []:
-            for row in queryreturn:
-                label, = row
-            label = label.decode("utf-8", "replace")
-        else:
-            queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', dbstr(address))
-            if queryreturn != []:
-                for row in queryreturn:
-                    label, = row
-                label = label.decode("utf-8", "replace")
-        return label
+        return address or self.address
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """Set metadata and address labels on self"""
-
         self.toAddress = ustr(toAddress)
         self.fromAddress = ustr(fromAddress)
         self.subject = ustr(subject)
@@ -166,17 +134,37 @@ class BMAccount(object):
         self.toLabel = ustr(self.getLabel(toAddress))
 
 
-class NoAccount(BMAccount):
-    """Override the __init__ method on a BMAccount"""
+class BMAccount(NoAccount):
+    """Encapsulate a Bitmessage account"""
 
-    def __init__(self, address=None):  # pylint: disable=super-init-not-called
-        self.address = address
-        self.type = AccountMixin.NORMAL
+    def __init__(self, address=None):
+        super(BMAccount, self).__init__(address)
+        if config.has_section(address):
+            if config.safeGetBoolean(self.address, 'chan'):
+                self.type = AccountMixin.CHAN
+            elif config.safeGetBoolean(self.address, 'mailinglist'):
+                self.type = AccountMixin.MAILINGLIST
+        elif self.address == str_broadcast_subscribers:
+            self.type = AccountMixin.BROADCAST
+        elif sqlQuery(
+            'SELECT label FROM subscriptions WHERE address=?', dbstr(self.address)
+        ):
+            self.type = AccountMixin.SUBSCRIPTION
 
     def getLabel(self, address=None):
-        if address is None:
-            address = self.address
-        return address
+        """Get a label for this bitmessage account"""
+        address = super(BMAccount, self).getLabel(address)
+        label = config.safeGet(address, 'label', address)
+        queryreturn = sqlQuery(
+            'SELECT label FROM addressbook WHERE address=?', dbstr(address))
+        if queryreturn:
+            label = queryreturn[-1][0]
+        else:
+            queryreturn = sqlQuery(
+                'SELECT label FROM subscriptions WHERE address=?', dbstr(address))
+            if queryreturn:
+                label = queryreturn[-1][0]
+        return unic(ustr(label))
 
 
 class SubscriptionAccount(BMAccount):
@@ -196,15 +184,11 @@ class GatewayAccount(BMAccount):
     ALL_OK = 0
     REGISTRATION_DENIED = 1
 
-    def __init__(self, address):
-        super(GatewayAccount, self).__init__(address)
-
     def send(self):
-        """Override the send method for gateway accounts"""
-
-        # pylint: disable=unused-variable
-        status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        stealthLevel = config.safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        """The send method for gateway accounts"""
+        streamNumber, ripe = decodeAddress(self.toAddress)[2:]
+        stealthLevel = config.safeGetInt(
+            'bitmessagesettings', 'ackstealthlevel')
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -277,10 +261,9 @@ class MailchuckAccount(GatewayAccount):
 
     def settings(self):
         """settings specific to a MailchuckAccount"""
-
         self.toAddress = self.registrationAddress
         self.subject = "config"
-        self.message = QtGui.QApplication.translate(
+        self.message = _translate(
             "Mailchuck",
             """# You can use this to configure your email gateway account
 # Uncomment the setting you want to use
@@ -326,8 +309,9 @@ class MailchuckAccount(GatewayAccount):
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """parseMessage specific to a MailchuckAccount"""
-
-        super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(MailchuckAccount, self).parseMessage(
+            toAddress, fromAddress, subject, message
+        )
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
             if matches is not None:
@@ -348,6 +332,7 @@ class MailchuckAccount(GatewayAccount):
                     self.toLabel = matches.group(1)
                     self.toAddress = matches.group(1)
         self.feedback = self.ALL_OK
-        if fromAddress == self.registrationAddress and self.subject == "Registration Request Denied":
+        if fromAddress == self.registrationAddress \
+                and self.subject == "Registration Request Denied":
             self.feedback = self.REGISTRATION_DENIED
         return self.feedback

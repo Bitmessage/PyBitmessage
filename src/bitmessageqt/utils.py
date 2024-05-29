@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from PyQt4 import QtGui
+from qtpy import QtGui
 
 import state
 from addresses import addBMIfNotPresent
@@ -30,16 +30,18 @@ def identiconize(address):
     # It can be used as a pseudo-password to salt the generation of
     # the identicons to decrease the risk of attacks where someone creates
     # an address to mimic someone else's identicon.
-    identiconsuffix = config.get('bitmessagesettings', 'identiconsuffix')
+    data = addBMIfNotPresent(address) + config.get(
+        'bitmessagesettings', 'identiconsuffix')
+    data = data.encode("utf-8", "replace")
     if identicon_lib[:len('qidenticon')] == 'qidenticon':
         # originally by:
         # :Author:Shin Adachi <shn@glucose.jp>
         # Licesensed under FreeBSD License.
         # stripped from PIL and uses QT instead (by sendiulo, same license)
         import qidenticon
-        icon_hash = hashlib.md5(
-            (addBMIfNotPresent(address) + identiconsuffix).encode("utf-8", "replace")).hexdigest()
-        use_two_colors = identicon_lib[:len('qidenticon_two')] == 'qidenticon_two'
+        icon_hash = hashlib.md5(data).hexdigest()
+        use_two_colors = (
+            identicon_lib[:len('qidenticon_two')] == 'qidenticon_two')
         opacity = int(
             identicon_lib not in (
                 'qidenticon_x', 'qidenticon_two_x',
@@ -63,8 +65,7 @@ def identiconize(address):
         # https://github.com/azaghal/pydenticon
         # note that it requires pillow (or PIL) to be installed:
         # https://python-pillow.org/
-        idcon_render = Pydenticon(
-            addBMIfNotPresent(address) + identiconsuffix, size * 3)
+        idcon_render = Pydenticon(data, size * 3)
         rendering = idcon_render._render()
         data = rendering.convert("RGBA").tostring("raw", "RGBA")
         qim = QtGui.QImage(data, size, size, QtGui.QImage.Format_ARGB32)
@@ -105,11 +106,9 @@ def avatarize(address):
         lower_default = state.appdata + 'avatars/' + 'default.' + ext.lower()
         upper_default = state.appdata + 'avatars/' + 'default.' + ext.upper()
         if os.path.isfile(lower_default):
-            default = lower_default
             idcon.addFile(lower_default)
             return idcon
         elif os.path.isfile(upper_default):
-            default = upper_default
             idcon.addFile(upper_default)
             return idcon
     # If no avatar is found

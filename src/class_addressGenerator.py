@@ -1,5 +1,5 @@
 """
-A thread for creating addresses
+addressGenerator thread class definition
 """
 
 import time
