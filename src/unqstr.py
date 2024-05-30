@@ -5,6 +5,8 @@ def ustr(v):
     if six.PY3:
         if isinstance(v, str):
             return v
+        elif isinstance(v, bytes):
+            return v.decode("utf-8", "replace")
         else:
             return str(v)
     # assume six.PY2
