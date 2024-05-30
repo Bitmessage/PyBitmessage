@@ -549,7 +549,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         logger.debug(
             'remote node incoming address: %s:%i',
             self.destination.host, self.peerNode.port)
-        logger.debug('user agent: %s', self.userAgent)
+        logger.debug('user agent: %s', self.userAgent.decode("utf-8", "replace"))
         logger.debug('streams: [%s]', ','.join(map(str, self.streams)))
         if not self.peerValidityChecks():
             # ABORT afterwards
