@@ -1467,10 +1467,10 @@ class BMRPCDispatcher(object):
                 # Stream Number length
                 readPosition += decodeVarint(
                     payload[readPosition:readPosition + 10])[1]
-                t = (payload[readPosition:readPosition + 32], sqlite3.Binary(hash01))
+                t = (sqlite3.Binary(payload[readPosition:readPosition + 32]), sqlite3.Binary(hash01))
                 _, rowcount = sql.execute("UPDATE inventory SET tag=? WHERE hash=?", *t)
                 if rowcount < 1:
-                    t = (payload[readPosition:readPosition + 32], hash01)
+                    t = (sqlite3.Binary(payload[readPosition:readPosition + 32]), hash01)
                     sql.execute("UPDATE inventory SET tag=? WHERE hash=CAST(? AS TEXT)", *t)
 
         queryreturn = sqlQuery(

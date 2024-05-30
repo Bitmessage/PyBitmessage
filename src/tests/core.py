@@ -357,7 +357,7 @@ class TestCore(unittest.TestCase):
         if len(column_type) < 1:
             column_type = sqlQuery(
                 '''select typeof(msgid) from sent where ackdata=CAST(? AS TEXT)''', result)
-        self.assertEqual(column_type[0][0] if column_type else '', 'text')
+        self.assertEqual(column_type[0][0] if column_type else '', 'blob')
 
     @unittest.skipIf(frozen, 'not packed test_pattern into the bundle')
     def test_old_knownnodes_pickle(self):

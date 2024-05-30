@@ -3277,7 +3277,7 @@ class MyForm(settingsmixin.SMainWindow):
         if total_row_count < 1:
             sqlExecuteChunked(
                 "UPDATE inbox SET folder='inbox' WHERE msgid IN({0})",
-                True, idCount, *inventoryHashesToTrash, as_text=True)
+                True, idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount()
