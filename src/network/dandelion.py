@@ -8,7 +8,7 @@ from threading import RLock
 from time import time
 import six
 
-from network import connectionpool
+import network.connectionpool  # use long name to address recursive import
 import state
 from queues import invQueue
 
@@ -185,11 +185,11 @@ class Dandelion:  # pylint: disable=old-style-class
             try:
                 # random two connections
                 self.stem = sample(
-                    sorted(connectionpool.BMConnectionPool(
+                    sorted(network.connectionpool.BMConnectionPool(
                     ).outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = connectionpool.BMConnectionPool(
+                self.stem = network.connectionpool.BMConnectionPool(
                 ).outboundConnections.values()
             self.nodeMap = {}
             # hashMap stays to cater for pending stems

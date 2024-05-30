@@ -17,7 +17,7 @@ import l10n
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-import dandelion
+from network import dandelion
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from queues import invQueue, receiveDataQueue, UISignalQueue

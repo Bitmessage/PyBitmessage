@@ -6,7 +6,7 @@ from threading import RLock
 import six
 
 import network.connectionpool  # use long name to address recursive import
-import dandelion
+from network import dandelion
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False

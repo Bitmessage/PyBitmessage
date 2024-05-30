@@ -10,7 +10,7 @@ import protocol
 from network import connectionpool
 from .objectracker import missingObjects
 from .threads import StoppableThread
-import dandelion
+from network import dandelion
 
 
 class DownloadThread(StoppableThread):
