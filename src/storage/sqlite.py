@@ -110,6 +110,7 @@ class SqliteInventory(InventoryStorage):
             # always use the inventoryLock OUTSIDE of the sqlLock.
             with SqlBulkExecute() as sql:
                 for objectHash, value in self._inventory.items():
+                    value = [value[0], value[1], sqlite3.Binary(value[2]), value[3], sqlite3.Binary(value[4])]
                     sql.execute(
                         'INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)',
                         sqlite3.Binary(objectHash), *value)

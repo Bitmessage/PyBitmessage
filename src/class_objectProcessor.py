@@ -12,6 +12,7 @@ import subprocess  # nosec B404
 import threading
 import time
 from binascii import hexlify
+import sqlite3
 
 import helper_bitcoin
 import helper_inbox
@@ -122,7 +123,7 @@ class objectProcessor(threading.Thread):
                         objectType, data = queues.objectProcessorQueue.get()
                         sql.execute(
                             'INSERT INTO objectprocessorqueue VALUES (?,?)',
-                            objectType, data)
+                            objectType, sqlite3.Binary(data))
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
                 logger.debug(
                     'Saved %s objects from the objectProcessorQueue to'
@@ -145,12 +146,16 @@ class objectProcessor(threading.Thread):
         if data_bytes in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
             del state.ackdataForWhichImWatching[data_bytes]
-            sqlExecute(
+            rowcount = sqlExecute(
                 "UPDATE sent SET status='ackreceived', lastactiontime=?"
-                " WHERE ackdata=?", int(time.time()), data[readPosition:])
+                " WHERE ackdata=?", int(time.time()), sqlite3.Binary(data_bytes))
+            if rowcount < 1:
+                rowcount = sqlExecute(
+                    "UPDATE sent SET status='ackreceived', lastactiontime=?"
+                    " WHERE ackdata=CAST(? AS TEXT)", int(time.time()), data_bytes)
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata', (
-                    data[readPosition:],
+                    data_bytes,
                     _translate(
                         "MainWindow",
                         "Acknowledgement of the message received {0}"
@@ -337,13 +342,13 @@ class objectProcessor(threading.Thread):
             if queryreturn != []:
                 logger.info(
                     'We HAVE used this pubkey personally. Updating time.')
-                t = (dbstr(address), addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
                      int(time.time()), 'yes')
             else:
                 logger.info(
                     'We have NOT used this pubkey personally. Inserting'
                     ' in database.')
-                t = (dbstr(address), addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
                      int(time.time()), 'no')
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(address)
@@ -399,13 +404,13 @@ class objectProcessor(threading.Thread):
             if queryreturn != []:
                 logger.info(
                     'We HAVE used this pubkey personally. Updating time.')
-                t = (dbstr(address), addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
                      int(time.time()), dbstr('yes'))
             else:
                 logger.info(
                     'We have NOT used this pubkey personally. Inserting'
                     ' in database.')
-                t = (dbstr(address), addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
                      int(time.time()), dbstr('no'))
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(address)
@@ -597,7 +602,7 @@ class objectProcessor(threading.Thread):
             '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
             dbstr(fromAddress),
             sendersAddressVersionNumber,
-            decryptedData[:endOfThePublicKeyPosition],
+            sqlite3.Binary(decryptedData[:endOfThePublicKeyPosition]),
             int(time.time()),
             dbstr('yes'))
 
@@ -935,7 +940,7 @@ class objectProcessor(threading.Thread):
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
                    dbstr(fromAddress),
                    dbstr(sendersAddressVersion),
-                   decryptedData[:endOfPubkeyPosition],
+                   sqlite3.Binary(decryptedData[:endOfPubkeyPosition]),
                    int(time.time()),
                    dbstr('yes'))
 

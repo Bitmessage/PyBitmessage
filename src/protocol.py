@@ -13,6 +13,7 @@ import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
 import six
+import sqlite3
 
 import defaults
 import highlevelcrypto
@@ -562,7 +563,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             hexlify(pubSigningKey), hexlify(pubEncryptionKey)
         )
 
-        t = (dbstr(address), addressVersion, storedData, int(time.time()), dbstr('yes'))
+        t = (dbstr(address), addressVersion, sqlite3.Binary(storedData), int(time.time()), dbstr('yes'))
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
         return 'successful'
     except varintDecodeError:

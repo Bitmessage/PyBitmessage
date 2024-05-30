@@ -16,6 +16,7 @@ import threading
 import time
 import unittest
 import six
+import sqlite3
 
 import protocol
 import state
@@ -347,11 +348,17 @@ class TestCore(unittest.TestCase):
             subject=subject, message=message
         )
         queryreturn = sqlQuery(
-            '''select msgid from sent where ackdata=?''', result)
+            '''select msgid from sent where ackdata=?''', sqlite3.Binary(result))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                '''select msgid from sent where ackdata=CAST(? AS TEXT)''', result)
         self.assertNotEqual(queryreturn[0][0] if queryreturn else b'', b'')
 
         column_type = sqlQuery(
-            '''select typeof(msgid) from sent where ackdata=?''', result)
+            '''select typeof(msgid) from sent where ackdata=?''', sqlite3.Binary(result))
+        if len(column_type) < 1:
+            column_type = sqlQuery(
+                '''select typeof(msgid) from sent where ackdata=CAST(? AS TEXT)''', result)
         self.assertEqual(column_type[0][0] if column_type else '', 'blob')
 
     @unittest.skipIf(frozen, 'not packed test_pattern into the bundle')

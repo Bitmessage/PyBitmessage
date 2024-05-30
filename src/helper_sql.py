@@ -61,7 +61,7 @@ def sqlQuery(sql_statement, *args):
     return queryreturn
 
 
-def sqlExecuteChunked(sql_statement, idCount, *args):
+def sqlExecuteChunked(sql_statement, as_text, idCount, *args):
     """Execute chunked SQL statement to avoid argument limit"""
     # SQLITE_MAX_VARIABLE_NUMBER,
     # unfortunately getting/setting isn't exposed to python
@@ -80,9 +80,14 @@ def sqlExecuteChunked(sql_statement, idCount, *args):
             chunk_slice = args[
                 i:i + sqlExecuteChunked.chunkSize - (len(args) - idCount)
             ]
-            sqlSubmitQueue.put(
-                sql_statement.format(','.join('?' * len(chunk_slice)))
-            )
+            if as_text:
+                sqlSubmitQueue.put(
+                    sql_statement.format(','.join('CAST(? AS TEXT)' * len(chunk_slice)))
+                )
+            else:
+                sqlSubmitQueue.put(
+                    sql_statement.format(','.join('?' * len(chunk_slice)))
+                )
             # first static args, and then iterative chunk
             sqlSubmitQueue.put(
                 args[0:len(args) - idCount] + chunk_slice
