@@ -72,14 +72,15 @@ class TLSDispatcher(AdvancedDispatcher):
             self.set_state("tls_handshake")
             return False
 
-        self.do_tls_init()
+        return self.do_tls_init()
 
     def do_tls_init(self):
         # Once the connection has been established,
         # it's safe to wrap the socket.
         if sys.version_info >= (2, 7, 9):
             if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
-                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER
+                    if self.server_side else ssl.PROTOCOL_TLS_CLIENT)
             else:
                 context = ssl.create_default_context(
                     purpose=ssl.Purpose.SERVER_AUTH
@@ -92,7 +93,7 @@ class TLSDispatcher(AdvancedDispatcher):
             if ssl.OPENSSL_VERSION_NUMBER >= 0x30000000:
                 context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 |\
                     ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE |\
-                    ssl.OP_CIPHER_SERVER_PREFERENCE | ssl.OP_NO_TLS1_3
+                    ssl.OP_CIPHER_SERVER_PREFERENCE | ssl.OP_NO_TLSv1_3
             else:
                 context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 |\
                     ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE |\
