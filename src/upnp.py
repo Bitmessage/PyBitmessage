@@ -4,6 +4,7 @@ Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
 
+import six
 from six.moves import http_client as httplib
 import re
 import socket
@@ -220,6 +221,10 @@ class uPnPThread(StoppableThread):
 
     def run(self):
         """Start the thread to manage UPnP activity"""
+
+        if six.PY3:
+            logger.warning("UPnP is disabled currently, due to incompleted migration to Python3.")
+            return
 
         logger.debug("Starting UPnP thread")
         logger.debug("Local IP: %s", self.localIP)
