@@ -14,6 +14,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
+import sqlite3
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer
@@ -2671,14 +2672,19 @@ class MyForm(settingsmixin.SMainWindow):
 
         msgids = []
         for i in range(0, idCount):
-            msgids.append(tableWidget.item(i, 3).data())
+            msgids.append(sqlite3.Binary(tableWidget.item(i, 3).data()))
             for col in xrange(tableWidget.columnCount()):
                 tableWidget.item(i, col).setUnread(False)
 
         markread = sqlExecuteChunked(
             "UPDATE inbox SET read = 1 WHERE msgid IN({0}) AND read=0",
-            idCount, *msgids
+            False, idCount, *msgids
         )
+        if markread < 1:
+            markread = sqlExecuteChunked(
+                "UPDATE inbox SET read = 1 WHERE msgid IN({0}) AND read=0",
+                True, idCount, *msgids
+            )
 
         if markread > 0:
             self.propagateUnreadCount()
@@ -2916,7 +2922,10 @@ class MyForm(settingsmixin.SMainWindow):
         if not msgid:
             return
         queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
+            '''select message from inbox where msgid=?''', sqlite3.Binary(msgid))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                '''select message from inbox where msgid=CAST(? AS TEXT)''', msgid)
         if queryreturn != []:
             for row in queryreturn:
                 messageText, = row
@@ -2946,7 +2955,7 @@ class MyForm(settingsmixin.SMainWindow):
         # modified = 0
         for row in tableWidget.selectedIndexes():
             currentRow = row.row()
-            msgid = tableWidget.item(currentRow, 3).data()
+            msgid = sqlite3.Binary(tableWidget.item(currentRow, 3).data())
             msgids.add(msgid)
             # if not tableWidget.item(currentRow, 0).unread:
             #     modified += 1
@@ -2955,10 +2964,15 @@ class MyForm(settingsmixin.SMainWindow):
         # for 1081
         idCount = len(msgids)
         # rowcount =
-        sqlExecuteChunked(
+        total_row_count = sqlExecuteChunked(
             '''UPDATE inbox SET read=0 WHERE msgid IN ({0}) AND read=1''',
-            idCount, *msgids
+            False, idCount, *msgids
         )
+        if total_row_count < 1:
+            sqlExecuteChunked(
+                '''UPDATE inbox SET read=0 WHERE msgid IN ({0}) AND read=1''',
+                True, idCount, *msgids
+            )
 
         self.propagateUnreadCount()
         # tableWidget.selectRow(currentRow + 1)
@@ -3038,8 +3052,12 @@ class MyForm(settingsmixin.SMainWindow):
             currentInboxRow, column_from).address
         msgid = tableWidget.item(currentInboxRow, 3).data()
         queryreturn = sqlQuery(
-            "SELECT message FROM inbox WHERE msgid=?", msgid
-        ) or sqlQuery("SELECT message FROM sent WHERE ackdata=?", msgid)
+            "SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(msgid)
+        ) or sqlQuery("SELECT message FROM sent WHERE ackdata=?", sqlite3.Binary(msgid))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", msgid
+            ) or sqlQuery("SELECT message FROM sent WHERE ackdata=CAST(? AS TEXT)", msgid)
         if queryreturn != []:
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
@@ -3213,16 +3231,21 @@ class MyForm(settingsmixin.SMainWindow):
         )[::-1]:
             for i in range(r.bottomRow() - r.topRow() + 1):
                 inventoryHashesToTrash.add(
-                    tableWidget.item(r.topRow() + i, 3).data())
+                    sqlite3.Binary(tableWidget.item(r.topRow() + i, 3).data()))
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(
                 r.topRow(), r.bottomRow() - r.topRow() + 1)
         idCount = len(inventoryHashesToTrash)
-        sqlExecuteChunked(
+        total_row_count = sqlExecuteChunked(
             ("DELETE FROM inbox" if folder == "trash" or shifted else
              "UPDATE inbox SET folder='trash', read=1") +
-            " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
+            " WHERE msgid IN ({0})", False, idCount, *inventoryHashesToTrash)
+        if total_row_count < 1:
+            sqlExecuteChunked(
+                ("DELETE FROM inbox" if folder == "trash" or shifted else
+                 "UPDATE inbox SET folder='trash', read=1") +
+                " WHERE msgid IN ({0})", True, idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount(folder)
@@ -3241,16 +3264,20 @@ class MyForm(settingsmixin.SMainWindow):
         )[::-1]:
             for i in range(r.bottomRow() - r.topRow() + 1):
                 inventoryHashesToTrash.add(
-                    tableWidget.item(r.topRow() + i, 3).data())
+                    sqlite3.Binary(tableWidget.item(r.topRow() + i, 3).data()))
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(
                 r.topRow(), r.bottomRow() - r.topRow() + 1)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         idCount = len(inventoryHashesToTrash)
-        sqlExecuteChunked(
+        total_row_count = sqlExecuteChunked(
             "UPDATE inbox SET folder='inbox' WHERE msgid IN({0})",
-            idCount, *inventoryHashesToTrash)
+            False, idCount, *inventoryHashesToTrash)
+        if total_row_count < 1:
+            sqlExecuteChunked(
+                "UPDATE inbox SET folder='inbox' WHERE msgid IN({0})",
+                True, idCount, *inventoryHashesToTrash, as_text=True)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount()
@@ -3270,7 +3297,10 @@ class MyForm(settingsmixin.SMainWindow):
         # Retrieve the message data out of the SQL database
         msgid = tableWidget.item(currentInboxRow, 3).data()
         queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
+            '''select message from inbox where msgid=?''', sqlite3.Binary(msgid))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                '''select message from inbox where msgid=CAST(? AS TEXT)''', msgid)
         if queryreturn != []:
             for row in queryreturn:
                 message, = row
@@ -3301,11 +3331,17 @@ class MyForm(settingsmixin.SMainWindow):
         while tableWidget.selectedIndexes() != []:
             currentRow = tableWidget.selectedIndexes()[0].row()
             ackdataToTrash = tableWidget.item(currentRow, 3).data()
-            sqlExecute(
+            rowcount = sqlExecute(
                 "DELETE FROM sent" if folder == "trash" or shifted else
                 "UPDATE sent SET folder='trash'"
-                " WHERE ackdata = ?", ackdataToTrash
+                " WHERE ackdata = ?", sqlite3.Binary(ackdataToTrash)
             )
+            if rowcount < 1:
+                sqlExecute(
+                    "DELETE FROM sent" if folder == "trash" or shifted else
+                    "UPDATE sent SET folder='trash'"
+                    " WHERE ackdata = CAST(? AS TEXT)", ackdataToTrash
+                )
             self.getCurrentMessageTextedit().setPlainText("")
             tableWidget.removeRow(currentRow)
             self.updateStatusBar(_translate(
@@ -3319,9 +3355,13 @@ class MyForm(settingsmixin.SMainWindow):
         addressAtCurrentRow = self.ui.tableWidgetInbox.item(
             currentRow, 0).data(QtCore.Qt.UserRole)
         toRipe = decodeAddress(addressAtCurrentRow)[3]
-        sqlExecute(
+        rowcount = sqlExecute(
             '''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''',
-            toRipe)
+            sqlite3.Binary(toRipe))
+        if rowcount < 1:
+            sqlExecute(
+                '''UPDATE sent SET status='forcepow' WHERE toripe=CAST(? AS TEXT) AND status='toodifficult' and folder='sent' ''',
+                toRipe)
         queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
         for row in queryreturn:
             ackdata, = row
@@ -4017,7 +4057,9 @@ class MyForm(settingsmixin.SMainWindow):
         # menu option (Force Send) if it is.
         if currentRow >= 0:
             ackData = self.ui.tableWidgetInbox.item(currentRow, 3).data()
-            queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
+            queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', sqlite3.Binary(ackData))
+            if len(queryreturn) < 1:
+                queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=CAST(? AS TEXT)''', ackData)
             for row in queryreturn:
                 status, = row
             if status == 'toodifficult':
@@ -4119,8 +4161,15 @@ class MyForm(settingsmixin.SMainWindow):
                 '''SELECT message FROM %s WHERE %s=?''' % (
                     ('sent', 'ackdata') if folder == 'sent'
                     else ('inbox', 'msgid')
-                ), msgid
+                ), sqlite3.Binary(msgid)
             )
+            if len(queryreturn) < 1:
+                queryreturn = sqlQuery(
+                    '''SELECT message FROM %s WHERE %s=CAST(? AS TEXT)''' % (
+                        ('sent', 'ackdata') if folder == 'sent'
+                        else ('inbox', 'msgid')
+                    ), msgid
+                )
 
         try:
             message = queryreturn[-1][0]
@@ -4138,10 +4187,16 @@ class MyForm(settingsmixin.SMainWindow):
             if tableWidget.item(currentRow, 0).unread is True:
                 self.updateUnreadStatus(tableWidget, currentRow, msgid)
             # propagate
-            if folder != 'sent' and sqlExecute(
+            rowcount = sqlExecute(
                 '''UPDATE inbox SET read=1 WHERE msgid=? AND read=0''',
-                msgid
-            ) > 0:
+                sqlite3.Binary(msgid)
+            )
+            if rowcount < 1:
+                rowcount = sqlExecute(
+                    '''UPDATE inbox SET read=1 WHERE msgid=CAST(? AS TEXT) AND read=0''',
+                    msgid
+                )
+            if folder != 'sent' and rowcount > 0:
                 self.propagateUnreadCount()
 
         messageTextedit.setCurrentFont(QtGui.QFont())
