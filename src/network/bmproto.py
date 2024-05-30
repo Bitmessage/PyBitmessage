@@ -17,6 +17,7 @@ from network import knownnodes
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
+import dandelion
 from bmconfigparser import config
 from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
@@ -350,27 +351,27 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.pendingUpload[i] = now
         return True
 
-    def _command_inv(self, dandelion=False):
+    def _command_inv(self, extend_dandelion_stem=False):
         """
         Common inv announce implementation:
-        both inv and dinv depending on *dandelion* kwarg
+        both inv and dinv depending on *extend_dandelion_stem* kwarg
         """
         items = self.decode_payload_content("l32s")
 
         if len(items) > protocol.MAX_OBJECT_COUNT:
             logger.error(
-                'Too many items in %sinv message!', 'd' if dandelion else '')
+                'Too many items in %sinv message!', 'd' if extend_dandelion_stem else '')
             raise BMProtoExcessiveDataError()
 
         # ignore dinv if dandelion turned off
-        if dandelion and not state.dandelion_enabled:
+        if extend_dandelion_stem and not state.dandelion_enabled:
             return True
 
         for i in items:
-            if i in state.Inventory and not state.Dandelion.hasHash(i):
+            if i in state.Inventory and not dandelion.instance.hasHash(i):
                 continue
-            if dandelion and not state.Dandelion.hasHash(i):
-                state.Dandelion.addHash(i, self)
+            if extend_dandelion_stem and not dandelion.instance.hasHash(i):
+                dandelion.instance.addHash(i, self)
             self.handleReceivedInventory(i)
 
         return True
@@ -436,9 +437,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except KeyError:
                 pass
 
-        if self.object.inventoryHash in state.Inventory and state.Dandelion.hasHash(
+        if self.object.inventoryHash in state.Inventory and dandelion.instance.hasHash(
                 self.object.inventoryHash):
-            state.Dandelion.removeHash(
+            dandelion.instance.removeHash(
                 self.object.inventoryHash, "cycle detection")
 
         if six.PY2:

@@ -10,6 +10,7 @@ import protocol
 from network import connectionpool
 from .objectracker import missingObjects
 from .threads import StoppableThread
+import dandelion
 
 
 class DownloadThread(StoppableThread):
@@ -60,7 +61,7 @@ class DownloadThread(StoppableThread):
                 payload = bytearray()
                 chunkCount = 0
                 for chunk in request:
-                    if chunk in state.Inventory and not state.Dandelion.hasHash(chunk):
+                    if chunk in state.Inventory and not dandelion.instance.hasHash(chunk):
                         try:
                             del i.objectsNewToMe[chunk]
                         except KeyError:

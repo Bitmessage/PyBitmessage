@@ -17,6 +17,7 @@ import l10n
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
+import dandelion
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from queues import invQueue, receiveDataQueue, UISignalQueue
@@ -175,7 +176,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.increaseRating(self.destination)
             knownnodes.addKnownNode(
                 self.streams, self.destination, time.time())
-            state.Dandelion.maybeAddStem(self)
+            dandelion.instance.maybeAddStem(self)
         self.sendAddr()
         self.sendBigInv()
 
@@ -237,7 +238,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with self.objectsNewToThemLock:
                 for objHash in state.Inventory.unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
-                    if state.Dandelion.hasHash(objHash):
+                    if dandelion.instance.hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
         objectCount = 0
@@ -299,7 +300,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             if host_is_global:
                 knownnodes.addKnownNode(
                     self.streams, self.destination, time.time())
-                state.Dandelion.maybeRemoveStem(self)
+                dandelion.instance.maybeRemoveStem(self)
         else:
             self.checkTimeOffsetNotification()
             if host_is_global:
