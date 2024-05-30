@@ -5,8 +5,8 @@ import time
 from threading import RLock
 import six
 
-import state
 import network.connectionpool  # use long name to address recursive import
+import dandelion
 from randomtrackingdict import RandomTrackingDict
 
 haveBloom = False
@@ -111,14 +111,14 @@ class ObjectTracker(object):
                 del i.objectsNewToMe[hashid]
             except KeyError:
                 if streamNumber in i.streams and (
-                        not state.Dandelion.hasHash(hashid)
-                        or state.Dandelion.objectChildStem(hashid) == i):
+                        not dandelion.instance.hasHash(hashid)
+                        or dandelion.instance.objectChildStem(hashid) == i):
                     with i.objectsNewToThemLock:
                         i.objectsNewToThem[hashid_bytes] = time.time()
                     # update stream number,
                     # which we didn't have when we just received the dinv
                     # also resets expiration of the stem mode
-                    state.Dandelion.setHashStream(hashid, streamNumber)
+                    dandelion.instance.setHashStream(hashid, streamNumber)
 
             if i == self:
                 try:
