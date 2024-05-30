@@ -7,7 +7,7 @@ import time
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-import dandelion
+from network import dandelion
 from highlevelcrypto import calculateInventoryHash
 
 logger = logging.getLogger('default')

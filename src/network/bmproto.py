@@ -17,7 +17,7 @@ from network import knownnodes
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-import dandelion
+from network import dandelion
 from bmconfigparser import config
 from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict

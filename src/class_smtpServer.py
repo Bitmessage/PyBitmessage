@@ -12,6 +12,7 @@ import threading
 import time
 from email.header import decode_header
 from email.parser import Parser
+import sqlite3
 
 import queues
 from addresses import decodeAddress
@@ -89,13 +90,13 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            '',
+            sqlite3.Binary(b''),
             dbstr(toAddress),
-            ripe,
+            sqlite3.Binary(ripe),
             dbstr(fromAddress),
             dbstr(subject),
             dbstr(message),
-            ackdata,
+            sqlite3.Binary(ackdata),
             int(time.time()),  # sentTime (this will never change)
             int(time.time()),  # lastActionTime
             0,  # sleepTill time. This will get set when the POW gets done.

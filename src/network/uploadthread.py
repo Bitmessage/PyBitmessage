@@ -7,7 +7,7 @@ import helper_random
 import protocol
 import state
 from network import connectionpool
-import dandelion
+from network import dandelion
 from randomtrackingdict import RandomTrackingDict
 from .threads import StoppableThread
 

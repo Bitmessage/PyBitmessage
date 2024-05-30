@@ -11,6 +11,7 @@ import time
 from binascii import hexlify, unhexlify
 from struct import pack
 from subprocess import call  # nosec
+import sqlite3
 
 import defaults
 import helper_inbox
@@ -111,10 +112,15 @@ class singleWorker(StoppableThread):
                 # attach legacy header, always constant (msg/1/1)
                 newack = b'\x00\x00\x00\x02\x01\x01' + oldack
                 state.ackdataForWhichImWatching[bytes(newack)] = 0
-                sqlExecute(
+                rowcount = sqlExecute(
                     '''UPDATE sent SET ackdata=? WHERE ackdata=? AND folder = 'sent' ''',
-                    newack, oldack
+                    sqlite3.Binary(newack), sqlite3.Binary(oldack)
                 )
+                if rowcount < 1:
+                    sqlExecute(
+                        '''UPDATE sent SET ackdata=? WHERE ackdata=CAST(? AS TEXT) AND folder = 'sent' ''',
+                        sqlite3.Binary(newack), oldack
+                    )
                 del state.ackdataForWhichImWatching[oldack]
 
         # For the case if user deleted knownnodes
@@ -596,11 +602,18 @@ class singleWorker(StoppableThread):
                 ))
                 continue
 
-            if not sqlExecute(
+            rowcount = sqlExecute(
                     '''UPDATE sent SET status='doingbroadcastpow' '''
                     ''' WHERE ackdata=? AND status='broadcastqueued' '''
                     ''' AND folder='sent' ''',
-                    ackdata):
+                    sqlite3.Binary(ackdata))
+            if rowcount < 1:
+                rowcount = sqlExecute(
+                        '''UPDATE sent SET status='doingbroadcastpow' '''
+                        ''' WHERE ackdata=CAST(? AS TEXT) AND status='broadcastqueued' '''
+                        ''' AND folder='sent' ''',
+                        ackdata)
+            if rowcount < 1:
                 continue
 
             # At this time these pubkeys are 65 bytes long
@@ -718,11 +731,17 @@ class singleWorker(StoppableThread):
 
             # Update the status of the message in the 'sent' table to have
             # a 'broadcastsent' status
-            sqlExecute(
+            rowcount = sqlExecute(
                 '''UPDATE sent SET msgid=?, status=?, lastactiontime=? '''
                 ''' WHERE ackdata=? AND folder='sent' ''',
-                inventoryHash, dbstr('broadcastsent'), int(time.time()), ackdata
+                sqlite3.Binary(inventoryHash), dbstr('broadcastsent'), int(time.time()), sqlite3.Binary(ackdata)
             )
+            if rowcount < 1:
+                sqlExecute(
+                    '''UPDATE sent SET msgid=?, status=?, lastactiontime=? '''
+                    ''' WHERE ackdata=CAST(? AS TEXT) AND folder='sent' ''',
+                    sqlite3.Binary(inventoryHash), 'broadcastsent', int(time.time()), ackdata
+                )
 
     def sendMsg(self):
         """
@@ -1072,10 +1091,15 @@ class singleWorker(StoppableThread):
                         if cond1 or cond2:
                             # The demanded difficulty is more than
                             # we are willing to do.
-                            sqlExecute(
+                            rowcount = sqlExecute(
                                 '''UPDATE sent SET status='toodifficult' '''
                                 ''' WHERE ackdata=? AND folder='sent' ''',
-                                ackdata)
+                                sqlite3.Binary(ackdata))
+                            if rowcount < 1:
+                                sqlExecute(
+                                    '''UPDATE sent SET status='toodifficult' '''
+                                    ''' WHERE ackdata=CAST(? AS TEXT) AND folder='sent' ''',
+                                    ackdata)
                             queues.UISignalQueue.put((
                                 'updateSentItemStatusByAckdata', (
                                     ackdata, _translate(
@@ -1235,10 +1259,15 @@ class singleWorker(StoppableThread):
                 )
             except:  # noqa:E722
                 self.logger.warning("highlevelcrypto.encrypt didn't work")
-                sqlExecute(
+                rowcount = sqlExecute(
                     '''UPDATE sent SET status='badkey' WHERE ackdata=? AND folder='sent' ''',
-                    ackdata
+                    sqlite3.Binary(ackdata)
                 )
+                if rowcount < 1:
+                    sqlExecute(
+                        '''UPDATE sent SET status='badkey' WHERE ackdata=CAST(? AS TEXT) AND folder='sent' ''',
+                        ackdata
+                    )
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
                         ackdata, _translate(
@@ -1338,12 +1367,19 @@ class singleWorker(StoppableThread):
                 newStatus = 'msgsent'
             # wait 10% past expiration
             sleepTill = int(time.time() + TTL * 1.1)
-            sqlExecute(
+            rowcount = sqlExecute(
                 '''UPDATE sent SET msgid=?, status=?, retrynumber=?, '''
                 ''' sleeptill=?, lastactiontime=? WHERE ackdata=? AND folder='sent' ''',
-                inventoryHash, dbstr(newStatus), retryNumber + 1,
-                sleepTill, int(time.time()), ackdata
+                sqlite3.Binary(inventoryHash), dbstr(newStatus), retryNumber + 1,
+                sleepTill, int(time.time()), sqlite3.Binary(ackdata)
             )
+            if rowcount < 1:
+                sqlExecute(
+                    '''UPDATE sent SET msgid=?, status=?, retrynumber=?, '''
+                    ''' sleeptill=?, lastactiontime=? WHERE ackdata=CAST(? AS TEXT) AND folder='sent' ''',
+                    sqlite3.Binary(inventoryHash), newStatus, retryNumber + 1,
+                    sleepTill, int(time.time()), ackdata
+                )
 
             # If we are sending to ourselves or a chan, let's put
             # the message in our own inbox.
