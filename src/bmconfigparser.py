@@ -114,7 +114,8 @@ class BMConfigParser(SafeConfigParser):
         """Return a list of local bitmessage addresses (from section labels)"""
         sections = [x for x in self.sections() if x.startswith('BM-')]
         if sort:
-            sections.sort(key=lambda item: self.get(item, 'label').lower())
+            sections.sort(key=lambda item: self.get(item, 'label') \
+                    .decode('utf-8').lower())
         return sections
 
     def save(self):

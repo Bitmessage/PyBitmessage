@@ -139,9 +139,10 @@ class TCPConnection(BMProto, TLSDispatcher):
                 'updateStatusBar',
                 _translate(
                     "MainWindow",
-                    "The time on your computer, %1, may be wrong. "
+                    "The time on your computer, {0}, may be wrong. "
                     "Please verify your settings."
-                ).arg(l10n.formatTimestamp())))
+                ).format(l10n.formatTimestamp())
+            ))
 
     def state_connection_fully_established(self):
         """

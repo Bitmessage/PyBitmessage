@@ -354,8 +354,8 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="597"/>
-        <source>One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
-        <translation>Jeden z adresów, %1, jest starym adresem wersji 1. Adresy tej wersji nie są już wspierane. Usunąć go?</translation>
+        <source>One of your addresses, {0}, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
+        <translation>Jeden z adresów, {0}, jest starym adresem wersji 1. Adresy tej wersji nie są już wspierane. Usunąć go?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1030"/>
@@ -374,13 +374,13 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1039"/>
-        <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
-        <translation>Wiadomość wysłana. Oczekiwanie na potwierdzenie odbioru. Wysłano o %1</translation>
+        <source>Message sent. Waiting for acknowledgement. Sent at {0}</source>
+        <translation>Wiadomość wysłana. Oczekiwanie na potwierdzenie odbioru. Wysłano o {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1042"/>
-        <source>Message sent. Sent at %1</source>
-        <translation>Wiadomość wysłana. Wysłano o %1</translation>
+        <source>Message sent. Sent at {0}</source>
+        <translation>Wiadomość wysłana. Wysłano o {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1002"/>
@@ -389,8 +389,8 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1048"/>
-        <source>Acknowledgement of the message received %1</source>
-        <translation>Otrzymano potwierdzenie odbioru wiadomości %1</translation>
+        <source>Acknowledgement of the message received {0}</source>
+        <translation>Otrzymano potwierdzenie odbioru wiadomości {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2140"/>
@@ -399,18 +399,18 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1057"/>
-        <source>Broadcast on %1</source>
-        <translation>Wysłana o %1</translation>
+        <source>Broadcast on {0}</source>
+        <translation>Wysłana o {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1060"/>
-        <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
-        <translation>Problem: dowód pracy wymagany przez odbiorcę jest trudniejszy niż zaakceptowany przez Ciebie. %1</translation>
+        <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. {0}</source>
+        <translation>Problem: dowód pracy wymagany przez odbiorcę jest trudniejszy niż zaakceptowany przez Ciebie. {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1063"/>
-        <source>Problem: The recipient&apos;s encryption key is no good. Could not encrypt message. %1</source>
-        <translation>Problem: klucz szyfrujący odbiorcy jest nieprawidłowy. Nie można zaszyfrować wiadomości. %1</translation>
+        <source>Problem: The recipient&apos;s encryption key is no good. Could not encrypt message. {0}</source>
+        <translation>Problem: klucz szyfrujący odbiorcy jest nieprawidłowy. Nie można zaszyfrować wiadomości. {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1066"/>
@@ -419,8 +419,8 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1069"/>
-        <source>Unknown status: %1 %2</source>
-        <translation>Nieznany status: %1 %2</translation>
+        <source>Unknown status: {0} {1}</source>
+        <translation>Nieznany status: {0} {1}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1610"/>
@@ -460,10 +460,10 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1459"/>
         <source>You may manage your keys by editing the keys.dat file stored in
- %1 
+ {0} 
 It is important that you back up this file.</source>
         <translation>Możesz zarządzać swoimi kluczami edytując plik keys.dat znajdujący się
-%1
+{0}
 Zaleca się zrobienie kopii zapasowej tego pliku.</translation>
     </message>
     <message>
@@ -479,10 +479,10 @@ Zaleca się zrobienie kopii zapasowej tego pliku.</translation>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1466"/>
         <source>You may manage your keys by editing the keys.dat file stored in
- %1 
+ {0} 
 It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>Możesz zarządzać swoimi kluczami edytując plik keys.dat znajdujący się
-%1
+{0}
 Zaleca się zrobienie kopii zapasowej tego pliku. Czy chcesz otworzyć ten plik teraz? (Zamknij Bitmessage przed wprowadzeniem jakichkolwiek zmian.)</translation>
     </message>
     <message>
@@ -547,7 +547,7 @@ Zaleca się zrobienie kopii zapasowej tego pliku. Czy chcesz otworzyć ten plik 
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1603"/>
-        <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in &apos;Your Identities&apos;.</source>
+        <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: {0}. This address also appears in &apos;Your Identities&apos;.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -618,52 +618,52 @@ Zwykle 4-5 dniowy TTL jest odpowiedni.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1899"/>
-        <source>The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.</source>
-        <translation>Wiadomość jest za długa o %1 bajtów (maksymalna długość wynosi 261644 bajty). Przed wysłaniem należy ją skrócić.</translation>
+        <source>The message that you are trying to send is too long by {0} bytes. (The maximum is 261644 bytes). Please cut it down before sending.</source>
+        <translation>Wiadomość jest za długa o {0} bajtów (maksymalna długość wynosi 261644 bajty). Przed wysłaniem należy ją skrócić.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1941"/>
-        <source>Error: Your account wasn&apos;t registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.</source>
-        <translation>Błąd: Twoje konto nie było zarejestrowane w bramce poczty. Rejestrowanie jako %1, proszę poczekać na zakończenie procesu przed ponowną próbą wysłania wiadomości.</translation>
+        <source>Error: Your account wasn&apos;t registered at an email gateway. Sending registration now as {0}, please wait for the registration to be processed before retrying sending.</source>
+        <translation>Błąd: Twoje konto nie było zarejestrowane w bramce poczty. Rejestrowanie jako {0}, proszę poczekać na zakończenie procesu przed ponowną próbą wysłania wiadomości.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2008"/>
-        <source>Error: Bitmessage addresses start with BM-   Please check %1</source>
+        <source>Error: Bitmessage addresses start with BM-   Please check {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2011"/>
-        <source>Error: The address %1 is not typed or copied correctly. Please check it.</source>
+        <source>Error: The address {0} is not typed or copied correctly. Please check it.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2014"/>
-        <source>Error: The address %1 contains invalid characters. Please check it.</source>
+        <source>Error: The address {0} contains invalid characters. Please check it.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2017"/>
-        <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
+        <source>Error: The address version in {0} is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2020"/>
-        <source>Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
+        <source>Error: Some data encoded in the address {0} is too short. There might be something wrong with the software of your acquaintance.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2023"/>
-        <source>Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
+        <source>Error: Some data encoded in the address {0} is too long. There might be something wrong with the software of your acquaintance.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2026"/>
-        <source>Error: Some data encoded in the address %1 is malformed. There might be something wrong with the software of your acquaintance.</source>
+        <source>Error: Some data encoded in the address {0} is malformed. There might be something wrong with the software of your acquaintance.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2029"/>
-        <source>Error: Something is wrong with the address %1.</source>
+        <source>Error: Something is wrong with the address {0}.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -678,8 +678,8 @@ Zwykle 4-5 dniowy TTL jest odpowiedni.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2026"/>
-        <source>Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
-        <translation>Odnośnie adresu %1, Bitmessage nie potrafi odczytać wersji adresu %2. Może uaktualnij Bitmessage do najnowszej wersji.</translation>
+        <source>Concerning the address {0}, Bitmessage cannot understand address version numbers of {1}. Perhaps upgrade Bitmessage to the latest version.</source>
+        <translation>Odnośnie adresu {0}, Bitmessage nie potrafi odczytać wersji adresu {1}. Może uaktualnij Bitmessage do najnowszej wersji.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2030"/>
@@ -688,8 +688,8 @@ Zwykle 4-5 dniowy TTL jest odpowiedni.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2030"/>
-        <source>Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
-        <translation>Odnośnie adresu %1, Bitmessage nie potrafi operować na strumieniu adresu %2. Może uaktualnij Bitmessage do najnowszej wersji.</translation>
+        <source>Concerning the address {0}, Bitmessage cannot handle stream numbers of {1}. Perhaps upgrade Bitmessage to the latest version.</source>
+        <translation>Odnośnie adresu {0}, Bitmessage nie potrafi operować na strumieniu adresu {1}. Może uaktualnij Bitmessage do najnowszej wersji.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2035"/>
@@ -823,8 +823,8 @@ Zwykle 4-5 dniowy TTL jest odpowiedni.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3043"/>
-        <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
-        <translation>Bitmessage nie może odnaleźć Twojego adresu %1. Może go usunąłeś?</translation>
+        <source>Bitmessage cannot find your address {0}. Perhaps you removed it?</source>
+        <translation>Bitmessage nie może odnaleźć Twojego adresu {0}. Może go usunąłeś?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3046"/>
@@ -981,7 +981,7 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="4374"/>
-        <source>You are using TCP port %1. (This can be changed in the settings).</source>
+        <source>You are using TCP port {0}. (This can be changed in the settings).</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1176,8 +1176,8 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/messageview.py" line="56"/>
-        <source>Zoom level %1%</source>
-        <translation>Poziom powiększenia %1%</translation>
+        <source>Zoom level {0}%</source>
+        <translation>Poziom powiększenia {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="91"/>
@@ -1191,48 +1191,48 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="4334"/>
-        <source>Display the %1 recent broadcast(s) from this address.</source>
+        <source>Display the {0} recent broadcast(s) from this address.</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1774"/>
-        <source>New version of PyBitmessage is available: %1. Download it from https://github.com/Bitmessage/PyBitmessage/releases/latest</source>
-        <translation>Nowa wersja Bitmessage jest dostępna: %1. Pobierz ją z https://github.com/Bitmessage/PyBitmessage/releases/latest</translation>
+        <source>New version of PyBitmessage is available: {0}. Download it from https://github.com/Bitmessage/PyBitmessage/releases/latest</source>
+        <translation>Nowa wersja Bitmessage jest dostępna: {0}. Pobierz ją z https://github.com/Bitmessage/PyBitmessage/releases/latest</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2817"/>
-        <source>Waiting for PoW to finish... %1%</source>
-        <translation>Oczekiwanie na wykonanie dowodu pracy… %1%</translation>
+        <source>Waiting for PoW to finish... {0}%</source>
+        <translation>Oczekiwanie na wykonanie dowodu pracy… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2826"/>
-        <source>Shutting down Pybitmessage... %1%</source>
-        <translation>Zamykanie PyBitmessage… %1%</translation>
+        <source>Shutting down Pybitmessage... {0}%</source>
+        <translation>Zamykanie PyBitmessage… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2845"/>
-        <source>Waiting for objects to be sent... %1%</source>
-        <translation>Oczekiwanie na wysłanie obiektów… %1%</translation>
+        <source>Waiting for objects to be sent... {0}%</source>
+        <translation>Oczekiwanie na wysłanie obiektów… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2862"/>
-        <source>Saving settings... %1%</source>
-        <translation>Zapisywanie ustawień… %1%</translation>
+        <source>Saving settings... {0}%</source>
+        <translation>Zapisywanie ustawień… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2875"/>
-        <source>Shutting down core... %1%</source>
-        <translation>Zamykanie rdzenia programu… %1%</translation>
+        <source>Shutting down core... {0}%</source>
+        <translation>Zamykanie rdzenia programu… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2881"/>
-        <source>Stopping notifications... %1%</source>
-        <translation>Zatrzymywanie powiadomień… %1%</translation>
+        <source>Stopping notifications... {0}%</source>
+        <translation>Zatrzymywanie powiadomień… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2885"/>
-        <source>Shutdown imminent... %1%</source>
-        <translation>Zaraz zamknę… %1%</translation>
+        <source>Shutdown imminent... {0}%</source>
+        <translation>Zaraz zamknę… {0}%</translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/bitmessageui.py" line="706"/>
@@ -1246,8 +1246,8 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2783"/>
-        <source>Shutting down PyBitmessage... %1%</source>
-        <translation>Zamykanie PyBitmessage… %1%</translation>
+        <source>Shutting down PyBitmessage... {0}%</source>
+        <translation>Zamykanie PyBitmessage… {0}%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1144"/>
@@ -1266,13 +1266,13 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../class_addressGenerator.py" line="219"/>
-        <source>Generating %1 new addresses.</source>
-        <translation>Generowanie %1 nowych adresów.</translation>
+        <source>Generating {0} new addresses.</source>
+        <translation>Generowanie {0} nowych adresów.</translation>
     </message>
     <message>
         <location filename="../class_addressGenerator.py" line="323"/>
-        <source>%1 is already in &apos;Your Identities&apos;. Not adding it again.</source>
-        <translation>%1 jest już w &apos;Twoich tożsamościach&apos;. Nie zostanie tu dodany.</translation>
+        <source>{0} is already in &apos;Your Identities&apos;. Not adding it again.</source>
+        <translation>{0} jest już w &apos;Twoich tożsamościach&apos;. Nie zostanie tu dodany.</translation>
     </message>
     <message>
         <location filename="../class_addressGenerator.py" line="377"/>
@@ -1281,7 +1281,7 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../class_outgoingSynSender.py" line="228"/>
-        <source>SOCKS5 Authentication problem: %1</source>
+        <source>SOCKS5 Authentication problem: {0}</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1306,8 +1306,8 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="612"/>
-        <source>Broadcast sent on %1</source>
-        <translation>Wysłano: %1</translation>
+        <source>Broadcast sent on {0}</source>
+        <translation>Wysłano: {0}</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="722"/>
@@ -1326,8 +1326,8 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="877"/>
-        <source>Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1</source>
-        <translation>Problem: adres docelowy jest urządzeniem przenośnym, które wymaga, aby adres docelowy był zawarty w wiadomości, ale jest to zabronione w Twoich ustawieniach. %1</translation>
+        <source>Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  {0}</source>
+        <translation>Problem: adres docelowy jest urządzeniem przenośnym, które wymaga, aby adres docelowy był zawarty w wiadomości, ale jest to zabronione w Twoich ustawieniach. {0}</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="908"/>
@@ -1339,19 +1339,19 @@ Nie ma wymaganej trudności dla adresów w wersji 2, takich jak ten adres.</tran
     <message>
         <location filename="../class_singleWorker.py" line="944"/>
         <source>Doing work necessary to send message.
-Receiver&apos;s required difficulty: %1 and %2</source>
+Receiver&apos;s required difficulty: {0} and {1}</source>
         <translation>Wykonywanie dowodu pracy niezbędnego do wysłania wiadomości.
-Odbiorca wymaga trudności: %1 i %2</translation>
+Odbiorca wymaga trudności: {0} i {1}</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="986"/>
-        <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3</source>
-        <translation>Problem: dowód pracy wymagany przez odbiorcę (%1 i %2) jest trudniejszy niż chciałbyś wykonać. %3</translation>
+        <source>Problem: The work demanded by the recipient ({0} and {1}) is more difficult than you are willing to do. {2}</source>
+        <translation>Problem: dowód pracy wymagany przez odbiorcę ({0} i {1}) jest trudniejszy niż chciałbyś wykonać. {2}</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="1010"/>
-        <source>Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1</source>
-        <translation>Problem: próbujesz wysłać wiadomość do siebie lub na kanał, ale Twój klucz szyfrujący nie został znaleziony w pliku keys.dat. Nie można zaszyfrować wiadomości. %1</translation>
+        <source>Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. {0}</source>
+        <translation>Problem: próbujesz wysłać wiadomość do siebie lub na kanał, ale Twój klucz szyfrujący nie został znaleziony w pliku keys.dat. Nie można zaszyfrować wiadomości. {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1045"/>
@@ -1360,8 +1360,8 @@ Odbiorca wymaga trudności: %1 i %2</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="1214"/>
-        <source>Message sent. Waiting for acknowledgement. Sent on %1</source>
-        <translation>Wiadomość wysłana. Oczekiwanie na potwierdzenie odbioru. Wysłano o %1</translation>
+        <source>Message sent. Waiting for acknowledgement. Sent on {0}</source>
+        <translation>Wiadomość wysłana. Oczekiwanie na potwierdzenie odbioru. Wysłano o {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1033"/>
@@ -1375,13 +1375,13 @@ Odbiorca wymaga trudności: %1 i %2</translation>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="1383"/>
-        <source>Sending public key request. Waiting for reply. Requested at %1</source>
-        <translation>Wysyłanie prośby o klucz publiczny. Oczekiwanie na odpowiedź. Zapytano o %1</translation>
+        <source>Sending public key request. Waiting for reply. Requested at {0}</source>
+        <translation>Wysyłanie prośby o klucz publiczny. Oczekiwanie na odpowiedź. Zapytano o {0}</translation>
     </message>
     <message>
         <location filename="../upnp.py" line="267"/>
-        <source>UPnP port mapping established on port %1</source>
-        <translation>Mapowanie portów UPnP wykonano na porcie %1</translation>
+        <source>UPnP port mapping established on port {0}</source>
+        <translation>Mapowanie portów UPnP wykonano na porcie {0}</translation>
     </message>
     <message>
         <location filename="../upnp.py" line="293"/>
@@ -1425,18 +1425,18 @@ Odbiorca wymaga trudności: %1 i %2</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="119"/>
-        <source>The name %1 was not found.</source>
-        <translation>Ksywka %1 nie została znaleziona.</translation>
+        <source>The name {0} was not found.</source>
+        <translation>Ksywka {0} nie została znaleziona.</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="130"/>
-        <source>The namecoin query failed (%1)</source>
-        <translation>Zapytanie namecoin nie powiodło się (%1)</translation>
+        <source>The namecoin query failed ({0})</source>
+        <translation>Zapytanie namecoin nie powiodło się ({0})</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="134"/>
-        <source>Unknown namecoin interface type: %1</source>
-        <translation>Nieznany typ interfejsu namecoin: %1</translation>
+        <source>Unknown namecoin interface type: {0}</source>
+        <translation>Nieznany typ interfejsu namecoin: {0}</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="139"/>
@@ -1445,13 +1445,13 @@ Odbiorca wymaga trudności: %1 i %2</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="156"/>
-        <source>The name %1 has no associated Bitmessage address.</source>
-        <translation>Ksywka %1 nie ma powiązanego adresu Bitmessage.</translation>
+        <source>The name {0} has no associated Bitmessage address.</source>
+        <translation>Ksywka {0} nie ma powiązanego adresu Bitmessage.</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="185"/>
-        <source>Success!  Namecoind version %1 running.</source>
-        <translation>Namecoind wersja %1 działa poprawnie!</translation>
+        <source>Success!  Namecoind version {0} running.</source>
+        <translation>Namecoind wersja {0} działa poprawnie!</translation>
     </message>
     <message>
         <location filename="../namecoin.py" line="196"/>
@@ -1514,53 +1514,53 @@ Witamy w przyjaznym i bezpiecznym Bitmessage
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1960"/>
-        <source>Error: Bitmessage addresses start with BM-   Please check the recipient address %1</source>
-        <translation>Błąd: adresy Bitmessage zaczynają się od BM-. Proszę sprawdzić adres odbiorcy %1.</translation>
+        <source>Error: Bitmessage addresses start with BM-   Please check the recipient address {0}</source>
+        <translation>Błąd: adresy Bitmessage zaczynają się od BM-. Proszę sprawdzić adres odbiorcy {0}.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1966"/>
-        <source>Error: The recipient address %1 is not typed or copied correctly. Please check it.</source>
-        <translation>Błąd: adres odbiorcy %1 nie został skopiowany lub przepisany poprawnie. Proszę go sprawdzić.</translation>
+        <source>Error: The recipient address {0} is not typed or copied correctly. Please check it.</source>
+        <translation>Błąd: adres odbiorcy {0} nie został skopiowany lub przepisany poprawnie. Proszę go sprawdzić.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1972"/>
-        <source>Error: The recipient address %1 contains invalid characters. Please check it.</source>
-        <translation>Błąd: adres odbiorcy %1 zawiera nieprawidłowe znaki. Proszę go sprawdzić.</translation>
+        <source>Error: The recipient address {0} contains invalid characters. Please check it.</source>
+        <translation>Błąd: adres odbiorcy {0} zawiera nieprawidłowe znaki. Proszę go sprawdzić.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1978"/>
-        <source>Error: The version of the recipient address %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
-        <translation>Błąd: wersja adresu odbiorcy %1 jest za wysoka. Musisz albo zaktualizować Twoje oprogramowanie Bitmessage, albo twój znajomy Cię trolluje.</translation>
+        <source>Error: The version of the recipient address {0} is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
+        <translation>Błąd: wersja adresu odbiorcy {0} jest za wysoka. Musisz albo zaktualizować Twoje oprogramowanie Bitmessage, albo twój znajomy Cię trolluje.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1986"/>
-        <source>Error: Some data encoded in the recipient address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
-        <translation>Błąd: niektóre dane zakodowane w adresie odbiorcy %1 są zbyt krótkie. Być może coś nie działa należycie w programie Twojego znajomego.</translation>
+        <source>Error: Some data encoded in the recipient address {0} is too short. There might be something wrong with the software of your acquaintance.</source>
+        <translation>Błąd: niektóre dane zakodowane w adresie odbiorcy {0} są zbyt krótkie. Być może coś nie działa należycie w programie Twojego znajomego.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1994"/>
-        <source>Error: Some data encoded in the recipient address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
-        <translation>Błąd: niektóre dane zakodowane w adresie odbiorcy %1 są zbyt długie. Być może coś nie działa należycie w programie Twojego znajomego.</translation>
+        <source>Error: Some data encoded in the recipient address {0} is too long. There might be something wrong with the software of your acquaintance.</source>
+        <translation>Błąd: niektóre dane zakodowane w adresie odbiorcy {0} są zbyt długie. Być może coś nie działa należycie w programie Twojego znajomego.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2002"/>
-        <source>Error: Some data encoded in the recipient address %1 is malformed. There might be something wrong with the software of your acquaintance.</source>
-        <translation>Błąd: niektóre dane zakodowane w adresie odbiorcy %1 są uszkodzone. Być może coś nie działa należycie w programie Twojego znajomego.</translation>
+        <source>Error: Some data encoded in the recipient address {0} is malformed. There might be something wrong with the software of your acquaintance.</source>
+        <translation>Błąd: niektóre dane zakodowane w adresie odbiorcy {0} są uszkodzone. Być może coś nie działa należycie w programie Twojego znajomego.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2010"/>
-        <source>Error: Something is wrong with the recipient address %1.</source>
-        <translation>Błąd: coś jest nie tak z adresem odbiorcy %1.</translation>
+        <source>Error: Something is wrong with the recipient address {0}.</source>
+        <translation>Błąd: coś jest nie tak z adresem odbiorcy {0}.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2159"/>
-        <source>Error: %1</source>
-        <translation>Błąd: %1</translation>
+        <source>Error: {0}</source>
+        <translation>Błąd: {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2276"/>
-        <source>From %1</source>
-        <translation>Od %1</translation>
+        <source>From {0}</source>
+        <translation>Od {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2680"/>
@@ -1672,8 +1672,8 @@ Witamy w przyjaznym i bezpiecznym Bitmessage
     </message>
     <message>
         <location filename="../bitmessageqt/messageview.py" line="84"/>
-        <source>The link &quot;%1&quot; will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?</source>
-        <translation>Odnośnik &quot;%1&quot; zostanie otwarty w przeglądarce. Może to spowodować zagrożenie bezpieczeństwa, może on ujawnić Twoją anonimowość lub pobrać złośliwe dane. Czy jesteś pewien?</translation>
+        <source>The link &quot;{0}&quot; will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?</source>
+        <translation>Odnośnik &quot;{0}&quot; zostanie otwarty w przeglądarce. Może to spowodować zagrożenie bezpieczeństwa, może on ujawnić Twoją anonimowość lub pobrać złośliwe dane. Czy jesteś pewien?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/messageview.py" line="134"/>
@@ -2008,8 +2008,8 @@ Generowanie adresów „losowych” jest wybrane domyślnie, jednak deterministy
     </message>
     <message>
         <location filename="../bitmessageqt/dialogs.py" line="64"/>
-        <source>You are using TCP port %1. (This can be changed in the settings).</source>
-        <translation>Btimessage używa portu TCP %1. (Można go zmienić w ustawieniach).</translation>
+        <source>You are using TCP port {0}. (This can be changed in the settings).</source>
+        <translation>Btimessage używa portu TCP {0}. (Można go zmienić w ustawieniach).</translation>
     </message>
 </context>
 <context>
@@ -2061,28 +2061,28 @@ Generowanie adresów „losowych” jest wybrane domyślnie, jednak deterministy
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="242"/>
-        <source>Since startup on %1</source>
-        <translation>Od startu programu o %1</translation>
+        <source>Since startup on {0}</source>
+        <translation>Od startu programu o {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="140"/>
-        <source>Down: %1/s  Total: %2</source>
-        <translation>Pobieranie: %1/s W całości: %2</translation>
+        <source>Down: {0}/s  Total: {1}</source>
+        <translation>Pobieranie: {0}/s W całości: {1}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="146"/>
-        <source>Up: %1/s  Total: %2</source>
-        <translation>Wysyłanie: %1/s W całości: %2</translation>
+        <source>Up: {0}/s  Total: {1}</source>
+        <translation>Wysyłanie: {0}/s W całości: {1}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="219"/>
-        <source>Total Connections: %1</source>
-        <translation>Wszystkich połączeń: %1</translation>
+        <source>Total Connections: {0}</source>
+        <translation>Wszystkich połączeń: {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="234"/>
-        <source>Inventory lookups per second: %1</source>
-        <translation>Zapytań o elementy na sekundę: %1</translation>
+        <source>Inventory lookups per second: {0}</source>
+        <translation>Zapytań o elementy na sekundę: {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="256"/>
@@ -2247,8 +2247,8 @@ Generowanie adresów „losowych” jest wybrane domyślnie, jednak deterministy
     <name>newchandialog</name>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="68"/>
-        <source>Successfully created / joined chan %1</source>
-        <translation>Pomyślnie utworzono / dołączono do kanału %1</translation>
+        <source>Successfully created / joined chan {0}</source>
+        <translation>Pomyślnie utworzono / dołączono do kanału {0}</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="75"/>

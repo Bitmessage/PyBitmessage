@@ -1,12 +1,12 @@
 """
 Folder tree and messagelist widgets definitions.
 """
-# pylint: disable=too-many-arguments,bad-super-call
+# pylint: disable=too-many-arguments
 # pylint: disable=attribute-defined-outside-init
 
 from cgi import escape
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
@@ -38,15 +38,16 @@ class AccountMixin(object):
             return QtGui.QColor(128, 128, 128)
         elif self.type == self.CHAN:
             return QtGui.QColor(216, 119, 0)
-        elif self.type in [self.MAILINGLIST, self.SUBSCRIPTION]:
+        elif self.type in (self.MAILINGLIST, self.SUBSCRIPTION):
             return QtGui.QColor(137, 4, 177)
-        return QtGui.QApplication.palette().text().color()
+
+        return QtWidgets.QApplication.palette().text().color()
 
     def folderColor(self):
         """QT UI color for a folder"""
         if not self.parent().isEnabled:
             return QtGui.QColor(128, 128, 128)
-        return QtGui.QApplication.palette().text().color()
+        return QtWidgets.QApplication.palette().text().color()
 
     def accountBrush(self):
         """Account brush (for QT UI)"""
@@ -83,7 +84,7 @@ class AccountMixin(object):
         except AttributeError:
             pass
         self.unreadCount = int(cnt)
-        if isinstance(self, QtGui.QTreeWidgetItem):
+        if isinstance(self, QtWidgets.QTreeWidgetItem):
             self.emitDataChanged()
 
     def setEnabled(self, enabled):
@@ -97,7 +98,7 @@ class AccountMixin(object):
             for i in range(self.childCount()):
                 if isinstance(self.child(i), Ui_FolderWidget):
                     self.child(i).setEnabled(enabled)
-        if isinstance(self, QtGui.QTreeWidgetItem):
+        if isinstance(self, QtWidgets.QTreeWidgetItem):
             self.emitDataChanged()
 
     def setType(self):
@@ -111,44 +112,44 @@ class AccountMixin(object):
         elif config.safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
-                '''select label from subscriptions where address=?''', self.address):
+            'SELECT label FROM subscriptions WHERE address=?',
+            self.address
+        ):
             self.type = AccountMixin.SUBSCRIPTION
         else:
             self.type = self.NORMAL
 
     def defaultLabel(self):
         """Default label (in case no label is set manually)"""
-        queryreturn = None
-        retval = None
+        queryreturn = retval = None
         if self.type in (
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                retval = unicode(
-                    config.get(self.address, 'label'), 'utf-8')
+                retval = config.get(self.address, 'label')
             except Exception:
                 queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                    'SELECT label FROM addressbook WHERE address=?',
+                    self.address
+                )
         elif self.type == AccountMixin.SUBSCRIPTION:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
-        if queryreturn is not None:
-            if queryreturn != []:
-                for row in queryreturn:
-                    retval, = row
-                    retval = unicode(retval, 'utf-8')
+                'SELECT label FROM subscriptions WHERE address=?',
+                self.address
+            )
+        if queryreturn:
+            retval = queryreturn[-1][0]
         elif self.address is None or self.type == AccountMixin.ALL:
-            return unicode(
-                str(_translate("MainWindow", "All accounts")), 'utf-8')
+            return _translate("MainWindow", "All accounts")
 
-        return retval or unicode(self.address, 'utf-8')
+        return (retval or self.address).decode('utf-8')
 
 
-class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
+class BMTreeWidgetItem(QtWidgets.QTreeWidgetItem, AccountMixin):
     """A common abstract class for Tree widget item"""
 
     def __init__(self, parent, pos, address, unreadCount):
-        super(QtGui.QTreeWidgetItem, self).__init__()
+        super(QtWidgets.QTreeWidgetItem, self).__init__()
         self.setAddress(address)
         self.setUnreadCount(unreadCount)
         self._setup(parent, pos)
@@ -157,7 +158,7 @@ class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
         return " (" + str(self.unreadCount) + ")" if unreadCount else ""
 
     def data(self, column, role):
-        """Override internal QT method for returning object data"""
+        """Override internal Qt method for returning object data"""
         if column == 0:
             if role == QtCore.Qt.DisplayRole:
                 return self._getLabel() + self._getAddressBracket(
@@ -190,11 +191,11 @@ class Ui_FolderWidget(BMTreeWidgetItem):
         return _translate("MainWindow", self.folderName)
 
     def setFolderName(self, fname):
-        """Set folder name (for QT UI)"""
+        """Set folder name (for Qt UI)"""
         self.folderName = str(fname)
 
     def data(self, column, role):
-        """Override internal QT method for returning object data"""
+        """Override internal Qt method for returning object data"""
         if column == 0 and role == QtCore.Qt.ForegroundRole:
             return self.folderBrush()
         return super(Ui_FolderWidget, self).data(column, role)
@@ -216,12 +217,14 @@ class Ui_FolderWidget(BMTreeWidgetItem):
                 return self.folderName < other.folderName
             return x >= y if reverse else x < y
 
-        return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+        return super(QtWidgets.QTreeWidgetItem, self).__lt__(other)
 
 
 class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
     """Item in the account/folder tree representing an account"""
-    def __init__(self, parent, pos=0, address=None, unreadCount=0, enabled=True):
+    def __init__(
+        self, parent, pos=0, address=None, unreadCount=0, enabled=True
+    ):
         super(Ui_AddressWidget, self).__init__(
             parent, pos, address, unreadCount)
         self.setEnabled(enabled)
@@ -232,15 +235,12 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
 
     def _getLabel(self):
         if self.address is None:
-            return unicode(_translate(
-                "MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
-        else:
-            try:
-                return unicode(
-                    config.get(self.address, 'label'),
-                    'utf-8', 'ignore')
-            except:
-                return unicode(self.address, 'utf-8')
+            return _translate("MainWindow", "All accounts")
+
+        try:
+            return config.get(self.address, 'label').decode('utf-8', 'ignore')
+        except:
+            return self.address.decode('utf-8')
 
     def _getAddressBracket(self, unreadCount=False):
         ret = "" if self.isExpanded() \
@@ -260,15 +260,13 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
         return super(Ui_AddressWidget, self).data(column, role)
 
     def setData(self, column, role, value):
-        """Save account label (if you edit in the the UI, this will be triggered and will save it to keys.dat)"""
+        """
+        Save account label (if you edit in the the UI, this will be
+        triggered and will save it to keys.dat)
+        """
         if role == QtCore.Qt.EditRole \
                 and self.type != AccountMixin.SUBSCRIPTION:
-            config.set(
-                str(self.address), 'label',
-                str(value.toString().toUtf8())
-                if isinstance(value, QtCore.QVariant)
-                else value.encode('utf-8')
-            )
+            config.set(str(self.address), 'label', value.encode('utf-8'))
             config.save()
         return super(Ui_AddressWidget, self).setData(column, role, value)
 
@@ -295,24 +293,26 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
                 if self._getSortRank() < other._getSortRank() else reverse
             )
 
-        return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+        return super(Ui_AddressWidget, self).__lt__(other)
 
 
 class Ui_SubscriptionWidget(Ui_AddressWidget):
     """Special treating of subscription addresses"""
     # pylint: disable=unused-argument
-    def __init__(self, parent, pos=0, address="", unreadCount=0, label="", enabled=True):
+    def __init__(
+        self, parent, pos=0, address="", unreadCount=0, label="",
+        enabled=True
+    ):
         super(Ui_SubscriptionWidget, self).__init__(
             parent, pos, address, unreadCount, enabled)
 
     def _getLabel(self):
         queryreturn = sqlQuery(
-            '''select label from subscriptions where address=?''', self.address)
-        if queryreturn != []:
-            for row in queryreturn:
-                retval, = row
-            return unicode(retval, 'utf-8', 'ignore')
-        return unicode(self.address, 'utf-8')
+            'SELECT label FROM subscriptions WHERE address=?',
+            self.address)
+        if queryreturn:
+            return queryreturn[-1][0].decode('utf-8', 'ignore')
+        return self.address.decode('utf-8')
 
     def setType(self):
         """Set account type"""
@@ -322,22 +322,17 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
     def setData(self, column, role, value):
         """Save subscription label to database"""
         if role == QtCore.Qt.EditRole:
-            if isinstance(value, QtCore.QVariant):
-                label = str(
-                    value.toString().toUtf8()).decode('utf-8', 'ignore')
-            else:
-                label = unicode(value, 'utf-8', 'ignore')
             sqlExecute(
-                '''UPDATE subscriptions SET label=? WHERE address=?''',
-                label, self.address)
+                'UPDATE subscriptions SET label=? WHERE address=?',
+                value, self.address)
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
 
 
-class BMTableWidgetItem(QtGui.QTableWidgetItem, SettingsMixin):
+class BMTableWidgetItem(QtWidgets.QTableWidgetItem, SettingsMixin):
     """A common abstract class for Table widget item"""
 
     def __init__(self, label=None, unread=False):
-        super(QtGui.QTableWidgetItem, self).__init__()
+        super(QtWidgets.QTableWidgetItem, self).__init__()
         self.setLabel(label)
         self.setUnread(unread)
         self._setup()
@@ -407,20 +402,19 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                newLabel = unicode(
-                    config.get(self.address, 'label'),
-                    'utf-8', 'ignore')
+                newLabel = config.get(self.address, 'label')
             except:
                 queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                    'SELECT label FROM addressbook WHERE address=?',
+                    self.address)
         elif self.type == AccountMixin.SUBSCRIPTION:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                'SELECT label FROM subscriptions WHERE address=?',
+                self.address)
         if queryreturn:
-            for row in queryreturn:
-                newLabel = unicode(row[0], 'utf-8', 'ignore')
+            newLabel = queryreturn[-1][0]
 
-        self.label = newLabel
+        self.label = newLabel.decode('utf-8', 'ignore')
 
     def data(self, role):
         """Return object data (QT UI)"""
@@ -438,7 +432,7 @@ class MessageList_AddressWidget(BMAddressWidget):
     def __lt__(self, other):
         if isinstance(other, MessageList_AddressWidget):
             return self.label.lower() < other.label.lower()
-        return super(QtGui.QTableWidgetItem, self).__lt__(other)
+        return super(MessageList_AddressWidget, self).__lt__(other)
 
 
 class MessageList_SubjectWidget(BMTableWidgetItem):
@@ -456,14 +450,14 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         if role == QtCore.Qt.UserRole:
             return self.subject
         if role == QtCore.Qt.ToolTipRole:
-            return escape(unicode(self.subject, 'utf-8'))
+            return escape(self.subject)
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
         if isinstance(other, MessageList_SubjectWidget):
             return self.label.lower() < other.label.lower()
-        return super(QtGui.QTableWidgetItem, self).__lt__(other)
+        return super(MessageList_SubjectWidget, self).__lt__(other)
 
 
 # In order for the time columns on the Inbox and Sent tabs to be sorted
@@ -491,15 +485,14 @@ class MessageList_TimeWidget(BMTableWidgetItem):
         """
         data = super(MessageList_TimeWidget, self).data(role)
         if role == TimestampRole:
-            return int(data.toPyObject())
+            return int(data)
         if role == QtCore.Qt.UserRole:
-            return str(data.toPyObject())
+            return str(data)
         return data
 
 
 class Ui_AddressBookWidgetItem(BMAddressWidget):
     """Addressbook item"""
-    # pylint: disable=unused-argument
     def __init__(self, label=None, acc_type=AccountMixin.NORMAL):
         self.type = acc_type
         super(Ui_AddressBookWidgetItem, self).__init__(label=label)
@@ -513,10 +506,7 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
     def setData(self, role, value):
         """Set data"""
         if role == QtCore.Qt.EditRole:
-            self.label = str(
-                value.toString().toUtf8()
-                if isinstance(value, QtCore.QVariant) else value
-            )
+            self.label = value.encode('utf-8')
             if self.type in (
                     AccountMixin.NORMAL,
                     AccountMixin.MAILINGLIST, AccountMixin.CHAN):
@@ -525,22 +515,27 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                     config.set(self.address, 'label', self.label)
                     config.save()
                 except:
-                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
+                    sqlExecute(
+                        'UPDATE addressbook SET label=? WHERE address=?',
+                        self.label, self.address
+                    )
             elif self.type == AccountMixin.SUBSCRIPTION:
-                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
-            else:
-                pass
+                sqlExecute(
+                    'UPDATE subscriptions SET label=? WHERE address=?',
+                    self.label, self.address)
         return super(Ui_AddressBookWidgetItem, self).setData(role, value)
 
     def __lt__(self, other):
-        if isinstance(other, Ui_AddressBookWidgetItem):
-            reverse = QtCore.Qt.DescendingOrder == \
-                self.tableWidget().horizontalHeader().sortIndicatorOrder()
+        if not isinstance(other, Ui_AddressBookWidgetItem):
+            return super(Ui_AddressBookWidgetItem, self).__lt__(other)
 
-            if self.type == other.type:
-                return self.label.lower() < other.label.lower()
-            return not reverse if self.type < other.type else reverse
-        return super(QtGui.QTableWidgetItem, self).__lt__(other)
+        reverse = QtCore.Qt.DescendingOrder == \
+            self.tableWidget().horizontalHeader().sortIndicatorOrder()
+
+        if self.type == other.type:
+            return self.label.lower() < other.label.lower()
+
+        return not reverse if self.type < other.type else reverse
 
 
 class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
@@ -570,28 +565,26 @@ class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
         return super(Ui_AddressBookWidgetItemAddress, self).data(role)
 
 
-class AddressBookCompleter(QtGui.QCompleter):
+class AddressBookCompleter(QtWidgets.QCompleter):
     """Addressbook completer"""
-
     def __init__(self):
         super(AddressBookCompleter, self).__init__()
         self.cursorPos = -1
 
-    def onCursorPositionChanged(self, oldPos, newPos):  # pylint: disable=unused-argument
+    def onCursorPositionChanged(self, oldPos, newPos):
         """Callback for cursor position change"""
+        # pylint: disable=unused-argument
         if oldPos != self.cursorPos:
             self.cursorPos = -1
 
     def splitPath(self, path):
         """Split on semicolon"""
-        text = unicode(path.toUtf8(), 'utf-8')
-        return [text[:self.widget().cursorPosition()].split(';')[-1].strip()]
+        return [path[:self.widget().cursorPosition()].split(';')[-1].strip()]
 
     def pathFromIndex(self, index):
         """Perform autocompletion (reimplemented QCompleter method)"""
-        autoString = unicode(
-            index.data(QtCore.Qt.EditRole).toString().toUtf8(), 'utf-8')
-        text = unicode(self.widget().text().toUtf8(), 'utf-8')
+        autoString = index.data(QtCore.Qt.EditRole).toString()
+        text = self.widget().text()
 
         # If cursor position was saved, restore it, else save it
         if self.cursorPos != -1:
@@ -620,7 +613,6 @@ class AddressBookCompleter(QtGui.QCompleter):
 
         # Get string value from before auto finished string is selected
         # pre = text[prevDelimiterIndex + 1:curIndex - 1]
-
         # Get part of string that occurs AFTER cursor
         part2 = text[nextDelimiterIndex:]
 

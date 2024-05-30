@@ -11,11 +11,13 @@ ingredients:
     - python-msgpack
     - python-qrcode
     - python-qt4
+    - python-qtpy
     - python-setuptools
     - python-sip
     - python-six
     - python-xdg
     - sni-qt
+    - xkb-data
   exclude:
     - libdb5.3
     - libglib2.0-0

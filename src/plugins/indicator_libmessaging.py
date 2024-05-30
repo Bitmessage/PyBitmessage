@@ -23,9 +23,9 @@ class IndicatorLibmessaging(object):
             return
 
         self._menu = {
-            'send': unicode(_translate('MainWindow', 'Send')),
-            'messages': unicode(_translate('MainWindow', 'Messages')),
-            'subscriptions': unicode(_translate('MainWindow', 'Subscriptions'))
+            'send': _translate('MainWindow', 'Send'),
+            'messages': _translate('MainWindow', 'Messages'),
+            'subscriptions': _translate('MainWindow', 'Subscriptions')
         }
 
         self.new_message_item = self.new_broadcast_item = None
@@ -45,12 +45,11 @@ class IndicatorLibmessaging(object):
 
     def show_unread(self, draw_attention=False):
         """
-        show the number of unread messages and subscriptions
+        Show the number of unread messages and subscriptions
         on the messaging menu
         """
         for source, count in zip(
-                ('messages', 'subscriptions'),
-                self.form.getUnread()
+            ('messages', 'subscriptions'), self.form.getUnread()
         ):
             if count > 0:
                 if self.app.has_source(source):

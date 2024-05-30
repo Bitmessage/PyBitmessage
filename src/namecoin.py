@@ -1,7 +1,7 @@
 """
 Namecoin queries
 """
-# pylint: disable=too-many-branches,protected-access
+# pylint: disable=too-many-branches
 
 import base64
 import httplib
@@ -14,14 +14,14 @@ import defaults
 from addresses import decodeAddress
 from bmconfigparser import config
 from debug import logger
-from tr import _translate  # translate
+from tr import _translate
+
 
 configSection = "bitmessagesettings"
 
 
 class RPCError(Exception):
     """Error thrown when the RPC call returns an error."""
-
     error = None
 
     def __init__(self, data):
@@ -29,7 +29,7 @@ class RPCError(Exception):
         self.error = data
 
     def __str__(self):
-        return "{0}: {1}".format(type(self).__name__, self.error)
+        return '{0}: {1}'.format(type(self).__name__, self.error)
 
 
 class namecoinConnection(object):
@@ -46,8 +46,8 @@ class namecoinConnection(object):
 
     def __init__(self, options=None):
         """
-        Initialise.  If options are given, take the connection settings from
-        them instead of loading from the configs.  This can be used to test
+        Initialise. If options are given, take the connection settings from
+        them instead of loading from the configs. This can be used to test
         currently entered connection settings in the config dialog without
         actually changing the values (yet).
         """
@@ -69,14 +69,14 @@ class namecoinConnection(object):
             self.user = options["user"]
             self.password = options["password"]
 
-        assert self.nmctype == "namecoind" or self.nmctype == "nmcontrol"
+        assert self.nmctype in ("namecoind", "nmcontrol")
         if self.nmctype == "namecoind":
             self.con = httplib.HTTPConnection(self.host, self.port, timeout=3)
 
     def query(self, identity):
         """
         Query for the bitmessage address corresponding to the given identity
-        string.  If it doesn't contain a slash, id/ is prepended.  We return
+        string. If it doesn't contain a slash, id/ is prepended. We return
         the result as (Error, Address) pair, where the Error is an error
         message to display or None in case of success.
         """
@@ -96,8 +96,8 @@ class namecoinConnection(object):
                 res = res["reply"]
                 if not res:
                     return (_translate(
-                        "MainWindow", "The name %1 was not found."
-                    ).arg(identity.decode("utf-8", "ignore")), None)
+                        "MainWindow", "The name {0} was not found."
+                    ).format(identity.decode('utf-8', 'ignore')), None)
             else:
                 assert False
         except RPCError as exc:
@@ -107,12 +107,12 @@ class namecoinConnection(object):
             else:
                 errmsg = exc.error
             return (_translate(
-                "MainWindow", "The namecoin query failed (%1)"
-            ).arg(errmsg.decode("utf-8", "ignore")), None)
+                "MainWindow", "The namecoin query failed ({0})"
+            ).format(errmsg.decode('utf-8', 'ignore')), None)
         except AssertionError:
             return (_translate(
-                "MainWindow", "Unknown namecoin interface type: %1"
-            ).arg(self.nmctype.decode("utf-8", "ignore")), None)
+                "MainWindow", "Unknown namecoin interface type: {0}"
+            ).format(self.nmctype.decode('utf-8', 'ignore')), None)
         except Exception:
             logger.exception("Namecoin query exception")
             return (_translate(
@@ -135,12 +135,12 @@ class namecoinConnection(object):
         ) if valid else (
             _translate(
                 "MainWindow",
-                "The name %1 has no associated Bitmessage address."
-            ).arg(identity.decode("utf-8", "ignore")), None)
+                "The name {0} has no associated Bitmessage address."
+            ).format(identity.decode('utf-8', 'ignore')), None)
 
     def test(self):
         """
-        Test the connection settings.  This routine tries to query a "getinfo"
+        Test the connection settings. This routine tries to query a "getinfo"
         command, and builds either an error message or a success message with
         some info from it.
         """
@@ -160,44 +160,36 @@ class namecoinConnection(object):
                     versStr = "0.%d.%d" % (v1, v2)
                 else:
                     versStr = "0.%d.%d.%d" % (v1, v2, v3)
-                message = (
-                    "success",
-                    _translate(
+                return (
+                    'success', _translate(
                         "MainWindow",
-                        "Success!  Namecoind version %1 running.").arg(
-                            versStr.decode("utf-8", "ignore")))
+                        "Success! Namecoind version {0} running."
+                    ).format(versStr.decode('utf-8', 'ignore'))
+                )
 
             elif self.nmctype == "nmcontrol":
                 res = self.callRPC("data", ["status"])
                 prefix = "Plugin data running"
                 if ("reply" in res) and res["reply"][:len(prefix)] == prefix:
                     return (
-                        "success",
-                        _translate(
+                        'success', _translate(
                             "MainWindow",
-                            "Success!  NMControll is up and running."
-                        )
+                            "Success! NMControll is up and running.")
                     )
 
                 logger.error("Unexpected nmcontrol reply: %s", res)
-                message = (
-                    "failed",
-                    _translate(
-                        "MainWindow",
-                        "Couldn\'t understand NMControl."
-                    )
+                return (
+                    'failed', _translate(
+                        "MainWindow", "Couldn\'t understand NMControl.")
                 )
 
             else:
                 sys.exit("Unsupported Namecoin type")
 
-            return message
-
         except Exception:
             logger.info("Namecoin connection test failure")
             return (
-                "failed",
-                _translate(
+                'failed', _translate(
                     "MainWindow", "The connection to namecoin failed.")
             )
 
@@ -245,26 +237,24 @@ class namecoinConnection(object):
                 "Authorization", "Basic %s" % base64.b64encode(authstr))
             self.con.endheaders()
             self.con.send(data)
+            try:
+                resp = self.con.getresponse()
+                result = resp.read()
+                if resp.status != 200:
+                    raise Exception(
+                        "Namecoin returned status %i: %s" %
+                        (resp.status, resp.reason))
+            except:  # noqa:E722
+                logger.info("HTTP receive error")
         except:  # noqa:E722
             logger.info("HTTP connection error")
-            return None
-
-        try:
-            resp = self.con.getresponse()
-            result = resp.read()
-            if resp.status != 200:
-                raise Exception(
-                    "Namecoin returned status"
-                    " %i: %s" % (resp.status, resp.reason))
-        except:  # noqa:E722
-            logger.info("HTTP receive error")
-            return None
 
         return result
 
     def queryServer(self, data):
-        """Helper routine sending data to the RPC "
-        "server and returning the result."""
+        """
+        Helper routine sending data to the RPC server and returning the result.
+        """
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -296,23 +286,24 @@ def lookupNamecoinFolder():
     """
 
     app = "namecoin"
-    from os import path, environ
+
     if sys.platform == "darwin":
-        if "HOME" in environ:
-            dataFolder = path.join(os.environ["HOME"],
-                                   "Library/Application Support/", app) + "/"
-        else:
+        try:
+            dataFolder = os.path.join(
+                os.getenv("HOME"), "Library/Application Support/", app)
+        except TypeError:  # getenv is None
             sys.exit(
                 "Could not find home folder, please report this message"
                 " and your OS X version to the BitMessage Github."
-            )
+            )  # TODO: remove exits from utility modules
 
-    elif "win32" in sys.platform or "win64" in sys.platform:
-        dataFolder = path.join(environ["APPDATA"], app) + "\\"
-    else:
-        dataFolder = path.join(environ["HOME"], ".%s" % app) + "/"
+    dataFolder = (
+        os.path.join(os.getenv("APPDATA"), app)
+        if sys.platform.startswith('win') else
+        os.path.join(os.getenv("HOME"), ".%s" % app)
+    )
 
-    return dataFolder
+    return dataFolder + os.path.sep
 
 
 def ensureNamecoinOptions():
@@ -357,8 +348,8 @@ def ensureNamecoinOptions():
         nmc.close()
     except IOError:
         logger.warning(
-            "%s unreadable or missing, Namecoin support deactivated",
-            nmcConfig)
+            "%s unreadable or missing, Namecoin support deactivated", nmcConfig
+        )
     except Exception:
         logger.warning("Error processing namecoin.conf", exc_info=True)
 

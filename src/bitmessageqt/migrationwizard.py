@@ -1,16 +1,15 @@
-#!/usr/bin/env python2.7
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
-class MigrationWizardIntroPage(QtGui.QWizardPage):
+class MigrationWizardIntroPage(QtWidgets.QWizardPage):
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(QtWidgets.QWizardPage, self).__init__()
         self.setTitle("Migrating configuration")
 
-        label = QtGui.QLabel("This wizard will help you to migrate your configuration. "
+        label = QtWidgets.QLabel("This wizard will help you to migrate your configuration. "
             "You can still keep using PyBitMessage once you migrate, the changes are backwards compatible.")
         label.setWordWrap(True)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
         
@@ -18,15 +17,15 @@ class MigrationWizardIntroPage(QtGui.QWizardPage):
         return 1
     
 
-class MigrationWizardAddressesPage(QtGui.QWizardPage):
+class MigrationWizardAddressesPage(QtWidgets.QWizardPage):
     def __init__(self, addresses):
-        super(QtGui.QWizardPage, self).__init__()
+        super(QtWidgets.QWizardPage, self).__init__()
         self.setTitle("Addresses")
 
-        label = QtGui.QLabel("Please select addresses that you are already using with mailchuck. ")
+        label = QtWidgets.QLabel("Please select addresses that you are already using with mailchuck. ")
         label.setWordWrap(True)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
         
@@ -34,15 +33,15 @@ class MigrationWizardAddressesPage(QtGui.QWizardPage):
         return 10
     
 
-class MigrationWizardGPUPage(QtGui.QWizardPage):
+class MigrationWizardGPUPage(QtWidgets.QWizardPage):
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(QtWidgets.QWizardPage, self).__init__()
         self.setTitle("GPU")
 
-        label = QtGui.QLabel("Are you using a GPU? ")
+        label = QtWidgets.QLabel("Are you using a GPU? ")
         label.setWordWrap(True)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
         
@@ -50,22 +49,22 @@ class MigrationWizardGPUPage(QtGui.QWizardPage):
         return 10
     
 
-class MigrationWizardConclusionPage(QtGui.QWizardPage):
+class MigrationWizardConclusionPage(QtWidgets.QWizardPage):
     def __init__(self):
-        super(QtGui.QWizardPage, self).__init__()
+        super(QtWidgets.QWizardPage, self).__init__()
         self.setTitle("All done!")
 
-        label = QtGui.QLabel("You successfully migrated.")
+        label = QtWidgets.QLabel("You successfully migrated.")
         label.setWordWrap(True)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
 
 
-class Ui_MigrationWizard(QtGui.QWizard):
+class Ui_MigrationWizard(QtWidgets.QWizard):
     def __init__(self, addresses):
-        super(QtGui.QWizard, self).__init__()
+        super(QtWidgets.QWizard, self).__init__()
 
         self.pages = {}
         
