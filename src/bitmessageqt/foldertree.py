@@ -4,7 +4,10 @@ Folder tree and messagelist widgets definitions.
 # pylint: disable=too-many-arguments
 # pylint: disable=attribute-defined-outside-init
 
-from cgi import escape
+try:
+    from cgi import escape
+except ImportError:
+    from html import escape
 
 from unqstr import ustr, unic
 from dbcompat import dbstr

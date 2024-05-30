@@ -808,7 +808,7 @@ class MyForm(settingsmixin.SMainWindow):
         elif TTL > 28 * 24 * 60 * 60:  # 28 days
             TTL = 28 * 24 * 60 * 60
         self.ui.horizontalSliderTTL.setSliderPosition(
-            (TTL - 3600) ** (1 / 3.199))
+            int((TTL - 3600) ** (1 / 3.199)))
         self.updateHumanFriendlyTTLDescription(TTL)
 
         self.ui.horizontalSliderTTL.valueChanged.connect(self.updateTTL)
