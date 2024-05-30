@@ -145,7 +145,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
                 0, 0, QtWidgets.QTableWidgetItem(
                     "%s:%i" % (destination.host, destination.port)))
             self.tableWidgetConnectionCount.setItem(
-                0, 2, QtWidgets.QTableWidgetItem("%s" % (c.userAgent)))
+                0, 2, QtWidgets.QTableWidgetItem("%s" % (c.userAgent.decode("utf-8", "replace"))))
             self.tableWidgetConnectionCount.setItem(
                 0, 3, QtWidgets.QTableWidgetItem("%s" % (c.tlsVersion)))
             self.tableWidgetConnectionCount.setItem(
