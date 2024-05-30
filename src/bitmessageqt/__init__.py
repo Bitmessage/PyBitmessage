@@ -840,9 +840,10 @@ class MyForm(settingsmixin.SMainWindow):
         TTL = config.getint('bitmessagesettings', 'ttl')
         if TTL < 3600: # an hour
             TTL = 3600
-        elif TTL > 28*24*60*60: # 28 days
-            TTL = 28*24*60*60
-        self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
+        elif TTL > 28 * 24 * 60 * 60:  # 28 days
+            TTL = 28 * 24 * 60 * 60
+        self.ui.horizontalSliderTTL.setSliderPosition(
+            int((TTL - 3600) ** (1 / 3.199)))
         self.updateHumanFriendlyTTLDescription(TTL)
 
         QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
