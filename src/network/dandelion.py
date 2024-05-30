@@ -7,6 +7,7 @@ from random import choice, expovariate, sample
 from threading import RLock
 from time import time
 import six
+from binascii import hexlify
 
 import network.connectionpool  # use long name to address recursive import
 import state
@@ -76,7 +77,7 @@ class Dandelion:  # pylint: disable=old-style-class
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 '%s entering fluff mode due to %s.',
-                ''.join('%02x' % six.byte2int(i) for i in hashId), reason)
+                hexlify(hashId), reason)
         with self.lock:
             try:
                 del self.hashMap[bytes(hashId)]
