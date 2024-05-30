@@ -1,6 +1,7 @@
 """
 Sqlite Inventory
 """
+import six
 import sqlite3
 import time
 from threading import RLock
@@ -110,7 +111,10 @@ class SqliteInventory(InventoryStorage):
             # always use the inventoryLock OUTSIDE of the sqlLock.
             with SqlBulkExecute() as sql:
                 for objectHash, value in self._inventory.items():
-                    value = [value[0], value[1], sqlite3.Binary(value[2]), value[3], sqlite3.Binary(value[4])]
+                    tag = value[4]
+                    if six.PY3 and isinstance(tag, str):
+                        tag = tag.encode("utf-8", "replace")
+                    value = [value[0], value[1], sqlite3.Binary(value[2]), value[3], sqlite3.Binary(tag)]
                     sql.execute(
                         'INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)',
                         sqlite3.Binary(objectHash), *value)
