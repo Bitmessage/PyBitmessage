@@ -92,6 +92,13 @@ def openKeysFile():
         os.startfile(keysfile)  # pylint: disable=no-member
 
 
+def as_msgid(id_data):
+    if six.PY3:
+        return escape_decode(id_data)[0][2:-1]
+    else:  # assume six.PY2
+        return id_data
+
+
 class MyForm(settingsmixin.SMainWindow):
 
     # the maximum frequency of message sounds in seconds
@@ -994,7 +1001,7 @@ class MyForm(settingsmixin.SMainWindow):
             # related = related.findItems(msgid, QtCore.Qt.MatchExactly),
             # returns an empty list
             for rrow in range(related.rowCount()):
-                if related.item(rrow, 3).data() == msgid:
+                if as_msgid(related.item(rrow, 3).data()) == msgid:
                     break
 
         for col in range(widget.columnCount()):
@@ -1914,7 +1921,7 @@ class MyForm(settingsmixin.SMainWindow):
                 # toAddress = sent.item(i, 0).data(QtCore.Qt.UserRole)
                 # decodeAddress(toAddress)
 
-                if sent.item(i, 3).data() == ackdata:
+                if as_msgid(sent.item(i, 3).data()) == ackdata:
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.find('\n')
@@ -1937,7 +1944,7 @@ class MyForm(settingsmixin.SMainWindow):
         ):
             i = None
             for i in range(inbox.rowCount()):
-                if msgid == inbox.item(i, 3).data():
+                if msgid == as_msgid(inbox.item(i, 3).data()):
                     break
             else:
                 continue
@@ -2686,7 +2693,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         msgids = []
         for i in range(0, idCount):
-            msgids.append(sqlite3.Binary(tableWidget.item(i, 3).data()))
+            msgids.append(sqlite3.Binary(as_msgid(tableWidget.item(i, 3).data())))
             for col in xrange(tableWidget.columnCount()):
                 tableWidget.item(i, col).setUnread(False)
 
@@ -2975,8 +2982,8 @@ class MyForm(settingsmixin.SMainWindow):
         # modified = 0
         for row in tableWidget.selectedIndexes():
             currentRow = row.row()
-            msgid = sqlite3.Binary(tableWidget.item(currentRow, 3).data())
-            msgids.add(msgid)
+            msgid = as_msgid(tableWidget.item(currentRow, 3).data())
+            msgids.add(sqlite3.Binary(msgid))
             # if not tableWidget.item(currentRow, 0).unread:
             #     modified += 1
             self.updateUnreadStatus(tableWidget, currentRow, msgid, False)
@@ -3066,7 +3073,7 @@ class MyForm(settingsmixin.SMainWindow):
         acct = accountClass(toAddressAtCurrentInboxRow)
         fromAddressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, column_from).address
-        msgid = tableWidget.item(currentInboxRow, 3).data()
+        msgid = as_msgid(tableWidget.item(currentInboxRow, 3).data())
         queryreturn = sqlQuery(
             "SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(msgid)
         ) or sqlQuery("SELECT message FROM sent WHERE ackdata=?", sqlite3.Binary(msgid))
@@ -3225,15 +3232,15 @@ class MyForm(settingsmixin.SMainWindow):
             messageLists = (messageLists,)
         for messageList in messageLists:
             if row is not None:
-                inventoryHash = messageList.item(row, 3).data()
+                inventoryHash = as_msgid(messageList.item(row, 3).data())
                 messageList.removeRow(row)
             elif inventoryHash is not None:
                 for i in range(messageList.rowCount() - 1, -1, -1):
-                    if messageList.item(i, 3).data() == inventoryHash:
+                    if as_msgid(messageList.item(i, 3).data()) == inventoryHash:
                         messageList.removeRow(i)
             elif ackData is not None:
                 for i in range(messageList.rowCount() - 1, -1, -1):
-                    if messageList.item(i, 3).data() == ackData:
+                    if as_msgid(messageList.item(i, 3).data()) == ackData:
                         messageList.removeRow(i)
 
     # Send item on the Inbox tab to trash
@@ -3253,7 +3260,7 @@ class MyForm(settingsmixin.SMainWindow):
         )[::-1]:
             for i in range(r.bottomRow() - r.topRow() + 1):
                 inventoryHashesToTrash.add(
-                    sqlite3.Binary(tableWidget.item(r.topRow() + i, 3).data()))
+                    sqlite3.Binary(as_msgid(tableWidget.item(r.topRow() + i, 3).data())))
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(
@@ -3286,7 +3293,7 @@ class MyForm(settingsmixin.SMainWindow):
         )[::-1]:
             for i in range(r.bottomRow() - r.topRow() + 1):
                 inventoryHashesToTrash.add(
-                    sqlite3.Binary(tableWidget.item(r.topRow() + i, 3).data()))
+                    sqlite3.Binary(as_msgid(tableWidget.item(r.topRow() + i, 3).data())))
             currentRow = r.topRow()
             self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(
@@ -3317,7 +3324,7 @@ class MyForm(settingsmixin.SMainWindow):
             subjectAtCurrentInboxRow = ''
 
         # Retrieve the message data out of the SQL database
-        msgid = tableWidget.item(currentInboxRow, 3).data()
+        msgid = as_msgid(tableWidget.item(currentInboxRow, 3).data())
         queryreturn = sqlQuery(
             'SELECT message FROM inbox WHERE msgid=?', sqlite3.Binary(msgid))
         if len(queryreturn) < 1:
@@ -3354,7 +3361,7 @@ class MyForm(settingsmixin.SMainWindow):
                    QtCore.Qt.ShiftModifier)
         while tableWidget.selectedIndexes() != []:
             currentRow = tableWidget.selectedIndexes()[0].row()
-            ackdataToTrash = tableWidget.item(currentRow, 3).data()
+            ackdataToTrash = as_msgid(tableWidget.item(currentRow, 3).data())
             rowcount = sqlExecute(
                 "DELETE FROM sent" if folder == "trash" or shifted else
                 "UPDATE sent SET folder='trash'"
@@ -3637,11 +3644,7 @@ class MyForm(settingsmixin.SMainWindow):
         if messagelist:
             currentRow = messagelist.currentRow()
             if currentRow >= 0:
-                msgid_str = messagelist.item(currentRow, 3).data()
-                if six.PY3:
-                    return escape_decode(msgid_str)[0][2:-1]
-                else:  # assume six.PY2
-                    return msgid_str
+                return as_msgid(messagelist.item(currentRow, 3).data())
 
     def getCurrentMessageTextedit(self):
         currentIndex = self.ui.tabWidget.currentIndex()
@@ -4086,7 +4089,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
         if currentRow >= 0:
-            ackData = self.ui.tableWidgetInbox.item(currentRow, 3).data()
+            ackData = as_msgid(self.ui.tableWidgetInbox.item(currentRow, 3).data())
             queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', sqlite3.Binary(ackData))
             if len(queryreturn) < 1:
                 queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=CAST(? AS TEXT)''', ackData)
