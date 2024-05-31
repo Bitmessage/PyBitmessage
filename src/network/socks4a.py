@@ -40,11 +40,11 @@ class Socks4a(Proxy):
     def state_pre_connect(self):
         """Handle feedback from SOCKS4a while it is connecting on our behalf"""
         # Get the response
-        if self.read_buf[0:1] != six.int2byte(0x00).encode():
+        if self.read_buf[0:1] != six.int2byte(0x00):
             # bad data
             self.close()
             raise GeneralProxyError(1)
-        elif self.read_buf[1:2] != six.int2byte(0x5A).encode():
+        elif self.read_buf[1:2] != six.int2byte(0x5A):
             # Connection failed
             self.close()
             if six.byte2int(self.read_buf[1:2]) in (91, 92, 93):
@@ -103,9 +103,9 @@ class Socks4aConnection(Socks4a):
                 self.append_write_buf(self.ipaddr)
         if self._auth:
             self.append_write_buf(self._auth[0])
-        self.append_write_buf(six.int2byte(0x00).encode())
+        self.append_write_buf(six.int2byte(0x00))
         if rmtrslv:
-            self.append_write_buf(self.destination[0] + six.int2byte(0x00).encode())
+            self.append_write_buf(self.destination[0].encode("utf-8", "replace") + six.int2byte(0x00))
         self.set_state("pre_connect", length=0, expectBytes=8)
         return True
 
@@ -133,8 +133,8 @@ class Socks4aResolver(Socks4a):
         self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
         if self._auth:
             self.append_write_buf(self._auth[0])
-        self.append_write_buf(six.int2byte(0x00).encode())
-        self.append_write_buf(self.host + six.int2byte(0x00).encode())
+        self.append_write_buf(six.int2byte(0x00))
+        self.append_write_buf(self.host + six.int2byte(0x00))
         self.set_state("pre_connect", length=0, expectBytes=8)
         return True
 
