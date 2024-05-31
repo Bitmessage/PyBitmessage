@@ -190,8 +190,8 @@ class Dandelion:  # pylint: disable=old-style-class
                     ).outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = network.connectionpool.BMConnectionPool(
-                ).outboundConnections.values()
+                self.stem = list(network.connectionpool.BMConnectionPool(
+                ).outboundConnections.values())
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time() + REASSIGN_INTERVAL
