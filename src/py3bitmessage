@@ -1,7 +1,9 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 
 import os
 import pkg_resources
+
+import pybitmessage
 
 dist = pkg_resources.get_distribution('pybitmessage')
 script_file = os.path.join(dist.location, dist.key, 'bitmessagemain.py')
