@@ -43,7 +43,7 @@ handlers=default
         cls._files = cls._files[2:] + ('logging.dat',)
         cls.log_file = os.path.join(cls.home, 'debug.log')
 
-        with open(os.path.join(cls.home, 'logging.dat'), 'wb') as dst:
+        with open(os.path.join(cls.home, 'logging.dat'), 'w') as dst:
             dst.write(cls.conf_template.format(cls.log_file, cls.pattern))
 
         super(TestLogger, cls).setUpClass()

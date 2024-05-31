@@ -39,7 +39,7 @@ broadcastSendersForWhichImWatching = {}
 def isAddressInMyAddressBook(address):
     """Is address in my addressbook?"""
     queryreturn = sqlQuery(
-        '''select address from addressbook where address=?''',
+        '''select TRUE from addressbook where address=?''',
         dbstr(address))
     return queryreturn != []
 
@@ -48,7 +48,7 @@ def isAddressInMyAddressBook(address):
 def isAddressInMySubscriptionsList(address):
     """Am I subscribed to this address?"""
     queryreturn = sqlQuery(
-        '''select * from subscriptions where address=?''',
+        '''select TRUE from subscriptions where address=?''',
         dbstr(address))
     return queryreturn != []
 

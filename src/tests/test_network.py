@@ -3,10 +3,7 @@
 import threading
 import time
 
-from .common import skip_python3
 from .partial import TestPartialRun
-
-skip_python3()
 
 
 class TestNetwork(TestPartialRun):
@@ -24,11 +21,14 @@ class TestNetwork(TestPartialRun):
         # config variable is still used inside of the network ):
         import network
         from network import connectionpool, stats
+        from network.stats import sentBytes, receivedBytes
 
         # beware of singleton
         connectionpool.config = cls.config
         cls.pool = connectionpool.pool
         cls.stats = stats
+        cls.stats.sentBytes = sentBytes
+        cls.stats.receivedBytes = receivedBytes
 
         network.start(cls.config, cls.state)
 

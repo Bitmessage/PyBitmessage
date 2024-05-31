@@ -45,10 +45,12 @@ class TestHelperSent(unittest.TestCase):
     @patch("pybitmessage.helper_sent.sqlExecute")
     def test_delete(self, mock_sql_execute):
         """Test delete function"""
+        mock_sql_execute.return_value = 1
         delete(b"ack_data")
         self.assertTrue(mock_sql_execute.called)
+        import sqlite3
         mock_sql_execute.assert_called_once_with(
-            "DELETE FROM sent WHERE ackdata = ?", b"ack_data"
+            "DELETE FROM sent WHERE ackdata = ?", sqlite3.Binary(b"ack_data")
         )
 
     @patch("pybitmessage.helper_sent.sqlQuery")
@@ -64,7 +66,7 @@ class TestHelperSent(unittest.TestCase):
             )
         ]
         mock_sql_query.return_value = return_data
-        result = retrieve_message_details("12345")
+        result = retrieve_message_details(b"12345")
         self.assertEqual(result, return_data)
 
     @patch("pybitmessage.helper_sent.sqlExecute")

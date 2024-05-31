@@ -43,6 +43,7 @@ class TestHelperInbox(unittest.TestCase):
     @patch("pybitmessage.helper_inbox.sqlExecute")
     def test_trash(self, mock_sql_execute):  # pylint: disable=no-self-use
         """Test marking a message in the `inbox` as `trash`"""
+        mock_sql_execute.return_value = 1
         mock_msg_id = b"fefkosghsbse92"
         trash(msgid=mock_msg_id)
         mock_sql_execute.assert_called_once()
@@ -50,6 +51,7 @@ class TestHelperInbox(unittest.TestCase):
     @patch("pybitmessage.helper_inbox.sqlExecute")
     def test_delete(self, mock_sql_execute):  # pylint: disable=no-self-use
         """Test for permanent deletion of message from trash"""
+        mock_sql_execute.return_value = 1
         mock_ack_data = genAckPayload()
         delete(mock_ack_data)
         mock_sql_execute.assert_called_once()
@@ -57,6 +59,7 @@ class TestHelperInbox(unittest.TestCase):
     @patch("pybitmessage.helper_inbox.sqlExecute")
     def test_undeleteMessage(self, mock_sql_execute):  # pylint: disable=no-self-use
         """Test for Undelete the message"""
+        mock_sql_execute.return_value = 1
         mock_msg_id = b"fefkosghsbse92"
         undeleteMessage(msgid=mock_msg_id)
         mock_sql_execute.assert_called_once()
@@ -64,7 +67,7 @@ class TestHelperInbox(unittest.TestCase):
     @patch("pybitmessage.helper_inbox.sqlQuery")
     def test_isMessageAlreadyInInbox(self, mock_sql_query):
         """Test for check for previous instances of this message"""
-        fake_sigHash = "h4dkn54546"
+        fake_sigHash = b"h4dkn54546"
         # if Message is already in Inbox
         mock_sql_query.return_value = [(1,)]
         result = isMessageAlreadyInInbox(sigHash=fake_sigHash)
