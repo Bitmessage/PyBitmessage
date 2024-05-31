@@ -81,9 +81,13 @@ def sqlExecuteChunked(sql_statement, as_text, idCount, *args):
                 i:i + sqlExecuteChunked.chunkSize - (len(args) - idCount)
             ]
             if as_text:
-                sqlSubmitQueue.put(
-                    sql_statement.format(','.join('CAST(? AS TEXT)' * len(chunk_slice)))
-                )
+                q = ""
+                n = len(chunk_slice)
+                for i in range(n):
+                    q += "CAST(? AS TEXT)"
+                    if i != n - 1:
+                        q += ","
+                sqlSubmitQueue.put(sql_statement.format(q))
             else:
                 sqlSubmitQueue.put(
                     sql_statement.format(','.join('?' * len(chunk_slice)))
