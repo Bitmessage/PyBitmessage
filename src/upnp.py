@@ -94,12 +94,12 @@ class Router:  # pylint: disable=old-style-class
 
         self.address = address
 
-        row = ssdpResponse.split('\r\n')
+        row = ssdpResponse.split(b'\r\n')
         header = {}
         for i in range(1, len(row)):
-            part = row[i].split(': ')
+            part = row[i].split(b': ')
             if len(part) == 2:
-                header[part[0].lower()] = part[1]
+                header[part[0].decode("utf-8", "replace").lower()] = part[1].decode("utf-8", "replace")
 
         try:
             self.routerPath = urlparse(header['location'])
@@ -222,10 +222,6 @@ class uPnPThread(StoppableThread):
     def run(self):
         """Start the thread to manage UPnP activity"""
 
-        if six.PY3:
-            logger.warning("UPnP is disabled currently, due to incompleted migration to Python3.")
-            return
-
         logger.debug("Starting UPnP thread")
         logger.debug("Local IP: %s", self.localIP)
         lastSent = 0
@@ -323,7 +319,7 @@ class uPnPThread(StoppableThread):
 
         try:
             logger.debug("Sending UPnP query")
-            self.sock.sendto(ssdpRequest, (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
+            self.sock.sendto(ssdpRequest.encode("utf8", "replace"), (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
         except:  # noqa:E722
             logger.exception("UPnP send query failed")
 
