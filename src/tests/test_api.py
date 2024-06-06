@@ -5,11 +5,11 @@ Tests using API.
 import base64
 import json
 import time
-
 from binascii import hexlify
-from six.moves import xmlrpc_client  # nosec
 
 import psutil
+import six
+from six.moves import xmlrpc_client  # nosec
 
 from .samples import (
     sample_deterministic_addr3, sample_deterministic_addr4, sample_seed,
@@ -174,29 +174,29 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             self.api.getDeterministicAddress(self._seed, 3, 1),
             sample_deterministic_addr3)
-        self.assertRegexpMatches(
-            self.api.getDeterministicAddress(self._seed, 2, 1),
+        six.assertRegex(
+            self, self.api.getDeterministicAddress(self._seed, 2, 1),
             r'^API Error 0002:')
 
         # This is here until the streams will be implemented
-        self.assertRegexpMatches(
-            self.api.getDeterministicAddress(self._seed, 3, 2),
+        six.assertRegex(
+            self, self.api.getDeterministicAddress(self._seed, 3, 2),
             r'API Error 0003:')
-        self.assertRegexpMatches(
-            self.api.createDeterministicAddresses(self._seed, 1, 4, 2),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 1, 4, 2),
             r'API Error 0003:')
 
-        self.assertRegexpMatches(
-            self.api.createDeterministicAddresses('', 1),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses('', 1),
             r'API Error 0001:')
-        self.assertRegexpMatches(
-            self.api.createDeterministicAddresses(self._seed, 1, 2),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 1, 2),
             r'API Error 0002:')
-        self.assertRegexpMatches(
-            self.api.createDeterministicAddresses(self._seed, 0),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 0),
             r'API Error 0004:')
-        self.assertRegexpMatches(
-            self.api.createDeterministicAddresses(self._seed, 1000),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 1000),
             r'API Error 0005:')
 
         addresses = json.loads(
@@ -210,8 +210,8 @@ class TestAPI(TestAPIProto):
     def test_create_random_address(self):
         """API command 'createRandomAddress': basic BM-address validation"""
         addr = self._add_random_address('random_1')
-        self.assertRegexpMatches(addr, r'^BM-')
-        self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
+        six.assertRegex(self, addr, r'^BM-')
+        six.assertRegex(self, addr[3:], r'[a-zA-Z1-9]+$')
         # Whitepaper says "around 36 character"
         self.assertLessEqual(len(addr[3:]), 40)
         self.assertEqual(self.api.deleteAddress(addr), 'success')
@@ -411,7 +411,7 @@ class TestAPI(TestAPIProto):
             self.assertEqual(self.api.enableAddress(addr, False), 'success')
             result = self.api.sendBroadcast(
                 addr, base64.encodestring('test_subject'), msg)
-            self.assertRegexpMatches(result, r'^API Error 0014:')
+            six.assertRegex(self, result, r'^API Error 0014:')
         finally:
             self.assertEqual(self.api.deleteAddress(addr), 'success')
 
@@ -420,7 +420,7 @@ class TestAPI(TestAPIProto):
         result = self.api.sendBroadcast(
             'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',
             base64.encodestring('test_subject'), msg)
-        self.assertRegexpMatches(result, r'^API Error 0013:')
+        six.assertRegex(self, result, r'^API Error 0013:')
 
     def test_chan(self):
         """Testing chan creation/joining"""
@@ -435,7 +435,7 @@ class TestAPI(TestAPIProto):
             self.assertEqual(self.api.joinChan(self._seed, addr), 'success')
             self.assertEqual(self.api.leaveChan(addr), 'success')
         # Joining with wrong address should fail
-        self.assertRegexpMatches(
-            self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
+        six.assertRegex(
+            self, self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
             r'^API Error 0008:'
         )

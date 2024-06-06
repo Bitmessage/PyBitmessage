@@ -2,6 +2,7 @@
 
 from binascii import unhexlify
 
+import six
 from six.moves import queue
 
 from .partial import TestPartialRun
@@ -91,8 +92,8 @@ class TestAddressGenerator(TestPartialRun):
         self.command_queue.put((
             'createRandomAddress', 4, 1, 'test_random', 1, '', False, 0, 0))
         addr = self.return_queue.get()
-        self.assertRegexpMatches(addr, r'^BM-')
-        self.assertRegexpMatches(addr[3:], r'[a-zA-Z1-9]+$')
+        six.assertRegex(self, addr, r'^BM-')
+        six.assertRegex(self, addr[3:], r'[a-zA-Z1-9]+$')
         self.assertLessEqual(len(addr[3:]), 40)
 
         self.assertEqual(
