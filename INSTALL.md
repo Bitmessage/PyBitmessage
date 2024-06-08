@@ -1,6 +1,6 @@
 # PyBitmessage Installation Instructions
 - Binary (64bit, no separate installation of dependencies required)
-    - Windows: https://download.bitmessage.org/snapshots/
+    - Windows: https://artifacts.bitmessage.at/winebuild/
     - Linux AppImages: https://artifacts.bitmessage.at/appimage/
     - Linux snaps: https://artifacts.bitmessage.at/snap/
     - Mac (not up to date): https://github.com/Bitmessage/PyBitmessage/releases/tag/v0.6.1
