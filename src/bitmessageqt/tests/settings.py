@@ -43,7 +43,8 @@ class TestSettings(TestBase):
         self.assertIs(style_setting, None)
         self.assertIs(font_setting, None)
         style_control = self.dialog.comboBoxStyle
-        self.assertEqual(style_control.currentText(), 'GTK+')
+        self.assertEqual(
+            style_control.currentText(), self.app.get_windowstyle())
 
         def call_font_dialog():
             """A function to get the open font dialog and accept it"""

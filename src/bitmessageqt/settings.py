@@ -45,6 +45,7 @@ class SettingsDialog(QtGui.QDialog):
         super(SettingsDialog, self).__init__(parent)
         widgets.load('settings.ui', self)
 
+        self.app = QtGui.QApplication.instance()
         self.parent = parent
         self.firstrun = firstrun
         self.config = config_obj
@@ -87,14 +88,13 @@ class SettingsDialog(QtGui.QDialog):
         """Adjust all widgets state according to config settings"""
         # pylint: disable=too-many-branches,too-many-statements
 
-        current_style = config.safeGet(
-            'bitmessagesettings', 'windowstyle', 'GTK+')
+        current_style = self.app.get_windowstyle()
         for i, sk in enumerate(QtGui.QStyleFactory.keys()):
             self.comboBoxStyle.addItem(sk)
             if sk == current_style:
                 self.comboBoxStyle.setCurrentIndex(i)
 
-        self.save_font_setting(QtGui.QApplication.instance().font())
+        self.save_font_setting(self.app.font())
 
         if not self.parent.tray.isSystemTrayAvailable():
             self.groupBoxTray.setEnabled(False)
@@ -148,7 +148,7 @@ class SettingsDialog(QtGui.QDialog):
                 "MainWindow",
                 "Tray notifications not yet supported on your OS."))
 
-        if 'win' not in sys.platform and not self.parent.desktop:
+        if not sys.platform.startswith('win') and not self.parent.desktop:
             self.checkBoxStartOnLogon.setDisabled(True)
             self.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
@@ -372,9 +372,7 @@ class SettingsDialog(QtGui.QDialog):
             self.checkBoxReplyBelow.isChecked()))
 
         window_style = str(self.comboBoxStyle.currentText())
-        if self.config.safeGet(
-            'bitmessagesettings', 'windowstyle', 'GTK+'
-        ) != window_style or self.config.safeGet(
+        if self.app.get_windowstyle() != window_style or self.config.safeGet(
             'bitmessagesettings', 'font'
         ) != self.font_setting:
             self.config.set('bitmessagesettings', 'windowstyle', window_style)

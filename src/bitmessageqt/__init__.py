@@ -62,6 +62,9 @@ except ImportError:
     get_plugins = False
 
 
+is_windows = sys.platform.startswith('win')
+
+
 # TODO: rewrite
 def powQueueSize():
     """Returns the size of queues.workerQueue including current unfinished work"""
@@ -80,7 +83,7 @@ def openKeysFile():
     keysfile = os.path.join(state.appdata, 'keys.dat')
     if 'linux' in sys.platform:
         subprocess.call(["xdg-open", keysfile])
-    elif sys.platform.startswith('win'):
+    elif is_windows:
         os.startfile(keysfile)  # pylint: disable=no-member
 
 
@@ -868,7 +871,7 @@ class MyForm(settingsmixin.SMainWindow):
         """
         startonlogon = config.safeGetBoolean(
             'bitmessagesettings', 'startonlogon')
-        if sys.platform.startswith('win'):  # Auto-startup for Windows
+        if is_windows:  # Auto-startup for Windows
             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
             settings = QtCore.QSettings(
                 RUN_PATH, QtCore.QSettings.NativeFormat)
@@ -4233,6 +4236,14 @@ class BitmessageQtApplication(QtGui.QApplication):
     # Unique identifier for this application
     uuid = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
 
+    @staticmethod
+    def get_windowstyle():
+        """Get window style set in config or default"""
+        return config.safeGet(
+            'bitmessagesettings', 'windowstyle',
+            'Windows' if is_windows else 'GTK+'
+        )
+
     def __init__(self, *argv):
         super(BitmessageQtApplication, self).__init__(*argv)
         id = BitmessageQtApplication.uuid
@@ -4241,8 +4252,7 @@ class BitmessageQtApplication(QtGui.QApplication):
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
         QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
 
-        self.setStyle(
-            config.safeGet('bitmessagesettings', 'windowstyle', 'GTK+'))
+        self.setStyle(self.get_windowstyle())
 
         font = config.safeGet('bitmessagesettings', 'font')
         if font:
