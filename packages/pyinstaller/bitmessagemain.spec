@@ -2,7 +2,6 @@
 import ctypes
 import os
 import sys
-import time
 
 from PyInstaller.utils.hooks import copy_metadata
 
@@ -22,7 +21,7 @@ qtBase = "PyQt4"
 sys.path.insert(0, srcPath)
 os.chdir(srcPath)
 
-snapshot = False
+snapshot = os.getenv('SNAPSHOT')
 
 hookspath = os.path.join(spec_root, 'hooks')
 
@@ -112,10 +111,8 @@ a.binaries += [
 
 from version import softwareVersion
 
-today = time.strftime("%Y%m%d")
-
-fname = '%s_%%s_%s.exe' % (
-    ('Bitmessagedev', today) if snapshot else ('Bitmessage', softwareVersion)
+fname = 'Bitmessage_%%s_%s.exe' % (
+    '{}-{}'.format(softwareVersion, snapshot) if snapshot else softwareVersion
 ) % ("x86" if arch == 32 else "x64")
 
 

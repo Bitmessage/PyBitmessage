@@ -174,9 +174,9 @@ function dryrun_exe(){
     cd "${BASE_DIR}" || exit 1
     local VERSION=$(python setup.py --version)
     if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
-	EXE=Bitmessage_x64_$VERSION.exe
+	EXE=Bitmessage_x64_$VERSION*.exe
     else
-	EXE=Bitmessage_x86_$VERSION.exe
+	EXE=Bitmessage_x86_$VERSION*.exe
     fi
     wine packages/pyinstaller/dist/$EXE -t
 }

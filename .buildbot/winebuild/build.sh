@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export SNAPSHOT="g$(git describe --contains --always)"
+
 xvfb-run -a buildscripts/winbuild.sh || exit 1
 
 mkdir -p ../out
