@@ -80,7 +80,10 @@ class SettingsDialog(QtGui.QDialog):
             self.tabWidgetSettings.setCurrentIndex(
                 self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
             )
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtGui.QWidget.setMinimumSize(self, QtCore.QSize(900, 555))
+        QtGui.QWidget.setMaximumSize(self, QtCore.QSize(900, 555))
+        QtGui.QWidget.setBaseSize(self, QtCore.QSize(900, 555))
+        QtGui.QWidget.resize(self, 900, 555)
 
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
