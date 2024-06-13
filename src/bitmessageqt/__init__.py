@@ -12,6 +12,7 @@ import sys
 import textwrap
 import threading
 import time
+import base64
 from datetime import datetime, timedelta
 from sqlite3 import register_adapter
 
@@ -176,6 +177,8 @@ class MyForm(settingsmixin.SMainWindow):
             "clicked()"), self.click_pushButtonTTL)
         QtCore.QObject.connect(self.ui.pushButtonClear, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonClear)
+        QtCore.QObject.connect(self.ui.pushButtonAttach, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonAttach)
         QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
@@ -2066,6 +2069,23 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.lineEditTo.setText("")
         self.ui.textEditMessage.reset()
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
+
+    def click_pushButtonAttach(self):
+        """Launch a file picker and append to the current message the base64-encoded contents of the chosen file."""
+        filename = QtGui.QFileDialog.getOpenFileName(self, "Attach File")
+        if filename:
+            f = open(filename, 'rb')
+            data = f.read()
+            f.close()
+            data_b64 = base64.b64encode(data)
+            html_data = '<a href="data:application/octet-stream;base64,' + data_b64 + '">' \
+                        + os.path.basename(unicode(filename)) + '</a>'
+            if self.ui.tabWidgetSend.currentIndex() == self.ui.tabWidgetSend.indexOf(self.ui.sendDirect):
+                # send direct message
+                self.ui.textEditMessage.insertPlainText(html_data)
+            else:
+                # send broadcast message
+                self.ui.textEditMessageBroadcast.insertPlainText(html_data)
 
     def click_pushButtonSend(self):
         encoding = 3 if QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier else 2
