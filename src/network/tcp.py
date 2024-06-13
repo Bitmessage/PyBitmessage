@@ -11,7 +11,6 @@ import time
 
 # magic imports!
 import addresses
-import helper_random
 import l10n
 import protocol
 import state
@@ -201,7 +200,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     elemCount = min(
                         len(filtered),
                         maxAddrCount / 2 if n else maxAddrCount)
-                    addrs[s] = helper_random.randomsample(filtered, elemCount)
+                    addrs[s] = random.sample(filtered, elemCount)
         for substream in addrs:
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))

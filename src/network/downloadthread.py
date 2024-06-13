@@ -2,9 +2,9 @@
 `DownloadThread` class definition
 """
 import time
+import random
 import state
 import addresses
-import helper_random
 import protocol
 import connectionpool
 from network import dandelion_ins
@@ -43,7 +43,7 @@ class DownloadThread(StoppableThread):
             requested = 0
             # Choose downloading peers randomly
             connections = connectionpool.pool.establishedConnections()
-            helper_random.randomshuffle(connections)
+            random.shuffle(connections)
             requestChunk = max(int(
                 min(self.maxRequestChunk, len(missingObjects))
                 / len(connections)), 1) if connections else 1

@@ -3,7 +3,7 @@
 """
 import time
 
-import helper_random
+import random
 import protocol
 import state
 import connectionpool
@@ -24,7 +24,7 @@ class UploadThread(StoppableThread):
             uploaded = 0
             # Choose uploading peers randomly
             connections = connectionpool.pool.establishedConnections()
-            helper_random.randomshuffle(connections)
+            random.shuffle(connections)
             for i in connections:
                 now = time.time()
                 # avoid unnecessary delay

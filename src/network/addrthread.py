@@ -1,11 +1,11 @@
 """
 Announce addresses as they are received from other hosts
 """
+import random
 from six.moves import queue
 
 # magic imports!
 import connectionpool
-from helper_random import randomshuffle
 from protocol import assembleAddrMessage
 from queues import addrQueue  # FIXME: init with queue
 
@@ -29,9 +29,9 @@ class AddrThread(StoppableThread):
             if chunk:
                 # Choose peers randomly
                 connections = connectionpool.pool.establishedConnections()
-                randomshuffle(connections)
+                random.shuffle(connections)
                 for i in connections:
-                    randomshuffle(chunk)
+                    random.shuffle(chunk)
                     filtered = []
                     for stream, peer, seen, destination in chunk:
                         # peer's own address or address received from peer

@@ -9,6 +9,7 @@ Basic infrastructure for asynchronous socket service clients and servers.
 import os
 import select
 import socket
+import random
 import sys
 import time
 import warnings
@@ -19,7 +20,6 @@ from errno import (
 )
 from threading import current_thread
 
-import helper_random
 
 try:
     from errno import WSAEWOULDBLOCK
@@ -233,13 +233,13 @@ def select_poller(timeout=0.0, map=None):
             if err.args[0] in (WSAENOTSOCK, ):
                 return
 
-        for fd in helper_random.randomsample(r, len(r)):
+        for fd in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
             read(obj)
 
-        for fd in helper_random.randomsample(w, len(w)):
+        for fd in random.sample(w, len(w)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -297,7 +297,7 @@ def poll_poller(timeout=0.0, map=None):
         except socket.error as err:
             if err.args[0] in (EBADF, WSAENOTSOCK, EINTR):
                 return
-        for fd, flags in helper_random.randomsample(r, len(r)):
+        for fd, flags in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -357,7 +357,7 @@ def epoll_poller(timeout=0.0, map=None):
             if err.args[0] != EINTR:
                 raise
             r = []
-        for fd, flags in helper_random.randomsample(r, len(r)):
+        for fd, flags in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -420,7 +420,7 @@ def kqueue_poller(timeout=0.0, map=None):
 
         events = kqueue_poller.pollster.control(updates, selectables, timeout)
         if len(events) > 1:
-            events = helper_random.randomsample(events, len(events))
+            events = random.sample(events, len(events))
 
         for event in events:
             fd = event.ident
