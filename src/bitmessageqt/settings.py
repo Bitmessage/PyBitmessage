@@ -41,6 +41,7 @@ def getSOCKSProxyType(config):
 
 class SettingsDialog(QtGui.QDialog):
     """The "Settings" dialog"""
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)
         widgets.load('settings.ui', self)
