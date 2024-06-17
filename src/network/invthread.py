@@ -5,12 +5,9 @@ import Queue
 import random
 from time import time
 
-import addresses
-import protocol
-import state
+from network import protocol, state, queues, addresses
 import connectionpool
 from network import dandelion_ins
-from queues import invQueue
 from threads import StoppableThread
 
 
@@ -52,9 +49,9 @@ class InvThread(StoppableThread):
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
-                handleExpiredDandelion(dandelion_ins.expire(invQueue))
+                handleExpiredDandelion(dandelion_ins.expire(queues.invQueue))
                 try:
-                    data = invQueue.get(False)
+                    data = queues.invQueue.get(False)
                     chunk.append((data[0], data[1]))
                     # locally generated
                     if len(data) == 2 or data[2] is None:
@@ -101,9 +98,9 @@ class InvThread(StoppableThread):
                             addresses.encodeVarint(
                                 len(stems)) + ''.join(stems)))
 
-            invQueue.iterate()
+            queues.invQueue.iterate()
             for _ in range(len(chunk)):
-                invQueue.task_done()
+                queues.invQueue.task_done()
 
             dandelion_ins.reRandomiseStems()
 

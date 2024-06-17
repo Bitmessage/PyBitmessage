@@ -5,7 +5,7 @@ import time
 
 # magic imports!
 import connectionpool
-from bmconfigparser import config
+from network import config
 from protocol import assembleAddrMessage
 
 from node import Peer

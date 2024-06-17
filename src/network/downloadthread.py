@@ -2,12 +2,9 @@
 `DownloadThread` class definition
 """
 import time
-import state
-import addresses
+from network import state, protocol, addresses, dandelion_ins
 import helper_random
-import protocol
 import connectionpool
-from network import dandelion_ins
 from objectracker import missingObjects
 from threads import StoppableThread
 

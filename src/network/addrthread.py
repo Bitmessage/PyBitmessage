@@ -7,7 +7,7 @@ from six.moves import queue
 import connectionpool
 from helper_random import randomshuffle
 from protocol import assembleAddrMessage
-from queues import addrQueue  # FIXME: init with queue
+from network import queues  # FIXME: init with queue
 
 from threads import StoppableThread
 
@@ -21,7 +21,7 @@ class AddrThread(StoppableThread):
             chunk = []
             while True:
                 try:
-                    data = addrQueue.get(False)
+                    data = queues.addrQueue.get(False)
                     chunk.append(data)
                 except queue.Empty:
                     break
@@ -43,7 +43,7 @@ class AddrThread(StoppableThread):
                     if filtered:
                         i.append_write_buf(assembleAddrMessage(filtered))
 
-            addrQueue.iterate()
+            queues.addrQueue.iterate()
             for i in range(len(chunk)):
-                addrQueue.task_done()
+                queues.addrQueue.task_done()
             self.stop.wait(1)

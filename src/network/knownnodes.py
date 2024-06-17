@@ -15,8 +15,7 @@ try:
 except ImportError:
     from collections import Iterable
 
-import state
-from bmconfigparser import config
+from network import state, config
 from network.node import Peer
 
 state.Peer = Peer

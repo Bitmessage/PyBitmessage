@@ -4,8 +4,7 @@
 import time
 
 import helper_random
-import protocol
-import state
+from network import protocol, state
 import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from network import dandelion_ins

@@ -7,7 +7,7 @@ import socket
 
 import connectionpool
 from network.advanceddispatcher import UnknownStateError
-from queues import receiveDataQueue
+from network import queues
 from threads import StoppableThread
 
 
@@ -20,7 +20,7 @@ class ReceiveQueueThread(StoppableThread):
     def run(self):
         while not self._stopped:
             try:
-                dest = receiveDataQueue.get(block=True, timeout=1)
+                dest = queues.receiveDataQueue.get(block=True, timeout=1)
             except Queue.Empty:
                 continue
 
@@ -38,7 +38,7 @@ class ReceiveQueueThread(StoppableThread):
                 connection = connectionpool.pool.getConnectionByAddr(dest)
             # connection object not found
             except KeyError:
-                receiveDataQueue.task_done()
+                queues.receiveDataQueue.task_done()
                 continue
             try:
                 connection.process()
@@ -52,4 +52,4 @@ class ReceiveQueueThread(StoppableThread):
                     self.logger.error('Socket error: %s', err)
             except:  # noqa:E722
                 self.logger.error('Error processing', exc_info=True)
-            receiveDataQueue.task_done()
+            queues.receiveDataQueue.task_done()

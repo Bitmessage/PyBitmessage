@@ -1,8 +1,17 @@
 """
 Network subsystem package
 """
+try:
+    import networkdepsinterface
+except ImportError:
+    from pybitmessage import networkdepsinterface
+
 from .dandelion import Dandelion
 from .threads import StoppableThread
+
+(
+    state, queues, config, protocol,
+    randomtrackingdict, addresses, paths) = networkdepsinterface.importParentPackageDepsToNetwork()
 
 dandelion_ins = Dandelion()
 
@@ -11,7 +20,6 @@ __all__ = ["StoppableThread"]
 
 def start(config, state):
     """Start network threads"""
-    import state
     from .announcethread import AnnounceThread
     import connectionpool  # pylint: disable=relative-import
     from .addrthread import AddrThread

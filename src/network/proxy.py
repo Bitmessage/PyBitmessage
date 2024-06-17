@@ -8,7 +8,7 @@ import time
 
 import asyncore_pollchoose as asyncore
 from advanceddispatcher import AdvancedDispatcher
-from bmconfigparser import config
+from network import config
 from node import Peer
 
 logger = logging.getLogger('default')
