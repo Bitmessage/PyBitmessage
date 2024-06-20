@@ -5,7 +5,6 @@ import Queue
 import random
 from time import time
 
-from network import protocol, state, queues, addresses
 import connectionpool
 from network import dandelion_ins
 from threads import StoppableThread
@@ -34,6 +33,13 @@ class InvThread(StoppableThread):
 
     name = "InvBroadcaster"
 
+    def __init__(self, protocol, state, queues, addresses):
+        self.protocol = protocol
+        self.state = state
+        self.queues = queues
+        self.addresses = addresses
+        StoppableThread.__init__(self)
+
     @staticmethod
     def handleLocallyGenerated(stream, hashId):
         """Locally generated inventory items require special handling"""
@@ -45,13 +51,13 @@ class InvThread(StoppableThread):
             connection.objectsNewToThem[hashId] = time()
 
     def run(self):  # pylint: disable=too-many-branches
-        while not state.shutdown:  # pylint: disable=too-many-nested-blocks
+        while not self.state.shutdown:  # pylint: disable=too-many-nested-blocks
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
-                handleExpiredDandelion(dandelion_ins.expire(queues.invQueue))
+                handleExpiredDandelion(dandelion_ins.expire(self.queues.invQueue))
                 try:
-                    data = queues.invQueue.get(False)
+                    data = self.queues.invQueue.get(False)
                     chunk.append((data[0], data[1]))
                     # locally generated
                     if len(data) == 2 or data[2] is None:
@@ -78,7 +84,7 @@ class InvThread(StoppableThread):
                                 if random.randint(1, 100) >= dandelion_ins.enabled:  # nosec B311
                                     fluffs.append(inv[1])
                                 # send a dinv only if the stem node supports dandelion
-                                elif connection.services & protocol.NODE_DANDELION > 0:
+                                elif connection.services & self.protocol.NODE_DANDELION > 0:
                                     stems.append(inv[1])
                                 else:
                                     fluffs.append(inv[1])
@@ -87,20 +93,20 @@ class InvThread(StoppableThread):
 
                     if fluffs:
                         random.shuffle(fluffs)
-                        connection.append_write_buf(protocol.CreatePacket(
+                        connection.append_write_buf(self.protocol.CreatePacket(
                             'inv',
-                            addresses.encodeVarint(
+                            self.addresses.encodeVarint(
                                 len(fluffs)) + ''.join(fluffs)))
                     if stems:
                         random.shuffle(stems)
-                        connection.append_write_buf(protocol.CreatePacket(
+                        connection.append_write_buf(self.protocol.CreatePacket(
                             'dinv',
-                            addresses.encodeVarint(
+                            self.addresses.encodeVarint(
                                 len(stems)) + ''.join(stems)))
 
-            queues.invQueue.iterate()
+            self.queues.invQueue.iterate()
             for _ in range(len(chunk)):
-                queues.invQueue.task_done()
+                self.queues.invQueue.task_done()
 
             dandelion_ins.reRandomiseStems()
 

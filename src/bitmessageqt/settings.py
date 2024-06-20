@@ -414,7 +414,7 @@ class SettingsDialog(QtGui.QDialog):
                 'bitmessagesettings', 'udp'):
             self.config.set('bitmessagesettings', 'udp', str(udp_enabled))
             if udp_enabled:
-                announceThread = AnnounceThread()
+                announceThread = AnnounceThread(self.config)
                 announceThread.daemon = True
                 announceThread.start()
             else:

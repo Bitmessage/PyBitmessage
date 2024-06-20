@@ -5,7 +5,6 @@ import time
 
 # magic imports!
 import connectionpool
-from network import config
 from protocol import assembleAddrMessage
 
 from node import Peer
@@ -17,18 +16,22 @@ class AnnounceThread(StoppableThread):
     name = "Announcer"
     announceInterval = 60
 
+    def __init__(self, config):
+        self.config = config
+        StoppableThread.__init__(self)
+
     def run(self):
         lastSelfAnnounced = 0
         while not self._stopped:
             processed = 0
             if lastSelfAnnounced < time.time() - self.announceInterval:
-                self.announceSelf()
+                self.announceSelf(self.config)
                 lastSelfAnnounced = time.time()
             if processed == 0:
                 self.stop.wait(10)
 
     @staticmethod
-    def announceSelf():
+    def announceSelf(config):
         """Announce our presence"""
         for connection in connectionpool.pool.udpSockets.values():
             if not connection.announcing:

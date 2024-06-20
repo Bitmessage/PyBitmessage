@@ -3,7 +3,6 @@ A thread to handle network concerns
 """
 import network.asyncore_pollchoose as asyncore
 import connectionpool
-from network import queues
 from threads import StoppableThread
 
 
@@ -11,12 +10,16 @@ class BMNetworkThread(StoppableThread):
     """Main network thread"""
     name = "Asyncore"
 
+    def __init__(self, queues):
+        self.queues = queues
+        StoppableThread.__init__(self)
+
     def run(self):
         try:
             while not self._stopped:
                 connectionpool.pool.loop()
         except Exception as e:
-            queues.excQueue.put((self.name, e))
+            self.queues.excQueue.put((self.name, e))
             raise
 
     def stopThread(self):

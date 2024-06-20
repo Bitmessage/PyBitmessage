@@ -38,18 +38,19 @@ def start(config, state):
     readKnownNodes()
     connectionpool.pool.connectToStream(1)
     for thread in (
-        BMNetworkThread(), InvThread(), AddrThread(),
-        DownloadThread(), UploadThread()
+        BMNetworkThread(queues), InvThread(protocol, state, queues, addresses),
+        AddrThread(protocol, queues), DownloadThread(state, protocol, addresses),
+        UploadThread(protocol, state)
     ):
         thread.daemon = True
         thread.start()
 
     # Optional components
     for i in range(config.getint('threads', 'receive')):
-        thread = ReceiveQueueThread(i)
+        thread = ReceiveQueueThread(queues, i)
         thread.daemon = True
         thread.start()
     if config.safeGetBoolean('bitmessagesettings', 'udp'):
-        state.announceThread = AnnounceThread()
+        state.announceThread = AnnounceThread(config)
         state.announceThread.daemon = True
         state.announceThread.start()

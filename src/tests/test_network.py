@@ -74,7 +74,7 @@ class TestNetwork(TestPartialRun):
 
         for _ in range(10):
             try:
-                self.state.announceThread.announceSelf()
+                self.state.announceThread.announceSelf(self.config)
             except AttributeError:
                 self.fail('state.announceThread is not set properly')
             time.sleep(1)

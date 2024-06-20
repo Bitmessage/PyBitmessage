@@ -2,7 +2,7 @@
 `DownloadThread` class definition
 """
 import time
-from network import state, protocol, addresses, dandelion_ins
+from network import dandelion_ins
 import helper_random
 import connectionpool
 from objectracker import missingObjects
@@ -17,8 +17,11 @@ class DownloadThread(StoppableThread):
     cleanInterval = 60
     requestExpires = 3600
 
-    def __init__(self):
+    def __init__(self, state, protocol, addresses):
         super(DownloadThread, self).__init__(name="Downloader")
+        self.state = state
+        self.protocol = protocol
+        self.addresses = addresses
         self.lastCleaned = time.time()
 
     def cleanPending(self):
@@ -57,7 +60,7 @@ class DownloadThread(StoppableThread):
                 payload = bytearray()
                 chunkCount = 0
                 for chunk in request:
-                    if chunk in state.Inventory and not dandelion_ins.hasHash(chunk):
+                    if chunk in self.state.Inventory and not dandelion_ins.hasHash(chunk):
                         try:
                             del i.objectsNewToMe[chunk]
                         except KeyError:
@@ -68,8 +71,8 @@ class DownloadThread(StoppableThread):
                     missingObjects[chunk] = now
                 if not chunkCount:
                     continue
-                payload[0:0] = addresses.encodeVarint(chunkCount)
-                i.append_write_buf(protocol.CreatePacket('getdata', payload))
+                payload[0:0] = self.addresses.encodeVarint(chunkCount)
+                i.append_write_buf(self.protocol.CreatePacket('getdata', payload))
                 self.logger.debug(
                     '%s:%i Requesting %i objects',
                     i.destination.host, i.destination.port, chunkCount)

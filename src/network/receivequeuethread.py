@@ -7,20 +7,20 @@ import socket
 
 import connectionpool
 from network.advanceddispatcher import UnknownStateError
-from network import queues
 from threads import StoppableThread
 
 
 class ReceiveQueueThread(StoppableThread):
     """This thread processes data received from the network
     (which is done by the asyncore thread)"""
-    def __init__(self, num=0):
+    def __init__(self, queues, num=0):
+        self.queues = queues
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
 
     def run(self):
         while not self._stopped:
             try:
-                dest = queues.receiveDataQueue.get(block=True, timeout=1)
+                dest = self.queues.receiveDataQueue.get(block=True, timeout=1)
             except Queue.Empty:
                 continue
 
@@ -38,7 +38,7 @@ class ReceiveQueueThread(StoppableThread):
                 connection = connectionpool.pool.getConnectionByAddr(dest)
             # connection object not found
             except KeyError:
-                queues.receiveDataQueue.task_done()
+                self.queues.receiveDataQueue.task_done()
                 continue
             try:
                 connection.process()
@@ -52,4 +52,4 @@ class ReceiveQueueThread(StoppableThread):
                     self.logger.error('Socket error: %s', err)
             except:  # noqa:E722
                 self.logger.error('Error processing', exc_info=True)
-            queues.receiveDataQueue.task_done()
+            self.queues.receiveDataQueue.task_done()
