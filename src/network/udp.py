@@ -6,10 +6,8 @@ import socket
 import time
 
 # magic imports!
-import protocol
-import state
+from network import protocol, state, queues
 import connectionpool
-from queues import receiveDataQueue
 
 from bmproto import BMProto
 from node import Peer
@@ -138,7 +136,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         # self.local works correctly
         self.read_buf[0:] = recdata
         self.bm_proto_reset()
-        receiveDataQueue.put(self.listening)
+        queues.receiveDataQueue.put(self.listening)
 
     def handle_write(self):
         try:

@@ -4,8 +4,7 @@ BMObject and it's exceptions.
 import logging
 import time
 
-import protocol
-import state
+from network import state, protocol
 import connectionpool
 from network import dandelion_ins
 from highlevelcrypto import calculateInventoryHash

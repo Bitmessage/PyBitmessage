@@ -4,8 +4,6 @@
 import time
 
 import helper_random
-import protocol
-import state
 import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from network import dandelion_ins
@@ -18,6 +16,11 @@ class UploadThread(StoppableThread):
     """
     maxBufSize = 2097152  # 2MB
     name = "Uploader"
+
+    def __init__(self, protocol, state):
+        self.protocol = protocol
+        self.state = state
+        StoppableThread.__init__(self)
 
     def run(self):
         while not self._stopped:
@@ -49,8 +52,8 @@ class UploadThread(StoppableThread):
                             i.destination)
                         break
                     try:
-                        payload.extend(protocol.CreatePacket(
-                            'object', state.Inventory[chunk].payload))
+                        payload.extend(self.protocol.CreatePacket(
+                            'object', self.state.Inventory[chunk].payload))
                         chunk_count += 1
                     except KeyError:
                         i.antiIntersectionDelay()

@@ -6,10 +6,7 @@ import logging
 import random
 
 import knownnodes
-import protocol
-import state
-from bmconfigparser import config
-from queues import queue, portCheckerQueue
+from network import protocol, state, config, queues
 
 logger = logging.getLogger('default')
 
@@ -34,10 +31,10 @@ def chooseConnection(stream):
     onionOnly = config.safeGetBoolean(
         "bitmessagesettings", "onionservicesonly")
     try:
-        retval = portCheckerQueue.get(False)
-        portCheckerQueue.task_done()
+        retval = queues.portCheckerQueue.get(False)
+        queues.portCheckerQueue.task_done()
         return retval
-    except queue.Empty:
+    except queues.queue.Empty:
         pass
     # with a probability of 0.5, connect to a discovered peer
     if random.choice((False, True)) and not haveOnion:  # nosec B311

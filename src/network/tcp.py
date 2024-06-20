@@ -10,16 +10,11 @@ import socket
 import time
 
 # magic imports!
-import addresses
 import helper_random
 import l10n
-import protocol
-import state
+from network import protocol, state, config, queues, addresses, dandelion_ins
 import connectionpool
-from bmconfigparser import config
 from highlevelcrypto import randomBytes
-from network import dandelion_ins
-from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 
 import asyncore_pollchoose as asyncore
@@ -109,7 +104,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         max_known_nodes = max(
             len(knownnodes.knownNodes[x]) for x in knownnodes.knownNodes)
         delay = math.ceil(math.log(max_known_nodes + 2, 20)) * (
-            0.2 + invQueue.queueCount / 2.0)
+            0.2 + queues.invQueue.queueCount / 2.0)
         # take the stream with maximum amount of nodes
         # +2 is to avoid problems with log(0) and log(1)
         # 20 is avg connected nodes count
@@ -135,7 +130,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         if BMProto.timeOffsetWrongCount > \
                 maximumTimeOffsetWrongCount and \
                 not self.fullyEstablished:
-            UISignalQueue.put((
+            queues.UISignalQueue.put((
                 'updateStatusBar',
                 _translate(
                     "MainWindow",
@@ -158,8 +153,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         """Initiate inventory synchronisation."""
         if not self.isOutbound and not self.local:
             state.clientHasReceivedIncomingConnections = True
-            UISignalQueue.put(('setStatusIcon', 'green'))
-        UISignalQueue.put((
+            queues.UISignalQueue.put(('setStatusIcon', 'green'))
+        queues.UISignalQueue.put((
             'updateNetworkStatusTab', (self.isOutbound, True, self.destination)
         ))
         self.antiIntersectionDelay(True)
@@ -169,7 +164,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.increaseRating(self.destination)
             knownnodes.addKnownNode(
                 self.streams, self.destination, time.time())
-            dandelion_ins.maybeAddStem(self, invQueue)
+            dandelion_ins.maybeAddStem(self, queues.invQueue)
         self.sendAddr()
         self.sendBigInv()
 
@@ -271,12 +266,12 @@ class TCPConnection(BMProto, TLSDispatcher):
                 connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.connectedAt = time.time()
-        receiveDataQueue.put(self.destination)
+        queues.receiveDataQueue.put(self.destination)
 
     def handle_read(self):
         """Callback for reading from a socket"""
         TLSDispatcher.handle_read(self)
-        receiveDataQueue.put(self.destination)
+        queues.receiveDataQueue.put(self.destination)
 
     def handle_write(self):
         """Callback for writing to a socket"""
@@ -286,7 +281,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         """Callback for connection being closed."""
         host_is_global = self.isOutbound or not self.local and not state.socksIP
         if self.fullyEstablished:
-            UISignalQueue.put((
+            queues.UISignalQueue.put((
                 'updateNetworkStatusTab',
                 (self.isOutbound, False, self.destination)
             ))

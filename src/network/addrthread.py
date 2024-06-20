@@ -6,8 +6,6 @@ from six.moves import queue
 # magic imports!
 import connectionpool
 from helper_random import randomshuffle
-from protocol import assembleAddrMessage
-from queues import addrQueue  # FIXME: init with queue
 
 from threads import StoppableThread
 
@@ -16,12 +14,17 @@ class AddrThread(StoppableThread):
     """(Node) address broadcasting thread"""
     name = "AddrBroadcaster"
 
+    def __init__(self, protocol, queues):
+        self.protocol = protocol
+        self.queues = queues
+        StoppableThread.__init__(self)
+
     def run(self):
         while not self._stopped:
             chunk = []
             while True:
                 try:
-                    data = addrQueue.get(False)
+                    data = self.queues.addrQueue.get(False)
                     chunk.append(data)
                 except queue.Empty:
                     break
@@ -41,9 +44,9 @@ class AddrThread(StoppableThread):
                             continue
                         filtered.append((stream, peer, seen))
                     if filtered:
-                        i.append_write_buf(assembleAddrMessage(filtered))
+                        i.append_write_buf(self.protocol.assembleAddrMessage(filtered))
 
-            addrQueue.iterate()
+            self.queues.addrQueue.iterate()
             for i in range(len(chunk)):
-                addrQueue.task_done()
+                self.queues.addrQueue.task_done()
             self.stop.wait(1)

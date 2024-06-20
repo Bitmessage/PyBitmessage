@@ -11,9 +11,7 @@ import time
 import asyncore_pollchoose as asyncore
 import helper_random
 import knownnodes
-import protocol
-import state
-from bmconfigparser import config
+from network import protocol, state, config
 from connectionchooser import chooseConnection
 from node import Peer
 from proxy import Proxy

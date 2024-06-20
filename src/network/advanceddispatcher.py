@@ -6,7 +6,7 @@ import threading
 import time
 
 import network.asyncore_pollchoose as asyncore
-import state
+from network import state
 from threads import BusyError, nonBlocking
 
 

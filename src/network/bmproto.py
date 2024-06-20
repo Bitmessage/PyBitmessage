@@ -11,13 +11,9 @@ import struct
 import time
 
 # magic imports!
-import addresses
 import knownnodes
-import protocol
-import state
+from network import protocol, state, config, queues, addresses, dandelion_ins
 import connectionpool
-from bmconfigparser import config
-from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
@@ -26,7 +22,6 @@ from network.bmobject import (
     BMObjectUnwantedStreamError
 )
 from network.proxy import ProxyError
-from network import dandelion_ins
 from node import Node, Peer
 from objectracker import ObjectTracker, missingObjects
 
@@ -409,7 +404,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         try:
             self.object.checkObjectByType()
-            objectProcessorQueue.put((
+            queues.objectProcessorQueue.put((
                 self.object.objectType, buffer(self.object.data)))  # noqa: F821
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
@@ -431,7 +426,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
-        invQueue.put((
+        queues.invQueue.put((
             self.object.streamNumber, self.object.inventoryHash,
             self.destination))
         return True
@@ -472,7 +467,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_portcheck(self):
         """Incoming port check request, queue it."""
-        portCheckerQueue.put(Peer(self.destination, self.peerNode.port))
+        queues.portCheckerQueue.put(Peer(self.destination, self.peerNode.port))
         return True
 
     def bm_command_ping(self):
