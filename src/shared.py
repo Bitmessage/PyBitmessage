@@ -196,7 +196,7 @@ def checkSensitiveFilePermissions(filename):
             ['/usr/bin/stat', '-f', '-c', '%T', filename],
             stderr=subprocess.STDOUT
         )  # nosec B603
-        if 'fuseblk' in fstype:
+        if b'fuseblk' in fstype:
             logger.info(
                 'Skipping file permissions check for %s.'
                 ' Filesystem fuseblk detected.', filename)
