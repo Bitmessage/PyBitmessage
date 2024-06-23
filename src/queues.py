@@ -5,10 +5,9 @@ import time
 
 from six.moves import queue
 
-try:
-    from multiqueue import MultiQueue
-except ImportError:
-    from .multiqueue import MultiQueue
+
+from network.multiqueue import MultiQueue
+
 
 
 class ObjectProcessorQueue(queue.Queue):
