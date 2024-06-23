@@ -9,6 +9,7 @@ dandelion_ins = Dandelion()
 
 # network queues
 invQueue = MultiQueue()
+addrQueue = MultiQueue()
 
 __all__ = ["StoppableThread"]
 

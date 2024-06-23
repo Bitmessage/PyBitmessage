@@ -6,10 +6,6 @@ import time
 from six.moves import queue
 
 
-from network.multiqueue import MultiQueue
-
-
-
 class ObjectProcessorQueue(queue.Queue):
     """Special queue class using lock for `.threads.objectProcessor`"""
 
@@ -43,7 +39,6 @@ addressGeneratorQueue = queue.Queue()
 #: `.network.ReceiveQueueThread` instances dump objects they hear
 #: on the network into this queue to be processed.
 objectProcessorQueue = ObjectProcessorQueue()
-addrQueue = MultiQueue()
 portCheckerQueue = queue.Queue()
 receiveDataQueue = queue.Queue()
 #: The address generator thread uses this queue to get information back
