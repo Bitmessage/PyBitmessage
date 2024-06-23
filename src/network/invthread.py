@@ -9,8 +9,7 @@ import addresses
 import protocol
 import state
 import connectionpool
-from network import dandelion_ins
-from queues import invQueue
+from network import dandelion_ins, invQueue
 from threads import StoppableThread
 
 

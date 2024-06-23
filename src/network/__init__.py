@@ -3,15 +3,18 @@ Network subsystem package
 """
 from .dandelion import Dandelion
 from .threads import StoppableThread
+from .multiqueue import MultiQueue
 
 dandelion_ins = Dandelion()
+
+# network queues
+invQueue = MultiQueue()
 
 __all__ = ["StoppableThread"]
 
 
 def start(config, state):
     """Start network threads"""
-    import state
     from .announcethread import AnnounceThread
     import connectionpool  # pylint: disable=relative-import
     from .addrthread import AddrThread

@@ -30,7 +30,7 @@ from addresses import (
 from bmconfigparser import config
 from helper_sql import (
     sql_ready, sql_timeout, SqlBulkExecute, sqlExecute, sqlQuery)
-from network import knownnodes
+from network import knownnodes, invQueue
 from network.node import Peer
 from tr import _translate
 
@@ -729,7 +729,7 @@ class objectProcessor(threading.Thread):
             inventoryHash = highlevelcrypto.calculateInventoryHash(ackPayload)
             state.Inventory[inventoryHash] = (
                 objectType, toStreamNumber, ackPayload, expiresTime, b'')
-            queues.invQueue.put((toStreamNumber, inventoryHash))
+            invQueue.put((toStreamNumber, inventoryHash))
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(
