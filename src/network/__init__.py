@@ -1,6 +1,7 @@
 """
 Network subsystem package
 """
+from six.moves import queue
 from .dandelion import Dandelion
 from .threads import StoppableThread
 from .multiqueue import MultiQueue
@@ -10,6 +11,8 @@ dandelion_ins = Dandelion()
 # network queues
 invQueue = MultiQueue()
 addrQueue = MultiQueue()
+portCheckerQueue = queue.Queue()
+receiveDataQueue = queue.Queue()
 
 __all__ = ["StoppableThread"]
 

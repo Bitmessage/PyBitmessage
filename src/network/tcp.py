@@ -17,8 +17,8 @@ import state
 import connectionpool
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
-from network import dandelion_ins, invQueue
-from queues import receiveDataQueue, UISignalQueue
+from network import dandelion_ins, invQueue, receiveDataQueue
+from queues import UISignalQueue
 from tr import _translate
 
 import asyncore_pollchoose as asyncore

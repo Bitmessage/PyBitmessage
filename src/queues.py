@@ -39,8 +39,6 @@ addressGeneratorQueue = queue.Queue()
 #: `.network.ReceiveQueueThread` instances dump objects they hear
 #: on the network into this queue to be processed.
 objectProcessorQueue = ObjectProcessorQueue()
-portCheckerQueue = queue.Queue()
-receiveDataQueue = queue.Queue()
 #: The address generator thread uses this queue to get information back
 #: to the API thread.
 apiAddressGeneratorReturnQueue = queue.Queue()

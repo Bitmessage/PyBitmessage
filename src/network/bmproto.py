@@ -17,7 +17,7 @@ import protocol
 import state
 import connectionpool
 from bmconfigparser import config
-from queues import objectProcessorQueue, portCheckerQueue
+from queues import objectProcessorQueue
 from randomtrackingdict import RandomTrackingDict
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
@@ -26,7 +26,7 @@ from network.bmobject import (
     BMObjectUnwantedStreamError
 )
 from network.proxy import ProxyError
-from network import dandelion_ins, invQueue
+from network import dandelion_ins, invQueue, portCheckerQueue
 from node import Node, Peer
 from objectracker import ObjectTracker, missingObjects
 

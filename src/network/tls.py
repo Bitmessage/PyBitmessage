@@ -10,7 +10,7 @@ import sys
 import network.asyncore_pollchoose as asyncore
 import paths
 from network.advanceddispatcher import AdvancedDispatcher
-from queues import receiveDataQueue
+from network import receiveDataQueue
 
 logger = logging.getLogger('default')
 

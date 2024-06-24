@@ -7,7 +7,7 @@ import socket
 
 import connectionpool
 from network.advanceddispatcher import UnknownStateError
-from queues import receiveDataQueue
+from network import receiveDataQueue
 from threads import StoppableThread
 
 
