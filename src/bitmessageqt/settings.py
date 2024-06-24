@@ -27,10 +27,15 @@ from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
 
+try:
+    SafeConfigParser = configparser.SafeConfigParser
+except AttributeError:
+    SafeConfigParser = configparser.ConfigParser
+
 def getSOCKSProxyType(config):
     """Get user socksproxytype setting from *config*"""
     try:
-        result = configparser.SafeConfigParser.get(
+        result = SafeConfigParser.get(
             config, 'bitmessagesettings', 'socksproxytype')
     except (configparser.NoSectionError, configparser.NoOptionError):
         return None
