@@ -1269,8 +1269,8 @@ class MyForm(settingsmixin.SMainWindow):
             r.append(row[1].decode("utf-8", "replace"))  # fromaddress
             r.append(row[2].decode("utf-8", "replace"))  # subject
             r.append(row[3].decode("utf-8", "replace"))  # status
-            r.append(row[3])  # ackdata
-            r.append(row[4])  # lastactiontime
+            r.append(row[4])  # ackdata
+            r.append(row[5])  # lastactiontime
             self.addMessageListItemSent(tableWidget, *r)
 
         tableWidget.horizontalHeader().setSortIndicator(
