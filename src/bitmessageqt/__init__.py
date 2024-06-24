@@ -2415,7 +2415,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')
             isChan = config.safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                label = unic(ustr(config.get(addressInKeysFile, 'label')).strip()) or addressInKeyFile
+                label = unic(ustr(config.get(addressInKeysFile, 'label')).strip()) or addressInKeysFile
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
         for i in range(self.ui.comboBoxSendFromBroadcast.count()):
             address = ustr(self.ui.comboBoxSendFromBroadcast.itemData(
