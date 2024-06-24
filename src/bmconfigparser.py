@@ -15,7 +15,10 @@ try:
 except ImportError:
     from pybitmessage import state
 
-SafeConfigParser = configparser.SafeConfigParser
+try:
+    SafeConfigParser = configparser.SafeConfigParser
+except AttributeError:
+    SafeConfigParser = configparser.ConfigParser
 config_ready = Event()
 
 
