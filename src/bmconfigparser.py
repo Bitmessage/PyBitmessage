@@ -18,6 +18,7 @@ except ImportError:
 try:
     SafeConfigParser = configparser.SafeConfigParser
 except AttributeError:
+    # alpine linux, python3.12
     SafeConfigParser = configparser.ConfigParser
 config_ready = Event()
 
