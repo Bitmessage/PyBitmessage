@@ -30,6 +30,7 @@ from tr import _translate
 try:
     SafeConfigParser = configparser.SafeConfigParser
 except AttributeError:
+    # alpine linux, python3.12
     SafeConfigParser = configparser.ConfigParser
 
 def getSOCKSProxyType(config):
