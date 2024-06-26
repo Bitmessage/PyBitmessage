@@ -73,13 +73,13 @@ from six.moves import configparser, http_client, xmlrpc_server
 
 import helper_inbox
 import helper_sent
-import protocol
 import proofofwork
 import queues
 import shared
 
 import shutdown
 import state
+import network.protocol as protocol
 from addresses import (
     addBMIfNotPresent,
     decodeAddress,

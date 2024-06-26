@@ -13,16 +13,26 @@ import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
 
-import defaults
-import highlevelcrypto
-import state
-from addresses import (
-    encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
-from bmconfigparser import config
-from debug import logger
-from helper_sql import sqlExecute
-from network.node import Peer
-from version import softwareVersion
+try:
+    import defaults
+    import highlevelcrypto
+    import state
+    from addresses import (
+        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+    from bmconfigparser import config
+    from debug import logger
+    from helper_sql import sqlExecute
+    from version import softwareVersion
+except ImportError:
+    from pybitmessage import defaults, highlevelcrypto, state
+    from pybitmessage.addresses import (
+        encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+    from pybitmessage.bmconfigparser import config
+    from pybitmessage.debug import logger
+    from pybitmessage.helper_sql import sqlExecute
+    from pybitmessage.version import softwareVersion
+
+from .node import Peer
 
 # Network constants
 magic = 0xE9BEB4D9

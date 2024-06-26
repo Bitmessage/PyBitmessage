@@ -3,7 +3,8 @@
 from binascii import unhexlify
 from struct import pack
 
-from pybitmessage import addresses, protocol
+from pybitmessage import addresses
+from pybitmessage.network import protocol
 
 from .samples import (
     sample_addr_data, sample_object_data, sample_object_expires)

@@ -5,7 +5,8 @@ Tests for common protocol functions
 import sys
 import unittest
 
-from pybitmessage import protocol, state
+from pybitmessage import state
+from pybitmessage.network import protocol
 from pybitmessage.helper_startup import fixSocket
 
 

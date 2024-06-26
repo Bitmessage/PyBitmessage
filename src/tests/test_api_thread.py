@@ -7,7 +7,7 @@ from struct import pack
 
 from six.moves import queue, xmlrpc_client
 
-from pybitmessage import protocol
+from pybitmessage.network import protocol
 from pybitmessage.highlevelcrypto import calculateInventoryHash
 
 from .partial import TestPartialRun

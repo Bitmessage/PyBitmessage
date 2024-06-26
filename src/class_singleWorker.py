@@ -20,11 +20,11 @@ import helper_sql
 import highlevelcrypto
 import l10n
 import proofofwork
-import protocol
 import queues
 import shared
 import state
 import tr
+import network.protocol as protocol
 from addresses import decodeAddress, decodeVarint, encodeVarint
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
