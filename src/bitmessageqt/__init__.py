@@ -70,6 +70,9 @@ except ImportError:
 
 logger = logging.getLogger('default')
 
+is_windows = sys.platform.startswith('win')
+
+
 # TODO: rewrite
 def powQueueSize():
     """Returns the size of queues.workerQueue including current unfinished work"""
@@ -88,7 +91,7 @@ def openKeysFile():
     keysfile = os.path.join(state.appdata, 'keys.dat')
     if 'linux' in sys.platform:
         subprocess.call(["xdg-open", keysfile])
-    elif sys.platform.startswith('win'):
+    elif is_windows:
         os.startfile(keysfile)  # pylint: disable=no-member
 
 
@@ -848,7 +851,7 @@ class MyForm(settingsmixin.SMainWindow):
         """
         startonlogon = config.safeGetBoolean(
             'bitmessagesettings', 'startonlogon')
-        if sys.platform.startswith('win'):  # Auto-startup for Windows
+        if is_windows:  # Auto-startup for Windows
             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
             settings = QtCore.QSettings(
                 RUN_PATH, QtCore.QSettings.NativeFormat)
@@ -1919,9 +1922,10 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             for i in range(sent.rowCount()):
                 # toAddress = sent.item(i, 0).data(QtCore.Qt.UserRole)
-                # decodeAddress(toAddress)
-
-                if as_msgid(sent.item(i, 3).data()) == ackdata:
+                tableAckdata = as_msgid(sent.item(i, 3).data())
+                # status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                #     toAddress)
+                if ackdata == tableAckdata:
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
                         newlinePosition = textToDisplay.find('\n')
@@ -4327,6 +4331,14 @@ class BitmessageQtApplication(QtWidgets.QApplication):
     # Unique identifier for this application
     uuid = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
 
+    @staticmethod
+    def get_windowstyle():
+        """Get window style set in config or default"""
+        return config.safeGet(
+            'bitmessagesettings', 'windowstyle',
+            'Windows' if is_windows else 'GTK+'
+        )
+
     def __init__(self, *argv):
         super(BitmessageQtApplication, self).__init__(*argv)
         id = BitmessageQtApplication.uuid
@@ -4334,6 +4346,14 @@ class BitmessageQtApplication(QtWidgets.QApplication):
         QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
         QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
+
+        self.setStyle(self.get_windowstyle())
+
+        font = config.safeGet('bitmessagesettings', 'font')
+        if font:
+            # family, size, weight = font.split(',')
+            family, size = font.split(',')
+            self.setFont(QtGui.QFont(family, int(size)))
 
         self.server = None
         self.is_running = False

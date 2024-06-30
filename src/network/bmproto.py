@@ -17,7 +17,6 @@ from network import knownnodes
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-from network import dandelion
 from bmconfigparser import config
 from queues import invQueue, objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict
@@ -29,6 +28,7 @@ from network.bmobject import (
 )
 from network.proxy import ProxyError
 
+from network import dandelion_ins
 from .node import Node, Peer
 from .objectracker import ObjectTracker, missingObjects
 
@@ -364,14 +364,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             raise BMProtoExcessiveDataError()
 
         # ignore dinv if dandelion turned off
-        if extend_dandelion_stem and not state.dandelion_enabled:
+        if extend_dandelion_stem and not dandelion_ins.enabled:
             return True
 
         for i in items:
-            if i in state.Inventory and not dandelion.instance.hasHash(i):
+            if i in state.Inventory and not dandelion_ins.hasHash(i):
                 continue
-            if extend_dandelion_stem and not dandelion.instance.hasHash(i):
-                dandelion.instance.addHash(i, self)
+            if extend_dandelion_stem and not dandelion_ins.hasHash(i):
+                dandelion_ins.addHash(i, self)
             self.handleReceivedInventory(i)
 
         return True
@@ -437,9 +437,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except KeyError:
                 pass
 
-        if self.object.inventoryHash in state.Inventory and dandelion.instance.hasHash(
+        if self.object.inventoryHash in state.Inventory and dandelion_ins.hasHash(
                 self.object.inventoryHash):
-            dandelion.instance.removeHash(
+            dandelion_ins.removeHash(
                 self.object.inventoryHash, "cycle detection")
 
         if six.PY2:
@@ -563,7 +563,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                network.connectionpool.pool.streams, True,
+                network.connectionpool.pool.streams, dandelion_ins.enabled, True,
                 nodeid=self.nodeid))
             logger.debug(
                 '%(host)s:%(port)i sending version',

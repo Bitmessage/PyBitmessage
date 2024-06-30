@@ -2,8 +2,8 @@
 
 from binascii import unhexlify
 
-from six.moves import queue
 import six
+from six.moves import queue
 
 from .partial import TestPartialRun
 from .samples import (

@@ -4,6 +4,7 @@ Testing the logger configuration
 
 import os
 import tempfile
+
 import six
 
 from .test_process import TestProcessProto

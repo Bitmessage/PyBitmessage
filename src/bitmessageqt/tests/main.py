@@ -1,19 +1,23 @@
 """Common definitions for bitmessageqt tests"""
 
-from six.moves import queue as Queue
 import sys
 import unittest
 
 from qtpy import QtCore, QtWidgets
 from six import string_types
+from six.moves import queue
 
 import bitmessageqt
-import queues
-from tr import _translate
+from bitmessageqt import _translate, config, queues
 
 
 class TestBase(unittest.TestCase):
     """Base class for bitmessageqt test case"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Provide the UI test cases with common settings"""
+        cls.config = config
 
     def setUp(self):
         self.app = (
@@ -25,14 +29,21 @@ class TestBase(unittest.TestCase):
             self.window.appIndicatorInit(self.app)
 
     def tearDown(self):
+        """Search for exceptions in closures called by timer and fail if any"""
         # self.app.deleteLater()
+        concerning = []
         while True:
             try:
                 thread, exc = queues.excQueue.get(block=False)
-            except Queue.Empty:
-                return
+            except queue.Empty:
+                break
             if thread == 'tests':
-                self.fail('Exception in the main thread: %s' % exc)
+                concerning.append(exc)
+        if concerning:
+            self.fail(
+                'Exceptions found in the main thread:\n%s' % '\n'.join((
+                    str(e) for e in concerning
+                )))
 
 
 class TestMain(unittest.TestCase):

@@ -43,8 +43,6 @@ ownAddresses = {}
 
 discoveredPeers = {}
 
-dandelion_enabled = 0
-
 kivy = False
 
 kivyapp = None

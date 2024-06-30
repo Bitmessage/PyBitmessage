@@ -3,12 +3,12 @@
 """
 import time
 
-import helper_random
+import random
 import protocol
 import state
 from network import connectionpool
-from network import dandelion
 from randomtrackingdict import RandomTrackingDict
+from network import dandelion_ins
 from .threads import StoppableThread
 
 
@@ -24,7 +24,7 @@ class UploadThread(StoppableThread):
             uploaded = 0
             # Choose uploading peers randomly
             connections = connectionpool.pool.establishedConnections()
-            helper_random.randomshuffle(connections)
+            random.shuffle(connections)
             for i in connections:
                 now = time.time()
                 # avoid unnecessary delay
@@ -41,8 +41,8 @@ class UploadThread(StoppableThread):
                 chunk_count = 0
                 for chunk in request:
                     del i.pendingUpload[chunk]
-                    if dandelion.instance.hasHash(chunk) and \
-                       i != dandelion.instance.objectChildStem(chunk):
+                    if dandelion_ins.hasHash(chunk) and \
+                       i != dandelion_ins.objectChildStem(chunk):
                         i.antiIntersectionDelay()
                         self.logger.info(
                             '%s asked for a stem object we didn\'t offer to it.',

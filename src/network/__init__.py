@@ -1,9 +1,10 @@
 """
 Network subsystem package
 """
-
+from .dandelion import Dandelion
 from .threads import StoppableThread
 
+dandelion_ins = Dandelion()
 
 __all__ = ["StoppableThread"]
 
@@ -20,6 +21,11 @@ def start(config, state):
     from .knownnodes import readKnownNodes
     from .receivequeuethread import ReceiveQueueThread
     from .uploadthread import UploadThread
+
+    # check and set dandelion enabled value at network startup
+    dandelion_ins.init_dandelion_enabled(config)
+    # pass pool instance into dandelion class instance
+    dandelion_ins.init_pool(connectionpool.pool)
 
     readKnownNodes()
     connectionpool.pool.connectToStream(1)

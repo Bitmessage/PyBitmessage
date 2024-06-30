@@ -339,8 +339,8 @@ def assembleAddrMessage(peerList):
     return retval
 
 
-def assembleVersionMessage(
-    remoteHost, remotePort, participatingStreams, server=False, nodeid=None
+def assembleVersionMessage(  # pylint: disable=too-many-arguments
+    remoteHost, remotePort, participatingStreams, dandelion_enabled=True, server=False, nodeid=None,
 ):
     """
     Construct the payload of a version message,
@@ -353,7 +353,7 @@ def assembleVersionMessage(
         '>q',
         NODE_NETWORK
         | (NODE_SSL if haveSSL(server) else 0)
-        | (NODE_DANDELION if state.dandelion_enabled else 0)
+        | (NODE_DANDELION if dandelion_enabled else 0)
     )
     payload += pack('>q', int(time.time()))
 
@@ -377,7 +377,7 @@ def assembleVersionMessage(
         '>q',
         NODE_NETWORK
         | (NODE_SSL if haveSSL(server) else 0)
-        | (NODE_DANDELION if state.dandelion_enabled else 0)
+        | (NODE_DANDELION if dandelion_enabled else 0)
     )
     # = 127.0.0.1. This will be ignored by the remote host.
     # The actual remote connected IP will be used.

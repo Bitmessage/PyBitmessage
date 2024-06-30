@@ -12,14 +12,13 @@ import six
 
 # magic imports!
 import addresses
-import helper_random
 import l10n
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-from network import dandelion
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
+from network import dandelion_ins
 from queues import invQueue, receiveDataQueue, UISignalQueue
 from tr import _translate
 
@@ -176,7 +175,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.increaseRating(self.destination)
             knownnodes.addKnownNode(
                 self.streams, self.destination, time.time())
-            dandelion.instance.maybeAddStem(self)
+            dandelion_ins.maybeAddStem(self, invQueue)
         self.sendAddr()
         self.sendBigInv()
 
@@ -208,7 +207,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                     elemCount = min(
                         len(filtered),
                         maxAddrCount / 2 if n else maxAddrCount)
-                    addrs[s] = helper_random.randomsample(filtered, elemCount)
+                    addrs[s] = random.sample(filtered, elemCount)
         for substream in addrs:
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
@@ -238,7 +237,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with self.objectsNewToThemLock:
                 for objHash in state.Inventory.unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
-                    if dandelion.instance.hasHash(objHash):
+                    if dandelion_ins.hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
         objectCount = 0
@@ -275,7 +274,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                network.connectionpool.pool.streams,
+                network.connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
@@ -300,7 +299,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             if host_is_global:
                 knownnodes.addKnownNode(
                     self.streams, self.destination, time.time())
-                dandelion.instance.maybeRemoveStem(self)
+                dandelion_ins.maybeRemoveStem(self)
         else:
             self.checkTimeOffsetNotification()
             if host_is_global:
@@ -326,7 +325,7 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                network.connectionpool.pool.streams,
+                network.connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -350,7 +349,7 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                network.connectionpool.pool.streams,
+                network.connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True

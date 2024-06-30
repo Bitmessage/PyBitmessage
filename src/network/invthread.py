@@ -9,7 +9,7 @@ import addresses
 import protocol
 import state
 from network import connectionpool
-from network import dandelion
+from network import dandelion_ins
 from queues import invQueue
 from .threads import StoppableThread
 
@@ -40,10 +40,10 @@ class InvThread(StoppableThread):
     @staticmethod
     def handleLocallyGenerated(stream, hashId):
         """Locally generated inventory items require special handling"""
-        dandelion.instance.addHash(hashId, stream=stream)
+        dandelion_ins.addHash(hashId, stream=stream)
         for connection in connectionpool.pool.connections():
-            if state.dandelion_enabled and connection != \
-                    dandelion.instance.objectChildStem(hashId):
+            if dandelion_ins.enabled and connection != \
+                    dandelion_ins.objectChildStem(hashId):
                 continue
             connection.objectsNewToThem[hashId] = time()
 
@@ -52,7 +52,7 @@ class InvThread(StoppableThread):
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
-                handleExpiredDandelion(dandelion.instance.expire())
+                handleExpiredDandelion(dandelion_ins.expire(invQueue))
                 try:
                     data = invQueue.get(False)
                     chunk.append((data[0], data[1]))
@@ -75,10 +75,10 @@ class InvThread(StoppableThread):
                         except KeyError:
                             continue
                         try:
-                            if connection == dandelion.instance.objectChildStem(inv[1]):
+                            if connection == dandelion_ins.objectChildStem(inv[1]):
                                 # Fluff trigger by RNG
                                 # auto-ignore if config set to 0, i.e. dandelion is off
-                                if random.randint(1, 100) >= state.dandelion_enabled:  # nosec B311
+                                if random.randint(1, 100) >= dandelion_ins.enabled:  # nosec B311
                                     fluffs.append(inv[1])
                                 # send a dinv only if the stem node supports dandelion
                                 elif connection.services & protocol.NODE_DANDELION > 0:
@@ -105,7 +105,6 @@ class InvThread(StoppableThread):
             for _ in range(len(chunk)):
                 invQueue.task_done()
 
-            if dandelion.instance.refresh < time():
-                dandelion.instance.reRandomiseStems()
+            dandelion_ins.reRandomiseStems()
 
             self.stop.wait(1)
