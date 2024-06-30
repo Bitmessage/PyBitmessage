@@ -5,12 +5,11 @@ Tests using API.
 import base64
 import json
 import time
-
 from binascii import hexlify
-from six.moves import xmlrpc_client  # nosec
-import six
 
 import psutil
+import six
+from six.moves import xmlrpc_client  # nosec
 
 from .samples import (
     sample_deterministic_addr3, sample_deterministic_addr4, sample_seed,
@@ -181,29 +180,29 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             self.api.getDeterministicAddress(self._seed, 3, 1),
             sample_deterministic_addr3)
-        six.assertRegex(self,
-            self.api.getDeterministicAddress(self._seed, 2, 1),
+        six.assertRegex(
+            self, self.api.getDeterministicAddress(self._seed, 2, 1),
             r'^API Error 0002:')
 
         # This is here until the streams will be implemented
-        six.assertRegex(self,
-            self.api.getDeterministicAddress(self._seed, 3, 2),
+        six.assertRegex(
+            self, self.api.getDeterministicAddress(self._seed, 3, 2),
             r'API Error 0003:')
-        six.assertRegex(self,
-            self.api.createDeterministicAddresses(self._seed, 1, 4, 2),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 1, 4, 2),
             r'API Error 0003:')
 
-        six.assertRegex(self,
-            self.api.createDeterministicAddresses('', 1),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses('', 1),
             r'API Error 0001:')
-        six.assertRegex(self,
-            self.api.createDeterministicAddresses(self._seed, 1, 2),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 1, 2),
             r'API Error 0002:')
-        six.assertRegex(self,
-            self.api.createDeterministicAddresses(self._seed, 0),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 0),
             r'API Error 0004:')
-        six.assertRegex(self,
-            self.api.createDeterministicAddresses(self._seed, 1000),
+        six.assertRegex(
+            self, self.api.createDeterministicAddresses(self._seed, 1000),
             r'API Error 0005:')
 
         addresses = json.loads(
@@ -442,7 +441,7 @@ class TestAPI(TestAPIProto):
             self.assertEqual(self.api.joinChan(self._seed, addr), 'success')
             self.assertEqual(self.api.leaveChan(addr), 'success')
         # Joining with wrong address should fail
-        six.assertRegex(self,
-            self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
+        six.assertRegex(
+            self, self.api.joinChan(self._seed, 'BM-2cWzSnwjJ7yRP3nLEW'),
             r'^API Error 0008:'
         )

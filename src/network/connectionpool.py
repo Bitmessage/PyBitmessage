@@ -7,9 +7,9 @@ import re
 import socket
 import sys
 import time
+import random
 
 from network import asyncore_pollchoose as asyncore
-import helper_random
 from network import knownnodes
 import protocol
 import state
@@ -216,7 +216,7 @@ class BMConnectionPool(object):
             connection_base = TCPConnection
         elif proxy_type == 'SOCKS5':
             connection_base = Socks5BMConnection
-            hostname = helper_random.randomchoice([
+            hostname = random.choice([  # nosec B311
                 'quzwelsuziwqgpt2.onion', None
             ])
         elif proxy_type == 'SOCKS4a':
@@ -228,7 +228,7 @@ class BMConnectionPool(object):
 
         bootstrapper = bootstrap(connection_base)
         if not hostname:
-            port = helper_random.randomchoice([8080, 8444])
+            port = random.choice([8080, 8444])  # nosec B311
             hostname = 'bootstrap%s.bitmessage.org' % port
         else:
             port = 8444
@@ -295,7 +295,7 @@ class BMConnectionPool(object):
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
                         chosen = self.trustedPeer or chooseConnection(
-                            helper_random.randomchoice(self.streams))
+                            random.choice(self.streams))  # nosec B311
                     except ValueError:
                         continue
                     if chosen in self.outboundConnections:

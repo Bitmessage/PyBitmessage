@@ -7,7 +7,7 @@ import time
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-from network import dandelion
+from network import dandelion_ins
 from highlevelcrypto import calculateInventoryHash
 
 logger = logging.getLogger('default')
@@ -113,7 +113,7 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
         or advertise it unnecessarily)
         """
         # if it's a stem duplicate, pretend we don't have it
-        if dandelion.instance.hasHash(self.inventoryHash):
+        if dandelion_ins.hasHash(self.inventoryHash):
             return
         if self.inventoryHash in state.Inventory:
             raise BMObjectAlreadyHaveError()

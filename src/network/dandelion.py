@@ -9,9 +9,6 @@ from time import time
 import six
 from binascii import hexlify
 
-import network.connectionpool  # use long name to address recursive import
-import state
-from queues import invQueue
 
 # randomise routes after 600 seconds
 REASSIGN_INTERVAL = 600
@@ -39,6 +36,8 @@ class Dandelion:  # pylint: disable=old-style-class
         # when to rerandomise routes
         self.refresh = time() + REASSIGN_INTERVAL
         self.lock = RLock()
+        self.enabled = None
+        self.pool = None
 
     @staticmethod
     def poissonTimeout(start=None, average=0):
@@ -49,10 +48,23 @@ class Dandelion:  # pylint: disable=old-style-class
             average = FLUFF_TRIGGER_MEAN_DELAY
         return start + expovariate(1.0 / average) + FLUFF_TRIGGER_FIXED_DELAY
 
+    def init_pool(self, pool):
+        """pass pool instance"""
+        self.pool = pool
+
+    def init_dandelion_enabled(self, config):
+        """Check if Dandelion is enabled and set value in enabled attribute"""
+        dandelion_enabled = config.safeGetInt('network', 'dandelion')
+        # dandelion requires outbound connections, without them,
+        # stem objects will get stuck forever
+        if not config.safeGetBoolean(
+                'bitmessagesettings', 'sendoutgoingconnections'):
+            dandelion_enabled = 0
+        self.enabled = dandelion_enabled
+
     def addHash(self, hashId, source=None, stream=1):
-        """Add inventory vector to dandelion stem"""
-        if not state.dandelion_enabled:
-            return
+        """Add inventory vector to dandelion stem return status of dandelion enabled"""
+        assert self.enabled is not None
         with self.lock:
             self.hashMap[bytes(hashId)] = Stem(
                 self.getNodeStem(source),
@@ -92,7 +104,7 @@ class Dandelion:  # pylint: disable=old-style-class
         """Child (i.e. next) node for an inventory vector during stem mode"""
         return self.hashMap[bytes(hashId)].child
 
-    def maybeAddStem(self, connection):
+    def maybeAddStem(self, connection, invQueue):
         """
         If we had too few outbound connections, add the current one to the
         current stem list. Dandelion as designed by the authors should
@@ -166,7 +178,7 @@ class Dandelion:  # pylint: disable=old-style-class
                 self.nodeMap[node] = self.pickStem(node)
                 return self.nodeMap[node]
 
-    def expire(self):
+    def expire(self, invQueue):
         """Switch expired objects from stem to fluff mode"""
         with self.lock:
             deadline = time()
@@ -182,19 +194,18 @@ class Dandelion:  # pylint: disable=old-style-class
 
     def reRandomiseStems(self):
         """Re-shuffle stem mapping (parent <-> child pairs)"""
+        assert self.pool is not None
+        if self.refresh > time():
+            return
+
         with self.lock:
             try:
                 # random two connections
                 self.stem = sample(
-                    sorted(network.connectionpool.BMConnectionPool(
-                    ).outboundConnections.values()), MAX_STEMS)
+                    sorted(self.pool.outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = list(network.connectionpool.BMConnectionPool(
-                ).outboundConnections.values())
+                self.stem = list(self.pool.outboundConnections.values())
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time() + REASSIGN_INTERVAL
-
-
-instance = Dandelion()

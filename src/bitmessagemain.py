@@ -12,6 +12,7 @@ The PyBitmessage startup script
 import os
 import sys
 
+
 try:
     import pathmagic
 except ImportError:
@@ -155,13 +156,6 @@ class Main(object):
         self.setSignalHandler()
 
         set_thread_name("PyBitmessage")
-
-        state.dandelion_enabled = config.safeGetInt('network', 'dandelion')
-        # dandelion requires outbound connections, without them,
-        # stem objects will get stuck forever
-        if state.dandelion_enabled and not config.safeGetBoolean(
-                'bitmessagesettings', 'sendoutgoingconnections'):
-            state.dandelion_enabled = 0
 
         if state.testmode or config.safeGetBoolean(
                 'bitmessagesettings', 'extralowdifficulty'):

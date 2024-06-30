@@ -48,14 +48,17 @@ def getSOCKSProxyType(config):
 
 class SettingsDialog(QtGui.QDialog):
     """The "Settings" dialog"""
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)
         widgets.load('settings.ui', self)
 
+        self.app = QtGui.QApplication.instance()
         self.parent = parent
         self.firstrun = firstrun
         self.config = config_obj
         self.net_restart_needed = False
+        self.font_setting = None
         self.timer = QtCore.QTimer()
 
         if self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
@@ -92,6 +95,15 @@ class SettingsDialog(QtGui.QDialog):
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
         # pylint: disable=too-many-branches,too-many-statements
+
+        current_style = self.app.get_windowstyle()
+        for i, sk in enumerate(QtGui.QStyleFactory.keys()):
+            self.comboBoxStyle.addItem(sk)
+            if sk == current_style:
+                self.comboBoxStyle.setCurrentIndex(i)
+
+        self.save_font_setting(self.app.font())
+
         if not self.parent.tray.isSystemTrayAvailable():
             self.groupBoxTray.setEnabled(False)
             self.groupBoxTray.setTitle(_translate(
@@ -144,7 +156,7 @@ class SettingsDialog(QtGui.QDialog):
                 "MainWindow",
                 "Tray notifications not yet supported on your OS."))
 
-        if 'win' not in sys.platform and not self.parent.desktop:
+        if not sys.platform.startswith('win') and not self.parent.desktop:
             self.checkBoxStartOnLogon.setDisabled(True)
             self.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
@@ -329,6 +341,18 @@ class SettingsDialog(QtGui.QDialog):
         if status == 'success':
             self.parent.namecoin = nc
 
+    def save_font_setting(self, font):
+        """Save user font setting and set the buttonFont text"""
+        font_setting = (font.family(), font.pointSize())
+        self.buttonFont.setText('{} {}'.format(*font_setting))
+        self.font_setting = '{},{}'.format(*font_setting)
+
+    def choose_font(self):
+        """Show the font selection dialog"""
+        font, valid = QtGui.QFontDialog.getFont()
+        if valid:
+            self.save_font_setting(font)
+
     def accept(self):
         """A callback for accepted event of buttonBox (OK button pressed)"""
         # pylint: disable=too-many-branches,too-many-statements
@@ -354,6 +378,20 @@ class SettingsDialog(QtGui.QDialog):
             self.checkBoxUseIdenticons.isChecked()))
         self.config.set('bitmessagesettings', 'replybelow', str(
             self.checkBoxReplyBelow.isChecked()))
+
+        window_style = str(self.comboBoxStyle.currentText())
+        if self.app.get_windowstyle() != window_style or self.config.safeGet(
+            'bitmessagesettings', 'font'
+        ) != self.font_setting:
+            self.config.set('bitmessagesettings', 'windowstyle', window_style)
+            self.config.set('bitmessagesettings', 'font', self.font_setting)
+            queues.UISignalQueue.put((
+                'updateStatusBar', (
+                    _translate(
+                        "MainWindow",
+                        "You need to restart the application to apply"
+                        " the window style or default font."), 1)
+            ))
 
         lang = str(self.languageComboBox.itemData(
             self.languageComboBox.currentIndex()))
