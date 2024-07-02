@@ -63,6 +63,8 @@ class TestProtocol(TestSocketInet):
 
     def test_check_local(self):
         """Check the logic of TCPConnection.local"""
+        self.assertFalse(
+            protocol.checkIPAddress(protocol.encodeHost('127.0.0.1')))
         self.assertTrue(
             protocol.checkIPAddress(protocol.encodeHost('127.0.0.1'), True))
         self.assertTrue(
