@@ -16,10 +16,10 @@ import threading
 import time
 import unittest
 
-import protocol
 import state
 import helper_sent
 import helper_addressbook
+import network.protocol as protocol
 
 from bmconfigparser import config
 from helper_msgcoding import MsgEncode, MsgDecode

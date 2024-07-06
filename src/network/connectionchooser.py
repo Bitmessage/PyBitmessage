@@ -6,8 +6,8 @@ import logging
 import random
 
 import knownnodes
-import protocol
 import state
+import protocol
 from bmconfigparser import config
 from queues import queue, portCheckerQueue
 

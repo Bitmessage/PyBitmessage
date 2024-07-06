@@ -13,9 +13,9 @@ import time
 # magic imports!
 import addresses
 import knownnodes
-import protocol
 import state
 import connectionpool
+import protocol
 from bmconfigparser import config
 from queues import objectProcessorQueue, portCheckerQueue
 from randomtrackingdict import RandomTrackingDict

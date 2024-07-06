@@ -19,10 +19,10 @@ import helper_msgcoding
 import helper_sent
 import highlevelcrypto
 import l10n
-import protocol
 import queues
 import shared
 import state
+import network.protocol as protocol
 from addresses import (
     decodeAddress, decodeVarint,
     encodeAddress, encodeVarint, varintDecodeError
