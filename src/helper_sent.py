@@ -4,6 +4,7 @@ Insert values into sent table
 
 import time
 import uuid
+import sqlite3
 from addresses import decodeAddress
 from bmconfigparser import config
 from helper_ackPayload import genAckPayload
@@ -38,7 +39,7 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
 
         ttl = ttl if ttl else config.getint('bitmessagesettings', 'ttl')
 
-        t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
+        t = (sqlite3.Binary(msgid), toAddress, sqlite3.Binary(ripe), fromAddress, subject, message, sqlite3.Binary(ackdata),
              sentTime, lastActionTime, sleeptill, status, retryNumber, folder,
              encoding, ttl)
 
@@ -50,20 +51,30 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
 
 def delete(ack_data):
     """Perform Delete query"""
-    sqlExecute("DELETE FROM sent WHERE ackdata = ?", ack_data)
+    rowcount = sqlExecute("DELETE FROM sent WHERE ackdata = ?", sqlite3.Binary(ack_data))
+    if rowcount < 1:
+        sqlExecute("DELETE FROM sent WHERE ackdata = CAST(? AS TEXT)", ack_data)
 
 
 def retrieve_message_details(ack_data):
     """Retrieving Message details"""
     data = sqlQuery(
-        "select toaddress, fromaddress, subject, message, received from inbox where msgid = ?", ack_data
+        "select toaddress, fromaddress, subject, message, received from inbox where msgid = ?", sqlite3.Binary(ack_data)
     )
+    if len(data) < 1:
+        data = sqlQuery(
+            "select toaddress, fromaddress, subject, message, received from inbox where msgid = CAST(? AS TEXT)", ack_data
+        )
     return data
 
 
 def trash(ackdata):
     """Mark a message in the `sent` as `trash`"""
     rowcount = sqlExecute(
-        '''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdata
+        '''UPDATE sent SET folder='trash' WHERE ackdata=?''', sqlite3.Binary(ackdata)
     )
+    if rowcount < 1:
+        rowcount = sqlExecute(
+            '''UPDATE sent SET folder='trash' WHERE ackdata=CAST(? AS TEXT)''', ackdata
+        )
     return rowcount
