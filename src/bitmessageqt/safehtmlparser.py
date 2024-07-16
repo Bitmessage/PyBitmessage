@@ -125,6 +125,8 @@ class SafeHTMLParser(HTMLParser):
     def feed(self, data):
         try:
             data = unicode(data, 'utf-8')
+        except TypeError:
+            pass
         except UnicodeDecodeError:
             data = unicode(data, 'utf-8', errors='replace')
         HTMLParser.feed(self, data)

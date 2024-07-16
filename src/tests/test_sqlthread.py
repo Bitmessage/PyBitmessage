@@ -41,4 +41,4 @@ class TestSqlThread(unittest.TestCase):
 
         query = sqlQuery('SELECT enaddr(4, 1, "21122112211221122112")')
         self.assertEqual(
-            query[0][-1], encoded_str, "test case fail for create_function")
+            query[0][-1].decode("utf-8", "replace"), encoded_str, "test case fail for create_function")

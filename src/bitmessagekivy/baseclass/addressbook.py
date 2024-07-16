@@ -29,6 +29,7 @@ from pybitmessage.bitmessagekivy.baseclass.common import (
 from pybitmessage.bitmessagekivy.baseclass.popup import SavedAddressDetailPopup
 from pybitmessage.bitmessagekivy.baseclass.addressbook_widgets import HelperAddressBook
 from pybitmessage.helper_sql import sqlExecute
+from dbcompat import dbstr
 
 logger = logging.getLogger('default')
 
@@ -59,7 +60,7 @@ class AddressBook(Screen, HelperAddressBook):
         self.ids.tag_label.text = ''
         self.queryreturn = kivy_helper_search.search_sql(
             xAddress, account, "addressbook", where, what, False)
-        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        self.queryreturn = [[obj[0].decode("utf-8", "replace"), obj[1].decode("utf-8", "replace")] for obj in reversed(self.queryreturn)]
         if self.queryreturn:
             self.ids.tag_label.text = 'Address Book'
             self.has_refreshed = True
@@ -131,7 +132,7 @@ class AddressBook(Screen, HelperAddressBook):
         if self.ids.ml.children is not None:
             self.ids.tag_label.text = ''
         sqlExecute(
-            "DELETE FROM  addressbook WHERE address = ?", address)
+            "DELETE FROM  addressbook WHERE address = ?", dbstr(address))
         toast('Address Deleted')
 
     def close_pop(self, instance):
@@ -142,8 +143,13 @@ class AddressBook(Screen, HelperAddressBook):
     def update_addbook_label(self, instance):
         """Updating the label of address book address"""
         address_list = kivy_helper_search.search_sql(folder="addressbook")
-        stored_labels = [labels[0] for labels in address_list]
-        add_dict = dict(address_list)
+        stored_labels = [labels[0].decode("utf-8", "replace") for labels in address_list]
+        add_dict = {}
+        for row in address_list:
+            label, address = row
+            label = label.decode("utf-8", "replace")
+            address = address.decode("utf-8", "replace")
+            add_dict[label] = address
         label = str(self.addbook_popup.content_cls.ids.add_label.text)
         if label in stored_labels and self.address == add_dict[label]:
             stored_labels.remove(label)
@@ -151,7 +157,7 @@ class AddressBook(Screen, HelperAddressBook):
             sqlExecute("""
                 UPDATE addressbook
                 SET label = ?
-                WHERE address = ?""", label, self.addbook_popup.content_cls.address)
+                WHERE address = ?""", dbstr(label), dbstr(self.addbook_popup.content_cls.address))
             App.get_running_app().root.ids.id_addressbook.ids.ml.clear_widgets()
             App.get_running_app().root.ids.id_addressbook.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()

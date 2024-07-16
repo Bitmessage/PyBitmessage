@@ -33,6 +33,7 @@ from helper_sql import (
 from network import knownnodes, invQueue
 from network.node import Peer
 from tr import _translate
+from dbcompat import dbstr
 
 logger = logging.getLogger('default')
 
@@ -327,19 +328,19 @@ class objectProcessor(threading.Thread):
 
             queryreturn = sqlQuery(
                 "SELECT usedpersonally FROM pubkeys WHERE address=?"
-                " AND usedpersonally='yes'", address)
+                " AND usedpersonally='yes'", dbstr(address))
             # if this pubkey is already in our database and if we have
             # used it personally:
             if queryreturn != []:
                 logger.info(
                     'We HAVE used this pubkey personally. Updating time.')
-                t = (address, addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, dataToStore,
                      int(time.time()), 'yes')
             else:
                 logger.info(
                     'We have NOT used this pubkey personally. Inserting'
                     ' in database.')
-                t = (address, addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, dataToStore,
                      int(time.time()), 'no')
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(address)
@@ -389,20 +390,20 @@ class objectProcessor(threading.Thread):
             address = encodeAddress(addressVersion, streamNumber, ripe)
             queryreturn = sqlQuery(
                 "SELECT usedpersonally FROM pubkeys WHERE address=?"
-                " AND usedpersonally='yes'", address)
+                " AND usedpersonally='yes'", dbstr(address))
             # if this pubkey is already in our database and if we have
             # used it personally:
             if queryreturn != []:
                 logger.info(
                     'We HAVE used this pubkey personally. Updating time.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'yes')
+                t = (dbstr(address), addressVersion, dataToStore,
+                     int(time.time()), dbstr('yes'))
             else:
                 logger.info(
                     'We have NOT used this pubkey personally. Inserting'
                     ' in database.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'no')
+                t = (dbstr(address), addressVersion, dataToStore,
+                     int(time.time()), dbstr('no'))
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(address)
 
@@ -590,11 +591,11 @@ class objectProcessor(threading.Thread):
         # person.
         sqlExecute(
             '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-            fromAddress,
+            dbstr(fromAddress),
             sendersAddressVersionNumber,
             decryptedData[:endOfThePublicKeyPosition],
             int(time.time()),
-            'yes')
+            dbstr('yes'))
 
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
@@ -631,7 +632,7 @@ class objectProcessor(threading.Thread):
                 'bitmessagesettings', 'blackwhitelist') == 'black':
             queryreturn = sqlQuery(
                 "SELECT label FROM blacklist where address=? and enabled='1'",
-                fromAddress)
+                dbstr(fromAddress))
             if queryreturn != []:
                 logger.info('Message ignored because address is in blacklist.')
 
@@ -639,7 +640,7 @@ class objectProcessor(threading.Thread):
         else:  # We're using a whitelist
             queryreturn = sqlQuery(
                 "SELECT label FROM whitelist where address=? and enabled='1'",
-                fromAddress)
+                dbstr(fromAddress))
             if queryreturn == []:
                 logger.info(
                     'Message ignored because address not in whitelist.')
@@ -927,11 +928,11 @@ class objectProcessor(threading.Thread):
 
         # Let's store the public key in case we want to reply to this person.
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-                   fromAddress,
-                   sendersAddressVersion,
+                   dbstr(fromAddress),
+                   dbstr(sendersAddressVersion),
                    decryptedData[:endOfPubkeyPosition],
                    int(time.time()),
-                   'yes')
+                   dbstr('yes'))
 
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
@@ -1012,7 +1013,7 @@ class objectProcessor(threading.Thread):
             "UPDATE sent SET status='doingmsgpow', retrynumber=0"
             " WHERE toaddress=?"
             " AND (status='awaitingpubkey' OR status='doingpubkeypow')"
-            " AND folder='sent'", address)
+            " AND folder='sent'", dbstr(address))
         queues.workerQueue.put(('sendmessage', ''))
 
     @staticmethod

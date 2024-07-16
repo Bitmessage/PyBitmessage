@@ -7,6 +7,7 @@ Folder tree and messagelist widgets definitions.
 from cgi import escape
 
 from PyQt4 import QtCore, QtGui
+from dbcompat import dbstr
 
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
@@ -111,7 +112,7 @@ class AccountMixin(object):
         elif config.safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
-                '''select label from subscriptions where address=?''', self.address):
+                '''select label from subscriptions where address=?''', dbstr(self.address)):
             self.type = AccountMixin.SUBSCRIPTION
         else:
             self.type = self.NORMAL
@@ -128,15 +129,15 @@ class AccountMixin(object):
                     config.get(self.address, 'label'), 'utf-8')
             except Exception:
                 queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                    '''select label from addressbook where address=?''', dbstr(self.address))
         elif self.type == AccountMixin.SUBSCRIPTION:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                '''select label from subscriptions where address=?''', dbstr(self.address))
         if queryreturn is not None:
             if queryreturn != []:
                 for row in queryreturn:
                     retval, = row
-                    retval = unicode(retval, 'utf-8')
+                retval = retval.decode("utf-8", "replace")
         elif self.address is None or self.type == AccountMixin.ALL:
             return unicode(
                 str(_translate("MainWindow", "All accounts")), 'utf-8')
@@ -307,12 +308,12 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
 
     def _getLabel(self):
         queryreturn = sqlQuery(
-            '''select label from subscriptions where address=?''', self.address)
+            '''select label from subscriptions where address=?''', dbstr(self.address))
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
-            return unicode(retval, 'utf-8', 'ignore')
-        return unicode(self.address, 'utf-8')
+            return retval.decode("utf-8", "replace")
+        return self.address
 
     def setType(self):
         """Set account type"""
@@ -329,7 +330,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
                 label = unicode(value, 'utf-8', 'ignore')
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
-                label, self.address)
+                dbstr(label), dbstr(self.address))
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
 
 
@@ -412,13 +413,14 @@ class MessageList_AddressWidget(BMAddressWidget):
                     'utf-8', 'ignore')
             except:
                 queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                    '''select label from addressbook where address=?''', dbstr(self.address))
         elif self.type == AccountMixin.SUBSCRIPTION:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                '''select label from subscriptions where address=?''', dbstr(self.address))
         if queryreturn:
             for row in queryreturn:
-                newLabel = unicode(row[0], 'utf-8', 'ignore')
+                newLabel = row[0]
+            newLabel = newLabel.decode("utf-8", "replace")
 
         self.label = newLabel
 
@@ -456,7 +458,7 @@ class MessageList_SubjectWidget(BMTableWidgetItem):
         if role == QtCore.Qt.UserRole:
             return self.subject
         if role == QtCore.Qt.ToolTipRole:
-            return escape(unicode(self.subject, 'utf-8'))
+            return escape(self.subject)
         return super(MessageList_SubjectWidget, self).data(role)
 
     # label (or address) alphabetically, disabled at the end
@@ -525,9 +527,9 @@ class Ui_AddressBookWidgetItem(BMAddressWidget):
                     config.set(self.address, 'label', self.label)
                     config.save()
                 except:
-                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
+                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', dbstr(self.label), dbstr(self.address))
             elif self.type == AccountMixin.SUBSCRIPTION:
-                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
+                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', dbstr(self.label), dbstr(self.address))
             else:
                 pass
         return super(Ui_AddressBookWidgetItem, self).setData(role, value)

@@ -29,6 +29,7 @@ from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from network import connectionpool, knownnodes, StoppableThread
 from tr import _translate
+from dbcompat import dbstr
 
 
 #: Equals 4 weeks. You could make this longer if you want
@@ -99,6 +100,8 @@ class singleCleaner(StoppableThread):
                     tick - state.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for toAddress, ackData, status in queryreturn:
+                    toAddress = toAddress.decode("utf-8", "replace")
+                    status = status.decode("utf-8", "replace")
                     if status == 'awaitingpubkey':
                         self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
@@ -168,7 +171,7 @@ class singleCleaner(StoppableThread):
         ))
         sqlExecute(
             "UPDATE sent SET status = 'msgqueued'"
-            " WHERE toaddress = ? AND folder = 'sent'", address)
+            " WHERE toaddress = ? AND folder = 'sent'", dbstr(address))
         queues.workerQueue.put(('sendmessage', ''))
 
     def resendMsg(self, ackdata):

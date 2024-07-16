@@ -70,6 +70,7 @@ from struct import pack, unpack
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
+from dbcompat import dbstr
 
 import helper_inbox
 import helper_sent
@@ -531,12 +532,12 @@ class BMRPCDispatcher(object):
         message = shared.fixPotentiallyInvalidUTF8Data(message)
         return {
             'msgid': hexlify(msgid),
-            'toAddress': toAddress,
-            'fromAddress': fromAddress,
+            'toAddress': toAddress.decode("utf-8", "replace"),
+            'fromAddress': fromAddress.decode("utf-8", "replace"),
             'subject': base64.b64encode(subject),
             'message': base64.b64encode(message),
             'encodingType': encodingtype,
-            'receivedTime': received,
+            'receivedTime': received.decode("utf-8", "replace"),
             'read': read
         }
 
@@ -598,11 +599,12 @@ class BMRPCDispatcher(object):
         """
         queryreturn = sqlQuery(
             "SELECT label, address from addressbook WHERE label = ?",
-            label
+            dbstr(label)
         ) if label else sqlQuery("SELECT label, address from addressbook")
         data = []
         for label, address in queryreturn:
             label = shared.fixPotentiallyInvalidUTF8Data(label)
+            address = address.decode("utf-8", "replace")
             data.append({
                 'label': base64.b64encode(label),
                 'address': address
@@ -618,12 +620,12 @@ class BMRPCDispatcher(object):
         self._verifyAddress(address)
         # TODO: add unique together constraint in the table
         queryreturn = sqlQuery(
-            "SELECT address FROM addressbook WHERE address=?", address)
+            "SELECT address FROM addressbook WHERE address=?", dbstr(address))
         if queryreturn != []:
             raise APIError(
                 16, 'You already have this address in your address book.')
 
-        sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+        sqlExecute("INSERT INTO addressbook VALUES(?,?)", dbstr(label), dbstr(address))
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
@@ -635,7 +637,7 @@ class BMRPCDispatcher(object):
         """Delete an entry from address book."""
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
-        sqlExecute('DELETE FROM addressbook WHERE address=?', address)
+        sqlExecute('DELETE FROM addressbook WHERE address=?', dbstr(address))
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
@@ -919,6 +921,7 @@ class BMRPCDispatcher(object):
             " ORDER BY received"
         )
         return {"inboxMessages": [
+
             self._dump_inbox_message(*data) for data in queryreturn
         ]}
 
@@ -1018,7 +1021,7 @@ class BMRPCDispatcher(object):
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received,"
             " message, encodingtype, read FROM inbox WHERE folder='inbox'"
-            " AND toAddress=?", toAddress)
+            " AND toAddress=?", dbstr(toAddress))
         return {"inboxMessages": [
             self._dump_inbox_message(*data) for data in queryreturn
         ]}
@@ -1055,7 +1058,7 @@ class BMRPCDispatcher(object):
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent"
             " WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime",
-            fromAddress
+            dbstr(fromAddress)
         )
         return {"sentMessages": [
             self._dump_sent_message(*data) for data in queryreturn
@@ -1150,9 +1153,9 @@ class BMRPCDispatcher(object):
 
         toLabel = ''
         queryreturn = sqlQuery(
-            "SELECT label FROM addressbook WHERE address=?", toAddress)
+            "SELECT label FROM addressbook WHERE address=?", dbstr(toAddress))
         try:
-            toLabel = queryreturn[0][0]
+            toLabel = queryreturn[0][0].decode("utf-8", "replace")
         except IndexError:
             pass
 
@@ -1219,7 +1222,7 @@ class BMRPCDispatcher(object):
         queryreturn = sqlQuery(
             "SELECT status FROM sent where ackdata=?", ackdata)
         try:
-            return queryreturn[0][0]
+            return queryreturn[0][0].decode("utf-8", "replace")
         except IndexError:
             return 'notfound'
 
@@ -1238,11 +1241,11 @@ class BMRPCDispatcher(object):
         # First we must check to see if the address is already in the
         # subscriptions list.
         queryreturn = sqlQuery(
-            "SELECT * FROM subscriptions WHERE address=?", address)
+            "SELECT * FROM subscriptions WHERE address=?", dbstr(address))
         if queryreturn:
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute(
-            "INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
+            "INSERT INTO subscriptions VALUES (?,?,?)", dbstr(label), dbstr(address), True)
         shared.reloadBroadcastSendersForWhichImWatching()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
@@ -1256,7 +1259,7 @@ class BMRPCDispatcher(object):
         """
 
         address = addBMIfNotPresent(address)
-        sqlExecute("DELETE FROM subscriptions WHERE address=?", address)
+        sqlExecute("DELETE FROM subscriptions WHERE address=?", dbstr(address))
         shared.reloadBroadcastSendersForWhichImWatching()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
@@ -1274,6 +1277,7 @@ class BMRPCDispatcher(object):
         data = []
         for label, address, enabled in queryreturn:
             label = shared.fixPotentiallyInvalidUTF8Data(label)
+            address = address.decode("utf-8", "replace")
             data.append({
                 'label': base64.b64encode(label),
                 'address': address,

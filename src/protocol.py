@@ -23,6 +23,7 @@ from debug import logger
 from helper_sql import sqlExecute
 from network.node import Peer
 from version import softwareVersion
+from dbcompat import dbstr
 
 # Network constants
 magic = 0xE9BEB4D9
@@ -558,7 +559,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             hexlify(pubSigningKey), hexlify(pubEncryptionKey)
         )
 
-        t = (address, addressVersion, storedData, int(time.time()), 'yes')
+        t = (dbstr(address), addressVersion, storedData, int(time.time()), dbstr('yes'))
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
         return 'successful'
     except varintDecodeError:
