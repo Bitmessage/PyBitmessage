@@ -64,7 +64,7 @@ class Dandelion:  # pylint: disable=old-style-class
         """Add inventory vector to dandelion stem return status of dandelion enabled"""
         assert self.enabled is not None
         with self.lock:
-            self.hashMap[hashId] = Stem(
+            self.hashMap[bytes(hashId)] = Stem(
                 self.getNodeStem(source),
                 stream,
                 self.poissonTimeout())
@@ -75,9 +75,10 @@ class Dandelion:  # pylint: disable=old-style-class
         include streams, we only learn this after receiving the object)
         """
         with self.lock:
-            if hashId in self.hashMap:
-                self.hashMap[hashId] = Stem(
-                    self.hashMap[hashId].child,
+            hashId_bytes = bytes(hashId)
+            if hashId_bytes in self.hashMap:
+                self.hashMap[hashId_bytes] = Stem(
+                    self.hashMap[hashId_bytes].child,
                     stream,
                     self.poissonTimeout())
 
@@ -89,17 +90,17 @@ class Dandelion:  # pylint: disable=old-style-class
                 ''.join('%02x' % ord(i) for i in hashId), reason)
         with self.lock:
             try:
-                del self.hashMap[hashId]
+                del self.hashMap[bytes(hashId)]
             except KeyError:
                 pass
 
     def hasHash(self, hashId):
         """Is inventory vector in stem mode?"""
-        return hashId in self.hashMap
+        return bytes(hashId) in self.hashMap
 
     def objectChildStem(self, hashId):
         """Child (i.e. next) node for an inventory vector during stem mode"""
-        return self.hashMap[hashId].child
+        return self.hashMap[bytes(hashId)].child
 
     def maybeAddStem(self, connection, invQueue):
         """
