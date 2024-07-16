@@ -220,7 +220,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                 'Sending huge inv message with %i objects to just this'
                 ' one peer', objectCount)
             self.append_write_buf(protocol.CreatePacket(
-                'inv', addresses.encodeVarint(objectCount) + payload))
+                b'inv', addresses.encodeVarint(objectCount) + payload))
 
         # Select all hashes for objects in this stream.
         bigInvList = {}
