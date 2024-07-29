@@ -22,6 +22,9 @@ RUN apt-get -y update -qq \
 RUN apt-get -y install -qq --no-install-recommends openjdk-17-jdk \
     && apt-get -y autoremove
 
+# pyzbar dependencies
+RUN apt-get -y install -qq --no-install-recommends libzbar0 libtool gettext
+
 RUN pip install buildozer cython virtualenv
 
 

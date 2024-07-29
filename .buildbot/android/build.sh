@@ -11,7 +11,7 @@ echo "org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMe
 rm -rf src/pybitmessage
 mkdir -p src/pybitmessage
 cp src/*.py src/pybitmessage
-cp -r src/bitmessagekivy src/backend src/mockbm src/pybitmessage
+cp -r src/bitmessagekivy src/backend src/mockbm src/images src/pybitmessage
 
 pushd packages/android
 
