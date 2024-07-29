@@ -16,6 +16,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
+from kivy.core.clipboard import Clipboard
 
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
@@ -479,6 +480,11 @@ class NavigateApp(MDApp):
     def initiate_purchase(self, method_name):
         """initiate_purchase module"""
         logger.debug("Purchasing %s through %s", self.product_id, method_name)
+
+    def copy_composer_text(self, text):
+        """Copy text to clipboard"""
+        Clipboard.copy(text)
+        toast("Copied to clipboard")
 
 
 class PaymentMethodLayout(BoxLayout):
