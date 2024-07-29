@@ -26,7 +26,7 @@ class ShowQRCode(Screen):
     def qrdisplay(self, instance, address):
         """Method used for showing QR Code"""
         self.ids.qr.clear_widgets()
-        self.kivy_running_app.set_toolbar_for_QrCode()
+        self.kivy_running_app.set_toolbar_for_qr_code()
         self.address = address  # used for label
         self.ids.qr.add_widget(QRCodeWidget(data=self.address))
         self.ids.qr.children[0].show_border = False

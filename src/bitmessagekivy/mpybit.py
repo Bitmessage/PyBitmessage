@@ -1,53 +1,60 @@
 # pylint: disable=too-many-public-methods, unused-variable, too-many-ancestors
-# pylint: disable=no-name-in-module, too-few-public-methods, unused-argument
+# pylint: disable=too-few-public-methods, unused-argument
 # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
+# pylint: disable=broad-exception-caught, no-self-use
 
 """
 Bitmessage android(mobile) interface
 """
 
-import os
 import logging
+import os
 import sys
 from functools import partial
-from PIL import Image as PilImage
 
 from kivy.clock import Clock
-from kivy.lang import Builder
+from kivy.core.clipboard import Clipboard
 from kivy.core.window import Window
+from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
-
 from kivymd.app import MDApp
-from kivymd.uix.label import MDLabel
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import (
-    IRightBodyTouch
-)
-from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.bottomsheet import MDCustomBottomSheet
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.dialog import MDDialog
 from kivymd.uix.filemanager import MDFileManager
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import IRightBodyTouch
+from PIL import Image as PilImage
 
-from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
-from pybitmessage.bitmessagekivy.base_navigation import (
-    BaseLanguage, BaseNavigationItem, BaseNavigationDrawerDivider,
-    BaseNavigationDrawerSubheader, BaseContentNavigationDrawer,
-    BaseIdentitySpinner
-)
-from pybitmessage.bmconfigparser import config  # noqa: F401
 from pybitmessage.bitmessagekivy import identiconGeneration
+from pybitmessage.bitmessagekivy.base_navigation import (
+    BaseContentNavigationDrawer, BaseIdentitySpinner, BaseLanguage,
+    BaseNavigationDrawerDivider, BaseNavigationDrawerSubheader,
+    BaseNavigationItem)
+from pybitmessage.bitmessagekivy.baseclass.common import (get_identity_list,
+                                                          load_image_path,
+                                                          toast)
+from pybitmessage.bitmessagekivy.baseclass.popup import (AddAddressPopup,
+                                                         AddressChangingLoader,
+                                                         AppClosingPopup)
 from pybitmessage.bitmessagekivy.get_platform import platform
-from pybitmessage.bitmessagekivy.baseclass.common import toast, load_image_path, get_identity_list
+from pybitmessage.bitmessagekivy.kivy_state import KivyStateVariables
 from pybitmessage.bitmessagekivy.load_kivy_screens_data import load_screen_json
-
-from pybitmessage.bitmessagekivy.baseclass.popup import (
-    AddAddressPopup, AppClosingPopup, AddressChangingLoader
-)
-from pybitmessage.bitmessagekivy.baseclass.login import *  # noqa: F401, F403
 from pybitmessage.bitmessagekivy.uikivysignaler import UIkivySignaler
-
-from pybitmessage.mockbm.helper_startup import loadConfig, total_encrypted_messages_per_month
+from pybitmessage.bmconfigparser import config  # noqa: F401
+from pybitmessage.mockbm.helper_startup import (
+    loadConfig, total_encrypted_messages_per_month)
 
 logger = logging.getLogger('default')
+
+# Define constants for magic numbers
+DIALOG_WIDTH_ANDROID = 0.85
+DIALOG_WIDTH_OTHER = 0.8
+DIALOG_HEIGHT = 0.23
+LOADER_DELAY = 1
+IMAGE_SIZE = (300, 300)
+MAX_LABEL_LENGTH = 15
+TRUNCATE_STRING = '...'
 
 
 class Lang(BaseLanguage):
@@ -134,11 +141,11 @@ class NavigateApp(MDApp):
 
     def addingtoaddressbook(self):
         """Dialog for saving address"""
-        width = .85 if platform == 'android' else .8
+        width = DIALOG_WIDTH_ANDROID if platform == 'android' else DIALOG_WIDTH_OTHER
         self.add_popup = MDDialog(
             title='Add contact',
             type="custom",
-            size_hint=(width, .23),
+            size_hint=(width, DIALOG_HEIGHT),
             content_cls=AddAddressPopup(),
             buttons=[
                 MDRaisedButton(
@@ -166,7 +173,9 @@ class NavigateApp(MDApp):
             self.root.ids.scr_mngr.current = 'scanscreen'
         else:
             alert_text = (
-                'Currently this feature is not avaialbe!' if platform == 'android' else 'Camera is not available!')
+                'Currently this feature is not available!'
+                if platform == 'android'
+                else 'Camera is not available!')
             self.add_popup.dismiss()
             toast(alert_text)
 
@@ -190,8 +199,8 @@ class NavigateApp(MDApp):
         self.add_popup.dismiss()
         toast('Canceled')
 
-    def loadMyAddressScreen(self, action):
-        """loadMyAddressScreen method spin the loader"""
+    def load_my_address_screen(self, action):
+        """load_my_address_screen method spin the loader"""
         if len(self.root.ids.id_myaddress.children) <= 2:
             self.root.ids.id_myaddress.children[0].active = action
         else:
@@ -208,7 +217,7 @@ class NavigateApp(MDApp):
                 self.root.ids.id_trash.children[1].active = True
             except Exception as e:
                 self.root.ids.id_trash.children[0].children[1].active = True
-        Clock.schedule_once(partial(self.load_screen_callback, instance), 1)
+        Clock.schedule_once(partial(self.load_screen_callback, instance), LOADER_DELAY)
 
     def load_screen_callback(self, instance, dt=0):
         """This method is rotating loader for few seconds"""
@@ -241,10 +250,8 @@ class NavigateApp(MDApp):
         """Formatting label"""
         if label:
             f_name = label.split()
-            truncate_string = '...'
-            f_name_max_length = 15
-            formatted_label = f_name[0][:14].capitalize() + truncate_string if len(
-                f_name[0]) > f_name_max_length else f_name[0].capitalize()
+            formatted_label = f_name[0][:MAX_LABEL_LENGTH - 1].capitalize() + TRUNCATE_STRING if len(
+                f_name[0]) > MAX_LABEL_LENGTH else f_name[0].capitalize()
             return formatted_label
         return ''
 
@@ -261,20 +268,20 @@ class NavigateApp(MDApp):
             NavigateApp.format_address(address)
         )
 
-    def getDefaultAccData(self, instance):
+    def get_default_account_data(self, instance):
         """Getting Default Account Data"""
         if self.identity_list:
             self.kivy_state_obj.selected_address = first_addr = self.identity_list[0]
             return first_addr
         return 'Select Address'
 
-    def getCurrentAccountData(self, text):
+    def get_current_account_data(self, text):
         """Get Current Address Account Data"""
         if text != '':
             if os.path.exists(os.path.join(
                     self.image_dir, 'default_identicon', '{}.png'.format(text))
             ):
-                self.load_selected_Image(text)
+                self.load_selected_image(text)
             else:
                 self.set_identicon(text)
                 self.root.ids.content_drawer.ids.reset_image.opacity = 0
@@ -286,10 +293,10 @@ class NavigateApp(MDApp):
             for nav_obj in self.root.ids.content_drawer.children[
                     0].children[0].children[0].children:
                 nav_obj.active = True if nav_obj.text == 'Inbox' else False
-            self.fileManagerSetting()
-            Clock.schedule_once(self.setCurrentAccountData, 0.5)
+            self.file_manager_setting()
+            Clock.schedule_once(self.set_current_account_data, 0.5)
 
-    def setCurrentAccountData(self, dt=0):
+    def set_current_account_data(self, dt=0):
         """This method set the current accout data on all the screens"""
         self.root.ids.id_inbox.ids.ml.clear_widgets()
         self.root.ids.id_inbox.loadMessagelist(self.kivy_state_obj.selected_address)
@@ -298,14 +305,14 @@ class NavigateApp(MDApp):
         self.root.ids.id_sent.children[2].children[2].ids.search_field.text = ''
         self.root.ids.id_sent.loadSent(self.kivy_state_obj.selected_address)
 
-    def fileManagerSetting(self):
+    def file_manager_setting(self):
         """This method is for file manager setting"""
         if not self.root.ids.content_drawer.ids.file_manager.opacity and \
                 self.root.ids.content_drawer.ids.file_manager.disabled:
             self.root.ids.content_drawer.ids.file_manager.opacity = 1
             self.root.ids.content_drawer.ids.file_manager.disabled = False
 
-    def on_request_close(self, *args):  # pylint: disable=no-self-use
+    def on_request_close(self, *args):
         """This method is for app closing request"""
         AppClosingPopup().open()
         return True
@@ -335,7 +342,7 @@ class NavigateApp(MDApp):
     def set_identicon(self, text):
         """Show identicon in address spinner"""
         img = identiconGeneration.generate(text)
-        self.root.ids.content_drawer.ids.top_box.children[0].texture = (img.texture)
+        self.root.ids.content_drawer.ids.top_box.children[0].texture = img.texture
 
     # pylint: disable=import-outside-toplevel
     def file_manager_open(self):
@@ -350,13 +357,16 @@ class NavigateApp(MDApp):
         self.file_manager.current_path = '/'
         if platform == 'android':
             # pylint: disable=import-error
-            from android.permissions import request_permissions, Permission, check_permission
+            from android.permissions import (Permission, check_permission,
+                                             request_permissions)
             if check_permission(Permission.WRITE_EXTERNAL_STORAGE) and \
                     check_permission(Permission.READ_EXTERNAL_STORAGE):
                 self.file_manager.show(os.getenv('EXTERNAL_STORAGE'))
                 self.kivy_state_obj.manager_open = True
             else:
-                request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+                request_permissions([
+                    Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE
+                ])
         else:
             self.file_manager.show(os.environ["HOME"])
             self.kivy_state_obj.manager_open = True
@@ -364,23 +374,23 @@ class NavigateApp(MDApp):
     def select_path(self, path):
         """This method is used to set the select image"""
         try:
-            newImg = PilImage.open(path).resize((300, 300))
+            new_image = PilImage.open(path).resize(IMAGE_SIZE)
             if platform == 'android':
                 android_path = os.path.join(
                     os.path.join(os.environ['ANDROID_PRIVATE'], 'app', 'images', 'kivy')
                 )
                 if not os.path.exists(os.path.join(android_path, 'default_identicon')):
                     os.makedirs(os.path.join(android_path, 'default_identicon'))
-                newImg.save(os.path.join(android_path, 'default_identicon', '{}.png'.format(
+                new_image.save(os.path.join(android_path, 'default_identicon', '{}.png'.format(
                     self.kivy_state_obj.selected_address))
                 )
             else:
                 if not os.path.exists(os.path.join(self.image_dir, 'default_identicon')):
                     os.makedirs(os.path.join(self.image_dir, 'default_identicon'))
-                newImg.save(os.path.join(self.image_dir, 'default_identicon', '{0}.png'.format(
+                new_image.save(os.path.join(self.image_dir, 'default_identicon', '{0}.png'.format(
                     self.kivy_state_obj.selected_address))
                 )
-            self.load_selected_Image(self.kivy_state_obj.selected_address)
+            self.load_selected_image(self.kivy_state_obj.selected_address)
             toast('Image changed')
         except Exception:
             toast('Exit')
@@ -391,10 +401,14 @@ class NavigateApp(MDApp):
         self.kivy_state_obj.manager_open = False
         self.file_manager.close()
 
-    def load_selected_Image(self, curerentAddr):
+    def load_selected_image(self, curerent_addr):
         """This method load the selected image on screen"""
         top_box_obj = self.root.ids.content_drawer.ids.top_box.children[0]
-        top_box_obj.source = os.path.join(self.image_dir, 'default_identicon', '{0}.png'.format(curerentAddr))
+        top_box_obj.source = os.path.join(
+            self.image_dir,
+            'default_identicon',
+            '{0}.png'.format(curerent_addr)
+        )
         self.root.ids.content_drawer.ids.reset_image.opacity = 1
         self.root.ids.content_drawer.ids.reset_image.disabled = False
         top_box_obj.reload()
@@ -403,7 +417,8 @@ class NavigateApp(MDApp):
         """set default avatar generated image"""
         self.set_identicon(self.kivy_state_obj.selected_address)
         img_path = os.path.join(
-            self.image_dir, 'default_identicon', '{}.png'.format(self.kivy_state_obj.selected_address)
+            self.image_dir, 'default_identicon',
+            '{}.png'.format(self.kivy_state_obj.selected_address)
         )
         if os.path.exists(img_path):
             os.remove(img_path)
@@ -427,7 +442,7 @@ class NavigateApp(MDApp):
                 else:
                     img = identiconGeneration.generate(first_addr)
                     instance.texture = img.texture
-                    return
+                    return None
         return os.path.join(self.image_dir, 'drawer_logo1.png')
 
     @staticmethod
@@ -455,7 +470,7 @@ class NavigateApp(MDApp):
         self.root.ids.scr_mngr.transition.bind(on_complete=self.reset)
         self.kivy_state.in_composer = False
 
-    def set_toolbar_for_QrCode(self):
+    def set_toolbar_for_qr_code(self):
         """This method is use for setting Qr code toolbar."""
         self.root.ids.toolbar.left_action_items = [
             ['arrow-left', lambda x: self.back_press()]]
@@ -479,6 +494,10 @@ class NavigateApp(MDApp):
     def initiate_purchase(self, method_name):
         """initiate_purchase module"""
         logger.debug("Purchasing %s through %s", self.product_id, method_name)
+
+    def copy_composer_text(self, text):
+        """Copy text to clipboard"""
+        Clipboard.copy(text)
 
 
 class PaymentMethodLayout(BoxLayout):

@@ -4,7 +4,10 @@ from pybitmessage.bmconfigparser import config
 
 def loadConfig():
     """Loading mock test data"""
-    config.read(os.path.join(os.environ['BITMESSAGE_HOME'], 'keys.dat'))
+    try:
+        config.read(os.path.join(os.environ['BITMESSAGE_HOME'], 'keys.dat'))
+    except KeyError:
+        pass
 
 
 def total_encrypted_messages_per_month():
