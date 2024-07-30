@@ -141,14 +141,14 @@
                     text: app.tr._('Draft')
                     icon: 'message-draw'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'draft'
+                    on_release: app.set_screen('draft')
                     on_release: root.parent.set_state()
                 NavigationItem:
                     id: trash_cnt
                     text: app.tr._('Trash')
                     icon: 'delete'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'trash'
+                    on_release: app.set_screen('trash')
                     on_press: root.parent.set_state()
                     on_press: app.load_screen(self)
                 NavigationItem:
@@ -156,7 +156,7 @@
                     text: app.tr._('All Mails')
                     icon: 'mailbox'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'allmails'
+                    on_release: app.set_screen('allmails')
                     on_release: root.parent.set_state()
                     on_press: app.load_screen(self)
                 NavigationDrawerDivider:
@@ -167,7 +167,7 @@
                     text: app.tr._('Chat')
                     icon: 'chat'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'chat'
+                    on_release: app.set_screen('chat')
                     on_release: root.parent.set_state()
                 NavigationDrawerDivider:
                 NavigationDrawerSubheader:
@@ -176,38 +176,38 @@
                     text: app.tr._('Address Book')
                     icon: 'book-multiple'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'addressbook'
+                    on_release: app.set_screen('addressbook')
                     on_release: root.parent.set_state()
                 NavigationItem:
                     text: app.tr._('Settings')
                     icon: 'application-settings'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'set'
+                    on_release: app.set_screen('set')
                     on_release: root.parent.set_state()
                 NavigationItem:
                     text: app.tr._('Payment plan')
                     icon: 'shopping'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'payment'
+                    on_release: app.set_screen('payment')
                     on_release: root.parent.set_state()
                 NavigationItem:
                     text: app.tr._('New address')
                     icon: 'account-plus'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'login'
+                    on_release: app.set_screen('login')
                     on_release: root.parent.set_state()
                     on_press: app.reset_login_screen()
                 NavigationItem:
                     text: app.tr._('Network status')
                     icon: 'server-network'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'networkstat'
+                    on_release: app.set_screen('networkstat')
                     on_release: root.parent.set_state()
                 NavigationItem:
                     text: app.tr._('My addresses')
                     icon: 'account-multiple'
                     divider: None
-                    on_release: app.root.ids.scr_mngr.current = 'myaddress'
+                    on_release: app.set_screen('myaddress')
                     on_release: root.parent.set_state()
 
 MDNavigationLayout:
