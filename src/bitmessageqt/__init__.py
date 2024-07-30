@@ -854,6 +854,9 @@ class MyForm(settingsmixin.SMainWindow):
             'bitmessagesettings', 'dontconnect')
 
         self._contact_selected = None
+        self.progress = QtGui.QProgressBar(self)
+        self.progress.setGeometry(550, 555, 250, 20)
+        self.progress.hide()
 
     def getContactSelected(self):
         """Returns last selected contact once"""
@@ -2714,6 +2717,18 @@ class MyForm(settingsmixin.SMainWindow):
             dontconnect_option or self.namecoin.test()[0] == 'failed'
         )
 
+    def processing(self):
+        """Processing progress bar"""
+        completed = 0
+        self.progress.show()
+        while completed < 80:
+            completed += 0.1
+            self.progress.setValue(completed)
+
+    def hideprogressBar(self):
+        """Hide progress bar"""
+        self.progress.hide()
+
     # Quit selected from menu or application indicator
     def quit(self):
         """Quit the bitmessageqt application"""
@@ -2730,8 +2745,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
         if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
-            reply = QtGui.QMessageBox.question(
-                self, _translate("MainWindow", "Proof of work pending"),
+            messagebox = QtGui.QMessageBox(
+                QtGui.QMessageBox.Question,
+                _translate("MainWindow", "Proof of work pending"),
                 _translate(
                     "MainWindow",
                     "%n object(s) pending proof of work", None,
@@ -2743,17 +2759,25 @@ class MyForm(settingsmixin.SMainWindow):
                     QtCore.QCoreApplication.CodecForTr, pendingUpload()
                 ) + "\n\n" +
                 _translate(
-                    "MainWindow", "Wait until these tasks finish?"),
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-                | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+                    "MainWindow", "Wait until these tasks finish?"), parent=self)
+            messagebox.setStandardButtons(
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
+            btnN = messagebox.button(QtGui.QMessageBox.No)
+            btnN.setText("Quit")
+            btnN.clicked.connect(self.processing)
+            btnC = messagebox.button(QtGui.QMessageBox.Cancel)
+            btnC.setText("Don't Quit")
+            btnC.clicked.connect(self.hideprogressBar)
+            reply = messagebox.exec_()
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
         if pendingDownload() > 0:
-            reply = QtGui.QMessageBox.question(
-                self, _translate("MainWindow", "Synchronisation pending"),
+            messagebox = QtGui.QMessageBox(
+                QtGui.QMessageBox.Question,
+                _translate("MainWindow", "Synchronisation pending"),
                 _translate(
                     "MainWindow",
                     "Bitmessage hasn't synchronised with the network,"
@@ -2761,9 +2785,16 @@ class MyForm(settingsmixin.SMainWindow):
                     " it may cause delivery delays. Wait until the"
                     " synchronisation finishes?", None,
                     QtCore.QCoreApplication.CodecForTr, pendingDownload()
-                ),
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-                | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+                ), parent=self)
+            messagebox.setStandardButtons(
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
+            btnN = messagebox.button(QtGui.QMessageBox.No)
+            btnN.setText("Quit")
+            btnN.clicked.connect(self.processing)
+            btnC = messagebox.button(QtGui.QMessageBox.Cancel)
+            btnC.setText("Don't Quit")
+            btnC.clicked.connect(self.hideprogressBar)
+            reply = messagebox.exec_()
             if reply == QtGui.QMessageBox.Yes:
                 self.wait = waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
@@ -2771,16 +2802,24 @@ class MyForm(settingsmixin.SMainWindow):
 
         if state.statusIconColor == 'red' and not config.safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
-            reply = QtGui.QMessageBox.question(
-                self, _translate("MainWindow", "Not connected"),
+            messagebox = QtGui.QMessageBox(
+                QtGui.QMessageBox.Question,
+                _translate("MainWindow", "Not connected"),
                 _translate(
                     "MainWindow",
                     "Bitmessage isn't connected to the network. If you"
                     " quit now, it may cause delivery delays. Wait until"
                     " connected and the synchronisation finishes?"
-                ),
-                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
-                | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+                ), parent=self)
+            messagebox.setStandardButtons(
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
+            btnN = messagebox.button(QtGui.QMessageBox.No)
+            btnN.setText("Quit")
+            btnN.clicked.connect(self.processing)
+            btnC = messagebox.button(QtGui.QMessageBox.Cancel)
+            btnC.setText("Don't Quit")
+            btnC.clicked.connect(self.hideprogressBar)
+            reply = messagebox.exec_()
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
                 self.wait = waitForSync = True
@@ -2791,11 +2830,10 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.updateStatusBar(_translate(
             "MainWindow", "Shutting down PyBitmessage... %1%").arg(0))
-
         if waitForConnection:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for network connection..."))
-            while state.statusIconColor == 'red':
+            while state.statusIconColor == 'red' and not self.quitAccepted:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2807,7 +2845,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while pendingDownload() > 0:
+            while pendingDownload() > 0 and not self.quitAccepted:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2822,7 +2860,7 @@ class MyForm(settingsmixin.SMainWindow):
                 curWorkerQueue = powQueueSize()
                 if curWorkerQueue > maxWorkerQueue:
                     maxWorkerQueue = curWorkerQueue
-                if curWorkerQueue > 0:
+                if curWorkerQueue > 0 and not self.quitAccepted:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Waiting for PoW to finish... %1%"
                     ).arg(50 * (maxWorkerQueue - curWorkerQueue) /
@@ -2911,6 +2949,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.appIndicatorHide()
         else:
             # custom quit method
+            self.wait = False
             self.quit()
 
     def on_action_InboxMessageForceHtml(self):
