@@ -5,3 +5,4 @@ __pycache__
 .buildozer
 .tox
 mprofile_*
+**.so
