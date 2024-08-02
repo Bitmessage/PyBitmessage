@@ -13,3 +13,5 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
 RUN python3.9 -m pip install --upgrade pip tox virtualenv
 
 ADD . .
+
+CMD .buildbot/tox-focal/test.sh

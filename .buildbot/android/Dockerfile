@@ -22,7 +22,7 @@ RUN apt-get -y update -qq \
 RUN apt-get -y install -qq --no-install-recommends openjdk-17-jdk \
     && apt-get -y autoremove
 
-RUN pip install pip install buildozer cython virtualenv
+RUN pip install buildozer cython virtualenv
 
 
 ENV ANDROID_NDK_HOME="${ANDROID_HOME}/android-ndk"

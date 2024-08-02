@@ -10,3 +10,7 @@ RUN apt-get install -yq --no-install-suggests --no-install-recommends \
     python3-dev python3-pip language-pack-en qt5dxcb-plugin tor xvfb
 
 RUN pip install tox
+
+ADD . .
+
+CMD .buildbot/tox-jammy/test.sh

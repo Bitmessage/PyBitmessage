@@ -7,7 +7,7 @@ from six.moves import queue
 # magic imports!
 from network import connectionpool
 from protocol import assembleAddrMessage
-from queues import addrQueue  # FIXME: init with queue
+from network import addrQueue  # FIXME: init with queue
 
 from .threads import StoppableThread
 
