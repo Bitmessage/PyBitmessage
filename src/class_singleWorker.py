@@ -29,7 +29,7 @@ import tr
 from addresses import decodeAddress, decodeVarint, encodeVarint
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from network import knownnodes, StoppableThread
+from network import knownnodes, StoppableThread, invQueue
 from six.moves import configparser, queue
 from six.moves.reprlib import repr
 import six
@@ -303,7 +303,7 @@ class singleWorker(StoppableThread):
         self.logger.info(
             'broadcasting inv with hash: %s', hexlify(inventoryHash))
 
-        queues.invQueue.put((streamNumber, inventoryHash))
+        invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             config.set(
@@ -391,7 +391,7 @@ class singleWorker(StoppableThread):
         self.logger.info(
             'broadcasting inv with hash: %s', hexlify(inventoryHash))
 
-        queues.invQueue.put((streamNumber, inventoryHash))
+        invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             config.set(
@@ -484,7 +484,7 @@ class singleWorker(StoppableThread):
         self.logger.info(
             'broadcasting inv with hash: %s', hexlify(inventoryHash))
 
-        queues.invQueue.put((streamNumber, inventoryHash))
+        invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             config.set(
@@ -538,7 +538,7 @@ class singleWorker(StoppableThread):
         self.logger.info(
             'sending inv (within sendOnionPeerObj function) for object: %s',
             hexlify(inventoryHash))
-        queues.invQueue.put((streamNumber, inventoryHash))
+        invQueue.put((streamNumber, inventoryHash))
 
     def sendBroadcast(self):
         """Send a broadcast-type object (assemble the object, perform PoW and put it to the inv announcement queue)"""
@@ -716,7 +716,7 @@ class singleWorker(StoppableThread):
                 ' for object: %s',
                 hexlify(inventoryHash)
             )
-            queues.invQueue.put((streamNumber, inventoryHash))
+            invQueue.put((streamNumber, inventoryHash))
 
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata', (
@@ -1374,7 +1374,7 @@ class singleWorker(StoppableThread):
                 'Broadcasting inv for my msg(within sendmsg function): %s',
                 hexlify(inventoryHash)
             )
-            queues.invQueue.put((toStreamNumber, inventoryHash))
+            invQueue.put((toStreamNumber, inventoryHash))
 
             # Update the sent message in the sent table with the
             # necessary information.
@@ -1515,7 +1515,7 @@ class singleWorker(StoppableThread):
         state.Inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
         self.logger.info('sending inv (for the getpubkey message)')
-        queues.invQueue.put((streamNumber, inventoryHash))
+        invQueue.put((streamNumber, inventoryHash))
 
         # wait 10% past expiration
         sleeptill = int(time.time() + TTL * 1.1)

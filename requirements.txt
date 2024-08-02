@@ -1,7 +1,7 @@
 coverage
 psutil
 pycryptodome
-PyQt5;python_version>="3.7"
+PyQt5;python_version>="3.7" and platform_machine=="x86_64"
 mock;python_version<="2.7"
 python_prctl;platform_system=="Linux"
 six

@@ -103,7 +103,7 @@ try:
 except ImportError:
     connectionpool = None
 
-from network import stats, StoppableThread
+from network import stats, StoppableThread, invQueue
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -1383,7 +1383,7 @@ class BMRPCDispatcher(object):
         logger.info(
             'Broadcasting inv for msg(API disseminatePreEncryptedMsg'
             ' command): %s', hexlify(inventoryHash))
-        queues.invQueue.put((toStreamNumber, inventoryHash))
+        invQueue.put((toStreamNumber, inventoryHash))
         return hexlify(inventoryHash).decode()
 
     @command('trashSentMessageByAckData')
@@ -1440,7 +1440,7 @@ class BMRPCDispatcher(object):
         logger.info(
             'broadcasting inv within API command disseminatePubkey with'
             ' hash: %s', hexlify(inventoryHash))
-        queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
+        invQueue.put((pubkeyStreamNumber, inventoryHash))
 
     @command(
         'getMessageDataByDestinationHash', 'getMessageDataByDestinationTag')

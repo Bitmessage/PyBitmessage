@@ -1,7 +1,7 @@
 """Test cases for multiqueue"""
 
 import unittest
-from pybitmessage.multiqueue import MultiQueue
+from pybitmessage.network.multiqueue import MultiQueue
 
 
 class TestMultiQueue(unittest.TestCase):

@@ -11,11 +11,17 @@ import hashlib
 import os
 from binascii import hexlify
 
-import pyelliptic
-from pyelliptic import OpenSSL
-from pyelliptic import arithmetic as a
+try:
+    import pyelliptic
+    from fallback import RIPEMD160Hash
+    from pyelliptic import OpenSSL
+    from pyelliptic import arithmetic as a
+except ImportError:
+    from pybitmessage import pyelliptic
+    from pybitmessage.fallback import RIPEMD160Hash
+    from pybitmessage.pyelliptic import OpenSSL
+    from pybitmessage.pyelliptic import arithmetic as a
 
-from fallback import RIPEMD160Hash
 
 __all__ = [
     'decodeWalletImportFormat', 'deterministic_keys',

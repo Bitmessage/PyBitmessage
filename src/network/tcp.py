@@ -18,8 +18,8 @@ import state
 import network.connectionpool  # use long name to address recursive import
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
-from network import dandelion_ins
-from queues import invQueue, receiveDataQueue, UISignalQueue
+from network import dandelion_ins, invQueue, receiveDataQueue
+from queues import UISignalQueue
 from tr import _translate
 
 from network import asyncore_pollchoose as asyncore

@@ -18,7 +18,7 @@ import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
 from bmconfigparser import config
-from queues import invQueue, objectProcessorQueue, portCheckerQueue
+from queues import objectProcessorQueue
 from randomtrackingdict import RandomTrackingDict
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import (
@@ -28,7 +28,7 @@ from network.bmobject import (
 )
 from network.proxy import ProxyError
 
-from network import dandelion_ins
+from network import dandelion_ins, invQueue, portCheckerQueue
 from .node import Node, Peer
 from .objectracker import ObjectTracker, missingObjects
 

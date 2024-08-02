@@ -9,8 +9,8 @@ import time
 import protocol
 import state
 import network.connectionpool  # use long name to address recursive import
-from queues import receiveDataQueue
 
+from network import receiveDataQueue
 from .bmproto import BMProto
 from .node import Peer
 from .objectracker import ObjectTracker

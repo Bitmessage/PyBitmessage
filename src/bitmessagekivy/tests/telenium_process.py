@@ -8,6 +8,8 @@ import tempfile
 from time import time, sleep
 from six.moves import getcwdb
 
+from requests.exceptions import ChunkedEncodingError
+
 from telenium.tests import TeleniumTestCase
 from telenium.client import TeleniumHttpException
 
@@ -55,7 +57,10 @@ class TeleniumTestProcess(TeleniumTestCase):
     def tearDownClass(cls):
         """Ensures that pybitmessage stopped and removes files"""
         # pylint: disable=no-member
-        super(TeleniumTestProcess, cls).tearDownClass()
+        try:
+            super(TeleniumTestProcess, cls).tearDownClass()
+        except ChunkedEncodingError:
+            pass
         cleanup()
 
     def assert_wait_no_except(self, selector, timeout=-1, value='inbox'):
