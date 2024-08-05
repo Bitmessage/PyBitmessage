@@ -20,6 +20,7 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 
 from pybitmessage.bitmessagekivy.get_platform import platform
+from pyzbar.pyzbar import ZBarSymbol
 
 logger = logging.getLogger('default')
 
@@ -87,16 +88,16 @@ class ScanScreen(Screen):
         """Its used for starting camera for scanning qrcode"""
         # pylint: disable=attribute-defined-outside-init
         self.xcam = self.children[0].ids.zbarcam.ids.xcamera
-        if platform == "android":
-            self.xcam.play = True
-        else:
-            Clock.schedule_once(self.open_cam, 0)
+        # if platform != "android":
+        self.xcam.play = True
+        # else:
+        #     Clock.schedule_once(self.open_cam, 0)
 
     def stop_camera(self, *args):
         """Its used for stop the camera"""
         self.xcam.play = False
-        if platform != "android":
-            self.xcam._camera._device.release()
+        # if platform != "android":
+        #     self.xcam._camera._device.release()
 
     def open_cam(self, *args):
         """It will open up the camera"""
