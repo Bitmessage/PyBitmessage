@@ -484,7 +484,6 @@ class NavigateApp(MDApp):
     def copy_composer_text(self, text):
         """Copy text to clipboard"""
         Clipboard.copy(text)
-        toast("Copied to clipboard")
 
 
 class PaymentMethodLayout(BoxLayout):
