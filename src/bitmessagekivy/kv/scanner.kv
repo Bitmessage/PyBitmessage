@@ -34,10 +34,4 @@ BoxLayout:
         #     Rectangle:
         #         pos: self.size[0]/2-self.qrwidth/2, 0
         #         size: self.qrwidth, self.size[1]/2-self.qrwidth/2
-    Label:
-        size_hint: None, None
-        size: self.texture_size[0], 50
-        text: ', '.join([str(symbol.data) for symbol in zbarcam.symbols])
-
-            
     
