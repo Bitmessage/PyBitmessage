@@ -69,6 +69,7 @@ class ScanScreen(Screen):
                     os.path.dirname(os.path.dirname(__file__)), "kv", "{}.kv").format("scanner")
             )
             self.add_widget(tmp)
+            self.zbarcam = self.children[0].ids.zbarcam
         if platform == "android":
             Clock.schedule_once(self.start_camera, 0)
 
@@ -87,17 +88,27 @@ class ScanScreen(Screen):
     def start_camera(self, *args):
         """Its used for starting camera for scanning qrcode"""
         # pylint: disable=attribute-defined-outside-init
-        self.xcam = self.children[0].ids.zbarcam.ids.xcamera
-        # if platform != "android":
-        self.xcam.play = True
-        # else:
-        #     Clock.schedule_once(self.open_cam, 0)
+        self.zbarcam.start()
+        Clock.schedule_interval(self.check_symbol, 0.5)
+    
+    def check_symbol(self, *args):
+        """Check if the symbol is detected"""
+        if self.zbarcam.symbols:
+            for symbol in self.zbarcam.symbols:
+                # ZBarSymbol.QRCODE is an integer, QRCODE corresponds to 64
+                if symbol.type == 'QRCODE':
+                    self.stop_camera()
+                    self.pop_up_instance.content_cls.address.text = symbol.data.decode("utf-8")
+                    self.manager.current = self.previous_open_screen
+                    # changing screen closes popup, so need to open again with filled address
+                    self.pop_up_instance.open()
+                    return False
+        return True
+
 
     def stop_camera(self, *args):
-        """Its used for stop the camera"""
-        self.xcam.play = False
-        # if platform != "android":
-        #     self.xcam._camera._device.release()
+        """Its used to stop the camera"""
+        self.zbarcam.stop()
 
     def open_cam(self, *args):
         """It will open up the camera"""
