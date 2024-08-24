@@ -1,50 +1,64 @@
-# pylint: disable=no-member, too-many-arguments, too-few-public-methods
-"""
-Addressbook widgets are here.
-"""
+# pylint: disable=no-member, too-many-arguments, too-few-public-methods, no-init
+
+"""Addressbook widgets are here."""
 
 from kivy.app import App
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 
+POPUP_HEIGHT_PROPORTION = 0.25
+
 
 class HelperAddressBook(object):
-    """Widget used in Addressbook are here"""
+    """Widget utilities for Addressbook."""
 
     @staticmethod
     def address_detail_popup(obj, send_message, update_address, close_popup, width):
-        """This function shows the address's details and opens the popup."""
-        show_dialogue = MDDialog(
+        """
+        Shows address details in a popup with clear actions.
+
+        Args:
+            obj: The widget containing the address details to display.
+            send_message: The function to call when the "Send message" button is pressed.
+            update_address: The function to call when the "Save" button is pressed.
+            close_popup: The function to call when the "Cancel" button is pressed or the popup is closed.
+            width: The desired width of the popup as a proportion of the screen.
+        """
+
+        buttons = [
+            MDRaisedButton(text="Send message", on_release=send_message),
+            MDRaisedButton(text="Update Address", on_release=update_address),
+            MDRaisedButton(text="Cancel", on_release=close_popup),
+        ]
+
+        return MDDialog(
             type="custom",
-            size_hint=(width, .25),
+            size_hint=(width, POPUP_HEIGHT_PROPORTION),
             content_cls=obj,
-            buttons=[
-                MDRaisedButton(
-                    text="Send message to",
-                    on_release=send_message,
-                ),
-                MDRaisedButton(
-                    text="Save",
-                    on_release=update_address,
-                ),
-                MDRaisedButton(
-                    text="Cancel",
-                    on_release=close_popup,
-                ),
-            ],
+            buttons=buttons,
         )
-        return show_dialogue
 
     @staticmethod
     def compose_message(from_addr=None, to_addr=None):
-        """This UI independent method for message sending to reciever"""
-        window_obj = App.get_runnint_app().root.ids
-        if to_addr:
-            window_obj.id_create.children[1].ids.txt_input.text = to_addr
-        if from_addr:
-            window_obj.id_create.children[1].ids.txt_input.text = from_addr
-        window_obj.id_create.children[1].ids.ti.text = ''
-        window_obj.id_create.children[1].ids.composer_dropdown.text = 'Select'
-        window_obj.id_create.children[1].ids.subject.text = ''
-        window_obj.id_create.children[1].ids.body.text = ''
-        window_obj.scr_mngr.current = 'create'
+        """
+        Composes a new message (UI-independent).
+
+        Args:
+            from_addr (str, optional): The address to set in the "From" field. Defaults to None.
+            to_addr (str, optional): The address to set in the "To" field. Defaults to None.
+        """
+
+        app = App.get_running_app()
+
+        ids = app.root.ids
+        create_screen = ids.id_create.children[1].ids
+
+        # Reset fields
+        create_screen.txt_input.text = to_addr if to_addr else from_addr
+        create_screen.ti.text = ""
+        create_screen.composer_dropdown.text = "Select"
+        create_screen.subject.text = ""
+        create_screen.body.text = ""
+
+        # Navigate to create screen
+        ids.scr_mngr.current = "create"
