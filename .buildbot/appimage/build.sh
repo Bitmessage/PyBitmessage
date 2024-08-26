@@ -8,7 +8,7 @@ git remote add -f upstream https://github.com/Bitmessage/PyBitmessage.git
 HEAD="$(git rev-parse HEAD)"
 UPSTREAM="$(git merge-base --fork-point upstream/v0.6)"
 export APP_VERSION=$(git describe --tags | cut -d- -f1,3 | tr -d v)
-[ $HEAD != $UPSTREAM ] && APP_VERSION="${APP_VERSION}-alpha"
+[ "$HEAD" != "$UPSTREAM" ] && APP_VERSION="${APP_VERSION}-alpha"
 
 function set_sourceline {
     if [ ${ARCH} == amd64 ]; then
