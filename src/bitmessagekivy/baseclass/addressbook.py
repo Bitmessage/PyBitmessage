@@ -13,10 +13,7 @@ import os
 import logging
 from functools import partial
 
-from kivy.properties import (
-    ListProperty,
-    StringProperty
-)
+from kivy.properties import ListProperty, StringProperty
 from kivy.uix.screenmanager import Screen
 from kivy.app import App
 
@@ -34,7 +31,7 @@ logger = logging.getLogger('default')
 
 
 class AddressBook(Screen, HelperAddressBook):
-    """AddressBook Screen class for kivy Ui"""
+    """AddressBook Screen class for kivy UI"""
 
     queryreturn = ListProperty()
     has_refreshed = True
@@ -45,21 +42,23 @@ class AddressBook(Screen, HelperAddressBook):
 
     def __init__(self, *args, **kwargs):
         """Getting AddressBook Details"""
-        super(AddressBook, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.addbook_popup = None
         self.kivy_state = kivy_state_variables()
 
     def loadAddresslist(self, account, where="", what=""):
-        """Clock Schdule for method AddressBook"""
+        """Load address list with optional search filters"""
         if self.kivy_state.searching_text:
             self.ids.scroll_y.scroll_y = 1.0
             where = ['label', 'address']
             what = self.kivy_state.searching_text
+        
         xAddress = ''
         self.ids.tag_label.text = ''
-        self.queryreturn = kivy_helper_search.search_sql(
-            xAddress, account, "addressbook", where, what, False)
-        self.queryreturn = [obj for obj in reversed(self.queryreturn)]
+        self.queryreturn = list(reversed(
+            kivy_helper_search.search_sql(xAddress, account, "addressbook", where, what, False)
+        ))
+
         if self.queryreturn:
             self.ids.tag_label.text = 'Address Book'
             self.has_refreshed = True
@@ -69,53 +68,47 @@ class AddressBook(Screen, HelperAddressBook):
             self.ids.ml.add_widget(empty_screen_label(self.label_str, self.no_search_res_found))
 
     def set_mdList(self, start_index, end_index):
-        """Creating the mdList"""
+        """Create the mdList"""
         for item in self.queryreturn[start_index:end_index]:
-            message_row = SwipeToDeleteItem(
-                text=item[0],
-            )
+            message_row = SwipeToDeleteItem(text=item[0])
             listItem = message_row.ids.content
             listItem.secondary_text = item[1]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             image = os.path.join(
-                self.kivy_state.imageDir, "text_images", "{}.png".format(avatar_image_first_letter(item[0].strip()))
+                self.kivy_state.imageDir, "text_images", f"{avatar_image_first_letter(item[0].strip())}.png"
             )
             message_row.ids.avater_img.source = image
-            listItem.bind(on_release=partial(
-                self.addBook_detail, item[1], item[0], message_row))
+            listItem.bind(on_release=partial(self.addBook_detail, item[1], item[0], message_row))
             message_row.ids.delete_msg.bind(on_press=partial(self.delete_address, item[1]))
             self.ids.ml.add_widget(message_row)
 
-    def check_scroll_y(self, instance, somethingelse):
-        """Load data on scroll"""
+    def check_scroll_y(self, instance, _):
+        """Load more data on scroll down"""
         if self.ids.scroll_y.scroll_y <= -0.0 and self.has_refreshed:
             self.ids.scroll_y.scroll_y = 0.06
             exist_addresses = len(self.ids.ml.children)
             if exist_addresses != len(self.queryreturn):
                 self.update_addressBook_on_scroll(exist_addresses)
-            self.has_refreshed = (
-                True if exist_addresses != len(self.queryreturn) else False
-            )
+            self.has_refreshed = exist_addresses != len(self.queryreturn)
 
     def update_addressBook_on_scroll(self, exist_addresses):
-        """Load more data on scroll down"""
+        """Load more data on scroll"""
         self.set_mdList(exist_addresses, exist_addresses + 5)
 
     @staticmethod
     def refreshs(*args):
         """Refresh the Widget"""
 
-    # @staticmethod
     def addBook_detail(self, address, label, instance, *args):
-        """Addressbook details"""
+        """Display Addressbook details"""
         if instance.state == 'closed':
             instance.ids.delete_msg.disabled = True
             if instance.open_progress == 0.0:
                 obj = SavedAddressDetailPopup()
                 self.address_label = obj.address_label = label
                 self.address = obj.address = address
-                width = .9 if platform == 'android' else .8
+                width = 0.9 if platform == 'android' else 0.8
                 self.addbook_popup = self.address_detail_popup(
                     obj, self.send_message_to, self.update_addbook_label,
                     self.close_pop, width)
@@ -125,40 +118,42 @@ class AddressBook(Screen, HelperAddressBook):
             instance.ids.delete_msg.disabled = False
 
     def delete_address(self, address, instance, *args):
-        """Delete inbox mail from inbox listing"""
+        """Delete address from the address book"""
         self.ids.ml.remove_widget(instance.parent.parent)
-        # if len(self.ids.ml.children) == 0:
-        if self.ids.ml.children is not None:
+        if self.ids.ml.children:
             self.ids.tag_label.text = ''
-        sqlExecute(
-            "DELETE FROM  addressbook WHERE address = ?", address)
+        sqlExecute("DELETE FROM addressbook WHERE address = ?", address)
         toast('Address Deleted')
 
     def close_pop(self, instance):
-        """Pop is Canceled"""
+        """Cancel and close the popup"""
         self.addbook_popup.dismiss()
         toast('Canceled')
 
     def update_addbook_label(self, instance):
-        """Updating the label of address book address"""
+        """Update the label of the address book"""
         address_list = kivy_helper_search.search_sql(folder="addressbook")
         stored_labels = [labels[0] for labels in address_list]
         add_dict = dict(address_list)
         label = str(self.addbook_popup.content_cls.ids.add_label.text)
+
         if label in stored_labels and self.address == add_dict[label]:
             stored_labels.remove(label)
+
         if label and label not in stored_labels:
             sqlExecute("""
                 UPDATE addressbook
                 SET label = ?
                 WHERE address = ?""", label, self.addbook_popup.content_cls.address)
-            App.get_running_app().root.ids.id_addressbook.ids.ml.clear_widgets()
-            App.get_running_app().root.ids.id_addressbook.loadAddresslist(None, 'All', '')
+
+            app = App.get_running_app()
+            app.root.ids.id_addressbook.ids.ml.clear_widgets()
+            app.root.ids.id_addressbook.loadAddresslist(None, 'All', '')
             self.addbook_popup.dismiss()
             toast('Saved')
 
     def send_message_to(self, instance):
-        """Method used to fill to_address of composer autofield"""
+        """Fill the to_address of the composer autofield"""
         App.get_running_app().set_navbar_for_composer()
         self.compose_message(None, self.address)
         self.addbook_popup.dismiss()
