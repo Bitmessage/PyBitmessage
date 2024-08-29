@@ -174,7 +174,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             self.parent.screens[3].clear_widgets()
             self.parent.screens[3].add_widget(Factory.Trash())
             self.parent.screens[14].clear_widgets()
-            self.parent.screens[14].add_widget(Factory.Allmails())
+            self.parent.screens[14].add_widget(Factory.AllMails())
         Clock.schedule_once(self.callback_for_delete, 4)
 
     def callback_for_delete(self, dt=0):

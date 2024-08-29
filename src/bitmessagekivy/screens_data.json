@@ -59,7 +59,7 @@
     "All Mails": {
         "kv_string": "allmails",
         "name_screen": "allmails",
-        "Import": "from pybitmessage.bitmessagekivy.baseclass.allmail import Allmails"
+        "Import": "from pybitmessage.bitmessagekivy.baseclass.allmail import AllMails"
     },
     "MailDetail": {
         "kv_string": "maildetail",
