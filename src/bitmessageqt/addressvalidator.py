@@ -3,15 +3,16 @@ Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
 
-from Queue import Empty
+from six.moves.queue import Empty
 
+from unqstr import ustr
 from PyQt4 import QtGui
 
 from addresses import decodeAddress, addBMIfNotPresent
 from bmconfigparser import config
 from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
-from utils import str_chan
+from .utils import str_chan
 
 
 class AddressPassPhraseValidatorMixin(object):
@@ -108,26 +109,26 @@ class AddressPassPhraseValidatorMixin(object):
         if self.addressObject is None:
             address = None
         else:
-            address = str(self.addressObject.text().toUtf8())
+            address = ustr(self.addressObject.text())
             if address == "":
                 address = None
         if self.passPhraseObject is None:
             passPhrase = ""
         else:
-            passPhrase = str(self.passPhraseObject.text().toUtf8())
+            passPhrase = ustr(self.passPhraseObject.text())
             if passPhrase == "":
                 passPhrase = None
 
         # no chan name
         if passPhrase is None:
             self.setError(_translate("AddressValidator", "Chan name/passphrase needed. You didn't enter a chan name."))
-            return (QtGui.QValidator.Intermediate, pos)
+            return (QtGui.QValidator.Intermediate, s, pos)
 
         if self.addressMandatory or address is not None:
             # check if address already exists:
             if address in config.addresses():
                 self.setError(_translate("AddressValidator", "Address already present as one of your identities."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
             # version too high
             if decodeAddress(address)[0] == 'versiontoohigh':
@@ -138,12 +139,12 @@ class AddressPassPhraseValidatorMixin(object):
                         " address might be valid, its version number"
                         " is too new for us to handle. Perhaps you need"
                         " to upgrade Bitmessage."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
             # invalid
             if decodeAddress(address)[0] != 'success':
                 self.setError(_translate("AddressValidator", "The Bitmessage address is not valid."))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
         # this just disables the OK button without changing the feedback text
         # but only if triggered by textEdited, not by clicking the Ok button
@@ -152,15 +153,15 @@ class AddressPassPhraseValidatorMixin(object):
 
         # check through generator
         if address is None:
-            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + str(passPhrase), passPhrase, False))
+            addressGeneratorQueue.put(('createChan', 4, 1, str_chan + ' ' + ustr(passPhrase), passPhrase.encode("utf-8", "replace"), False))
         else:
             addressGeneratorQueue.put(
                 ('joinChan', addBMIfNotPresent(address),
-                 "{} {}".format(str_chan, passPhrase), passPhrase, False))
+                 "{} {}".format(str_chan, passPhrase), passPhrase.encode("utf-8", "replace"), False))
 
         if self.buttonBox.button(QtGui.QDialogButtonBox.Ok).hasFocus():
-            return (self.returnValid(), pos)
-        return (QtGui.QValidator.Intermediate, pos)
+            return (self.returnValid(), s, pos)
+        return (QtGui.QValidator.Intermediate, s, pos)
 
     def checkData(self):
         """Validator Qt signal interface"""

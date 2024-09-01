@@ -13,8 +13,11 @@ import inspect
 import re
 import sys
 import time
+import sqlite3
 
+from unqstr import ustr
 from PyQt4 import QtGui
+from dbcompat import dbstr
 
 import queues
 from addresses import decodeAddress
@@ -38,6 +41,8 @@ def getSortedSubscriptions(count=False):
     ret = {}
     for row in queryreturn:
         label, address, enabled = row
+        label = label.decode("utf-8", "replace")
+        address = address.decode("utf-8", "replace")
         ret[address] = {}
         ret[address]["inbox"] = {}
         ret[address]["inbox"]['label'] = label
@@ -47,9 +52,11 @@ def getSortedSubscriptions(count=False):
         queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
             FROM inbox, subscriptions ON subscriptions.address = inbox.fromaddress
             WHERE read = 0 AND toaddress = ?
-            GROUP BY inbox.fromaddress, folder''', str_broadcast_subscribers)
+            GROUP BY inbox.fromaddress, folder''', dbstr(str_broadcast_subscribers))
         for row in queryreturn:
             address, folder, cnt = row
+            address = address.decode("utf-8", "replace")
+            folder = folder.decode("utf-8", "replace")
             if folder not in ret[address]:
                 ret[address][folder] = {
                     'label': ret[address]['inbox']['label'],
@@ -100,7 +107,7 @@ class AccountColor(AccountMixin):  # pylint: disable=too-few-public-methods
             elif config.safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
-                    '''select label from subscriptions where address=?''', self.address):
+                    '''select label from subscriptions where address=?''', dbstr(self.address)):
                 self.type = AccountMixin.SUBSCRIPTION
             else:
                 self.type = AccountMixin.NORMAL
@@ -123,7 +130,7 @@ class BMAccount(object):
             self.type = AccountMixin.BROADCAST
         else:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', self.address)
+                '''select label from subscriptions where address=?''', dbstr(self.address))
             if queryreturn:
                 self.type = AccountMixin.SUBSCRIPTION
 
@@ -131,32 +138,33 @@ class BMAccount(object):
         """Get a label for this bitmessage account"""
         if address is None:
             address = self.address
+        else:
+            address = ustr(address)
         label = config.safeGet(address, 'label', address)
         queryreturn = sqlQuery(
-            '''select label from addressbook where address=?''', address)
+            '''select label from addressbook where address=?''', dbstr(address))
         if queryreturn != []:
             for row in queryreturn:
                 label, = row
+            label = label.decode("utf-8", "replace")
         else:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', address)
+                '''select label from subscriptions where address=?''', dbstr(address))
             if queryreturn != []:
                 for row in queryreturn:
                     label, = row
+                label = label.decode("utf-8", "replace")
         return label
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         """Set metadata and address labels on self"""
 
-        self.toAddress = toAddress
-        self.fromAddress = fromAddress
-        if isinstance(subject, unicode):
-            self.subject = str(subject)
-        else:
-            self.subject = subject
-        self.message = message
-        self.fromLabel = self.getLabel(fromAddress)
-        self.toLabel = self.getLabel(toAddress)
+        self.toAddress = ustr(toAddress)
+        self.fromAddress = ustr(fromAddress)
+        self.subject = ustr(subject)
+        self.message = ustr(message)
+        self.fromLabel = ustr(self.getLabel(fromAddress))
+        self.toLabel = ustr(self.getLabel(toAddress))
 
 
 class NoAccount(BMAccount):
@@ -201,19 +209,19 @@ class GatewayAccount(BMAccount):
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            '',
-            self.toAddress,
-            ripe,
-            self.fromAddress,
-            self.subject,
-            self.message,
-            ackdata,
+            sqlite3.Binary(b''),
+            dbstr(self.toAddress),
+            sqlite3.Binary(ripe),
+            dbstr(self.fromAddress),
+            dbstr(self.subject),
+            dbstr(self.message),
+            sqlite3.Binary(ackdata),
             int(time.time()),  # sentTime (this will never change)
             int(time.time()),  # lastActionTime
             0,  # sleepTill time. This will get set when the POW gets done.
-            'msgqueued',
+            dbstr('msgqueued'),
             0,  # retryNumber
-            'sent',  # folder
+            dbstr('sent'),  # folder
             2,  # encodingtype
             # not necessary to have a TTL higher than 2 days
             min(config.getint('bitmessagesettings', 'ttl'), 86400 * 2)

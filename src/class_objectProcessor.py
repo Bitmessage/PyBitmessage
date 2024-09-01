@@ -12,6 +12,7 @@ import subprocess  # nosec B404
 import threading
 import time
 from binascii import hexlify
+import sqlite3
 
 import helper_bitcoin
 import helper_inbox
@@ -33,6 +34,7 @@ from helper_sql import (
 from network import knownnodes, invQueue
 from network.node import Peer
 from tr import _translate
+from dbcompat import dbstr
 
 logger = logging.getLogger('default')
 
@@ -121,7 +123,7 @@ class objectProcessor(threading.Thread):
                         objectType, data = queues.objectProcessorQueue.get()
                         sql.execute(
                             'INSERT INTO objectprocessorqueue VALUES (?,?)',
-                            objectType, data)
+                            objectType, sqlite3.Binary(data))
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
                 logger.debug(
                     'Saved %s objects from the objectProcessorQueue to'
@@ -140,19 +142,24 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in state.ackdataForWhichImWatching:
+        data_bytes = bytes(data[readPosition:])
+        if data_bytes in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del state.ackdataForWhichImWatching[data[readPosition:]]
-            sqlExecute(
+            del state.ackdataForWhichImWatching[data_bytes]
+            rowcount = sqlExecute(
                 "UPDATE sent SET status='ackreceived', lastactiontime=?"
-                " WHERE ackdata=?", int(time.time()), data[readPosition:])
+                " WHERE ackdata=?", int(time.time()), sqlite3.Binary(data_bytes))
+            if rowcount < 1:
+                rowcount = sqlExecute(
+                    "UPDATE sent SET status='ackreceived', lastactiontime=?"
+                    " WHERE ackdata=CAST(? AS TEXT)", int(time.time()), data_bytes)
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata', (
-                    data[readPosition:],
+                    data_bytes,
                     _translate(
                         "MainWindow",
-                        "Acknowledgement of the message received %1"
-                    ).arg(l10n.formatTimestamp()))
+                        "Acknowledgement of the message received {0}"
+                    ).format(l10n.formatTimestamp()))
             ))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
@@ -215,9 +222,10 @@ class objectProcessor(threading.Thread):
             logger.info(
                 'the hash requested in this getpubkey request is: %s',
                 hexlify(requestedHash))
+            requestedHash_bytes = bytes(requestedHash)
             # if this address hash is one of mine
-            if requestedHash in shared.myAddressesByHash:
-                myAddress = shared.myAddressesByHash[requestedHash]
+            if requestedHash_bytes in shared.myAddressesByHash:
+                myAddress = shared.myAddressesByHash[requestedHash_bytes]
         elif requestedAddressVersionNumber >= 4:
             requestedTag = data[readPosition:readPosition + 32]
             if len(requestedTag) != 32:
@@ -227,8 +235,9 @@ class objectProcessor(threading.Thread):
             logger.debug(
                 'the tag requested in this getpubkey request is: %s',
                 hexlify(requestedTag))
-            if requestedTag in shared.myAddressesByTag:
-                myAddress = shared.myAddressesByTag[requestedTag]
+            requestedTag_bytes = bytes(requestedTag)
+            if requestedTag_bytes in shared.myAddressesByTag:
+                myAddress = shared.myAddressesByTag[requestedTag_bytes]
 
         if myAddress == '':
             logger.info('This getpubkey request is not for any of my keys.')
@@ -299,12 +308,12 @@ class objectProcessor(threading.Thread):
                     '(within processpubkey) payloadLength less than 146.'
                     ' Sanity check failed.')
             readPosition += 4
-            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             # Is it possible for a public key to be invalid such that trying to
             # encrypt or sign with it will cause an error? If it is, it would
             # be easiest to test them here.
             readPosition += 64
-            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             if len(pubEncryptionKey) < 65:
                 return logger.debug(
                     'publicEncryptionKey length less than 64. Sanity check'
@@ -327,19 +336,19 @@ class objectProcessor(threading.Thread):
 
             queryreturn = sqlQuery(
                 "SELECT usedpersonally FROM pubkeys WHERE address=?"
-                " AND usedpersonally='yes'", address)
+                " AND usedpersonally='yes'", dbstr(address))
             # if this pubkey is already in our database and if we have
             # used it personally:
             if queryreturn != []:
                 logger.info(
                     'We HAVE used this pubkey personally. Updating time.')
-                t = (address, addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
                      int(time.time()), 'yes')
             else:
                 logger.info(
                     'We have NOT used this pubkey personally. Inserting'
                     ' in database.')
-                t = (address, addressVersion, dataToStore,
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
                      int(time.time()), 'no')
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(address)
@@ -350,9 +359,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])[1]
@@ -389,20 +398,20 @@ class objectProcessor(threading.Thread):
             address = encodeAddress(addressVersion, streamNumber, ripe)
             queryreturn = sqlQuery(
                 "SELECT usedpersonally FROM pubkeys WHERE address=?"
-                " AND usedpersonally='yes'", address)
+                " AND usedpersonally='yes'", dbstr(address))
             # if this pubkey is already in our database and if we have
             # used it personally:
             if queryreturn != []:
                 logger.info(
                     'We HAVE used this pubkey personally. Updating time.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'yes')
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
+                     int(time.time()), dbstr('yes'))
             else:
                 logger.info(
                     'We have NOT used this pubkey personally. Inserting'
                     ' in database.')
-                t = (address, addressVersion, dataToStore,
-                     int(time.time()), 'no')
+                t = (dbstr(address), addressVersion, sqlite3.Binary(dataToStore),
+                     int(time.time()), dbstr('no'))
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(address)
 
@@ -413,12 +422,13 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in state.neededPubkeys:
+            tag_bytes = bytes(tag)
+            if tag_bytes not in state.neededPubkeys:
                 return logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
 
             # Let us try to decrypt the pubkey
-            toAddress = state.neededPubkeys[tag][0]
+            toAddress = state.neededPubkeys[tag_bytes][0]
             if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
@@ -483,7 +493,7 @@ class objectProcessor(threading.Thread):
 
         # This is a message bound for me.
         # Look up my address based on the RIPE hash.
-        toAddress = shared.myAddressesByHash[toRipe]
+        toAddress = shared.myAddressesByHash[bytes(toRipe)]
         readPosition = 0
         sendersAddressVersionNumber, sendersAddressVersionNumberLength = \
             decodeVarint(decryptedData[readPosition:readPosition + 10])
@@ -507,9 +517,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -558,7 +568,7 @@ class objectProcessor(threading.Thread):
         readPosition += signatureLengthLength
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
-        signedData = data[8:20] + encodeVarint(1) + encodeVarint(
+        signedData = bytes(data[8:20]) + encodeVarint(1) + encodeVarint(
             streamNumberAsClaimedByMsg
         ) + decryptedData[:positionOfBottomOfAckData]
 
@@ -590,11 +600,11 @@ class objectProcessor(threading.Thread):
         # person.
         sqlExecute(
             '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-            fromAddress,
+            dbstr(fromAddress),
             sendersAddressVersionNumber,
-            decryptedData[:endOfThePublicKeyPosition],
+            sqlite3.Binary(decryptedData[:endOfThePublicKeyPosition]),
             int(time.time()),
-            'yes')
+            dbstr('yes'))
 
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
@@ -631,7 +641,7 @@ class objectProcessor(threading.Thread):
                 'bitmessagesettings', 'blackwhitelist') == 'black':
             queryreturn = sqlQuery(
                 "SELECT label FROM blacklist where address=? and enabled='1'",
-                fromAddress)
+                dbstr(fromAddress))
             if queryreturn != []:
                 logger.info('Message ignored because address is in blacklist.')
 
@@ -639,7 +649,7 @@ class objectProcessor(threading.Thread):
         else:  # We're using a whitelist
             queryreturn = sqlQuery(
                 "SELECT label FROM whitelist where address=? and enabled='1'",
-                fromAddress)
+                dbstr(fromAddress))
             if queryreturn == []:
                 logger.info(
                     'Message ignored because address not in whitelist.')
@@ -808,13 +818,14 @@ class objectProcessor(threading.Thread):
         elif broadcastVersion == 5:
             embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
-            if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
+            embeddedTag_bytes = bytes(embeddedTag)
+            if embeddedTag_bytes not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.
             # We're going to add some more data which is signed further down.
-            signedData = data[8:readPosition]
-            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag]
+            signedData = bytes(data[8:readPosition])
+            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag_bytes]
             try:
                 decryptedData = cryptorObject.decrypt(data[readPosition:])
                 logger.debug('EC decryption successful')
@@ -854,10 +865,10 @@ class objectProcessor(threading.Thread):
             )
         readPosition += sendersStreamLength
         readPosition += 4
-        sendersPubSigningKey = '\x04' + \
+        sendersPubSigningKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        sendersPubEncryptionKey = '\x04' + \
+        sendersPubEncryptionKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersion >= 3:
@@ -927,11 +938,11 @@ class objectProcessor(threading.Thread):
 
         # Let's store the public key in case we want to reply to this person.
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-                   fromAddress,
-                   sendersAddressVersion,
-                   decryptedData[:endOfPubkeyPosition],
+                   dbstr(fromAddress),
+                   dbstr(sendersAddressVersion),
+                   sqlite3.Binary(decryptedData[:endOfPubkeyPosition]),
                    int(time.time()),
-                   'yes')
+                   dbstr('yes'))
 
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
@@ -997,8 +1008,9 @@ class objectProcessor(threading.Thread):
                 encodeVarint(addressVersion) + encodeVarint(streamNumber)
                 + ripe
             )[32:]
-            if tag in state.neededPubkeys:
-                del state.neededPubkeys[tag]
+            tag_bytes = bytes(tag)
+            if tag_bytes in state.neededPubkeys:
+                del state.neededPubkeys[tag_bytes]
                 self.sendMessages(address)
 
     @staticmethod
@@ -1012,7 +1024,7 @@ class objectProcessor(threading.Thread):
             "UPDATE sent SET status='doingmsgpow', retrynumber=0"
             " WHERE toaddress=?"
             " AND (status='awaitingpubkey' OR status='doingpubkeypow')"
-            " AND folder='sent'", address)
+            " AND folder='sent'", dbstr(address))
         queues.workerQueue.put(('sendmessage', ''))
 
     @staticmethod
@@ -1047,8 +1059,8 @@ class objectProcessor(threading.Thread):
         if checksum != hashlib.sha512(payload).digest()[0:4]:
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
-        command = command.rstrip('\x00')
-        if command != 'object':
+        command = command.rstrip(b'\x00')
+        if command != b'object':
             return False
         return True
 

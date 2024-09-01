@@ -3,7 +3,7 @@
 A menu plugin showing QR-Code for bitmessage address in modal dialog.
 """
 
-import urllib
+from six.moves.urllib.parse import urlencode
 
 import qrcode
 from PyQt4 import QtCore, QtGui
@@ -93,7 +93,7 @@ def connect_plugin(form):
                 return
         dialog.render(
             'bitmessage:%s' % account.address + (
-                '?' + urllib.urlencode({'label': label.encode('utf-8')})
+                '?' + urlencode({'label': label.encode('utf-8')})
                 if label != account.address else '')
         )
         dialog.exec_()

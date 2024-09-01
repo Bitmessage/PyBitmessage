@@ -1,12 +1,13 @@
 """
 This module setting file is for settings
 """
-import ConfigParser
+from six.moves import configparser
 import os
 import sys
 import tempfile
 
 import six
+from unqstr import ustr
 from PyQt4 import QtCore, QtGui
 
 import debug
@@ -16,7 +17,7 @@ import openclpow
 import paths
 import queues
 import state
-import widgets
+from bitmessageqt import widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
@@ -26,12 +27,18 @@ from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
 
+try:
+    SafeConfigParser = configparser.SafeConfigParser
+except AttributeError:
+    # alpine linux, python3.12
+    SafeConfigParser = configparser.ConfigParser
+
 def getSOCKSProxyType(config):
     """Get user socksproxytype setting from *config*"""
     try:
-        result = ConfigParser.SafeConfigParser.get(
+        result = SafeConfigParser.get(
             config, 'bitmessagesettings', 'socksproxytype')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         return None
     else:
         if result.lower() in ('', 'none', 'false'):
@@ -187,7 +194,7 @@ class SettingsDialog(QtGui.QDialog):
             else:
                 if self.checkBoxOnionOnly.isChecked():
                     self.checkBoxOnionOnly.setText(
-                        self.checkBoxOnionOnly.text() + ", " + _translate(
+                        ustr(self.checkBoxOnionOnly.text()) + ", " + _translate(
                             "MainWindow", "may cause connection problems!"))
                     self.checkBoxOnionOnly.setStyleSheet(
                         "QCheckBox { color : red; }")
@@ -324,10 +331,10 @@ class SettingsDialog(QtGui.QDialog):
             _translate("MainWindow", "Testing..."))
         nc = namecoin.namecoinConnection({
             'type': self.getNamecoinType(),
-            'host': str(self.lineEditNamecoinHost.text().toUtf8()),
-            'port': str(self.lineEditNamecoinPort.text().toUtf8()),
-            'user': str(self.lineEditNamecoinUser.text().toUtf8()),
-            'password': str(self.lineEditNamecoinPassword.text().toUtf8())
+            'host': ustr(self.lineEditNamecoinHost.text()),
+            'port': ustr(self.lineEditNamecoinPort.text()),
+            'user': ustr(self.lineEditNamecoinUser.text()),
+            'password': ustr(self.lineEditNamecoinPassword.text())
         })
         status, text = nc.test()
         self.labelNamecoinTestResult.setText(text)
@@ -387,7 +394,7 @@ class SettingsDialog(QtGui.QDialog):
             ))
 
         lang = str(self.languageComboBox.itemData(
-            self.languageComboBox.currentIndex()).toString())
+            self.languageComboBox.currentIndex()))
         self.config.set('bitmessagesettings', 'userlocale', lang)
         self.parent.change_translation()
 
@@ -486,13 +493,13 @@ class SettingsDialog(QtGui.QDialog):
 
         self.config.set(
             'bitmessagesettings', 'namecoinrpctype', self.getNamecoinType())
-        self.config.set('bitmessagesettings', 'namecoinrpchost', str(
+        self.config.set('bitmessagesettings', 'namecoinrpchost', ustr(
             self.lineEditNamecoinHost.text()))
-        self.config.set('bitmessagesettings', 'namecoinrpcport', str(
+        self.config.set('bitmessagesettings', 'namecoinrpcport', ustr(
             self.lineEditNamecoinPort.text()))
-        self.config.set('bitmessagesettings', 'namecoinrpcuser', str(
+        self.config.set('bitmessagesettings', 'namecoinrpcuser', ustr(
             self.lineEditNamecoinUser.text()))
-        self.config.set('bitmessagesettings', 'namecoinrpcpassword', str(
+        self.config.set('bitmessagesettings', 'namecoinrpcpassword', ustr(
             self.lineEditNamecoinPassword.text()))
         self.parent.resetNamecoinConnection()
 
@@ -510,11 +517,11 @@ class SettingsDialog(QtGui.QDialog):
                     float(self.lineEditSmallMessageDifficulty.text())
                     * defaults.networkDefaultPayloadLengthExtraBytes)))
 
-        if self.comboBoxOpenCL.currentText().toUtf8() != self.config.safeGet(
-                'bitmessagesettings', 'opencl'):
+        if ustr(self.comboBoxOpenCL.currentText()) != ustr(self.config.safeGet(
+                'bitmessagesettings', 'opencl')):
             self.config.set(
                 'bitmessagesettings', 'opencl',
-                str(self.comboBoxOpenCL.currentText()))
+                ustr(self.comboBoxOpenCL.currentText()))
             queues.workerQueue.put(('resetPoW', ''))
 
         acceptableDifficultyChanged = False

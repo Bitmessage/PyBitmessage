@@ -6,6 +6,8 @@ from collections import namedtuple
 from random import choice, expovariate, sample
 from threading import RLock
 from time import time
+import six
+from binascii import hexlify
 
 
 # randomise routes after 600 seconds
@@ -64,7 +66,7 @@ class Dandelion:  # pylint: disable=old-style-class
         """Add inventory vector to dandelion stem return status of dandelion enabled"""
         assert self.enabled is not None
         with self.lock:
-            self.hashMap[hashId] = Stem(
+            self.hashMap[bytes(hashId)] = Stem(
                 self.getNodeStem(source),
                 stream,
                 self.poissonTimeout())
@@ -75,9 +77,10 @@ class Dandelion:  # pylint: disable=old-style-class
         include streams, we only learn this after receiving the object)
         """
         with self.lock:
-            if hashId in self.hashMap:
-                self.hashMap[hashId] = Stem(
-                    self.hashMap[hashId].child,
+            hashId_bytes = bytes(hashId)
+            if hashId_bytes in self.hashMap:
+                self.hashMap[hashId_bytes] = Stem(
+                    self.hashMap[hashId_bytes].child,
                     stream,
                     self.poissonTimeout())
 
@@ -86,20 +89,20 @@ class Dandelion:  # pylint: disable=old-style-class
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 '%s entering fluff mode due to %s.',
-                ''.join('%02x' % ord(i) for i in hashId), reason)
+                hexlify(hashId), reason)
         with self.lock:
             try:
-                del self.hashMap[hashId]
+                del self.hashMap[bytes(hashId)]
             except KeyError:
                 pass
 
     def hasHash(self, hashId):
         """Is inventory vector in stem mode?"""
-        return hashId in self.hashMap
+        return bytes(hashId) in self.hashMap
 
     def objectChildStem(self, hashId):
         """Child (i.e. next) node for an inventory vector during stem mode"""
-        return self.hashMap[hashId].child
+        return self.hashMap[bytes(hashId)].child
 
     def maybeAddStem(self, connection, invQueue):
         """
@@ -111,12 +114,12 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             if len(self.stem) < MAX_STEMS:
                 self.stem.append(connection)
-                for k in (k for k, v in self.nodeMap.iteritems() if v is None):
+                for k in (k for k, v in six.iteritems(self.nodeMap) if v is None):
                     self.nodeMap[k] = connection
-                for k, v in {
-                        k: v for k, v in self.hashMap.iteritems()
+                for k, v in six.iteritems({
+                        k: v for k, v in six.iteritems(self.hashMap)
                         if v.child is None
-                }.iteritems():
+                }):
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
@@ -132,14 +135,14 @@ class Dandelion:  # pylint: disable=old-style-class
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
                 for k in (
-                        k for k, v in self.nodeMap.iteritems()
+                        k for k, v in six.iteritems(self.nodeMap)
                         if v == connection
                 ):
                     self.nodeMap[k] = None
-                for k, v in {
-                        k: v for k, v in self.hashMap.iteritems()
+                for k, v in six.iteritems({
+                        k: v for k, v in six.iteritems(self.hashMap)
                         if v.child == connection
-                }.iteritems():
+                }):
                     self.hashMap[k] = Stem(
                         None, v.stream, self.poissonTimeout())
 
@@ -180,7 +183,7 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             deadline = time()
             toDelete = [
-                [v.stream, k, v.child] for k, v in self.hashMap.iteritems()
+                [v.stream, k, v.child] for k, v in six.iteritems(self.hashMap)
                 if v.timeout < deadline
             ]
 
@@ -199,10 +202,10 @@ class Dandelion:  # pylint: disable=old-style-class
             try:
                 # random two connections
                 self.stem = sample(
-                    self.pool.outboundConnections.values(), MAX_STEMS)
+                    sorted(self.pool.outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = self.pool.outboundConnections.values()
+                self.stem = list(self.pool.outboundConnections.values())
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time() + REASSIGN_INTERVAL

@@ -1,5 +1,6 @@
 """Common definitions for bitmessageqt tests"""
 
+from six.moves import queue as Queue
 import sys
 import unittest
 
@@ -52,7 +53,7 @@ class TestMain(unittest.TestCase):
         """Check the results of _translate() with various args"""
         self.assertIsInstance(
             _translate("MainWindow", "Test"),
-            QtCore.QString
+            str
         )
 
 

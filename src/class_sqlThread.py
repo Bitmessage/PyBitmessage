@@ -8,6 +8,7 @@ import sqlite3
 import sys
 import threading
 import time
+from six.moves.reprlib import repr
 
 try:
     import helper_sql
@@ -38,7 +39,7 @@ class sqlThread(threading.Thread):
         helper_sql.sql_available = True
         config_ready.wait()
         self.conn = sqlite3.connect(state.appdata + 'messages.dat')
-        self.conn.text_factory = str
+        self.conn.text_factory = bytes
         self.cur = self.conn.cursor()
 
         self.cur.execute('PRAGMA secure_delete = true')
@@ -73,7 +74,7 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES'''
                 '''('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
-                '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
+                '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''')
             self.cur.execute('''INSERT INTO settings VALUES('version','11')''')
             self.cur.execute('''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
@@ -542,7 +543,7 @@ class sqlThread(threading.Thread):
                 shutil.move(
                     paths.lookupAppdataFolder() + 'messages.dat', paths.lookupExeFolder() + 'messages.dat')
                 self.conn = sqlite3.connect(paths.lookupExeFolder() + 'messages.dat')
-                self.conn.text_factory = str
+                self.conn.text_factory = bytes
                 self.cur = self.conn.cursor()
             elif item == 'movemessagstoappdata':
                 logger.debug('the sqlThread is moving the messages.dat file to the Appdata folder.')
@@ -568,7 +569,7 @@ class sqlThread(threading.Thread):
                 shutil.move(
                     paths.lookupExeFolder() + 'messages.dat', paths.lookupAppdataFolder() + 'messages.dat')
                 self.conn = sqlite3.connect(paths.lookupAppdataFolder() + 'messages.dat')
-                self.conn.text_factory = str
+                self.conn.text_factory = bytes
                 self.cur = self.conn.cursor()
             elif item == 'deleteandvacuume':
                 self.cur.execute('''delete from inbox where folder='trash' ''')

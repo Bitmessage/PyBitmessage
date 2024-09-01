@@ -30,7 +30,7 @@ class Cipher(object):
         self.ctx = OpenSSL.EVP_CIPHER_CTX_new()
         if do == 1 or do == 0:
             k = OpenSSL.malloc(key, len(key))
-            IV = OpenSSL.malloc(iv, len(iv))
+            IV = OpenSSL.malloc(bytes(iv), len(iv))
             OpenSSL.EVP_CipherInit_ex(
                 self.ctx, self.cipher.get_pointer(), 0, k, IV, do)
         else:
@@ -59,7 +59,7 @@ class Cipher(object):
         """Update result with more data"""
         i = OpenSSL.c_int(0)
         buffer = OpenSSL.malloc(b"", len(input) + self.cipher.get_blocksize())
-        inp = OpenSSL.malloc(input, len(input))
+        inp = OpenSSL.malloc(bytes(input), len(input))
         if OpenSSL.EVP_CipherUpdate(self.ctx, OpenSSL.byref(buffer),
                                     OpenSSL.byref(i), inp, len(input)) == 0:
             raise Exception("[OpenSSL] EVP_CipherUpdate FAIL ...")

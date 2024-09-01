@@ -14,6 +14,7 @@ import stat
 import subprocess  # nosec B404
 import sys
 from binascii import hexlify
+from six.moves.reprlib import repr
 
 # Project imports.
 import highlevelcrypto
@@ -22,6 +23,7 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import config
 from debug import logger
 from helper_sql import sqlQuery
+from dbcompat import dbstr
 
 
 myECCryptorObjects = {}
@@ -37,8 +39,8 @@ broadcastSendersForWhichImWatching = {}
 def isAddressInMyAddressBook(address):
     """Is address in my addressbook?"""
     queryreturn = sqlQuery(
-        '''select address from addressbook where address=?''',
-        address)
+        '''select TRUE from addressbook where address=?''',
+        dbstr(address))
     return queryreturn != []
 
 
@@ -46,8 +48,8 @@ def isAddressInMyAddressBook(address):
 def isAddressInMySubscriptionsList(address):
     """Am I subscribed to this address?"""
     queryreturn = sqlQuery(
-        '''select * from subscriptions where address=?''',
-        str(address))
+        '''select TRUE from subscriptions where address=?''',
+        dbstr(address))
     return queryreturn != []
 
 
@@ -61,14 +63,14 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     queryreturn = sqlQuery(
         '''SELECT address FROM whitelist where address=?'''
         ''' and enabled = '1' ''',
-        address)
+        dbstr(address))
     if queryreturn != []:
         return True
 
     queryreturn = sqlQuery(
         '''select address from subscriptions where address=?'''
         ''' and enabled = '1' ''',
-        address)
+        dbstr(address))
     if queryreturn != []:
         return True
     return False
@@ -114,11 +116,11 @@ def reloadMyAddressHashes():
         if len(privEncryptionKey) == 64:
             myECCryptorObjects[hashobj] = \
                 highlevelcrypto.makeCryptor(privEncryptionKey)
-            myAddressesByHash[hashobj] = addressInKeysFile
+            myAddressesByHash[bytes(hashobj)] = addressInKeysFile
             tag = highlevelcrypto.double_sha512(
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj)[32:]
-            myAddressesByTag[tag] = addressInKeysFile
+            myAddressesByTag[bytes(tag)] = addressInKeysFile
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(os.path.join(
@@ -136,6 +138,7 @@ def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
+        address = address.decode("utf-8", "replace")
         # status
         addressVersionNumber, streamNumber, hashobj = decodeAddress(address)[1:]
         if addressVersionNumber == 2:
@@ -149,7 +152,7 @@ def reloadBroadcastSendersForWhichImWatching():
                 encodeVarint(addressVersionNumber)
                 + encodeVarint(streamNumber) + hashobj
             ).digest()[:32]
-            MyECSubscriptionCryptorObjects[hashobj] = \
+            MyECSubscriptionCryptorObjects[bytes(hashobj)] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = highlevelcrypto.double_sha512(
@@ -158,7 +161,7 @@ def reloadBroadcastSendersForWhichImWatching():
             )
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
-            MyECSubscriptionCryptorObjects[tag] = \
+            MyECSubscriptionCryptorObjects[bytes(tag)] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 
@@ -169,7 +172,7 @@ def fixPotentiallyInvalidUTF8Data(text):
         return text
     except UnicodeDecodeError:
         return 'Part of the message is corrupt. The message cannot be' \
-            ' displayed the normal way.\n\n' + repr(text)
+            ' displayed the normal way.\n\n' + text.decode("utf-8", "replace")
 
 
 def checkSensitiveFilePermissions(filename):
@@ -193,7 +196,7 @@ def checkSensitiveFilePermissions(filename):
             ['/usr/bin/stat', '-f', '-c', '%T', filename],
             stderr=subprocess.STDOUT
         )  # nosec B603
-        if 'fuseblk' in fstype:
+        if b'fuseblk' in fstype:
             logger.info(
                 'Skipping file permissions check for %s.'
                 ' Filesystem fuseblk detected.', filename)

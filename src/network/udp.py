@@ -8,12 +8,12 @@ import time
 # magic imports!
 import protocol
 import state
-import connectionpool
+import network.connectionpool  # use long name to address recursive import
 
 from network import receiveDataQueue
-from bmproto import BMProto
-from node import Peer
-from objectracker import ObjectTracker
+from .bmproto import BMProto
+from .node import Peer
+from .objectracker import ObjectTracker
 
 
 logger = logging.getLogger('default')
@@ -81,8 +81,8 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
             return True
         remoteport = False
         for seenTime, stream, _, ip, port in addresses:
-            decodedIP = protocol.checkIPAddress(str(ip))
-            if stream not in connectionpool.pool.streams:
+            decodedIP = protocol.checkIPAddress(ip)
+            if stream not in network.connectionpool.pool.streams:
                 continue
             if (seenTime < time.time() - protocol.MAX_TIME_OFFSET
                     or seenTime > time.time() + protocol.MAX_TIME_OFFSET):

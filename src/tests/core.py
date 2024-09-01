@@ -6,7 +6,7 @@ Tests for core and those that do not work outside
 import atexit
 import os
 import pickle  # nosec
-import Queue
+from six.moves import queue as Queue
 import random  # nosec
 import shutil
 import socket
@@ -15,6 +15,8 @@ import sys
 import threading
 import time
 import unittest
+import six
+import sqlite3
 
 import protocol
 import state
@@ -31,6 +33,7 @@ from network.node import Node, Peer
 from network.tcp import Socks4aBMConnection, Socks5BMConnection, TCPConnection
 from queues import excQueue
 from version import softwareVersion
+from dbcompat import dbstr
 
 from common import cleanup
 
@@ -137,8 +140,8 @@ class TestCore(unittest.TestCase):
     @staticmethod
     def _outdate_knownnodes():
         with knownnodes.knownNodesLock:
-            for nodes in knownnodes.knownNodes.itervalues():
-                for node in nodes.itervalues():
+            for nodes in six.itervalues(knownnodes.knownNodes):
+                for node in six.itervalues(nodes):
                     node['lastseen'] -= 2419205  # older than 28 days
 
     def test_knownnodes_pickle(self):
@@ -146,9 +149,9 @@ class TestCore(unittest.TestCase):
         pickle_knownnodes()
         self._wipe_knownnodes()
         knownnodes.readKnownNodes()
-        for nodes in knownnodes.knownNodes.itervalues():
+        for nodes in six.itervalues(knownnodes.knownNodes):
             self_count = n = 0
-            for n, node in enumerate(nodes.itervalues()):
+            for n, node in enumerate(six.itervalues(nodes)):
                 if node.get('self'):
                     self_count += 1
             self.assertEqual(n - self_count, 2)
@@ -202,7 +205,7 @@ class TestCore(unittest.TestCase):
         while c > 0:
             time.sleep(1)
             c -= 2
-            for peer, con in connectionpool.pool.outboundConnections.iteritems():
+            for peer, con in six.iteritems(connectionpool.pool.outboundConnections):
                 if (
                     peer.host.startswith('bootstrap')
                     or peer.host == 'quzwelsuziwqgpt2.onion'
@@ -223,7 +226,7 @@ class TestCore(unittest.TestCase):
             'Failed to connect during %.2f sec' % (time.time() - _started))
 
     def _check_knownnodes(self):
-        for stream in knownnodes.knownNodes.itervalues():
+        for stream in six.itervalues(knownnodes.knownNodes):
             for peer in stream:
                 if peer.host.startswith('bootstrap'):
                     self.fail(
@@ -346,12 +349,18 @@ class TestCore(unittest.TestCase):
             subject=subject, message=message
         )
         queryreturn = sqlQuery(
-            '''select msgid from sent where ackdata=?''', result)
-        self.assertNotEqual(queryreturn[0][0] if queryreturn else '', '')
+            '''select msgid from sent where ackdata=?''', sqlite3.Binary(result))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                '''select msgid from sent where ackdata=CAST(? AS TEXT)''', result)
+        self.assertNotEqual(queryreturn[0][0] if queryreturn else b'', b'')
 
         column_type = sqlQuery(
-            '''select typeof(msgid) from sent where ackdata=?''', result)
-        self.assertEqual(column_type[0][0] if column_type else '', 'text')
+            '''select typeof(msgid) from sent where ackdata=?''', sqlite3.Binary(result))
+        if len(column_type) < 1:
+            column_type = sqlQuery(
+                '''select typeof(msgid) from sent where ackdata=CAST(? AS TEXT)''', result)
+        self.assertEqual(column_type[0][0] if column_type else '', 'blob')
 
     @unittest.skipIf(frozen, 'not packed test_pattern into the bundle')
     def test_old_knownnodes_pickle(self):
@@ -369,7 +378,7 @@ class TestCore(unittest.TestCase):
     @staticmethod
     def delete_address_from_addressbook(address):
         """Clean up addressbook"""
-        sqlQuery('''delete from addressbook where address=?''', address)
+        sqlQuery('''delete from addressbook where address=?''', dbstr(address))
 
     def test_add_same_address_twice_in_addressbook(self):
         """checking same address is added twice in addressbook"""
@@ -383,7 +392,7 @@ class TestCore(unittest.TestCase):
         """checking is address added in addressbook or not"""
         helper_addressbook.insert(label='test1', address=self.addr)
         queryreturn = sqlQuery(
-            'select count(*) from addressbook where address=?', self.addr)
+            'select count(*) from addressbook where address=?', dbstr(self.addr))
         self.assertEqual(queryreturn[0][0], 1)
         self.delete_address_from_addressbook(self.addr)
 

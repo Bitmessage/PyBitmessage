@@ -4,6 +4,8 @@ Wrappers for hash functions from OpenSSL.
 #  Copyright (C) 2011 Yann GUIBET <yannguibet@gmail.com>
 #  See LICENSE for details.
 
+import six
+
 from .openssl import OpenSSL
 
 
@@ -22,7 +24,7 @@ def _equals_str(a, b):
         return False
     result = 0
     for x, y in zip(a, b):
-        result |= ord(x) ^ ord(y)
+        result |= six.byte2int(x) ^ six.byte2int(y)
     return result == 0
 
 
@@ -38,7 +40,7 @@ def hmac_sha256(k, m):
     Compute the key and the message with HMAC SHA5256
     """
     key = OpenSSL.malloc(k, len(k))
-    d = OpenSSL.malloc(m, len(m))
+    d = OpenSSL.malloc(bytes(m), len(m))
     md = OpenSSL.malloc(0, 32)
     i = OpenSSL.pointer(OpenSSL.c_int(0))
     OpenSSL.HMAC(OpenSSL.EVP_sha256(), key, len(k), d, len(m), md, i)
