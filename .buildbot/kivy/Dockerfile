@@ -15,4 +15,4 @@ RUN apt-get install -yq \
 
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-RUN pip3 install --upgrade setuptools pip
+RUN pip3 install --upgrade 'setuptools<71' pip
