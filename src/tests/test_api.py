@@ -301,6 +301,54 @@ class TestAPI(TestAPIProto):
         self.assertEqual(
             json.loads(self.api.listSubscriptions())['subscriptions'], [])
 
+    def test_blackwhitelist(self):
+        """Test API commands for managing the black/white list"""
+        # Initially it's black
+        self.assertEqual(self.api.getBlackWhitelistKind(), 'black')
+        # Initially they are empty
+        self.assertEqual(
+            json.loads(self.api.listBlacklistEntries()).get('addresses'), [])
+        self.assertEqual(
+            json.loads(self.api.listWhitelistEntries()).get('addresses'), [])
+
+        # For the Blacklist:
+        # Add known address
+        self.api.addBlacklistEntry(
+            sample_deterministic_addr4,
+            base64.encodestring('tiger_4')
+        )
+        # Check list entry
+        entry = json.loads(self.api.listBlacklistEntries()).get('addresses')[0]
+        self.assertEqual(entry['address'], sample_deterministic_addr4)
+        self.assertEqual(base64.decodestring(entry['label']), 'tiger_4')
+        # Remove known address
+        self.api.deleteBlacklistEntry(sample_deterministic_addr4)
+        self.assertEqual(
+            json.loads(self.api.listBlacklistEntries()).get('addresses'), [])
+
+        # Only two kinds - black and white
+        six.assertRegex(
+            self, self.api.setBlackWhitelistKind('yellow'),
+            r'^API Error 0028:')
+        # Change kind
+        self.api.setBlackWhitelistKind('white')
+        self.assertEqual(self.api.getBlackWhitelistKind(), 'white')
+
+        # For the Whitelist:
+        # Add known address
+        self.api.addWhitelistEntry(
+            sample_deterministic_addr4,
+            base64.encodestring('tiger_4')
+        )
+        # Check list entry
+        entry = json.loads(self.api.listWhitelistEntries()).get('addresses')[0]
+        self.assertEqual(entry['address'], sample_deterministic_addr4)
+        self.assertEqual(base64.decodestring(entry['label']), 'tiger_4')
+        # Remove known address
+        self.api.deleteWhitelistEntry(sample_deterministic_addr4)
+        self.assertEqual(
+            json.loads(self.api.listWhitelistEntries()).get('addresses'), [])
+
     def test_send(self):
         """Test message sending"""
         addr = self._add_random_address('random_2')
