@@ -6,18 +6,14 @@
 Kivy UI for inbox screen
 """
 from kivy.clock import Clock
-from kivy.properties import (
-    ListProperty,
-    StringProperty
-)
+from kivy.properties import ListProperty, StringProperty
 from kivy.app import App
 from kivy.uix.screenmanager import Screen
-
 from pybitmessage.bitmessagekivy.baseclass.common import kivy_state_variables, load_image_path
 
 
 class Inbox(Screen):
-    """Inbox Screen class for kivy Ui"""
+    """Inbox Screen class for Kivy UI"""
 
     queryreturn = ListProperty()
     has_refreshed = True
@@ -26,33 +22,32 @@ class Inbox(Screen):
     label_str = "Yet no message for this account!"
 
     def __init__(self, *args, **kwargs):
-        """Initialize kivy variables"""
-        super(Inbox, self).__init__(*args, **kwargs)
+        """Initialize Kivy variables and set up the UI"""
+        super().__init__(*args, **kwargs)
         self.kivy_running_app = App.get_running_app()
         self.kivy_state = kivy_state_variables()
         self.image_dir = load_image_path()
         Clock.schedule_once(self.init_ui, 0)
 
-    def set_defaultAddress(self):
-        """Set default address"""
-        if self.kivy_state.selected_address == "":
-            if self.kivy_running_app.identity_list:
-                self.kivy_state.selected_address = self.kivy_running_app.identity_list[0]
+    def set_default_address(self):
+        """Set the default address if none is selected"""
+        if not self.kivy_state.selected_address and self.kivy_running_app.identity_list:
+            self.kivy_state.selected_address = self.kivy_running_app.identity_list[0]
 
     def init_ui(self, dt=0):
-        """loadMessagelist() call at specific interval"""
+        """Initialize UI and load message list"""
         self.loadMessagelist()
 
     def loadMessagelist(self, where="", what=""):
-        """Load inbox list for inbox messages"""
-        self.set_defaultAddress()
+        """Load inbox messages"""
+        self.set_default_address()
         self.account = self.kivy_state.selected_address
 
     def refresh_callback(self, *args):
-        """Load inbox messages while wating-loader spins & called in inbox.kv"""
+        """Refresh the inbox messages while showing a loading spinner"""
 
         def refresh_on_scroll_down(interval):
-            """Reset fields and load data on scrolling upside down"""
+            """Reset search fields and reload data on scroll"""
             self.kivy_state.searching_text = ""
             self.children[2].children[1].ids.search_field.text = ""
             self.ids.ml.clear_widgets()
