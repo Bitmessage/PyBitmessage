@@ -8,7 +8,6 @@ import ssl
 import sys
 
 import network.asyncore_pollchoose as asyncore
-import paths
 from network.advanceddispatcher import AdvancedDispatcher
 from network import receiveDataQueue
 
@@ -49,9 +48,9 @@ class TLSDispatcher(AdvancedDispatcher):
                  server_side=False, ciphers=sslProtocolCiphers):
         self.want_read = self.want_write = True
         self.certfile = certfile or os.path.join(
-            paths.codePath(), 'sslkeys', 'cert.pem')
+            self._codePath(), 'sslkeys', 'cert.pem')
         self.keyfile = keyfile or os.path.join(
-            paths.codePath(), 'sslkeys', 'key.pem')
+            self._codePath(), 'sslkeys', 'key.pem')
         self.server_side = server_side
         self.ciphers = ciphers
         self.tlsStarted = False
@@ -218,3 +217,13 @@ class TLSDispatcher(AdvancedDispatcher):
             self.set_state("connection_fully_established")
             receiveDataQueue.put(self.destination)
         return False
+
+    def _codePath(self):  # pylint: disable=no-self-use
+        """Returns project dir path"""
+        frozen = getattr(sys, 'frozen', None)
+        if not frozen:
+            return os.path.dirname(os.path.dirname(__file__))
+        return (
+            os.environ.get('RESOURCEPATH')
+            # pylint: disable=protected-access, no-member
+            if frozen == "macosx_app" else sys._MEIPASS)
