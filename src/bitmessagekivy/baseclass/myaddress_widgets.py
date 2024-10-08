@@ -1,8 +1,8 @@
-# pylint: disable=too-many-arguments, no-name-in-module, import-error
-# pylint: disable=too-few-public-methods, no-member, too-many-ancestors
+# pylint: disable=too-many-arguments, no-name-in-module, import-error, no-init
+# pylint: disable=too-few-public-methods, no-member, too-many-ancestors, useless-object-inheritance
 
 """
-MyAddress widgets are here.
+Widgets for the MyAddress module.
 """
 
 from kivymd.uix.button import MDFlatButton
@@ -15,44 +15,49 @@ from pybitmessage.bitmessagekivy.baseclass.common import ThemeClsColor
 
 
 class BadgeText(IRightBodyTouch, MDLabel):
-    """BadgeText class for kivy UI"""
+    """Class representing a badge text in the UI."""
 
 
 class HelperMyAddress(object):
-    """Widget used in MyAddress are here"""
-    dialog_height = .25
+    """Helper class to manage MyAddress widgets and dialogs."""
+
+    dialog_height = 0.25  # Consistent decimal notation
 
     @staticmethod
     def is_active_badge():
-        """This function show the 'active' label of active Address."""
+        """Return a label showing 'Active' status for the address."""
         active_status = 'Active'
-        is_android_width = 90
-        width = 50
-        height = 60
-        badge_obj = BadgeText(
+        badge_width = 90 if platform == 'android' else 50
+        badge_height = 60
+
+        return BadgeText(
             size_hint=(None, None),
-            size=[is_android_width if platform == 'android' else width, height],
-            text=active_status, halign='center',
-            font_style='Body1', theme_text_color='Custom',
-            text_color=ThemeClsColor, font_size='13sp'
+            size=[badge_width, badge_height],
+            text=active_status,
+            halign='center',
+            font_style='Body1',
+            theme_text_color='Custom',
+            text_color=ThemeClsColor,
+            font_size='13sp'
         )
-        return badge_obj
 
     @staticmethod
     def myaddress_detail_popup(obj, width):
-        """This method show the details of address as popup opens."""
-        show_myaddress_dialogue = MDDialog(
+        """Show address details in a popup dialog."""
+        return MDDialog(
             type="custom",
             size_hint=(width, HelperMyAddress.dialog_height),
             content_cls=obj,
         )
-        return show_myaddress_dialogue
 
     @staticmethod
     def inactive_address_popup(width, callback_for_menu_items):
-        """This method shows the warning popup if the address is inactive"""
-        dialog_text = 'Address is not currently active. Please click on Toggle button to active it.'
-        dialog_box = MDDialog(
+        """Show a warning dialog when the address is inactive."""
+        dialog_text = (
+            'Address is not currently active. Please click the Toggle button to activate it.'
+        )
+
+        return MDDialog(
             text=dialog_text,
             size_hint=(width, HelperMyAddress.dialog_height),
             buttons=[
@@ -61,4 +66,3 @@ class HelperMyAddress(object):
                 ),
             ],
         )
-        return dialog_box
