@@ -32,7 +32,7 @@ class AllMails(Screen):
 
     def __init__(self, *args, **kwargs):
         """Initialize the AllMails screen."""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # pylint: disable=missing-super-argument
         self.kivy_state = kivy_state_variables()
         self._initialize_selected_address()
         Clock.schedule_once(self.init_ui, 0)
