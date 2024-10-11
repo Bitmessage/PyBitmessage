@@ -42,7 +42,7 @@ class AddressBook(Screen, HelperAddressBook):
 
     def __init__(self, *args, **kwargs):
         """Getting AddressBook Details"""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # pylint: disable=missing-super-argument
         self.addbook_popup = None
         self.kivy_state = kivy_state_variables()
 
