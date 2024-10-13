@@ -23,7 +23,7 @@ import helper_addressbook
 
 from bmconfigparser import config
 from helper_msgcoding import MsgEncode, MsgDecode
-from helper_sql import sqlQuery
+from helper_sql import sqlQuery, sqlExecute
 from network import asyncore_pollchoose as asyncore, knownnodes
 from network.bmproto import BMProto
 import network.connectionpool as connectionpool
@@ -397,6 +397,22 @@ class TestCore(unittest.TestCase):
             helper_addressbook.insert(label='test2', address=address2))
         self.delete_address_from_addressbook(address1)
         self.delete_address_from_addressbook(address2)
+
+    def test_sqlscripts(self):
+        """ Test sql statements"""
+
+        sqlExecute('create table if not exists testtbl (id integer)')
+        tables = list(sqlQuery("select name from sqlite_master where type is 'table'"))
+        res = [item for item in tables if 'testtbl' in item]
+        self.assertEqual(res[0][0], 'testtbl')
+
+        queryreturn = sqlExecute("INSERT INTO testtbl VALUES(101);")
+        self.assertEqual(queryreturn, 1)
+
+        queryreturn = sqlQuery('''SELECT * FROM testtbl''')
+        self.assertEqual(queryreturn[0][0], 101)
+
+        sqlQuery("DROP TABLE testtbl")
 
 
 def run():
