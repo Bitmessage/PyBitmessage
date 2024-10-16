@@ -22,7 +22,10 @@ from .test_process import TestProcessProto
 
 class TestAPIProto(TestProcessProto):
     """Test case logic for testing API"""
-    _process_cmd = ['pybitmessage', '-t']
+    if six.PY3:
+        _process_cmd = ['./py3bitmessage', '-t']
+    else:  # assume six.PY2
+        _process_cmd = ['./pybitmessage', '-t']
 
     @classmethod
     def setUpClass(cls):
@@ -57,7 +60,10 @@ class TestAPIShutdown(TestAPIProto):
 
 class TestAPI(TestAPIProto):
     """Main API test case"""
-    _seed = base64.encodestring(sample_seed)
+    if six.PY3:
+        _seed = base64.encodebytes(sample_seed)
+    else:  # assume six.PY2
+        _seed = base64.encodestring(sample_seed)
 
     def _add_random_address(self, label):
         addr = self.api.createRandomAddress(base64.encodestring(label))
@@ -242,7 +248,7 @@ class TestAPI(TestAPIProto):
         msg_subject = base64.encodestring('test_subject')
         result = self.api.sendMessage(
             sample_deterministic_addr4, addr, msg_subject, msg)
-        self.assertNotRegexpMatches(result, r'^API Error')
+        six.assertNotRegex(self, result, r'^API Error')
         self.api.deleteAddress(addr)
         # Remove known address
         self.api.deleteAddressBookEntry(sample_deterministic_addr4)

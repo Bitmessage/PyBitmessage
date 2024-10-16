@@ -6,7 +6,7 @@ import time
 
 import protocol
 import state
-import connectionpool
+import network.connectionpool  # use long name to address recursive import
 from network import dandelion_ins
 from highlevelcrypto import calculateInventoryHash
 
@@ -100,7 +100,7 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
             logger.warning(
                 'The object has invalid stream: %s', self.streamNumber)
             raise BMObjectInvalidError()
-        if self.streamNumber not in connectionpool.pool.streams:
+        if self.streamNumber not in network.connectionpool.pool.streams:
             logger.debug(
                 'The streamNumber %i isn\'t one we are interested in.',
                 self.streamNumber)

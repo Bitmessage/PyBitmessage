@@ -4,9 +4,9 @@ SMTP client thread for delivering emails
 # pylint: disable=unused-variable
 
 import smtplib
-import urlparse
+from six.moves.urllib import parse as urlparse
 from email.header import Header
-from email.mime.text import MIMEText
+from six.moves import email_mime_text
 
 import queues
 import state
@@ -55,7 +55,7 @@ class smtpDeliver(StoppableThread):
                     u = urlparse.urlparse(dest)
                     to = urlparse.parse_qs(u.query)['to']
                     client = smtplib.SMTP(u.hostname, u.port)
-                    msg = MIMEText(body, 'plain', 'utf-8')
+                    msg = email_mime_text(body, 'plain', 'utf-8')
                     msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
                     toLabel = map(

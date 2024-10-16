@@ -67,9 +67,12 @@ import subprocess  # nosec B404
 import time
 from binascii import hexlify, unhexlify
 from struct import pack, unpack
+import sqlite3
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
+from six.moves.reprlib import repr
+from dbcompat import dbstr
 
 import helper_inbox
 import helper_sent
@@ -531,12 +534,12 @@ class BMRPCDispatcher(object):
         message = shared.fixPotentiallyInvalidUTF8Data(message)
         return {
             'msgid': hexlify(msgid),
-            'toAddress': toAddress,
-            'fromAddress': fromAddress,
+            'toAddress': toAddress.decode("utf-8", "replace"),
+            'fromAddress': fromAddress.decode("utf-8", "replace"),
             'subject': base64.b64encode(subject),
             'message': base64.b64encode(message),
             'encodingType': encodingtype,
-            'receivedTime': received,
+            'receivedTime': received.decode("utf-8", "replace"),
             'read': read
         }
 
@@ -598,11 +601,12 @@ class BMRPCDispatcher(object):
         """
         queryreturn = sqlQuery(
             "SELECT label, address from addressbook WHERE label = ?",
-            label
+            dbstr(label)
         ) if label else sqlQuery("SELECT label, address from addressbook")
         data = []
         for label, address in queryreturn:
             label = shared.fixPotentiallyInvalidUTF8Data(label)
+            address = address.decode("utf-8", "replace")
             data.append({
                 'label': base64.b64encode(label),
                 'address': address
@@ -618,12 +622,12 @@ class BMRPCDispatcher(object):
         self._verifyAddress(address)
         # TODO: add unique together constraint in the table
         queryreturn = sqlQuery(
-            "SELECT address FROM addressbook WHERE address=?", address)
+            "SELECT address FROM addressbook WHERE address=?", dbstr(address))
         if queryreturn != []:
             raise APIError(
                 16, 'You already have this address in your address book.')
 
-        sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+        sqlExecute("INSERT INTO addressbook VALUES(?,?)", dbstr(label), dbstr(address))
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
@@ -635,7 +639,7 @@ class BMRPCDispatcher(object):
         """Delete an entry from address book."""
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
-        sqlExecute('DELETE FROM addressbook WHERE address=?', address)
+        sqlExecute('DELETE FROM addressbook WHERE address=?', dbstr(address))
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderMessagelistToLabels', ''))
         queues.UISignalQueue.put(('rerenderAddressBook', ''))
@@ -919,6 +923,7 @@ class BMRPCDispatcher(object):
             " ORDER BY received"
         )
         return {"inboxMessages": [
+
             self._dump_inbox_message(*data) for data in queryreturn
         ]}
 
@@ -953,20 +958,32 @@ class BMRPCDispatcher(object):
                     23, 'Bool expected in readStatus, saw %s instead.'
                     % type(readStatus))
             queryreturn = sqlQuery(
-                "SELECT read FROM inbox WHERE msgid=?", msgid)
+                "SELECT read FROM inbox WHERE msgid=?", sqlite3.Binary(msgid))
+            if len(queryreturn) < 1:
+                queryreturn = sqlQuery(
+                    "SELECT read FROM inbox WHERE msgid=CAST(? AS TEXT)", msgid)
             # UPDATE is slow, only update if status is different
             try:
                 if (queryreturn[0][0] == 1) != readStatus:
-                    sqlExecute(
+                    rowcount = sqlExecute(
                         "UPDATE inbox set read = ? WHERE msgid=?",
-                        readStatus, msgid)
+                        readStatus, sqlite3.Binary(msgid))
+                    if rowcount < 1:
+                        rowcount = sqlExecute(
+                            "UPDATE inbox set read = ? WHERE msgid=CAST(? AS TEXT)",
+                            readStatus, msgid)
                     queues.UISignalQueue.put(('changedInboxUnread', None))
             except IndexError:
                 pass
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received, message,"
-            " encodingtype, read FROM inbox WHERE msgid=?", msgid
+            " encodingtype, read FROM inbox WHERE msgid=?", sqlite3.Binary(msgid)
         )
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT msgid, toaddress, fromaddress, subject, received, message,"
+                " encodingtype, read FROM inbox WHERE msgid=CAST(? AS TEXT)", msgid
+            )
         try:
             return {"inboxMessage": [
                 self._dump_inbox_message(*queryreturn[0])]}
@@ -1018,7 +1035,7 @@ class BMRPCDispatcher(object):
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, received,"
             " message, encodingtype, read FROM inbox WHERE folder='inbox'"
-            " AND toAddress=?", toAddress)
+            " AND toAddress=?", dbstr(toAddress))
         return {"inboxMessages": [
             self._dump_inbox_message(*data) for data in queryreturn
         ]}
@@ -1035,8 +1052,14 @@ class BMRPCDispatcher(object):
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent WHERE msgid=?",
-            msgid
+            sqlite3.Binary(msgid)
         )
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
+                " message, encodingtype, status, ackdata FROM sent WHERE msgid=CAST(? AS TEXT)",
+                msgid
+            )
         try:
             return {"sentMessage": [
                 self._dump_sent_message(*queryreturn[0])
@@ -1055,7 +1078,7 @@ class BMRPCDispatcher(object):
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent"
             " WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime",
-            fromAddress
+            dbstr(fromAddress)
         )
         return {"sentMessages": [
             self._dump_sent_message(*data) for data in queryreturn
@@ -1072,8 +1095,14 @@ class BMRPCDispatcher(object):
         queryreturn = sqlQuery(
             "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
             " message, encodingtype, status, ackdata FROM sent"
-            " WHERE ackdata=?", ackData
+            " WHERE ackdata=?", sqlite3.Binary(ackData)
         )
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT msgid, toaddress, fromaddress, subject, lastactiontime,"
+                " message, encodingtype, status, ackdata FROM sent"
+                " WHERE ackdata=CAST(? AS TEXT)", ackData
+            )
 
         try:
             return {"sentMessage": [
@@ -1093,7 +1122,9 @@ class BMRPCDispatcher(object):
         # Trash if in inbox table
         helper_inbox.trash(msgid)
         # Trash if in sent table
-        sqlExecute("UPDATE sent SET folder='trash' WHERE msgid=?", msgid)
+        rowcount = sqlExecute("UPDATE sent SET folder='trash' WHERE msgid=?", sqlite3.Binary(msgid))
+        if rowcount < 1:
+            sqlExecute("UPDATE sent SET folder='trash' WHERE msgid=CAST(? AS TEXT)", msgid)
         return 'Trashed message (assuming message existed).'
 
     @command('trashInboxMessage')
@@ -1107,7 +1138,9 @@ class BMRPCDispatcher(object):
     def HandleTrashSentMessage(self, msgid):
         """Trash sent message by msgid (encoded in hex)."""
         msgid = self._decode(msgid, "hex")
-        sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
+        rowcount = sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', sqlite3.Binary(msgid))
+        if rowcount < 1:
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=CAST(? AS TEXT)''', msgid)
         return 'Trashed sent message (assuming message existed).'
 
     @command('sendMessage')
@@ -1150,9 +1183,9 @@ class BMRPCDispatcher(object):
 
         toLabel = ''
         queryreturn = sqlQuery(
-            "SELECT label FROM addressbook WHERE address=?", toAddress)
+            "SELECT label FROM addressbook WHERE address=?", dbstr(toAddress))
         try:
-            toLabel = queryreturn[0][0]
+            toLabel = queryreturn[0][0].decode("utf-8", "replace")
         except IndexError:
             pass
 
@@ -1217,9 +1250,12 @@ class BMRPCDispatcher(object):
             raise APIError(15, 'Invalid ackData object size.')
         ackdata = self._decode(ackdata, "hex")
         queryreturn = sqlQuery(
-            "SELECT status FROM sent where ackdata=?", ackdata)
+            "SELECT status FROM sent where ackdata=?", sqlite3.Binary(ackdata))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT status FROM sent where ackdata=CAST(? AS TEXT)", ackdata)
         try:
-            return queryreturn[0][0]
+            return queryreturn[0][0].decode("utf-8", "replace")
         except IndexError:
             return 'notfound'
 
@@ -1238,11 +1274,11 @@ class BMRPCDispatcher(object):
         # First we must check to see if the address is already in the
         # subscriptions list.
         queryreturn = sqlQuery(
-            "SELECT * FROM subscriptions WHERE address=?", address)
+            "SELECT * FROM subscriptions WHERE address=?", dbstr(address))
         if queryreturn:
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute(
-            "INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
+            "INSERT INTO subscriptions VALUES (?,?,?)", dbstr(label), dbstr(address), True)
         shared.reloadBroadcastSendersForWhichImWatching()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
@@ -1256,7 +1292,7 @@ class BMRPCDispatcher(object):
         """
 
         address = addBMIfNotPresent(address)
-        sqlExecute("DELETE FROM subscriptions WHERE address=?", address)
+        sqlExecute("DELETE FROM subscriptions WHERE address=?", dbstr(address))
         shared.reloadBroadcastSendersForWhichImWatching()
         queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         queues.UISignalQueue.put(('rerenderSubscriptions', ''))
@@ -1274,6 +1310,7 @@ class BMRPCDispatcher(object):
         data = []
         for label, address, enabled in queryreturn:
             label = shared.fixPotentiallyInvalidUTF8Data(label)
+            address = address.decode("utf-8", "replace")
             data.append({
                 'label': base64.b64encode(label),
                 'address': address,
@@ -1354,7 +1391,9 @@ class BMRPCDispatcher(object):
         """Trash a sent message by ackdata (hex encoded)"""
         # This API method should only be used when msgid is not available
         ackdata = self._decode(ackdata, "hex")
-        sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=?", ackdata)
+        rowcount = sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=?", sqlite3.Binary(ackdata))
+        if rowcount < 1:
+            sqlExecute("UPDATE sent SET folder='trash' WHERE ackdata=CAST(? AS TEXT)", ackdata)
         return 'Trashed sent message (assuming message existed).'
 
     @command('disseminatePubkey')
@@ -1421,19 +1460,29 @@ class BMRPCDispatcher(object):
         # use it we'll need to fill out a field in our inventory database
         # which is blank by default (first20bytesofencryptedmessage).
         queryreturn = sqlQuery(
-            "SELECT hash, payload FROM inventory WHERE tag = ''"
-            " and objecttype = 2")
+            "SELECT hash, payload FROM inventory WHERE tag = ?"
+            " and objecttype = 2", sqlite3.Binary(b""))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT hash, payload FROM inventory WHERE tag = CAST(? AS TEXT)"
+                " and objecttype = 2", b"")
         with SqlBulkExecute() as sql:
             for hash01, payload in queryreturn:
                 readPosition = 16  # Nonce length + time length
                 # Stream Number length
                 readPosition += decodeVarint(
                     payload[readPosition:readPosition + 10])[1]
-                t = (payload[readPosition:readPosition + 32], hash01)
-                sql.execute("UPDATE inventory SET tag=? WHERE hash=?", *t)
+                t = (sqlite3.Binary(payload[readPosition:readPosition + 32]), sqlite3.Binary(hash01))
+                _, rowcount = sql.execute("UPDATE inventory SET tag=? WHERE hash=?", *t)
+                if rowcount < 1:
+                    t = (sqlite3.Binary(payload[readPosition:readPosition + 32]), hash01)
+                    sql.execute("UPDATE inventory SET tag=? WHERE hash=CAST(? AS TEXT)", *t)
 
         queryreturn = sqlQuery(
-            "SELECT payload FROM inventory WHERE tag = ?", requestedHash)
+            "SELECT payload FROM inventory WHERE tag = ?", sqlite3.Binary(requestedHash))
+        if len(queryreturn) < 1:
+            queryreturn = sqlQuery(
+                "SELECT payload FROM inventory WHERE tag = CAST(? AS TEXT)", requestedHash)
         return {"receivedMessageDatas": [
             {'data': hexlify(payload)} for payload, in queryreturn
         ]}

@@ -10,10 +10,8 @@ import os
 import pickle  # nosec B403
 import threading
 import time
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from six.moves.collections_abc import Iterable
+import six
 
 import state
 from bmconfigparser import config
@@ -54,8 +52,8 @@ def json_serialize_knownnodes(output):
     Reorganize knownnodes dict and write it as JSON to output
     """
     _serialized = []
-    for stream, peers in knownNodes.iteritems():
-        for peer, info in peers.iteritems():
+    for stream, peers in six.iteritems(knownNodes):
+        for peer, info in six.iteritems(peers):
             info.update(rating=round(info.get('rating', 0), 2))
             _serialized.append({
                 'stream': stream, 'peer': peer._asdict(), 'info': info
@@ -87,7 +85,7 @@ def pickle_deserialize_old_knownnodes(source):
     global knownNodes
     knownNodes = pickle.load(source)  # nosec B301
     for stream in knownNodes.keys():
-        for node, params in knownNodes[stream].iteritems():
+        for node, params in six.iteritems(knownNodes[stream]):
             if isinstance(params, (float, int)):
                 addKnownNode(stream, node, params)
 
@@ -97,7 +95,7 @@ def saveKnownNodes(dirName=None):
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
-        with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
+        with open(os.path.join(dirName, 'knownnodes.dat'), 'w') as output:
             json_serialize_knownnodes(output)
 
 
@@ -108,6 +106,12 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
     Returns True if added a new node.
     """
     # pylint: disable=too-many-branches
+    if not isinstance(peer.host, str):
+        try:
+            peer = Peer(peer.host.decode("ascii"), peer.port)
+        except UnicodeDecodeError as err:
+            logger.warning("Invalid host: {}".format(peer.host.decode("ascii", "backslashreplace")))
+            return
     if isinstance(stream, Iterable):
         with knownNodesLock:
             for s in stream:
@@ -153,7 +157,7 @@ def createDefaultKnownNodes():
 def readKnownNodes():
     """Load knownnodes from filesystem"""
     try:
-        with open(state.appdata + 'knownnodes.dat', 'rb') as source:
+        with open(state.appdata + 'knownnodes.dat', 'r') as source:
             with knownNodesLock:
                 try:
                     json_deserialize_knownnodes(source)

@@ -4,12 +4,13 @@
 import time
 import random
 import state
+import six
 import addresses
 import protocol
-import connectionpool
+from network import connectionpool
 from network import dandelion_ins
-from objectracker import missingObjects
-from threads import StoppableThread
+from .objectracker import missingObjects
+from .threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):
@@ -29,7 +30,7 @@ class DownloadThread(StoppableThread):
         deadline = time.time() - self.requestExpires
         try:
             toDelete = [
-                k for k, v in missingObjects.iteritems()
+                k for k, v in six.iteritems(missingObjects)
                 if v < deadline]
         except RuntimeError:
             pass
@@ -68,11 +69,11 @@ class DownloadThread(StoppableThread):
                         continue
                     payload.extend(chunk)
                     chunkCount += 1
-                    missingObjects[chunk] = now
+                    missingObjects[bytes(chunk)] = now
                 if not chunkCount:
                     continue
                 payload[0:0] = addresses.encodeVarint(chunkCount)
-                i.append_write_buf(protocol.CreatePacket('getdata', payload))
+                i.append_write_buf(protocol.CreatePacket(b'getdata', payload))
                 self.logger.debug(
                     '%s:%i Requesting %i objects',
                     i.destination.host, i.destination.port, chunkCount)

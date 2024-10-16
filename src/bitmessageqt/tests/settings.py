@@ -2,7 +2,7 @@
 import threading
 import time
 
-from PyQt4 import QtCore, QtGui, QtTest
+from qtpy import QtCore, QtWidgets, QtTest
 
 from bmconfigparser import config
 from bitmessageqt import settings
@@ -48,8 +48,8 @@ class TestSettings(TestBase):
 
         def call_font_dialog():
             """A function to get the open font dialog and accept it"""
-            font_dialog = QtGui.QApplication.activeModalWidget()
-            self.assertTrue(isinstance(font_dialog, QtGui.QFontDialog))
+            font_dialog = QtWidgets.QApplication.activeModalWidget()
+            self.assertTrue(isinstance(font_dialog, QtWidgets.QFontDialog))
             selected_font = font_dialog.currentFont()
             self.assertEqual(
                 config.safeGet('bitmessagesettings', 'font'), '{},{}'.format(
@@ -64,7 +64,7 @@ class TestSettings(TestBase):
         def click_font_button():
             """Use QtTest to click the button"""
             QtTest.QTest.mouseClick(
-                self.dialog.buttonFont, QtCore.Qt.LeftButton)
+                self.dialog.buttonFont, QtCore.Qt.MouseButton.LeftButton)
 
         style_count = style_control.count()
         self.assertGreater(style_count, 1)

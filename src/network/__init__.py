@@ -20,7 +20,7 @@ __all__ = ["StoppableThread"]
 def start(config, state):
     """Start network threads"""
     from .announcethread import AnnounceThread
-    import connectionpool  # pylint: disable=relative-import
+    from network import connectionpool
     from .addrthread import AddrThread
     from .downloadthread import DownloadThread
     from .invthread import InvThread

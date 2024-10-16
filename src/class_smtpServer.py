@@ -12,6 +12,7 @@ import threading
 import time
 from email.header import decode_header
 from email.parser import Parser
+import sqlite3
 
 import queues
 from addresses import decodeAddress
@@ -20,6 +21,7 @@ from helper_ackPayload import genAckPayload
 from helper_sql import sqlExecute
 from network.threads import StoppableThread
 from version import softwareVersion
+from dbcompat import dbstr
 
 SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
@@ -88,19 +90,19 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            '',
-            toAddress,
-            ripe,
-            fromAddress,
-            subject,
-            message,
-            ackdata,
+            sqlite3.Binary(b''),
+            dbstr(toAddress),
+            sqlite3.Binary(ripe),
+            dbstr(fromAddress),
+            dbstr(subject),
+            dbstr(message),
+            sqlite3.Binary(ackdata),
             int(time.time()),  # sentTime (this will never change)
             int(time.time()),  # lastActionTime
             0,  # sleepTill time. This will get set when the POW gets done.
-            'msgqueued',
+            dbstr('msgqueued'),
             0,  # retryNumber
-            'sent',  # folder
+            dbstr('sent'),  # folder
             2,  # encodingtype
             # not necessary to have a TTL higher than 2 days
             min(config.getint('bitmessagesettings', 'ttl'), 86400 * 2)

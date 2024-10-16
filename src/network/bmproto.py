@@ -9,13 +9,14 @@ import re
 import socket
 import struct
 import time
+import six
 
 # magic imports!
 import addresses
-import knownnodes
+from network import knownnodes
 import protocol
 import state
-import connectionpool
+import network.connectionpool  # use long name to address recursive import
 from bmconfigparser import config
 from queues import objectProcessorQueue
 from randomtrackingdict import RandomTrackingDict
@@ -26,13 +27,26 @@ from network.bmobject import (
     BMObjectUnwantedStreamError
 )
 from network.proxy import ProxyError
+
 from network import dandelion_ins, invQueue, portCheckerQueue
-from node import Node, Peer
-from objectracker import ObjectTracker, missingObjects
+from .node import Node, Peer
+from .objectracker import ObjectTracker, missingObjects
 
 
 logger = logging.getLogger('default')
 
+
+def _hoststr(v):
+    if six.PY3:
+        return v
+    else:  # assume six.PY2
+        return str(v)
+
+def _restr(v):
+    if six.PY3:
+        return v.decode("utf-8", "replace")
+    else:  # assume six.PY2
+        return v
 
 class BMProtoError(ProxyError):
     """A Bitmessage Protocol Base Error"""
@@ -82,7 +96,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Process incoming header"""
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-        self.command = self.command.rstrip('\x00')
+        self.command = self.command.rstrip(b'\x00')
         if self.magic != protocol.magic:
             # skip 1 byte in order to sync
             self.set_state("bm_header", length=1)
@@ -107,7 +121,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.invalid = True
         retval = True
         if not self.fullyEstablished and self.command not in (
-                "error", "version", "verack"):
+                b"error", b"version", b"verack"):
             logger.error(
                 'Received command %s before connection was fully'
                 ' established, ignoring', self.command)
@@ -115,7 +129,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.invalid:
             try:
                 retval = getattr(
-                    self, "bm_command_" + str(self.command).lower())()
+                    self, "bm_command_" + self.command.decode("utf-8", "replace").lower())()
             except AttributeError:
                 # unimplemented command
                 logger.debug('unimplemented command %s', self.command)
@@ -168,17 +182,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Decode node details from the payload"""
         # protocol.checkIPAddress()
         services, host, port = self.decode_payload_content("Q16sH")
-        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
-        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+        if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+            host = socket.inet_ntop(socket.AF_INET, _hoststr(host[12:16]))
+        elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
-            host = base64.b32encode(host[6:]).lower() + ".onion"
+            host = base64.b32encode(host[6:]).lower() + b".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, str(host))
-        if host == "":
+            host = socket.inet_ntop(socket.AF_INET6, _hoststr(host))
+        if host == b"":
             # This can happen on Windows systems which are not 64-bit
             # compatible so let us drop the IPv6 address.
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, _hoststr(host[12:16]))
 
         return Node(services, host, port)
 
@@ -334,7 +348,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if now < self.skipUntil:
             return True
         for i in items:
-            self.pendingUpload[str(i)] = now
+            self.pendingUpload[i] = now
         return True
 
     def _command_inv(self, extend_dandelion_stem=False):
@@ -353,7 +367,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if extend_dandelion_stem and not dandelion_ins.enabled:
             return True
 
-        for i in map(str, items):
+        for i in items:
             if i in state.Inventory and not dandelion_ins.hasHash(i):
                 continue
             if extend_dandelion_stem and not dandelion_ins.hasHash(i):
@@ -409,13 +423,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         try:
             self.object.checkObjectByType()
+            if six.PY2:
+                data_buffer = buffer(self.object.data)
+            else:  # assume six.PY3
+                data_buffer = memoryview(self.object.data)
             objectProcessorQueue.put((
-                self.object.objectType, buffer(self.object.data)))  # noqa: F821
+                self.object.objectType, data_buffer))  # noqa: F821
         except BMObjectInvalidError:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
         else:
             try:
-                del missingObjects[self.object.inventoryHash]
+                del missingObjects[bytes(self.object.inventoryHash)]
             except KeyError:
                 pass
 
@@ -424,10 +442,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             dandelion_ins.removeHash(
                 self.object.inventoryHash, "cycle detection")
 
+        if six.PY2:
+            object_buffer = buffer(self.payload[objectOffset:])
+            tag_buffer = buffer(self.object.tag)
+        else:  # assume six.PY3
+            object_buffer = memoryview(self.payload[objectOffset:])
+            tag_buffer = memoryview(self.object.tag)
         state.Inventory[self.object.inventoryHash] = (
             self.object.objectType, self.object.streamNumber,
-            buffer(self.payload[objectOffset:]), self.object.expiresTime,  # noqa: F821
-            buffer(self.object.tag)  # noqa: F821
+            object_buffer, self.object.expiresTime,  # noqa: F821
+            tag_buffer  # noqa: F821
         )
         self.handleReceivedObject(
             self.object.streamNumber, self.object.inventoryHash)
@@ -443,11 +467,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Incoming addresses, process them"""
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
-            ip = str(ip)
             if (
-                stream not in connectionpool.pool.streams
+                stream not in network.connectionpool.pool.streams
                 # FIXME: should check against complete list
-                or ip.startswith('bootstrap')
+                or ip.decode("utf-8", "replace").startswith('bootstrap')
             ):
                 continue
             decodedIP = protocol.checkIPAddress(ip)
@@ -477,7 +500,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_ping(self):
         """Incoming ping, respond to it."""
-        self.append_write_buf(protocol.CreatePacket('pong'))
+        self.append_write_buf(protocol.CreatePacket(b'pong'))
         return True
 
     @staticmethod
@@ -526,21 +549,21 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         logger.debug(
             'remote node incoming address: %s:%i',
             self.destination.host, self.peerNode.port)
-        logger.debug('user agent: %s', self.userAgent)
+        logger.debug('user agent: %s', self.userAgent.decode("utf-8", "replace"))
         logger.debug('streams: [%s]', ','.join(map(str, self.streams)))
         if not self.peerValidityChecks():
             # ABORT afterwards
             return True
-        self.append_write_buf(protocol.CreatePacket('verack'))
+        self.append_write_buf(protocol.CreatePacket(b'verack'))
         self.verackSent = True
         ua_valid = re.match(
-            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', self.userAgent)
+            r'^/[a-zA-Z]+:[0-9]+\.?[\w\s\(\)\./:;-]*/$', _restr(self.userAgent))
         if not ua_valid:
-            self.userAgent = '/INVALID:0/'
+            self.userAgent = b'/INVALID:0/'
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled, True,
+                network.connectionpool.pool.streams, dandelion_ins.enabled, True,
                 nodeid=self.nodeid))
             logger.debug(
                 '%(host)s:%(port)i sending version',
@@ -596,7 +619,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closed connection to %s because there is no overlapping'
                 ' interest in streams.', self.destination)
             return False
-        if connectionpool.pool.inboundConnections.get(
+        if network.connectionpool.pool.inboundConnections.get(
                 self.destination):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
@@ -614,8 +637,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # or server full report the same error to counter deanonymisation
             if (
                 Peer(self.destination.host, self.peerNode.port)
-                in connectionpool.pool.inboundConnections
-                or len(connectionpool.pool)
+                in network.connectionpool.pool.inboundConnections
+                or len(network.connectionpool.pool)
                 > config.safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
                 + config.safeGetInt(
@@ -627,7 +650,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     'Closed connection to %s due to server full'
                     ' or duplicate inbound/outbound.', self.destination)
                 return False
-        if connectionpool.pool.isAlreadyConnected(self.nonce):
+        if network.connectionpool.pool.isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="I'm connected to myself. Closing connection.",
                 fatal=2))
@@ -641,7 +664,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):
         """Stop downloading object *hashId*"""
-        for connection in connectionpool.pool.connections():
+        for connection in network.connectionpool.pool.connections():
             try:
                 del connection.objectsNewToMe[hashId]
             except KeyError:
@@ -653,7 +676,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 except KeyError:
                     pass
         try:
-            del missingObjects[hashId]
+            del missingObjects[bytes(hashId)]
         except KeyError:
             pass
 

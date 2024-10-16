@@ -9,21 +9,27 @@ import sys
 import time
 import random
 
-import asyncore_pollchoose as asyncore
-import knownnodes
+from network import asyncore_pollchoose as asyncore
+from network import knownnodes
 import protocol
 import state
 from bmconfigparser import config
-from connectionchooser import chooseConnection
-from node import Peer
-from proxy import Proxy
-from tcp import (
+from .connectionchooser import chooseConnection
+from .node import Peer
+from .proxy import Proxy
+from .tcp import (
     bootstrap, Socks4aBMConnection, Socks5BMConnection,
     TCPConnection, TCPServer)
-from udp import UDPSocket
+from .udp import UDPSocket
 
 logger = logging.getLogger('default')
 
+
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
 
 class BMConnectionPool(object):
     """Pool of all existing connections"""
@@ -78,7 +84,7 @@ class BMConnectionPool(object):
         Shortcut for combined list of connections from
         `inboundConnections` and `outboundConnections` dicts
         """
-        return self.inboundConnections.values() + self.outboundConnections.values()
+        return list(self.inboundConnections.values()) + list(self.outboundConnections.values())
 
     def establishedConnections(self):
         """Shortcut for list of connections having fullyEstablished == True"""
@@ -160,8 +166,8 @@ class BMConnectionPool(object):
     @staticmethod
     def getListeningIP():
         """What IP are we supposed to be listening on?"""
-        if config.safeGet(
-                "bitmessagesettings", "onionhostname", "").endswith(".onion"):
+        if _ends_with(config.safeGet(
+                "bitmessagesettings", "onionhostname", ""), ".onion"):
             host = config.safeGet(
                 "bitmessagesettings", "onionbindip")
         else:
@@ -314,7 +320,7 @@ class BMConnectionPool(object):
                         continue
 
                     try:
-                        if chosen.host.endswith(".onion") and Proxy.onion_proxy:
+                        if _ends_with(chosen.host, ".onion") and Proxy.onion_proxy:
                             if onionsocksproxytype == "SOCKS5":
                                 self.addConnection(Socks5BMConnection(chosen))
                             elif onionsocksproxytype == "SOCKS4a":
@@ -381,14 +387,14 @@ class BMConnectionPool(object):
                 minTx -= 300 - 20
             if i.lastTx < minTx:
                 if i.fullyEstablished:
-                    i.append_write_buf(protocol.CreatePacket('ping'))
+                    i.append_write_buf(protocol.CreatePacket(b'ping'))
                 else:
                     i.close_reason = "Timeout (%is)" % (
                         time.time() - i.lastTx)
                     i.set_state("close")
         for i in (
             self.connections()
-            + self.listeningSockets.values() + self.udpSockets.values()
+            + list(self.listeningSockets.values()) + list(self.udpSockets.values())
         ):
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

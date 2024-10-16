@@ -6,6 +6,7 @@ and suggest how it may be installed
 import os
 import re
 import sys
+import six
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -17,6 +18,7 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     )
 
 import logging  # noqa:E402
+from distutils import version
 import subprocess  # nosec B404
 
 from importlib import import_module
@@ -53,23 +55,23 @@ PACKAGE_MANAGER = {
 }
 
 PACKAGES = {
-    "PyQt4": {
-        "OpenBSD": "py-qt4",
-        "FreeBSD": "py27-qt4",
-        "Debian": "python-qt4",
-        "Ubuntu": "python-qt4",
-        "Ubuntu 12": "python-qt4",
-        "Ubuntu 20": "",
-        "openSUSE": "python-qt",
-        "Fedora": "PyQt4",
-        "Guix": "python2-pyqt@4.11.4",
-        "Gentoo": "dev-python/PyQt4",
+    "qtpy": {
+        "OpenBSD": "py-qtpy",
+        "FreeBSD": "py27-QtPy",
+        "Debian": "python-qtpy",
+        "Ubuntu": "python-qtpy",
+        "Ubuntu 12": "python-qtpy",
+        "Ubuntu 20": "python-qtpy",
+        "openSUSE": "python-QtPy",
+        "Fedora": "python2-QtPy",
+        "Guix": "",
+        "Gentoo": "dev-python/QtPy",
         "optional": True,
         "description":
-        "You only need PyQt if you want to use the GUI."
+        "You only need qtpy if you want to use the GUI."
         " When only running as a daemon, this can be skipped.\n"
-        "However, you would have to install it manually"
-        " because setuptools does not support PyQt."
+        "Also maybe you need to install PyQt5 or PyQt4"
+        " if your package manager not installs it as qtpy dependency"
     },
     "msgpack": {
         "OpenBSD": "py-msgpack",
@@ -156,19 +158,19 @@ detectOS.result = None
 def detectOSRelease():
     """Detecting the release of OS"""
     with open("/etc/os-release", 'r') as osRelease:
-        version = None
+        ver = None
         for line in osRelease:
             if line.startswith("NAME="):
                 detectOS.result = OS_RELEASE.get(
                     line.replace('"', '').split("=")[-1].strip().lower())
             elif line.startswith("VERSION_ID="):
                 try:
-                    version = float(line.split("=")[1].replace("\"", ""))
+                    ver = float(line.split("=")[1].replace("\"", ""))
                 except ValueError:
                     pass
-        if detectOS.result == "Ubuntu" and version < 14:
+        if detectOS.result == "Ubuntu" and ver < 14:
             detectOS.result = "Ubuntu 12"
-        elif detectOS.result == "Ubuntu" and version >= 20:
+        elif detectOS.result == "Ubuntu" and ver >= 20:
             detectOS.result = "Ubuntu 20"
 
 
@@ -191,7 +193,7 @@ def try_import(module, log_extra=False):
 def check_ripemd160():
     """Check availability of the RIPEMD160 hash function"""
     try:
-        from fallback import RIPEMD160Hash  # pylint: disable=relative-import
+        from fallback import RIPEMD160Hash
     except ImportError:
         return False
     return RIPEMD160Hash is not None
@@ -380,33 +382,71 @@ def check_curses():
 def check_pyqt():
     """Do pyqt dependency check.
 
-    Here we are checking for PyQt4 with its version, as for it require
-    PyQt 4.8 or later.
+    Here we are checking for qtpy with its version, as for it require
+    qtpy.
     """
+    # pylint: disable=no-member
+    try:
+        import qtpy
+    except ImportError:
+        logger.error(
+            'PyBitmessage requires qtpy, and PyQt5 or PyQt4, '
+            ' PyQt 4.8 or later and Qt 4.7 or later.')
+        return False
+
+    sip_found = False
+    try:
+        import sip
+        sip.setapi("QString", 2)
+        sip.setapi("QVariant", 2)
+        sip_found = True
+    except ImportError:
+        pass
+
     QtCore = try_import(
-        'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
+        'qtpy.QtCore', 'PyBitmessage requires qtpy and Qt 4.7 or later.')
 
     if not QtCore:
         return False
 
-    logger.info('PyQt Version: %s', QtCore.PYQT_VERSION_STR)
-    logger.info('Qt Version: %s', QtCore.QT_VERSION_STR)
+    try:
+        logger.info('PyQt Version: %s', QtCore.PYQT_VERSION_STR)
+    except AttributeError:
+        logger.info('Can be PySide..')
+    try:
+        logger.info('Qt Version: %s', QtCore.__version__)
+    except AttributeError:
+        # Can be PySide..
+        pass
     passed = True
-    if QtCore.PYQT_VERSION < 0x40800:
-        logger.error(
-            'This version of PyQt is too old. PyBitmessage requries'
-            ' PyQt 4.8 or later.')
-        passed = False
-    if QtCore.QT_VERSION < 0x40700:
-        logger.error(
-            'This version of Qt is too old. PyBitmessage requries'
-            ' Qt 4.7 or later.')
-        passed = False
+
+    try:
+        if version.LooseVersion(QtCore.PYQT_VERSION_STR) < '4.8':
+            logger.error(
+                'This version of PyQt is too old. PyBitmessage requries'
+                ' PyQt 4.8 or later.')
+            passed = False
+    except AttributeError:
+        # Can be PySide..
+        pass
+    try:
+        if version.LooseVersion(QtCore.__version__) < '4.7':
+            logger.error(
+                'This version of Qt is too old. PyBitmessage requries'
+                ' Qt 4.7 or later.')
+            passed = False
+    except AttributeError:
+        # Can be PySide..
+        pass
+
+    if passed and not sip_found:
+        logger.info("sip is not found although PyQt is found")
+        return False
+
     return passed
 
-
 def check_msgpack():
-    """Do sgpack module check.
+    """Do msgpack module check.
 
     simply checking if msgpack package with all its dependency
     is available or not as recommended for messages coding.
@@ -435,14 +475,9 @@ def check_dependencies(verbose=False, optional=False):
     logger.info('Python version: %s', sys.version)
     if sys.hexversion < 0x20704F0:
         logger.error(
-            'PyBitmessage requires Python 2.7.4 or greater'
-            ' (but not Python 3+)')
+            'PyBitmessage requires Python 2.7.4 or greater.'
+            ' Python 2.7.18 is recommended.')
         has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required. Python 2.7.18 is recommended.')
-        sys.exit()
 
     # FIXME: This needs to be uncommented when more of the code is python3 compatible
     # if sys.hexversion >= 0x3000000 and sys.hexversion < 0x3060000:
