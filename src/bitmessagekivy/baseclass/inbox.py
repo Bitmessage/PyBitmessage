@@ -23,7 +23,7 @@ class Inbox(Screen):
 
     def __init__(self, *args, **kwargs):
         """Initialize Kivy variables and set up the UI"""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # pylint: disable=missing-super-argument
         self.kivy_running_app = App.get_running_app()
         self.kivy_state = kivy_state_variables()
         self.image_dir = load_image_path()
