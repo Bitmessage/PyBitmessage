@@ -40,7 +40,7 @@ class Draft(Screen):
     def init_ui(self, dt=0):
         """Initialize the UI and load draft messages"""
         self.load_draft()
-        logger.debug(f"UI initialized with dt: {dt}")
+        logger.debug(f"UI initialized with dt: {dt}")  # noqa: E999
 
     def load_draft(self, where="", what=""):
         """Load the list of draft messages"""
