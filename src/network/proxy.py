@@ -6,13 +6,19 @@ import logging
 import socket
 import time
 
-import asyncore_pollchoose as asyncore
-from advanceddispatcher import AdvancedDispatcher
+from network import asyncore_pollchoose as asyncore
+from .advanceddispatcher import AdvancedDispatcher
 from bmconfigparser import config
-from node import Peer
+from .node import Peer
 
 logger = logging.getLogger('default')
 
+
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
 
 class ProxyError(Exception):
     """Base proxy exception class"""
@@ -125,7 +131,7 @@ class Proxy(AdvancedDispatcher):
             self.auth = None
         self.connect(
             self.onion_proxy
-            if address.host.endswith(".onion") and self.onion_proxy else
+            if _ends_with(address.host, ".onion") and self.onion_proxy else
             self.proxy
         )
 

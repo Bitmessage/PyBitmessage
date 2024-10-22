@@ -32,6 +32,7 @@ def get_plugins(group, point='', name=None, fallback=None):
             except (AttributeError,
                     ImportError,
                     ValueError,
+                    RuntimeError,  # PyQt for example
                     pkg_resources.DistributionNotFound,
                     pkg_resources.UnknownExtra):
                 logger.debug(

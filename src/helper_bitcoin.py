@@ -19,17 +19,17 @@ def calculateBitcoinAddressFromPubkey(pubkey):
     sha = hashlib.new('sha256')
     sha.update(pubkey)
     ripe.update(sha.digest())
-    ripeWithProdnetPrefix = '\x00' + ripe.digest()
+    ripeWithProdnetPrefix = b'\x00' + ripe.digest()
 
     checksum = hashlib.sha256(hashlib.sha256(
         ripeWithProdnetPrefix).digest()).digest()[:4]
     binaryBitcoinAddress = ripeWithProdnetPrefix + checksum
     numberOfZeroBytesOnBinaryBitcoinAddress = 0
-    while binaryBitcoinAddress[0] == '\x00':
+    while binaryBitcoinAddress[0] == b'\x00':
         numberOfZeroBytesOnBinaryBitcoinAddress += 1
         binaryBitcoinAddress = binaryBitcoinAddress[1:]
     base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
-    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
+    return b"1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
 
 
 def calculateTestnetAddressFromPubkey(pubkey):
@@ -43,14 +43,14 @@ def calculateTestnetAddressFromPubkey(pubkey):
     sha = hashlib.new('sha256')
     sha.update(pubkey)
     ripe.update(sha.digest())
-    ripeWithProdnetPrefix = '\x6F' + ripe.digest()
+    ripeWithProdnetPrefix = b'\x6F' + ripe.digest()
 
     checksum = hashlib.sha256(hashlib.sha256(
         ripeWithProdnetPrefix).digest()).digest()[:4]
     binaryBitcoinAddress = ripeWithProdnetPrefix + checksum
     numberOfZeroBytesOnBinaryBitcoinAddress = 0
-    while binaryBitcoinAddress[0] == '\x00':
+    while binaryBitcoinAddress[0] == b'\x00':
         numberOfZeroBytesOnBinaryBitcoinAddress += 1
         binaryBitcoinAddress = binaryBitcoinAddress[1:]
     base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
-    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
+    return b"1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded

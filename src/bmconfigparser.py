@@ -9,19 +9,24 @@ from datetime import datetime
 
 from six import string_types
 from six.moves import configparser
+from unqstr import ustr
 
 try:
     import state
 except ImportError:
     from pybitmessage import state
 
-SafeConfigParser = configparser.SafeConfigParser
+try:
+    SafeConfigParser = configparser.SafeConfigParser
+except AttributeError:
+    # alpine linux, python3.12
+    SafeConfigParser = configparser.ConfigParser
 config_ready = Event()
 
 
 class BMConfigParser(SafeConfigParser):
     """
-    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    Singleton class inherited from :class:`configparser.SafeConfigParser`
     with additional methods specific to bitmessage config.
     """
     # pylint: disable=too-many-ancestors
@@ -114,7 +119,8 @@ class BMConfigParser(SafeConfigParser):
         """Return a list of local bitmessage addresses (from section labels)"""
         sections = [x for x in self.sections() if x.startswith('BM-')]
         if sort:
-            sections.sort(key=lambda item: self.get(item, 'label').lower())
+            sections.sort(key=lambda item: ustr(self.get(item, 'label')) \
+                    .lower())
         return sections
 
     def save(self):

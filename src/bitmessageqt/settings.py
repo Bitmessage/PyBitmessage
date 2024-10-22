@@ -1,13 +1,14 @@
 """
-This module setting file is for settings
+SettingsDialog class definition
 """
-import ConfigParser
+from six.moves import configparser
 import os
 import sys
 import tempfile
 
+from qtpy import QtCore, QtGui, QtWidgets
 import six
-from PyQt4 import QtCore, QtGui
+from unqstr import ustr
 
 import debug
 import defaults
@@ -16,7 +17,7 @@ import openclpow
 import paths
 import queues
 import state
-import widgets
+from bitmessageqt import widgets
 from bmconfigparser import config as config_obj
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
@@ -26,12 +27,18 @@ from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
 
+try:
+    SafeConfigParser = configparser.SafeConfigParser
+except AttributeError:
+    # alpine linux, python3.12
+    SafeConfigParser = configparser.ConfigParser
+
 def getSOCKSProxyType(config):
     """Get user socksproxytype setting from *config*"""
     try:
-        result = ConfigParser.SafeConfigParser.get(
+        result = SafeConfigParser.get(
             config, 'bitmessagesettings', 'socksproxytype')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         return None
     else:
         if result.lower() in ('', 'none', 'false'):
@@ -39,14 +46,14 @@ def getSOCKSProxyType(config):
     return result
 
 
-class SettingsDialog(QtGui.QDialog):
+class SettingsDialog(QtWidgets.QDialog):
     """The "Settings" dialog"""
     # pylint: disable=too-many-instance-attributes
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)
         widgets.load('settings.ui', self)
 
-        self.app = QtGui.QApplication.instance()
+        self.app = QtWidgets.QApplication.instance()
         self.parent = parent
         self.firstrun = firstrun
         self.config = config_obj
@@ -83,14 +90,14 @@ class SettingsDialog(QtGui.QDialog):
             self.tabWidgetSettings.setCurrentIndex(
                 self.tabWidgetSettings.indexOf(self.tabNetworkSettings)
             )
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        QtWidgets.QWidget.resize(self, QtWidgets.QWidget.sizeHint(self))
 
     def adjust_from_config(self, config):
         """Adjust all widgets state according to config settings"""
         # pylint: disable=too-many-branches,too-many-statements
 
         current_style = self.app.get_windowstyle()
-        for i, sk in enumerate(QtGui.QStyleFactory.keys()):
+        for i, sk in enumerate(QtWidgets.QStyleFactory.keys()):
             self.comboBoxStyle.addItem(sk)
             if sk == current_style:
                 self.comboBoxStyle.setCurrentIndex(i)
@@ -187,7 +194,7 @@ class SettingsDialog(QtGui.QDialog):
             else:
                 if self.checkBoxOnionOnly.isChecked():
                     self.checkBoxOnionOnly.setText(
-                        self.checkBoxOnionOnly.text() + ", " + _translate(
+                        ustr(self.checkBoxOnionOnly.text()) + ", " + _translate(
                             "MainWindow", "may cause connection problems!"))
                     self.checkBoxOnionOnly.setStyleSheet(
                         "QCheckBox { color : red; }")
@@ -324,10 +331,10 @@ class SettingsDialog(QtGui.QDialog):
             _translate("MainWindow", "Testing..."))
         nc = namecoin.namecoinConnection({
             'type': self.getNamecoinType(),
-            'host': str(self.lineEditNamecoinHost.text().toUtf8()),
-            'port': str(self.lineEditNamecoinPort.text().toUtf8()),
-            'user': str(self.lineEditNamecoinUser.text().toUtf8()),
-            'password': str(self.lineEditNamecoinPassword.text().toUtf8())
+            'host': ustr(self.lineEditNamecoinHost.text()),
+            'port': ustr(self.lineEditNamecoinPort.text()),
+            'user': ustr(self.lineEditNamecoinUser.text()),
+            'password': ustr(self.lineEditNamecoinPassword.text())
         })
         status, text = nc.test()
         self.labelNamecoinTestResult.setText(text)
@@ -342,7 +349,7 @@ class SettingsDialog(QtGui.QDialog):
 
     def choose_font(self):
         """Show the font selection dialog"""
-        font, valid = QtGui.QFontDialog.getFont()
+        font, valid = QtWidgets.QFontDialog.getFont()
         if valid:
             self.save_font_setting(font)
 
@@ -372,7 +379,7 @@ class SettingsDialog(QtGui.QDialog):
         self.config.set('bitmessagesettings', 'replybelow', str(
             self.checkBoxReplyBelow.isChecked()))
 
-        window_style = str(self.comboBoxStyle.currentText())
+        window_style = ustr(self.comboBoxStyle.currentText())
         if self.app.get_windowstyle() != window_style or self.config.safeGet(
             'bitmessagesettings', 'font'
         ) != self.font_setting:
@@ -386,8 +393,8 @@ class SettingsDialog(QtGui.QDialog):
                         " the window style or default font."), 1)
             ))
 
-        lang = str(self.languageComboBox.itemData(
-            self.languageComboBox.currentIndex()).toString())
+        lang = ustr(self.languageComboBox.itemData(
+            self.languageComboBox.currentIndex()))
         self.config.set('bitmessagesettings', 'userlocale', lang)
         self.parent.change_translation()
 
@@ -469,7 +476,7 @@ class SettingsDialog(QtGui.QDialog):
             self.config.set('bitmessagesettings', 'maxuploadrate', str(
                 int(float(self.lineEditMaxUploadRate.text()))))
         except ValueError:
-            QtGui.QMessageBox.about(
+            QtWidgets.QMessageBox.about(
                 self, _translate("MainWindow", "Number needed"),
                 _translate(
                     "MainWindow",
@@ -486,13 +493,13 @@ class SettingsDialog(QtGui.QDialog):
 
         self.config.set(
             'bitmessagesettings', 'namecoinrpctype', self.getNamecoinType())
-        self.config.set('bitmessagesettings', 'namecoinrpchost', str(
+        self.config.set('bitmessagesettings', 'namecoinrpchost', ustr(
             self.lineEditNamecoinHost.text()))
-        self.config.set('bitmessagesettings', 'namecoinrpcport', str(
+        self.config.set('bitmessagesettings', 'namecoinrpcport', ustr(
             self.lineEditNamecoinPort.text()))
-        self.config.set('bitmessagesettings', 'namecoinrpcuser', str(
+        self.config.set('bitmessagesettings', 'namecoinrpcuser', ustr(
             self.lineEditNamecoinUser.text()))
-        self.config.set('bitmessagesettings', 'namecoinrpcpassword', str(
+        self.config.set('bitmessagesettings', 'namecoinrpcpassword', ustr(
             self.lineEditNamecoinPassword.text()))
         self.parent.resetNamecoinConnection()
 
@@ -510,11 +517,11 @@ class SettingsDialog(QtGui.QDialog):
                     float(self.lineEditSmallMessageDifficulty.text())
                     * defaults.networkDefaultPayloadLengthExtraBytes)))
 
-        if self.comboBoxOpenCL.currentText().toUtf8() != self.config.safeGet(
-                'bitmessagesettings', 'opencl'):
+        if ustr(self.comboBoxOpenCL.currentText()) != ustr(self.config.safeGet(
+                'bitmessagesettings', 'opencl')):
             self.config.set(
                 'bitmessagesettings', 'opencl',
-                str(self.comboBoxOpenCL.currentText()))
+                ustr(self.comboBoxOpenCL.currentText()))
             queues.workerQueue.put(('resetPoW', ''))
 
         acceptableDifficultyChanged = False
@@ -524,7 +531,7 @@ class SettingsDialog(QtGui.QDialog):
             or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
         ):
             if self.config.get(
-                    'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
+                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
             ) != str(int(
                 float(self.lineEditMaxAcceptableTotalDifficulty.text())
                     * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)):
@@ -541,7 +548,7 @@ class SettingsDialog(QtGui.QDialog):
             or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
         ):
             if self.config.get(
-                    'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
+                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
             ) != str(int(
                 float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
                     * defaults.networkDefaultPayloadLengthExtraBytes)):
@@ -593,7 +600,7 @@ class SettingsDialog(QtGui.QDialog):
             if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
-                QtGui.QMessageBox.about(
+                QtWidgets.QMessageBox.about(
                     self,
                     _translate("MainWindow", "Will not resend ever"),
                     _translate(

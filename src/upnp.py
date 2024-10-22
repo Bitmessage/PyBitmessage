@@ -4,13 +4,14 @@ Complete UPnP port forwarding implementation in separate thread.
 Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
 """
 
-import httplib
+import six
+from six.moves import http_client as httplib
 import re
 import socket
 import time
-import urllib2
+from six.moves.urllib.request import urlopen
 from random import randint
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from xml.dom.minidom import Document  # nosec B408
 from defusedxml.minidom import parseString
 
@@ -93,12 +94,12 @@ class Router:  # pylint: disable=old-style-class
 
         self.address = address
 
-        row = ssdpResponse.split('\r\n')
+        row = ssdpResponse.split(b'\r\n')
         header = {}
         for i in range(1, len(row)):
-            part = row[i].split(': ')
+            part = row[i].split(b': ')
             if len(part) == 2:
-                header[part[0].lower()] = part[1]
+                header[part[0].decode("utf-8", "replace").lower()] = part[1].decode("utf-8", "replace")
 
         try:
             self.routerPath = urlparse(header['location'])
@@ -108,7 +109,7 @@ class Router:  # pylint: disable=old-style-class
             logger.error("UPnP: missing location header")
 
         # get the profile xml file and read it into a variable
-        directory = urllib2.urlopen(header['location']).read()
+        directory = urlopen(header['location']).read()
 
         # create a DOM object that represents the `directory` document
         dom = parseString(directory)
@@ -268,9 +269,12 @@ class uPnPThread(StoppableThread):
                             with knownnodes.knownNodesLock:
                                 knownnodes.addKnownNode(
                                     1, self_peer, is_self=True)
-                        queues.UISignalQueue.put(('updateStatusBar', tr._translate(
-                            "MainWindow", 'UPnP port mapping established on port %1'
-                        ).arg(str(self.extPort))))
+                        queues.UISignalQueue.put((
+                            'updateStatusBar', tr._translate(
+                                "MainWindow",
+                                "UPnP port mapping established on port {0}"
+                            ).format(self.extPort)
+                        ))
                         break
             except socket.timeout:
                 pass
@@ -315,7 +319,7 @@ class uPnPThread(StoppableThread):
 
         try:
             logger.debug("Sending UPnP query")
-            self.sock.sendto(ssdpRequest, (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
+            self.sock.sendto(ssdpRequest.encode("utf8", "replace"), (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
         except:  # noqa:E722
             logger.exception("UPnP send query failed")
 

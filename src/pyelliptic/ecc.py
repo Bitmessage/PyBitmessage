@@ -7,6 +7,7 @@ Asymmetric cryptography using elliptic curves
 
 from hashlib import sha512
 from struct import pack, unpack
+from ctypes import c_char_p
 
 from .cipher import Cipher
 from .hash import equals, hmac_sha256
@@ -218,8 +219,8 @@ class ECC(object):
             if other_key == 0:
                 raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
 
-            other_pub_key_x = OpenSSL.BN_bin2bn(pubkey_x, len(pubkey_x), None)
-            other_pub_key_y = OpenSSL.BN_bin2bn(pubkey_y, len(pubkey_y), None)
+            other_pub_key_x = OpenSSL.BN_bin2bn(c_char_p(bytes(pubkey_x)), len(pubkey_x), None)
+            other_pub_key_y = OpenSSL.BN_bin2bn(c_char_p(bytes(pubkey_y)), len(pubkey_y), None)
 
             other_group = OpenSSL.EC_KEY_get0_group(other_key)
             other_pub_key = OpenSSL.EC_POINT_new(other_group)

@@ -2,13 +2,13 @@
 Process data incoming from network
 """
 import errno
-import Queue
+from six.moves import queue as Queue
 import socket
 
-import connectionpool
+from network import connectionpool
 from network.advanceddispatcher import UnknownStateError
 from network import receiveDataQueue
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 class ReceiveQueueThread(StoppableThread):

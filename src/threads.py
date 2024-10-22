@@ -14,6 +14,7 @@ There are also other threads in the `.network` package.
 """
 
 import threading
+import six
 
 from class_addressGenerator import addressGenerator
 from class_objectProcessor import objectProcessor
@@ -32,12 +33,13 @@ else:
         """Set the thread name for external use (visible from the OS)."""
         prctl.set_name(name)
 
-    def _thread_name_hack(self):
-        set_thread_name(self.name)
-        threading.Thread.__bootstrap_original__(self)
-    # pylint: disable=protected-access
-    threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
-    threading.Thread._Thread__bootstrap = _thread_name_hack
+    if six.PY2:
+        def _thread_name_hack(self):
+            set_thread_name(self.name)
+            threading.Thread.__bootstrap_original__(self)
+        # pylint: disable=protected-access
+        threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
+        threading.Thread._Thread__bootstrap = _thread_name_hack
 
 
 printLock = threading.Lock()

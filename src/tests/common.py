@@ -1,7 +1,7 @@
 import os
-import sys
 import time
 import unittest
+import six
 
 
 _files = (
@@ -33,7 +33,7 @@ def checkup():
 
 def skip_python3():
     """Raise unittest.SkipTest() if detected python3"""
-    if sys.hexversion >= 0x3000000:
+    if six.PY3:
         raise unittest.SkipTest('Module is not ported to python3')
 
 

@@ -4,7 +4,7 @@ import atexit
 import unittest
 
 try:
-    from PyQt5 import QtGui, QtWidgets
+    from qtpy import QtGui, QtWidgets
     from xvfbwrapper import Xvfb
     from pybitmessage import qidenticon
 except ImportError:

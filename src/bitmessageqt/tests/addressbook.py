@@ -1,7 +1,7 @@
 import helper_addressbook
 from bitmessageqt.support import createAddressIfNeeded
 
-from main import TestBase
+from .main import TestBase
 
 
 class TestAddressbook(TestBase):

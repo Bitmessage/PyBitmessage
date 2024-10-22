@@ -1,5 +1,5 @@
 """
-A thread for creating addresses
+addressGenerator thread class definition
 """
 
 import time
@@ -211,8 +211,8 @@ class addressGenerator(StoppableThread):
                         'updateStatusBar',
                         _translate(
                             "MainWindow",
-                            "Generating %1 new addresses."
-                        ).arg(str(numberOfAddressesToMake))
+                            "Generating {0} new addresses."
+                        ).format(str(numberOfAddressesToMake))
                     ))
                 signingKeyNonce = 0
                 encryptionKeyNonce = 1
@@ -302,9 +302,9 @@ class addressGenerator(StoppableThread):
                                 'updateStatusBar',
                                 _translate(
                                     "MainWindow",
-                                    "%1 is already in 'Your Identities'."
+                                    "{0} is already in 'Your Identities'."
                                     " Not adding it again."
-                                ).arg(address)
+                                ).format(address)
                             ))
                         else:
                             self.logger.debug('label: %s', label)

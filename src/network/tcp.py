@@ -8,28 +8,29 @@ import math
 import random
 import socket
 import time
+import six
 
 # magic imports!
 import addresses
 import l10n
 import protocol
 import state
-import connectionpool
+import network.connectionpool  # use long name to address recursive import
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from network import dandelion_ins, invQueue, receiveDataQueue
 from queues import UISignalQueue
 from tr import _translate
 
-import asyncore_pollchoose as asyncore
-import knownnodes
+from network import asyncore_pollchoose as asyncore
+from network import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
-from node import Peer
+from .node import Peer
 
 
 logger = logging.getLogger('default')
@@ -38,6 +39,12 @@ logger = logging.getLogger('default')
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  #: Equals three hours
 maximumTimeOffsetWrongCount = 3  #: Connections with wrong time offset
 
+
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
 
 class TCPConnection(BMProto, TLSDispatcher):
     # pylint: disable=too-many-instance-attributes
@@ -138,9 +145,9 @@ class TCPConnection(BMProto, TLSDispatcher):
                 'updateStatusBar',
                 _translate(
                     "MainWindow",
-                    "The time on your computer, %1, may be wrong. "
+                    "The time on your computer, {0}, may be wrong. "
                     "Please verify your settings."
-                ).arg(l10n.formatTimestamp())))
+                ).format(l10n.formatTimestamp())))
 
     def state_connection_fully_established(self):
         """
@@ -191,10 +198,10 @@ class TCPConnection(BMProto, TLSDispatcher):
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
                     filtered = [
-                        (k, v) for k, v in nodes.iteritems()
+                        (k, v) for k, v in six.iteritems(nodes)
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
-                        and v["rating"] >= 0 and not k.host.endswith('.onion')
+                        and v["rating"] >= 0 and not _ends_with(k.host, '.onion')
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
@@ -220,7 +227,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                 'Sending huge inv message with %i objects to just this'
                 ' one peer', objectCount)
             self.append_write_buf(protocol.CreatePacket(
-                'inv', addresses.encodeVarint(objectCount) + payload))
+                b'inv', addresses.encodeVarint(objectCount) + payload))
 
         # Select all hashes for objects in this stream.
         bigInvList = {}
@@ -267,7 +274,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled,
+                network.connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
@@ -318,7 +325,7 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled,
+                network.connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -342,7 +349,7 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled,
+                network.connectionpool.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -430,7 +437,7 @@ class TCPServer(AdvancedDispatcher):
 
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
-            len(connectionpool.pool)
+            len(network.connectionpool.pool)
             > config.safeGetInt(
                 'bitmessagesettings', 'maxtotalconnections')
                 + config.safeGetInt(
@@ -442,7 +449,7 @@ class TCPServer(AdvancedDispatcher):
             sock.close()
             return
         try:
-            connectionpool.pool.addConnection(
+            network.connectionpool.pool.addConnection(
                 TCPConnection(sock=sock))
         except socket.error:
             pass

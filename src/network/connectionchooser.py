@@ -7,7 +7,7 @@ import random
 
 from six.moves import queue
 
-import knownnodes
+from network import knownnodes
 import protocol
 import state
 
@@ -17,10 +17,16 @@ from network import portCheckerQueue
 logger = logging.getLogger('default')
 
 
+def _ends_with(s, tail):
+    try:
+        return s.endswith(tail)
+    except:
+        return s.decode("utf-8", "replace").endswith(tail)
+
 def getDiscoveredPeer():
     """Get a peer from the local peer discovery list"""
     try:
-        peer = random.choice(state.discoveredPeers.keys())  # nosec B311
+        peer = random.choice(list(state.discoveredPeers.keys()))  # nosec B311
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -48,7 +54,7 @@ def chooseConnection(stream):
         return getDiscoveredPeer()
     for _ in range(50):
         peer = random.choice(  # nosec B311
-            knownnodes.knownNodes[stream].keys())
+            list(knownnodes.knownNodes[stream].keys()))
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):
@@ -60,10 +66,10 @@ def chooseConnection(stream):
         if haveOnion:
             # do not connect to raw IP addresses
             # --keep all traffic within Tor overlay
-            if onionOnly and not peer.host.endswith('.onion'):
+            if onionOnly and not _ends_with(peer.host, '.onion'):
                 continue
             # onion addresses have a higher priority when SOCKS
-            if peer.host.endswith('.onion') and rating > 0:
+            if _ends_with(peer.host, '.onion') and rating > 0:
                 rating = 1
             # TODO: need better check
             elif not peer.host.startswith('bootstrap'):

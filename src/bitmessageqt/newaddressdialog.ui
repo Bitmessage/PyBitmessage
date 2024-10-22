@@ -375,7 +375,7 @@ The 'Random Number' option is selected by default but deterministic addresses ha
    <sender>radioButtonDeterministicAddress</sender>
    <signal>toggled(bool)</signal>
    <receiver>groupBoxDeterministic</receiver>
-   <slot>setShown(bool)</slot>
+   <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>92</x>
@@ -391,7 +391,7 @@ The 'Random Number' option is selected by default but deterministic addresses ha
    <sender>radioButtonRandomAddress</sender>
    <signal>toggled(bool)</signal>
    <receiver>groupBox</receiver>
-   <slot>setShown(bool)</slot>
+   <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>72</x>

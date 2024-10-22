@@ -23,7 +23,11 @@ def doCleanShutdown():
 
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
     for thread in threading.enumerate():
-        if thread.isAlive() and isinstance(thread, StoppableThread):
+        try:
+            alive = thread.isAlive()
+        except AttributeError:
+            alive = thread.is_alive()
+        if alive and isinstance(thread, StoppableThread):
             thread.stopThread()
 
     UISignalQueue.put((

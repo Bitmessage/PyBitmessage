@@ -43,8 +43,16 @@ a = Analysis(
         'setuptools.msvc', '_cffi_backend',
         'plugins.menu_qrcode', 'plugins.proxyconfig_stem'
     ],
-    runtime_hooks=[os.path.join(hookspath, 'pyinstaller_rthook_plugins.py')],
-    excludes=excludes
+    # https://github.com/pyinstaller/pyinstaller/wiki/Recipe-PyQt4-API-Version
+    runtime_hooks = [
+        os.path.join(hookspath, hook) for hook in (
+            'pyinstaller_rthook_pyqt4.py',
+            'pyinstaller_rthook_plugins.py'
+        )],
+    excludes += [
+        'PyQt4.QtOpenGL','PyQt4.QtSql',
+        'PyQt4.QtSvg', 'PyQt4.QtTest', 'PyQt4.QtWebKit', 'PyQt4.QtXml',
+        'win32ui']
 )
 
 
@@ -90,9 +98,8 @@ a.datas += addTranslations()
 a.datas += [('default.ini', os.path.join(srcPath, 'default.ini'), 'DATA')]
 
 excluded_binaries = [
-    'QtOpenGL4.dll',
-    'QtSvg4.dll',
-    'QtXml4.dll',
+    'QtOpenGL4.dll', 'QtSql4.dll', 'QtSvg4.dll', 'QtTest4.dll',
+    'QtWebKit4.dll', 'QtXml4.dll'
 ]
 a.binaries = TOC([x for x in a.binaries if x[0] not in excluded_binaries])
 

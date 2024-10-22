@@ -2,7 +2,6 @@
 Message encoding end decoding functions
 """
 
-import string
 import zlib
 
 import messagetypes
@@ -71,7 +70,8 @@ class MsgEncode(object):
 
     def encodeSimple(self, message):
         """Handle simple encoding"""
-        self.data = 'Subject:%(subject)s\nBody:%(body)s' % message
+        data = 'Subject:%(subject)s\nBody:%(body)s' % message
+        self.data = data.encode("utf-8", "replace")
         self.length = len(self.data)
 
     def encodeTrivial(self, message):
@@ -99,14 +99,14 @@ class MsgDecode(object):
     def decodeExtended(self, data):
         """Handle extended encoding"""
         dc = zlib.decompressobj()
-        tmp = ""
+        tmp = b""
         while len(tmp) <= config.safeGetInt("zlib", "maxsize"):
             try:
                 got = dc.decompress(
                     data, config.safeGetInt("zlib", "maxsize")
                     + 1 - len(tmp))
                 # EOF
-                if got == "":
+                if got == b"":
                     break
                 tmp += got
                 data = dc.unconsumed_tail
@@ -142,7 +142,7 @@ class MsgDecode(object):
 
     def decodeSimple(self, data):
         """Handle simple encoding"""
-        bodyPositionIndex = string.find(data, '\nBody:')
+        bodyPositionIndex = data.find(b'\nBody:')
         if bodyPositionIndex > 1:
             subject = data[8:bodyPositionIndex]
             # Only save and show the first 500 characters of the subject.
@@ -150,10 +150,11 @@ class MsgDecode(object):
             subject = subject[:500]
             body = data[bodyPositionIndex + 6:]
         else:
-            subject = ''
+            subject = b''
             body = data
         # Throw away any extra lines (headers) after the subject.
         if subject:
             subject = subject.splitlines()[0]
-        self.subject = subject
-        self.body = body
+        # Field types should be the same for all message types
+        self.subject = subject.decode("utf-8", "replace")
+        self.body = body.decode("utf-8", "replace")

@@ -12,6 +12,8 @@ import sys
 import time
 from binascii import hexlify
 from struct import Struct, pack, unpack
+import six
+import sqlite3
 
 import defaults
 import highlevelcrypto
@@ -23,6 +25,7 @@ from debug import logger
 from helper_sql import sqlExecute
 from network.node import Peer
 from version import softwareVersion
+from dbcompat import dbstr
 
 # Network constants
 magic = 0xE9BEB4D9
@@ -168,11 +171,11 @@ def checkIPAddress(host, private=False):
     otherwise returns False
     """
     if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-        hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
+        hostStandardFormat = socket.inet_ntop(socket.AF_INET, bytes(host[12:]))
         return checkIPv4Address(host[12:], hostStandardFormat, private)
     elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
         # Onion, based on BMD/bitcoind
-        hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+        hostStandardFormat = base64.b32encode(host[6:]).lower() + b".onion"
         if private:
             return False
         return hostStandardFormat
@@ -227,7 +230,7 @@ def checkIPv6Address(host, hostStandardFormat, private=False):
             logger.debug('Ignoring loopback address: %s', hostStandardFormat)
         return False
     try:
-        host = [ord(c) for c in host[:2]]
+        host = [six.byte2int(c) for c in host[:2]]
     except TypeError:  # python3 has ints already
         pass
     if host[0] == 0xfe and host[1] & 0xc0 == 0x80:
@@ -293,7 +296,7 @@ def isProofOfWorkSufficient(
     if TTL < 300:
         TTL = 300
     POW, = unpack('>Q', highlevelcrypto.double_sha512(
-        data[:8] + hashlib.sha512(data[8:]).digest())[0:8])
+        bytes(data[:8]) + hashlib.sha512(data[8:]).digest())[0:8])
     return POW <= 2 ** 64 / (
         nonceTrialsPerByte * (
             len(data) + payloadLengthExtraBytes
@@ -417,7 +420,7 @@ def assembleVersionMessage(  # pylint: disable=too-many-arguments
     return CreatePacket(b'version', payload)
 
 
-def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
+def assembleErrorMessage(fatal=0, banTime=0, inventoryVector=b'', errorText=''):
     """
     Construct the payload of an error message,
     return the resulting bytes of running `CreatePacket` on it
@@ -426,6 +429,8 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload += encodeVarint(banTime)
     payload += encodeVarint(len(inventoryVector))
     payload += inventoryVector
+    if isinstance(errorText, str):
+        errorText = errorText.encode("utf-8", "replace")
     payload += encodeVarint(len(errorText))
     payload += errorText
     return CreatePacket(b'error', payload)
@@ -465,7 +470,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += varintLength
         # We'll store the address version and stream number
         # (and some more) in the pubkeys table.
-        storedData = data[20:readPosition]
+        storedData = bytes(data[20:readPosition])
 
         if addressVersion != embeddedAddressVersion:
             logger.info(
@@ -482,11 +487,11 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += 32
         # the time through the tag. More data is appended onto
         # signedData below after the decryption.
-        signedData = data[8:readPosition]
+        signedData = bytes(data[8:readPosition])
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = state.neededPubkeys[tag]
+        toAddress, cryptorObject = state.neededPubkeys[bytes(tag)]
         if toAddress != address:
             logger.critical(
                 'decryptAndCheckPubkeyPayload failed due to toAddress'
@@ -511,9 +516,9 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition = 0
         # bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         specifiedNonceTrialsPerByteLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])[1]
@@ -558,7 +563,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             hexlify(pubSigningKey), hexlify(pubEncryptionKey)
         )
 
-        t = (address, addressVersion, storedData, int(time.time()), 'yes')
+        t = (dbstr(address), addressVersion, sqlite3.Binary(storedData), int(time.time()), dbstr('yes'))
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
         return 'successful'
     except varintDecodeError:

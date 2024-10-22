@@ -7,6 +7,8 @@ High level cryptographic functions based on `.pyelliptic` OpenSSL bindings.
   `More discussion. <https://github.com/yann2192/pyelliptic/issues/32>`_
 """
 
+from unqstr import unic
+
 import hashlib
 import os
 from binascii import hexlify
@@ -102,7 +104,7 @@ def random_keys():
 
 def deterministic_keys(passphrase, nonce):
     """Generate keys from *passphrase* and *nonce* (encoded as varint)"""
-    priv = hashlib.sha512(passphrase + nonce).digest()[:32]
+    priv = hashlib.sha512(unic(passphrase).encode("utf-8", "replace") + nonce).digest()[:32]
     pub = pointMult(priv)
     return priv, pub
 

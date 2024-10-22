@@ -72,6 +72,8 @@ function install_python(){
         wine python -m pip install pytools==2020.2
 	echo "Upgrading pip"
 	wine python -m pip install --upgrade pip
+	# install pypiwin32 for win32com
+	wine python -m pip install pypiwin32
 }
 
 function install_pyqt(){
@@ -82,6 +84,8 @@ function install_pyqt(){
 		echo "Installing PyQt-${PYQT_VERSION} 32b"
 		wine PyQt${PYQT_VERSION}-x32.exe /S /WX
 	fi
+	# and qtpy
+	wine python -m pip install qtpy
 }
 
 function install_openssl(){
