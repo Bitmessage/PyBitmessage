@@ -76,7 +76,7 @@ class AddressBook(Screen, HelperAddressBook):
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
             image = os.path.join(
-                self.kivy_state.image_dir, "text_images", f"{avatar_image_first_letter(item[0].strip())}.png"
+                self.kivy_state.image_dir, "text_images", f"{avatar_image_first_letter(item[0].strip())}.png"  # noqa: E999
             )
             message_row.ids.avater_img.source = image
             listItem.bind(on_release=partial(self.addBook_detail, item[1], item[0], message_row))
