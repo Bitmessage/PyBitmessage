@@ -18,11 +18,6 @@ from network import StoppableThread
 from tr import _translate
 
 
-class AddressGeneratorException(Exception):
-    '''Generic AddressGenerator exception'''
-    pass
-
-
 class addressGenerator(StoppableThread):
     """A thread for creating addresses"""
 
@@ -343,7 +338,7 @@ class addressGenerator(StoppableThread):
                 elif command == 'getDeterministicAddress':
                     queues.apiAddressGeneratorReturnQueue.put(address)
             else:
-                raise AddressGeneratorException(
+                raise RuntimeError(
                     "Error in the addressGenerator thread. Thread was"
                     + " given a command it could not understand: " + command)
             queues.addressGeneratorQueue.task_done()
