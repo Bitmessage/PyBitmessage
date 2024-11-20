@@ -54,6 +54,15 @@
               </color>
              </brush>
             </colorrole>
+            <colorrole role="Text">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>0</red>
+               <green>0</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </colorrole>
            </active>
            <inactive>
             <colorrole role="Base">
@@ -65,6 +74,15 @@
               </color>
              </brush>
             </colorrole>
+            <colorrole role="Text">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>0</red>
+               <green>0</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </colorrole>
            </inactive>
            <disabled>
             <colorrole role="Base">
@@ -73,6 +91,15 @@
                <red>212</red>
                <green>208</green>
                <blue>200</blue>
+              </color>
+             </brush>
+            </colorrole>
+            <colorrole role="Text">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>0</red>
+               <green>0</green>
+               <blue>0</blue>
               </color>
              </brush>
             </colorrole>
