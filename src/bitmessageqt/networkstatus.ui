@@ -78,6 +78,8 @@
             </colorrole>
            </disabled>
           </palette>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="frameShape">
           <enum>QFrame::Box</enum>
