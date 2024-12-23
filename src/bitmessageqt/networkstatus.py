@@ -192,12 +192,13 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                 0, 1,
                 QtGui.QTableWidgetItem("%s" % (rating))
             )
-            if outbound:
-                brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)
-            else:
-                brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.SolidPattern)
+            brush = QtGui.QBrush(
+                QtGui.QColor("yellow" if outbound else "green"),
+                QtCore.Qt.SolidPattern)
             for j in range(1):
                 self.tableWidgetConnectionCount.item(0, j).setBackground(brush)
+                self.tableWidgetConnectionCount.item(0, j).setForeground(
+                    QtGui.QBrush(QtGui.QColor("black"), QtCore.Qt.SolidPattern))
             self.tableWidgetConnectionCount.item(0, 0).setData(QtCore.Qt.UserRole, destination)
             self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.UserRole, outbound)
         else:
