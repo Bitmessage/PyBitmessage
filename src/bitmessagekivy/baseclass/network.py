@@ -2,7 +2,7 @@
 # pylint: disable=no-name-in-module, too-few-public-methods
 
 """
-   Network status
+Network status
 """
 
 import os
@@ -16,39 +16,28 @@ from pybitmessage import state
 if os.environ.get('INSTALL_TESTS', False) and not state.backend_py3_compatible:
     from pybitmessage.mockbm import kivy_main
     stats = kivy_main.network.stats
-    objectracker = kivy_main.network.objectracker
+    object_tracker = kivy_main.network.objectracker
 else:
-    from pybitmessage.network import stats, objectracker
+    from pybitmessage.network import stats, objectracker as object_tracker
 
 
 class NetworkStat(Screen):
-    """NetworkStat class for kivy Ui"""
+    """NetworkStat class for Kivy UI"""
 
-    text_variable_1 = StringProperty(
-        '{0}::{1}'.format('Total Connections', '0'))
-    text_variable_2 = StringProperty(
-        'Processed {0} per-to-per messages'.format('0'))
-    text_variable_3 = StringProperty(
-        'Processed {0} brodcast messages'.format('0'))
-    text_variable_4 = StringProperty(
-        'Processed {0} public keys'.format('0'))
-    text_variable_5 = StringProperty(
-        'Processed {0} object to be synced'.format('0'))
+    text_variable_1 = StringProperty(f'Total Connections::0')
+    text_variable_2 = StringProperty(f'Processed 0 peer-to-peer messages')
+    text_variable_3 = StringProperty(f'Processed 0 broadcast messages')
+    text_variable_4 = StringProperty(f'Processed 0 public keys')
+    text_variable_5 = StringProperty(f'Processed 0 objects to be synced')
 
-    def __init__(self, *args, **kwargs):
-        """Init method for network stat"""
-        super(NetworkStat, self).__init__(*args, **kwargs)
-        Clock.schedule_interval(self.init_ui, 1)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
+        Clock.schedule_interval(self.update_stats, 1)
 
-    def init_ui(self, dt=0):
-        """Clock Schdule for method networkstat screen"""
-        self.text_variable_1 = '{0} :: {1}'.format(
-            'Total Connections', str(len(stats.connectedHostsList())))
-        self.text_variable_2 = 'Processed {0} per-to-per messages'.format(
-            str(state.numberOfMessagesProcessed))
-        self.text_variable_3 = 'Processed {0} brodcast messages'.format(
-            str(state.numberOfBroadcastsProcessed))
-        self.text_variable_4 = 'Processed {0} public keys'.format(
-            str(state.numberOfPubkeysProcessed))
-        self.text_variable_5 = '{0} object to be synced'.format(
-            len(objectracker.missingObjects))
+    def update_stats(self, dt):
+        """Update network statistics"""
+        self.text_variable_1 = f'Total Connections::{len(stats.connectedHostsList())}'
+        self.text_variable_2 = f'Processed {state.numberOfMessagesProcessed} peer-to-peer messages'
+        self.text_variable_3 = f'Processed {state.numberOfBroadcastsProcessed} broadcast messages'
+        self.text_variable_4 = f'Processed {state.numberOfPubkeysProcessed} public keys'
+        self.text_variable_5 = f'Processed {object_tracker.missingObjects} objects'

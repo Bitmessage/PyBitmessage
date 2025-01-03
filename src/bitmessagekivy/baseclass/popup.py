@@ -2,9 +2,9 @@
 # pylint: disable=no-member, no-name-in-module, unused-argument, too-few-public-methods
 
 """
-All the popup are managed here.
-
+All the popups are managed here.
 """
+
 import logging
 from datetime import datetime
 
@@ -17,34 +17,34 @@ from kivy.app import App
 
 from pybitmessage.bitmessagekivy import kivy_helper_search
 from pybitmessage.bitmessagekivy.get_platform import platform
-
 from pybitmessage.bitmessagekivy.baseclass.common import toast
-
 from pybitmessage.addresses import decodeAddress
 
 logger = logging.getLogger('default')
 
 
 class AddressChangingLoader(Popup):
-    """Run a Screen Loader when changing the Identity for kivy UI"""
+    """Run a Screen Loader when changing the Identity for Kivy UI"""
 
     def __init__(self, **kwargs):
-        super(AddressChangingLoader, self).__init__(**kwargs)
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
         Clock.schedule_once(self.dismiss_popup, 0.5)
 
     def dismiss_popup(self, dt):
-        """Dismiss popups"""
+        """Dismiss popup"""
         self.dismiss()
 
 
 class AddAddressPopup(BoxLayout):
-    """Popup for adding new address to addressbook"""
+    """Popup for adding new address to address book"""
 
     validation_dict = {
-        "missingbm": "The address should start with ''BM-''",
+        "missingbm": "The address should start with 'BM-'",
         "checksumfailed": "The address is not typed or copied correctly",
-        "versiontoohigh": "The version number of this address is higher than this"
-        " software can support. Please upgrade Bitmessage.",
+        "versiontoohigh": (
+            "The version number of this address is higher than this "
+            "software can support. Please upgrade Bitmessage."
+        ),
         "invalidcharacters": "The address contains invalid characters.",
         "ripetooshort": "Some data encoded in the address is too short.",
         "ripetoolong": "Some data encoded in the address is too long.",
@@ -53,19 +53,19 @@ class AddAddressPopup(BoxLayout):
     valid = False
 
     def __init__(self, **kwargs):
-        super(AddAddressPopup, self).__init__(**kwargs)
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
 
     def checkAddress_valid(self, instance):
-        """Checking address is valid or not"""
+        """Check if the address is valid or not"""
         my_addresses = (
             App.get_running_app().root.ids.content_drawer.ids.identity_dropdown.values)
         add_book = [addr[1] for addr in kivy_helper_search.search_sql(
             folder="addressbook")]
         entered_text = str(instance.text).strip()
         if entered_text in add_book:
-            text = 'Address is already in the addressbook.'
+            text = 'Address is already in the address book.'
         elif entered_text in my_addresses:
-            text = 'You can not save your own address.'
+            text = 'You cannot save your own address.'
         elif entered_text:
             text = self.addressChanged(entered_text)
 
@@ -82,7 +82,7 @@ class AddAddressPopup(BoxLayout):
             self.ids.address.helper_text = 'This field is required'
 
     def checkLabel_valid(self, instance):
-        """Checking address label is unique or not"""
+        """Check if the address label is unique or not"""
         entered_label = instance.text.strip()
         addr_labels = [labels[0] for labels in kivy_helper_search.search_sql(
             folder="addressbook")]
@@ -112,17 +112,17 @@ class AddAddressPopup(BoxLayout):
 
 
 class SavedAddressDetailPopup(BoxLayout):
-    """Pop-up for Saved Address details for kivy UI"""
+    """Popup for saved address details for Kivy UI"""
 
     address_label = StringProperty()
     address = StringProperty()
 
     def __init__(self, **kwargs):
         """Set screen of address detail page"""
-        super(SavedAddressDetailPopup, self).__init__(**kwargs)
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
 
     def checkLabel_valid(self, instance):
-        """Checking address label is unique of not"""
+        """Check if the address label is unique or not"""
         entered_label = str(instance.text.strip())
         address_list = kivy_helper_search.search_sql(folder="addressbook")
         addr_labels = [labels[0] for labels in address_list]
@@ -130,7 +130,7 @@ class SavedAddressDetailPopup(BoxLayout):
         if self.address and entered_label in addr_labels \
                 and self.address != add_dict[entered_label]:
             self.ids.add_label.error = True
-            self.ids.add_label.helper_text = 'label name already exists.'
+            self.ids.add_label.helper_text = 'Label name already exists.'
         elif entered_label:
             self.ids.add_label.error = False
         else:
@@ -139,17 +139,17 @@ class SavedAddressDetailPopup(BoxLayout):
 
 
 class MyaddDetailPopup(BoxLayout):
-    """MyaddDetailPopup class for kivy Ui"""
+    """Popup for my address details for Kivy UI"""
 
     address_label = StringProperty()
     address = StringProperty()
 
     def __init__(self, **kwargs):
-        """My Address Details screen setting"""
-        super(MyaddDetailPopup, self).__init__(**kwargs)
+        """Set screen of my address details"""
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
 
     def send_message_from(self):
-        """Method used to fill from address of composer autofield"""
+        """Fill from address of composer autofield"""
         App.get_running_app().set_navbar_for_composer()
         window_obj = App.get_running_app().root.ids
         window_obj.id_create.children[1].ids.ti.text = self.address
@@ -161,16 +161,16 @@ class MyaddDetailPopup(BoxLayout):
         self.parent.parent.parent.dismiss()
 
     def close_pop(self):
-        """Pop is Cancelled"""
+        """Cancel the popup"""
         self.parent.parent.parent.dismiss()
         toast('Cancelled')
 
 
 class AppClosingPopup(Popup):
-    """AppClosingPopup class for kivy Ui"""
+    """Popup for closing the application for Kivy UI"""
 
     def __init__(self, **kwargs):
-        super(AppClosingPopup, self).__init__(**kwargs)
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
 
     def closingAction(self, text):
         """Action on closing window"""
@@ -185,22 +185,30 @@ class AppClosingPopup(Popup):
 
 
 class SenderDetailPopup(Popup):
-    """SenderDetailPopup class for kivy Ui"""
+    """Popup for sender details for Kivy UI"""
 
     to_addr = StringProperty()
     from_addr = StringProperty()
     time_tag = StringProperty()
 
     def __init__(self, **kwargs):
-        """this metthod initialized the send message detial popup"""
-        super(SenderDetailPopup, self).__init__(**kwargs)
+        """Initialize the send message detail popup"""
+        super().__init__(**kwargs)  # pylint: disable=missing-super-argument
 
     def assignDetail(self, to_addr, from_addr, timeinseconds):
-        """Detailes assigned"""
+        """Assign details to the popup"""
         self.to_addr = to_addr
         self.from_addr = from_addr
+        self.time_tag = self.format_time(timeinseconds)
+        self.adjust_popup_height(to_addr)
+
+    def format_time(self, timeinseconds):
+        """Format the timestamp into a readable string"""
         time_obj = datetime.fromtimestamp(int(timeinseconds))
-        self.time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
+        return time_obj.strftime("%d %b %Y, %I:%M %p")
+
+    def adjust_popup_height(self, to_addr):
+        """Adjust the height of the popup based on the address length"""
         device_type = 2 if platform == 'android' else 1.5
         pop_height = 1.2 * device_type * (self.ids.sd_label.height + self.ids.dismiss_btn.height)
         if len(to_addr) > 3:
@@ -219,13 +227,14 @@ class SenderDetailPopup(Popup):
 
 
 class ToAddrBoxlayout(BoxLayout):
-    """ToAddrBoxlayout class for kivy Ui"""
+    """BoxLayout for displaying the to address"""
+
     to_addr = StringProperty()
 
     def set_toAddress(self, to_addr):
-        """This method is use to set to address"""
+        """Set the to address"""
         self.to_addr = to_addr
 
 
 class ToAddressTitle(BoxLayout):
-    """ToAddressTitle class for BoxLayout behaviour"""
+    """BoxLayout for displaying the to address title"""
