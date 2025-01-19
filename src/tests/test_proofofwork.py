@@ -76,6 +76,7 @@ class TestProofofwork(TestProofofworkBase):
         # pylint: disable=import-outside-toplevel
         from class_singleWorker import singleWorker
 
+        # pylint: disable=no-member
         with self.assertLogs('default') as cm:
             self.assertTrue(protocol.isProofOfWorkSufficient(
                 singleWorker._doPOWDefaults(payload, TTL, log_prefix='+')))

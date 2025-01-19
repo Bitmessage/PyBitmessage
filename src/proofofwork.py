@@ -343,7 +343,7 @@ def resetPoW():
 
 def init():
     """Initialise PoW"""
-    # pylint: disable=broad-exception-caught,disable=global-statement
+    # pylint: disable=broad-exception-caught,global-statement
     global bitmsglib, bmpow
 
     openclpow.initCL()
