@@ -50,6 +50,7 @@ class TestAddressGenerator(TestPartialRun):
             return self.return_queue.get(timeout=30)[0]
         except (IndexError, queue.Empty):
             self.fail('Failed to execute command %s' % command)
+        return None
 
     @unittest.skipIf(
         sys.hexversion < 0x3000000, 'assertLogs is new in version 3.4')
