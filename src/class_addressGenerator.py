@@ -148,17 +148,15 @@ class addressGenerator(StoppableThread):
             if nonceTrialsPerByte == 0:
                 nonceTrialsPerByte = config.getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            if nonceTrialsPerByte < \
-                    defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
-                nonceTrialsPerByte = \
-                    defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+            nonceTrialsPerByte = max(
+                nonceTrialsPerByte,
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
             if payloadLengthExtraBytes == 0:
                 payloadLengthExtraBytes = config.getint(
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-            if payloadLengthExtraBytes < \
-                    defaults.networkDefaultPayloadLengthExtraBytes:
-                payloadLengthExtraBytes = \
-                    defaults.networkDefaultPayloadLengthExtraBytes
+            payloadLengthExtraBytes = max(
+                payloadLengthExtraBytes,
+                defaults.networkDefaultPayloadLengthExtraBytes)
             if command == 'createRandomAddress':
                 queues.UISignalQueue.put((
                     'updateStatusBar',
