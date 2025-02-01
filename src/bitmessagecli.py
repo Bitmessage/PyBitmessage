@@ -21,7 +21,9 @@ import os
 import socket
 import sys
 import time
-import xmlrpclib
+
+from six.moves import input as raw_input
+from six.moves import xmlrpc_client as xmlrpclib
 
 from bmconfigparser import config
 

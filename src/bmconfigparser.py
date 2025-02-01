@@ -4,8 +4,8 @@ BMConfigParser class definition and default configuration settings
 
 import os
 import shutil
-from threading import Event
 from datetime import datetime
+from threading import Event
 
 from six import string_types
 from six.moves import configparser
@@ -21,7 +21,7 @@ config_ready = Event()
 
 class BMConfigParser(SafeConfigParser):
     """
-    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    Singleton class inherited from :class:`configparser.SafeConfigParser`
     with additional methods specific to bitmessage config.
     """
     # pylint: disable=too-many-ancestors
