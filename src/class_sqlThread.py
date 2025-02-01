@@ -9,6 +9,8 @@ import sys
 import threading
 import time
 
+from six.moves.reprlib import repr
+
 try:
     import helper_sql
     import helper_startup

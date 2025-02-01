@@ -4,11 +4,12 @@ Namecoin queries
 # pylint: disable=too-many-branches,protected-access
 
 import base64
-import httplib
 import json
 import os
 import socket
 import sys
+
+from six.moves import http_client as httplib
 
 import defaults
 from addresses import decodeAddress
@@ -296,7 +297,7 @@ def lookupNamecoinFolder():
     """
 
     app = "namecoin"
-    from os import path, environ
+    from os import environ, path
     if sys.platform == "darwin":
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"],

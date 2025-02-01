@@ -16,8 +16,8 @@ from struct import Struct, pack, unpack
 import defaults
 import highlevelcrypto
 import state
-from addresses import (
-    encodeVarint, decodeVarint, decodeAddress, varintDecodeError)
+from addresses import (decodeAddress, decodeVarint, encodeVarint,
+                       varintDecodeError)
 from bmconfigparser import config
 from debug import logger
 from helper_sql import sqlExecute

@@ -12,6 +12,9 @@ from binascii import hexlify, unhexlify
 from struct import pack
 from subprocess import call  # nosec
 
+from six.moves import configparser, queue
+from six.moves.reprlib import repr
+
 import defaults
 import helper_inbox
 import helper_msgcoding
@@ -28,8 +31,7 @@ import tr
 from addresses import decodeAddress, decodeVarint, encodeVarint
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
-from network import knownnodes, StoppableThread, invQueue
-from six.moves import configparser, queue
+from network import StoppableThread, invQueue, knownnodes
 
 
 def sizeof_fmt(num, suffix='h/s'):
