@@ -1,8 +1,9 @@
 #!/usr/bin/env python2.7
 
-import collectd
 import json
-import xmlrpclib
+
+import collectd
+from six.moves import xmlrpc_client as xmlrpclib
 
 pybmurl = ""
 api = ""

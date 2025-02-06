@@ -70,29 +70,24 @@ from struct import pack, unpack
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
+from six.moves.reprlib import repr
 
 import helper_inbox
 import helper_sent
-import protocol
 import proofofwork
+import protocol
 import queues
 import shared
-
 import shutdown
 import state
-from addresses import (
-    addBMIfNotPresent,
-    decodeAddress,
-    decodeVarint,
-    varintDecodeError
-)
+from addresses import (addBMIfNotPresent, decodeAddress, decodeVarint,
+                       varintDecodeError)
 from bmconfigparser import config
 from debug import logger
-from defaults import (
-    networkDefaultProofOfWorkNonceTrialsPerByte,
-    networkDefaultPayloadLengthExtraBytes)
-from helper_sql import (
-    SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure, sql_ready)
+from defaults import (networkDefaultPayloadLengthExtraBytes,
+                      networkDefaultProofOfWorkNonceTrialsPerByte)
+from helper_sql import (SqlBulkExecute, sql_ready, sqlExecute, sqlQuery,
+                        sqlStoredProcedure)
 from highlevelcrypto import calculateInventoryHash
 
 try:
@@ -100,7 +95,7 @@ try:
 except ImportError:
     connectionpool = None
 
-from network import stats, StoppableThread, invQueue
+from network import StoppableThread, invQueue, stats
 from version import softwareVersion
 
 try:  # TODO: write tests for XML vulnerabilities
@@ -224,8 +219,8 @@ class singleAPI(StoppableThread):
         if config.safeGet(
                 'bitmessagesettings', 'apivariant') == 'json':
             try:
-                from jsonrpclib.SimpleJSONRPCServer import (
-                    SimpleJSONRPCServer as RPCServerBase)
+                from jsonrpclib.SimpleJSONRPCServer import \
+                    SimpleJSONRPCServer as RPCServerBase
             except ImportError:
                 logger.warning(
                     'jsonrpclib not available, failing back to XML-RPC')
