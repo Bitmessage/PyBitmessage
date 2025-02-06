@@ -268,6 +268,7 @@ class TestCore(unittest.TestCase):
         self._check_connection()
         self._check_knownnodes()
 
+    @unittest.skip('There are no onion bootstrap servers available')
     @unittest.skipIf(tor_port_free, 'no running tor detected')
     def test_onionservicesonly(self):
         """ensure bitmessage doesn't try to connect to non-onion nodes
