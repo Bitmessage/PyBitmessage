@@ -18,6 +18,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python-setuptools \
     python2.7 \
     python2.7-dev \
+    python-six \
     python3 \
     python3-dev \
     python3-flake8 \

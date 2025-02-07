@@ -18,7 +18,7 @@
             ],
             "settings": {
                 "flake8.args": ["--config=setup.cfg"],
-                "pylint.args": ["--rcfile=setup.cfg"],
+                "pylint.args": ["--rcfile=setup.cfg", "--init-hook", "import sys;sys.path.append('src')"],
                 "terminal.integrated.shell.linux": "/usr/bin/zsh",
                 "terminal.integrated.defaultProfile.linux": "zsh",
                 "terminal.integrated.fontFamily": "'SourceCodePro+Powerline+Awesome Regular'",
