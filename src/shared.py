@@ -22,6 +22,7 @@ from addresses import decodeAddress, encodeVarint
 from bmconfigparser import config
 from debug import logger
 from helper_sql import sqlQuery
+from dbcompat import dbstr
 
 
 myECCryptorObjects = {}
@@ -38,7 +39,7 @@ def isAddressInMyAddressBook(address):
     """Is address in my addressbook?"""
     queryreturn = sqlQuery(
         '''select address from addressbook where address=?''',
-        address)
+        dbstr(address))
     return queryreturn != []
 
 
@@ -47,7 +48,7 @@ def isAddressInMySubscriptionsList(address):
     """Am I subscribed to this address?"""
     queryreturn = sqlQuery(
         '''select * from subscriptions where address=?''',
-        str(address))
+        dbstr(address))
     return queryreturn != []
 
 
@@ -61,14 +62,14 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     queryreturn = sqlQuery(
         '''SELECT address FROM whitelist where address=?'''
         ''' and enabled = '1' ''',
-        address)
+        dbstr(address))
     if queryreturn != []:
         return True
 
     queryreturn = sqlQuery(
         '''select address from subscriptions where address=?'''
         ''' and enabled = '1' ''',
-        address)
+        dbstr(address))
     if queryreturn != []:
         return True
     return False
@@ -136,6 +137,7 @@ def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
+        address = address.decode("utf-8", "replace")
         # status
         addressVersionNumber, streamNumber, hashobj = decodeAddress(address)[1:]
         if addressVersionNumber == 2:
@@ -169,7 +171,7 @@ def fixPotentiallyInvalidUTF8Data(text):
         return text
     except UnicodeDecodeError:
         return 'Part of the message is corrupt. The message cannot be' \
-            ' displayed the normal way.\n\n' + repr(text)
+            ' displayed the normal way.\n\n' + text.decode("utf-8", "replace")
 
 
 def checkSensitiveFilePermissions(filename):

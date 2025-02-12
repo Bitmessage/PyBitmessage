@@ -119,16 +119,16 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def assign_mail_details(self, data):
         """Assigning mail details"""
-        subject = data[0][2].decode() if isinstance(data[0][2], bytes) else data[0][2]
-        body = data[0][3].decode() if isinstance(data[0][2], bytes) else data[0][3]
-        self.to_addr = data[0][0] if len(data[0][0]) > 4 else ' '
-        self.from_addr = data[0][1]
+        subject = data[0][2].decode("utf-8", "replace") if isinstance(data[0][2], bytes) else data[0][2]
+        body = data[0][3].decode("utf-8", "replace") if isinstance(data[0][2], bytes) else data[0][3]
+        self.to_addr = data[0][0].decode("utf-8", "replace") if len(data[0][0]) > 4 else ' '
+        self.from_addr = data[0][1].decode("utf-8", "replace")
 
         self.subject = subject.capitalize(
         ) if subject.capitalize() else self.no_subject
         self.message = body
         if len(data[0]) == 7:
-            self.status = data[0][4]
+            self.status = data[0][4].decode("utf-8", "replace")
         self.time_tag = show_time_history(data[0][4]) if self.kivy_state.detail_page_type == 'inbox' \
             else show_time_history(data[0][6])
         self.avatarImg = os.path.join(self.kivy_state.imageDir, 'draft-icon.png') \

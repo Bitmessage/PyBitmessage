@@ -2,11 +2,13 @@
 
 import queues
 from helper_sql import sqlExecute, sqlQuery
+from dbcompat import dbstr
 
 
 def insert(t):
     """Perform an insert into the "inbox" table"""
-    sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
+    u = [t[0], dbstr(t[1]), dbstr(t[2]), dbstr(t[3]), dbstr(t[4]), dbstr(t[5]), dbstr(t[6]), t[7], t[8], t[9]]
+    sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *u)
     # shouldn't emit changedInboxUnread and displayNewInboxMessage
     # at the same time
     # queues.UISignalQueue.put(('changedInboxUnread', None))

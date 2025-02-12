@@ -8,6 +8,7 @@ from addresses import decodeAddress
 from bmconfigparser import config
 from helper_ackPayload import genAckPayload
 from helper_sql import sqlExecute, sqlQuery
+from dbcompat import dbstr
 
 
 # pylint: disable=too-many-arguments
@@ -38,8 +39,8 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
 
         ttl = ttl if ttl else config.getint('bitmessagesettings', 'ttl')
 
-        t = (msgid, toAddress, ripe, fromAddress, subject, message, ackdata,
-             sentTime, lastActionTime, sleeptill, status, retryNumber, folder,
+        t = (msgid, dbstr(toAddress), ripe, dbstr(fromAddress), dbstr(subject), dbstr(message), ackdata,
+             sentTime, lastActionTime, sleeptill, dbstr(status), retryNumber, dbstr(folder),
              encoding, ttl)
 
         sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
