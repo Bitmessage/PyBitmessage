@@ -2,17 +2,18 @@
 Custom dialog classes
 """
 # pylint: disable=too-few-public-methods
+from unqstr import ustr
 from PyQt4 import QtGui
 
 import paths
-import widgets
-from address_dialogs import (
+from bitmessageqt import widgets
+from .address_dialogs import (
     AddAddressDialog, EmailGatewayDialog, NewAddressDialog,
     NewSubscriptionDialog, RegenerateAddressesDialog,
     SpecialAddressBehaviorDialog
 )
-from newchandialog import NewChanDialog
-from settings import SettingsDialog
+from .newchandialog import NewChanDialog
+from .settings import SettingsDialog
 from tr import _translate
 from version import softwareVersion
 
@@ -36,7 +37,7 @@ class AboutDialog(QtGui.QDialog):
         if commit:
             version += '-' + commit[:7]
         self.labelVersion.setText(
-            self.labelVersion.text().replace(
+            ustr(self.labelVersion.text()).replace(
                 ':version:', version
             ).replace(':branch:', commit or 'v%s' % version)
         )
@@ -44,8 +45,8 @@ class AboutDialog(QtGui.QDialog):
 
         try:
             self.label_2.setText(
-                self.label_2.text().replace(
-                    '2022', str(last_commit.get('time').year)
+                ustr(self.label_2.text()).replace(
+                    '2022', ustr(last_commit.get('time').year)
                 ))
         except AttributeError:
             pass
@@ -64,8 +65,8 @@ class IconGlossaryDialog(QtGui.QDialog):
 
         self.labelPortNumber.setText(_translate(
             "iconGlossaryDialog",
-            "You are using TCP port %1. (This can be changed in the settings)."
-        ).arg(config.getint('bitmessagesettings', 'port')))
+            "You are using TCP port {0}. (This can be changed in the settings)."
+        ).format(config.getint('bitmessagesettings', 'port')))
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 

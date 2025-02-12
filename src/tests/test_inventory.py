@@ -38,7 +38,7 @@ class TestFilesystemInventory(TestPartialRun):
         embedded_time = int(time.time() + TTL)
         msg = struct.pack('>Q', embedded_time) + os.urandom(166)
         invhash = highlevelcrypto.calculateInventoryHash(msg)
-        self.inventory[invhash] = (2, 1, msg, embedded_time, b'')
+        self.inventory[bytes(invhash)] = (2, 1, msg, embedded_time, b'')
 
     @classmethod
     def tearDownClass(cls):

@@ -9,12 +9,12 @@
 
 from PyQt4 import QtCore, QtGui
 from bmconfigparser import config
-from foldertree import AddressBookCompleter
-from messageview import MessageView
-from messagecompose import MessageCompose
-import settingsmixin
-from networkstatus import NetworkStatus
-from blacklist import Blacklist
+from .foldertree import AddressBookCompleter
+from .messageview import MessageView
+from .messagecompose import MessageCompose
+from bitmessageqt import settingsmixin
+from .networkstatus import NetworkStatus
+from .blacklist import Blacklist
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8

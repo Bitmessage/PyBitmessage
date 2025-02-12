@@ -1,6 +1,7 @@
 """Test cases for helper_sql"""
 
 import unittest
+import sqlite3
 
 try:
     # Python 3
@@ -23,23 +24,23 @@ class TestHelperSql(unittest.TestCase):
     @patch("pybitmessage.helper_sql.sqlReturnQueue.get")
     def test_sqlquery_no_args(self, mock_sqlreturnqueue_get, mock_sqlsubmitqueue_put):
         """Test sqlQuery with no additional arguments"""
-        mock_sqlreturnqueue_get.return_value = ("dummy_result", None)
+        mock_sqlreturnqueue_get.return_value = (b"dummy_result", None)
         result = helper_sql.sqlQuery(
             "SELECT msgid FROM inbox where folder='inbox' ORDER BY received"
         )
         self.assertEqual(mock_sqlsubmitqueue_put.call_count, 2)
-        self.assertEqual(result, "dummy_result")
+        self.assertEqual(result.decode("utf-8", "replace"), "dummy_result")
 
     @patch("pybitmessage.helper_sql.sqlSubmitQueue.put")
     @patch("pybitmessage.helper_sql.sqlReturnQueue.get")
     def test_sqlquery_with_args(self, mock_sqlreturnqueue_get, mock_sqlsubmitqueue_put):
         """Test sqlQuery with additional arguments"""
-        mock_sqlreturnqueue_get.return_value = ("dummy_result", None)
+        mock_sqlreturnqueue_get.return_value = (b"dummy_result", None)
         result = helper_sql.sqlQuery(
             "SELECT address FROM addressbook WHERE address=?", "PB-5yfds868gbkj"
         )
         self.assertEqual(mock_sqlsubmitqueue_put.call_count, 2)
-        self.assertEqual(result, "dummy_result")
+        self.assertEqual(result.decode("utf-8", "replace"), "dummy_result")
 
     @patch("pybitmessage.helper_sql.sqlSubmitQueue.put")
     @patch("pybitmessage.helper_sql.sqlReturnQueue.get")
@@ -49,8 +50,14 @@ class TestHelperSql(unittest.TestCase):
         rowcount = helper_sql.sqlExecute(
             "UPDATE sent SET status = 'msgqueued'"
             "WHERE ackdata = ? AND folder = 'sent'",
-            "1710652313",
+            sqlite3.Binary(b"1710652313"),
         )
+        if rowcount < 0:
+            rowcount = helper_sql.sqlExecute(
+                "UPDATE sent SET status = 'msgqueued'"
+                "WHERE ackdata = CAST(? AS TEXT) AND folder = 'sent'",
+                b"1710652313",
+            )
         self.assertEqual(mock_sqlsubmitqueue_put.call_count, 3)
         self.assertEqual(rowcount, 1)
 
@@ -80,7 +87,7 @@ class TestHelperSql(unittest.TestCase):
         for i in range(0, ID_COUNT):
             args.append("arg{}".format(i))
         total_row_count_return = helper_sql.sqlExecuteChunked(
-            "INSERT INTO table VALUES {}", ID_COUNT, *args
+            "INSERT INTO table VALUES {}", False, ID_COUNT, *args
         )
         self.assertEqual(TOTAL_ROW_COUNT, total_row_count_return)
         self.assertTrue(mock_sqlsubmitqueue_put.called)
@@ -97,7 +104,7 @@ class TestHelperSql(unittest.TestCase):
         for i in range(0, ID_COUNT):
             args.append("arg{}".format(i))
         total_row_count = helper_sql.sqlExecuteChunked(
-            "INSERT INTO table VALUES {}", ID_COUNT, *args
+            "INSERT INTO table VALUES {}", False, ID_COUNT, *args
         )
         self.assertEqual(total_row_count, 0)
         self.assertFalse(mock_sqlsubmitqueue_put.called)
@@ -112,7 +119,7 @@ class TestHelperSql(unittest.TestCase):
         ID_COUNT = 12
         args = ["args0", "arg1"]
         total_row_count = helper_sql.sqlExecuteChunked(
-            "INSERT INTO table VALUES {}", ID_COUNT, *args
+            "INSERT INTO table VALUES {}", False, ID_COUNT, *args
         )
         self.assertEqual(total_row_count, 0)
         self.assertFalse(mock_sqlsubmitqueue_put.called)

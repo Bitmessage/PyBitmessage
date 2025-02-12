@@ -3,6 +3,7 @@ Arithmetic Expressions
 """
 import hashlib
 import re
+import six
 
 P = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
 A = 0
@@ -34,7 +35,7 @@ def get_code_string(base):
         return b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
     if base == 256:
         try:
-            return b''.join([chr(x) for x in range(256)])
+            return b''.join([six.int2byte(x) for x in range(256)])
         except TypeError:
             return bytes([x for x in range(256)])
 

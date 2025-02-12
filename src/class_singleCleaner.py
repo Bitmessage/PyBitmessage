@@ -22,6 +22,7 @@ It resends messages when there has been no response:
 import gc
 import os
 import time
+import sqlite3
 
 import queues
 import state
@@ -29,6 +30,7 @@ from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
 from network import connectionpool, knownnodes, StoppableThread
 from tr import _translate
+from dbcompat import dbstr
 
 
 #: Equals 4 weeks. You could make this longer if you want
@@ -99,6 +101,8 @@ class singleCleaner(StoppableThread):
                     tick - state.maximumLengthOfTimeToBotherResendingMessages
                 )
                 for toAddress, ackData, status in queryreturn:
+                    toAddress = toAddress.decode("utf-8", "replace")
+                    status = status.decode("utf-8", "replace")
                     if status == 'awaitingpubkey':
                         self.resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
@@ -168,7 +172,7 @@ class singleCleaner(StoppableThread):
         ))
         sqlExecute(
             "UPDATE sent SET status = 'msgqueued'"
-            " WHERE toaddress = ? AND folder = 'sent'", address)
+            " WHERE toaddress = ? AND folder = 'sent'", dbstr(address))
         queues.workerQueue.put(('sendmessage', ''))
 
     def resendMsg(self, ackdata):
@@ -177,9 +181,13 @@ class singleCleaner(StoppableThread):
             'It has been a long time and we haven\'t heard an acknowledgement'
             ' to our msg. Sending again.'
         )
-        sqlExecute(
+        rowcount = sqlExecute(
             "UPDATE sent SET status = 'msgqueued'"
-            " WHERE ackdata = ? AND folder = 'sent'", ackdata)
+            " WHERE ackdata = ? AND folder = 'sent'", sqlite3.Binary(ackdata))
+        if rowcount < 1:
+            sqlExecute(
+                "UPDATE sent SET status = 'msgqueued'"
+                " WHERE ackdata = CAST(? AS TEXT) AND folder = 'sent'", ackdata)
         queues.workerQueue.put(('sendmessage', ''))
         queues.UISignalQueue.put((
             'updateStatusBar',

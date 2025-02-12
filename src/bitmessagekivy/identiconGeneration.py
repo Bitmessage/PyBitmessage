@@ -3,7 +3,7 @@ Core classes for loading images and converting them to a Texture.
 The raw image data can be keep in memory for further access
 """
 import hashlib
-from io import BytesIO
+from six import BytesIO
 
 from PIL import Image
 from kivy.core.image import Image as CoreImage

@@ -7,6 +7,7 @@ Maildetail screen for inbox, sent, draft and trash.
 
 import os
 from datetime import datetime
+import sqlite3
 
 from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
@@ -111,7 +112,11 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             elif self.kivy_state.detail_page_type == 'inbox':
                 data = sqlQuery(
                     "select toaddress, fromaddress, subject, message, received from inbox"
-                    " where msgid = ?", self.kivy_state.mail_id)
+                    " where msgid = ?", sqlite3.Binary(self.kivy_state.mail_id))
+                if len(data) < 1:
+                    data = sqlQuery(
+                        "select toaddress, fromaddress, subject, message, received from inbox"
+                        " where msgid = CAST(? AS TEXT)", self.kivy_state.mail_id)
                 self.assign_mail_details(data)
                 App.get_running_app().set_mail_detail_header()
         except Exception as e:  # pylint: disable=unused-variable
@@ -119,16 +124,16 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def assign_mail_details(self, data):
         """Assigning mail details"""
-        subject = data[0][2].decode() if isinstance(data[0][2], bytes) else data[0][2]
-        body = data[0][3].decode() if isinstance(data[0][2], bytes) else data[0][3]
-        self.to_addr = data[0][0] if len(data[0][0]) > 4 else ' '
-        self.from_addr = data[0][1]
+        subject = data[0][2].decode("utf-8", "replace") if isinstance(data[0][2], bytes) else data[0][2]
+        body = data[0][3].decode("utf-8", "replace") if isinstance(data[0][2], bytes) else data[0][3]
+        self.to_addr = data[0][0].decode("utf-8", "replace") if len(data[0][0]) > 4 else ' '
+        self.from_addr = data[0][1].decode("utf-8", "replace")
 
         self.subject = subject.capitalize(
         ) if subject.capitalize() else self.no_subject
         self.message = body
         if len(data[0]) == 7:
-            self.status = data[0][4]
+            self.status = data[0][4].decode("utf-8", "replace")
         self.time_tag = show_time_history(data[0][4]) if self.kivy_state.detail_page_type == 'inbox' \
             else show_time_history(data[0][6])
         self.avatarImg = os.path.join(self.kivy_state.imageDir, 'draft-icon.png') \

@@ -4,7 +4,7 @@ Namecoin queries
 # pylint: disable=too-many-branches,protected-access
 
 import base64
-import httplib
+from six.moves import http_client as httplib
 import json
 import os
 import socket
@@ -96,8 +96,8 @@ class namecoinConnection(object):
                 res = res["reply"]
                 if not res:
                     return (_translate(
-                        "MainWindow", "The name %1 was not found."
-                    ).arg(identity.decode("utf-8", "ignore")), None)
+                        "MainWindow", "The name {0} was not found."
+                    ).format(identity.decode("utf-8", "ignore")), None)
             else:
                 assert False
         except RPCError as exc:
@@ -107,12 +107,12 @@ class namecoinConnection(object):
             else:
                 errmsg = exc.error
             return (_translate(
-                "MainWindow", "The namecoin query failed (%1)"
-            ).arg(errmsg.decode("utf-8", "ignore")), None)
+                "MainWindow", "The namecoin query failed ({0})"
+            ).format(errmsg.decode("utf-8", "ignore")), None)
         except AssertionError:
             return (_translate(
-                "MainWindow", "Unknown namecoin interface type: %1"
-            ).arg(self.nmctype.decode("utf-8", "ignore")), None)
+                "MainWindow", "Unknown namecoin interface type: {0}"
+            ).format(self.nmctype.decode("utf-8", "ignore")), None)
         except Exception:
             logger.exception("Namecoin query exception")
             return (_translate(
@@ -135,8 +135,8 @@ class namecoinConnection(object):
         ) if valid else (
             _translate(
                 "MainWindow",
-                "The name %1 has no associated Bitmessage address."
-            ).arg(identity.decode("utf-8", "ignore")), None)
+                "The name {0} has no associated Bitmessage address."
+            ).format(identity.decode("utf-8", "ignore")), None)
 
     def test(self):
         """
@@ -164,7 +164,7 @@ class namecoinConnection(object):
                     "success",
                     _translate(
                         "MainWindow",
-                        "Success!  Namecoind version %1 running.").arg(
+                        "Success!  Namecoind version {0} running.").format(
                             versStr.decode("utf-8", "ignore")))
 
             elif self.nmctype == "nmcontrol":

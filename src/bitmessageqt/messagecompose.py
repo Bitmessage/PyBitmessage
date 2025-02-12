@@ -24,7 +24,7 @@ class MessageCompose(QtGui.QTextEdit):
                 self.zoomOut(1)
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtGui.QApplication.activeWindow().statusBar().showMessage(
-                QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(
+                QtGui.QApplication.translate("MainWindow", "Zoom level {0}%").format(
                     str(zoom)
                 )
             )

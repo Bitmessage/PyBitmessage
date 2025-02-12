@@ -15,10 +15,10 @@ class TestRandomTrackingDict(unittest.TestCase):
     @staticmethod
     def randString():
         """helper function for tests, generates a random string"""
-        retval = ''
-        for _ in range(32):
-            retval += chr(random.randint(0, 255))
-        return retval
+        retval = bytearray(32)
+        for i in range(32):
+            retval[i] = random.randint(0, 255)
+        return bytes(retval)
 
     def test_check_randomtrackingdict(self):
         """Check the logic of RandomTrackingDict class"""

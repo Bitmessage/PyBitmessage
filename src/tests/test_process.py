@@ -11,6 +11,7 @@ import time
 import unittest
 
 import psutil
+import six
 
 from .common import cleanup, put_signal_file, skip_python3
 
@@ -22,7 +23,10 @@ class TestProcessProto(unittest.TestCase):
     """Test case implementing common logic for external testing:
     it starts pybitmessage in setUpClass() and stops it in tearDownClass()
     """
-    _process_cmd = ['pybitmessage', '-d']
+    if six.PY3:
+        _process_cmd = ['./py3bitmessage', '-d']
+    else:  # assume six.PY2
+        _process_cmd = ['./pybitmessage', '-d']
     _threads_count_min = 15
     _threads_count_max = 16
     _threads_names = [

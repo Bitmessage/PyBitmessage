@@ -6,9 +6,11 @@ import ssl
 import sys
 import time
 
+from unqstr import ustr, unic
 from PyQt4 import QtCore
+from dbcompat import dbstr
 
-import account
+from bitmessageqt import account
 import defaults
 import network.stats
 import paths
@@ -16,12 +18,12 @@ import proofofwork
 import queues
 import state
 from bmconfigparser import config
-from foldertree import AccountMixin
+from .foldertree import AccountMixin
 from helper_sql import sqlExecute, sqlQuery
 from l10n import getTranslationLanguage
 from openclpow import openclEnabled
 from pyelliptic.openssl import OpenSSL
-from settings import getSOCKSProxyType
+from .settings import getSOCKSProxyType
 from version import softwareVersion
 from tr import _translate
 
@@ -67,12 +69,12 @@ Connected hosts: {}
 
 
 def checkAddressBook(myapp):
-    sqlExecute('DELETE from addressbook WHERE address=?', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', SUPPORT_ADDRESS)
+    sqlExecute('DELETE from addressbook WHERE address=?', dbstr(OLD_SUPPORT_ADDRESS))
+    queryreturn = sqlQuery('SELECT * FROM addressbook WHERE address=?', dbstr(SUPPORT_ADDRESS))
     if queryreturn == []:
         sqlExecute(
             'INSERT INTO addressbook VALUES (?,?)',
-            SUPPORT_LABEL.toUtf8(), SUPPORT_ADDRESS)
+            dbstr(SUPPORT_LABEL), dbstr(SUPPORT_ADDRESS))
         myapp.rerenderAddressBook()
 
 
@@ -88,7 +90,7 @@ def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
         queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, 1,
-            str(SUPPORT_MY_LABEL.toUtf8()),
+            ustr(SUPPORT_MY_LABEL),
             1, "", False,
             defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
             defaults.networkDefaultPayloadLengthExtraBytes
@@ -122,7 +124,7 @@ def createSupportMessage(myapp):
     os = sys.platform
     if os == "win32":
         windowsversion = sys.getwindowsversion()
-        os = "Windows " + str(windowsversion[0]) + "." + str(windowsversion[1])
+        os = "Windows " + ustr(windowsversion[0]) + "." + ustr(windowsversion[1])
     else:
         try:
             from os import uname
@@ -141,7 +143,7 @@ def createSupportMessage(myapp):
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if proofofwork.bmpow else "False"
-    openclpow = str(
+    openclpow = ustr(
         config.safeGet('bitmessagesettings', 'opencl')
     ) if openclEnabled() else "None"
     locale = getTranslationLanguage()
@@ -149,9 +151,9 @@ def createSupportMessage(myapp):
     upnp = config.safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
-    myapp.ui.textEditMessage.setText(unicode(SUPPORT_MESSAGE, 'utf-8').format(
+    myapp.ui.textEditMessage.setText(unic(ustr(SUPPORT_MESSAGE).format(
         version, os, architecture, pythonversion, opensslversion, frozen,
-        portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
+        portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts)))
 
     # single msg tab
     myapp.ui.tabWidgetSend.setCurrentIndex(

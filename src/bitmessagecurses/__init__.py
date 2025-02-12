@@ -10,13 +10,15 @@ Bitmessage commandline interface
 #     * python2-pythondialog
 #  * dialog
 
-import ConfigParser
+from six.moves import configparser
 import curses
 import os
 import sys
 import time
 from textwrap import fill
 from threading import Timer
+import six
+import sqlite3
 
 from dialog import Dialog
 import helper_sent
@@ -30,6 +32,7 @@ import state
 from addresses import addBMIfNotPresent, decodeAddress
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
+from dbcompat import dbstr
 
 # pylint: disable=global-statement
 
@@ -105,7 +108,7 @@ def ascii(s):
     """ASCII values"""
     r = ""
     for c in s:
-        if ord(c) in range(128):
+        if six.byte2int(c) in range(128):
             r += c
     return r
 
@@ -326,13 +329,13 @@ def handlech(c, stdscr):
     if c != curses.ERR:
         global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
         if c in range(256):
-            if chr(c) in '12345678':
+            if six.int2byte(c) in '12345678':
                 global menutab
-                menutab = int(chr(c))
-            elif chr(c) == 'q':
+                menutab = int(six.int2byte(c))
+            elif six.int2byte(c) == 'q':
                 global quit_
                 quit_ = True
-            elif chr(c) == '\n':
+            elif six.int2byte(c) == '\n':
                 curses.curs_set(1)
                 d = Dialog(dialog="dialog")
                 if menutab == 1:
@@ -358,7 +361,9 @@ def handlech(c, stdscr):
                                 inbox[inboxcur][1] +
                                 "\"")
                             data = ""       # pyint: disable=redefined-outer-name
-                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", inbox[inboxcur][0])
+                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                            if len(ret) < 1:
+                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                             if ret != []:
                                 for row in ret:
                                     data, = row
@@ -367,12 +372,16 @@ def handlech(c, stdscr):
                                 for i, item in enumerate(data.split("\n")):
                                     msg += fill(item, replace_whitespace=False) + "\n"
                                 scrollbox(d, unicode(ascii(msg)), 30, 80)
-                                sqlExecute("UPDATE inbox SET read=1 WHERE msgid=?", inbox[inboxcur][0])
+                                rowcount = sqlExecute("UPDATE inbox SET read=1 WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                                if rowcount < 1:
+                                    sqlExecute("UPDATE inbox SET read=1 WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                                 inbox[inboxcur][7] = 1
                             else:
                                 scrollbox(d, unicode("Could not fetch message."))
                         elif t == "2":       # Mark unread
-                            sqlExecute("UPDATE inbox SET read=0 WHERE msgid=?", inbox[inboxcur][0])
+                            rowcount = sqlExecute("UPDATE inbox SET read=0 WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                            if rowcount < 1:
+                                sqlExecute("UPDATE inbox SET read=0 WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                             inbox[inboxcur][7] = 0
                         elif t == "3":       # Reply
                             curses.curs_set(1)
@@ -396,11 +405,14 @@ def handlech(c, stdscr):
                             if not m[5][:4] == "Re: ":
                                 subject = "Re: " + m[5]
                             body = ""
-                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", m[0])
+                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(m[0]))
+                            if len(ret) < 1:
+                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", m[0])
                             if ret != []:
                                 body = "\n\n------------------------------------------------------\n"
                                 for row in ret:
                                     body, = row
+                                body = body.decode("utf-8", "replace")
 
                             sendMessage(fromaddr, toaddr, ischan, subject, body, True)
                             dialogreset(stdscr)
@@ -410,7 +422,7 @@ def handlech(c, stdscr):
                                 r, t = d.inputbox("Label for address \"" + addr + "\"")
                                 if r == d.DIALOG_OK:
                                     label = t
-                                    sqlExecute("INSERT INTO addressbook VALUES (?,?)", label, addr)
+                                    sqlExecute("INSERT INTO addressbook VALUES (?,?)", dbstr(label), dbstr(addr))
                                     # Prepend entry
                                     addrbook.reverse()
                                     addrbook.append([label, addr])
@@ -422,17 +434,22 @@ def handlech(c, stdscr):
                             r, t = d.inputbox("Filename", init=inbox[inboxcur][5] + ".txt")
                             if r == d.DIALOG_OK:
                                 msg = ""
-                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", inbox[inboxcur][0])
+                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                                if len(ret) < 1:
+                                    ret = sqlQuery("SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                                 if ret != []:
                                     for row in ret:
                                         msg, = row
+                                    msg = msg.decode("utf-8", "replace")
                                     fh = open(t, "a")       # Open in append mode just in case
                                     fh.write(msg)
                                     fh.close()
                                 else:
                                     scrollbox(d, unicode("Could not fetch message."))
                         elif t == "6":       # Move to trash
-                            sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=?", inbox[inboxcur][0])
+                            rowcount = sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                            if rowcount < 1:
+                                sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                             del inbox[inboxcur]
                             scrollbox(d, unicode(
                                 "Message moved to trash. There is no interface to view your trash,"
@@ -463,8 +480,13 @@ def handlech(c, stdscr):
                             data = ""
                             ret = sqlQuery(
                                 "SELECT message FROM sent WHERE subject=? AND ackdata=?",
-                                sentbox[sentcur][4],
-                                sentbox[sentcur][6])
+                                dbstr(sentbox[sentcur][4]),
+                                sqlite3.Binary(sentbox[sentcur][6]))
+                            if len(ret) < 1:
+                                ret = sqlQuery(
+                                    "SELECT message FROM sent WHERE subject=? AND ackdata=CAST(? AS TEXT)",
+                                    dbstr(sentbox[sentcur][4]),
+                                    sentbox[sentcur][6])
                             if ret != []:
                                 for row in ret:
                                     data, = row
@@ -476,10 +498,15 @@ def handlech(c, stdscr):
                             else:
                                 scrollbox(d, unicode("Could not fetch message."))
                         elif t == "2":       # Move to trash
-                            sqlExecute(
+                            rowcount = sqlExecute(
                                 "UPDATE sent SET folder='trash' WHERE subject=? AND ackdata=?",
-                                sentbox[sentcur][4],
-                                sentbox[sentcur][6])
+                                dbstr(sentbox[sentcur][4]),
+                                sqlite3.Binary(sentbox[sentcur][6]))
+                            if rowcount < 1:
+                                rowcount = sqlExecute(
+                                    "UPDATE sent SET folder='trash' WHERE subject=? AND ackdata=CAST(? AS TEXT)",
+                                    dbstr(sentbox[sentcur][4]),
+                                    sentbox[sentcur][6])
                             del sentbox[sentcur]
                             scrollbox(d, unicode(
                                 "Message moved to trash. There is no interface to view your trash"
@@ -672,7 +699,7 @@ def handlech(c, stdscr):
                                     elif t == "2" and m is False:
                                         try:
                                             mn = config.get(a, "mailinglistname")
-                                        except ConfigParser.NoOptionError:
+                                        except configparser.NoOptionError:
                                             mn = ""
                                         r, t = d.inputbox("Mailing list name", init=mn)
                                         if r == d.DIALOG_OK:
@@ -711,29 +738,29 @@ def handlech(c, stdscr):
                                         subscriptions.append([label, addr, True])
                                         subscriptions.reverse()
 
-                                        sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, addr, True)
+                                        sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", dbstr(label), dbstr(addr), True)
                                         shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "2":
                             r, t = d.inputbox("Type in \"I want to delete this subscription\"")
                             if r == d.DIALOG_OK and t == "I want to delete this subscription":
                                 sqlExecute(
                                     "DELETE FROM subscriptions WHERE label=? AND address=?",
-                                    subscriptions[subcur][0],
-                                    subscriptions[subcur][1])
+                                    dbstr(subscriptions[subcur][0]),
+                                    dbstr(subscriptions[subcur][1]))
                                 shared.reloadBroadcastSendersForWhichImWatching()
                                 del subscriptions[subcur]
                         elif t == "3":
                             sqlExecute(
                                 "UPDATE subscriptions SET enabled=1 WHERE label=? AND address=?",
-                                subscriptions[subcur][0],
-                                subscriptions[subcur][1])
+                                dbstr(subscriptions[subcur][0]),
+                                dbstr(subscriptions[subcur][1]))
                             shared.reloadBroadcastSendersForWhichImWatching()
                             subscriptions[subcur][2] = True
                         elif t == "4":
                             sqlExecute(
                                 "UPDATE subscriptions SET enabled=0 WHERE label=? AND address=?",
-                                subscriptions[subcur][0],
-                                subscriptions[subcur][1])
+                                dbstr(subscriptions[subcur][0]),
+                                dbstr(subscriptions[subcur][1]))
                             shared.reloadBroadcastSendersForWhichImWatching()
                             subscriptions[subcur][2] = False
                 elif menutab == 6:
@@ -762,7 +789,7 @@ def handlech(c, stdscr):
                                 subscriptions.append([label, addr, True])
                                 subscriptions.reverse()
 
-                                sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, addr, True)
+                                sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", dbstr(label), dbstr(addr), True)
                                 shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "3":
                             r, t = d.inputbox("Input new address")
@@ -771,7 +798,7 @@ def handlech(c, stdscr):
                                 if addr not in [item[1] for i, item in enumerate(addrbook)]:
                                     r, t = d.inputbox("Label for address \"" + addr + "\"")
                                     if r == d.DIALOG_OK:
-                                        sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
+                                        sqlExecute("INSERT INTO addressbook VALUES (?,?)", dbstr(t), dbstr(addr))
                                         # Prepend entry
                                         addrbook.reverse()
                                         addrbook.append([t, addr])
@@ -783,8 +810,8 @@ def handlech(c, stdscr):
                             if r == d.DIALOG_OK and t == "I want to delete this Address Book entry":
                                 sqlExecute(
                                     "DELETE FROM addressbook WHERE label=? AND address=?",
-                                    addrbook[abookcur][0],
-                                    addrbook[abookcur][1])
+                                    dbstr(addrbook[abookcur][0]),
+                                    dbstr(addrbook[abookcur][1]))
                                 del addrbook[abookcur]
                 elif menutab == 7:
                     set_background_title(d, "Blacklist Dialog Box")
@@ -800,20 +827,20 @@ def handlech(c, stdscr):
                             if r == d.DIALOG_OK and t == "I want to delete this Blacklist entry":
                                 sqlExecute(
                                     "DELETE FROM blacklist WHERE label=? AND address=?",
-                                    blacklist[blackcur][0],
-                                    blacklist[blackcur][1])
+                                    dbstr(blacklist[blackcur][0]),
+                                    dbstr(blacklist[blackcur][1]))
                                 del blacklist[blackcur]
                         elif t == "2":
                             sqlExecute(
                                 "UPDATE blacklist SET enabled=1 WHERE label=? AND address=?",
-                                blacklist[blackcur][0],
-                                blacklist[blackcur][1])
+                                dbstr(blacklist[blackcur][0]),
+                                dbstr(blacklist[blackcur][1]))
                             blacklist[blackcur][2] = True
                         elif t == "3":
                             sqlExecute(
                                 "UPDATE blacklist SET enabled=0 WHERE label=? AND address=?",
-                                blacklist[blackcur][0],
-                                blacklist[blackcur][1])
+                                dbstr(blacklist[blackcur][0]),
+                                dbstr(blacklist[blackcur][1]))
                             blacklist[blackcur][2] = False
                 dialogreset(stdscr)
         else:
@@ -991,10 +1018,13 @@ def loadInbox():
     ret = sqlQuery("""SELECT msgid, toaddress, fromaddress, subject, received, read
         FROM inbox WHERE folder='inbox' AND %s LIKE ?
         ORDER BY received
-        """ % (where,), what)
+        """ % (where,), dbstr(what))
     for row in ret:
         msgid, toaddr, fromaddr, subject, received, read = row
+        toaddr = toaddr.decode("utf-8", "replace")
+        fromaddr = fromaddr.decode("utf-8", "replace")
         subject = ascii(shared.fixPotentiallyInvalidUTF8Data(subject))
+        received = received.decode("utf-8", "replace")
 
         # Set label for to address
         try:
@@ -1013,18 +1043,19 @@ def loadInbox():
         if config.has_section(fromaddr):
             fromlabel = config.get(fromaddr, "label")
         if fromlabel == "":         # Check Address Book
-            qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", fromaddr)
+            qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", dbstr(fromaddr))
             if qr != []:
                 for r in qr:
                     fromlabel, = r
+                fromlabel = shared.fixPotentiallyInvalidUTF8Data(fromlabel)
         if fromlabel == "":         # Check Subscriptions
-            qr = sqlQuery("SELECT label FROM subscriptions WHERE address=?", fromaddr)
+            qr = sqlQuery("SELECT label FROM subscriptions WHERE address=?", dbstr(fromaddr))
             if qr != []:
                 for r in qr:
                     fromlabel, = r
+                fromlabel = shared.fixPotentiallyInvalidUTF8Data(fromlabel)
         if fromlabel == "":
             fromlabel = fromaddr
-        fromlabel = shared.fixPotentiallyInvalidUTF8Data(fromlabel)
 
         # Load into array
         inbox.append([
@@ -1044,22 +1075,27 @@ def loadSent():
     ret = sqlQuery("""SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime
         FROM sent WHERE folder='sent' AND %s LIKE ?
         ORDER BY lastactiontime
-        """ % (where,), what)
+        """ % (where,), dbstr(what))
     for row in ret:
         toaddr, fromaddr, subject, status, ackdata, lastactiontime = row
+        toaddr = toaddr.decode("utf-8", "replace")
+        fromaddr = fromaddr.decode("utf-8", "replace")
         subject = ascii(shared.fixPotentiallyInvalidUTF8Data(subject))
+        status = status.decode("utf-8", "replace")
 
         # Set label for to address
         tolabel = ""
-        qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", toaddr)
+        qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", dbstr(toaddr))
         if qr != []:
             for r in qr:
                 tolabel, = r
+            tolabel = tolabel.decode("utf-8", "replace")
         if tolabel == "":
-            qr = sqlQuery("SELECT label FROM subscriptions WHERE address=?", toaddr)
+            qr = sqlQuery("SELECT label FROM subscriptions WHERE address=?", dbstr(toaddr))
             if qr != []:
                 for r in qr:
                     tolabel, = r
+                tolabel = tolabel.decode("utf-8", "replace")
         if tolabel == "":
             if config.has_section(toaddr):
                 tolabel = config.get(toaddr, "label")
@@ -1129,6 +1165,7 @@ def loadAddrBook():
     for row in ret:
         label, addr = row
         label = shared.fixPotentiallyInvalidUTF8Data(label)
+        addr = addr.decode("utf-8", "replace")
         addrbook.append([label, addr])
     addrbook.reverse()
 
@@ -1138,6 +1175,8 @@ def loadSubscriptions():
     ret = sqlQuery("SELECT label, address, enabled FROM subscriptions")
     for row in ret:
         label, address, enabled = row
+        label = label.decode("utf-8", "replace")
+        address = address.decode("utf-8", "replace")
         subscriptions.append([label, address, enabled])
     subscriptions.reverse()
 
@@ -1152,6 +1191,8 @@ def loadBlackWhiteList():
         ret = sqlQuery("SELECT label, address, enabled FROM whitelist")
     for row in ret:
         label, address, enabled = row
+        label = label.decode("utf-8", "replace")
+        address = address.decode("utf-8", "replace")
         blacklist.append([label, address, enabled])
     blacklist.reverse()
 

@@ -6,6 +6,7 @@ and suggest how it may be installed
 import os
 import re
 import sys
+import six
 
 # Only really old versions of Python don't have sys.hexversion. We don't
 # support them. The logging module was introduced in Python 2.3
@@ -383,6 +384,15 @@ def check_pyqt():
     Here we are checking for PyQt4 with its version, as for it require
     PyQt 4.8 or later.
     """
+    sip_found = False
+    try:
+        import sip
+        sip.setapi("QString", 2)
+        sip.setapi("QVariant", 2)
+        sip_found = True
+    except ImportError:
+        pass
+
     QtCore = try_import(
         'PyQt4.QtCore', 'PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
 
@@ -402,6 +412,11 @@ def check_pyqt():
             'This version of Qt is too old. PyBitmessage requries'
             ' Qt 4.7 or later.')
         passed = False
+
+    if passed and not sip_found:
+        logger.info("sip is not found although PyQt is found")
+        return False
+
     return passed
 
 
@@ -435,14 +450,9 @@ def check_dependencies(verbose=False, optional=False):
     logger.info('Python version: %s', sys.version)
     if sys.hexversion < 0x20704F0:
         logger.error(
-            'PyBitmessage requires Python 2.7.4 or greater'
-            ' (but not Python 3+)')
+            'PyBitmessage requires Python 2.7.4 or greater.'
+            ' Python 2.7.18 is recommended.')
         has_all_dependencies = False
-    if sys.hexversion >= 0x3000000:
-        logger.error(
-            'PyBitmessage does not support Python 3+. Python 2.7.4'
-            ' or greater is required. Python 2.7.18 is recommended.')
-        sys.exit()
 
     # FIXME: This needs to be uncommented when more of the code is python3 compatible
     # if sys.hexversion >= 0x3000000 and sys.hexversion < 0x3060000:

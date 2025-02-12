@@ -5,6 +5,7 @@ src/settingsmixin.py
 
 """
 
+from unqstr import ustr
 from PyQt4 import QtCore, QtGui
 
 
@@ -40,7 +41,7 @@ class SettingsMixin(object):
         self.warnIfNoObjectName()
         settings = QtCore.QSettings()
         try:
-            geom = settings.value("/".join([str(self.objectName()), "geometry"]))
+            geom = settings.value("/".join([ustr(self.objectName()), "geometry"]))
             target.restoreGeometry(geom.toByteArray() if hasattr(geom, 'toByteArray') else geom)
         except Exception:
             pass
@@ -50,7 +51,7 @@ class SettingsMixin(object):
         self.warnIfNoObjectName()
         settings = QtCore.QSettings()
         try:
-            state = settings.value("/".join([str(self.objectName()), "state"]))
+            state = settings.value("/".join([ustr(self.objectName()), "state"]))
             target.restoreState(state.toByteArray() if hasattr(state, 'toByteArray') else state)
         except Exception:
             pass

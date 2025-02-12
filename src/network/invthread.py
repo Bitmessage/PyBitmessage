@@ -1,16 +1,16 @@
 """
 Thread to send inv annoucements
 """
-import Queue
+from six.moves import queue as Queue
 import random
 from time import time
 
 import addresses
 import protocol
 import state
-import connectionpool
+from network import connectionpool
 from network import dandelion_ins, invQueue
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 def handleExpiredDandelion(expired):
@@ -90,15 +90,15 @@ class InvThread(StoppableThread):
                     if fluffs:
                         random.shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket(
-                            'inv',
+                            b'inv',
                             addresses.encodeVarint(
-                                len(fluffs)) + ''.join(fluffs)))
+                                len(fluffs)) + b''.join(fluffs)))
                     if stems:
                         random.shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket(
-                            'dinv',
+                            b'dinv',
                             addresses.encodeVarint(
-                                len(stems)) + ''.join(stems)))
+                                len(stems)) + b''.join(stems)))
 
             invQueue.iterate()
             for _ in range(len(chunk)):
