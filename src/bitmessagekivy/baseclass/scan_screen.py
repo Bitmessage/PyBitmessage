@@ -20,7 +20,6 @@ from kivy.properties import (
 from kivy.uix.screenmanager import Screen
 
 from pybitmessage.bitmessagekivy.get_platform import platform
-from pyzbar.pyzbar import ZBarSymbol
 
 logger = logging.getLogger('default')
 
@@ -36,6 +35,7 @@ class ScanScreen(Screen):
         """Getting AddressBook Details"""
         super(ScanScreen, self).__init__(*args, **kwargs)
         self.check_camera()
+        self.zbarcam = None
 
     def check_camera(self):
         """This method is used for checking camera avaibility"""
@@ -90,7 +90,7 @@ class ScanScreen(Screen):
         # pylint: disable=attribute-defined-outside-init
         self.zbarcam.start()
         Clock.schedule_interval(self.check_symbol, 0.5)
-    
+
     def check_symbol(self, *args):
         """Check if the symbol is detected"""
         if self.zbarcam.symbols:
@@ -104,7 +104,6 @@ class ScanScreen(Screen):
                     self.pop_up_instance.open()
                     return False
         return True
-
 
     def stop_camera(self, *args):
         """Its used to stop the camera"""
