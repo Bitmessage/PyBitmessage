@@ -8,15 +8,6 @@
             # height: dp(bod.height) + self.minimum_height
             height: self.minimum_height
             padding: dp(10)
-            # MDLabel:
-            #     size_hint_y: None
-            #     id: subj
-            #     text: root.subject
-            #     theme_text_color: 'Primary'
-            #     halign: 'left'
-            #     font_style: 'H5'
-            #     height: dp(40)
-            #     on_touch_down: root.allclick(self)
             OneLineListTitle:
                 id: subj
                 text: app.tr._(root.subject)
@@ -30,7 +21,7 @@
                 text: app.tr._(root.from_addr)
                 secondary_text: app.tr._('to ' + root.to_addr)
                 divider: None
-                on_press: root.detailedPopup()
+                on_press: root.detailed_popup()
                 BadgeText:
                     size_hint:(None, None)
                     size:[120, 140] if app.app_platform == 'android' else [64, 80]
@@ -49,20 +40,13 @@
                     radius: [8]
                     height: self.parent.height/4
                 AvatarSampleWidget:
-                    source: root.avatarImg
+                    source: root.avatar_image
             MDLabel:
                 text: root.status
                 disabled: True
                 font_style: 'Body2'
                 halign:'left'
                 padding_x: 20
-            # MDLabel:
-            #     id: bod
-            #     font_style: 'Subtitle2'
-            #     theme_text_color: 'Primary'
-            #     text: root.message
-            #     halign: 'left'
-            #     height: self.texture_size[1]
             MyMDTextField:
                 id: bod
                 size_hint_y: None

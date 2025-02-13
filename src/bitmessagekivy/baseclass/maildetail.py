@@ -1,5 +1,6 @@
 # pylint: disable=unused-argument, consider-using-f-string, import-error, attribute-defined-outside-init
 # pylint: disable=unnecessary-comprehension, no-member, no-name-in-module, too-few-public-methods
+# pylint: disable=broad-except
 
 """
 MailDetail screen for inbox, sent, draft, and trash.
@@ -7,7 +8,6 @@ MailDetail screen for inbox, sent, draft, and trash.
 
 import os
 from datetime import datetime
-import logging
 
 from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
@@ -73,6 +73,7 @@ class OneLineListTitle(OneLineListItem):
 class IconRightSampleWidget(IRightBodyTouch, MDIconButton):
     """IconRightSampleWidget class for Kivy UI."""
 
+
 class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
     """MailDetail Screen class for Kivy UI."""
 
@@ -83,7 +84,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
     status = StringProperty()
     page_type = StringProperty()
     time_tag = StringProperty()
-    avatarImg = StringProperty()
+    avatar_image = StringProperty()
     no_subject = '(no subject)'
 
     def __init__(self, *args, **kwargs):
@@ -119,11 +120,17 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         self.message = body
         if len(data[0]) == 7:
             self.status = data[0][4]
-        self.time_tag = show_time_history(data[0][4]) if self.page_type == 'inbox' else show_time_history(data[0][6])
-        self.avatarImg = (
+        self.time_tag = (
+            show_time_history(data[0][4]) if self.page_type == 'inbox'
+            else show_time_history(data[0][6])
+        )
+        self.avatar_image = (
             os.path.join(self.kivy_state.image_dir, 'draft-icon.png')
             if self.page_type == 'draft'
-            else os.path.join(self.kivy_state.image_dir, 'text_images', f'{avatar_image_first_letter(self.subject.strip())}.png')  # noqa: E999
+            else os.path.join(
+                self.kivy_state.image_dir, 'text_images',
+                f'{avatar_image_first_letter(self.subject.strip())}.png'
+            )
         )
         self.timeinseconds = data[0][4] if self.page_type == 'inbox' else data[0][6]
 
@@ -144,8 +151,6 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             self._update_mail_counts(msg_count_objs)
 
         Clock.schedule_once(self.callback_for_delete, 4)
-    
-    #created separate function for more readablity and maintanence
 
     def _update_sent_mail(self, msg_count_objs):
         """Update UI for sent mail."""
@@ -175,7 +180,11 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         msg_count_objs.trash_cnt.ids.badge_txt.text = str(int(self.kivy_state.trash_count) + 1)
         msg_count_objs.allmail_cnt.ids.badge_txt.text = str(int(self.kivy_state.all_count) - 1)
         self.kivy_state.trash_count = str(int(self.kivy_state.trash_count) + 1)
-        self.kivy_state.all_count = str(int(self.kivy_state.all_count) - 1) if int(self.kivy_state.all_count) else '0'
+        self.kivy_state.all_count = (
+            str(int(self.kivy_state.all_count) - 1)
+            if int(self.kivy_state.all_count)
+            else '0'
+        )
         self.parent.screens[3].clear_widgets()
         self.parent.screens[3].add_widget(Factory.Trash())
         self.parent.screens[14].clear_widgets()
@@ -199,7 +208,8 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         composer_obj.composer_dropdown.text = data[0][0]
         composer_obj.txt_input.text = data[0][1]
         split_subject = data[0][2].split('Re:', 1)
-        composer_obj.subject.text = 'Re: ' + (split_subject[1] if len(split_subject) > 1 else split_subject[0])
+        subject_text = split_subject[1] if len(split_subject) > 1 else split_subject[0]
+        composer_obj.subject.text = 'Re: ' + subject_text
         time_obj = datetime.fromtimestamp(int(data[0][4]))
         time_tag = time_obj.strftime("%d %b %Y, %I:%M %p")
         sender_name = data[0][1]
@@ -226,13 +236,13 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         composer_ids.subject.text = data[0][2] if data[0][2] != self.no_subject else ''
         composer_ids.body.text = data[0][3]
 
-    def write_msg(self, navApp):
+    def write_msg(self, nav_app):
         """Switch to draft mail composition."""
         self.kivy_state.send_draft_mail = self.kivy_state.mail_id
         self.parent.current = 'create'
-        navApp.set_navbar_for_composer()
+        nav_app.set_navbar_for_composer()
 
-    def detailedPopup(self):
+    def detailed_popup(self):
         """Show detailed sender information popup."""
         obj = SenderDetailPopup()
         obj.open()
