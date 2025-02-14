@@ -27,8 +27,6 @@ logger = logging.getLogger('default')
 
 class BMConnectionPool(object):
     """Pool of all existing connections"""
-    # pylint: disable=too-many-instance-attributes
-
     trustedPeer = None
     """
     If the trustedpeer option is specified in keys.dat then this will

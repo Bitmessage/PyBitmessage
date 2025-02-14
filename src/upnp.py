@@ -132,7 +132,7 @@ class Router:  # pylint: disable=old-style-class
             description,
             leaseDuration=0,
             enabled=1,
-    ):  # pylint: disable=too-many-arguments
+    ):
         """Add UPnP port mapping"""
 
         resp = self.soapRequest(self.upnp_schema + ':1', 'AddPortMapping', [

@@ -208,7 +208,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
                     self.value.serialize(),
                     self._ec_point_serialize(self.Q))
 
-    def __init__(self, curve="secp256k1", pubkey=None, privkey=None,  # pylint: disable=too-many-arguments
+    def __init__(self, curve="secp256k1", pubkey=None, privkey=None,
                  year=2025, month=11, value=0xFF):
         self.ctx = OpenSSL.BN_CTX_new()
 

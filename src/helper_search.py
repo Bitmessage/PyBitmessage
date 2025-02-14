@@ -28,7 +28,7 @@ def search_sql(
     :return: all messages where <where> field contains <what>
     :rtype: list[list]
     """
-    # pylint: disable=too-many-arguments, too-many-branches
+    # pylint: disable=too-many-branches
     if what:
         what = '%' + what + '%'
         if where == _translate("MainWindow", "To"):
@@ -84,7 +84,6 @@ def check_match(
     Check if a single message matches a filter (used when new messages
     are added to messagelists)
     """
-    # pylint: disable=too-many-arguments
     if not what:
         return True
 

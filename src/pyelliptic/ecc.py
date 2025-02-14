@@ -54,7 +54,7 @@ class ECC(object):
             pubkey_y=None,
             raw_privkey=None,
             curve='sect283r1',
-    ):  # pylint: disable=too-many-arguments
+    ):
         """
         For a normal and high level use, specifie pubkey,
         privkey (if you need) and the curve
@@ -478,7 +478,7 @@ class ECC(object):
             curve='sect283r1',
             ephemcurve=None,
             ciphername='aes-256-cbc',
-    ):  # pylint: disable=too-many-arguments
+    ):
         """ECDH encryption, keys supplied in binary data format"""
 
         if ephemcurve is None:

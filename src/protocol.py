@@ -336,8 +336,9 @@ def assembleAddrMessage(peerList):
     return retval
 
 
-def assembleVersionMessage(  # pylint: disable=too-many-arguments
-    remoteHost, remotePort, participatingStreams, dandelion_enabled=True, server=False, nodeid=None,
+def assembleVersionMessage(
+    remoteHost, remotePort, participatingStreams,
+    dandelion_enabled=True, server=False, nodeid=None
 ):
     """
     Construct the payload of a version message,

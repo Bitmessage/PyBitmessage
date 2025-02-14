@@ -40,7 +40,7 @@ class BMObjectAlreadyHaveError(Exception):
     errorCodes = ("Already have this object")
 
 
-class BMObject(object):  # pylint: disable=too-many-instance-attributes
+class BMObject(object):
     """Bitmessage Object as a class."""
 
     # max TTL, 28 days and 3 hours
@@ -57,7 +57,7 @@ class BMObject(object):  # pylint: disable=too-many-instance-attributes
             streamNumber,
             data,
             payloadOffset
-    ):  # pylint: disable=too-many-arguments
+    ):
         self.nonce = nonce
         self.expiresTime = expiresTime
         self.objectType = objectType

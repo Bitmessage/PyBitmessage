@@ -525,7 +525,7 @@ class BMRPCDispatcher(object):
             status, addressVersionNumber, streamNumber, ripe)
 
     @staticmethod
-    def _dump_inbox_message(  # pylint: disable=too-many-arguments
+    def _dump_inbox_message(
             msgid, toAddress, fromAddress, subject, received,
             message, encodingtype, read):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -771,7 +771,6 @@ class BMRPCDispatcher(object):
         ))
         return queues.apiAddressGeneratorReturnQueue.get()
 
-    # pylint: disable=too-many-arguments
     @command('createDeterministicAddresses')
     def HandleCreateDeterministicAddresses(
         self, passphrase, numberOfAddresses=1, addressVersionNumber=0,
