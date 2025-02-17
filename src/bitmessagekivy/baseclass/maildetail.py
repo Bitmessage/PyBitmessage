@@ -3,7 +3,7 @@
 # pylint: disable=broad-except
 
 """
-MailDetail screen for inbox, sent, draft, and trash.
+MailDetail screen for inbox, sent, draft and trash.
 """
 
 import os
@@ -27,11 +27,18 @@ from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.helper_sql import sqlQuery
 
+# Define constants for magic numbers
+ANDROID_WIDTH = 0.8
+OTHER_WIDTH = 0.55
+DIALOG_HEIGHT = 0.25
+LONG_PRESS_DURATION = 1
+DELETE_DELAY = 4
+
 
 class OneLineListTitle(OneLineListItem):
     """OneLineListTitle class for Kivy UI."""
     __events__ = ('on_long_press', )
-    long_press_time = NumericProperty(1)
+    long_press_time = NumericProperty(LONG_PRESS_DURATION)
 
     def on_state(self, instance, value):
         """Handle state change for long press."""
@@ -51,10 +58,10 @@ class OneLineListTitle(OneLineListItem):
     def copy_message_title(self, title_text):
         """Display dialog box with options to copy the message title."""
         self.title_text = title_text
-        width = 0.8 if platform == 'android' else 0.55
+        width = ANDROID_WIDTH if platform == 'android' else OTHER_WIDTH
         self.dialog_box = MDDialog(
             text=title_text,
-            size_hint=(width, 0.25),
+            size_hint=(width, DIALOG_HEIGHT),
             buttons=[
                 MDFlatButton(text="Copy", on_release=self.copy_title_callback),
                 MDFlatButton(text="Cancel", on_release=self.copy_title_callback),
@@ -89,7 +96,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, *args, **kwargs):
         """Initialize MailDetail screen."""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # pylint: disable=missing-super-argument
         self.kivy_state = kivy_state_variables()
         Clock.schedule_once(self.init_ui, 0)
 
@@ -150,7 +157,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
         if self.page_type != 'draft':
             self._update_mail_counts(msg_count_objs)
 
-        Clock.schedule_once(self.callback_for_delete, 4)
+        Clock.schedule_once(self.callback_for_delete, DELETE_DELAY)
 
     def _update_sent_mail(self, msg_count_objs):
         """Update UI for sent mail."""
