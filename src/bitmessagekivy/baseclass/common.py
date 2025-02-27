@@ -43,6 +43,12 @@ data_screens = {
     },
 }
 
+DIALOG_WIDTH_ANDROID = 0.8
+DIALOG_WIDTH_OTHER = 0.55
+DIALOG_HEIGHT = 0.25
+LONG_PRESS_DURATION = 1
+DELETE_DELAY = 4
+
 
 def load_image_path():
     """Return the path of kivy images"""

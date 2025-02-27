@@ -9,30 +9,23 @@ MailDetail screen for inbox, sent, draft and trash.
 import os
 from datetime import datetime
 
-from kivy.core.clipboard import Clipboard
-from kivy.clock import Clock
-from kivy.properties import StringProperty, NumericProperty
-from kivy.uix.screenmanager import Screen
-from kivy.factory import Factory
 from kivy.app import App
-
+from kivy.clock import Clock
+from kivy.core.clipboard import Clipboard
+from kivy.factory import Factory
+from kivy.properties import NumericProperty, StringProperty
+from kivy.uix.screenmanager import Screen
 from kivymd.uix.button import MDFlatButton, MDIconButton
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import OneLineListItem, IRightBodyTouch
+from kivymd.uix.list import IRightBodyTouch, OneLineListItem
 
 from pybitmessage.bitmessagekivy.baseclass.common import (
-    toast, avatar_image_first_letter, show_time_history, kivy_state_variables
-)
+    avatar_image_first_letter, kivy_state_variables, show_time_history, toast,
+    DIALOG_WIDTH_ANDROID, DIALOG_WIDTH_OTHER, DIALOG_HEIGHT, LONG_PRESS_DURATION,
+    DELETE_DELAY)
 from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.helper_sql import sqlQuery
-
-# Define constants for magic numbers
-ANDROID_WIDTH = 0.8
-OTHER_WIDTH = 0.55
-DIALOG_HEIGHT = 0.25
-LONG_PRESS_DURATION = 1
-DELETE_DELAY = 4
 
 
 class OneLineListTitle(OneLineListItem):
@@ -58,7 +51,7 @@ class OneLineListTitle(OneLineListItem):
     def copy_message_title(self, title_text):
         """Display dialog box with options to copy the message title."""
         self.title_text = title_text
-        width = ANDROID_WIDTH if platform == 'android' else OTHER_WIDTH
+        width = DIALOG_WIDTH_ANDROID if platform == 'android' else DIALOG_WIDTH_OTHER
         self.dialog_box = MDDialog(
             text=title_text,
             size_hint=(width, DIALOG_HEIGHT),
