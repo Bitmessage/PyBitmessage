@@ -43,6 +43,26 @@ data_screens = {
     },
 }
 
+
+class ChipProperties:
+    """ChipProperties class for kivy UI"""
+    CENTER_X_ANDROID = 0.91
+    CENTER_X_OTHER = 0.94
+    CENTER_Y = 0.3
+    HEIGHT_DP = 18
+    RADIUS = [8]
+    TEXT_COLOR = (1, 1, 1, 1)
+    SIZE_HINT_ANDROID = (0.16, None)
+    SIZE_HINT_OTHER = (0.08, None)
+
+
+class BadgeProperties:
+    """BadgeProperties class for kivy UI"""
+    SIZE_ANDROID = [120, 140]
+    SIZE_OTHER = [64, 80]
+    FONT_SIZE = "11sp"
+
+
 DIALOG_WIDTH_ANDROID = 0.8
 DIALOG_WIDTH_OTHER = 0.55
 DIALOG_HEIGHT = 0.25

@@ -22,7 +22,7 @@ from kivymd.uix.list import IRightBodyTouch, OneLineListItem
 from pybitmessage.bitmessagekivy.baseclass.common import (
     avatar_image_first_letter, kivy_state_variables, show_time_history, toast,
     DIALOG_WIDTH_ANDROID, DIALOG_WIDTH_OTHER, DIALOG_HEIGHT, LONG_PRESS_DURATION,
-    DELETE_DELAY)
+    DELETE_DELAY, ChipProperties, BadgeProperties)
 from pybitmessage.bitmessagekivy.baseclass.popup import SenderDetailPopup
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.helper_sql import sqlQuery
@@ -86,6 +86,8 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
     time_tag = StringProperty()
     avatar_image = StringProperty()
     no_subject = '(no subject)'
+    chipProperties = ChipProperties()
+    badgeProperties = BadgeProperties()
 
     def __init__(self, *args, **kwargs):
         """Initialize MailDetail screen."""
