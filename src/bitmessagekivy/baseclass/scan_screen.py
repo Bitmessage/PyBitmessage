@@ -93,16 +93,19 @@ class ScanScreen(Screen):
 
     def check_symbol(self, *args):
         """Check if the symbol is detected"""
-        if self.zbarcam.symbols:
-            for symbol in self.zbarcam.symbols:
-                # ZBarSymbol.QRCODE is an integer, QRCODE corresponds to 64
-                if symbol.type == 'QRCODE':
-                    self.stop_camera()
-                    self.pop_up_instance.content_cls.address.text = symbol.data.decode("utf-8")
-                    self.manager.current = self.previous_open_screen
-                    # changing screen closes popup, so need to open again with filled address
-                    self.pop_up_instance.open()
-                    return False
+        if not self.zbarcam.symbols:
+            return True
+
+        for symbol in self.zbarcam.symbols:
+            # ZBarSymbol.QRCODE is an integer, QRCODE corresponds to 64
+            if symbol.type == 'QRCODE':
+                self.stop_camera()
+                self.pop_up_instance.content_cls.address.text = symbol.data.decode("utf-8")
+                self.manager.current = self.previous_open_screen
+                # changing screen closes popup, so need to open again with filled address
+                self.pop_up_instance.open()
+                return False
+
         return True
 
     def stop_camera(self, *args):
