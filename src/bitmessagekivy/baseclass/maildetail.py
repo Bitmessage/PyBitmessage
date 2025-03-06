@@ -109,7 +109,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
                 self.assign_mail_details(data)
                 App.get_running_app().set_mail_detail_header()
         except Exception:
-            print('Something went wrong!')
+            print("Error during MailDetail initalization")
 
     def assign_mail_details(self, data):
         """Assign mail details from query result."""
