@@ -109,7 +109,10 @@ class Router:  # pylint: disable=old-style-class
             logger.error("UPnP: missing location header")
 
         # get the profile xml file and read it into a variable
-        directory = urlopen(header['location']).read()
+        parsed_url = urlparse(header['location'])
+        if parsed_url.scheme not in ['http', 'https']:
+            raise UPnPError("Unsupported URL scheme: %s" % parsed_url.scheme)
+        directory = urlopen(header['location']).read()  # nosec B310
 
         # create a DOM object that represents the `directory` document
         dom = parseString(directory)
