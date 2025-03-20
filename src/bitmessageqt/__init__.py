@@ -67,6 +67,11 @@ except ImportError:
 
 is_windows = sys.platform.startswith('win')
 
+HOUR = 60 * 60
+SLIDER_SCALING_EXPONENT = 3.199
+DAY = 24 * HOUR
+MONTH = 28 * DAY
+
 
 # TODO: rewrite
 def powQueueSize():
@@ -834,11 +839,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         # Put the TTL slider in the correct spot
         TTL = config.getint('bitmessagesettings', 'ttl')
-        if TTL < 3600: # an hour
-            TTL = 3600
-        elif TTL > 28*24*60*60: # 28 days
-            TTL = 28*24*60*60
-        self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
+        if TTL < HOUR:
+            TTL = HOUR
+        elif TTL > MONTH:
+            TTL = MONTH
+        self.ui.horizontalSliderTTL.setSliderPosition((TTL - HOUR) ** (1 / SLIDER_SCALING_EXPONENT))
         self.updateHumanFriendlyTTLDescription(TTL)
 
         QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
@@ -891,34 +896,32 @@ class MyForm(settingsmixin.SMainWindow):
             except (NameError, TypeError):
                 self.desktop = False
 
-    def updateTTL(self, sliderPosition):
-        TTL = int(sliderPosition ** 3.199 + 3600)
-        self.updateHumanFriendlyTTLDescription(TTL)
-        config.set('bitmessagesettings', 'ttl', str(TTL))
+    def updateTTL(self, slider_position):
+        ttl = int(slider_position ** SLIDER_SCALING_EXPONENT + HOUR)
+        self.updateHumanFriendlyTTLDescription(ttl)
+        config.set('bitmessagesettings', 'ttl', str(ttl))
         config.save()
 
-    def updateHumanFriendlyTTLDescription(self, TTL):
-        numberOfHours = int(round(TTL / (60*60)))
+    def updateHumanFriendlyTTLDescription(self, ttl):
         font = QtGui.QFont()
         stylesheet = ""
 
-        if numberOfHours < 48:
+        if ttl < (2 * DAY):
             self.ui.labelHumanFriendlyTTLDescription.setText(
-                _translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfHours) +
+                _translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, int(round(ttl / HOUR))) +
                 ", " +
                 _translate("MainWindow", "not recommended for chans", None, QtCore.QCoreApplication.CodecForTr)
                 )
             stylesheet = "QLabel { color : red; }"
             font.setBold(True)
         else:
-            numberOfDays = int(round(TTL / (24*60*60)))
             self.ui.labelHumanFriendlyTTLDescription.setText(
                 _translate(
                     "MainWindow",
                     "%n day(s)",
                     None,
                     QtCore.QCoreApplication.CodecForTr,
-                    numberOfDays))
+                    int(round(ttl / DAY))))
             font.setBold(False)
         self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
         self.ui.labelHumanFriendlyTTLDescription.setFont(font)
