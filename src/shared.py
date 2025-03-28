@@ -32,7 +32,6 @@ MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {}
 # The key in this dictionary is the tag generated from the address.
 myAddressesByTag = {}
-broadcastSendersForWhichImWatching = {}
 
 
 def isAddressInMyAddressBook(address):
@@ -131,32 +130,18 @@ def reloadBroadcastSendersForWhichImWatching():
     Reinitialize runtime data for the broadcasts I'm subscribed to
     from the config file
     """
-    broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     queryreturn = sqlQuery('SELECT address FROM subscriptions where enabled=1')
     logger.debug('reloading subscriptions...')
-    for row in queryreturn:
-        address, = row
-        # status
-        addressVersionNumber, streamNumber, hashobj = decodeAddress(address)[1:]
-        if addressVersionNumber == 2:
-            broadcastSendersForWhichImWatching[hashobj] = 0
-        # Now, for all addresses, even version 2 addresses,
-        # we should create Cryptor objects in a dictionary which we will
-        # use to attempt to decrypt encrypted broadcast messages.
-
-        if addressVersionNumber <= 3:
-            privEncryptionKey = hashlib.sha512(
-                encodeVarint(addressVersionNumber)
-                + encodeVarint(streamNumber) + hashobj
-            ).digest()[:32]
-            MyECSubscriptionCryptorObjects[hashobj] = \
+    for address, in queryreturn:
+        version, stream, ripe = decodeAddress(address)[1:]
+        data = encodeVarint(version) + encodeVarint(stream) + ripe
+        if version <= 3:
+            privEncryptionKey = hashlib.sha512(data).digest()[:32]
+            MyECSubscriptionCryptorObjects[ripe] = \
                 highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
-            doubleHashOfAddressData = highlevelcrypto.double_sha512(
-                encodeVarint(addressVersionNumber)
-                + encodeVarint(streamNumber) + hashobj
-            )
+            doubleHashOfAddressData = highlevelcrypto.double_sha512(data)
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = \
