@@ -59,9 +59,12 @@ sample_inbox_msg_ids = [
 # second address in sample_subscription_addresses is
 # for the announcement broadcast, but is it matter?
 sample_subscription_addresses = [
-    'BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq',
-    'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw']
+    'BM-2cWQLCBGorT9pUGkYSuGGVr9LzE4mRnQaq',  # version 4
+    'BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw'  # version 3
+]
 sample_subscription_name = 'test sub'
+sample_subscription_tag = unhexlify(
+    b'1a6db7c393f458c0e1efa791bbe354e3ab910006d6acd1da92fa3b0377f2dd67')
 
 
 sample_object_expires = 1712271487

@@ -1,6 +1,8 @@
 """Test cases for shared.py"""
 
 import unittest
+from binascii import unhexlify
+
 from pybitmessage.shared import (
     isAddressInMyAddressBook,
     isAddressInMySubscriptionsList,
@@ -12,7 +14,10 @@ from pybitmessage.shared import (
     os,
 )
 
-from .samples import sample_address
+from .samples import (
+    sample_address, sample_ripe,
+    sample_subscription_addresses, sample_subscription_tag
+)
 
 try:
     # Python 3
@@ -78,14 +83,19 @@ class TestShared(unittest.TestCase):
     def test_reloadBroadcastSendersForWhichImWatching(self, mock_sql_query):
         """Test for reload Broadcast Senders For Which Im Watching"""
         mock_sql_query.return_value = [
-            (sample_address,),
+            (addr,) for addr in sample_subscription_addresses + [sample_address]
         ]
         # before reload
         self.assertEqual(len(MyECSubscriptionCryptorObjects), 0)
 
-        # reloading with addressVersionNumber 1
         reloadBroadcastSendersForWhichImWatching()
         self.assertGreater(len(MyECSubscriptionCryptorObjects), 0)
+        self.assertTrue(
+            MyECSubscriptionCryptorObjects.get(unhexlify(sample_ripe))
+        )
+        self.assertTrue(
+            MyECSubscriptionCryptorObjects.get(sample_subscription_tag)
+        )
 
     @patch("pybitmessage.shared.os.stat")
     @patch(
