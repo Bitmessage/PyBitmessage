@@ -13,6 +13,7 @@ import inspect
 import re
 import sys
 import time
+import sqlite3
 
 from PyQt4 import QtGui
 
@@ -201,13 +202,13 @@ class GatewayAccount(BMAccount):
         ackdata = genAckPayload(streamNumber, stealthLevel)
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            '',
+            sqlite3.Binary(''),
             self.toAddress,
-            ripe,
+            sqlite3.Binary(ripe),
             self.fromAddress,
             self.subject,
             self.message,
-            ackdata,
+            sqlite3.Binary(ackdata),
             int(time.time()),  # sentTime (this will never change)
             int(time.time()),  # lastActionTime
             0,  # sleepTill time. This will get set when the POW gets done.

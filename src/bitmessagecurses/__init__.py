@@ -17,6 +17,7 @@ import sys
 import time
 from textwrap import fill
 from threading import Timer
+import sqlite3
 
 from dialog import Dialog
 import helper_sent
@@ -358,7 +359,9 @@ def handlech(c, stdscr):
                                 inbox[inboxcur][1] +
                                 "\"")
                             data = ""       # pyint: disable=redefined-outer-name
-                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", inbox[inboxcur][0])
+                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                            if len(ret) < 1:
+                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                             if ret != []:
                                 for row in ret:
                                     data, = row
@@ -367,12 +370,16 @@ def handlech(c, stdscr):
                                 for i, item in enumerate(data.split("\n")):
                                     msg += fill(item, replace_whitespace=False) + "\n"
                                 scrollbox(d, unicode(ascii(msg)), 30, 80)
-                                sqlExecute("UPDATE inbox SET read=1 WHERE msgid=?", inbox[inboxcur][0])
+                                rowcount = sqlExecute("UPDATE inbox SET read=1 WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                                if rowcount < 1:
+                                    sqlExecute("UPDATE inbox SET read=1 WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                                 inbox[inboxcur][7] = 1
                             else:
                                 scrollbox(d, unicode("Could not fetch message."))
                         elif t == "2":       # Mark unread
-                            sqlExecute("UPDATE inbox SET read=0 WHERE msgid=?", inbox[inboxcur][0])
+                            rowcount = sqlExecute("UPDATE inbox SET read=0 WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                            if rowcount < 1:
+                                sqlExecute("UPDATE inbox SET read=0 WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                             inbox[inboxcur][7] = 0
                         elif t == "3":       # Reply
                             curses.curs_set(1)
@@ -396,7 +403,9 @@ def handlech(c, stdscr):
                             if not m[5][:4] == "Re: ":
                                 subject = "Re: " + m[5]
                             body = ""
-                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", m[0])
+                            ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(m[0]))
+                            if len(ret) < 1:
+                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", m[0])
                             if ret != []:
                                 body = "\n\n------------------------------------------------------\n"
                                 for row in ret:
@@ -422,7 +431,9 @@ def handlech(c, stdscr):
                             r, t = d.inputbox("Filename", init=inbox[inboxcur][5] + ".txt")
                             if r == d.DIALOG_OK:
                                 msg = ""
-                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", inbox[inboxcur][0])
+                                ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                                if len(ret) < 1:
+                                    ret = sqlQuery("SELECT message FROM inbox WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                                 if ret != []:
                                     for row in ret:
                                         msg, = row
@@ -432,7 +443,9 @@ def handlech(c, stdscr):
                                 else:
                                     scrollbox(d, unicode("Could not fetch message."))
                         elif t == "6":       # Move to trash
-                            sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=?", inbox[inboxcur][0])
+                            rowcount = sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=?", sqlite3.Binary(inbox[inboxcur][0]))
+                            if rowcount < 1:
+                                sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=CAST(? AS TEXT)", inbox[inboxcur][0])
                             del inbox[inboxcur]
                             scrollbox(d, unicode(
                                 "Message moved to trash. There is no interface to view your trash,"
@@ -464,7 +477,12 @@ def handlech(c, stdscr):
                             ret = sqlQuery(
                                 "SELECT message FROM sent WHERE subject=? AND ackdata=?",
                                 sentbox[sentcur][4],
-                                sentbox[sentcur][6])
+                                sqlite3.Binary(sentbox[sentcur][6]))
+                            if len(ret) < 1:
+                                ret = sqlQuery(
+                                    "SELECT message FROM sent WHERE subject=? AND ackdata=CAST(? AS TEXT)",
+                                    sentbox[sentcur][4],
+                                    sentbox[sentcur][6])
                             if ret != []:
                                 for row in ret:
                                     data, = row
@@ -476,10 +494,15 @@ def handlech(c, stdscr):
                             else:
                                 scrollbox(d, unicode("Could not fetch message."))
                         elif t == "2":       # Move to trash
-                            sqlExecute(
+                            rowcount = sqlExecute(
                                 "UPDATE sent SET folder='trash' WHERE subject=? AND ackdata=?",
                                 sentbox[sentcur][4],
-                                sentbox[sentcur][6])
+                                sqlite3.Binary(sentbox[sentcur][6]))
+                            if rowcount < 1:
+                                rowcount = sqlExecute(
+                                    "UPDATE sent SET folder='trash' WHERE subject=? AND ackdata=CAST(? AS TEXT)",
+                                    sentbox[sentcur][4],
+                                    sentbox[sentcur][6])
                             del sentbox[sentcur]
                             scrollbox(d, unicode(
                                 "Message moved to trash. There is no interface to view your trash"

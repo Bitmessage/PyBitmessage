@@ -7,6 +7,7 @@ Maildetail screen for inbox, sent, draft and trash.
 
 import os
 from datetime import datetime
+import sqlite3
 
 from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
@@ -111,7 +112,11 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             elif self.kivy_state.detail_page_type == 'inbox':
                 data = sqlQuery(
                     "select toaddress, fromaddress, subject, message, received from inbox"
-                    " where msgid = ?", self.kivy_state.mail_id)
+                    " where msgid = ?", sqlite3.Binary(self.kivy_state.mail_id))
+                if len(data) < 1:
+                    data = sqlQuery(
+                        "select toaddress, fromaddress, subject, message, received from inbox"
+                        " where msgid = CAST(? AS TEXT)", self.kivy_state.mail_id)
                 self.assign_mail_details(data)
                 App.get_running_app().set_mail_detail_header()
         except Exception as e:  # pylint: disable=unused-variable

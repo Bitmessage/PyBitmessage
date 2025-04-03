@@ -22,6 +22,7 @@ It resends messages when there has been no response:
 import gc
 import os
 import time
+import sqlite3
 
 import queues
 import state
@@ -177,9 +178,13 @@ class singleCleaner(StoppableThread):
             'It has been a long time and we haven\'t heard an acknowledgement'
             ' to our msg. Sending again.'
         )
-        sqlExecute(
+        rowcount = sqlExecute(
             "UPDATE sent SET status = 'msgqueued'"
-            " WHERE ackdata = ? AND folder = 'sent'", ackdata)
+            " WHERE ackdata = ? AND folder = 'sent'", sqlite3.Binary(ackdata))
+        if rowcount < 1:
+            sqlExecute(
+                "UPDATE sent SET status = 'msgqueued'"
+                " WHERE ackdata = CAST(? AS TEXT) AND folder = 'sent'", ackdata)
         queues.workerQueue.put(('sendmessage', ''))
         queues.UISignalQueue.put((
             'updateStatusBar',
