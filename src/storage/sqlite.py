@@ -29,20 +29,22 @@ class SqliteInventory(InventoryStorage):
 
     def __contains__(self, hash_):
         with self.lock:
-            if hash_ in self._objects:
+            hash_bytes = bytes(hash_)
+            if hash_bytes in self._objects:
                 return True
             rows = sqlQuery(
                 'SELECT streamnumber FROM inventory WHERE hash=?',
                 sqlite3.Binary(hash_))
             if not rows:
                 return False
-            self._objects[hash_] = rows[0][0]
+            self._objects[hash_bytes] = rows[0][0]
             return True
 
     def __getitem__(self, hash_):
         with self.lock:
-            if hash_ in self._inventory:
-                return self._inventory[hash_]
+            hash_bytes = bytes(hash_)
+            if hash_bytes in self._inventory:
+                return self._inventory[hash_bytes]
             rows = sqlQuery(
                 'SELECT objecttype, streamnumber, payload, expirestime, tag'
                 ' FROM inventory WHERE hash=?', sqlite3.Binary(hash_))
@@ -53,15 +55,16 @@ class SqliteInventory(InventoryStorage):
     def __setitem__(self, hash_, value):
         with self.lock:
             value = InventoryItem(*value)
-            self._inventory[hash_] = value
-            self._objects[hash_] = value.stream
+            hash_bytes = bytes(hash_)
+            self._inventory[hash_bytes] = value
+            self._objects[hash_bytes] = value.stream
 
     def __delitem__(self, hash_):
         raise NotImplementedError
 
     def __iter__(self):
         with self.lock:
-            hashes = self._inventory.keys()[:]
+            hashes = [] + self._inventory.keys()[:]
             hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 

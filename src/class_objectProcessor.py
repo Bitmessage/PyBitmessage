@@ -140,9 +140,10 @@ class objectProcessor(threading.Thread):
         # bypass nonce and time, retain object type/version/stream + body
         readPosition = 16
 
-        if data[readPosition:] in state.ackdataForWhichImWatching:
+        data_bytes = bytes(data[readPosition:])
+        if data_bytes in state.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del state.ackdataForWhichImWatching[data[readPosition:]]
+            del state.ackdataForWhichImWatching[data_bytes]
             sqlExecute(
                 "UPDATE sent SET status='ackreceived', lastactiontime=?"
                 " WHERE ackdata=?", int(time.time()), data[readPosition:])
@@ -215,9 +216,10 @@ class objectProcessor(threading.Thread):
             logger.info(
                 'the hash requested in this getpubkey request is: %s',
                 hexlify(requestedHash))
+            requestedHash_bytes = bytes(requestedHash)
             # if this address hash is one of mine
-            if requestedHash in shared.myAddressesByHash:
-                myAddress = shared.myAddressesByHash[requestedHash]
+            if requestedHash_bytes in shared.myAddressesByHash:
+                myAddress = shared.myAddressesByHash[requestedHash_bytes]
         elif requestedAddressVersionNumber >= 4:
             requestedTag = data[readPosition:readPosition + 32]
             if len(requestedTag) != 32:
@@ -227,8 +229,9 @@ class objectProcessor(threading.Thread):
             logger.debug(
                 'the tag requested in this getpubkey request is: %s',
                 hexlify(requestedTag))
-            if requestedTag in shared.myAddressesByTag:
-                myAddress = shared.myAddressesByTag[requestedTag]
+            requestedTag_bytes = bytes(requestedTag)
+            if requestedTag_bytes in shared.myAddressesByTag:
+                myAddress = shared.myAddressesByTag[requestedTag_bytes]
 
         if myAddress == '':
             logger.info('This getpubkey request is not for any of my keys.')
@@ -413,12 +416,13 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in state.neededPubkeys:
+            tag_bytes = bytes(tag)
+            if tag_bytes not in state.neededPubkeys:
                 return logger.info(
                     'We don\'t need this v4 pubkey. We didn\'t ask for it.')
 
             # Let us try to decrypt the pubkey
-            toAddress = state.neededPubkeys[tag][0]
+            toAddress = state.neededPubkeys[tag_bytes][0]
             if protocol.decryptAndCheckPubkeyPayload(data, toAddress) == \
                     'successful':
                 # At this point we know that we have been waiting on this
@@ -483,7 +487,7 @@ class objectProcessor(threading.Thread):
 
         # This is a message bound for me.
         # Look up my address based on the RIPE hash.
-        toAddress = shared.myAddressesByHash[toRipe]
+        toAddress = shared.myAddressesByHash[bytes(toRipe)]
         readPosition = 0
         sendersAddressVersionNumber, sendersAddressVersionNumberLength = \
             decodeVarint(decryptedData[readPosition:readPosition + 10])
@@ -558,7 +562,7 @@ class objectProcessor(threading.Thread):
         readPosition += signatureLengthLength
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
-        signedData = data[8:20] + encodeVarint(1) + encodeVarint(
+        signedData = bytes(data[8:20]) + encodeVarint(1) + encodeVarint(
             streamNumberAsClaimedByMsg
         ) + decryptedData[:positionOfBottomOfAckData]
 
@@ -808,13 +812,14 @@ class objectProcessor(threading.Thread):
         elif broadcastVersion == 5:
             embeddedTag = data[readPosition:readPosition + 32]
             readPosition += 32
-            if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
+            embeddedTag_bytes = bytes(embeddedTag)
+            if embeddedTag_bytes not in shared.MyECSubscriptionCryptorObjects:
                 logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.
             # We're going to add some more data which is signed further down.
-            signedData = data[8:readPosition]
-            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag]
+            signedData = bytes(data[8:readPosition])
+            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag_bytes]
             try:
                 decryptedData = cryptorObject.decrypt(data[readPosition:])
                 logger.debug('EC decryption successful')
@@ -997,8 +1002,9 @@ class objectProcessor(threading.Thread):
                 encodeVarint(addressVersion) + encodeVarint(streamNumber)
                 + ripe
             )[32:]
-            if tag in state.neededPubkeys:
-                del state.neededPubkeys[tag]
+            tag_bytes = bytes(tag)
+            if tag_bytes in state.neededPubkeys:
+                del state.neededPubkeys[tag_bytes]
                 self.sendMessages(address)
 
     @staticmethod
