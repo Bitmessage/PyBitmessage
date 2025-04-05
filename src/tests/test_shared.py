@@ -3,19 +3,25 @@
 import unittest
 from binascii import unhexlify
 
+from pybitmessage.highlevelcrypto import encodeWalletImportFormat
 from pybitmessage.shared import (
+    config,
     isAddressInMyAddressBook,
     isAddressInMySubscriptionsList,
     checkSensitiveFilePermissions,
     reloadBroadcastSendersForWhichImWatching,
+    reloadMyAddressHashes,
     fixSensitiveFilePermissions,
+    myAddressesByHash,
+    myAddressesByTag,
+    myECCryptorObjects,
     MyECSubscriptionCryptorObjects,
     stat,
     os,
 )
 
 from .samples import (
-    sample_address, sample_ripe,
+    sample_address, sample_privencryptionkey, sample_ripe,
     sample_subscription_addresses, sample_subscription_tag
 )
 
@@ -96,6 +102,38 @@ class TestShared(unittest.TestCase):
         self.assertTrue(
             MyECSubscriptionCryptorObjects.get(sample_subscription_tag)
         )
+
+    def test_reloadMyAddressHashes(self):
+        """Test for reloadMyAddressHashes"""
+        self.assertEqual(len(myAddressesByHash), 0)
+        self.assertEqual(len(myAddressesByTag), 0)
+
+        config.add_section(sample_address)
+        config.set(sample_address, 'enabled', 'false')
+        config.set(sample_address, 'privencryptionkey', 'malformed')
+        config.save()
+
+        reloadMyAddressHashes()
+        self.assertEqual(len(myAddressesByHash), 0)
+
+        config.set(sample_address, 'enabled', 'true')
+        config.save()
+
+        reloadMyAddressHashes()
+        self.assertEqual(len(myAddressesByHash), 0)
+
+        config.set(
+            sample_address, 'privencryptionkey',
+            encodeWalletImportFormat(
+                unhexlify(sample_privencryptionkey)).decode()
+        )  # the key is not for the sample_address, but it doesn't matter
+        config.save()
+
+        reloadMyAddressHashes()
+        ripe = unhexlify(sample_ripe)
+        self.assertEqual(len(myAddressesByTag), 1)
+        self.assertTrue(myECCryptorObjects.get(ripe))
+        self.assertEqual(myAddressesByHash[ripe], sample_address)
 
     @patch("pybitmessage.shared.os.stat")
     @patch(
