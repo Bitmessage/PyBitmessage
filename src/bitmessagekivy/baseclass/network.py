@@ -24,7 +24,7 @@ else:
 class NetworkStat(Screen):
     """NetworkStat class for Kivy UI"""
 
-    text_variable_1 = StringProperty(f'Total Connections::0')
+    text_variable_1 = StringProperty(f'Total Connections::0')  # noqa: E999
     text_variable_2 = StringProperty(f'Processed 0 peer-to-peer messages')
     text_variable_3 = StringProperty(f'Processed 0 broadcast messages')
     text_variable_4 = StringProperty(f'Processed 0 public keys')

@@ -23,6 +23,12 @@ from pybitmessage.addresses import decodeAddress
 logger = logging.getLogger('default')
 
 
+def format_time(timeinseconds):
+    """Format the timestamp into a readable string"""
+    time_obj = datetime.fromtimestamp(int(timeinseconds))
+    return time_obj.strftime("%d %b %Y, %I:%M %p")
+
+
 class AddressChangingLoader(Popup):
     """Run a Screen Loader when changing the Identity for Kivy UI"""
 
@@ -199,13 +205,8 @@ class SenderDetailPopup(Popup):
         """Assign details to the popup"""
         self.to_addr = to_addr
         self.from_addr = from_addr
-        self.time_tag = self.format_time(timeinseconds)
+        self.time_tag = format_time(timeinseconds)
         self.adjust_popup_height(to_addr)
-
-    def format_time(self, timeinseconds):
-        """Format the timestamp into a readable string"""
-        time_obj = datetime.fromtimestamp(int(timeinseconds))
-        return time_obj.strftime("%d %b %Y, %I:%M %p")
 
     def adjust_popup_height(self, to_addr):
         """Adjust the height of the popup based on the address length"""

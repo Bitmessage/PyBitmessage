@@ -36,7 +36,7 @@ class Payment(Screen):
             toast('Credit added to your account!')
             # TODO: There is no sc18 screen id is available,
             # need to create sc18 for Credits screen inside main.kv
-            App.get_running_app().root.ids.sc18.ids.cred.text = f'{self.kivy_state.available_credit}'
+            App.get_running_app().root.ids.sc18.ids.cred.text = f'{self.kivy_state.available_credit}'  # noqa: E999
 
 
 class Category(BoxLayout, RectangularElevationBehavior):
