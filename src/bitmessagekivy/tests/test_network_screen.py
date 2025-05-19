@@ -33,7 +33,7 @@ class NetworkStatusScreen(TeleniumTestProcess):
         # Getting the value of total connections
         total_connection_text = self.cli.getattr('//NetworkStat//MDRaisedButton[@text]', 'text')
         # Splitting the string from total connection numbers
-        number_of_connections = int(total_connection_text.split(' ')[-1])
+        number_of_connections = int(total_connection_text.split('::')[-1])
         # Checking Total connections
         self.assertGreaterEqual(number_of_connections, 1)
         # Checking the state of Process tab
