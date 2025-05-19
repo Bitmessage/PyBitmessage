@@ -1,4 +1,6 @@
 # pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error, unused-argument
+# pylint: disable=no-init, too-few-public-methods
+
 """
     All Common widgets of kivy are managed here.
 """
@@ -44,7 +46,7 @@ data_screens = {
 }
 
 
-class ChipProperties:
+class ChipProperties():
     """ChipProperties class for kivy UI"""
     CENTER_X_ANDROID = 0.91
     CENTER_X_OTHER = 0.94
@@ -56,7 +58,7 @@ class ChipProperties:
     SIZE_HINT_OTHER = (0.08, None)
 
 
-class BadgeProperties:
+class BadgeProperties():
     """BadgeProperties class for kivy UI"""
     SIZE_ANDROID = [120, 140]
     SIZE_OTHER = [64, 80]

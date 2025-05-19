@@ -131,7 +131,7 @@ class MailDetail(Screen):  # pylint: disable=too-many-instance-attributes
             if self.page_type == 'draft'
             else os.path.join(
                 self.kivy_state.image_dir, 'text_images',
-                f'{avatar_image_first_letter(self.subject.strip())}.png'
+                f'{avatar_image_first_letter(self.subject.strip())}.png'  # noqa: E999
             )
         )
         self.timeinseconds = data[0][4] if self.page_type == 'inbox' else data[0][6]
