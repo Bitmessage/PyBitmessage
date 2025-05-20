@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error, unused-argument
-# pylint: disable=no-init, too-few-public-methods
+# pylint: disable=no-init, too-few-public-methods, useless-object-inheritance
 
 """
     All Common widgets of kivy are managed here.
@@ -8,26 +8,18 @@
 import os
 from datetime import datetime
 
+from kivy.app import App
 from kivy.core.window import Window
 from kivy.metrics import dp
+from kivy.properties import ListProperty, NumericProperty, StringProperty
 from kivy.uix.image import Image
-from kivy.properties import (
-    NumericProperty,
-    StringProperty,
-    ListProperty
-)
-from kivy.app import App
-
-from kivymd.uix.list import (
-    ILeftBody,
-    IRightBodyTouch,
-)
-from kivymd.uix.label import MDLabel
 from kivymd.toast import kivytoast
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.card import MDCardSwipe
 from kivymd.uix.chip import MDChip
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDFlatButton
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import ILeftBody, IRightBodyTouch
 
 from pybitmessage.bitmessagekivy.get_platform import platform
 from pybitmessage.bmconfigparser import config
@@ -46,7 +38,7 @@ data_screens = {
 }
 
 
-class ChipProperties():
+class ChipProperties(object):
     """ChipProperties class for kivy UI"""
     CENTER_X_ANDROID = 0.91
     CENTER_X_OTHER = 0.94
@@ -58,7 +50,7 @@ class ChipProperties():
     SIZE_HINT_OTHER = (0.08, None)
 
 
-class BadgeProperties():
+class BadgeProperties(object):
     """BadgeProperties class for kivy UI"""
     SIZE_ANDROID = [120, 140]
     SIZE_OTHER = [64, 80]
