@@ -33,7 +33,9 @@ class addressGenerator(StoppableThread):
         super(addressGenerator, self).stopThread()
 
     def save_address(
-        self, version, stream, ripe, label, signing_key, encryption_key
+        # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self, version, stream, ripe, label, signing_key, encryption_key,
+        nonceTrialsPerByte, payloadLengthExtraBytes
     ):
         """Write essential address config values and reload cryptors"""
         address = encodeAddress(version, stream, ripe)
@@ -59,6 +61,9 @@ class addressGenerator(StoppableThread):
         config.set(address, 'decoy', 'false')
         config.set(address, 'privsigningkey', signingKeyWIF.decode())
         config.set(address, 'privencryptionkey', encryptionKeyWIF.decode())
+        config.set(address, 'noncetrialsperbyte', str(nonceTrialsPerByte))
+        config.set(
+            address, 'payloadlengthextrabytes', str(payloadLengthExtraBytes))
         config.save()
 
         queues.UISignalQueue.put((
@@ -199,12 +204,9 @@ class addressGenerator(StoppableThread):
 
                 address = self.save_address(
                     addressVersionNumber, streamNumber, ripe, label,
-                    privSigningKey, potentialPrivEncryptionKey)
-                config.set(address, 'noncetrialsperbyte', str(
-                    nonceTrialsPerByte))
-                config.set(address, 'payloadlengthextrabytes', str(
-                    payloadLengthExtraBytes))
-                config.save()
+                    privSigningKey, potentialPrivEncryptionKey,
+                    nonceTrialsPerByte, payloadLengthExtraBytes
+                )
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
@@ -302,16 +304,11 @@ class addressGenerator(StoppableThread):
 
                     if saveAddressToDisk and live and self.save_address(
                         addressVersionNumber, streamNumber, ripe, label,
-                        potentialPrivSigningKey, potentialPrivEncryptionKey
+                        potentialPrivSigningKey, potentialPrivEncryptionKey,
+                        nonceTrialsPerByte, payloadLengthExtraBytes
                     ):
                         if command in ('createChan', 'joinChan'):
                             config.set(address, 'chan', 'true')
-                        config.set(
-                            address, 'noncetrialsperbyte',
-                            str(nonceTrialsPerByte))
-                        config.set(
-                            address, 'payloadlengthextrabytes',
-                            str(payloadLengthExtraBytes))
                         config.save()
 
                         listOfNewAddressesToSendOutThroughTheAPI.append(
