@@ -200,7 +200,8 @@ class TCPConnection(BMProto, TLSDispatcher):
                     elemCount = min(
                         len(filtered),
                         maxAddrCount / 2 if n else maxAddrCount)
-                    addrs[s] = random.sample(filtered, elemCount)
+                    addrs[s] = random.sample(filtered,
+                                             elemCount)  # nosec B311
         for substream in addrs:
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))

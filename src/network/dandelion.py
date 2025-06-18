@@ -198,7 +198,7 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             try:
                 # random two connections
-                self.stem = sample(
+                self.stem = sample(  # nosec B311
                     self.pool.outboundConnections.values(), MAX_STEMS)
             # not enough stems available
             except ValueError:

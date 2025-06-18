@@ -35,7 +35,7 @@ def randomsample(population, k):
     without replacement, its called
     partial shuffle.
     """
-    return random.sample(population, k)
+    return random.sample(population, k)  # nosec B311
 
 
 def randomrandrange(x, y=None):
