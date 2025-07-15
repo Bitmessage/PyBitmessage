@@ -1,5 +1,5 @@
 """Tests for AddressGenerator (with thread or not)"""
-# pylint: disable=import-error,import-outside-toplevel
+# pylint: disable=import-error,no-member,import-outside-toplevel
 import sys
 import time
 import unittest
