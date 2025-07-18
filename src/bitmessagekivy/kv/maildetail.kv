@@ -39,10 +39,7 @@
                     text: app.tr._(root.page_type)
                     icon: ''
                     text_color: root.chipProperties.TEXT_COLOR
-                    pos_hint: {
-                        'center_x': root.chipProperties.CENTER_X_ANDROID if app.app_platform == 'android' else root.chipProperties.CENTER_X_OTHER,
-                        'center_y': root.chipProperties.CENTER_Y
-                    }
+                    pos_hint: {'center_x': root.chipProperties.CENTER_X_ANDROID if app.app_platform == 'android' else root.chipProperties.CENTER_X_OTHER, 'center_y': root.chipProperties.CENTER_Y}
                     radius: root.chipProperties.RADIUS
                     height: self.parent.height/4
                 AvatarSampleWidget:
