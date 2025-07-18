@@ -61,7 +61,7 @@ class MyAddressScreen(TeleniumTestProcess):
         self.cli.wait_click("//MyAddress//CustomTwoLineAvatarIconListItem[@text=\"test2\"]", timeout=5)
         # Checking the popup is Opened
         self.assertExists(
-            '//MDDialog[@text=\"Address is not currently active. Please click on Toggle button to active it.\"]',
+            '//MDDialog[@text=\"Address is not currently active. Please click the Toggle button to activate it.\"]',
             timeout=5
         )
         # Clicking on 'Ok' Button To Dismiss the popup
@@ -98,9 +98,9 @@ class MyAddressScreen(TeleniumTestProcess):
         # Click on Address to open popup
         self.cli.wait_click('//MDList[0]/CustomTwoLineAvatarIconListItem[@text=\"test1\"]', timeout=5)
         # Check the Popup is opened
-        self.assertExists('//MyaddDetailPopup//MDLabel[@text=\"Show QR code\"]', timeout=5)
+        self.assertExists('//MyaddDetailPopup//BoxLayout[1]//MDLabel[@text=\"Show QR code\"]', timeout=5)
         # Cick on 'Show QR code' button to view QR Code
-        self.cli.wait_click('//MyaddDetailPopup//MDLabel[@text=\"Show QR code\"]', timeout=5)
+        self.cli.wait_click('//MyaddDetailPopup//BoxLayout[1]//MDLabel[@text=\"Show QR code\"]', timeout=5)
         # Check Current screen is QR Code screen
         self.assertExists("//ShowQRCode[@name~=\"showqrcode\"]", timeout=5)
         # Check BACK button
