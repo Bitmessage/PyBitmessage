@@ -25,7 +25,7 @@ RUN apt-get -y install -qq --no-install-recommends openjdk-17-jdk \
 # pyzbar dependencies
 RUN apt-get -y install -qq --no-install-recommends libzbar0 libtool gettext
 
-RUN pip install buildozer cython virtualenv
+RUN pip install buildozer cython==3.0.10 virtualenv
 
 
 ENV ANDROID_NDK_HOME="${ANDROID_HOME}/android-ndk"
