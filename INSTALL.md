@@ -32,7 +32,7 @@ docker:
 
 ```
 $ docker build -t bm-appimage -f .buildbot/appimage/Dockerfile .
-$ docker run -t --rm -v "$(pwd)"/dist:/out bm-appimage .buildbot/appimage/build.sh
+$ docker run -t --rm -v "$(pwd)"/dist:/out bm-appimage
 ```
 
 The appimages should be in the dist dir.

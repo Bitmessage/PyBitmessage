@@ -25,4 +25,4 @@ RUN wget -qO appimage-builder-x86_64.AppImage \
 
 ADD . .
 
-CMD .buildbot/tox-bionic/build.sh
+CMD .buildbot/appimage/build.sh
