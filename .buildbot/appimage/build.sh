@@ -20,6 +20,9 @@ function set_sourceline {
 
 function build_appimage {
     set_sourceline
+    rm -rf appimage-build
+    mkdir -p appimage-build/prime
+    wget -qO appimage-build/prime/runtime-${APPIMAGE_ARCH} "https://github.com/AppImage/AppImageKit/releases/download/continuous/obsolete-runtime-${APPIMAGE_ARCH}"
     ./${BUILDER} --recipe ${RECIPE} || exit 1
     rm -rf build
 }
