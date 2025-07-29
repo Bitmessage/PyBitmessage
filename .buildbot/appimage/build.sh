@@ -20,15 +20,12 @@ function set_sourceline {
 
 function build_appimage {
     set_sourceline
-    rm -rf appimage-build
-    mkdir -p appimage-build/prime
-    wget -qO appimage-build/prime/runtime-${APPIMAGE_ARCH} "https://github.com/AppImage/AppImageKit/releases/download/continuous/obsolete-runtime-${APPIMAGE_ARCH}"
     ./${BUILDER} --recipe ${RECIPE} || exit 1
     rm -rf build
 }
 
 [ -f ${BUILDER} ] || wget -qO ${BUILDER} \
-    https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.1.0/appimage-builder-1.1.0-x86_64.AppImage \
+    "https://artifacts.bitmessage.at/appimage/38930/appimage-builder-0.1.dev1035%2Bgce669f6-x86_64.AppImage" \
     && chmod +x ${BUILDER}
 
 chmod 1777 /tmp
