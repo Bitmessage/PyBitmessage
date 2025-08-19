@@ -1,7 +1,7 @@
 ﻿# pylint: disable=too-many-statements,too-many-branches,protected-access,no-self-use
 """
 Complete UPnP port forwarding implementation in separate thread.
-Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
+Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port.html
 """
 
 import re
