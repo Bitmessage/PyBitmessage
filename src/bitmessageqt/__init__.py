@@ -908,10 +908,19 @@ class MyForm(settingsmixin.SMainWindow):
 
         if ttl < (2 * DAY):
             self.ui.labelHumanFriendlyTTLDescription.setText(
-                _translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, int(round(ttl / HOUR))) +
-                ", " +
-                _translate("MainWindow", "not recommended for chans", None, QtCore.QCoreApplication.CodecForTr)
+                (
+                    _translate(
+                        "MainWindow", "%n hour(s)", None,
+                        QtCore.QCoreApplication.CodecForTr,
+                        int(round(ttl / HOUR))
+                    )
+                    + ", "
+                    + _translate(
+                        "MainWindow", "not recommended for chans",
+                        None, QtCore.QCoreApplication.CodecForTr
+                    )
                 )
+            )
             stylesheet = "QLabel { color : red; }"
             font.setBold(True)
         else:
