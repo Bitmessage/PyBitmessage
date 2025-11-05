@@ -111,7 +111,7 @@ class MyAddress(Screen, HelperMyAddress):
         )
         address_widget.canvas.children[3].rgba = self.canvas_color_black if is_enabled else self.canvas_color_gray
         avatar_image_path = os.path.join(
-            self.image_dir, "text_images", f"{avatar_image_first_letter(item['text'].strip())}.png"
+            self.image_dir, "text_images", f"{avatar_image_first_letter(item['text'].strip())}.png"  # noqa: E999
         )
         address_widget.add_widget(AvatarSampleWidget(source=avatar_image_path))
         address_widget.bind(on_press=partial(self.show_address_details, item['secondary_text'], item['text']))
@@ -149,7 +149,8 @@ class MyAddress(Screen, HelperMyAddress):
             self.myadddetail_popup.auto_dismiss = False
             self.myadddetail_popup.open()
         else:
-            popup_width = self.disabled_addr_width if platform == 'android' else self.other_platform_disabled_addr_width
+            popup_width = (
+                self.disabled_addr_width if platform == 'android' else self.other_platform_disabled_addr_width)
             self.dialog_box = self.create_inactive_address_popup(popup_width, self.inactive_address_callback)
             self.dialog_box.open()
 
