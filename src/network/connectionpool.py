@@ -56,7 +56,7 @@ class BMConnectionPool(object):
         self.streams = []
         self._lastSpawned = 0
         self._spawnWait = 2
-        self._bootstrapped = False
+        self._bootstrapped = True
 
         trustedPeer = config.safeGet(
             'bitmessagesettings', 'trustedpeer')
@@ -378,14 +378,13 @@ class BMConnectionPool(object):
         for i in self.connections():
             minTx = time.time() - 20
             if i.fullyEstablished:
-                minTx -= 300 - 20
+                minTx -= 60 - 20
             if i.lastTx < minTx:
-                if i.fullyEstablished:
-                    i.append_write_buf(protocol.CreatePacket('ping'))
+                if i.isOutbound:
+                    i.close_reason = "Thank you for running a server"
                 else:
-                    i.close_reason = "Timeout (%is)" % (
-                        time.time() - i.lastTx)
-                    i.set_state("close")
+                    i.close_reason = "Have a nice day"
+                i.set_state("close")
         for i in (
             self.connections()
             + self.listeningSockets.values() + self.udpSockets.values()

@@ -14,9 +14,7 @@ def start(config, state):
     import state
     from .announcethread import AnnounceThread
     import connectionpool  # pylint: disable=relative-import
-    from .addrthread import AddrThread
     from .downloadthread import DownloadThread
-    from .invthread import InvThread
     from .networkthread import BMNetworkThread
     from .knownnodes import readKnownNodes
     from .receivequeuethread import ReceiveQueueThread
@@ -30,7 +28,7 @@ def start(config, state):
     readKnownNodes()
     connectionpool.pool.connectToStream(1)
     for thread in (
-        BMNetworkThread(), InvThread(), AddrThread(),
+        BMNetworkThread(),
         DownloadThread(), UploadThread()
     ):
         thread.daemon = True

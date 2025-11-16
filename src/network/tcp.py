@@ -171,7 +171,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                 self.streams, self.destination, time.time())
             dandelion_ins.maybeAddStem(self, invQueue)
         self.sendAddr()
-        self.sendBigInv()
+        #self.sendBigInv()
 
     def sendAddr(self):
         """Send a partial list of known addresses to peer."""
@@ -195,7 +195,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         (k, v) for k, v in nodes.iteritems()
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
-                        and v["rating"] >= 0 and not k.host.endswith('.onion')
+                        and v["rating"] > 0.0 and not k.host.endswith('.onion')
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
@@ -300,6 +300,27 @@ class TCPConnection(BMProto, TLSDispatcher):
                 knownnodes.decreaseRating(self.destination)
         BMProto.handle_close(self)
 
+    def bm_command_object(self):
+        return True
+
+    def bm_command_getdata(self):
+        return True
+
+    def bm_command_inv(self):
+        return True
+
+    def bm_command_dinv(self):
+        return True
+
+    def bm_command_addr(self):
+        return True
+
+    def bm_command_portcheck(self):
+        return True
+
+    @staticmethod
+    def bm_command_pong():
+        return True
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):
     """SOCKS5 wrapper for TCP connections"""

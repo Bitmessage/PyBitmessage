@@ -70,6 +70,7 @@ def chooseConnection(stream):
                     continue
         if rating > 1:
             rating = 1
+        return peer
         try:
             if 0.05 / (1.0 - rating) > random.random():  # nosec B311
                 return peer
