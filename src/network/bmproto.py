@@ -65,6 +65,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.network_group = None
         # userAgent initialization
         self.userAgent = ''
+        # track port check requests, only allow one per connection
+        # completely disable port checks for now
+        self.portCheckRequested = True
 
     def bm_proto_reset(self):
         """Reset the bitmessage object parser"""
@@ -472,7 +475,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_portcheck(self):
         """Incoming port check request, queue it."""
-        portCheckerQueue.put(Peer(self.destination, self.peerNode.port))
+        if self.isOutbound or self.portCheckRequested:
+            return True
+        self.portCheckRequested = True
+        portCheckerQueue.put(Peer(self.destination.host,
+                                  self.peerNode.port))
         return True
 
     def bm_command_ping(self):
