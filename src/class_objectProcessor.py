@@ -299,12 +299,12 @@ class objectProcessor(threading.Thread):
                     '(within processpubkey) payloadLength less than 146.'
                     ' Sanity check failed.')
             readPosition += 4
-            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             # Is it possible for a public key to be invalid such that trying to
             # encrypt or sign with it will cause an error? If it is, it would
             # be easiest to test them here.
             readPosition += 64
-            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             if len(pubEncryptionKey) < 65:
                 return logger.debug(
                     'publicEncryptionKey length less than 64. Sanity check'
@@ -350,9 +350,9 @@ class objectProcessor(threading.Thread):
                     ' Sanity check failed.')
                 return
             readPosition += 4
-            pubSigningKey = '\x04' + data[readPosition:readPosition + 64]
+            pubSigningKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
-            pubEncryptionKey = '\x04' + data[readPosition:readPosition + 64]
+            pubEncryptionKey = b'\x04' + data[readPosition:readPosition + 64]
             readPosition += 64
             specifiedNonceTrialsPerByteLength = decodeVarint(
                 data[readPosition:readPosition + 10])[1]
@@ -507,9 +507,9 @@ class objectProcessor(threading.Thread):
             return
         readPosition += sendersStreamNumberLength
         readPosition += 4
-        pubSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubSigningKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        pubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        pubEncryptionKey = b'\x04' + decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersionNumber >= 3:
             requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = \
@@ -854,10 +854,10 @@ class objectProcessor(threading.Thread):
             )
         readPosition += sendersStreamLength
         readPosition += 4
-        sendersPubSigningKey = '\x04' + \
+        sendersPubSigningKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
-        sendersPubEncryptionKey = '\x04' + \
+        sendersPubEncryptionKey = b'\x04' + \
             decryptedData[readPosition:readPosition + 64]
         readPosition += 64
         if sendersAddressVersion >= 3:
@@ -1047,7 +1047,7 @@ class objectProcessor(threading.Thread):
         if checksum != hashlib.sha512(payload).digest()[0:4]:
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
-        command = command.rstrip('\x00')
+        command = command.rstrip(b'\x00')
         if command != 'object':
             return False
         return True

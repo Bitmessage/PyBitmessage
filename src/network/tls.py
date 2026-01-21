@@ -34,7 +34,7 @@ else:
 # ciphers
 if (
     ssl.OPENSSL_VERSION_NUMBER >= 0x10100000
-    and not ssl.OPENSSL_VERSION.startswith(b"LibreSSL")
+    and not ssl.OPENSSL_VERSION.startswith("LibreSSL")
 ):
     sslProtocolCiphers = "AECDH-AES256-SHA@SECLEVEL=0"
 else:

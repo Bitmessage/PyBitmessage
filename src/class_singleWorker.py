@@ -107,7 +107,7 @@ class singleWorker(StoppableThread):
         for oldack in state.ackdataForWhichImWatching:
             if len(oldack) == 32:
                 # attach legacy header, always constant (msg/1/1)
-                newack = '\x00\x00\x00\x02\x01\x01' + oldack
+                newack = b'\x00\x00\x00\x02\x01\x01' + oldack
                 state.ackdataForWhichImWatching[newack] = 0
                 sqlExecute(
                     '''UPDATE sent SET ackdata=? WHERE ackdata=? AND folder = 'sent' ''',
@@ -263,7 +263,7 @@ class singleWorker(StoppableThread):
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
-        payload += '\x00\x00\x00\x01'  # object type: pubkey
+        payload += b'\x00\x00\x00\x01'  # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
         # bitfield of features supported by me (see the wiki).
@@ -340,7 +340,7 @@ class singleWorker(StoppableThread):
         # expiresTime time.
 
         payload = pack('>Q', (embeddedTime))
-        payload += '\x00\x00\x00\x01'  # object type: pubkey
+        payload += b'\x00\x00\x00\x01'  # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
         # bitfield of features supported by me (see the wiki).
@@ -415,7 +415,7 @@ class singleWorker(StoppableThread):
         TTL = int(28 * 24 * 60 * 60 + helper_random.randomrandrange(-300, 300))
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
-        payload += '\x00\x00\x00\x01'  # object type: pubkey
+        payload += b'\x00\x00\x00\x01'  # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
         dataToEncrypt = protocol.getBitfield(myAddress)
@@ -601,7 +601,7 @@ class singleWorker(StoppableThread):
             TTL = int(TTL + helper_random.randomrandrange(-300, 300))
             embeddedTime = int(time.time() + TTL)
             payload = pack('>Q', embeddedTime)
-            payload += '\x00\x00\x00\x03'  # object type: broadcast
+            payload += b'\x00\x00\x00\x03'  # object type: broadcast
 
             if addressVersionNumber <= 3:
                 payload += encodeVarint(4)  # broadcast version
@@ -617,7 +617,7 @@ class singleWorker(StoppableThread):
                 tag = doubleHashOfAddressData[32:]
                 payload += tag
             else:
-                tag = ''
+                tag = b''
 
             dataToEncrypt = encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
@@ -790,7 +790,7 @@ class singleWorker(StoppableThread):
                 # We don't have the needed pubkey in the pubkeys table already.
                 else:
                     if toAddressVersionNumber <= 3:
-                        toTag = ''
+                        toTag = b''
                     else:
                         toTag = highlevelcrypto.double_sha512(
                             encodeVarint(toAddressVersionNumber)
@@ -1203,14 +1203,14 @@ class singleWorker(StoppableThread):
                     'Not bothering to include ackdata because we are'
                     ' sending to ourselves or a chan.'
                 )
-                fullAckPayload = ''
+                fullAckPayload = b''
             elif not protocol.checkBitfield(
                     behaviorBitfield, protocol.BITFIELD_DOESACK):
                 self.logger.info(
                     'Not bothering to include ackdata because'
                     ' the receiver said that they won\'t relay it anyway.'
                 )
-                fullAckPayload = ''
+                fullAckPayload = b''
             else:
                 # The fullAckPayload is a normal msg protocol message
                 # with the proof of work already completed that the
@@ -1219,7 +1219,7 @@ class singleWorker(StoppableThread):
                     ackdata, toStreamNumber, TTL)
             payload += encodeVarint(len(fullAckPayload))
             payload += fullAckPayload
-            dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + \
+            dataToSign = pack('>Q', embeddedTime) + b'\x00\x00\x00\x02' + \
                 encodeVarint(1) + encodeVarint(toStreamNumber) + payload
             signature = highlevelcrypto.sign(
                 dataToSign, privSigningKeyHex, self.digestAlg)
@@ -1229,7 +1229,7 @@ class singleWorker(StoppableThread):
             # We have assembled the data that will be encrypted.
             try:
                 encrypted = highlevelcrypto.encrypt(
-                    payload, "04" + hexlify(pubEncryptionKeyBase256)
+                    payload, b"04" + hexlify(pubEncryptionKeyBase256)
                 )
             except:  # noqa:E722
                 self.logger.warning("highlevelcrypto.encrypt didn't work")
@@ -1249,7 +1249,7 @@ class singleWorker(StoppableThread):
                 continue
 
             encryptedPayload = pack('>Q', embeddedTime)
-            encryptedPayload += '\x00\x00\x00\x02'  # object type: msg
+            encryptedPayload += b'\x00\x00\x00\x02'  # object type: msg
             encryptedPayload += encodeVarint(1)  # msg version
             encryptedPayload += encodeVarint(toStreamNumber) + encrypted
 
@@ -1403,7 +1403,7 @@ class singleWorker(StoppableThread):
         TTL = TTL + helper_random.randomrandrange(-300, 300)
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', embeddedTime)
-        payload += '\x00\x00\x00\x00'  # object type: getpubkey
+        payload += b'\x00\x00\x00\x00'  # object type: getpubkey
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         if addressVersionNumber <= 3:
@@ -1485,4 +1485,4 @@ class singleWorker(StoppableThread):
         payload = self._doPOWDefaults(
             payload, TTL, log_prefix='(For ack message)', log_time=True)
 
-        return protocol.CreatePacket('object', payload)
+        return protocol.CreatePacket(b'object', payload)
