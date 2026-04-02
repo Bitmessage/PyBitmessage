@@ -12,10 +12,10 @@ import time
 
 # magic imports!
 import addresses
-import knownnodes
 import protocol
 import state
-import connectionpool
+from . import connectionpool
+from . import knownnodes
 from bmconfigparser import config
 from queues import objectProcessorQueue
 from randomtrackingdict import RandomTrackingDict
@@ -27,8 +27,8 @@ from network.bmobject import (
 )
 from network.proxy import ProxyError
 from network import dandelion_ins, invQueue, portCheckerQueue
-from node import Node, Peer
-from objectracker import ObjectTracker, missingObjects
+from .node import Node, Peer
+from .objectracker import ObjectTracker, missingObjects
 
 
 logger = logging.getLogger('default')

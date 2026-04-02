@@ -4,7 +4,7 @@ Module for tracking objects
 import time
 from threading import RLock
 
-import connectionpool
+from . import connectionpool
 from network import dandelion_ins
 from randomtrackingdict import RandomTrackingDict
 

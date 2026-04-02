@@ -20,7 +20,8 @@ __all__ = ["StoppableThread"]
 def start(config, state):
     """Start network threads"""
     from .announcethread import AnnounceThread
-    import connectionpool  # pylint: disable=relative-import
+    from . import connectionpool
+    from .connectionpool import BMConnectionPool
     from .addrthread import AddrThread
     from .downloadthread import DownloadThread
     from .invthread import InvThread
@@ -28,6 +29,9 @@ def start(config, state):
     from .knownnodes import readKnownNodes
     from .receivequeuethread import ReceiveQueueThread
     from .uploadthread import UploadThread
+
+    # create the connection pool
+    connectionpool.pool = BMConnectionPool()
 
     # check and set dandelion enabled value at network startup
     dandelion_ins.init_dandelion_enabled(config)

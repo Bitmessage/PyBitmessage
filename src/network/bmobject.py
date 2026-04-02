@@ -6,7 +6,7 @@ import time
 
 import protocol
 import state
-import connectionpool
+from . import connectionpool
 from network import dandelion_ins
 from highlevelcrypto import calculateInventoryHash
 

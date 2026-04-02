@@ -6,10 +6,10 @@ import random
 import state
 import addresses
 import protocol
-import connectionpool
+from . import connectionpool
 from network import dandelion_ins
-from objectracker import missingObjects
-from threads import StoppableThread
+from .objectracker import missingObjects
+from .threads import StoppableThread
 
 
 class DownloadThread(StoppableThread):

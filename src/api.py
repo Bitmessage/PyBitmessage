@@ -1551,8 +1551,8 @@ class BMRPCDispatcher(object):
         Returns bitmessage connection information as dict with keys *inbound*,
         *outbound*.
         """
-        if connectionpool is None:
-            raise APIError(21, 'Could not import BMConnectionPool.')
+        if connectionpool is None or connectionpool.pool is None:
+            raise APIError(21, 'Network is not started.')
         inboundConnections = []
         outboundConnections = []
         for i in connectionpool.pool.inboundConnections.values():

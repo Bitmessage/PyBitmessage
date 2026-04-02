@@ -9,18 +9,14 @@ import sys
 import time
 import random
 
-import asyncore_pollchoose as asyncore
-import knownnodes
+from . import asyncore_pollchoose as asyncore
+from . import knownnodes
 import protocol
 import state
 from bmconfigparser import config
-from connectionchooser import chooseConnection
-from node import Peer
-from proxy import Proxy
-from tcp import (
-    bootstrap, Socks4aBMConnection, Socks5BMConnection,
-    TCPConnection, TCPServer)
-from udp import UDPSocket
+from .connectionchooser import chooseConnection
+from .node import Peer
+from .proxy import Proxy
 
 logger = logging.getLogger('default')
 
@@ -123,6 +119,7 @@ class BMConnectionPool(object):
 
     def addConnection(self, connection):
         """Add a connection object to our internal dict"""
+        from .udp import UDPSocket
         if isinstance(connection, UDPSocket):
             return
         if connection.isOutbound:
@@ -136,6 +133,8 @@ class BMConnectionPool(object):
 
     def removeConnection(self, connection):
         """Remove a connection from our internal dict"""
+        from .tcp import TCPServer
+        from .udp import UDPSocket
         if isinstance(connection, UDPSocket):
             del self.udpSockets[connection.listening.host]
         elif isinstance(connection, TCPServer):
@@ -177,6 +176,7 @@ class BMConnectionPool(object):
 
     def startListening(self, bind=None):
         """Open a listening socket and start accepting connections on it"""
+        from .tcp import TCPServer
         if bind is None:
             bind = self.getListeningIP()
         port = config.safeGetInt("bitmessagesettings", "port")
@@ -189,6 +189,7 @@ class BMConnectionPool(object):
         Open an UDP socket. Depending on settings, it can either only
         accept incoming UDP packets, or also be able to send them.
         """
+        from .udp import UDPSocket
         if bind is None:
             host = self.getListeningIP()
             udpSocket = UDPSocket(host=host, announcing=True)
@@ -201,6 +202,9 @@ class BMConnectionPool(object):
 
     def startBootstrappers(self):
         """Run the process of resolving bootstrap hostnames"""
+        from .tcp import (
+            bootstrap, Socks4aBMConnection, Socks5BMConnection,
+            TCPConnection)
         proxy_type = config.safeGet(
             'bitmessagesettings', 'socksproxytype')
         # A plugins may be added here
@@ -251,6 +255,9 @@ class BMConnectionPool(object):
                 'bitmessagesettings', 'onionhostname', '')
         ):
             acceptConnections = False
+
+        from .tcp import (
+            Socks4aBMConnection, Socks5BMConnection, TCPConnection)
 
         # pylint: disable=too-many-nested-blocks
         if spawnConnections:
@@ -401,4 +408,4 @@ class BMConnectionPool(object):
             self.removeConnection(i)
 
 
-pool = BMConnectionPool()
+pool = None

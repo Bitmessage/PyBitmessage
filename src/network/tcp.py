@@ -14,22 +14,22 @@ import addresses
 import l10n
 import protocol
 import state
-import connectionpool
+from . import connectionpool
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from network import dandelion_ins, invQueue, receiveDataQueue
 from queues import UISignalQueue
 from tr import _translate
 
-import asyncore_pollchoose as asyncore
-import knownnodes
+from . import asyncore_pollchoose as asyncore
+from . import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProto
 from network.objectracker import ObjectTracker
 from network.socks4a import Socks4aConnection
 from network.socks5 import Socks5Connection
 from network.tls import TLSDispatcher
-from node import Peer
+from .node import Peer
 
 
 logger = logging.getLogger('default')

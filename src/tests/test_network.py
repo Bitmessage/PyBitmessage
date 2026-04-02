@@ -27,10 +27,12 @@ class TestNetwork(TestPartialRun):
 
         # beware of singleton
         connectionpool.config = cls.config
-        cls.pool = connectionpool.pool
         cls.stats = stats
 
         network.start(cls.config, cls.state)
+
+        # pool is created inside network.start(), read it after
+        cls.pool = connectionpool.pool
 
     def test_threads(self):
         """Ensure all the network threads started"""

@@ -4,12 +4,11 @@ Announce addresses as they are received from other hosts
 import random
 from six.moves import queue
 
-# magic imports!
-import connectionpool
+from . import connectionpool
 from protocol import assembleAddrMessage
 from network import addrQueue  # FIXME: init with queue
 
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 class AddrThread(StoppableThread):

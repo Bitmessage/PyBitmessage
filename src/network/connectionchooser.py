@@ -7,7 +7,7 @@ import random
 
 from six.moves import queue
 
-import knownnodes
+from . import knownnodes
 import protocol
 import state
 

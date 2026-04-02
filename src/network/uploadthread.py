@@ -6,10 +6,10 @@ import time
 import random
 import protocol
 import state
-import connectionpool
+from . import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from network import dandelion_ins
-from threads import StoppableThread
+from .threads import StoppableThread
 
 
 class UploadThread(StoppableThread):

@@ -7,7 +7,7 @@ import time
 
 import network.asyncore_pollchoose as asyncore
 import state
-from threads import BusyError, nonBlocking
+from .threads import BusyError, nonBlocking
 
 
 class ProcessingError(Exception):

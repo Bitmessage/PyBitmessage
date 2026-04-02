@@ -8,12 +8,12 @@ import time
 # magic imports!
 import protocol
 import state
-import connectionpool
+from . import connectionpool
 
 from network import receiveDataQueue
-from bmproto import BMProto
-from node import Peer
-from objectracker import ObjectTracker
+from .bmproto import BMProto
+from .node import Peer
+from .objectracker import ObjectTracker
 
 
 logger = logging.getLogger('default')
