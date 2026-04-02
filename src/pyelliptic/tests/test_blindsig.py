@@ -2,13 +2,16 @@
 Test for ECC blind signatures
 """
 import os
+import time
 import unittest
 from hashlib import sha256
 
 try:
     from pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
+    from pyelliptic.eccblind import Expiration
 except ImportError:
     from pybitmessage.pyelliptic import ECCBlind, ECCBlindChain, OpenSSL
+    from pybitmessage.pyelliptic.eccblind import Expiration
 
 # pylint: disable=protected-access
 
@@ -121,9 +124,59 @@ class TestBlindSig(unittest.TestCase):
         verifier_obj = ECCBlind(pubkey=signer_obj.pubkey())
         self.assertFalse(verifier_obj.verify(msg, signature, value=8))
 
+    def test_expiration_auto_generated(self):
+        """Test that auto-generated expiration is one month from now"""
+        now = time.gmtime()
+        obj = ECCBlind()
+        expected = (now.tm_year - Expiration.EPOCH_YEAR) * 12 + now.tm_mon
+        self.assertEqual(obj.expiration.raw, expected)
+        self.assertTrue(obj.expiration.verify())
+
+    def test_expiration_future(self):
+        """Test that a future expiration verifies"""
+        exp = Expiration(255)
+        self.assertTrue(exp.verify())
+
+    def test_expiration_past(self):
+        """Test that a past expiration fails verification"""
+        exp = Expiration(0)  # Jan 2026
+        self.assertFalse(exp.verify())
+
+    def test_expiration_serialize_roundtrip(self):
+        """Test expiration serialization/deserialization round-trip"""
+        for raw in range(256):
+            exp = Expiration(raw)
+            serialized = exp.serialize()
+            self.assertEqual(serialized, raw)
+            exp2 = Expiration.deserialize(serialized)
+            self.assertEqual(exp.raw, exp2.raw)
+            self.assertEqual(exp.year, exp2.year)
+            self.assertEqual(exp.month, exp2.month)
+
+    def test_expiration_from_date(self):
+        """Test creating expiration from year and month"""
+        exp = Expiration.from_date(2026, 0)  # Jan 2026
+        self.assertEqual(exp.raw, 0)
+        self.assertEqual(exp.year, 2026)
+        self.assertEqual(exp.month, 0)
+
+        exp = Expiration.from_date(2027, 6)  # Jul 2027
+        self.assertEqual(exp.raw, 18)
+        self.assertEqual(exp.year, 2027)
+        self.assertEqual(exp.month, 6)
+
+    def test_expiration_year_month_properties(self):
+        """Test that year/month properties are consistent"""
+        for raw in range(256):
+            exp = Expiration(raw)
+            self.assertEqual(
+                (exp.year - Expiration.EPOCH_YEAR) * 12 + exp.month, raw)
+            self.assertGreaterEqual(exp.month, 0)
+            self.assertLess(exp.month, 12)
+
     def test_blind_sig_expiration(self):
         """Test blind signature expiration checking"""
-        signer_obj = ECCBlind(year=2020, month=1)
+        signer_obj = ECCBlind(months_since_epoch=0)  # Jan 2026, already expired
         point_r = signer_obj.signer_init()
         requester_obj = ECCBlind(pubkey=signer_obj.pubkey())
         msg = os.urandom(64)

@@ -26,32 +26,53 @@ PUBKEY = '!BB33s'
 
 
 class Expiration(object):
-    """Expiration of pubkey"""
+    """Expiration of pubkey, encoded as months since epoch (Jan 2026).
+
+    Single byte encoding: 0 = Jan 2026, 255 = Apr 2047.
+    Granularity of one month balances anonymity pool size
+    against storage requirements for blind signature certificates.
+    """
+    EPOCH_YEAR = 2026
+
     @staticmethod
     def deserialize(val):
-        """Create an object out of int"""
-        year = ((val & 0xF0) >> 4) + 2020
-        month = val & 0x0F
-        assert month < 12
-        return Expiration(year, month)
+        """Create an object out of a serialized byte value"""
+        return Expiration(val)
 
-    def __init__(self, year, month):
+    @staticmethod
+    def from_date(year, month_0indexed):
+        """Create from a year and 0-indexed month (0=Jan, 11=Dec)"""
         assert isinstance(year, int)
-        assert year > 2019 and year < 2036
-        assert isinstance(month, int)
-        assert month < 12
-        self.year = year
-        self.month = month
-        self.exp = year + month / 12.0
+        assert isinstance(month_0indexed, int)
+        assert 0 <= month_0indexed < 12
+        raw = (year - Expiration.EPOCH_YEAR) * 12 + month_0indexed
+        assert 0 <= raw <= 255
+        return Expiration(raw)
+
+    def __init__(self, months_since_epoch):
+        assert isinstance(months_since_epoch, int)
+        assert 0 <= months_since_epoch <= 255
+        self.raw = months_since_epoch
+
+    @property
+    def year(self):
+        """Calendar year"""
+        return self.EPOCH_YEAR + self.raw // 12
+
+    @property
+    def month(self):
+        """0-indexed month (0=Jan, 11=Dec)"""
+        return self.raw % 12
 
     def serialize(self):
         """Make int out of object"""
-        return ((self.year - 2020) << 4) + self.month
+        return self.raw
 
     def verify(self):
         """Check if the pubkey has expired"""
         now = time.gmtime()
-        return self.exp >= now.tm_year + (now.tm_mon - 1) / 12.0
+        current = (now.tm_year - self.EPOCH_YEAR) * 12 + (now.tm_mon - 1)
+        return self.raw >= current
 
 
 class Value(object):
@@ -209,7 +230,7 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
                     self._ec_point_serialize(self.Q))
 
     def __init__(self, curve="secp256k1", pubkey=None, privkey=None,
-                 year=2025, month=11, value=0xFF):
+                 months_since_epoch=None, value=0xFF):
         self.ctx = OpenSSL.BN_CTX_new()
 
         # ECC group
@@ -238,14 +259,12 @@ class ECCBlind(object):  # pylint: disable=too-many-instance-attributes
         else:
             # new keypair
             self.d, self.Q = self.ec_gen_keypair()
-            if not year or not month:
+            if months_since_epoch is None:
                 now = time.gmtime()
-                if now.tm_mon == 12:
-                    self.expiration = Expiration(now.tm_year + 1, 1)
-                else:
-                    self.expiration = Expiration(now.tm_year, now.tm_mon + 1)
-            else:
-                self.expiration = Expiration(year, month)
+                # one month from now
+                months_since_epoch = \
+                    (now.tm_year - Expiration.EPOCH_YEAR) * 12 + now.tm_mon
+            self.expiration = Expiration(months_since_epoch)
             self.value = Value(value)
 
     def __del__(self):
