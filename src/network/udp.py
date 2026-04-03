@@ -8,7 +8,6 @@ import time
 # magic imports!
 import protocol
 import state
-from . import connectionpool
 
 from network import receiveDataQueue
 from .bmproto import BMProto
@@ -82,7 +81,7 @@ class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
         remoteport = False
         for seenTime, stream, _, ip, port in addresses:
             decodedIP = protocol.checkIPAddress(str(ip))
-            if stream not in connectionpool.pool.streams:
+            if stream not in self.pool.streams:
                 continue
             if (seenTime < time.time() - protocol.MAX_TIME_OFFSET
                     or seenTime > time.time() + protocol.MAX_TIME_OFFSET):

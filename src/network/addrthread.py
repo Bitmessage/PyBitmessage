@@ -4,7 +4,6 @@ Announce addresses as they are received from other hosts
 import random
 from six.moves import queue
 
-from . import connectionpool
 from protocol import assembleAddrMessage
 from network import addrQueue  # FIXME: init with queue
 
@@ -14,6 +13,10 @@ from .threads import StoppableThread
 class AddrThread(StoppableThread):
     """(Node) address broadcasting thread"""
     name = "AddrBroadcaster"
+
+    def __init__(self, pool):
+        super(AddrThread, self).__init__()
+        self.pool = pool
 
     def run(self):
         while not self._stopped:
@@ -27,7 +30,7 @@ class AddrThread(StoppableThread):
 
             if chunk:
                 # Choose peers randomly
-                connections = connectionpool.pool.establishedConnections()
+                connections = self.pool.establishedConnections()
                 random.shuffle(connections)
                 for i in connections:
                     random.shuffle(chunk)

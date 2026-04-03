@@ -14,7 +14,6 @@ import time
 import addresses
 import protocol
 import state
-from . import connectionpool
 from . import knownnodes
 from bmconfigparser import config
 from queues import objectProcessorQueue
@@ -395,19 +394,19 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.object.checkAlreadyHave()
         except (BMObjectExpiredError, BMObjectAlreadyHaveError,
                 BMObjectInsufficientPOWError):
-            BMProto.stopDownloadingObject(self.object.inventoryHash)
+            self.stopDownloadingObject(self.object.inventoryHash)
             raise
         try:
-            self.object.checkStream()
+            self.object.checkStream(self.pool.streams)
         except BMObjectUnwantedStreamError:
             acceptmismatch = config.getboolean(
                 "inventory", "acceptmismatch")
-            BMProto.stopDownloadingObject(
+            self.stopDownloadingObject(
                 self.object.inventoryHash, acceptmismatch)
             if not acceptmismatch:
                 raise
         except BMObjectInvalidError:
-            BMProto.stopDownloadingObject(self.object.inventoryHash)
+            self.stopDownloadingObject(self.object.inventoryHash)
             raise
 
         try:
@@ -415,7 +414,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             objectProcessorQueue.put((
                 self.object.objectType, buffer(self.object.data)))  # noqa: F821
         except BMObjectInvalidError:
-            BMProto.stopDownloadingObject(self.object.inventoryHash, True)
+            self.stopDownloadingObject(self.object.inventoryHash, True)
         else:
             try:
                 del missingObjects[self.object.inventoryHash]
@@ -448,7 +447,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for seenTime, stream, _, ip, port in self._decode_addr():
             ip = str(ip)
             if (
-                stream not in connectionpool.pool.streams
+                stream not in self.pool.streams
                 # FIXME: should check against complete list
                 or ip.startswith('bootstrap')
             ):
@@ -547,7 +546,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled, True,
+                self.pool.streams, dandelion_ins.enabled, True,
                 nodeid=self.nodeid))
             logger.debug(
                 '%(host)s:%(port)i sending version',
@@ -603,7 +602,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closed connection to %s because there is no overlapping'
                 ' interest in streams.', self.destination)
             return False
-        if connectionpool.pool.inboundConnections.get(
+        if self.pool.inboundConnections.get(
                 self.destination):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
@@ -621,8 +620,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # or server full report the same error to counter deanonymisation
             if (
                 Peer(self.destination.host, self.peerNode.port)
-                in connectionpool.pool.inboundConnections
-                or len(connectionpool.pool)
+                in self.pool.inboundConnections
+                or len(self.pool)
                 > config.safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
                 + config.safeGetInt(
@@ -634,7 +633,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     'Closed connection to %s due to server full'
                     ' or duplicate inbound/outbound.', self.destination)
                 return False
-        if connectionpool.pool.isAlreadyConnected(self.nonce):
+        if self.pool.isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(
                 errorText="I'm connected to myself. Closing connection.",
                 fatal=2))
@@ -645,10 +644,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         return True
 
-    @staticmethod
-    def stopDownloadingObject(hashId, forwardAnyway=False):
+    def stopDownloadingObject(self, hashId, forwardAnyway=False):
         """Stop downloading object *hashId*"""
-        for connection in connectionpool.pool.connections():
+        for connection in self.pool.connections():
             try:
                 del connection.objectsNewToMe[hashId]
             except KeyError:

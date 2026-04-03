@@ -6,7 +6,6 @@ import time
 import random
 import protocol
 import state
-from . import connectionpool
 from randomtrackingdict import RandomTrackingDict
 from network import dandelion_ins
 from .threads import StoppableThread
@@ -19,11 +18,15 @@ class UploadThread(StoppableThread):
     maxBufSize = 2097152  # 2MB
     name = "Uploader"
 
+    def __init__(self, pool):
+        super(UploadThread, self).__init__()
+        self.pool = pool
+
     def run(self):
         while not self._stopped:
             uploaded = 0
             # Choose uploading peers randomly
-            connections = connectionpool.pool.establishedConnections()
+            connections = self.pool.establishedConnections()
             random.shuffle(connections)
             for i in connections:
                 now = time.time()

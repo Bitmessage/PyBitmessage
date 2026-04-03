@@ -6,7 +6,6 @@ import time
 
 import protocol
 import state
-from . import connectionpool
 from network import dandelion_ins
 from highlevelcrypto import calculateInventoryHash
 
@@ -93,14 +92,14 @@ class BMObject(object):
             # .. todo::  remove from download queue
             raise BMObjectExpiredError()
 
-    def checkStream(self):
+    def checkStream(self, streams):
         """Check if object's stream matches streams we are interested in"""
         if self.streamNumber < protocol.MIN_VALID_STREAM \
            or self.streamNumber > protocol.MAX_VALID_STREAM:
             logger.warning(
                 'The object has invalid stream: %s', self.streamNumber)
             raise BMObjectInvalidError()
-        if self.streamNumber not in connectionpool.pool.streams:
+        if self.streamNumber not in streams:
             logger.debug(
                 'The streamNumber %i isn\'t one we are interested in.',
                 self.streamNumber)

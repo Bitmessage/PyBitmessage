@@ -9,17 +9,16 @@ from six.moves import queue
 import addresses
 import protocol
 import state
-from . import connectionpool
 from network import dandelion_ins, invQueue
 from .threads import StoppableThread
 
 
-def handleExpiredDandelion(expired):
+def handleExpiredDandelion(expired, pool):
     """For expired dandelion objects, mark all remotes as not having
        the object"""
     if not expired:
         return
-    for i in connectionpool.pool.connections():
+    for i in pool.connections():
         if not i.fullyEstablished:
             continue
         for x in expired:
@@ -37,11 +36,14 @@ class InvThread(StoppableThread):
 
     name = "InvBroadcaster"
 
-    @staticmethod
-    def handleLocallyGenerated(stream, hashId):
+    def __init__(self, pool):
+        super(InvThread, self).__init__()
+        self.pool = pool
+
+    def handleLocallyGenerated(self, stream, hashId):
         """Locally generated inventory items require special handling"""
         dandelion_ins.addHash(hashId, stream=stream)
-        for connection in connectionpool.pool.connections():
+        for connection in self.pool.connections():
             if dandelion_ins.enabled and connection != \
                     dandelion_ins.objectChildStem(hashId):
                 continue
@@ -52,7 +54,7 @@ class InvThread(StoppableThread):
             chunk = []
             while True:
                 # Dandelion fluff trigger by expiration
-                handleExpiredDandelion(dandelion_ins.expire(invQueue))
+                handleExpiredDandelion(dandelion_ins.expire(invQueue), self.pool)
                 try:
                     data = invQueue.get(False)
                     chunk.append((data[0], data[1]))
@@ -63,7 +65,7 @@ class InvThread(StoppableThread):
                     break
 
             if chunk:
-                for connection in connectionpool.pool.connections():
+                for connection in self.pool.connections():
                     fluffs = []
                     stems = []
                     for inv in chunk:

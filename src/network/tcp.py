@@ -14,7 +14,6 @@ import addresses
 import l10n
 import protocol
 import state
-from . import connectionpool
 from bmconfigparser import config
 from highlevelcrypto import randomBytes
 from network import dandelion_ins, invQueue, receiveDataQueue
@@ -268,7 +267,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled,
+                self.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
@@ -319,7 +318,7 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled,
+                self.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -343,7 +342,7 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.pool.streams, dandelion_ins.enabled,
+                self.pool.streams, dandelion_ins.enabled,
                 False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
@@ -431,7 +430,7 @@ class TCPServer(AdvancedDispatcher):
 
         state.ownAddresses[Peer(*sock.getsockname())] = True
         if (
-            len(connectionpool.pool)
+            len(self.pool)
             > config.safeGetInt(
                 'bitmessagesettings', 'maxtotalconnections')
                 + config.safeGetInt(
@@ -443,7 +442,7 @@ class TCPServer(AdvancedDispatcher):
             sock.close()
             return
         try:
-            connectionpool.pool.addConnection(
+            self.pool.addConnection(
                 TCPConnection(sock=sock))
         except socket.error:
             pass

@@ -90,11 +90,6 @@ from helper_sql import (SqlBulkExecute, sql_ready, sqlExecute, sqlQuery,
                         sqlStoredProcedure)
 from highlevelcrypto import calculateInventoryHash
 
-try:
-    from network import connectionpool
-except ImportError:
-    connectionpool = None
-
 from network import StoppableThread, invQueue, stats
 from version import softwareVersion
 
@@ -1551,18 +1546,18 @@ class BMRPCDispatcher(object):
         Returns bitmessage connection information as dict with keys *inbound*,
         *outbound*.
         """
-        if connectionpool is None or connectionpool.pool is None:
+        if stats.pool is None:
             raise APIError(21, 'Network is not started.')
         inboundConnections = []
         outboundConnections = []
-        for i in connectionpool.pool.inboundConnections.values():
+        for i in stats.pool.inboundConnections.values():
             inboundConnections.append({
                 'host': i.destination.host,
                 'port': i.destination.port,
                 'fullyEstablished': i.fullyEstablished,
                 'userAgent': str(i.userAgent)
             })
-        for i in connectionpool.pool.outboundConnections.values():
+        for i in stats.pool.outboundConnections.values():
             outboundConnections.append({
                 'host': i.destination.host,
                 'port': i.destination.port,

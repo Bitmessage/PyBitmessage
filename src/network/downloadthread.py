@@ -6,7 +6,6 @@ import random
 import state
 import addresses
 import protocol
-from . import connectionpool
 from network import dandelion_ins
 from .objectracker import missingObjects
 from .threads import StoppableThread
@@ -20,8 +19,9 @@ class DownloadThread(StoppableThread):
     cleanInterval = 60
     requestExpires = 3600
 
-    def __init__(self):
+    def __init__(self, pool):
         super(DownloadThread, self).__init__(name="Downloader")
+        self.pool = pool
         self.lastCleaned = time.time()
 
     def cleanPending(self):
@@ -42,7 +42,7 @@ class DownloadThread(StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = connectionpool.pool.establishedConnections()
+            connections = self.pool.establishedConnections()
             random.shuffle(connections)
             requestChunk = max(int(
                 min(self.maxRequestChunk, len(missingObjects))

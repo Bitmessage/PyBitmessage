@@ -6,7 +6,6 @@ import socket
 
 from six.moves import queue
 
-from . import connectionpool
 from network.advanceddispatcher import UnknownStateError
 from network import receiveDataQueue
 from .threads import StoppableThread
@@ -15,8 +14,9 @@ from .threads import StoppableThread
 class ReceiveQueueThread(StoppableThread):
     """This thread processes data received from the network
     (which is done by the asyncore thread)"""
-    def __init__(self, num=0):
+    def __init__(self, num, pool):
         super(ReceiveQueueThread, self).__init__(name="ReceiveQueue_%i" % num)
+        self.pool = pool
 
     def run(self):
         while not self._stopped:
@@ -36,7 +36,7 @@ class ReceiveQueueThread(StoppableThread):
             # enough data, or the connection is to be aborted
 
             try:
-                connection = connectionpool.pool.getConnectionByAddr(dest)
+                connection = self.pool.getConnectionByAddr(dest)
             # connection object not found
             except KeyError:
                 receiveDataQueue.task_done()

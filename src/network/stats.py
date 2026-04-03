@@ -4,7 +4,6 @@ Network statistics
 import time
 
 from . import asyncore_pollchoose as asyncore
-from . import connectionpool
 from .objectracker import missingObjects
 
 
@@ -15,12 +14,20 @@ lastSentTimestamp = time.time()
 lastSentBytes = 0
 currentSentSpeed = 0
 
+pool = None
+
+
+def init(pool_instance):
+    """Set the pool reference for stats functions"""
+    global pool  # pylint: disable=global-statement
+    pool = pool_instance
+
 
 def connectedHostsList():
     """List of all the connected hosts"""
-    if connectionpool.pool is None:
+    if pool is None:
         return []
-    return connectionpool.pool.establishedConnections()
+    return pool.establishedConnections()
 
 
 def sentBytes():

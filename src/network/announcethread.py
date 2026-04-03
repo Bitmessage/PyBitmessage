@@ -3,7 +3,6 @@ Announce myself (node address)
 """
 import time
 
-from . import connectionpool
 from bmconfigparser import config
 from protocol import assembleAddrMessage
 
@@ -16,6 +15,10 @@ class AnnounceThread(StoppableThread):
     name = "Announcer"
     announceInterval = 60
 
+    def __init__(self, pool):
+        super(AnnounceThread, self).__init__()
+        self.pool = pool
+
     def run(self):
         lastSelfAnnounced = 0
         while not self._stopped:
@@ -26,13 +29,12 @@ class AnnounceThread(StoppableThread):
             if processed == 0:
                 self.stop.wait(10)
 
-    @staticmethod
-    def announceSelf():
+    def announceSelf(self):
         """Announce our presence"""
-        for connection in connectionpool.pool.udpSockets.values():
+        for connection in self.pool.udpSockets.values():
             if not connection.announcing:
                 continue
-            for stream in connectionpool.pool.streams:
+            for stream in self.pool.streams:
                 addr = (
                     stream,
                     Peer(

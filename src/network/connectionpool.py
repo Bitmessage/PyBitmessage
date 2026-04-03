@@ -120,6 +120,7 @@ class BMConnectionPool(object):
     def addConnection(self, connection):
         """Add a connection object to our internal dict"""
         from .udp import UDPSocket
+        connection.pool = self
         if isinstance(connection, UDPSocket):
             return
         if connection.isOutbound:
@@ -182,6 +183,7 @@ class BMConnectionPool(object):
         port = config.safeGetInt("bitmessagesettings", "port")
         # correct port even if it changed
         ls = TCPServer(host=bind, port=port)
+        ls.pool = self
         self.listeningSockets[ls.destination] = ls
 
     def startUDPSocket(self, bind=None):
@@ -198,6 +200,7 @@ class BMConnectionPool(object):
                 udpSocket = UDPSocket(announcing=False)
             else:
                 udpSocket = UDPSocket(host=bind, announcing=True)
+        udpSocket.pool = self
         self.udpSockets[udpSocket.listening.host] = udpSocket
 
     def startBootstrappers(self):

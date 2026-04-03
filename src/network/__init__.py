@@ -29,30 +29,35 @@ def start(config, state):
     from .knownnodes import readKnownNodes
     from .receivequeuethread import ReceiveQueueThread
     from .uploadthread import UploadThread
+    from . import stats
 
     # create the connection pool
-    connectionpool.pool = BMConnectionPool()
+    pool = BMConnectionPool()
+    connectionpool.pool = pool
 
     # check and set dandelion enabled value at network startup
     dandelion_ins.init_dandelion_enabled(config)
     # pass pool instance into dandelion class instance
-    dandelion_ins.init_pool(connectionpool.pool)
+    dandelion_ins.init_pool(pool)
+
+    # init stats with pool reference
+    stats.init(pool)
 
     readKnownNodes()
-    connectionpool.pool.connectToStream(1)
+    pool.connectToStream(1)
     for thread in (
-        BMNetworkThread(), InvThread(), AddrThread(),
-        DownloadThread(), UploadThread()
+        BMNetworkThread(pool), InvThread(pool), AddrThread(pool),
+        DownloadThread(pool), UploadThread(pool)
     ):
         thread.daemon = True
         thread.start()
 
     # Optional components
     for i in range(config.getint('threads', 'receive')):
-        thread = ReceiveQueueThread(i)
+        thread = ReceiveQueueThread(i, pool)
         thread.daemon = True
         thread.start()
     if config.safeGetBoolean('bitmessagesettings', 'udp'):
-        state.announceThread = AnnounceThread()
+        state.announceThread = AnnounceThread(pool)
         state.announceThread.daemon = True
         state.announceThread.start()
