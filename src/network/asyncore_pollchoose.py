@@ -509,7 +509,7 @@ class dispatcher(object):
             # Set to nonblocking just to make sure for cases where we
             # get a socket from a blocking source.
             sock.setblocking(0)
-            self.set_socket(sock, map)
+            self.set_socket(sock)
             self.connected = True
             # The constructor no longer requires that the socket
             # passed be connected.
@@ -524,7 +524,7 @@ class dispatcher(object):
                     # The socket is broken in some unknown way, alert
                     # the user and remove it from the map (to prevent
                     # polling of broken sockets).
-                    self.del_channel(map)
+                    self.del_channel()
                     raise
         else:
             self.socket = None
@@ -544,22 +544,18 @@ class dispatcher(object):
 
     __str__ = __repr__
 
-    def add_channel(self, map=None):
-        """Add a channel"""
+    def add_channel(self):
+        """Add a channel to the asyncore map set during __init__."""
         # pylint: disable=attribute-defined-outside-init
-        if map is None:
-            map = self._map
-        map[self._fileno] = self
+        self._map[self._fileno] = self
         self.poller_flags = 0
         self.poller_filter = 0
 
-    def del_channel(self, map=None):
-        """Delete a channel"""
+    def del_channel(self):
+        """Delete a channel from the asyncore map set during __init__."""
         fd = self._fileno
-        if map is None:
-            map = self._map
-        if fd in map:
-            del map[fd]
+        if fd in self._map:
+            del self._map[fd]
         if self._fileno:
             try:
                 kqueue_poller.pollster.control([select.kevent(
@@ -595,11 +591,15 @@ class dispatcher(object):
         sock.setblocking(0)
         self.set_socket(sock)
 
-    def set_socket(self, sock, map=None):
-        """Set socket"""
+    def set_socket(self, sock):
+        """Set socket without registering in the asyncore map.
+
+        Registration is deferred to an explicit add_channel() call,
+        typically done by BMConnectionPool.addConnection() after the
+        connection is fully initialised with a pool reference.
+        """
         self.socket = sock
         self._fileno = sock.fileno()
-        self.add_channel(map)
 
     def set_reuse_addr(self):
         """try to re-use a server port if possible"""
