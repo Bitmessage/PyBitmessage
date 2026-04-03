@@ -99,7 +99,7 @@ class ObjectTracker(object):
 
     def handleReceivedObject(self, streamNumber, hashid):
         """Handling received object"""
-        for i in self.pool.connections():
+        for i in self.pool.connections():  # pylint: disable=no-member
             if not i.fullyEstablished:
                 continue
             try:

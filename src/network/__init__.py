@@ -17,7 +17,7 @@ receiveDataQueue = queue.Queue()
 __all__ = ["StoppableThread"]
 
 
-def start(config, state):
+def start(config, state):  # pylint: disable=too-many-locals
     """Start network threads"""
     from .announcethread import AnnounceThread
     from . import connectionpool
