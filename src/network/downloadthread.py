@@ -29,7 +29,7 @@ class DownloadThread(StoppableThread):
         deadline = time.time() - self.requestExpires
         try:
             toDelete = [
-                k for k, v in missingObjects.iteritems()
+                k for k, v in missingObjects.items()
                 if v < deadline]
         except RuntimeError:
             pass

@@ -111,12 +111,12 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             if len(self.stem) < MAX_STEMS:
                 self.stem.append(connection)
-                for k in (k for k, v in self.nodeMap.iteritems() if v is None):
+                for k in (k for k, v in self.nodeMap.items() if v is None):
                     self.nodeMap[k] = connection
                 for k, v in {
-                        k: v for k, v in self.hashMap.iteritems()
+                        k: v for k, v in self.hashMap.items()
                         if v.child is None
-                }.iteritems():
+                }.items():
                     self.hashMap[k] = Stem(
                         connection, v.stream, self.poissonTimeout())
                     invQueue.put((v.stream, k, v.child))
@@ -132,14 +132,14 @@ class Dandelion:  # pylint: disable=old-style-class
                 self.stem.remove(connection)
                 # active mappings to pointing to the removed node
                 for k in (
-                        k for k, v in self.nodeMap.iteritems()
+                        k for k, v in self.nodeMap.items()
                         if v == connection
                 ):
                     self.nodeMap[k] = None
                 for k, v in {
-                        k: v for k, v in self.hashMap.iteritems()
+                        k: v for k, v in self.hashMap.items()
                         if v.child == connection
-                }.iteritems():
+                }.items():
                     self.hashMap[k] = Stem(
                         None, v.stream, self.poissonTimeout())
 
@@ -180,7 +180,7 @@ class Dandelion:  # pylint: disable=old-style-class
         with self.lock:
             deadline = time()
             toDelete = [
-                [v.stream, k, v.child] for k, v in self.hashMap.iteritems()
+                [v.stream, k, v.child] for k, v in self.hashMap.items()
                 if v.timeout < deadline
             ]
 
@@ -199,10 +199,10 @@ class Dandelion:  # pylint: disable=old-style-class
             try:
                 # random two connections
                 self.stem = sample(  # nosec B311
-                    self.pool.outboundConnections.values(), MAX_STEMS)
+                    list(self.pool.outboundConnections.values()), MAX_STEMS)
             # not enough stems available
             except ValueError:
-                self.stem = self.pool.outboundConnections.values()
+                self.stem = list(self.pool.outboundConnections.values())
             self.nodeMap = {}
             # hashMap stays to cater for pending stems
         self.refresh = time() + REASSIGN_INTERVAL

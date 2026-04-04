@@ -74,7 +74,7 @@ class ObjectTracker(object):
                 with self.objectsNewToThemLock:
                     self.objectsNewToThem = {
                         k: v
-                        for k, v in self.objectsNewToThem.iteritems()
+                        for k, v in self.objectsNewToThem.items()
                         if v >= deadline}
             self.lastCleaned = time.time()
 
