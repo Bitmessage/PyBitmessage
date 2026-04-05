@@ -12,7 +12,7 @@ sed -i -e "s|\(apiinterface = \).*|\10\.0\.0\.0|g" \
     -e "s|\(apipassword = \).*|\1$APIPASS|g" \
     -e "s|apinotifypath = .*||g" ${BITMESSAGE_HOME}/keys.dat
 
-if [ -n "$PYBITMESAGE_BOOTSTRAP" -o -n "$PYBITMESSAGE_TESTNET" ]; then
+if [ -n "$PYBITMESSAGE_BOOTSTRAP" -o -n "$PYBITMESSAGE_TESTNET" ]; then
     echo "[bootstrap]" >> ${BITMESSAGE_HOME}/keys.dat
 fi
 
@@ -21,13 +21,13 @@ if [ -n "$PYBITMESSAGE_BOOTSTRAP" ]; then
     sed -i -e "s|\(apiinterface = \).*|\1$IP|g" \
         -e "s|\(bind = \).*|\1$IP|g" \
         ${BITMESSAGE_HOME}/keys.dat
-    echo <<(EOF) >> ${BITMESSAGE_HOME}/keys.dat
+    cat <<EOF >> ${BITMESSAGE_HOME}/keys.dat
 idle_timeout = 60
 commands = True
 threads = True
 inv = True
 dup_ip = True
-(EOF)
+EOF
 fi
 
 if [ -n "$PYBITMESSAGE_TESTNET" ]; then
@@ -35,9 +35,9 @@ if [ -n "$PYBITMESSAGE_TESTNET" ]; then
     sed -i -e "s|\(apiinterface = \).*|\1$IP|g" \
         -e "s|\(bind = \).*|\1$IP|g" \
         ${BITMESSAGE_HOME}/keys.dat
-    echo <<(EOF) >> ${BITMESSAGE_HOME}/keys.dat
+    cat <<EOF >> ${BITMESSAGE_HOME}/keys.dat
 testnet = True
-(EOF)
+EOF
 fi
 
 # Run

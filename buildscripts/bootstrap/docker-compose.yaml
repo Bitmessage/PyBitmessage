@@ -1,10 +1,9 @@
 ---
-version: "3"
 name: pybitmessage
 services:
   bootstrap:
     image: pybitmessage/bootstrap:latest
-    build: ..
+    build: ../..
     env_file:
       - /etc/pybitmessage.conf
     ports:

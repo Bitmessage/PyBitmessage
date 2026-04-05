@@ -28,8 +28,8 @@ echo "<Plugin curl_json>" >> $CF
 
 for i in `seq 1 $THREADS`; do
     cont="pybitmessage-bootstrap-${i}"
-    IP=$(docker inspect -f
-        '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+    IP=$(docker inspect -f \
+        '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' \
         $cont 2>/dev/null)
     [ -z "$IP" ] && continue
     echo "Adding $IP"
