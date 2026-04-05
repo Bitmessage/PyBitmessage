@@ -390,7 +390,7 @@ class TCPServer(AdvancedDispatcher):
     """TCP connection server for Bitmessage protocol"""
 
     def __init__(self, host='127.0.0.1', port=8444):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             AdvancedDispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()

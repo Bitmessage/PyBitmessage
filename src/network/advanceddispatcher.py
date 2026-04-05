@@ -28,7 +28,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 131072  # 128kB
 
     def __init__(self, sock=None):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             asyncore.dispatcher.__init__(self, sock)
         self.connectedAt = 0
         self.close_reason = None

@@ -84,7 +84,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Process incoming header"""
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-        self.command = self.command.rstrip('\x00')
+        self.command = self.command.rstrip(b'\x00').decode('ascii', 'replace')
         if self.magic != protocol.magic:
             # skip 1 byte in order to sync
             self.set_state("bm_header", length=1)
@@ -170,17 +170,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Decode node details from the payload"""
         # protocol.checkIPAddress()
         services, host, port = self.decode_payload_content("Q16sH")
-        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
-        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+        if host[0:12] == b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+            host = socket.inet_ntop(socket.AF_INET, bytes(host[12:16]))
+        elif host[0:6] == b'\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
-            host = base64.b32encode(host[6:]).lower() + ".onion"
+            host = base64.b32encode(bytes(host[6:])).decode('ascii').lower() + ".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, str(host))
+            host = socket.inet_ntop(socket.AF_INET6, bytes(host))
         if host == "":
             # This can happen on Windows systems which are not 64-bit
             # compatible so let us drop the IPv6 address.
-            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
+            host = socket.inet_ntop(socket.AF_INET, bytes(host[12:16]))
 
         return Node(services, host, port)
 
@@ -445,11 +445,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         """Incoming addresses, process them"""
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
-            ip = str(ip)
+            ip = bytes(ip)
             if (
                 stream not in self.pool.streams
                 # FIXME: should check against complete list
-                or ip.startswith('bootstrap')
+                or ip.startswith(b'bootstrap')
             ):
                 continue
             decodedIP = protocol.checkIPAddress(ip)

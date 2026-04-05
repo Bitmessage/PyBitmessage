@@ -31,7 +31,7 @@ class HTTPRequestHandler(asyncore.dispatcher):
     </html>"""
 
     def __init__(self, sock):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             asyncore.dispatcher.__init__(self, sock)
         self.inbuf = ""
         self.ready = True
@@ -70,7 +70,7 @@ class HTTPRequestHandler(asyncore.dispatcher):
 class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
     """Handling HTTPS request"""
     def __init__(self, sock):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             asyncore.dispatcher.__init__(self, sock)        # pylint: disable=non-parent-init-called
         # self.tlsDone = False
         TLSHandshake.__init__(
@@ -118,7 +118,7 @@ class HTTPServer(asyncore.dispatcher):
     port = 12345
 
     def __init__(self):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
@@ -142,7 +142,7 @@ class HTTPSServer(HTTPServer):
     port = 12345
 
     def __init__(self):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             HTTPServer.__init__(self)
 
     def handle_accept(self):

@@ -17,7 +17,7 @@ self.sslSock = ssl.wrap_socket(
 
 class HTTPSClient(HTTPClient, TLSHandshake):
     def __init__(self, host, path):
-        if not hasattr(self, '_map'):
+        if '_map' not in self.__dict__:
             asyncore.dispatcher.__init__(self)
         self.tlsDone = False
         """

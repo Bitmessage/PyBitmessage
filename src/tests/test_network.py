@@ -3,10 +3,7 @@
 import threading
 import time
 
-from .common import skip_python3
 from .partial import TestPartialRun
-
-skip_python3()
 
 
 class TestNetwork(TestPartialRun):

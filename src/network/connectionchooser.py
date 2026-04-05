@@ -20,7 +20,7 @@ logger = logging.getLogger('default')
 def getDiscoveredPeer():
     """Get a peer from the local peer discovery list"""
     try:
-        peer = random.choice(state.discoveredPeers.keys())  # nosec B311
+        peer = random.choice(list(state.discoveredPeers.keys()))  # nosec B311
     except (IndexError, KeyError):
         raise ValueError
     try:
@@ -48,7 +48,7 @@ def chooseConnection(stream):
         return getDiscoveredPeer()
     for _ in range(50):
         peer = random.choice(  # nosec B311
-            knownnodes.knownNodes[stream].keys())
+            list(knownnodes.knownNodes[stream].keys()))
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):
