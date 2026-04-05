@@ -65,6 +65,12 @@ class BMConnectionPool(object):
                 ' trustedpeer=<hostname>:<portnumber>'
             )
 
+        # default timeout 300, lower than 30 doesn't make much practical sense
+        self.idleTimeout = max([30,
+                                config.safeGetInt('bootstrap',
+                                                  'idle_timeout', 300)
+                                ])
+
     def __len__(self):
         return len(self.outboundConnections) + len(self.inboundConnections)
 
@@ -390,7 +396,7 @@ class BMConnectionPool(object):
         for i in self.connections():
             minTx = time.time() - 20
             if i.fullyEstablished:
-                minTx -= 300 - 20
+                minTx -= self.idleTimeout - 20
             if i.lastTx < minTx:
                 if i.fullyEstablished:
                     i.append_write_buf(protocol.CreatePacket('ping'))

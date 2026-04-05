@@ -314,6 +314,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_error(self):
         """Decode an error message and log it"""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         err_values = self.decode_payload_content("vvlsls")
         fatalStatus = err_values[0]
         # banTime = err_values[1]
@@ -330,6 +332,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         If we have them and some other conditions are fulfilled,
         append them to the write queue.
         """
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         items = self.decode_payload_content("l32s")
         # skip?
         now = time.time()
@@ -366,14 +370,20 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_inv(self):
         """Non-dandelion announce"""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         return self._command_inv(False)
 
     def bm_command_dinv(self):
         """Dandelion stem announce"""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         return self._command_inv(True)
 
     def bm_command_object(self):
         """Incoming object, process it"""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         objectOffset = self.payloadOffset
         nonce, expiresTime, objectType, version, streamNumber = \
             self.decode_payload_content("QQIvv")
@@ -443,6 +453,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_addr(self):
         """Incoming addresses, process them"""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
             ip = bytes(ip)
@@ -474,6 +486,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_portcheck(self):
         """Incoming port check request, queue it."""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         if self.isOutbound or self.portCheckRequested:
             return True
         self.portCheckRequested = True
@@ -483,6 +497,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_ping(self):
         """Incoming ping, respond to it."""
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            return
         self.append_write_buf(protocol.CreatePacket('pong'))
         return True
 
@@ -603,7 +619,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 ' interest in streams.', self.destination)
             return False
         if self.pool.inboundConnections.get(
-                self.destination):
+                self.destination) and not \
+                config.safeGetBoolean('bootstrap', 'dup_ip'):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(

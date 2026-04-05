@@ -168,8 +168,10 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.addKnownNode(
                 self.streams, self.destination, time.time())
             dandelion_ins.maybeAddStem(self, invQueue)
-        self.sendAddr()
-        self.sendBigInv()
+        if not config.safeGetBoolean('bootstrap', 'addr'):
+            self.sendAddr()
+        if not config.safeGetBoolean('bootstrap', 'inv'):
+            self.sendBigInv()
 
     def sendAddr(self):
         """Send a partial list of known addresses to peer."""
@@ -372,7 +374,8 @@ def bootstrap(connection_class):
             """Only send addr here"""
             # pylint: disable=attribute-defined-outside-init
             self.fullyEstablished = True
-            self.sendAddr()
+            if not config.safeGetBoolean('bootstrap', 'addr'):
+                self.sendAddr()
 
         def handle_close(self):
             """

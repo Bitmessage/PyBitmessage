@@ -1,0 +1,13 @@
+---
+version: "3"
+name: pybitmessage
+services:
+  bootstrap:
+    image: pybitmessage/bootstrap:latest
+    build: ..
+    env_file:
+      - /etc/pybitmessage.conf
+    ports:
+      - 127.0.0.1::8444
+    deploy:
+      replicas: $THREADS

@@ -222,8 +222,12 @@ def trimKnownNodes(recAddrStream=1):
 def dns():
     """Add DNS names to knownnodes"""
     for port in [8080, 8444]:
-        addKnownNode(
-            1, Peer('bootstrap%s.bitmessage.org' % port, port))
+        if config.safeGetBoolean('boostrap', 'testnet'):
+            addKnownNode(
+                1, Peer('bootstrap%s.testnet.bitmessage.org' % port, port))
+        else:
+            addKnownNode(
+                1, Peer('bootstrap%s.bitmessage.org' % port, port))
 
 
 def cleanupKnownNodes(pool):

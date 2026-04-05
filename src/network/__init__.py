@@ -45,10 +45,13 @@ def start(config, state):  # pylint: disable=too-many-locals
 
     readKnownNodes()
     pool.connectToStream(1)
-    for thread in (
-        BMNetworkThread(pool), InvThread(pool), AddrThread(pool),
-        DownloadThread(pool), UploadThread(pool)
-    ):
+    threads_to_start = list()
+    threads_to_start.append(BMNetworkThread)
+    if not config.safeGetBoolean('bootstrap', 'threads'):
+        threads_to_start.extend([InvThread, AddrThread,
+                                 DownloadThread, UploadThread])
+    for thread_class in threads_to_start:
+        thread = thread_class(pool)
         thread.daemon = True
         thread.start()
 

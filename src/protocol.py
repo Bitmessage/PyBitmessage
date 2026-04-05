@@ -26,6 +26,8 @@ from version import softwareVersion
 
 # Network constants
 magic = 0xE9BEB4D9
+if config.safeGetBoolean('bootstrap', 'testnet'):
+    magic = 0xFB110907
 #: protocol specification says max 1000 addresses in one addr command
 MAX_ADDR_COUNT = 1000
 #: address is online if online less than this many seconds ago
