@@ -48,6 +48,11 @@ DEFAULT_NODES = (
     Peer('178.11.46.221', 8444)
 )
 
+TESTNET_NODES = (
+    Peer('46.62.252.34', 8444),
+    Peer('5.78.198.100', 8444)
+)
+
 
 def json_serialize_knownnodes(output):
     """
@@ -145,7 +150,11 @@ def addKnownNode(stream, peer, lastseen=None, is_self=False):
 def createDefaultKnownNodes():
     """Creating default Knownnodes"""
     past = time.time() - 2418600  # 28 days - 10 min
-    for peer in DEFAULT_NODES:
+    nodes = (
+        TESTNET_NODES if config.safeGetBoolean('bootstrap', 'testnet')
+        else DEFAULT_NODES
+    )
+    for peer in nodes:
         addKnownNode(1, peer, past)
     saveKnownNodes()
 
@@ -222,7 +231,7 @@ def trimKnownNodes(recAddrStream=1):
 def dns():
     """Add DNS names to knownnodes"""
     for port in [8080, 8444]:
-        if config.safeGetBoolean('boostrap', 'testnet'):
+        if config.safeGetBoolean('bootstrap', 'testnet'):
             addKnownNode(
                 1, Peer('bootstrap%s.testnet.bitmessage.org' % port, port))
         else:
