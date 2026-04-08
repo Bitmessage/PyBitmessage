@@ -46,9 +46,9 @@ def start(config, state):  # pylint: disable=too-many-locals
     readKnownNodes()
     pool.connectToStream(1)
     threads_to_start = list()
-    threads_to_start.append(BMNetworkThread)
+    threads_to_start.extend((AddrThread, BMNetworkThread))
     if not config.safeGetBoolean('bootstrap', 'threads'):
-        threads_to_start.extend([InvThread, AddrThread,
+        threads_to_start.extend([InvThread,
                                  DownloadThread, UploadThread])
     for thread_class in threads_to_start:
         thread = thread_class(pool)

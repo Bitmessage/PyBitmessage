@@ -25,9 +25,17 @@ from network.node import Peer
 from version import softwareVersion
 
 # Network constants
-magic = 0xE9BEB4D9
-if config.safeGetBoolean('bootstrap', 'testnet'):
-    magic = 0xFB110907
+MAGIC_MAINNET = 0xE9BEB4D9
+MAGIC_TESTNET = 0xFB110907
+
+
+def get_magic():
+    """Return the protocol magic based on current testnet config"""
+    if config.safeGetBoolean('bootstrap', 'testnet'):
+        return MAGIC_TESTNET
+    return MAGIC_MAINNET
+
+
 #: protocol specification says max 1000 addresses in one addr command
 MAX_ADDR_COUNT = 1000
 #: address is online if online less than this many seconds ago
@@ -311,7 +319,7 @@ def CreatePacket(command, payload=b''):
     checksum = hashlib.sha512(payload).digest()[0:4]
 
     b = bytearray(Header.size + payload_length)
-    Header.pack_into(b, 0, magic, command, payload_length, checksum)
+    Header.pack_into(b, 0, get_magic(), command, payload_length, checksum)
     b[Header.size:] = payload
     return bytes(b)
 

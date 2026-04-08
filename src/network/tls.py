@@ -72,10 +72,14 @@ class TLSDispatcher(AdvancedDispatcher):
             context.set_ecdh_curve("secp256k1")
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
-            # also exclude TLSv1 and TLSv1.1 in the future
+            # AECDH-AES256-SHA is TLS 1.2 only; cap at TLS 1.2 to
+            # prevent OpenSSL 3.x from attempting TLS 1.3 with
+            # incompatible groups (secp256k1 not valid for TLS 1.3)
             context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 |\
                 ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE |\
                 ssl.OP_CIPHER_SERVER_PREFERENCE
+            if hasattr(ssl, 'OP_NO_TLSv1_3'):
+                context.options |= ssl.OP_NO_TLSv1_3  # pylint: disable=no-member
             self.sslSocket = context.wrap_socket(
                 self.socket, server_side=self.server_side,
                 do_handshake_on_connect=False)
@@ -120,6 +124,14 @@ class TLSDispatcher(AdvancedDispatcher):
             if not self.fullyEstablished and (
                     self.expectBytes == 0 or not self.write_buf_empty()):
                 return False
+            # After TLS handshake, check for decrypted data sitting
+            # in the SSL internal buffer that select/poll can't see
+            if self.tlsDone:
+                try:
+                    if self.sslSocket.pending() > 0:
+                        return True
+                except (AttributeError, ssl.SSLError):
+                    pass
         except AttributeError:
             pass
         return AdvancedDispatcher.readable(self)
@@ -165,7 +177,7 @@ class TLSDispatcher(AdvancedDispatcher):
                 return
             if err.errno not in _DISCONNECTED_SSL:
                 logger.info("SSL Error: %s", err)
-            self.close_reason = "SSL Error in handle_write"
+            self.close_reason = "SSL Error " + str(err) + " in handle_write"
             self.handle_close()
 
     def tls_handshake(self):
@@ -208,9 +220,12 @@ class TLSDispatcher(AdvancedDispatcher):
                 logger.debug(
                     '%s:%i: TLS handshake success',
                     self.destination.host, self.destination.port)
+            # Reset stale close_reason from WANT_READ/WANT_WRITE cycles
+            self.close_reason = None
             # The handshake has completed, so remove this channel and...
             self.del_channel()
             self.set_socket(self.sslSocket)
+            self.add_channel()
             self.tlsDone = True
 
             self.bm_proto_reset()

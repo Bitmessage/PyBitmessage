@@ -2,7 +2,8 @@
 
 apt -y install curl jq ipvsadm libyajl2
 
-EXTIP=$(curl -s telnetmyip.com|jq -r .ip)
+EXTIP=$(ip route get 8.8.8.8 | \
+    awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1); exit}')
 if [ ! -e .env ]; then
     THREADS=$(nproc --all)
     PASSWORD=$(tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo)

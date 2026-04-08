@@ -4,6 +4,7 @@ Select which node to connect to
 # pylint: disable=too-many-branches
 import logging
 import random
+import time
 
 from six.moves import queue
 
@@ -71,11 +72,20 @@ def chooseConnection(stream):
                 # don't connect to local IPs when using SOCKS
                 if not protocol.checkIPAddress(encodedAddr, False):
                     continue
+        roll = random.random()  # nosec B311
         if rating > 1:
             rating = 1
-        try:
-            if 0.05 / (1.0 - rating) > random.random():  # nosec B311
+        if config.safeGetBoolean('bootstrap', 'commands'):
+            # Bootstrap server: age-based selection with cooldown
+            age = time.time() - peer_info.get('lastseen', 0)
+            if age < knownnodes.BOOTSTRAP_RETRY_COOLDOWN:
+                continue  # 1h cooldown
+            prob = float(knownnodes.BOOTSTRAP_RETRY_COOLDOWN) / age
+        else:
+            try:
+                prob = 0.05 / (1.0 - rating)
+            except ZeroDivisionError:
                 return peer
-        except ZeroDivisionError:
+        if prob > roll:
             return peer
     raise ValueError

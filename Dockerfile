@@ -33,7 +33,7 @@ USER bitmessage
 # Generate default config
 RUN pybitmessage -t
 # But don't include anything else
-RUN rm -f knownnodes.dat messages.dat debuglog singleton.lock
+RUN rm -f knownnodes.dat messages.dat debug.log singleton.lock
 
 ENTRYPOINT ["launcher.sh"]
 CMD ["-d"]

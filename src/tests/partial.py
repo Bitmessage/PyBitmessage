@@ -31,7 +31,10 @@ class TestPartialRun(unittest.TestCase):
 
         state.shutdown = 0
         cls.state = state
-        bmconfigparser.config = cls.config = bmconfigparser.BMConfigParser()
+        # Reuse the existing singleton so that every module which already
+        # did ``from bmconfigparser import config`` keeps a valid reference.
+        # read() calls _reset() internally, giving each test a clean slate.
+        cls.config = bmconfigparser.config
         cls.config.read()
 
     @classmethod

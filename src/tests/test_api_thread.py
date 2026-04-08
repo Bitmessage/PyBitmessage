@@ -1,5 +1,6 @@
 """TestAPIThread class definition"""
 
+import socket
 import sys
 import time
 from binascii import hexlify, unhexlify
@@ -39,13 +40,36 @@ class TestAPIThread(TestPartialRun):
         cls.config.set('bitmessagesettings', 'apipassword', 'password')
         cls.config.set('inventory', 'storage', 'filesystem')
 
+        # Find a free port to avoid conflicts with the pybitmessage
+        # process started by test_api.py or anything else on 8442.
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('127.0.0.1', 0))
+        free_port = s.getsockname()[1]
+        s.close()
+        cls.config.set(
+            'bitmessagesettings', 'apiport', str(free_port))
+
         import api
         cls.thread = api.singleAPI()
         cls.thread.daemon = True
         cls.thread.start()
-        time.sleep(3)
-        cls.api = xmlrpc_client.ServerProxy(
-            "http://username:password@127.0.0.1:8442/")
+
+        # Wait for the API thread to start accepting connections.
+        for _ in range(30):
+            time.sleep(0.5)
+            port = cls.config.getint('bitmessagesettings', 'apiport')
+            try:
+                proxy = xmlrpc_client.ServerProxy(
+                    "http://username:password@127.0.0.1:%d/" % port)
+                proxy.helloWorld('startup', 'check')
+                cls.api = proxy
+                break
+            except Exception:
+                continue
+        else:
+            raise Exception(
+                'API thread did not start accepting connections'
+                ' on port %d' % port)
 
     def test_connection(self):
         """API command 'helloWorld'"""

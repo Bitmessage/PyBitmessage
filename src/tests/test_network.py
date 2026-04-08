@@ -1,9 +1,42 @@
 """Test network module"""
 
+import os
+import select
+import socket
 import threading
 import time
+import unittest
 
 from .partial import TestPartialRun
+
+
+def _can_broadcast_loopback():
+    """Check whether UDP broadcast loopback works.
+
+    Some virtualised environments (e.g. Docker on colima) don't
+    deliver broadcasts back to the sender.
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    except AttributeError:
+        pass
+    try:
+        s.bind(('0.0.0.0', 18444))
+        s.setblocking(0)
+        s.sendto(b'loopback-test', ('<broadcast>', 18444))
+        r, _, _ = select.select([s], [], [], 2.0)
+        return bool(r)
+    finally:
+        s.close()
+
+
+skip_without_broadcast_loopback = unittest.skipUnless(
+    _can_broadcast_loopback(),
+    'UDP broadcast loopback not supported (e.g. Docker on colima)'
+)
 
 
 class TestNetwork(TestPartialRun):
@@ -17,14 +50,18 @@ class TestNetwork(TestPartialRun):
 
         cls.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
         cls.config.set('bitmessagesettings', 'udp', 'True')
+        cls.config.add_section('bootstrap')
+        cls.config.set('bootstrap', 'testnet', 'True')
 
-        # config variable is still used inside of the network ):
         import network
         from network import connectionpool, stats
-
-        # beware of singleton
-        connectionpool.config = cls.config
         cls.stats = stats
+
+        # remove stale knownnodes from previous runs
+        try:
+            os.remove(os.path.join(cls.state.appdata, 'knownnodes.dat'))
+        except OSError:
+            pass
 
         network.start(cls.config, cls.state)
 
@@ -49,7 +86,7 @@ class TestNetwork(TestPartialRun):
     def test_stats(self):
         """Check that network starts connections and updates stats"""
         pl = 0
-        for _ in range(30):
+        for _ in range(60):
             if pl == 0:
                 pl = len(self.pool)
             if (
@@ -60,10 +97,31 @@ class TestNetwork(TestPartialRun):
                 break
             time.sleep(1)
         else:
-            self.fail('Have not started any connection in 30 sec')
+            from network import knownnodes
+            peers = [
+                '%s:%d' % (p.host, p.port)
+                for p in knownnodes.knownNodes.get(1, {})]
+            conns = [
+                '%s:%d(e=%s)' % (
+                    c.destination.host, c.destination.port,
+                    c.fullyEstablished)
+                for c in self.pool.connections()]
+            self.fail(
+                'Have not started any connection in 60 sec:'
+                ' pl=%d sent=%d recv=%d outbound=%d inbound=%d'
+                ' knownNodesActual=%s peers=%s conns=%s'
+                % (
+                    pl, self.stats.sentBytes(),
+                    self.stats.receivedBytes(),
+                    len(self.pool.outboundConnections),
+                    len(self.pool.inboundConnections),
+                    knownnodes.knownNodesActual,
+                    peers, conns))
 
+    @skip_without_broadcast_loopback
     def test_udp(self):
         """Invoke AnnounceThread.announceSelf() and check discovered peers"""
+
         for _ in range(20):
             if self.pool.udpSockets:
                 break

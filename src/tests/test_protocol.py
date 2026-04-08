@@ -110,6 +110,8 @@ class TestProtocol(TestSocketInet):
             protocol.network_group(test_ip))
 
         for test_ip in (
-                'bootstrap8444.bitmessage.org', 'quzwelsuziwqgpt2.onion', None):
+                'bootstrap8444.bitmessage.org',
+                'bootstrap8444.testnet.bitmessage.org',
+                'quzwelsuziwqgpt2.onion', None):
             self.assertEqual(
                 test_ip, protocol.network_group(test_ip))

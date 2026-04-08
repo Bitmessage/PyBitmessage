@@ -34,6 +34,13 @@ knownNodesForgetRating = -0.5
 
 knownNodesActual = False
 
+# Bootstrap server address management thresholds
+BOOTSTRAP_INSERT_AGE = 21660
+"""6h + 1min: unverified addresses are inserted with this age"""
+
+BOOTSTRAP_RETRY_COOLDOWN = 3600
+"""1 hour: don't retry connecting to a peer within this window"""
+
 logger = logging.getLogger('default')
 
 DEFAULT_NODES = (
@@ -78,8 +85,12 @@ def json_deserialize_knownnodes(source):
         info = node['info']
         peer = Peer(str(peer['host']), peer.get('port', 8444))
         knownNodes[node['stream']][peer] = info
+        default_nodes = (
+            TESTNET_NODES if config.safeGetBoolean('bootstrap', 'testnet')
+            else DEFAULT_NODES
+        )
         if not (knownNodesActual
-                or info.get('self')) and peer not in DEFAULT_NODES:
+                or info.get('self')) and peer not in default_nodes:
             knownNodesActual = True
 
 

@@ -85,7 +85,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.magic, self.command, self.payloadLength, self.checksum = \
             protocol.Header.unpack(self.read_buf[:protocol.Header.size])
         self.command = self.command.rstrip(b'\x00').decode('ascii', 'replace')
-        if self.magic != protocol.magic:
+        if self.magic != protocol.get_magic():
             # skip 1 byte in order to sync
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
@@ -453,8 +453,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_addr(self):
         """Incoming addresses, process them"""
-        if config.safeGetBoolean('bootstrap', 'commands'):
-            return
+        is_bootstrap = config.safeGetBoolean('bootstrap', 'commands')
         # not using services
         for seenTime, stream, _, ip, port in self._decode_addr():
             ip = bytes(ip)
@@ -473,8 +472,14 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 peer = Peer(decodedIP, port)
 
                 with knownnodes.knownNodesLock:
-                    # isnew =
-                    knownnodes.addKnownNode(stream, peer, seenTime)
+                    if is_bootstrap:
+                        # Insert as unverified: just over 6h old so it
+                        # won't be advertised until we connect to it
+                        knownnodes.addKnownNode(
+                            stream, peer,
+                            time.time() - knownnodes.BOOTSTRAP_INSERT_AGE)
+                    else:
+                        knownnodes.addKnownNode(stream, peer, seenTime)
 
                 # since we don't track peers outside of knownnodes,
                 # only spread if in knownnodes to prevent flood

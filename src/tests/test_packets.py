@@ -46,7 +46,7 @@ class TestSerialize(TestSocketInet):
 
     def test_packet(self):
         """Check the packet created by protocol.CreatePacket()"""
-        head = unhexlify(b'%x' % protocol.magic)
+        head = unhexlify(b'%x' % protocol.get_magic())
         self.assertEqual(
             protocol.CreatePacket(b'ping')[:len(head)], head)
 

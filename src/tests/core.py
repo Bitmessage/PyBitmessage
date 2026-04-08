@@ -64,6 +64,13 @@ class TestCore(unittest.TestCase):
     """Test case, which runs in main pybitmessage thread"""
     addr = 'BM-2cVvkzJuQDsQHLqxRXc6HZGPLZnkBLzEZY'
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestCore, cls).setUpClass()
+        if not config.has_section('bootstrap'):
+            config.add_section('bootstrap')
+        config.set('bootstrap', 'testnet', 'True')
+
     def tearDown(self):
         """Reset possible unexpected settings after test"""
         knownnodes.addKnownNode(1, Peer('127.0.0.1', 8444), is_self=True)
@@ -159,7 +166,7 @@ class TestCore(unittest.TestCase):
         self._wipe_knownnodes()
         knownnodes.readKnownNodes()
         self.assertGreaterEqual(
-            len(knownnodes.knownNodes[1]), len(knownnodes.DEFAULT_NODES))
+            len(knownnodes.knownNodes[1]), len(knownnodes.TESTNET_NODES))
 
     def test_0_cleaner(self):
         """test knownnodes starvation leading to IndexError in Asyncore"""
@@ -182,11 +189,11 @@ class TestCore(unittest.TestCase):
         knownnodes.cleanupKnownNodes(connectionpool.pool)
         time.sleep(5)
 
-    def _check_connection(self, full=False):
+    def _check_connection(self, full=False, timeout=360):
         """
-        Check if there is at least one outbound connection to remote host
-        with name not starting with "bootstrap" in 6 minutes at most,
-        fail otherwise.
+        Check if there is at least one outbound connection to a
+        non-bootstrap remote host within *timeout* seconds.
+        Bootstrap connections are ignored.
         """
         _started = time.time()
         config.remove_option('bitmessagesettings', 'dontconnect')
@@ -198,29 +205,22 @@ class TestCore(unittest.TestCase):
             connection_base = Socks4aBMConnection
         else:
             connection_base = TCPConnection
-        c = 360
-        while c > 0:
+        while time.time() - _started < timeout:
             time.sleep(1)
-            c -= 2
-            for peer, con in connectionpool.pool.outboundConnections.iteritems():
+            for peer, con in connectionpool.pool.outboundConnections.items():
                 if (
                     peer.host.startswith('bootstrap')
                     or peer.host == 'quzwelsuziwqgpt2.onion'
                 ):
-                    if c < 60:
-                        self.fail(
-                            'Still connected to bootstrap node %s after %.2f'
-                            ' seconds' % (peer, time.time() - _started))
-                    c += 1
-                    break
-                else:
-                    self.assertIsInstance(con, connection_base)
-                    self.assertNotEqual(peer.host, '127.0.0.1')
-                    if full and not con.fullyEstablished:
-                        continue
-                    return
+                    continue
+                self.assertIsInstance(con, connection_base)
+                self.assertNotEqual(peer.host, '127.0.0.1')
+                if full and not con.fullyEstablished:
+                    continue
+                return
         self.fail(
-            'Failed to connect during %.2f sec' % (time.time() - _started))
+            'No non-bootstrap connection found in %.0f sec'
+            % (time.time() - _started))
 
     def _check_knownnodes(self):
         for stream in knownnodes.knownNodes.itervalues():
@@ -239,7 +239,7 @@ class TestCore(unittest.TestCase):
         self._initiate_bootstrap()
         for port in [8080, 8444]:
             for item in socket.getaddrinfo(
-                    'bootstrap%s.bitmessage.org' % port, 80):
+                    'bootstrap%s.testnet.bitmessage.org' % port, 80):
                 try:
                     addr = item[4][0]
                     socket.inet_aton(item[4][0])

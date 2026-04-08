@@ -92,6 +92,35 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.bm_proto_reset()
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
+    def _host_is_global(self):
+        """Is this connection's address useful for knownnodes?
+
+        Returns True if the peer address is a real, globally routable
+        address that is worth sharing with the network.
+        """
+        # SOCKS proxy IP: not the real peer address
+        if protocol.checkSocksIP(self.destination.host):
+            return False
+        # Local/private IP: not useful to announce to the network
+        if self.local:
+            return False
+        return True
+
+    def _getPeer(self):
+        """Return the peer address suitable for knownnodes.
+
+        For outbound connections, use destination as-is.
+        For inbound connections, use the advertised listening port
+        from the version message instead of the ephemeral source port.
+        Falls back to destination if version was not yet received.
+        """
+        if self.isOutbound:
+            return self.destination
+        try:
+            return Peer(self.destination.host, self.peerNode.port)
+        except AttributeError:
+            return self.destination
+
     def antiIntersectionDelay(self, initial=False):
         """
         This is a defense against the so called intersection attacks.
@@ -162,18 +191,25 @@ class TCPConnection(BMProto, TLSDispatcher):
         ))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
+        peer = self._getPeer()
         # The connection having host suitable for knownnodes
-        if self.isOutbound or not self.local and not state.socksIP:
-            knownnodes.increaseRating(self.destination)
+        if self._host_is_global():
+            if self.isOutbound:
+                knownnodes.increaseRating(peer)
+                lastseen = time.time()
+            elif config.safeGetBoolean('bootstrap', 'commands'):
+                lastseen = time.time() - knownnodes.BOOTSTRAP_INSERT_AGE
+            else:
+                lastseen = time.time()
             knownnodes.addKnownNode(
-                self.streams, self.destination, time.time())
+                self.streams, peer, lastseen)
             dandelion_ins.maybeAddStem(self, invQueue)
         if not config.safeGetBoolean('bootstrap', 'addr'):
             self.sendAddr()
         if not config.safeGetBoolean('bootstrap', 'inv'):
             self.sendBigInv()
 
-    def sendAddr(self):
+    def sendAddr(self):  # pylint: disable=too-many-locals
         """Send a partial list of known addresses to peer."""
         # We are going to share a maximum number of 1000 addrs (per overlapping
         # stream) with our peer. 500 from overlapping streams, 250 from the
@@ -191,11 +227,14 @@ class TCPConnection(BMProto, TLSDispatcher):
                         continue
                     # only if more recent than 3 hours
                     # and having positive or neutral rating
+                    is_bootstrap = config.safeGetBoolean(
+                        'bootstrap', 'commands')
                     filtered = [
                         (k, v) for k, v in nodes.items()
                         if v["lastseen"] > int(time.time())
                         - maximumAgeOfNodesThatIAdvertiseToOthers
-                        and v["rating"] >= 0 and not k.host.endswith('.onion')
+                        and (is_bootstrap or v["rating"] >= 0)
+                        and not k.host.endswith('.onion')
                     ]
                     # sent 250 only if the remote isn't interested in it
                     elemCount = min(
@@ -285,20 +324,21 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def handle_close(self):
         """Callback for connection being closed."""
-        host_is_global = self.isOutbound or not self.local and not state.socksIP
+        host_is_global = self._host_is_global()
         if self.fullyEstablished:
             UISignalQueue.put((
                 'updateNetworkStatusTab',
                 (self.isOutbound, False, self.destination)
             ))
             if host_is_global:
-                knownnodes.addKnownNode(
-                    self.streams, self.destination, time.time())
+                if self.isOutbound:
+                    knownnodes.addKnownNode(
+                        self.streams, self._getPeer(), time.time())
                 dandelion_ins.maybeRemoveStem(self)
         else:
             self.checkTimeOffsetNotification()
-            if host_is_global:
-                knownnodes.decreaseRating(self.destination)
+            if host_is_global and self.isOutbound:
+                knownnodes.decreaseRating(self._getPeer())
         BMProto.handle_close(self)
 
 

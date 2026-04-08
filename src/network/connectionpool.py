@@ -238,7 +238,10 @@ class BMConnectionPool(object):
         bootstrapper = bootstrap(connection_base)
         if not hostname:
             port = random.choice([8080, 8444])  # nosec B311
-            hostname = 'bootstrap%s.bitmessage.org' % port
+            if config.safeGetBoolean('bootstrap', 'testnet'):
+                hostname = 'bootstrap%s.testnet.bitmessage.org' % port
+            else:
+                hostname = 'bootstrap%s.bitmessage.org' % port
         else:
             port = 8444
         self.addConnection(bootstrapper(hostname, port))
@@ -301,8 +304,9 @@ class BMConnectionPool(object):
                 1 for c in self.outboundConnections.values()
                 if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
-            if established < config.safeGetInt(
-                    'bitmessagesettings', 'maxoutboundconnections'):
+            maxOutbound = config.safeGetInt(
+                'bitmessagesettings', 'maxoutboundconnections')
+            if established < maxOutbound:
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
@@ -312,7 +316,9 @@ class BMConnectionPool(object):
                         continue
                     if chosen in self.outboundConnections:
                         continue
-                    if chosen.host in self.inboundConnections:
+                    if chosen.host in self.inboundConnections \
+                            and not config.safeGetBoolean(
+                                'bootstrap', 'dup_ip'):
                         continue
                     # don't connect to self
                     if chosen in state.ownAddresses:
@@ -325,7 +331,9 @@ class BMConnectionPool(object):
                     for j in self.outboundConnections.values():
                         if host_network_group == j.network_group:
                             same_group = True
-                            if chosen.host == j.destination.host:
+                            if chosen.host == j.destination.host \
+                                    and not config.safeGetBoolean(
+                                        'bootstrap', 'commands'):
                                 knownnodes.decreaseRating(chosen)
                             break
                     if same_group:
@@ -398,12 +406,15 @@ class BMConnectionPool(object):
             if i.fullyEstablished:
                 minTx -= self.idleTimeout - 20
             if i.lastTx < minTx:
-                if i.fullyEstablished:
-                    i.append_write_buf(protocol.CreatePacket('ping'))
-                else:
+                if not i.fullyEstablished:
                     i.close_reason = "Timeout (%is)" % (
                         time.time() - i.lastTx)
                     i.set_state("close")
+                elif config.safeGetBoolean('bootstrap', 'commands'):
+                    i.close_reason = "Bootstrap idle"
+                    i.set_state("close")
+                else:
+                    i.append_write_buf(protocol.CreatePacket('ping'))
         for i in (
             self.connections()
             + list(self.listeningSockets.values()) + list(self.udpSockets.values())
