@@ -110,9 +110,9 @@ class Ext:  # pylint: disable=old-style-class
         """
         Compare this Ext object with another for equality.
         """
-        return (isinstance(other, self.__class__) and
-                self.type == other.type and
-                self.data == other.data)
+        return (isinstance(other, self.__class__)
+                and self.type == other.type
+                and self.data == other.data)
 
     def __ne__(self, other):
         """
@@ -337,14 +337,14 @@ def _pack_ext(obj, fp, options):
     elif len(obj.data) == 16:
         fp.write(b"\xd8" + struct.pack("B", obj.type & 0xff) + obj.data)
     elif len(obj.data) <= 2**8 - 1:
-        fp.write(b"\xc7" +
-                 struct.pack("BB", len(obj.data), obj.type & 0xff) + obj.data)
+        fp.write(b"\xc7"
+                 + struct.pack("BB", len(obj.data), obj.type & 0xff) + obj.data)
     elif len(obj.data) <= 2**16 - 1:
-        fp.write(b"\xc8" +
-                 struct.pack(">HB", len(obj.data), obj.type & 0xff) + obj.data)
+        fp.write(b"\xc8"
+                 + struct.pack(">HB", len(obj.data), obj.type & 0xff) + obj.data)
     elif len(obj.data) <= 2**32 - 1:
-        fp.write(b"\xc9" +
-                 struct.pack(">IB", len(obj.data), obj.type & 0xff) + obj.data)
+        fp.write(b"\xc9"
+                 + struct.pack(">IB", len(obj.data), obj.type & 0xff) + obj.data)
     else:
         raise UnsupportedTypeException("huge ext data")
 

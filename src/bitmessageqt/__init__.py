@@ -176,7 +176,7 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(
             self.ui.pushButtonAddChan,
             QtCore.SIGNAL("clicked()"),
-            self.click_actionJoinChan) # also used for creating chans.
+            self.click_actionJoinChan)  # also used for creating chans.
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
@@ -1760,7 +1760,8 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.blackwhitelist.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
-                if config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
+                if (config.getboolean('bitmessagesettings', 'minimizetotray')
+                        and 'darwin' not in sys.platform):
                     QtCore.QTimer.singleShot(0, self.appIndicatorHide)
             elif event.oldState() & QtCore.Qt.WindowMinimized:
                 # The window state has just been changed to
@@ -1873,7 +1874,7 @@ class MyForm(settingsmixin.SMainWindow):
             painter.setPen(
                 QtGui.QPen(QtGui.QColor(255, 0, 0), QtCore.Qt.SolidPattern))
             painter.setFont(font)
-            painter.drawText(24-rect.right()-marginX, -rect.top()+marginY, txt)
+            painter.drawText(24 - rect.right() - marginX, -rect.top() + marginY, txt)
             painter.end()
         return QtGui.QIcon(pixmap)
 
@@ -1950,7 +1951,7 @@ class MyForm(settingsmixin.SMainWindow):
                     try:
                         newlinePosition = textToDisplay.indexOf('\n')
                     except:
-                        # If someone misses adding a "_translate" to a string before passing it to this function, 
+                        # If someone misses adding a "_translate" to a string before passing it to this function,
                         # this function won't receive a qstring which will cause an exception.
                         newlinePosition = 0
                     if newlinePosition > 1:
@@ -1987,8 +1988,7 @@ class MyForm(settingsmixin.SMainWindow):
             "MainWindow",
             "New version of PyBitmessage is available: %1. Download it"
             " from https://github.com/Bitmessage/PyBitmessage/releases/latest"
-            ).arg(self.notifiedNewVersion)
-        )
+        ).arg(self.notifiedNewVersion))
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
         self.updateStatusBar(text)
@@ -2011,7 +2011,7 @@ class MyForm(settingsmixin.SMainWindow):
                 messagelist.item(i, 0).setLabel()
 
     def rerenderAddressBook(self):
-        def addRow (address, label, type):
+        def addRow(address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = Ui_AddressBookWidgetItemLabel(address, text_type(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
@@ -2157,14 +2157,16 @@ class MyForm(settingsmixin.SMainWindow):
                                         "MainWindow",
                                         "You are trying to send an email instead of a bitmessage. "
                                         "This requires registering with a gateway. Attempt to register?"),
-                                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
+                                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
                                 continue
                             email = acct.getLabel()
-                            if email[-14:] != "@mailchuck.com": # attempt register
+                            if email[-14:] != "@mailchuck.com":  # attempt register
                                 # 12 character random email address
                                 email = ''.join(
-                                        random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)
-                                        ) + "@mailchuck.com"
+                                    random.SystemRandom().
+                                    choice(string.ascii_lowercase)
+                                    for _ in range(12)
+                                ) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
                             config.set(fromAddress, 'label', email)
@@ -2176,8 +2178,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " an email gateway. Sending registration"
                                 " now as %1, please wait for the registration"
                                 " to be processed before retrying sending."
-                                ).arg(email)
-                            )
+                            ).arg(email))
                             return
                     status, addressVersionNumber, streamNumber = decodeAddress(toAddress)[:3]
                     if status != 'success':
@@ -2192,19 +2193,19 @@ class MyForm(settingsmixin.SMainWindow):
                                 "MainWindow",
                                 "Error: Bitmessage addresses start with"
                                 " BM-   Please check the recipient address %1"
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'checksumfailed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address %1 is not"
                                 " typed or copied correctly. Please check it."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'invalidcharacters':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address %1 contains"
                                 " invalid characters. Please check it."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'versiontoohigh':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2212,7 +2213,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " %1 is too high. Either you need to upgrade"
                                 " your Bitmessage software or your"
                                 " acquaintance is being clever."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'ripetooshort':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2220,7 +2221,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address %1 is too short. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'ripetoolong':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2228,7 +2229,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address %1 is too long. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'varintmalformed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -2236,13 +2237,13 @@ class MyForm(settingsmixin.SMainWindow):
                                 " address %1 is malformed. There might be"
                                 " something wrong with the software of"
                                 " your acquaintance."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         else:
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Something is wrong with the"
                                 " recipient address %1."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                     elif fromAddress == '':
                         self.updateStatusBar(_translate(
                             "MainWindow",
@@ -2750,14 +2751,14 @@ class MyForm(settingsmixin.SMainWindow):
                 _translate(
                     "MainWindow",
                     "%n object(s) pending proof of work", None,
-                    QtCore.QCoreApplication.CodecForTr, powQueueSize()
-                ) + ", " +
-                _translate(
+                    QtCore.QCoreApplication.CodecForTr, powQueueSize())
+                + ", "
+                + _translate(
                     "MainWindow",
                     "%n object(s) waiting to be distributed", None,
-                    QtCore.QCoreApplication.CodecForTr, pendingUpload()
-                ) + "\n\n" +
-                _translate(
+                    QtCore.QCoreApplication.CodecForTr, pendingUpload())
+                + "\n\n"
+                + _translate(
                     "MainWindow", "Wait until these tasks finish?"),
                 QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
                 | QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
@@ -2840,8 +2841,8 @@ class MyForm(settingsmixin.SMainWindow):
                 if curWorkerQueue > 0:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Waiting for PoW to finish... %1%"
-                    ).arg(50 * (maxWorkerQueue - curWorkerQueue) /
-                          maxWorkerQueue))
+                    ).arg(50 * (maxWorkerQueue - curWorkerQueue)
+                          / maxWorkerQueue))
                     time.sleep(0.5)
                     QtCore.QCoreApplication.processEvents(
                         QtCore.QEventLoop.AllEvents, 1000
@@ -2947,10 +2948,10 @@ class MyForm(settingsmixin.SMainWindow):
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
-            elif lines[i] == '' and (i+1) < totalLines and \
-                 lines[i+1] != '------------------------------------------------------':
+            elif lines[i] == '' and (i + 1) < totalLines and \
+                    lines[i + 1] != '------------------------------------------------------':
                 lines[i] = '<br><br>'
-        content = ' '.join(lines) # To keep the whitespace between lines
+        content = ' '.join(lines)  # To keep the whitespace between lines
         content = shared.fixPotentiallyInvalidUTF8Data(content)
         content = text_type(content, 'utf-8)')
         textEdit.setHtml(QtCore.QString(content))
@@ -3007,7 +3008,8 @@ class MyForm(settingsmixin.SMainWindow):
             # Wrap and quote lines/paragraphs new to this message.
             else:
                 return quoteWrapper.fill(line)
-        return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
+        return '\n'.join([quote_line(line)
+                          for line in message.splitlines()]) + '\n\n'
 
     def setSendFromComboBox(self, address=None):
         if address is None:
@@ -3109,8 +3111,8 @@ class MyForm(settingsmixin.SMainWindow):
                 toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         if fromAddressAtCurrentInboxRow == \
             tableWidget.item(currentInboxRow, column_from).label or (
-                isinstance(acct, GatewayAccount) and
-                fromAddressAtCurrentInboxRow == acct.relayAddress):
+                isinstance(acct, GatewayAccount)
+                and fromAddressAtCurrentInboxRow == acct.relayAddress):
             self.ui.lineEditTo.setText(str(acct.fromAddress))
         else:
             self.ui.lineEditTo.setText(
@@ -3239,8 +3241,8 @@ class MyForm(settingsmixin.SMainWindow):
         idCount = len(inventoryHashesToTrash)
         sqlExecuteChunked(
             ("DELETE FROM inbox" if folder == "trash" or shifted else
-             "UPDATE inbox SET folder='trash', read=1") +
-            " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
+             "UPDATE inbox SET folder='trash', read=1")
+            + " WHERE msgid IN ({0})", idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount(folder)
@@ -3296,7 +3298,7 @@ class MyForm(settingsmixin.SMainWindow):
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
         filename = QtGui.QFileDialog.getSaveFileName(
             self,
-            _translate("MainWindow","Save As..."),
+            _translate("MainWindow", "Save As..."),
             defaultFilename,
             "Text files (*.txt);;All files (*.*)")
         if filename == '':
@@ -3755,8 +3757,8 @@ class MyForm(settingsmixin.SMainWindow):
             otherAddress = tableWidget.item(currentRow, 1).data(QtCore.Qt.UserRole)
         account = accountClass(myAddress)
         if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
-                (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
-                (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
+                (currentColumn in [0, 2] and self.getCurrentFolder() == "sent")
+                or (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
             text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(QtCore.Qt.UserRole)

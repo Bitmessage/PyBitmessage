@@ -9,6 +9,8 @@ The PyBitmessage startup script
 
 # Right now, PyBitmessage only support connecting to stream 1. It doesn't
 # yet contain logic to expand into further streams.
+
+# flake8: noqa:402
 import os
 import sys
 

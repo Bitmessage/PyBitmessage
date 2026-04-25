@@ -160,7 +160,8 @@ class singleCleaner(StoppableThread):
             pass
         except RuntimeError:
             self.logger.warning(
-                "Can't remove %s from neededPubkeys, requesting pubkey will be delayed", address, exc_info=True)
+                "Can't remove %s from neededPubkeys, requesting pubkey will be delayed",
+                address, exc_info=True)
 
         queues.UISignalQueue.put((
             'updateStatusBar',
