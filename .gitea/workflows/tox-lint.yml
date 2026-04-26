@@ -1,0 +1,76 @@
+name: Tox Linter Tests
+
+on:
+  push:
+    branches: [master, main, v0.6]
+  pull_request:
+    branches: [master, main, v0.6]
+
+jobs:
+  lint:
+    name: "${{ matrix.tox-env }} / python ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        tox-env: [bandit, flake8, pycodestyle, pylint]
+        python-version: ["2.7", "3.10"]
+        include:
+          - python-version: "2.7"
+            container: "python:2.7-buster"
+            tox-suffix: "-py27"
+          - python-version: "3.10"
+            tox-suffix: ""
+
+    steps:
+      # ── System packages ────────────────────────────────────────
+      # Container (Python 2): runs as root, needs git for checkout
+      - name: Install system dependencies (container)
+        if: matrix.python-version == '2.7'
+        run: |
+          sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list
+          sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list
+          sed -i '/buster-updates/d' /etc/apt/sources.list
+          apt-get update -q
+          apt-get install -qy git libcap-dev
+
+      # Host VM (Python 3): git is pre-installed, just need libcap-dev
+      - name: Install system dependencies
+        if: matrix.python-version != '2.7'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -qy libcap-dev
+
+      # GitHub mounts Node into containers, so actions/checkout works everywhere.
+      # Gitea runners don't, so the buster container needs a manual git clone.
+      - name: Checkout repository
+        if: "!(matrix.python-version == '2.7' && env.GITEA_ACTIONS == 'true')"
+        uses: actions/checkout@v4
+
+      - name: Checkout repository (Gitea container)
+        if: matrix.python-version == '2.7' && env.GITEA_ACTIONS == 'true'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git config --global --add safe.directory "$PWD"
+          git init
+          SERVER="${GITHUB_SERVER_URL#https://}"
+          git remote add origin "https://x-access-token:${TOKEN}@${SERVER}/${GITHUB_REPOSITORY}.git"
+          git fetch --depth 1 origin "${GITHUB_SHA}"
+          git checkout FETCH_HEAD
+
+      # ── Python 3 ───────────────────────────────────────────────
+      - name: Set up Python ${{ matrix.python-version }}
+        if: matrix.python-version != '2.7'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # ── Common ─────────────────────────────────────────────────
+      - name: Install tox
+        run: |
+          pip install "tox<4" "virtualenv<20.22.0"
+
+      - name: Run tox -e ${{ matrix.tox-env }}${{ matrix.tox-suffix }}
+        run: tox -e ${{ matrix.tox-env }}${{ matrix.tox-suffix }}

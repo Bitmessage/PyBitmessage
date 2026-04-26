@@ -1,4 +1,5 @@
 #!/bin/bash
+exit 0  # migrated to .gitea/workflows/android.yml
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 

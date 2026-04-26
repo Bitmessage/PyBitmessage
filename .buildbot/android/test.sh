@@ -1,4 +1,5 @@
 #!/bin/bash
+exit 0  # migrated to .gitea/workflows/android.yml
 
 RELEASE_ARTIFACT=$(grep release_artifact packages/android/buildozer.spec |cut -d= -f2|tr -Cd 'a-z')
 
