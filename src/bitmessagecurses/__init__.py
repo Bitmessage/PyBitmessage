@@ -252,8 +252,8 @@ def drawtab(stdscr):
             # Connection data
             connected_hosts = network.stats.connectedHostsList()
             stdscr.addstr(
-                4, 5, "Total Connections: " +
-                str(len(connected_hosts)).ljust(2)
+                4, 5, "Total Connections: "
+                + str(len(connected_hosts)).ljust(2)
             )
             stdscr.addstr(6, 6, "Stream #", curses.A_BOLD)
             stdscr.addstr(6, 18, "Connections", curses.A_BOLD)
@@ -350,13 +350,13 @@ def handlech(c, stdscr):
                         if t == "1":  # View
                             set_background_title(
                                 d,
-                                "\"" +
-                                inbox[inboxcur][5] +
-                                "\" from \"" +
-                                inbox[inboxcur][3] +
-                                "\" to \"" +
-                                inbox[inboxcur][1] +
-                                "\"")
+                                "\""
+                                + inbox[inboxcur][5]
+                                + "\" from \""
+                                + inbox[inboxcur][3]
+                                + "\" to \""
+                                + inbox[inboxcur][1]
+                                + "\"")
                             data = ""       # pyint: disable=redefined-outer-name
                             ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", inbox[inboxcur][0])
                             if ret != []:
@@ -453,13 +453,13 @@ def handlech(c, stdscr):
                         if t == "1":  # View
                             set_background_title(
                                 d,
-                                "\"" +
-                                sentbox[sentcur][4] +
-                                "\" from \"" +
-                                sentbox[sentcur][3] +
-                                "\" to \"" +
-                                sentbox[sentcur][1] +
-                                "\"")
+                                "\""
+                                + sentbox[sentcur][4]
+                                + "\" from \""
+                                + sentbox[sentcur][3]
+                                + "\" to \""
+                                + sentbox[sentcur][1]
+                                + "\"")
                             data = ""
                             ret = sqlQuery(
                                 "SELECT message FROM sent WHERE subject=? AND ackdata=?",
@@ -949,11 +949,11 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     if version > 4 or version <= 1:
                         set_background_title(d, "Recipient address error")
                         scrollbox(d, unicode(
-                            "Could not understand version number " +
-                            version +
-                            "of address" +
-                            addr +
-                            "."))
+                            "Could not understand version number "
+                            + version
+                            + " of address "
+                            + addr
+                            + "."))
                         continue
                     if stream > 1 or stream == 0:
                         set_background_title(d, "Recipient address error")

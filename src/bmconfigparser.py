@@ -35,7 +35,7 @@ class BMConfigParser(SafeConfigParser):
             raise ValueError("Invalid value %s" % value)
         return SafeConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, **kwargs):
+    def get(self, section, option, **kwargs):  # pylint: disable=arguments-differ
         """Try returning temporary value before using parent get()"""
         try:
             return self._temp[section][option]
@@ -87,11 +87,11 @@ class BMConfigParser(SafeConfigParser):
                 ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, variables=None):
+    def items(self, section, raw=False, vars=None):  # pylint: disable=redefined-builtin
         # pylint: disable=signature-differs
         """Return section variables as parent,
         but override the "raw" argument to always True"""
-        return SafeConfigParser.items(self, section, True, variables)
+        return SafeConfigParser.items(self, section, True, vars)
 
     def _reset(self):
         """
@@ -160,7 +160,7 @@ class BMConfigParser(SafeConfigParser):
     def search_addresses(self, address, searched_text):
         """Return the searched label of MyAddress"""
         return [x for x in [self.get(address, 'label').lower(),
-                address.lower()] if searched_text in x]
+                            address.lower()] if searched_text in x]
 
     def disable_address(self, address):
         """"Disabling the specific Address"""

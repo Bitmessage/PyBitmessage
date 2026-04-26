@@ -2399,7 +2399,7 @@ class MyForm(settingsmixin.SMainWindow):
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ForegroundRole)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
-        if(self.ui.comboBoxSendFrom.count() == 2):
+        if self.ui.comboBoxSendFrom.count() == 2:
             self.ui.comboBoxSendFrom.setCurrentIndex(1)
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
@@ -2422,7 +2422,7 @@ class MyForm(settingsmixin.SMainWindow):
                 i, AccountColor(address).accountColor(),
                 QtCore.Qt.ForegroundRole)
         self.ui.comboBoxSendFromBroadcast.insertItem(0, '', '')
-        if(self.ui.comboBoxSendFromBroadcast.count() == 2):
+        if self.ui.comboBoxSendFromBroadcast.count() == 2:
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(1)
         else:
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)

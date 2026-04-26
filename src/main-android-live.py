@@ -3,7 +3,8 @@ import state
 import sys
 from bitmessagemain import main
 from termcolor import colored
-print(colored('kivy is not supported at the moment for this version..', 'red'))
+print(colored('kivy is not supported at the moment for this version..',
+              'red'))
 sys.exit()
 
 

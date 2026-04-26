@@ -40,12 +40,14 @@ class UISignaler(QThread):
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
                 self.emit(SIGNAL(
-                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,"
+                    "PyQt_PyObject,PyQt_PyObject)"),
                     inventoryHash, toAddress, fromAddress, subject, body)
             elif command == 'displayNewSentMessage':
                 toAddress, fromLabel, fromAddress, subject, message, ackdata = data
                 self.emit(SIGNAL(
-                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,"
+                    "PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
                     toAddress, fromLabel, fromAddress, subject, message, ackdata)
             elif command == 'updateNetworkStatusTab':
                 outbound, add, destination = data

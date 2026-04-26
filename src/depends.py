@@ -3,6 +3,8 @@ Utility functions to check the availability of dependencies
 and suggest how it may be installed
 """
 
+# flake8: noqa:E402
+
 import os
 import re
 import sys

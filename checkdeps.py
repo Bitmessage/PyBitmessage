@@ -57,6 +57,7 @@ EXTRAS_REQUIRE_DEPS = {
 
 
 def detectPrereqs(missing=True):
+    """Detect which required modules are present or absent"""
     available = []
     for module in PACKAGES:
         try:
@@ -70,6 +71,7 @@ def detectPrereqs(missing=True):
 
 
 def prereqToPackages():
+    """Map python modules to package names"""
     if not detectPrereqs():
         return
     print("%s %s" % (
@@ -78,6 +80,7 @@ def prereqToPackages():
 
 
 def compilerToPackages():
+    """Map compiler to package name"""
     if not detectOS() in COMPILING:
         return
     print("%s %s" % (
@@ -85,6 +88,7 @@ def compilerToPackages():
 
 
 def testCompiler():
+    """Check if compiler can build C PoW library"""
     if not HAVE_SETUPTOOLS:
         # silent, we can't test without setuptools
         return True
@@ -141,9 +145,9 @@ for lhs, rhs in EXTRAS_REQUIRE.items():
     if OPSYS is None:
         break
     if rhs and any([
-        EXTRAS_REQUIRE_DEPS[x][OPSYS]
-        for x in rhs
-        if x in EXTRAS_REQUIRE_DEPS
+            EXTRAS_REQUIRE_DEPS[x][OPSYS]
+            for x in rhs
+            if x in EXTRAS_REQUIRE_DEPS
     ]):
         try:
             import_module(lhs)

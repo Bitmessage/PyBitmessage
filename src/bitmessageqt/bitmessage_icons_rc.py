@@ -1666,10 +1666,15 @@ qt_resource_struct = "\
 \x00\x00\x01\xe6\x00\x00\x00\x00\x00\x01\x00\x00\x34\xdf\
 "
 
+
 def qInitResources():
-    QtCore.qRegisterResourceData(0x01, qt_resource_struct, qt_resource_name, qt_resource_data)
+    QtCore.qRegisterResourceData(0x01, qt_resource_struct,
+                                 qt_resource_name, qt_resource_data)
+
 
 def qCleanupResources():
-    QtCore.qUnregisterResourceData(0x01, qt_resource_struct, qt_resource_name, qt_resource_data)
+    QtCore.qUnregisterResourceData(0x01, qt_resource_struct,
+                                   qt_resource_name, qt_resource_data)
+
 
 qInitResources()

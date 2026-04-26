@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+"""Setuptools script for building and installing PyBitmessage"""
 
 import os
 import platform
@@ -111,18 +112,18 @@ if __name__ == "__main__":
 
     data_files = [
         ('share/applications/',
-            ['desktop/pybitmessage.desktop']),
+         ['desktop/pybitmessage.desktop']),
         ('share/icons/hicolor/scalable/apps/',
-            ['desktop/icons/scalable/pybitmessage.svg']),
+         ['desktop/icons/scalable/pybitmessage.svg']),
         ('share/icons/hicolor/24x24/apps/',
-            ['desktop/icons/24x24/pybitmessage.png'])
+         ['desktop/icons/24x24/pybitmessage.png'])
     ]
 
     try:
         if platform.dist()[0] in ('Debian', 'Ubuntu'):
             data_files += [
                 ("etc/apparmor.d/",
-                    ['packages/apparmor/pybitmessage'])
+                 ['packages/apparmor/pybitmessage'])
             ]
     except AttributeError:
         pass  # FIXME: use distro for more recent python

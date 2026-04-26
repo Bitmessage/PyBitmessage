@@ -6,6 +6,8 @@ For a full list of options see the documentation:
 http://www.sphinx-doc.org/en/master/config
 """
 
+# flake8: noqa:E402
+
 import os
 import sys
 

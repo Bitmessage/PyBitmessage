@@ -61,6 +61,11 @@ def read_callback():
         metric.dispatch()
 
 
+def main():
+    """Dummy function"""
+    pass
+
+
 if __name__ == "__main__":
     main()
 else:
