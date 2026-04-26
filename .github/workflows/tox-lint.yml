@@ -42,8 +42,23 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -qy libcap-dev
 
+      # GitHub mounts Node into containers, so actions/checkout works everywhere.
+      # Gitea runners don't, so the buster container needs a manual git clone.
       - name: Checkout repository
+        if: "!(matrix.python-version == '2.7' && env.GITEA_ACTIONS == 'true')"
         uses: actions/checkout@v4
+
+      - name: Checkout repository (Gitea container)
+        if: matrix.python-version == '2.7' && env.GITEA_ACTIONS == 'true'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git config --global --add safe.directory "$PWD"
+          git init
+          SERVER="${GITHUB_SERVER_URL#https://}"
+          git remote add origin "https://x-access-token:${TOKEN}@${SERVER}/${GITHUB_REPOSITORY}.git"
+          git fetch --depth 1 origin "${GITHUB_SHA}"
+          git checkout FETCH_HEAD
 
       # ── Python 3 ───────────────────────────────────────────────
       - name: Set up Python ${{ matrix.python-version }}
