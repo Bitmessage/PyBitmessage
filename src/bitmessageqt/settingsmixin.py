@@ -5,7 +5,7 @@ src/settingsmixin.py
 
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 
 class SettingsMixin(object):

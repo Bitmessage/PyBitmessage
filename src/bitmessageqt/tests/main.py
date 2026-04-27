@@ -1,5 +1,5 @@
 """Common definitions for bitmessageqt tests"""
-
+# pylint: disable=import-error
 import sys
 import unittest
 

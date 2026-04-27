@@ -1,9 +1,8 @@
 """
 Message editor with a wheel zoom functionality
 """
-# pylint: disable=bad-continuation
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint disable:import-error
 
 
 class MessageCompose(QtGui.QTextEdit):
@@ -15,18 +14,22 @@ class MessageCompose(QtGui.QTextEdit):
 
     def wheelEvent(self, event):
         """Mouse wheel scroll event handler"""
-        if (
-            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
-        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
+        if (QtGui.QApplication.queryKeyboardModifiers()
+                & QtCore.Qt.ControlModifier) == \
+                QtCore.Qt.ControlModifier \
+                and event.orientation() == QtCore.Qt.Vertical:
             if event.delta() > 0:
                 self.zoomIn(1)
             else:
                 self.zoomOut(1)
-            zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
-            QtGui.QApplication.activeWindow().statusBar().showMessage(
-                QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(
-                    str(zoom)
-                )
+            zoom = self.currentFont().pointSize() \
+                * 100 \
+                / self.defaultFontPointSize
+            QtGui.QApplication.activeWindow().statusBar(). \
+                showMessage(
+                    QtGui.QApplication.translate("MainWindow",
+                                                 "Zoom level %1%").
+                    arg(str(zoom))
             )
         else:
             # in QTextEdit, super does not zoom, only scroll

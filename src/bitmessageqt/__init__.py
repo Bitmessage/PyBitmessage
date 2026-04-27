@@ -1,7 +1,7 @@
 """
 PyQt based UI for bitmessage, the main module
 """
-
+# pylint: disable=import-error,relative-import,too-many-lines
 import hashlib
 import locale
 import os
@@ -239,20 +239,20 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuInbox)
         self.ui.tableWidgetInboxSubscriptions.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.tableWidgetInboxSubscriptions, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuInbox)
         self.ui.tableWidgetInboxChans.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.tableWidgetInboxChans, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuInbox)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuInbox)
 
     def init_identities_popup_menu(self, connectSignal=True):
         # Popup menu for the Your Identities tab
@@ -291,8 +291,8 @@ class MyForm(settingsmixin.SMainWindow):
             QtCore.Qt.CustomContextMenu)
         if connectSignal:
             self.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                self.on_context_menuYourIdentities)
+                         'customContextMenuRequested(const QPoint&)'),
+                         self.on_context_menuYourIdentities)
 
         # load all gui.menu plugins with prefix 'address'
         self.menu_plugins = {'address': []}

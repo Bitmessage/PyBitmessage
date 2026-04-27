@@ -72,7 +72,7 @@ from struct import pack, unpack
 
 import six
 from six.moves import configparser, http_client, xmlrpc_server
-from six.moves.reprlib import repr
+from six.moves.reprlib import repr  # pylint: disable=redefined-builtin,import-error
 
 import helper_inbox
 import helper_sent

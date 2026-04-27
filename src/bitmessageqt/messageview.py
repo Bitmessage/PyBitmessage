@@ -52,11 +52,17 @@ class MessageView(QtGui.QTextBrowser):
         # super will actually automatically take care of zooming
         super(MessageView, self).wheelEvent(event)
         if (
-            QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier
-        ) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
-            zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
-            QtGui.QApplication.activeWindow().statusBar().showMessage(_translate(
-                "MainWindow", "Zoom level %1%").arg(str(zoom)))
+                QtGui.QApplication.queryKeyboardModifiers()
+                & QtCore.Qt.ControlModifier) == \
+                QtCore.Qt.ControlModifier \
+                and event.orientation() == QtCore.Qt.Vertical:
+            zoom = self.currentFont().pointSize() \
+                * 100 \
+                / self.defaultFontPointSize
+            QtGui.QApplication.activeWindow().statusBar().\
+                showMessage(_translate("MainWindow",
+                                       "Zoom level %1%").
+                            arg(str(zoom)))
 
     def setWrappingWidth(self, width=None):
         """Set word-wrapping width"""
@@ -114,8 +120,10 @@ class MessageView(QtGui.QTextBrowser):
         self.rendering = True
         position = self.verticalScrollBar().value()
         cursor = QtGui.QTextCursor(self.document())
-        while self.outpos < len(self.out) and self.verticalScrollBar().value(
-        ) >= self.document().size().height() - 2 * self.size().height():
+        while self.outpos < len(self.out) \
+                and self.verticalScrollBar().value() \
+                >= self.document().size().height() \
+                - 2 * self.size().height():
             startpos = self.outpos
             self.outpos += 10240
             # find next end of tag
@@ -123,8 +131,10 @@ class MessageView(QtGui.QTextBrowser):
                 pos = self.out.find(">", self.outpos)
                 if pos > self.outpos:
                     self.outpos = pos + 1
-            cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
-            cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
+            cursor.movePosition(QtGui.QTextCursor.End,
+                                QtGui.QTextCursor.MoveAnchor)
+            cursor.insertHtml(
+                QtCore.QString(self.out[startpos:self.outpos]))
         self.verticalScrollBar().setValue(position)
         self.rendering = False
 

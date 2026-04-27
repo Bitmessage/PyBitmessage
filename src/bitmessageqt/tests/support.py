@@ -1,10 +1,13 @@
+"""
+PyQt4 test for support request dialog
+"""
+# pylint: disable=relative-import
 # from PyQt4 import QtTest
 
 import sys
 
-from shared import isAddressInMyAddressBook
-
 from main import TestBase
+from shared import isAddressInMyAddressBook
 
 
 class TestSupport(TestBase):

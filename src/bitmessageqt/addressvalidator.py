@@ -2,6 +2,7 @@
 Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
+# pylint: disable=import-error,relative-import
 
 from Queue import Empty
 
@@ -103,7 +104,7 @@ class AddressPassPhraseValidatorMixin(object):
             return QtGui.QValidator.Acceptable
         return QtGui.QValidator.Intermediate
 
-    def validate(self, s, pos):
+    def validate(self, s, pos):  # pylint: disable=unused-argument
         """Top level validator method"""
         if self.addressObject is None:
             address = None

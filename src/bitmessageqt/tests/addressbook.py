@@ -1,3 +1,7 @@
+"""
+Test PyQt addressbook
+"""
+# pylint: disable=relative-import
 import helper_addressbook
 from bitmessageqt.support import createAddressIfNeeded
 

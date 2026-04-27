@@ -1,7 +1,8 @@
 """
 Dialogs that work with BM address.
 """
-# pylint: disable=attribute-defined-outside-init,too-few-public-methods,relative-import
+# pylint: disable=attribute-defined-outside-init,too-few-public-methods
+# pylint: disable=relative-import,import-error
 
 import hashlib
 

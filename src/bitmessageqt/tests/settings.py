@@ -1,4 +1,5 @@
 """Tests for PyBitmessage settings"""
+# pylint: disable=import-error
 import threading
 import time
 

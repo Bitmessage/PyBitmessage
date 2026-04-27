@@ -3,14 +3,15 @@ src/bitmessageqt/newchandialog.py
 =================================
 
 """
-
+# pylint: disable=import-error,relative-import,ungrouped-imports
 from PyQt4 import QtCore, QtGui
 
 import widgets
 from addresses import addBMIfNotPresent
 from addressvalidator import AddressValidator, PassPhraseValidator
-from queues import (
-    addressGeneratorQueue, apiAddressGeneratorReturnQueue, UISignalQueue)
+from queues import (addressGeneratorQueue,
+                    apiAddressGeneratorReturnQueue,
+                    UISignalQueue)
 from tr import _translate
 from utils import str_chan
 
@@ -37,8 +38,10 @@ class NewChanDialog(QtGui.QDialog):
                 False))
 
         self.timer = QtCore.QTimer()
-        QtCore.QObject.connect(  # pylint: disable=no-member
-            self.timer, QtCore.SIGNAL("timeout()"), self.delayedUpdateStatus)
+        # pylint: disable=no-member
+        QtCore.QObject.connect(self.timer,
+                               QtCore.SIGNAL("timeout()"),
+                               self.delayedUpdateStatus)
         self.timer.start(500)  # milliseconds
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.show()

@@ -6,7 +6,7 @@ import time
 from binascii import hexlify
 
 from six.moves import configparser, queue
-# pylint: disable=import-error
+# pylint: disable=import-error,relative-import
 import defaults
 import highlevelcrypto
 import queues
