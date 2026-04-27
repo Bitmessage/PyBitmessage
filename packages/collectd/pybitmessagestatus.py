@@ -1,22 +1,33 @@
 #!/usr/bin/env python2.7
+"""
+PyBitmessage status module for collectd
+Provides values for active connections and processed objects
+"""
 
 import json
 
-import collectd
+import collectd  # pylint: disable=import-error
 from six.moves import xmlrpc_client as xmlrpclib
 
 pybmurl = ""
-api = ""
+api = None
 
 
 def init_callback():
-    global api
+    """
+    Initialise callback
+    Creates an API object
+    """
+    global api  # pylint: disable=global-statement
     api = xmlrpclib.ServerProxy(pybmurl)
     collectd.info('pybitmessagestatus.py init done')
 
 
 def config_callback(ObjConfiguration):
-    global pybmurl
+    """
+    Load module config
+    """
+    global pybmurl  # pylint: disable=global-statement
     apiUsername = ""
     apiPassword = ""
     apiInterface = "127.0.0.1"
@@ -31,11 +42,17 @@ def config_callback(ObjConfiguration):
             apiInterface = node.values[0]
         elif key.lower() == "apiport" and node.values:
             apiPort = node.values[0]
-    pybmurl = "http://{}:{}@{}:{}/".format(apiUsername, apiPassword, apiInterface, str(int(apiPort)))
+    pybmurl = "http://{}:{}@{}:{}/".format(apiUsername,
+                                           apiPassword,
+                                           apiInterface,
+                                           str(int(apiPort)))
     collectd.info('pybitmessagestatus.py config done')
 
 
 def read_callback():
+    """
+    Read data from API
+    """
     try:
         clientStatus = json.loads(api.clientStatus())
     except (ValueError, TypeError):

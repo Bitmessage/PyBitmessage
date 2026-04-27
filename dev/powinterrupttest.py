@@ -1,3 +1,6 @@
+"""
+Code for discovering how C PoW can be interrupted
+"""
 import ctypes
 import hashlib
 from multiprocessing import current_process
@@ -9,9 +12,12 @@ from threading import current_thread
 shutdown = 0
 
 
-def signal_handler(signal, frame):
-    global shutdown
-    print("Got signal %i in %s/%s" % (signal, current_process().name, current_thread().name))
+# pylint: disable=unused-argument
+def signal_handler(signum, frame):
+    """Signal handler"""
+    global shutdown  # pylint: disable=global-statement
+    print("Got signal %i in %s/%s" % (signum, current_process().name,
+                                      current_thread().name))
     if current_process().name != "MainProcess":
         raise StopIteration("Interrupted")
     if current_thread().name != "PyBitmessage":
@@ -31,7 +37,12 @@ def _doCPoW(target, initialHash):
         nonce = bmpow(out_h, out_m)
         if shutdown:
             break
-    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
+    trialValue, = unpack('>Q',
+                         hashlib.sha512(
+                             hashlib.sha512(
+                                 pack('>Q', nonce) + initialHash).
+                             digest()).
+                         digest()[0:8])
     if shutdown != 0:
         raise StopIteration("Interrupted")
     print("C PoW done")

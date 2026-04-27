@@ -1,4 +1,5 @@
-# pylint: disable=no-member, too-many-arguments, too-few-public-methods, no-init
+# pylint: disable=no-member,too-many-arguments,too-few-public-methods
+# pylint: disable=no-init,import-error
 
 """Addressbook widgets are here."""
 

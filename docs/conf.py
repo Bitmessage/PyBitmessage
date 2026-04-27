@@ -13,9 +13,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../src'))
 
-from importlib import import_module
+from importlib import import_module  # pylint: disable=wrong-import-position
 
-import version  # noqa:E402
+import version  # noqa:E402 pylint: disable=wrong-import-position
 
 
 # -- Project information -----------------------------------------------------

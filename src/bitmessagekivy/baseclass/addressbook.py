@@ -83,6 +83,7 @@ class AddressBook(Screen, HelperAddressBook):
             listItem.secondary_text = item[1]
             listItem.theme_text_color = "Custom"
             listItem.text_color = ThemeClsColor
+            # pylint: disable=syntax-error
             image = os.path.join(
                 self.kivy_state.image_dir, "text_images",
                 f"{avatar_image_first_letter(item[0].strip())}.png"  # noqa: E999

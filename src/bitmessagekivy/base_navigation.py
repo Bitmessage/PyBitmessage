@@ -1,4 +1,5 @@
-# pylint: disable=unused-argument, no-name-in-module, too-few-public-methods
+# pylint: disable=unused-argument,no-name-in-module,too-few-public-methods
+# pylint: disable=import-error
 """
     Base class for Navigation Drawer
 """

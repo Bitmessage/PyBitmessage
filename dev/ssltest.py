@@ -1,3 +1,6 @@
+"""
+Development code for SSL compatibility investigations
+"""
 import os
 import select
 import socket
@@ -9,8 +12,12 @@ HOST = "127.0.0.1"
 PORT = 8912
 
 
+# pylint: disable=no-member
 def sslProtocolVersion():
-    # sslProtocolVersion
+    """
+    Find a protocol version value with compatibility across
+    different python versions
+    """
     if sys.version_info >= (2, 7, 13):
         # this means TLSv1 or higher
         # in the future change to
@@ -26,18 +33,30 @@ def sslProtocolVersion():
 
 
 def sslProtocolCiphers():
+    """
+    Find protocol cipher that is compatible for PyBitmessage across
+    different python and OpenSSL versions
+    """
     if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000:
         return "AECDH-AES256-SHA@SECLEVEL=0"
     else:
         return "AECDH-AES256-SHA"
 
 
+# pylint: disable=redefined-outer-name
 def connect():
+    """
+    Connect a socket
+    """
     sock = socket.create_connection((HOST, PORT))
     return sock
 
 
+# pylint: disable=redefined-outer-name
 def listen():
+    """
+    Listen on a socket
+    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((HOST, PORT))
@@ -45,7 +64,11 @@ def listen():
     return sock
 
 
+# pylint: disable=redefined-outer-name
 def sslHandshake(sock, server=False):
+    """
+    Perform SSL handshake
+    """
     if sys.version_info >= (2, 7, 9):
         context = ssl.SSLContext(sslProtocolVersion())
         context.set_ciphers(sslProtocolCiphers())
@@ -54,12 +77,19 @@ def sslHandshake(sock, server=False):
         context.verify_mode = ssl.CERT_NONE
         context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3\
             | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
-        sslSock = context.wrap_socket(sock, server_side=server, do_handshake_on_connect=False)
+        sslSock = context.wrap_socket(sock, server_side=server,
+                                      do_handshake_on_connect=False)
     else:
-        sslSock = ssl.wrap_socket(sock, keyfile=os.path.join('src', 'sslkeys', 'key.pem'),
-                                  certfile=os.path.join('src', 'sslkeys', 'cert.pem'),
-                                  server_side=server, ssl_version=sslProtocolVersion(),
-                                  do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+        sslSock = ssl.wrap_socket(sock, keyfile=os.path.join('src',
+                                                             'sslkeys',
+                                                             'key.pem'),
+                                  certfile=os.path.join('src',
+                                                        'sslkeys',
+                                                        'cert.pem'),
+                                  server_side=server,
+                                  ssl_version=sslProtocolVersion(),
+                                  do_handshake_on_connect=False,
+                                  ciphers='AECDH-AES256-SHA')
 
     while True:
         try:

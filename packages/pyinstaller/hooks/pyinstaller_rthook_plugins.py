@@ -1,5 +1,6 @@
 """Runtime PyInstaller hook to load plugins"""
 
+# pylint: disable=unused-import
 import os
 import sys
 

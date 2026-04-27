@@ -1,5 +1,6 @@
-# pylint: disable=no-name-in-module, attribute-defined-outside-init, import-error, unused-argument
-# pylint: disable=no-init, too-few-public-methods, useless-object-inheritance
+# pylint: disable=no-name-in-module,attribute-defined-outside-init
+# pylint: disable=import-error,unused-argument
+# pylint: disable=no-init,too-few-public-methods,useless-object-inheritance
 
 """
     All Common widgets of kivy are managed here.
