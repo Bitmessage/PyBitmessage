@@ -176,12 +176,12 @@ class SettingsDialog(QtGui.QDialog):
 
         if self._proxy_type:
             for node, info in six.iteritems(
-                knownnodes.knownNodes.get(
+                    knownnodes.knownNodes.get(
                     min(connectionpool.pool.streams), [])
             ):
                 if (
-                    node.host.endswith('.onion') and len(node.host) > 22
-                    and not info.get('self')
+                        node.host.endswith('.onion') and len(node.host) > 22
+                        and not info.get('self')
                 ):
                     break
             else:
@@ -346,9 +346,10 @@ class SettingsDialog(QtGui.QDialog):
         if valid:
             self.save_font_setting(font)
 
+    # pylint: disable=too-many-branches,too-many-statements
+    # pylint: disable=too-many-locals
     def accept(self):
         """A callback for accepted event of buttonBox (OK button pressed)"""
-        # pylint: disable=too-many-branches,too-many-statements
         super(SettingsDialog, self).accept()
         if self.firstrun:
             self.config.remove_option('bitmessagesettings', 'dontconnect')
@@ -374,7 +375,7 @@ class SettingsDialog(QtGui.QDialog):
 
         window_style = str(self.comboBoxStyle.currentText())
         if self.app.get_windowstyle() != window_style or self.config.safeGet(
-            'bitmessagesettings', 'font'
+                'bitmessagesettings', 'font'
         ) != self.font_setting:
             self.config.set('bitmessagesettings', 'windowstyle', window_style)
             self.config.set('bitmessagesettings', 'font', self.font_setting)
@@ -455,8 +456,8 @@ class SettingsDialog(QtGui.QDialog):
         self.config.set('bitmessagesettings', 'sockslisten', str(
             self.checkBoxSocksListen.isChecked()))
         if (
-            self.checkBoxOnionOnly.isChecked()
-            and not self.config.safeGetBoolean(
+                self.checkBoxOnionOnly.isChecked()
+                and not self.config.safeGetBoolean(
                 'bitmessagesettings', 'onionservicesonly')
         ):
             self.net_restart_needed = True
@@ -519,40 +520,39 @@ class SettingsDialog(QtGui.QDialog):
 
         acceptableDifficultyChanged = False
 
-        if (
-            float(self.lineEditMaxAcceptableTotalDifficulty.text()) >= 1
-            or float(self.lineEditMaxAcceptableTotalDifficulty.text()) == 0
-        ):
+        max_total_diff = float(
+            self.lineEditMaxAcceptableTotalDifficulty.text())
+        if max_total_diff >= 1 or max_total_diff == 0:
+            nonce_trials = str(int(
+                max_total_diff
+                * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
             if self.config.get(
-                    'bitmessagesettings', 'maxacceptablenoncetrialsperbyte'
-            ) != str(int(
-                float(self.lineEditMaxAcceptableTotalDifficulty.text())
-                    * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)):
+                    'bitmessagesettings',
+                    'maxacceptablenoncetrialsperbyte'
+            ) != nonce_trials:
                 # the user changed the max acceptable total difficulty
                 acceptableDifficultyChanged = True
                 self.config.set(
-                    'bitmessagesettings', 'maxacceptablenoncetrialsperbyte',
-                    str(int(
-                        float(self.lineEditMaxAcceptableTotalDifficulty.text())
-                        * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
-                )
-        if (
-            float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1
-            or float(self.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0
-        ):
+                    'bitmessagesettings',
+                    'maxacceptablenoncetrialsperbyte',
+                    nonce_trials)
+
+        max_msg_diff = float(
+            self.lineEditMaxAcceptableSmallMessageDifficulty.text())
+        if max_msg_diff >= 1 or max_msg_diff == 0:
+            extra_bytes = str(int(
+                max_msg_diff
+                * defaults.networkDefaultPayloadLengthExtraBytes))
             if self.config.get(
-                    'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'
-            ) != str(int(
-                float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
-                    * defaults.networkDefaultPayloadLengthExtraBytes)):
+                    'bitmessagesettings',
+                    'maxacceptablepayloadlengthextrabytes'
+            ) != extra_bytes:
                 # the user changed the max acceptable small message difficulty
                 acceptableDifficultyChanged = True
                 self.config.set(
-                    'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',
-                    str(int(
-                        float(self.lineEditMaxAcceptableSmallMessageDifficulty.text())
-                        * defaults.networkDefaultPayloadLengthExtraBytes))
-                )
+                    'bitmessagesettings',
+                    'maxacceptablepayloadlengthextrabytes',
+                    extra_bytes)
         if acceptableDifficultyChanged:
             # It might now be possible to send msgs which were previously
             # marked as toodifficult. Let us change them to 'msgqueued'.
@@ -629,8 +629,8 @@ class SettingsDialog(QtGui.QDialog):
         self.parent.updateStartOnLogon()
 
         if (
-            state.appdata != paths.lookupExeFolder()
-            and self.checkBoxPortableMode.isChecked()
+                state.appdata != paths.lookupExeFolder()
+                and self.checkBoxPortableMode.isChecked()
         ):
             # If we are NOT using portable mode now but the user selected
             # that we should...
@@ -652,8 +652,8 @@ class SettingsDialog(QtGui.QDialog):
                 pass
 
         if (
-            state.appdata == paths.lookupExeFolder()
-            and not self.checkBoxPortableMode.isChecked()
+                state.appdata == paths.lookupExeFolder()
+                and not self.checkBoxPortableMode.isChecked()
         ):
             # If we ARE using portable mode now but the user selected
             # that we shouldn't...

@@ -11,6 +11,7 @@ The PyBitmessage startup script
 # yet contain logic to expand into further streams.
 
 # flake8: noqa:402
+# pylint: disable=superfluous-parens
 import os
 import sys
 

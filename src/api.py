@@ -57,6 +57,8 @@ To use the API concider such simple example:
 For further examples please reference `.tests.test_api`.
 """
 
+# pylint: disable=too-many-lines,relative-import
+
 import base64
 import errno
 import hashlib
@@ -112,25 +114,25 @@ class ErrorCodes(type):
         0: 'Invalid command parameters number',
         1: 'The specified passphrase is blank.',
         2: 'The address version number currently must be 3, 4, or 0'
-        ' (which means auto-select).',
+           ' (which means auto-select).',
         3: 'The stream number must be 1 (or 0 which means'
-        ' auto-select). Others aren\'t supported.',
+           ' auto-select). Others aren\'t supported.',
         4: 'Why would you ask me to generate 0 addresses for you?',
         5: 'You have (accidentally?) specified too many addresses to'
-        ' make. Maximum 999. This check only exists to prevent'
-        ' mischief; if you really want to create more addresses than'
-        ' this, contact the Bitmessage developers and we can modify'
-        ' the check or you can do it yourself by searching the source'
-        ' code for this message.',
+           ' make. Maximum 999. This check only exists to prevent'
+           ' mischief; if you really want to create more addresses than'
+           ' this, contact the Bitmessage developers and we can modify'
+           ' the check or you can do it yourself by searching the source'
+           ' code for this message.',
         6: 'The encoding type must be 2 or 3.',
         7: 'Could not decode address',
         8: 'Checksum failed for address',
         9: 'Invalid characters in address',
         10: 'Address version number too high (or zero)',
         11: 'The address version number currently must be 2, 3 or 4.'
-        ' Others aren\'t supported. Check the address.',
+            ' Others aren\'t supported. Check the address.',
         12: 'The stream number must be 1. Others aren\'t supported.'
-        ' Check the address.',
+            ' Check the address.',
         13: 'Could not find this address in your keys.dat file.',
         14: 'Your fromAddress is disabled. Cannot send.',
         15: 'Invalid ackData object size.',
@@ -138,14 +140,14 @@ class ErrorCodes(type):
         17: 'Label is not valid UTF-8 data.',
         18: 'Chan name does not match address.',
         19: 'The length of hash should be 32 bytes (encoded in hex'
-        ' thus 64 characters).',
+            ' thus 64 characters).',
         20: 'Invalid method:',
         21: 'Unexpected API Failure',
         22: 'Decode error',
         23: 'Bool expected in eighteenByteRipe',
         24: 'Chan address is already present.',
         25: 'Specified address is not a chan address.'
-        ' Use deleteAddress API call instead.',
+            ' Use deleteAddress API call instead.',
         26: 'Malformed varint in address: ',
         27: 'Message is too long.',
         28: 'Invalid parameter'
@@ -153,7 +155,7 @@ class ErrorCodes(type):
 
     def __new__(mcs, name, bases, namespace):
         result = super(ErrorCodes, mcs).__new__(mcs, name, bases, namespace)
-        for code in six.iteritems(mcs._CODES):
+        for code in six.iteritems(mcs._CODES):  # pylint: disable=no-member
             # beware: the formatting is adjusted for list-table
             result.__doc__ += """   * - %04i
          - %s
@@ -466,6 +468,7 @@ class BMXMLRPCRequestHandler(xmlrpc_server.SimpleXMLRPCRequestHandler):
 class BMRPCDispatcher(object):
     """This class is used to dispatch API commands"""
 
+    # pylint: disable=inconsistent-return-statements
     @staticmethod
     def _decode(text, decode_type):
         try:
@@ -722,8 +725,8 @@ class BMRPCDispatcher(object):
 
     @command('createRandomAddress')
     def HandleCreateRandomAddress(
-        self, label, eighteenByteRipe=False, totalDifficulty=0,
-        smallMessageDifficulty=0
+            self, label, eighteenByteRipe=False, totalDifficulty=0,
+            smallMessageDifficulty=0
     ):
         """
         Create one address using the random number generator.
@@ -763,9 +766,9 @@ class BMRPCDispatcher(object):
 
     @command('createDeterministicAddresses')
     def HandleCreateDeterministicAddresses(
-        self, passphrase, numberOfAddresses=1, addressVersionNumber=0,
-        streamNumber=0, eighteenByteRipe=False, totalDifficulty=0,
-        smallMessageDifficulty=0
+            self, passphrase, numberOfAddresses=1, addressVersionNumber=0,
+            streamNumber=0, eighteenByteRipe=False, totalDifficulty=0,
+            smallMessageDifficulty=0
     ):
         """
         Create many addresses deterministically using the passphrase.
@@ -1190,8 +1193,8 @@ class BMRPCDispatcher(object):
 
     @command('sendMessage')
     def HandleSendMessage(
-        self, toAddress, fromAddress, subject, message,
-        encodingType=2, TTL=4 * 24 * 60 * 60
+            self, toAddress, fromAddress, subject, message,
+            encodingType=2, TTL=4 * 24 * 60 * 60
     ):
         """
         Send the message and return ackdata (hex encoded string).
@@ -1242,7 +1245,7 @@ class BMRPCDispatcher(object):
 
     @command('sendBroadcast')
     def HandleSendBroadcast(
-        self, fromAddress, subject, message, encodingType=2,
+            self, fromAddress, subject, message, encodingType=2,
             TTL=4 * 24 * 60 * 60):
         """Send the broadcast message. Similiar to *sendMessage*."""
 
@@ -1361,9 +1364,9 @@ class BMRPCDispatcher(object):
 
     @command('disseminatePreEncryptedMsg', 'disseminatePreparedObject')
     def HandleDisseminatePreparedObject(
-        self, encryptedPayload,
-        nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
-        payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
+            self, encryptedPayload,
+            nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
+            payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
     ):
         """
         Handle a request to disseminate an encrypted message.

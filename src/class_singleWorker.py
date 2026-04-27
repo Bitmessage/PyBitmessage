@@ -221,9 +221,9 @@ class singleWorker(StoppableThread):
 
     @classmethod
     def _doPOWDefaults(
-        cls, payload, TTL,
-        nonceTrialsPerByte=None, payloadLengthExtraBytes=None,
-        log_prefix='', log_time=False
+            cls, payload, TTL,
+            nonceTrialsPerByte=None, payloadLengthExtraBytes=None,
+            log_prefix='', log_time=False
     ):
         if not nonceTrialsPerByte:
             nonceTrialsPerByte = \
@@ -755,9 +755,9 @@ class singleWorker(StoppableThread):
             # in our keys.dat file.
             elif config.has_section(toaddress):
                 if not sqlExecute(
-                    '''UPDATE sent SET status='doingmsgpow' '''
-                    ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                    toaddress
+                        '''UPDATE sent SET status='doingmsgpow' '''
+                        ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
+                        toaddress
                 ):
                     continue
                 status = 'doingmsgpow'

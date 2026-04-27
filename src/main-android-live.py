@@ -1,4 +1,5 @@
 """This module is for thread start."""
+# pylint: disable=superfluous-parens
 import state
 import sys
 from bitmessagemain import main

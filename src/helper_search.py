@@ -8,8 +8,8 @@ from tr import _translate
 
 
 def search_sql(
-    xAddress='toaddress', account=None, folder='inbox', where=None,
-    what=None, unreadOnly=False
+        xAddress='toaddress', account=None, folder='inbox', where=None,
+        what=None, unreadOnly=False
 ):
     """
     Search for messages from given account and folder having search term
@@ -88,24 +88,24 @@ def check_match(
         return True
 
     if where in (
-        _translate("MainWindow", "To"), _translate("MainWindow", "All")
+            _translate("MainWindow", "To"), _translate("MainWindow", "All")
     ):
         if what.lower() not in toAddress.lower():
             return False
     elif where in (
-        _translate("MainWindow", "From"), _translate("MainWindow", "All")
+            _translate("MainWindow", "From"), _translate("MainWindow", "All")
     ):
         if what.lower() not in fromAddress.lower():
             return False
     elif where in (
-        _translate("MainWindow", "Subject"),
-        _translate("MainWindow", "All")
+            _translate("MainWindow", "Subject"),
+            _translate("MainWindow", "All")
     ):
         if what.lower() not in subject.lower():
             return False
     elif where in (
-        _translate("MainWindow", "Message"),
-        _translate("MainWindow", "All")
+            _translate("MainWindow", "Message"),
+            _translate("MainWindow", "All")
     ):
         if what.lower() not in message.lower():
             return False

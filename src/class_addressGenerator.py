@@ -32,10 +32,10 @@ class addressGenerator(StoppableThread):
 
         super(addressGenerator, self).stopThread()
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def save_address(
-        # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self, version, stream, ripe, label, signing_key, encryption_key,
-        nonceTrialsPerByte, payloadLengthExtraBytes
+            self, version, stream, ripe, label, signing_key, encryption_key,
+            nonceTrialsPerByte, payloadLengthExtraBytes
     ):
         """Write essential address config values and reload cryptors"""
         address = encodeAddress(version, stream, ripe)
@@ -183,8 +183,8 @@ class addressGenerator(StoppableThread):
                     ripe = highlevelcrypto.to_ripe(
                         pubSigningKey, potentialPubEncryptionKey)
                     if (
-                        ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
-                        == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                            ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
+                            == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                     ):
                         break
                 self.logger.info(

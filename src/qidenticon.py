@@ -262,9 +262,9 @@ class DonRenderer(IdenticonRendererBase):
         else:
             secondColor = foreColor
 
-        return (middleType, middleInvert, 0),\
-               (cornerType, cornerInvert, cornerTurn),\
-               (sideType, sideInvert, sideTurn),\
+        return (middleType, middleInvert, 0), \
+               (cornerType, cornerInvert, cornerTurn), \
+               (sideType, sideInvert, sideTurn), \
             foreColor, secondColor, swap_cross
 
 

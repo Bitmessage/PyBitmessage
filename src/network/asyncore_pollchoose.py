@@ -560,12 +560,12 @@ class dispatcher(object):
             try:
                 kqueue_poller.pollster.control([select.kevent(
                     fd, select.KQ_FILTER_READ, select.KQ_EV_DELETE)], 0)
-            except(AttributeError, KeyError, TypeError, IOError, OSError):
+            except (AttributeError, KeyError, TypeError, IOError, OSError):
                 pass
             try:
                 kqueue_poller.pollster.control([select.kevent(
                     fd, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)], 0)
-            except(AttributeError, KeyError, TypeError, IOError, OSError):
+            except (AttributeError, KeyError, TypeError, IOError, OSError):
                 pass
             try:
                 epoll_poller.pollster.unregister(fd)
