@@ -1,1 +1,0 @@
-../tox-bionic/test.sh

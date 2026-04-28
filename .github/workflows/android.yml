@@ -8,6 +8,10 @@ on:
 
 jobs:
   build:
+    # Only run on Gitea; this build needs a self-hosted runner with
+    # the tool cache and is not meant for GitHub's hosted runners.
+    if: >-
+      !contains(github.server_url, 'github.com')
     name: buildozer android debug
     runs-on: ubuntu-latest
     container: ubuntu:focal
@@ -86,5 +90,3 @@ jobs:
               | tar --list -z > package.list
           cat package.list
           grep '\.sql$' package.list || exit 1
-
-

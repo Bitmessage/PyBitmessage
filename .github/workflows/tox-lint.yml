@@ -70,7 +70,7 @@ jobs:
       # ── Common ─────────────────────────────────────────────────
       - name: Install tox
         run: |
-          pip install "tox<4" "virtualenv<20.22.0"
+          pip install --upgrade tox virtualenv
 
       - name: Run tox -e ${{ matrix.tox-env }}${{ matrix.tox-suffix }}
         run: tox -e ${{ matrix.tox-env }}${{ matrix.tox-suffix }}
