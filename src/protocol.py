@@ -347,8 +347,8 @@ def assembleAddrMessage(peerList):
 
 
 def assembleVersionMessage(
-    remoteHost, remotePort, participatingStreams,
-    dandelion_enabled=True, server=False, nodeid=None
+        remoteHost, remotePort, participatingStreams,
+        dandelion_enabled=True, server=False, nodeid=None
 ):
     """
     Construct the payload of a version message,
@@ -395,9 +395,10 @@ def assembleVersionMessage(
     # or outgoing through clearnet
     extport = config.safeGetInt('bitmessagesettings', 'extport')
     if (
-        extport and ((server and not checkSocksIP(remoteHost)) or (
-            config.get('bitmessagesettings', 'socksproxytype')
-            == 'none' and not server))
+            extport and ((server and not checkSocksIP(remoteHost))
+                         or (config.get('bitmessagesettings',
+                                        'socksproxytype')
+                             == 'none' and not server))
     ):
         payload += pack('>H', extport)
     elif checkSocksIP(remoteHost) and server:  # incoming connection over Tor

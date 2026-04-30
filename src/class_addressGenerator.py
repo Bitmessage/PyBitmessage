@@ -6,7 +6,7 @@ import time
 from binascii import hexlify
 
 from six.moves import configparser, queue
-# pylint: disable=import-error,relative-import
+# pylint: disable=import-error
 import defaults
 import highlevelcrypto
 import queues
@@ -221,8 +221,8 @@ class addressGenerator(StoppableThread):
                 ))
 
             elif command in (
-                'createDeterministicAddresses', 'createChan',
-                'getDeterministicAddress', 'joinChan'
+                    'createDeterministicAddresses', 'createChan',
+                    'getDeterministicAddress', 'joinChan'
             ):
                 if not deterministicPassphrase:
                     self.logger.warning(
@@ -268,8 +268,8 @@ class addressGenerator(StoppableThread):
                         ripe = highlevelcrypto.to_ripe(
                             potentialPubSigningKey, potentialPubEncryptionKey)
                         if (
-                            ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
-                            == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
+                                ripe[:numberOfNullBytesDemandedOnFrontOfRipeHash]
+                                == b'\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash
                         ):
                             break
 
@@ -303,9 +303,9 @@ class addressGenerator(StoppableThread):
                         saveAddressToDisk = False
 
                     if saveAddressToDisk and live and self.save_address(
-                        addressVersionNumber, streamNumber, ripe, label,
-                        potentialPrivSigningKey, potentialPrivEncryptionKey,
-                        nonceTrialsPerByte, payloadLengthExtraBytes
+                            addressVersionNumber, streamNumber, ripe, label,
+                            potentialPrivSigningKey, potentialPrivEncryptionKey,
+                            nonceTrialsPerByte, payloadLengthExtraBytes
                     ):
                         if command in ('createChan', 'joinChan'):
                             config.set(address, 'chan', 'true')
@@ -326,7 +326,7 @@ class addressGenerator(StoppableThread):
 
                 # Done generating addresses.
                 if command in (
-                    'createDeterministicAddresses', 'createChan', 'joinChan'
+                        'createDeterministicAddresses', 'createChan', 'joinChan'
                 ):
                     queues.apiAddressGeneratorReturnQueue.put(
                         listOfNewAddressesToSendOutThroughTheAPI)

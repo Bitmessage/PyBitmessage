@@ -3,7 +3,7 @@ src/bitmessageqt/newchandialog.py
 =================================
 
 """
-# pylint: disable=import-error,relative-import,ungrouped-imports
+# pylint: disable=import-error,ungrouped-imports,wrong-import-order
 from PyQt4 import QtCore, QtGui
 
 import widgets
@@ -67,20 +67,28 @@ class NewChanDialog(QtGui.QDialog):
                  self.chanPassPhrase.text().toUtf8(),
                  True))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
-        if addressGeneratorReturnValue and addressGeneratorReturnValue[0] != 'chan name does not match address':
-            UISignalQueue.put(('updateStatusBar', _translate(
-                "newchandialog", "Successfully created / joined chan %1").arg(unicode(self.chanPassPhrase.text()))))
+        if addressGeneratorReturnValue \
+                and addressGeneratorReturnValue[0] \
+                != 'chan name does not match address':
+            UISignalQueue.put(('updateStatusBar',
+                               _translate("newchandialog",
+                                          "Successfully created / joined chan %1").
+                              arg(unicode(self.chanPassPhrase.text()))))  # pylint: disable=undefined-variable
             self.parent.ui.tabWidget.setCurrentIndex(
                 self.parent.ui.tabWidget.indexOf(self.parent.ui.chans)
             )
             self.done(QtGui.QDialog.Accepted)
         else:
-            UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Chan creation / joining failed")))
+            UISignalQueue.put(('updateStatusBar',
+                               _translate("newchandialog",
+                                          "Chan creation / joining failed")))
             self.done(QtGui.QDialog.Rejected)
 
     def reject(self):
         """Cancel joining the chan"""
         self.timer.stop()
         self.hide()
-        UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Chan creation / joining cancelled")))
+        UISignalQueue.put(('updateStatusBar',
+                           _translate("newchandialog",
+                                      "Chan creation / joining cancelled")))
         self.done(QtGui.QDialog.Rejected)

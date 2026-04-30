@@ -1,7 +1,7 @@
 """
 PyQt based UI for bitmessage, the main module
 """
-# pylint: disable=import-error,relative-import,too-many-lines
+# pylint: disable=import-error,too-many-lines
 import hashlib
 import locale
 import os

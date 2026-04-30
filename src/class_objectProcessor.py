@@ -4,6 +4,7 @@ processes the network objects
 """
 # pylint: disable=too-many-locals,too-many-return-statements
 # pylint: disable=too-many-branches,too-many-statements
+# pylint: disable=too-many-lines
 import hashlib
 import logging
 import os
@@ -718,10 +719,10 @@ class objectProcessor(threading.Thread):
         # Don't send ACK if invalid, blacklisted senders, invisible
         # messages, disabled or chan
         if (
-            self.ackDataHasAValidHeader(ackData) and not blockMessage
-            and messageEncodingType != 0
-            and not config.safeGetBoolean(toAddress, 'dontsendack')
-            and not config.safeGetBoolean(toAddress, 'chan')
+                self.ackDataHasAValidHeader(ackData) and not blockMessage
+                and messageEncodingType != 0
+                and not config.safeGetBoolean(toAddress, 'dontsendack')
+                and not config.safeGetBoolean(toAddress, 'chan')
         ):
             ackPayload = ackData[24:]
             objectType, toStreamNumber, expiresTime = \

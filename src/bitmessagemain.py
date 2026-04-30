@@ -11,7 +11,7 @@ The PyBitmessage startup script
 # yet contain logic to expand into further streams.
 
 # flake8: noqa:402
-# pylint: disable=superfluous-parens,relative-import
+# pylint: disable=superfluous-parens
 import os
 import sys
 
@@ -212,7 +212,7 @@ class Main(object):
 
             # API is also objproc dependent
             if config.safeGetBoolean('bitmessagesettings', 'apienabled'):
-                import api  # pylint: disable=relative-import
+                import api
                 singleAPIThread = api.singleAPI()
                 # close the main program even if there are threads left
                 singleAPIThread.daemon = True
@@ -256,14 +256,13 @@ class Main(object):
             while state.shutdown == 0:
                 time.sleep(1)
                 if (
-                    state.testmode
-                    and time.time() - state.last_api_response >= 30
+                        state.testmode
+                        and time.time() - state.last_api_response >= 30
                 ):
                     self.stop()
         elif not state.enableGUI:
             state.enableGUI = True
             try:
-                # pylint: disable=relative-import
                 from tests import core as test_core
             except ImportError:
                 try:

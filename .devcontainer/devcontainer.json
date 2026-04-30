@@ -17,7 +17,11 @@
                 "visualstudioexptteam.vscodeintellicode"
             ],
             "settings": {
+                "python.defaultInterpreterPath": "/usr/bin/python3",
+                "flake8.interpreter": ["/usr/bin/python3"],
+                "flake8.importStrategy": "fromEnvironment",
                 "flake8.args": ["--config=setup.cfg"],
+                "pylint.interpreter": ["/usr/bin/python3"],
                 "pylint.args": ["--rcfile=setup.cfg", "--init-hook", "import sys;sys.path.append('src')"],
                 "terminal.integrated.shell.linux": "/usr/bin/zsh",
                 "terminal.integrated.defaultProfile.linux": "zsh",

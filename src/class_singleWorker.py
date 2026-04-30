@@ -3,7 +3,7 @@ Thread for performing PoW
 """
 # pylint: disable=protected-access,too-many-branches,too-many-statements
 # pylint: disable=no-self-use,too-many-lines,too-many-locals
-# pylint: disable=relative-import,import-error,redefined-builtin
+# pylint: disable=import-error,redefined-builtin
 
 from __future__ import division
 
@@ -492,7 +492,7 @@ class singleWorker(StoppableThread):
     def sendOnionPeerObj(self, peer=None):
         """Send onionpeer object representing peer"""
         if not peer:  # find own onionhostname
-            for peer in state.ownAddresses:
+            for peer in state.ownAddresses:  # pylint: disable=redefined-argument-from-local
                 if peer.host.endswith('.onion'):
                     break
             else:
@@ -772,9 +772,9 @@ class singleWorker(StoppableThread):
                 if queryreturn != []:
                     # set the status of this msg to doingmsgpow
                     if not sqlExecute(
-                        '''UPDATE sent SET status='doingmsgpow' '''
-                        ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
-                        toaddress
+                            '''UPDATE sent SET status='doingmsgpow' '''
+                            ''' WHERE toaddress=? AND status='msgqueued' AND folder='sent' ''',
+                            toaddress
                     ):
                         continue
                     status = 'doingmsgpow'

@@ -55,9 +55,9 @@ def doCleanShutdown():
 
     for thread in threading.enumerate():
         if (
-            thread is not threading.currentThread()
-            and isinstance(thread, StoppableThread)
-            and thread.name != 'SQL'
+                thread is not threading.currentThread()
+                and isinstance(thread, StoppableThread)
+                and thread.name != 'SQL'
         ):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()

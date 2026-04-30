@@ -1,3 +1,6 @@
+"""
+Hack to work around relative imports
+"""
 import os
 import sys
 

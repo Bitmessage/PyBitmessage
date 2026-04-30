@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines,global-statement,too-many-branches,too-many-statements,inconsistent-return-statements
 # pylint: disable=too-many-nested-blocks,too-many-locals,protected-access,too-many-arguments,too-many-function-args
-# pylint: disable=no-member
+# pylint: disable=no-member,superfluous-parens
 """
 Created by Adam Melton (.dok) referenceing https://bitmessage.org/wiki/API_Reference for API documentation
 Distributed under the MIT/X11 software license. See http://www.opensource.org/licenses/mit-license.php.
@@ -16,15 +16,14 @@ TODO: fix the following (currently ignored) violations:
 import datetime
 import imghdr
 import json
-import ntpath
 import os
 import socket
 import sys
 import time
-
 from six.moves import input as raw_input
 from six.moves import xmlrpc_client as xmlrpclib
 
+import ntpath
 from bmconfigparser import config
 
 

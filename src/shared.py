@@ -15,7 +15,7 @@ import subprocess  # nosec B404
 import sys
 from binascii import hexlify
 
-from six.moves.reprlib import repr
+from six.moves.reprlib import repr  # pylint: disable=redefined-builtin
 
 # Project imports.
 import highlevelcrypto
@@ -102,9 +102,9 @@ def reloadMyAddressHashes():
         # Returns a simple 32 bytes of information encoded in 64 Hex characters
         try:
             privEncryptionKey = hexlify(
-                highlevelcrypto.decodeWalletImportFormat(config.get(
-                    addressInKeysFile, 'privencryptionkey').encode()
-                ))
+                highlevelcrypto.decodeWalletImportFormat(
+                    config.get(addressInKeysFile,
+                               'privencryptionkey').encode()))
         except ValueError:
             logger.error(
                 'Error in reloadMyAddressHashes: failed to decode'

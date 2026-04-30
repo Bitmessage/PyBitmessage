@@ -1,11 +1,10 @@
 """
 Test PyQt addressbook
 """
-# pylint: disable=relative-import
 import helper_addressbook
 from bitmessageqt.support import createAddressIfNeeded
 
-from main import TestBase
+from main import TestBase  # pylint: disable=no-name-in-module
 
 
 class TestAddressbook(TestBase):

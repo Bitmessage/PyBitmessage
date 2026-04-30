@@ -25,8 +25,8 @@ from defaults import (
 from tr import _translate
 
 
-bitmsglib = 'bitmsghash.so'
-bmpow = None
+BITMSGLIB = 'bitmsghash.so'
+BMPOW = None
 
 
 class LogOutput(object):  # pylint: disable=too-few-public-methods
@@ -173,7 +173,7 @@ def _doCPoW(target, initialHash):
         out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
         out_m = ctypes.c_ulonglong(m)
         logger.debug('C PoW start')
-        nonce = bmpow(out_h, out_m)
+        nonce = BMPOW(out_h, out_m)
 
     trialValue = trial_value(nonce, initialHash)
     if state.shutdown != 0:
@@ -200,7 +200,7 @@ def _doGPUPoW(target, initialHash):
             'Your GPUs (%s) did not calculate correctly, disabling OpenCL.'
             ' Please report to the developers.', deviceNames)
         openclpow.enabledGpus = []
-        raise Exception("GPU did not calculate correctly.")
+        raise RuntimeError("GPU did not calculate correctly.")
     if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug('GPU PoW done')
@@ -240,7 +240,7 @@ def getPowType():
 
     if openclpow.openclEnabled():
         return "OpenCL"
-    if bmpow:
+    if BMPOW:
         return "C"
     return "python"
 
@@ -250,7 +250,7 @@ def notifyBuild(tried=False):
     Notify the user of the success or otherwise of building the PoW C module
     """
 
-    if bmpow:
+    if BMPOW:
         queues.UISignalQueue.put(('updateStatusBar', (_translate(
             "proofofwork", "C PoW module built successfully."), 1)))
     elif tried:
@@ -264,7 +264,7 @@ def notifyBuild(tried=False):
 
 def buildCPoW():
     """Attempt to build the PoW C module"""
-    if bmpow is not None:
+    if BMPOW is not None:
         return
     if paths.frozen or sys.platform.startswith('win'):
         notifyBuild(False)
@@ -279,7 +279,9 @@ def buildCPoW():
 
         subprocess.check_call(make_cmd)  # nosec B603
         if os.path.exists(
-            os.path.join(paths.codePath(), 'bitmsghash', 'bitmsghash.so')
+                os.path.join(paths.codePath(),
+                             'bitmsghash',
+                             'bitmsghash.so')
         ):
             init()
     except (OSError, subprocess.CalledProcessError):
@@ -299,7 +301,7 @@ def run(target, initialHash):
     target = int(target)
     if openclpow.openclEnabled():
         return _doGPUPoW(target, initialHash)
-    if bmpow:
+    if BMPOW:
         return _doCPoW(target, initialHash)
     if paths.frozen == "macosx_app" or not paths.frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
@@ -323,14 +325,14 @@ def getTarget(payloadLength, ttl, nonceTrialsPerByte, payloadLengthExtraBytes):
 
 
 def calculate(
-    payload, ttl,
-    nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
-    payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
+        payload, ttl,
+        nonceTrialsPerByte=networkDefaultProofOfWorkNonceTrialsPerByte,
+        payloadLengthExtraBytes=networkDefaultPayloadLengthExtraBytes
 ):
     """Do the PoW for the payload and TTL with optional difficulty params"""
-    return run(getTarget(
-        len(payload), ttl, nonceTrialsPerByte, payloadLengthExtraBytes),
-        hashlib.sha512(payload).digest())
+    return run(getTarget(len(payload), ttl, nonceTrialsPerByte,
+                         payloadLengthExtraBytes),
+               hashlib.sha512(payload).digest())
 
 
 def resetPoW():
@@ -344,34 +346,34 @@ def resetPoW():
 def init():
     """Initialise PoW"""
     # pylint: disable=broad-exception-caught,global-statement
-    global bitmsglib, bmpow
+    global BITMSGLIB, BMPOW
 
     openclpow.initCL()
     if sys.platform.startswith('win'):
-        bitmsglib = (
+        BITMSGLIB = (
             'bitmsghash32.dll' if ctypes.sizeof(ctypes.c_voidp) == 4 else
             'bitmsghash64.dll')
-        libfile = os.path.join(paths.codePath(), 'bitmsghash', bitmsglib)
+        libfile = os.path.join(paths.codePath(), 'bitmsghash', BITMSGLIB)
         try:
             # MSVS
             bso = ctypes.WinDLL(
-                os.path.join(paths.codePath(), 'bitmsghash', bitmsglib))
-            logger.info('Loaded C PoW DLL (stdcall) %s', bitmsglib)
-            bmpow = bso.BitmessagePOW
-            bmpow.restype = ctypes.c_ulonglong
+                os.path.join(paths.codePath(), 'bitmsghash', BITMSGLIB))
+            logger.info('Loaded C PoW DLL (stdcall) %s', BITMSGLIB)
+            BMPOW = bso.BitmessagePOW
+            BMPOW.restype = ctypes.c_ulonglong
             _doCPoW(2**63, "")
             logger.info(
-                'Successfully tested C PoW DLL (stdcall) %s', bitmsglib)
+                'Successfully tested C PoW DLL (stdcall) %s', BITMSGLIB)
         except ValueError:
             try:
                 # MinGW
                 bso = ctypes.CDLL(libfile)
-                logger.info('Loaded C PoW DLL (cdecl) %s', bitmsglib)
-                bmpow = bso.BitmessagePOW
-                bmpow.restype = ctypes.c_ulonglong
+                logger.info('Loaded C PoW DLL (cdecl) %s', BITMSGLIB)
+                BMPOW = bso.BitmessagePOW
+                BMPOW.restype = ctypes.c_ulonglong
                 _doCPoW(2**63, "")
                 logger.info(
-                    'Successfully tested C PoW DLL (cdecl) %s', bitmsglib)
+                    'Successfully tested C PoW DLL (cdecl) %s', BITMSGLIB)
             except Exception as e:
                 logger.error('Error: %s', e, exc_info=True)
         except Exception as e:
@@ -379,7 +381,7 @@ def init():
     else:
         try:
             bso = ctypes.CDLL(
-                os.path.join(paths.codePath(), 'bitmsghash', bitmsglib))
+                os.path.join(paths.codePath(), 'bitmsghash', BITMSGLIB))
         except OSError:
             import glob
             try:
@@ -391,15 +393,15 @@ def init():
         except Exception:
             bso = None
         else:
-            logger.info('Loaded C PoW DLL %s', bitmsglib)
+            logger.info('Loaded C PoW DLL %s', BITMSGLIB)
         if bso:
             try:
-                bmpow = bso.BitmessagePOW
-                bmpow.restype = ctypes.c_ulonglong
+                BMPOW = bso.BitmessagePOW
+                BMPOW.restype = ctypes.c_ulonglong
             except Exception:
                 logger.warning(
-                    'Failed to setup bmpow lib %s', bso, exc_info=True)
+                    'Failed to setup BMPOW lib %s', bso, exc_info=True)
                 return
 
-    if bmpow is None:
+    if BMPOW is None:
         buildCPoW()

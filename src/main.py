@@ -4,13 +4,13 @@
 """Mock kivy app with mock threads."""
 
 import os
-from kivy.config import Config
-from mockbm import multiqueue
-import state
+from kivy.config import Config  # pylint: disable=import-error
 
-from mockbm.class_addressGenerator import FakeAddressGenerator  # noqa:E402
-from bitmessagekivy.mpybit import NavigateApp  # noqa:E402
-from mockbm import network  # noqa:E402
+import pybitmessage.state as state
+from pybitmessage.bitmessagekivy.mpybit import NavigateApp  # noqa:E402
+from pybitmessage.mockbm import multiqueue
+from pybitmessage.mockbm.class_addressGenerator import FakeAddressGenerator  # noqa:E402
+from pybitmessage.mockbm import network  # noqa:E402
 
 stats = network.stats
 objectracker = network.objectracker

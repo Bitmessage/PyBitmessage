@@ -174,7 +174,7 @@ class TestShared(unittest.TestCase):
     @patch("pybitmessage.shared.os.chmod")
     @patch("pybitmessage.shared.os.stat")
     def test_fix_sensitive_file_permissions(  # pylint: disable=no-self-use
-        self, mock_os_stat, mock_chmod
+            self, mock_os_stat, mock_chmod
     ):
         """Test to fix file permissions"""
         fake_filename = "path/to/file"

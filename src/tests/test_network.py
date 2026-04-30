@@ -90,9 +90,10 @@ class TestNetwork(TestPartialRun):
             if pl == 0:
                 pl = len(self.pool)
             if (
-                self.stats.receivedBytes() > 0 and self.stats.sentBytes() > 0
-                and pl > 0
-                # and len(self.stats.connectedHostsList()) > 0
+                    self.stats.receivedBytes() > 0
+                    and self.stats.sentBytes() > 0
+                    and pl > 0
+                    # and len(self.stats.connectedHostsList()) > 0
             ):
                 break
             time.sleep(1)

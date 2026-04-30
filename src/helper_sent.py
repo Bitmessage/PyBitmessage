@@ -44,8 +44,7 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
 
         sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
         return ackdata
-    else:
-        return None
+    return None
 
 
 def delete(ack_data):

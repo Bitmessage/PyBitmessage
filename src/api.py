@@ -57,7 +57,7 @@ To use the API concider such simple example:
 For further examples please reference `.tests.test_api`.
 """
 
-# pylint: disable=too-many-lines,relative-import
+# pylint: disable=too-many-lines
 
 import base64
 import errno

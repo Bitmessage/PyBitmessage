@@ -1,12 +1,11 @@
 """
 PyQt4 test for support request dialog
 """
-# pylint: disable=relative-import
 # from PyQt4 import QtTest
 
 import sys
 
-from main import TestBase
+from main import TestBase  # pylint: disable=no-name-in-module
 from shared import isAddressInMyAddressBook
 
 

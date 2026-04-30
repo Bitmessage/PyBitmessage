@@ -11,7 +11,7 @@ from six import string_types
 from six.moves import configparser
 
 try:
-    import state  # pylint: disable=relative-import
+    import state
 except ImportError:
     from pybitmessage import state
 

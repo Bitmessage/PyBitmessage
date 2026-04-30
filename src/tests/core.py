@@ -209,8 +209,8 @@ class TestCore(unittest.TestCase):
             time.sleep(1)
             for peer, con in connectionpool.pool.outboundConnections.items():
                 if (
-                    peer.host.startswith('bootstrap')
-                    or peer.host == 'quzwelsuziwqgpt2.onion'
+                        peer.host.startswith('bootstrap')
+                        or peer.host == 'quzwelsuziwqgpt2.onion'
                 ):
                     continue
                 self.assertIsInstance(con, connection_base)
@@ -278,8 +278,8 @@ class TestCore(unittest.TestCase):
         config.set('bitmessagesettings', 'onionservicesonly', 'true')
         self._load_knownnodes(knownnodes_file + '.bak')
         if len([
-            node for node in knownnodes.knownNodes[1]
-            if node.host.endswith('.onion')
+                node for node in knownnodes.knownNodes[1]
+                if node.host.endswith('.onion')
         ]) < 3:  # generate fake onion nodes if have not enough
             with knownnodes.knownNodesLock:
                 for f in ('a', 'b', 'c', 'd'):

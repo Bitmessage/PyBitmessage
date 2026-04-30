@@ -2,7 +2,7 @@
 Address validator module.
 """
 # pylint: disable=too-many-branches,too-many-arguments
-# pylint: disable=import-error,relative-import
+# pylint: disable=import-error
 
 from Queue import Empty
 
